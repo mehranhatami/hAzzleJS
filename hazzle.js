@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.1
+ * Version: 0.1.2
  * Released under the MIT License.
  *
  * Date: 2014-03-30
@@ -38,6 +38,11 @@
         slice = ArrayProto.slice,
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
+
+        getTime = (Date.now || function () {
+            return new Date().getTime();
+        }),
+
 
         // Native functions that we are using.
 
@@ -276,7 +281,7 @@
         },
 
         index: function (sel) {
- 		  return sel === null ? this.parent().children().indexOf(this.elems[0]) : this.indexOf(hAzzle(sel)["this"].elems[0]);
+            return sel === null ? this.parent().children().indexOf(this.elems[0]) : this.indexOf(hAzzle(sel)["this"].elems[0]);
         },
 
         /**
@@ -311,7 +316,7 @@
          */
 
         get: function (index) {
-          return index === null ? this.elems.slice() : this.elems[0 > index ? this.elems.length + index : index];
+            return index === null ? this.elems.slice() : this.elems[0 > index ? this.elems.length + index : index];
         },
 
         /**
@@ -346,7 +351,7 @@
          */
 
         push: function (item) {
-			 return hAzzle.isElement(item) ? (this.elems.push(item), this.length = this.elems.length, this.length - 1) : -1;
+            return hAzzle.isElement(item) ? (this.elems.push(item), this.length = this.elems.length, this.length - 1) : -1;
         },
 
         reduce: function (a, b, c, d) {
@@ -370,7 +375,7 @@
          * @return {Object}
          */
         eq: function (index) {
-           return index === null ? hAzzle() : hAzzle(this.get(index))
+            return index === null ? hAzzle() : hAzzle(this.get(index))
         },
 
         /**
@@ -489,9 +494,9 @@
          */
 
         closest: function (sel) {
-			 return this.map(function (element) {
-                    return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
-                });
+            return this.map(function (element) {
+                return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
+            });
         },
 
         /**
@@ -610,21 +615,32 @@
         isNumeric: function (obj) {
             return !hAzzle.IsNaN(parseFloat(obj)) && isFinite(obj);
         },
+        isEmptyObject: function (obj) {
+            var name;
+            for (name in obj) {
+                return false;
+            }
+            return true;
+        },
 
         isFunction: function (value) {
             return typeof value === 'function';
         },
 
-        isArray: Array.isArray || function (obj) {
-            return toString[call](obj) === '[object Array]';
-        },
+        isArray: Array.isArray,
 
         isArrayLike: function (obj) {
+
+            if (obj['nodeType'] === 1 && obj.length) {
+
+                return true;
+            }
+
             if (obj === null || hAzzle.isWindow(obj)) return false;
         },
 
         isWindow: function (obj) {
-            return obj !== null && obj == obj.window;
+            return obj !== null && obj === obj.window;
         },
 
         isPlainObject: function (obj) {
@@ -644,6 +660,10 @@
         create: function (elements, sel) {
             return hAzzle.isUndefined(sel) ? hAzzle(elements) : hAzzle(elements).filter(sel);
         },
+
+        /**
+         * Get correct CSS browser prefix
+         */
 
         prefix: function (key, obj) {
             var result, upcased = key[0].toUpperCase() + key.substring(1),
@@ -799,15 +819,20 @@
             return element;
         },
 
-        contains: function (obj, target) {
-            var result = false;
-            hAzzle.each(obj,
-                function (obj) {
-                    if (result || (result = obj === target)) return breaker;
-                });
-            return result;
-        },
+        /**
+         * Check if an element contains another element
+         */
 
+        contains: function (obj, target) {
+            if (target) {
+                while ((target = target.parentNode)) {
+                    if (target === obj) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
         /**
          * Native indexOf is slow and the value is enough for us as argument.
          * Therefor we create our own
@@ -818,10 +843,21 @@
                 if (obj === len) return i;
             }
             return !1;
+        },
+        nodeName: function (elem, name) {
+            return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
+
+        },
+        /** 
+         * Return current time
+         */
+
+        now: function () {
+            return getTime();
         }
 
     });
-	
+
     window['hAzzle'] = hAzzle;
 
 })(window);
