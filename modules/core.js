@@ -34,7 +34,9 @@
          */
 
         slice = ArrayProto.slice,
+        splice = ArrayProto.splice,
         concat = ArrayProto.concat,
+        indexOf = ArrayProto.indexOf,
         toString = ObjProto.toString,
 
         getTime = (Date.now || function () {
@@ -302,7 +304,7 @@
          */
 
         not: function (sel) {
- 		   return cached[sel] ? cached[sel] : cached[sel] = this.filter(sel || [], true);
+            return cached[sel] ? cached[sel] : cached[sel] = this.filter(sel || [], true);
         },
 
         /**
@@ -315,7 +317,7 @@
          */
 
         is: function (sel) {
-			 return cached[sel] ? cached[sel] : cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
+            return cached[sel] ? cached[sel] : cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
         },
 
         /**
@@ -365,7 +367,7 @@
          */
 
         get: function (num) {
-            return cached[num] ? cached[num] : cached[num] = null === num ? this.elems.slice() : this.elems[0 > num ? this.elems.length + num : num]
+            return cached[num] ? cached[num] : cached[num] = null === num ? this.elems.slice() : this.elems[0 > num ? this.elems.length + num : num];
         },
 
         /**
@@ -402,7 +404,7 @@
             return cached[start] ? cached[start] : cached[start] = hAzzle(slice.call(this.elems, start, end));
         },
 
-        splice: function (item) {
+        splice: function (start, end) {
             return cached[start] ? cached[start] : cached[start] = hAzzle(splice.call(this.elems, start, end));
         },
 
@@ -410,8 +412,8 @@
          * Take an element and push it onto the "elems" stack
          */
 
-        push: function (item) {
-            return hAzzle.isElement(item) ? (this.elems.push(item), this.length = this.elems.length, this.length - 1) : -1;
+        push: function (itm) {
+            return hAzzle.isElement(itm) ? (this.elems.push(itm), this.length = this.elems.length, this.length - 1) : -1;
         },
 
         /**
@@ -448,6 +450,7 @@
             }
             return cached[a];
         },
+
 
         /**
          * Iterate through elements in the collection
@@ -587,8 +590,7 @@
         isArray: Array.isArray,
 
         isArrayLike: function (elem) {
-
-            if (obj === null || hAzzle.isWindow(obj)) return false;
+            if (elem === null || hAzzle.isWindow(elem)) return false;
         },
 
         isWindow: function (obj) {
@@ -596,7 +598,7 @@
         },
 
         isPlainObject: function (obj) {
-            return hAzzle.isObject(obj) && !hAzzle.isWindow(obj) && Object.getPrototypeOf(obj) == ObjProto;
+            return hAzzle.isObject(obj) && !hAzzle.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
         },
 
         unique: function (array) {
@@ -842,17 +844,26 @@
         /**
          * Get / set an elements ID
          *
-         * @param{elem} object
+         * @param{Object} elem
          * @return{Object}
          */
 
-        getUID: function (element) {
-            return element.hAzzle_id || (element.hAzzle_id = uid.next())
+        getUID: function (elem) {
+            return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
         },
-		
+
+        /**
+         * Set values on elements in an array
+         *
+         * @param{Array} array
+         * @param{String} prop
+         * @param{String} value
+         * @return{Object}
+         */
+
         put: function (array, prop, value) {
             return hAzzle.each(array, function (index) {
-                array[index][prop] = value
+                array[index][prop] = value;
             });
         }
     });
