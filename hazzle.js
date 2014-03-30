@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.2b
+ * Version: 0.1.3
  * Released under the MIT License.
  *
  * Date: 2014-03-31
@@ -70,14 +70,23 @@
 
         nodeTypes = {
             '1': function (elem) {
-                if (elem["nodeType"] === 1) return true;
+                if (elem["nodeType"] === 1) return true; // Element
+            },
+            '2': function (elem) {
+                if (elem["nodeType"] === 2) return true; // Attr
+            },
+            '3': function (elem) {
+                if (elem["nodeType"] === 3) return true; // Text
+            },
+            '6': function (elem) {
+                if (elem["nodeType"] === 6) return true; // Entity
             },
             '9': function (elem) {
-                if (elem["nodeType"] === 9) return true;
+                if (elem["nodeType"] === 9) return true; // Document
             },
             '11': function (elem) {
-                if (elem["nodeType"] === 11) return true;
-            },
+                if (elem["nodeType"] === 11) return true; // Documentfragment
+            }
         },
 
         // Dummy div we are using in different functions
@@ -113,6 +122,16 @@
     }());
 
     hAzzle.fn = hAzzle.prototype = {
+
+        // Default length allways 0
+
+        length: 0,
+
+        toArray: function () {
+
+            return slice.call(this);
+
+        },
 
         init: function (sel, ctx) {
 
@@ -213,15 +232,18 @@
          */
 
         find: function (sel) {
-            var elements;
-            if (this.length === 1) {
-                elements = hAzzle(this.elems[0], sel);
-            } else {
-                elements = this.elems.reduce(function (elements, element) {
-                    return elements.concat(hAzzle.select(sel, element));
-                }, []);
+            if (sel) {
+                var elements;
+                if (this.length === 1) {
+                    elements = hAzzle(this.elems[0], sel);
+                } else {
+                    elements = this.elems.reduce(function (elements, element) {
+                        return elements.concat(hAzzle.select(sel, element));
+                    }, []);
+                }
+                return hAzzle.create(elements);
             }
-            return hAzzle.create(elements);
+            return this;
         },
 
         /**
@@ -244,26 +266,6 @@
             }));
         },
 
-        /**
-         * Add elements to the set of matched elements.
-         *
-         * @param {String} sel
-         * @param {String} ctx
-         * @return {Object}
-         *
-         * @speed:  41% faster then jQuery and Zepto
-         *
-         */
-
-        add: function (sel, ctx) {
-            var elements = sel
-            if (hAzzle.isString(sel)) {
-                elements = cached[sel] ? cached[sel] : cached[sel] = hAzzle(sel, ctx).elems
-            }
-            return this.concat(elements)
-
-
-        },
 
         /**
          * Check to see if a DOM element is a descendant of another DOM element.
@@ -312,32 +314,28 @@
             return cached[sel];
         },
 
-        /** Determine the position of an element within the matched set of elements
-         *
-         * @param {string} elem
-         * @param {return} Object
-         *
-         * @speed:  83% faster then jQuery and Zepto
-         */
 
-        index: function (elem) {
-            if (!cached[elem]) {
-                cached[elem] = elem ? this.indexOf(hAzzle(elem).elems[0]) : this.parent().children().indexOf(this.elems[0]) || -1;
-            }
-            return cached[elem];
-        },
 
         /**
          * Fetch property from the "elems" stack
          *
          * @param {String} prop
+         * @param {Number|Null} nt
          * @return {Array}
+         *
+         * 'nt' are used if we need to exclude certain nodeTypes.
+         *
+         * Example: pluck('parentNode'), selector, 11)
+         *
+         * In the example above, the parentNode will only be returned if
+         *  nodeType !== 11
+         *
          */
 
-        pluck: function (prop, np) {
+        pluck: function (prop, nt) {
             if (!cached[prop]) {
-                if (np) {
-                    if (!nodeTypes[np]) cached[prop] = hAzzle.pluck(this.elems, prop);
+                if (nt && hAzzle.isNumber(nt)) {
+                    if (!nodeTypes[nt]) cached[prop] = hAzzle.pluck(this.elems, prop);
                 } else cached[prop] = hAzzle.pluck(this.elems, prop);
                 cached[prop] = hAzzle.pluck(this.elems, prop);
             }
@@ -358,28 +356,21 @@
         },
 
         /**
-         * Retrieve the DOM elements matched by the hAzzle object.
+         * Get the Nth element in the matched element set
          *
-         * @param {Number} index
+         * @param {Number} num
          * @return {object}
          */
 
-        get: function (index) {
-
-            if (!cached[index]) {
-                cached[index] = index === null ? this.elems.slice() : this.elems[0 > index ? this.elems.length + index : index];
-            }
-            return cached[index];
+        get: function (num) {
+            return cached[num] ? cached[num] : cached[num] = null === num ? this.elems.slice() : this.elems[0 > num ? this.elems.length + num : num]
         },
 
         /**
          * Map the elements in the "elems" stack
          */
         map: function (fn) {
-            if (!cached[fn]) {
-                cached[fn] = hAzzle(this.elems.map(fn));
-            }
-            return cached[fn];
+            return cached[fn] ? cached[fn] : cached[fn] = hAzzle(this.elems.map(fn));
         },
 
 
@@ -388,10 +379,7 @@
          */
 
         sort: function (elm) {
-            if (!cached[elm]) {
-                cached[elm] = hAzzle(this.elems.sort(elm));
-            }
-            return cached[elm];
+            return cached[elm] ? cached[elm] : cached[elm] = hAzzle(this.elems.sort(elm));
         },
 
         /**
@@ -410,14 +398,15 @@
          */
 
         slice: function (start, end) {
-            if (!cached[start]) {
-                cached[start] = hAzzle(slice.call(this.elems, start, end));
-            }
-            return cached[start];
+            return cached[start] ? cached[start] : cached[start] = hAzzle(slice.call(this.elems, start, end));
+        },
+
+        splice: function (item) {
+            return cached[start] ? cached[start] : cached[start] = hAzzle(splice.call(this.elems, start, end));
         },
 
         /**
-         * Push a element onto the "elems" stack
+         * Take an element and push it onto the "elems" stack
          */
 
         push: function (item) {
@@ -479,146 +468,6 @@
          */
         eq: function (index) {
             return index === null ? hAzzle() : hAzzle(this.get(index));
-        },
-
-        /**
-         * Fetch property from elements
-         *
-         * @param {String} prop
-         * @return {Array}
-         */
-
-        pluckNode: function (prop) {
-            return this.map(function (element) {
-                return hAzzle.getClosestNode(element, prop);
-            });
-        },
-
-        /**
-         *  Return the element's next sibling
-         * @return {Object}
-         */
-
-        next: function () {
-            return hAzzle.create(this.pluckNode('nextSibling'));
-        },
-
-        /**
-         *  Return the element's previous sibling
-         * @return {Object}
-         */
-
-        prev: function () {
-            return hAzzle.create(this.pluckNode('previousSibling'));
-        },
-
-        /**
-         * Reduce the set of matched elements to the first in the set.
-         */
-
-        first: function () {
-            return hAzzle.create(this.get(0));
-        },
-
-        /**
-         * Reduce the set of matched elements to the last one in the set.
-         */
-
-        last: function () {
-            return hAzzle.create(this.get(-1));
-        },
-
-        /**
-         * NOTE!! When we are using caching, we are in average 25% faster then other javascript libraries
-         */
-
-        siblings: function (sel) {
-            var siblings = [],
-                children,
-                i,
-                len;
-
-            if (!cached[sel]) {
-                this.each(function (index, element) {
-                    children = cached[element] ? cached[element] : cached[element] = slice.call(element.parentNode.childNodes);
-                    for (i = 0, len = children.length; i < len; i++) {
-                        if (hAzzle.isElement(children[i]) && children[i] !== element) {
-                            siblings.push(children[i]);
-                        }
-                    }
-                });
-                cached[sel] = siblings;
-            }
-            return hAzzle.create(cached[sel], sel);
-        },
-
-
-        /**
-         * Get immediate parents of each element in the collection.
-         * If CSS selector is given, filter results to include only ones matching the selector.
-         *
-         * @param {String} sel
-         * @return {Object}
-         *
-         * @speed: 98%% faster then jQuery and Zepto
-         */
-
-        parent: function (sel) {
-            return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11)
-        },
-
-        /**
-         *  Get the ancestors of each element in the current set of matched elements
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        parents: function (sel) {
-            var ancestors = [],
-                elements = this.elems,
-                fn = function (element) {
-                    if ((element = element.parentNode) && element !== doc && ancestors.indexOf(element) < 0) {
-                        ancestors.push(element);
-                        return element;
-                    }
-                };
-
-            while (elements.length > 0 && elements[0] !== undefined) {
-                elements = elements.map(fn);
-            }
-            return hAzzle.create(ancestors, sel);
-        },
-
-        /**
-         * Get the first element that matches the selector, beginning at the current element and progressing up through the DOM tree.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        closest: function (sel) {
-            return this.map(function (element) {
-                return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
-            });
-        },
-
-
-
-
-        /**
-         * Get all decending elements of a given element
-         * If selector is given, filter the results to only include ones matching the CSS selector.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        children: function (sel) {
-            return hAzzle.create(this.elems.reduce(function (elements, element) {
-                var childrens = slice.call(element.children);
-                return elements.concat(childrens);
-            }, []), sel);
         }
     };
 
@@ -738,11 +587,6 @@
 
         isArrayLike: function (elem) {
 
-            if (nodeTypes[1](elem) && elem.length) {
-
-                return true;
-            }
-
             if (obj === null || hAzzle.isWindow(obj)) return false;
         },
 
@@ -837,10 +681,14 @@
             return match;
         },
 
-        pluck: function (array, property, np) {
+        /**
+         * Same as the 'internal' pluck method, except this one is global
+         */
+
+        pluck: function (array, property, nt) {
             return array.map(function (item) {
-                if (np) {
-                    if (!nodeTypes[np]) return item[property];
+                if (nt) {
+                    if (!nodeTypes[nt]) return item[property];
                 } else return item[property];
             });
         },
@@ -918,17 +766,6 @@
 
         },
 
-        /**
-         * Walks the DOM tree using `method`, returns when an element node is found
-         */
-
-        getClosestNode: function (element, method, sel) {
-
-            do {
-                element = element[method];
-            } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
-            return element;
-        },
 
         /**
          * Check if an element contains another element
@@ -978,6 +815,27 @@
 
         nodeType: function (val, elem) {
             if (hAzzle.isNumber(elem) && nodeTypes[val]) return nodeTypes[val](elem);
+        },
+
+        /**
+         * Remove empty whitespace from beginning and end of a string
+         *
+         * @param{String} str
+         * @return{String}
+         */
+
+        trim: function (str) {
+
+            return String.prototype.trim ? str.trim() : str.replace(/^\s*/, "").replace(/\s*$/, "");
+        },
+
+        noop: function () {
+
+        },
+
+        inArray: function (elem, arr, i) {
+
+            return arr === null ? -1 : indexOf.call(arr, elem, i);
         }
 
     });
