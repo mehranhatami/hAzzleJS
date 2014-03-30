@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.4
+ * Version: 0.1.4a
  * Released under the MIT License.
  *
  * Date: 2014-03-31
@@ -1610,7 +1610,84 @@
                     return this.put(name, value);
                 }
             }
-        }
+        },
+		
+		/**
+     * Append node to one or more elements.
+     *
+     * @param {Object|String} html
+     * @return {Object}
+     */
+    append: function (html) {
+        return this.each(function (index, elem) {
+            if (hAzzle.isString(html)) {
+                elem.insertAdjacentHTML('beforeend', html)
+            } else {
+                if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
+                    elem.appendChild(html)
+                }
+            }
+        });
+    },
+
+    /**
+     * Prepend node to element.
+     *
+     * @param {Object|String} html
+     * @return {Object}
+     */
+
+    prepend: function (html) {
+        var first;
+        return this.each(function (index, elem) {
+            if (hAzzle.isString(html)) {
+                elem.insertAdjacentHTML('afterbegin', html)
+            } else if (first = elem.childNodes[0]) {
+                elem.insertBefore(html, first)
+            } else {
+                if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
+                    elem.appendChild(html)
+                }
+            }
+        });
+    },
+
+    /**
+     * Add node after element.
+     *
+     * @param {Object|String} html
+     * @return {Object}
+     */
+
+    after: function (html) {
+        var next
+        return this.each(function (index, elem) {
+            if (hAzzle.isString(html)) {
+                elem.insertAdjacentHTML('afterend', html)
+            } else if (next = hAzzle.getClosestNode(elem, 'nextSibling')) {
+                if (elem.parentNode) elem.parentNode.insertBefore(html, next)
+            } else {
+                if (elem.parentNode) elem.parentNode.appendChild(html)
+            }
+        });
+    },
+
+    /**
+     * Add node before element.
+     *
+     * @param {Object|String} html
+     * @return {Object}
+     */
+
+    before: function (html) {
+        return this.each(function (index, elem) {
+            if (hAzzle.isString(html)) {
+                elem.insertAdjacentHTML('beforebegin', html)
+            } else {
+                if (elem.parentNode) elem.parentNode.insertBefore(html, elem)
+            }
+        });
+    }
     });
 
     window['hAzzle'] = hAzzle;
