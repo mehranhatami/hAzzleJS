@@ -1,9 +1,27 @@
+/*!
+ * Manipulation.js - hAzzle.js module
+ */
 var
-booleans = /^(checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped|noresize|declare|nohref|noshade|truespeed|inert|formnovalidate|allowfullscreen|declare|seamless|sortable|typemustmatch)$/i,
-    rnoInnerhtml = /<(?:script|style|link)/i,
-    rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-    rtagName = /<([\w:]+)/,
-    byTag = 'getElementsByTagName',
+
+byTag = 'getElementsByTagName',
+    // RegExp we are using
+
+    expr = {
+
+        booleans: /^(checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped|noresize|declare|nohref|noshade|truespeed|inert|formnovalidate|allowfullscreen|declare|seamless|sortable|typemustmatch)$/i,
+        scriptstylelink: /<(?:script|style|link)/i,
+        htmlTags: /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        rtagName: /<([\w:]+)/
+
+    },
+
+    propertyFix = {
+        "for": "htmlFor",
+        "class": "className"
+    },
+
+    // Borrowed from jQuery
+
     wrapMap = {
         option: [1, "<select multiple='multiple'>", "</select>"],
         thead: [1, "<table>", "</table>"],
@@ -14,31 +32,47 @@ booleans = /^(checked|selected|async|autofocus|autoplay|controls|defer|disabled|
         _default: [0, "", ""]
     };
 
-
-function RemoveAttr(elem, value) {
-    var name, propName,
-        i = 0,
-        attrNames = value && value.match((/\S+/g));
-
-    if (attrNames && hAzzle.nodeType(1, elem)) {
-        while ((name = attrNames[i++])) {
-            propName = hAzzle.propFix[name] || name;
-            if (booleans.test(name)) {
-                elem[propName] = false;
-            }
-
-            elem.removeAttribute(name);
-        }
-    }
+function NodeMatching(elem) {
+    return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem) ? true : false;
 }
+
+
+// Global
 
 hAzzle.extend({
 
+    /**
+     * Get attributes
+     */
 
-    propFix: {
-        "for": "htmlFor",
-        "class": "className"
+    getAttr: function (element, name) {
+        if (name === 'value' && element.nodeName.toLowerCase() == 'input') {
+            return hAzzle.getValue(element);
+        }
+        return element.getAttribute(name);
     },
+
+    /**
+     * Remove attributes
+     */
+
+    removeAttr: function (elem, value) {
+        var name, propName,
+            i = 0,
+            attrNames = value && value.match((/\S+/g));
+
+        if (attrNames && hAzzle.nodeType(1, elem)) {
+            while ((name = attrNames[i++])) {
+                propName = propertyFix[name] || name;
+                if (expr['booleans'].test(name)) {
+                    elem[propName] = false;
+                }
+
+                elem.removeAttribute(name);
+            }
+        }
+    },
+
     getValue: function (elem) {
 
         // HTML Option
@@ -54,6 +88,10 @@ hAzzle.extend({
         return elem.value;
     },
 
+    /**
+     * Get text
+     */
+
     getText: function (elem) {
         var node, ret = "",
             i = 0;
@@ -62,7 +100,7 @@ hAzzle.extend({
             // If no nodeType, this is expected to be an array
             for (; node = elem[i++];) ret += hAzzle.getText(node);
 
-        } else if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem)) {
+        } else if (NodeMatching(elem)) {
 
             if (hAzzle.isString(elem.textContent)) return elem.textContent;
             for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += hAzzle.getText(elem);
@@ -74,6 +112,8 @@ hAzzle.extend({
     }
 
 });
+
+// Core
 
 hAzzle.fn.extend({
 
@@ -91,7 +131,7 @@ hAzzle.fn.extend({
         return hAzzle.isUndefined(value) ?
             hAzzle.getText(this) :
             this.empty().each(function () {
-                if (hAzzle.nodeType(1, this) || hAzzle.nodeType(9, this) || hAzzle.nodeType(11, this)) {
+                if (NodeMatching(this)) {
                     this.textContent = value;
                 }
             });
@@ -104,47 +144,58 @@ hAzzle.fn.extend({
      * @param {Object|String} st
      * @return {Object|String}
      */
+
     html: function (value) {
 
         if (hAzzle.isUndefined(value) && hAzzle.nodeType(11, this[0])) {
-            return elem.innerHTML;
+            return this[0].innerHTML;
         }
 
-        if (hAzzle.isString(value) && !rnoInnerhtml.test(value) && !wrapMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+        if (hAzzle.isString(value) && !expr['scriptstylelink'].test(value) && !wrapMap[(expr['rtagName'].exec(value) || ["", ""])[1].toLowerCase()]) {
 
-            value = value.replace(rxhtmlTag, "<$1></$2>");
+            value = value.replace(expr['htmlTags'], "<$1></$2>");
 
             return this.each(function (index, elem) {
                 if (hAzzle.nodeType(1, elem)) {
                     elem.innerHTML = value || "";
                 }
-            })
-
-            elem = 0;
+                elem = 0;
+            });
         }
+
+        // Return innerHTML only from the first elem in the collection
+
         return this[0] && this[0].innerHTML;
     },
 
+    /**
+     * Remove all childNodes from an element
+     *
+     * @return {Object}
+     */
+
     empty: function () {
 
-        var _this = this,
-            children;
+        var children;
 
-        // Loop through all elements
+        /* We have to loop through all elemets in the collection, and remove
+      all children to prevent memory leaks */
 
-        for (var i = _this.length; i--;) {
+        this.each(function (index, elem) {
 
-            // ... and get all the "ugly" children we want to remove
+            children = elem[byTag]('*');
 
-            children = _this[i][byTag]('*')
+            // Remove all the "ugly" children we want to remove
 
-            for (var x = children.length; x--;) {
+            for (var i = children.length; i--;) {
 
                 children[i].remove();
             }
-        }
 
-        // So far, so happy. Let us get rid of the textcontext on the parents	
+        });
+
+        // Get rid of the textcontext on the parents	
+        // Firefox support 'textContent' or not??
 
         return this.put('textContent', '');
     },
@@ -163,7 +214,7 @@ hAzzle.fn.extend({
     clone: function () {
         return this.map(function (index, element) {
             return element.cloneNode(true);
-        })
+        });
     },
 
     /**
@@ -180,20 +231,21 @@ hAzzle.fn.extend({
             if (element.parentNode) {
                 element.parentNode.removeChild(element);
             }
-        })
+        });
     },
 
 
     /**
-     * Get or set the value of a form element
+     * Get value for input/select elements
+     * Set value for input/select elements
+     *
+     * @param {String} value
+     * @return {Object|String}
      */
-
     val: function (value) {
 
-        var elem = this[0];
-
         if (!value) {
-            return elem && hAzzle.getValue(elem);
+            return elem && hAzzle.getValue(this[0]);
         }
 
         return this.each(function (index, element) {
@@ -218,8 +270,7 @@ hAzzle.fn.extend({
             }
 
             element.value = val;
-
-        })
+        });
     },
 
     /**
@@ -242,31 +293,36 @@ hAzzle.fn.extend({
                 }
                 hAzzle.each(name, function (value, key) {
                     element.setAttribute(key, value + "");
-                })
-            })
+                });
+            });
         }
-        return typeof value === 'undefined' ? this[0] && getAttribute(this[0], name) : this.each(function (index, element) {
+        return typeof value === 'undefined' ? this[0] && hAzzle.getAttr(this[0], name) : this.each(function (index, element) {
 
             if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
                 return;
             }
 
             element.setAttribute(name, value + "");
-        })
+        });
     },
 
     /**
      * Remove a given attribute from an element
+     *
+     * @param {String} value
+     *
+     * @return {Object}
      */
 
     removeAttr: function (elem, value) {
+        if (!value) return;
         return this.each(function (index, element) {
-            RemoveAttr(element, value);
+            hAzzle.removeAttr(element, value);
         });
     },
 
     prop: function (name, value) {
-        if (typeof name === 'object') {
+        if (hAzzle.isObject(name)) {
             return this.each(function (index, element) {
 
                 if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
@@ -274,19 +330,17 @@ hAzzle.fn.extend({
                 }
                 hAzzle.each(name, function (value, key) {
                     element[key] = value;
-                })
-            })
+                });
+            });
         }
         if (hAzzle.isUndefined(value)) {
 
             return this[0] && this[0][name];
         } else {
 
-            if (! hAzzle.nodeType(3, this[0]) || ! hAzzle.nodeType(8, this[0]) || ! hAzzle.nodeType(2, this[0])) {
-             return this.put(name, value);
+            if (!hAzzle.nodeType(3, this[0]) || !hAzzle.nodeType(8, this[0]) || !hAzzle.nodeType(2, this[0])) {
+                return this.put(name, value);
             }
         }
-
     }
-
 });
