@@ -49,6 +49,14 @@
             return keys;
         },
 
+        uid = {
+            current: 0,
+            next: function () {
+                return ++this.current
+            }
+        },
+
+
         // Cache functions for functions and params
 
         cached = [],
@@ -450,6 +458,7 @@
 
         /**
          * Iterate through elements in the collection
+
          */
 
         iterate: function (method, ctx) {
@@ -836,6 +845,17 @@
         inArray: function (elem, arr, i) {
 
             return arr === null ? -1 : indexOf.call(arr, elem, i);
+        },
+
+        /**
+         * Get an elements ID
+         *
+         * @param{elem} object
+         * @return{Object}
+         */
+
+        getUID: function (element) {
+            return element.hAzzle_id || (element.hAzzle_id = uid.next())
         }
 
     });

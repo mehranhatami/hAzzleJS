@@ -49,6 +49,13 @@
             return keys;
         },
 
+        uid = {
+            current: 0,
+            next: function () {
+                return ++this.current
+            }
+        },
+
         // Cache functions for functions and params
 
         cached = [],
@@ -63,7 +70,6 @@
 
             idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
             tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
-
         },
 
         // Different nodeTypes we are checking against for faster speed
@@ -313,8 +319,6 @@
             }
             return cached[sel];
         },
-
-
 
         /**
          * Fetch property from the "elems" stack
@@ -836,6 +840,17 @@
         inArray: function (elem, arr, i) {
 
             return arr === null ? -1 : indexOf.call(arr, elem, i);
+        },
+
+        /**
+         * Get an elements ID
+         *
+         * @param{elem} object
+         * @return{Object}
+         */
+
+        getUID: function (element) {
+            return element.hAzzle_id || (element.hAzzle_id = uid.next())
         }
 
     });
