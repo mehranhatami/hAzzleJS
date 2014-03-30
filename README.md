@@ -1,4 +1,4 @@
-hAzzleJS v. 0.1.3
+hAzzleJS v. 0.1.4
 =================
 
 **hAzzle** is a fast, and lightweight javascript library for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
