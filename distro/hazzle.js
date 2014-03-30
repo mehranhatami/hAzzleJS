@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.3
+ * Version: 0.1.3a
  * Released under the MIT License.
  *
  * Date: 2014-03-31
@@ -52,10 +52,9 @@
         uid = {
             current: 0,
             next: function () {
-                return ++this.current
+                return ++this.current;
             }
         },
-
 
         // Cache functions for functions and params
 
@@ -71,7 +70,6 @@
 
             idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
             tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
-
         },
 
         // Different nodeTypes we are checking against for faster speed
@@ -83,8 +81,12 @@
             '2': function (elem) {
                 if (elem["nodeType"] === 2) return true; // Attr
             },
+
             '3': function (elem) {
                 if (elem["nodeType"] === 3) return true; // Text
+            },
+            '4': function (elem) {
+                if (elem["nodeType"] === 4) return true; // 
             },
             '6': function (elem) {
                 if (elem["nodeType"] === 6) return true; // Entity
@@ -300,10 +302,7 @@
          */
 
         not: function (sel) {
-            if (!cached[sel]) {
-                cached[sel] = this.filter(sel || [], true);
-            }
-            return cached[sel];
+            return cached[sel] ? cached[sel] : cached[sel] = this.filter(sel || [], true);
         },
 
         /**
@@ -316,13 +315,8 @@
          */
 
         is: function (sel) {
-            if (!cached[sel]) {
-                cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
-            }
-            return cached[sel];
+            return cached[sel] ? cached[sel] : cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
         },
-
-
 
         /**
          * Fetch property from the "elems" stack
@@ -380,7 +374,6 @@
         map: function (fn) {
             return cached[fn] ? cached[fn] : cached[fn] = hAzzle(this.elems.map(fn));
         },
-
 
         /**
          * Sort the elements in the "elems" stack
@@ -458,7 +451,6 @@
 
         /**
          * Iterate through elements in the collection
-
          */
 
         iterate: function (method, ctx) {
@@ -823,7 +815,7 @@
          **/
 
         nodeType: function (val, elem) {
-            if (hAzzle.isNumber(elem) && nodeTypes[val]) return nodeTypes[val](elem);
+            if (nodeTypes[val]) return nodeTypes[val](elem);
         },
 
         /**
@@ -848,7 +840,7 @@
         },
 
         /**
-         * Get an elements ID
+         * Get / set an elements ID
          *
          * @param{elem} object
          * @return{Object}
@@ -856,10 +848,14 @@
 
         getUID: function (element) {
             return element.hAzzle_id || (element.hAzzle_id = uid.next())
+        },
+
+        put: function (array, prop, value) {
+            return hAzzle.each(array, function (index) {
+                array[index][prop] = value
+            });
         }
-
     });
-
 
     // **************************************************************
     // DOM READY (module)
@@ -1112,137 +1108,137 @@
 
     });
 
-  // **************************************************************
+    // **************************************************************
     // DOM TRAVERSING
     // **************************************************************
 
- var data = {};
+    var data = {};
 
- /**
-  * Store data on an element
-  */
+    /**
+     * Store data on an element
+     */
 
- function set(element, key, value) {
-     var id = hAzzle.getUID(element),
-         obj = data[id] || (data[id] = {});
-     obj[key] = value;
- }
+    function set(element, key, value) {
+        var id = hAzzle.getUID(element),
+            obj = data[id] || (data[id] = {});
+        obj[key] = value;
+    }
 
- /**
-  * Get data from an element
-  */
+    /**
+     * Get data from an element
+     */
 
- function get(element, key) {
-     var obj = data[hAzzle.getUID(element)];
-     if (key == null) {
-         return obj;
-     }
-     return obj && obj[key];
- }
+    function get(element, key) {
+        var obj = data[hAzzle.getUID(element)];
+        if (key == null) {
+            return obj;
+        }
+        return obj && obj[key];
+    }
 
- /**
-  * Check if an element contains any data
-  */
+    /**
+     * Check if an element contains any data
+     */
 
- function has(element, key) {
-     var obj = data[hAzzle.getUID(element)];
-     if (key == null) {
-         return false;
-     }
-     if (obj && obj[key]) return true;
- }
+    function has(element, key) {
+        var obj = data[hAzzle.getUID(element)];
+        if (key == null) {
+            return false;
+        }
+        if (obj && obj[key]) return true;
+    }
 
- /**
-  * Remove data from an element
-  */
+    /**
+     * Remove data from an element
+     */
 
- function remove(element, key) {
-     var obj = data[hAzzle.getUID(element)];
+    function remove(element, key) {
+        var obj = data[hAzzle.getUID(element)];
 
-     if (!key) {
+        if (!key) {
 
-         /* FIX ME !!
+            /* FIX ME !!
   
      If no key, need to find all data on the element, and reomve data without knowing the key 
     */
 
-         return false;
-     }
-     delete obj[key];
+            return false;
+        }
+        delete obj[key];
 
- }
+    }
 
- hAzzle.extend({
+    hAzzle.extend({
 
-     /**
-      * Check if an element contains data
-      *
-      * @param{String/Object} elem
-      * @param{String} key
-      */
-     hasData: function (elem, key) {
+        /**
+         * Check if an element contains data
+         *
+         * @param{String/Object} elem
+         * @param{String} key
+         */
+        hasData: function (elem, key) {
 
-         if (elem instanceof hAzzle) {
-             if (has(elem, key)) return true;
-         } else if (has(hAzzle(elem)[0], key)) return true;
-         return false;
-     },
+            if (elem instanceof hAzzle) {
+                if (has(elem, key)) return true;
+            } else if (has(hAzzle(elem)[0], key)) return true;
+            return false;
+        },
 
-     /**
-      * Remove data from an element
-      */
-     removeData: function (elem, key) {
-         if (elem instanceof hAzzle) {
-             if (remove(elem, key)) return true;
-         } else if (remove(hAzzle(elem)[0], key)) return true;
-         return false;
-     }
- });
+        /**
+         * Remove data from an element
+         */
+        removeData: function (elem, key) {
+            if (elem instanceof hAzzle) {
+                if (remove(elem, key)) return true;
+            } else if (remove(hAzzle(elem)[0], key)) return true;
+            return false;
+        }
+    });
 
- hAzzle.fn.extend({
+    hAzzle.fn.extend({
 
-     /**
-      * Remove attributes from element collection
-      *
-      * @param {String} key
-      *
-      * @return {Object}
-      */
+        /**
+         * Remove attributes from element collection
+         *
+         * @param {String} key
+         *
+         * @return {Object}
+         */
 
-     removeData: function (key) {
-         this.each(function (index, element) {
-             remove(element, key);
-         })
-         return this;
-     },
+        removeData: function (key) {
+            this.each(function (index, element) {
+                remove(element, key);
+            })
+            return this;
+        },
 
-     /**
-      * Store random data on the hAzzle Object
-      *
-      * @param {String} obj
-      * @param {String|Object} value
-      *
-      * @return {Object|String}
-      *
-      *
-      * IN THE FUTURE:
-      * =============
-      *
-      * Add option for saving and restoring data with objects
-      *
-      */
+        /**
+         * Store random data on the hAzzle Object
+         *
+         * @param {String} obj
+         * @param {String|Object} value
+         *
+         * @return {Object|String}
+         *
+         *
+         * IN THE FUTURE:
+         * =============
+         *
+         * Add option for saving and restoring data with objects
+         *
+         */
 
-     data: function (key, value) {
-         return hAzzle.isDefined(value) ? (this.each(function (index, element) {
-             // Sets multiple values
-             set(element, key, value);
-         }), this) : this.elems.length === 1 ? get(this.elems[0], key) : this.elems.map(function (value) {
-             // Get data from an single element in the "elems" stack
-             return get(value, key);
-         })
-     }
+        data: function (key, value) {
+            return hAzzle.isDefined(value) ? (this.each(function (index, element) {
+                // Sets multiple values
+                set(element, key, value);
+            }), this) : this.elems.length === 1 ? get(this.elems[0], key) : this.elems.map(function (value) {
+                // Get data from an single element in the "elems" stack
+                return get(value, key);
+            })
+        }
 
- });
+    });
     window['hAzzle'] = hAzzle;
 
 })(window);

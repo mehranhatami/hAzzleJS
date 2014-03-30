@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.3
+ * Version: 0.1.3a
  * Released under the MIT License.
  *
  * Date: 2014-03-31
@@ -52,7 +52,7 @@
         uid = {
             current: 0,
             next: function () {
-                return ++this.current
+                return ++this.current;
             }
         },
 
@@ -81,8 +81,12 @@
             '2': function (elem) {
                 if (elem["nodeType"] === 2) return true; // Attr
             },
+
             '3': function (elem) {
                 if (elem["nodeType"] === 3) return true; // Text
+            },
+            '4': function (elem) {
+                if (elem["nodeType"] === 4) return true; // 
             },
             '6': function (elem) {
                 if (elem["nodeType"] === 6) return true; // Entity
@@ -298,10 +302,7 @@
          */
 
         not: function (sel) {
-            if (!cached[sel]) {
-                cached[sel] = this.filter(sel || [], true);
-            }
-            return cached[sel];
+ 		   return cached[sel] ? cached[sel] : cached[sel] = this.filter(sel || [], true);
         },
 
         /**
@@ -314,10 +315,7 @@
          */
 
         is: function (sel) {
-            if (!cached[sel]) {
-                cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
-            }
-            return cached[sel];
+			 return cached[sel] ? cached[sel] : cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
         },
 
         /**
@@ -376,7 +374,6 @@
         map: function (fn) {
             return cached[fn] ? cached[fn] : cached[fn] = hAzzle(this.elems.map(fn));
         },
-
 
         /**
          * Sort the elements in the "elems" stack
@@ -818,7 +815,7 @@
          **/
 
         nodeType: function (val, elem) {
-            if (hAzzle.isNumber(elem) && nodeTypes[val]) return nodeTypes[val](elem);
+            if (nodeTypes[val]) return nodeTypes[val](elem);
         },
 
         /**
@@ -843,7 +840,7 @@
         },
 
         /**
-         * Get an elements ID
+         * Get / set an elements ID
          *
          * @param{elem} object
          * @return{Object}
@@ -851,8 +848,13 @@
 
         getUID: function (element) {
             return element.hAzzle_id || (element.hAzzle_id = uid.next())
+        },
+		
+        put: function (array, prop, value) {
+            return hAzzle.each(array, function (index) {
+                array[index][prop] = value
+            });
         }
-
     });
 
     window['hAzzle'] = hAzzle;
