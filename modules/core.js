@@ -118,7 +118,7 @@
      * An object used to flag environments/features.
      */
 
-    var support = {};
+    var support = hAzzle.support = {};
 
     (function () {
 
@@ -602,6 +602,9 @@
 
         isPlainObject: function (obj) {
             return hAzzle.isObject(obj) && !hAzzle.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
+        },
+		isBoolean: function (str) {
+        return typeof str === 'boolean';
         },
 
         unique: function (array) {
