@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.3a
+ * Version: 0.1.4a
  * Released under the MIT License.
  *
  * Date: 2014-03-31
@@ -92,6 +92,9 @@
             },
             '6': function (elem) {
                 if (elem["nodeType"] === 6) return true; // Entity
+            },
+            '8': function (elem) {
+                if (elem["nodeType"] === 8) return true; // 
             },
             '9': function (elem) {
                 if (elem["nodeType"] === 9) return true; // Document
@@ -451,7 +454,6 @@
             return cached[a];
         },
 
-
         /**
          * Iterate through elements in the collection
          */
@@ -526,7 +528,8 @@
                 var keys = nativeKeys(obj);
 
                 for (i = keys.length; i--;) {
-                    if (callback.call(obj[keys], name, obj[keys]) === false) {
+
+                    if (callback.call(obj[keys], keys, obj[keys]) === false) {
                         break;
                     }
                 }

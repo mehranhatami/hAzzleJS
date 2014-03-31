@@ -882,6 +882,7 @@
         /**
          * Set values on elements in an array
          *
+
          * @param{Array} array
          * @param{String} prop
          * @param{String} value
@@ -964,15 +965,13 @@
          */
 
         getClosestNode: function (element, method, sel) {
-
+            if (!element || element === null) return;
             do {
                 element = element[method];
             } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
             return element;
         }
     });
-
-
     // Extend hAzzle
 
     hAzzle.fn.extend({
@@ -985,6 +984,7 @@
          */
 
         pluckNode: function (prop) {
+            if (!prop) return;
             return this.map(function (element) {
                 return hAzzle.getClosestNode(element, prop);
             });
@@ -1000,6 +1000,7 @@
          */
 
         closest: function (sel) {
+            if (!sel) return;
             return cached[sel] ? cached[sel] : cached[sel] = this.map(function (element) {
                 return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
             });
@@ -1014,6 +1015,7 @@
          */
 
         index: function (elem) {
+            if (!elem) return;
             return cached[elem] ? cached[elem] : cached[elem] = elem ? this.indexOf(hAzzle(elem).elems[0]) : this.parent().children().indexOf(this.elems[0]) || -1;
         },
 
@@ -1035,6 +1037,7 @@
             }
             return this.concat(elements);
         },
+
         /**
          * Get immediate parents of each element in the collection.
          * If CSS selector is given, filter results to include only ones matching the selector.
@@ -1046,6 +1049,7 @@
          */
 
         parent: function (sel) {
+            if (!sel) return;
             return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
         },
 
@@ -1082,10 +1086,12 @@
          */
 
         children: function (sel) {
+            if (!sel) return;
             return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.elems.reduce(function (elements, element) {
                 var childrens = slice.call(element.children);
                 return elements.concat(childrens);
             }, []), sel);
+
         },
 
         /**
@@ -1096,9 +1102,7 @@
          */
 
         next: function () {
-
             return hAzzle.create(this.pluckNode('nextSibling'));
-
         },
 
         /**
@@ -1132,7 +1136,6 @@
             return hAzzle.create(this.get(-1));
         },
 
-
         /**
          * Return the element's siblings
          * @param {String} sel
@@ -1142,6 +1145,7 @@
          */
 
         siblings: function (sel) {
+            if (!sel) return;
             var siblings = [],
                 children,
                 i,
@@ -1611,83 +1615,83 @@
                 }
             }
         },
-		
-		/**
-     * Append node to one or more elements.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     */
-    append: function (html) {
-        return this.each(function (index, elem) {
-            if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('beforeend', html)
-            } else {
-                if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
-                    elem.appendChild(html)
+
+        /**
+         * Append node to one or more elements.
+         *
+         * @param {Object|String} html
+         * @return {Object}
+         */
+        append: function (html) {
+            return this.each(function (index, elem) {
+                if (hAzzle.isString(html)) {
+                    elem.insertAdjacentHTML('beforeend', html)
+                } else {
+                    if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
+                        elem.appendChild(html)
+                    }
                 }
-            }
-        });
-    },
+            });
+        },
 
-    /**
-     * Prepend node to element.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     */
+        /**
+         * Prepend node to element.
+         *
+         * @param {Object|String} html
+         * @return {Object}
+         */
 
-    prepend: function (html) {
-        var first;
-        return this.each(function (index, elem) {
-            if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('afterbegin', html)
-            } else if (first = elem.childNodes[0]) {
-                elem.insertBefore(html, first)
-            } else {
-                if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
-                    elem.appendChild(html)
+        prepend: function (html) {
+            var first;
+            return this.each(function (index, elem) {
+                if (hAzzle.isString(html)) {
+                    elem.insertAdjacentHTML('afterbegin', html)
+                } else if (first = elem.childNodes[0]) {
+                    elem.insertBefore(html, first)
+                } else {
+                    if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
+                        elem.appendChild(html)
+                    }
                 }
-            }
-        });
-    },
+            });
+        },
 
-    /**
-     * Add node after element.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     */
+        /**
+         * Add node after element.
+         *
+         * @param {Object|String} html
+         * @return {Object}
+         */
 
-    after: function (html) {
-        var next
-        return this.each(function (index, elem) {
-            if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('afterend', html)
-            } else if (next = hAzzle.getClosestNode(elem, 'nextSibling')) {
-                if (elem.parentNode) elem.parentNode.insertBefore(html, next)
-            } else {
-                if (elem.parentNode) elem.parentNode.appendChild(html)
-            }
-        });
-    },
+        after: function (html) {
+            var next
+            return this.each(function (index, elem) {
+                if (hAzzle.isString(html)) {
+                    elem.insertAdjacentHTML('afterend', html)
+                } else if (next = hAzzle.getClosestNode(elem, 'nextSibling')) {
+                    if (elem.parentNode) elem.parentNode.insertBefore(html, next)
+                } else {
+                    if (elem.parentNode) elem.parentNode.appendChild(html)
+                }
+            });
+        },
 
-    /**
-     * Add node before element.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     */
+        /**
+         * Add node before element.
+         *
+         * @param {Object|String} html
+         * @return {Object}
+         */
 
-    before: function (html) {
-        return this.each(function (index, elem) {
-            if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('beforebegin', html)
-            } else {
-                if (elem.parentNode) elem.parentNode.insertBefore(html, elem)
-            }
-        });
-    }
+        before: function (html) {
+            return this.each(function (index, elem) {
+                if (hAzzle.isString(html)) {
+                    elem.insertAdjacentHTML('beforebegin', html)
+                } else {
+                    if (elem.parentNode) elem.parentNode.insertBefore(html, elem)
+                }
+            });
+        }
     });
 
     window['hAzzle'] = hAzzle;

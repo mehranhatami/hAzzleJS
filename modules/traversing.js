@@ -23,7 +23,7 @@ hAzzle.extend({
      */
 
     getClosestNode: function (element, method, sel) {
-
+		if(!element || element === null) return;
         do {
             element = element[method];
         } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
@@ -44,6 +44,7 @@ hAzzle.fn.extend({
      */
 
     pluckNode: function (prop) {
+		if(!prop) return;
         return this.map(function (element) {
             return hAzzle.getClosestNode(element, prop);
         });
@@ -59,6 +60,7 @@ hAzzle.fn.extend({
      */
 
     closest: function (sel) {
+		if(!sel) return;
         return cached[sel] ? cached[sel] : cached[sel] = this.map(function (element) {
             return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
         });
@@ -73,6 +75,7 @@ hAzzle.fn.extend({
      */
 
     index: function (elem) {
+		if(!elem) return;
         return cached[elem] ? cached[elem] : cached[elem] = elem ? this.indexOf(hAzzle(elem).elems[0]) : this.parent().children().indexOf(this.elems[0]) || -1;
     },
 
@@ -106,6 +109,7 @@ hAzzle.fn.extend({
      */
 
     parent: function (sel) {
+		if(!sel) return;
         return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
     },
 
@@ -142,6 +146,7 @@ hAzzle.fn.extend({
      */
 
     children: function (sel) {
+		if(!sel) return;
         return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.elems.reduce(function (elements, element) {
             var childrens = slice.call(element.children);
             return elements.concat(childrens);
@@ -157,9 +162,7 @@ hAzzle.fn.extend({
      */
 
     next: function () {
-
         return hAzzle.create(this.pluckNode('nextSibling'));
-
     },
 
     /**
@@ -202,6 +205,7 @@ hAzzle.fn.extend({
      */
 
     siblings: function (sel) {
+		if(!sel) return;
         var siblings = [],
             children,
             i,
@@ -209,11 +213,6 @@ hAzzle.fn.extend({
 
         if (!cached[sel]) {
             this.each(function (index, element) {
-
-                /**
-				DO NOT CACHE HERE!! If we do, we get different amount of unique siblings then jQuery
-				*/
-
                 children = slice.call(element.parentNode.childNodes); // DO NOT CACHE HERE!!
                 for (i = 0, len = children.length; i < len; i++) {
                     if (hAzzle.isElement(children[i]) && children[i] !== element) {
