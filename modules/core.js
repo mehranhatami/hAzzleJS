@@ -1,11 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.4a
+ * Version: 0.1.5
  * Released under the MIT License.
  *
- * Date: 2014-03-31
+ * Date: 2014-04-01
  */
+
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -603,8 +604,8 @@
         isPlainObject: function (obj) {
             return hAzzle.isObject(obj) && !hAzzle.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
         },
-		isBoolean: function (str) {
-        return typeof str === 'boolean';
+        isBoolean: function (str) {
+            return typeof str === 'boolean';
         },
 
         unique: function (array) {
@@ -856,6 +857,10 @@
 
         getUID: function (elem) {
             return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
+        },
+
+        nextUID: function (elem) {
+            return elem.hAzzle_id = uid.next();
         },
 
         /**
