@@ -72,10 +72,10 @@
         // RegExp we are using
 
         expr = {
-			
-			// Events
-			
-			namespaceRegex: /[^\.]*(?=\..*)\.|.*/,
+
+            // Events
+
+            namespaceRegex: /[^\.]*(?=\..*)\.|.*/,
             nameRegex: /\..*/,
 
             specialSplit: /\s*,\s*|\s+/,
@@ -905,10 +905,10 @@
         getUID: function (elem) {
             return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
         },
-		
-		nextUID: function(elem) {
-			return elem.hAzzle_id = uid.next();
-		},
+
+        nextUID: function (elem) {
+            return elem.hAzzle_id = uid.next();
+        },
 
         /**
          * Set values on elements in an array
@@ -2108,8 +2108,8 @@
     // **************************************************************
     // EVENT HANDLING
     // **************************************************************
-	
-	  function check(evt) {
+
+    function check(evt) {
         if (evt = evt.relatedTarget) {
             var ac;
             if (ac = evt !== this)
@@ -2405,7 +2405,7 @@
             }
         };
     }());
-	
+
     // we attach this listener to each DOM event that we need to listen to, only once
     // per event type per DOM element
     function subHandler(event, type) {
@@ -2707,8 +2707,38 @@
             return el;
         }
     });
+
+    // **************************************************************
+    // CSS
+    // **************************************************************
+
+    /* TODO!!  A lot to change here, will fix it later on ! */
 	
-	
+    var cssNumber = 'fill-opacity font-weight line-height opacity orphans widows z-index zoom'.split(' ');
+
+    hAzzle.fn.extend({
+
+        css: function (name, value) {
+
+            if (hAzzle.isDefined(value)) {
+                return this.each(function () {
+
+                    if (typeof value == 'number' && cssNumber.indexOf(name) === -1) {
+                        value += 'px';
+                    }
+
+                    var action = (value === null || value === '') ? 'remove' : 'set';
+
+                    this.style[action + 'Property'](name, '' + value);
+                });
+            }
+            return this[0].style.getPropertyValue(name) || window.getComputedStyle(this[0], null).getPropertyValue(name);
+
+        }
+    });
+
+
+
     window['hAzzle'] = hAzzle;
 
 })(window);
