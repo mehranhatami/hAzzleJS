@@ -78,6 +78,28 @@
              if (remove(elem, key)) return true;
          } else if (remove(hAzzle(elem)[0], key)) return true;
          return false;
+     },
+	 
+	 data: function (elem, key, value) {
+         return hAzzle.isDefined(value) ? set(elem[0], key, value) : get(elem[0], key);
+     },
+
+     data: {
+         get: function (elem, key) {
+             if (elem instanceof hAzzle) {
+                 get(elem, key);
+             } else {
+                 get(hAzzle(elem)[0], key, value);
+             }
+         },
+         set: function (elem, key, value) {
+             if (elem instanceof hAzzle) {
+                 set(elem, key, value);
+             } else {
+                 set(hAzzle(elem)[0], key, value);
+
+             }
+         } 
      }
  });
 
