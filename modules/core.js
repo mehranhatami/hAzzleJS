@@ -459,10 +459,11 @@
          * Iterate through elements in the collection
          */
 
-        iterate: function (method, ctx) {
+	    iterate: function (method, ctx) {
             return function (a, b, c, d) {
-                return this.each(function (element) {
-                    method.call(ctx, element, a, b, c, d);
+                return this.each(function () {
+
+                    method.call(ctx, this, a, b, c, d);
                 });
             };
         },
