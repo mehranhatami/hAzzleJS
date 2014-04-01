@@ -19,9 +19,9 @@ NOTE!! hAzzle is still in a pre-alpha stage and testing and fixed will be done s
 
 Upcoming functionality:
 
-- touch
-- animation
-- 
+* touch
+* animation
+ 
 
 Browser compatiblity
 --------------------
