@@ -1,5 +1,5 @@
-hAzzleJS v. 0.1.4
-=================
+hAzzleJS v. 0.1.5a
+==================
 
 **hAzzle** is a javascript library that tries it best to be the fastest one, and still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
 
@@ -13,6 +13,15 @@ The DOM traversing methods are in average 80% faster then jQuery and Zepto
 
 14.66KB minimized
 
+As of april 1 - 2014 most of the modules are now completed, and hAzzle can be used in webpages.
+
+NOTE!! hAzzle is still in a pre-alpha stage and testing and fixed will be done soon.
+
+Upcoming functionality:
+
+- touch
+- animation
+- 
 
 Browser compatiblity
 --------------------
