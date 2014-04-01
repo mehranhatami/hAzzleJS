@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.6
+ * Version: 0.1.6a
  * Released under the MIT License.
  *
- * Date: 2014-04-01
+ * Date: 2014-04-02
  */
 (function (window, undefined) {
 
@@ -810,6 +810,7 @@
 
         nodeType: function (val, elem) {
             if (nodeTypes[val]) return nodeTypes[val](elem);
+            return false;
         },
 
         /**
@@ -892,7 +893,31 @@
             }
 
             return matches;
+        },
+
+        /**
+         * Walks the DOM tree using `method`, returns when an element node is found
+         *
+         * @param{Object} element
+         * @param{String} method
+         * @param{String} sel
+         * @param{Number/Null } nt
+         */
+
+
+        getClosestNode: function (element, method, sel, nt) {
+            do {
+                element = element[method];
+            } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
+
+            // If 'nt' - only return if nodeType match with the 'nt' value
+
+            if (hAzzle.isDefined(nt) && (element !== null && !hAzzle.nodeType(nt, element))) {
+                return element || '';
+            }
+            return element || '';
         }
+
     });
 
     window['hAzzle'] = hAzzle;

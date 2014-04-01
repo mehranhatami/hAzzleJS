@@ -1,37 +1,9 @@
 /*!
- * Traversing.js - hAzzle.js module
- *
- * PERFORMANCE
- * ===========
- *
- * In average all this functions are 80 - 90% faster then
- * jQuery / Zepto. In some cases 96% faster.
- *
- * Tests have been done with jsPerf.com
- *
+ * Traversing.js
  */
 var
-
 cached = [],
-reduce = Array.prototype.reduce,
     slice = Array.prototype.slice;
-
-
-hAzzle.extend({
-
-    /**
-     * Walks the DOM tree using `method`, returns when an element node is found
-     */
-
-    getClosestNode: function (element, method, sel) {
-		if(!element || element === null) return;
-        do {
-            element = element[method];
-        } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
-        return element;
-    }
-});
-
 
 // Extend hAzzle
 
@@ -45,7 +17,6 @@ hAzzle.fn.extend({
      */
 
     pluckNode: function (prop) {
-		if(!prop) return;
         return this.map(function (element) {
             return hAzzle.getClosestNode(element, prop);
         });
@@ -59,9 +30,14 @@ hAzzle.fn.extend({
      */
 
     closest: function (sel) {
-          return this.map(function (element) {
-            return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
-        });
+        return this.map(function (elem) {
+            // Only check for match if nodeType 1
+            if (hAzzle.nodeType(1, elem) && hAzzle.matches(elem, sel)) {
+                return elem;
+            }
+            // Exclude document fragments
+            return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
+        })
     },
 
     /** Determine the position of an element within the matched set of elements
@@ -85,7 +61,7 @@ hAzzle.fn.extend({
     add: function (sel, ctx) {
         var elements = sel;
         if (hAzzle.isString(sel)) {
-            elements = cached[sel] ? cached[sel] : cached[sel] = hAzzle(sel, ctx).elems;
+            elements = hAzzle(sel, ctx).elems;
         }
         return this.concat(elements);
     },
@@ -99,7 +75,7 @@ hAzzle.fn.extend({
      */
 
     parent: function (sel) {
-		return sel ? hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11) : '';
+        return hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11)
     },
 
     /**
@@ -136,7 +112,7 @@ hAzzle.fn.extend({
      */
 
     children: function (sel) {
-		return hAzzle.create(this.reduce(function (elements, elem) {
+        return hAzzle.create(this.reduce(function (elements, elem) {
             var childrens = slice.call(elem.children);
             return elements.concat(childrens);
         }, []), sel);
@@ -185,16 +161,15 @@ hAzzle.fn.extend({
     siblings: function (sel) {
         var siblings = [],
             children,
-			elem,
+            elem,
             i,
             len;
 
         if (!cached[sel]) {
             this.each(function () {
-				elem = this;
-				
+                elem = this;
                 children = slice.call(elem.parentNode.childNodes);
-				
+
                 for (i = 0, len = children.length; i < len; i++) {
                     if (hAzzle.isElement(children[i]) && children[i] !== elem) {
                         siblings.push(children[i]);

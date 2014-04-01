@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.6
+ * Version: 0.1.6a
  * Released under the MIT License.
  *
- * Date: 2014-04-01
+ * Date: 2014-04-02
  */
 (function (window, undefined) {
 
@@ -943,7 +943,30 @@
             }
 
             return matches;
+        },
+
+        /**
+         * Walks the DOM tree using `method`, returns when an element node is found
+         *
+         * @param{Object} element
+         * @param{String} method
+         * @param{String} sel
+         * @param{Number/Null } nt
+         */
+
+        getClosestNode: function (element, method, sel, nt) {
+            do {
+                element = element[method];
+            } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
+
+            // If 'nt' - only return if nodeType match with the 'nt' value
+
+            if (hAzzle.isDefined(nt) && (element !== null && !hAzzle.nodeType(nt, element))) {
+                return element || '';
+            }
+            return element || '';
         }
+
     });
 
     // **************************************************************
@@ -1007,22 +1030,6 @@
     // DOM TRAVERSING
     // **************************************************************
 
-    hAzzle.extend({
-
-        /**
-         * Walks the DOM tree using `method`, returns when an element node is found
-         */
-
-        getClosestNode: function (element, method, sel) {
-            if (!element || element === null) return;
-            do {
-                element = element[method];
-            } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
-            return element;
-        }
-    });
-    // Extend hAzzle
-
     hAzzle.fn.extend({
 
         /**
@@ -1033,12 +1040,10 @@
          */
 
         pluckNode: function (prop) {
-            if (!prop) return;
             return this.map(function (element) {
                 return hAzzle.getClosestNode(element, prop);
             });
         },
-
         /**
          * Get the first element that matches the selector, beginning at the current element and progressing up through the DOM tree.
          *
@@ -1047,11 +1052,15 @@
          */
 
         closest: function (sel) {
-            return this.map(function (element) {
-                return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
-            });
+            return this.map(function (elem) {
+                // Only check for match if nodeType 1
+                if (hAzzle.nodeType(1, elem) && hAzzle.matches(elem, sel)) {
+                    return elem;
+                }
+                // Exclude document fragments
+                return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
+            })
         },
-
         /** Determine the position of an element within the matched set of elements
          *
          * @param {string} elem
@@ -1087,9 +1096,8 @@
          */
 
         parent: function (sel) {
-            return sel ? hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11) : '';
+            return hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11)
         },
-
         /**
          *  Get the ancestors of each element in the current set of matched elements
          *
@@ -1171,6 +1179,7 @@
          */
 
         siblings: function (sel) {
+
             var siblings = [],
                 children,
                 elem,
