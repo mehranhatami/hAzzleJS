@@ -1,20 +1,18 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.5a
+ * Version: 0.1.6
  * Released under the MIT License.
  *
  * Date: 2014-04-01
  */
-
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
 
     if (window['hAzzle']) return;
 
-    var
-    doc = window.document,
+    var doc = window.document,
         byClass = 'getElementsByClassName',
         byTag = 'getElementsByTagName',
         byId = 'getElementById',
@@ -89,13 +87,13 @@
                 if (elem["nodeType"] === 3) return true; // Text
             },
             '4': function (elem) {
-                if (elem["nodeType"] === 4) return true; // 
+                if (elem["nodeType"] === 4) return true; // CDATASection
             },
             '6': function (elem) {
                 if (elem["nodeType"] === 6) return true; // Entity
             },
             '8': function (elem) {
-                if (elem["nodeType"] === 8) return true; // 
+                if (elem["nodeType"] === 8) return true; // Comment
             },
             '9': function (elem) {
                 if (elem["nodeType"] === 9) return true; // Document
@@ -143,12 +141,6 @@
 
         length: 0,
 
-        toArray: function () {
-
-            return slice.call(this);
-
-        },
-
         init: function (sel, ctx) {
 
             var elems, i;
@@ -160,6 +152,7 @@
             if (hAzzle.isString(sel)) {
 
                 if (cache[sel] && !ctx) {
+
 
                     this.elems = elems = cache[sel];
                     this.length = elems.length;
@@ -190,7 +183,7 @@
 
             } else if (hAzzle.isObject(sel)) {
 
-                this.elems = sel;
+                this.elems = [sel];
                 this.length = 1;
                 this[0] = sel;
 
@@ -308,7 +301,7 @@
          */
 
         not: function (sel) {
-            return cached[sel] ? cached[sel] : cached[sel] = this.filter(sel || [], true);
+            return this.filter(sel || [], true);
         },
 
         /**
@@ -321,7 +314,7 @@
          */
 
         is: function (sel) {
-            return cached[sel] ? cached[sel] : cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
+            return this.length > 0 && this.filter(sel || []).length > 0;
         },
 
         /**
@@ -341,13 +334,10 @@
          */
 
         pluck: function (prop, nt) {
-            if (!cached[prop]) {
-                if (nt && hAzzle.isNumber(nt)) {
-                    if (!nodeTypes[nt]) cached[prop] = hAzzle.pluck(this.elems, prop);
-                } else cached[prop] = hAzzle.pluck(this.elems, prop);
-                cached[prop] = hAzzle.pluck(this.elems, prop);
+            if (nt && hAzzle.isNumber(nt)) {
+                if (!nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
             }
-            return cached[prop] || [];
+            return hAzzle.pluck(this.elems, prop);
         },
 
         /**
@@ -364,29 +354,31 @@
         },
 
         /**
-         * Get the Nth element in the matched element set
+         * Get the Nth element in the "elems" stack, or all elements
          *
          * @param {Number} num
          * @return {object}
          */
 
         get: function (num) {
-            return cached[num] ? cached[num] : cached[num] = null === num ? this.elems.slice() : this.elems[0 > num ? this.elems.length + num : num];
+            return hAzzle.isDefined(num) ? this.elems[0 > num ? this.elems.length + num : num] : this.elems;
         },
 
         /**
          * Map the elements in the "elems" stack
          */
-        map: function (fn) {
-            return cached[fn] ? cached[fn] : cached[fn] = hAzzle(this.elems.map(fn));
+
+        map: function (callback) {
+            return hAzzle(this.elems['map'](callback));
         },
+
 
         /**
          * Sort the elements in the "elems" stack
          */
 
         sort: function (elm) {
-            return cached[elm] ? cached[elm] : cached[elm] = hAzzle(this.elems.sort(elm));
+            return hAzzle(this.elems.sort(elm));
         },
 
         /**
@@ -405,11 +397,11 @@
          */
 
         slice: function (start, end) {
-            return cached[start] ? cached[start] : cached[start] = hAzzle(slice.call(this.elems, start, end));
+            return hAzzle(slice.call(this.elems, start, end));
         },
 
         splice: function (start, end) {
-            return cached[start] ? cached[start] : cached[start] = hAzzle(splice.call(this.elems, start, end));
+            return hAzzle(splice.call(this.elems, start, end));
         },
 
         /**
@@ -423,14 +415,13 @@
         /**
          * Determine if the "elems" stack contains a given value
          *
+         * NOTE!! This function is not the same as the hAzzle.indexOf
+         *
          * @return {Boolean}
          */
 
         indexOf: function (needle) {
-            if (!cached[needle]) {
-                cached[needle] = this.elems.indexOf(needle);
-            }
-            return cached[needle];
+            return this.elems.indexOf(needle);
         },
 
         /**
@@ -438,10 +429,7 @@
          */
 
         reduce: function (a, b, c, d) {
-            if (!cached[a]) {
-                cached[a] = this.elems.reduce(a, b, c, d);
-            }
-            return cached[a];
+            return this.elems['reduce'](a, b, c, d);
         },
 
         /**
@@ -449,20 +437,16 @@
          */
 
         reduceRight: function (a, b, c, d) {
-            if (!cached[a]) {
-                cached[a] = this.elems.reduceRight(a, b, c, d);
-            }
-            return cached[a];
+            return this.elems['reduceRight'](a, b, c, d);
         },
 
         /**
          * Iterate through elements in the collection
          */
 
-	    iterate: function (method, ctx) {
+        iterate: function (method, ctx) {
             return function (a, b, c, d) {
                 return this.each(function () {
-
                     method.call(ctx, this, a, b, c, d);
                 });
             };
@@ -664,7 +648,7 @@
             }
 
             if (sel instanceof hAzzle) {
-                return sel.elements.some(function (sel) {
+                return sel.elems.some(function (sel) {
                     return hAzzle.matches(element, sel);
                 });
             }
@@ -766,8 +750,8 @@
                 var result = ctx[byTag](m[1]),
                     id = m[2],
                     className = m[3];
-                hAzzle.each(result, function (index, el) {
-                    if (el.id === id || hAzzle.containsClass(el, className)) els.push(el);
+                hAzzle.each(result, function () {
+                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
                 });
             } else { // QuerySelectorAll
                 els = ctx[byAll](sel);
@@ -840,12 +824,13 @@
             return String.prototype.trim ? str.trim() : str.replace(/^\s*/, "").replace(/\s*$/, "");
         },
 
-        noop: function () {
+        /**
+         * Nothing at all
+         */
 
-        },
+        noop: function () {},
 
         inArray: function (elem, arr, i) {
-
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
 
@@ -858,10 +843,6 @@
 
         getUID: function (elem) {
             return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
-        },
-
-        nextUID: function (elem) {
-            return elem.hAzzle_id = uid.next();
         },
 
         /**
@@ -877,6 +858,40 @@
             return hAzzle.each(array, function (index) {
                 array[index][prop] = value;
             });
+        },
+
+        /**
+         * Merge two arrays
+         */
+
+        merge: function (first, second) {
+            var len = +second.length,
+                j = 0,
+                i = first.length;
+
+            for (; j < len; j++) {
+                first[i++] = second[j];
+            }
+
+            first.length = i;
+
+            return first;
+        },
+        grep: function (elems, callback, invert) {
+            var callbackInverse,
+                matches = [],
+                i = 0,
+                length = elems.length,
+                callbackExpect = !invert;
+
+            for (; i < length; i++) {
+                callbackInverse = !callback(elems[i], i);
+                if (callbackInverse !== callbackExpect) {
+                    matches.push(elems[i]);
+                }
+            }
+
+            return matches;
         }
     });
 

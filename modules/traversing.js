@@ -13,6 +13,7 @@
 var
 
 cached = [],
+reduce = Array.prototype.reduce,
     slice = Array.prototype.slice;
 
 
@@ -55,13 +56,10 @@ hAzzle.fn.extend({
      *
      * @param {String} sel
      * @return {Object}
-     *
-     * @speed: 99% faster then jQuery and Zepto
      */
 
     closest: function (sel) {
-		if(!sel) return;
-        return cached[sel] ? cached[sel] : cached[sel] = this.map(function (element) {
+          return this.map(function (element) {
             return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
         });
     },
@@ -70,13 +68,10 @@ hAzzle.fn.extend({
      *
      * @param {string} elem
      * @param {return} Object
-     *
-     * @speed:  83% faster then jQuery and Zepto
      */
 
     index: function (elem) {
-		if(!elem) return;
-        return cached[elem] ? cached[elem] : cached[elem] = elem ? this.indexOf(hAzzle(elem).elems[0]) : this.parent().children().indexOf(this.elems[0]) || -1;
+        return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
     },
 
     /**
@@ -85,9 +80,6 @@ hAzzle.fn.extend({
      * @param {String} sel
      * @param {String} ctx
      * @return {Object}
-     *
-     * @speed: 41% faster then jQuery and Zepto
-     *
      */
 
     add: function (sel, ctx) {
@@ -104,13 +96,10 @@ hAzzle.fn.extend({
      *
      * @param {String} sel
      * @return {Object}
-     *
-     * @speed: 98%% faster then jQuery and Zepto
      */
 
     parent: function (sel) {
-		if(!sel) return;
-        return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
+		return sel ? hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11) : '';
     },
 
     /**
@@ -133,6 +122,7 @@ hAzzle.fn.extend({
         while (elements.length > 0 && elements[0] !== undefined) {
             elements = elements.map(fn);
         }
+
         return hAzzle.create(ancestors, sel);
     },
 
@@ -146,19 +136,15 @@ hAzzle.fn.extend({
      */
 
     children: function (sel) {
-		if(!sel) return;
-        return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.elems.reduce(function (elements, element) {
-            var childrens = slice.call(element.children);
+		return hAzzle.create(this.reduce(function (elements, elem) {
+            var childrens = slice.call(elem.children);
             return elements.concat(childrens);
         }, []), sel);
-
     },
 
     /**
      *  Return the element's next sibling
      * @return {Object}
-     *
-     * @speed:  98% faster then jQuery and Zepto
      */
 
     next: function () {
@@ -168,8 +154,6 @@ hAzzle.fn.extend({
     /**
      *  Return the element's previous sibling
      * @return {Object}
-     *
-     * @speed:  98% faster then jQuery and Zepto
      */
 
     prev: function () {
@@ -178,8 +162,6 @@ hAzzle.fn.extend({
 
     /**
      * Reduce the set of matched elements to the first in the set.
-     *
-     * @speed:  98% faster then jQuery and Zepto
      */
 
     first: function () {
@@ -188,8 +170,6 @@ hAzzle.fn.extend({
 
     /**
      * Reduce the set of matched elements to the last one in the set.
-     *
-     * @speed:  98% faster then jQuery and Zepto
      */
 
     last: function () {
@@ -200,22 +180,23 @@ hAzzle.fn.extend({
      * Return the element's siblings
      * @param {String} sel
      * @return {Object}
-     *
-     * @speed:  98% faster then jQuery and Zepto
      */
 
     siblings: function (sel) {
-		if(!sel) return;
         var siblings = [],
             children,
+			elem,
             i,
             len;
 
         if (!cached[sel]) {
-            this.each(function (index, element) {
-                children = slice.call(element.parentNode.childNodes); // DO NOT CACHE HERE!!
+            this.each(function () {
+				elem = this;
+				
+                children = slice.call(elem.parentNode.childNodes);
+				
                 for (i = 0, len = children.length; i < len; i++) {
-                    if (hAzzle.isElement(children[i]) && children[i] !== element) {
+                    if (hAzzle.isElement(children[i]) && children[i] !== elem) {
                         siblings.push(children[i]);
                     }
                 }

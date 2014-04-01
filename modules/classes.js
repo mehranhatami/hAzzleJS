@@ -57,7 +57,7 @@ hAzzle.extend({
     addClass: function (classes, el) {
         if (!classes) return;
         classList ? hAzzle.each(classes.split(expr['specialSplit']), function (cls) {
-            el.classList.add(trim(cls));
+            el.classList.add(hAzzle.trim(cls));
         }) :
             hAzzle.hasClass(className, el) || (el.className += (el.className ? " " : "") + className);
     },

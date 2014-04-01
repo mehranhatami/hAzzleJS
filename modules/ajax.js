@@ -56,7 +56,7 @@ function ctqs(o, trad) {
     if (hAzzle.isArray(o))
         for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
     else
-        for (i = 0, prefix; prefix = nativeKeys(o)[i]; i += 1)
+        for (i = 0; prefix = nativeKeys(o)[i]; i += 1)
             buildParams(prefix, o[prefix], traditional, add, o);
     return s.join('&').replace(/%20/g, '+');
 }

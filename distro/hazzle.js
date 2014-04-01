@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.5a
+ * Version: 0.1.6
  * Released under the MIT License.
  *
  * Date: 2014-04-01
@@ -136,11 +136,15 @@
                 if (elem["nodeType"] === 3) return true; // Text
             },
             '4': function (elem) {
-                if (elem["nodeType"] === 4) return true; // 
+                if (elem["nodeType"] === 4) return true; // CDATASection
             },
             '6': function (elem) {
                 if (elem["nodeType"] === 6) return true; // Entity
             },
+            '8': function (elem) {
+                if (elem["nodeType"] === 8) return true; // Comment
+            },
+
             '9': function (elem) {
                 if (elem["nodeType"] === 9) return true; // Document
             },
@@ -189,12 +193,6 @@
 
         length: 0,
 
-        toArray: function () {
-
-            return slice.call(this);
-
-        },
-
         init: function (sel, ctx) {
 
             var elems, i;
@@ -236,7 +234,7 @@
 
             } else if (hAzzle.isObject(sel)) {
 
-                this.elems = sel;
+                this.elems = [sel];
                 this.length = 1;
                 this[0] = sel;
 
@@ -355,7 +353,7 @@
          */
 
         not: function (sel) {
-            return cached[sel] ? cached[sel] : cached[sel] = this.filter(sel || [], true);
+            return this.filter(sel || [], true);
         },
 
         /**
@@ -368,7 +366,7 @@
          */
 
         is: function (sel) {
-            return cached[sel] ? cached[sel] : cached[sel] = this.length > 0 && this.filter(sel || []).length > 0;
+            return this.length > 0 && this.filter(sel || []).length > 0;
         },
 
         /**
@@ -388,13 +386,10 @@
          */
 
         pluck: function (prop, nt) {
-            if (!cached[prop]) {
-                if (nt && hAzzle.isNumber(nt)) {
-                    if (!nodeTypes[nt]) cached[prop] = hAzzle.pluck(this.elems, prop);
-                } else cached[prop] = hAzzle.pluck(this.elems, prop);
-                cached[prop] = hAzzle.pluck(this.elems, prop);
+            if (nt && hAzzle.isNumber(nt)) {
+                if (!nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
             }
-            return cached[prop] || [];
+            return hAzzle.pluck(this.elems, prop);
         },
 
         /**
@@ -411,29 +406,31 @@
         },
 
         /**
-         * Get the Nth element in the matched element set
+         * Get the Nth element in the "elems" stack, or all elements
          *
          * @param {Number} num
          * @return {object}
          */
 
         get: function (num) {
-            return cached[num] ? cached[num] : cached[num] = null === num ? this.elems.slice() : this.elems[0 > num ? this.elems.length + num : num];
+            return hAzzle.isDefined(num) ? this.elems[0 > num ? this.elems.length + num : num] : this.elems;
         },
 
         /**
          * Map the elements in the "elems" stack
          */
-        map: function (fn) {
-            return cached[fn] ? cached[fn] : cached[fn] = hAzzle(this.elems.map(fn));
+
+        map: function (callback) {
+            return hAzzle(this.elems['map'](callback));
         },
+
 
         /**
          * Sort the elements in the "elems" stack
          */
 
         sort: function (elm) {
-            return cached[elm] ? cached[elm] : cached[elm] = hAzzle(this.elems.sort(elm));
+            return hAzzle(this.elems.sort(elm));
         },
 
         /**
@@ -452,12 +449,11 @@
          */
 
         slice: function (start, end) {
-
-            return cached[start] ? cached[start] : cached[start] = hAzzle(slice.call(this.elems, start, end));
+            return hAzzle(slice.call(this.elems, start, end));
         },
 
         splice: function (start, end) {
-            return cached[start] ? cached[start] : cached[start] = hAzzle(splice.call(this.elems, start, end));
+            return hAzzle(splice.call(this.elems, start, end));
         },
 
         /**
@@ -471,14 +467,13 @@
         /**
          * Determine if the "elems" stack contains a given value
          *
+         * NOTE!! This function is not the same as the hAzzle.indexOf
+         *
          * @return {Boolean}
          */
 
         indexOf: function (needle) {
-            if (!cached[needle]) {
-                cached[needle] = this.elems.indexOf(needle);
-            }
-            return cached[needle];
+            return this.elems.indexOf(needle);
         },
 
         /**
@@ -486,10 +481,7 @@
          */
 
         reduce: function (a, b, c, d) {
-            if (!cached[a]) {
-                cached[a] = this.elems.reduce(a, b, c, d);
-            }
-            return cached[a];
+            return this.elems['reduce'](a, b, c, d);
         },
 
         /**
@@ -497,13 +489,8 @@
          */
 
         reduceRight: function (a, b, c, d) {
-            if (!cached[a]) {
-                cached[a] = this.elems.reduceRight(a, b, c, d);
-            }
-            return cached[a];
+            return this.elems['reduceRight'](a, b, c, d);
         },
-
-
 
         /**
          * Iterate through elements in the collection
@@ -511,8 +498,8 @@
 
         iterate: function (method, ctx) {
             return function (a, b, c, d) {
-                return this.each(function (element) {
-                    method.call(ctx, element, a, b, c, d);
+                return this.each(function () {
+                    method.call(ctx, this, a, b, c, d);
                 });
             };
         },
@@ -529,7 +516,6 @@
     };
 
     hAzzle.fn.init.prototype = hAzzle.fn;
-
 
     /**
      * Extend `hAzzle` with arguments, if the arguments length is one, the extend target is `hAzzle`
@@ -579,7 +565,8 @@
                 var keys = nativeKeys(obj);
 
                 for (i = keys.length; i--;) {
-                    if (callback.call(obj[keys], name, obj[keys]) === false) {
+
+                    if (callback.call(obj[keys], keys, obj[keys]) === false) {
                         break;
                     }
                 }
@@ -712,7 +699,7 @@
             }
 
             if (sel instanceof hAzzle) {
-                return sel.elements.some(function (sel) {
+                return sel.elems.some(function (sel) {
                     return hAzzle.matches(element, sel);
                 });
             }
@@ -814,8 +801,8 @@
                 var result = ctx[byTag](m[1]),
                     id = m[2],
                     className = m[3];
-                hAzzle.each(result, function (index, el) {
-                    if (el.id === id || hAzzle.containsClass(el, className)) els.push(el);
+                hAzzle.each(result, function () {
+                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
                 });
             } else { // QuerySelectorAll
                 els = ctx[byAll](sel);
@@ -888,12 +875,13 @@
             return String.prototype.trim ? str.trim() : str.replace(/^\s*/, "").replace(/\s*$/, "");
         },
 
-        noop: function () {
+        /**
+         * Nothing at all
+         */
 
-        },
+        noop: function () {},
 
         inArray: function (elem, arr, i) {
-
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
 
@@ -908,25 +896,53 @@
             return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
         },
 
-        nextUID: function (elem) {
-            return elem.hAzzle_id = uid.next();
-        },
-
         /**
          * Set values on elements in an array
          *
-
          * @param{Array} array
          * @param{String} prop
          * @param{String} value
          * @return{Object}
          */
 
-
         put: function (array, prop, value) {
             return hAzzle.each(array, function (index) {
                 array[index][prop] = value;
             });
+        },
+
+        /**
+         * Merge two arrays
+         */
+
+        merge: function (first, second) {
+            var len = +second.length,
+                j = 0,
+                i = first.length;
+
+            for (; j < len; j++) {
+                first[i++] = second[j];
+            }
+
+            first.length = i;
+
+            return first;
+        },
+        grep: function (elems, callback, invert) {
+            var callbackInverse,
+                matches = [],
+                i = 0,
+                length = elems.length,
+                callbackExpect = !invert;
+
+            for (; i < length; i++) {
+                callbackInverse = !callback(elems[i], i);
+                if (callbackInverse !== callbackExpect) {
+                    matches.push(elems[i]);
+                }
+            }
+
+            return matches;
         }
     });
 
@@ -1028,13 +1044,10 @@
          *
          * @param {String} sel
          * @return {Object}
-         *
-         * @speed: 99% faster then jQuery and Zepto
          */
 
         closest: function (sel) {
-            if (!sel) return;
-            return cached[sel] ? cached[sel] : cached[sel] = this.map(function (element) {
+            return this.map(function (element) {
                 return hAzzle.matches(element, sel) ? element : hAzzle.getClosestNode(element, "parentNode", sel);
             });
         },
@@ -1043,13 +1056,10 @@
          *
          * @param {string} elem
          * @param {return} Object
-         *
-         * @speed:  83% faster then jQuery and Zepto
          */
 
         index: function (elem) {
-            if (!elem) return;
-            return cached[elem] ? cached[elem] : cached[elem] = elem ? this.indexOf(hAzzle(elem).elems[0]) : this.parent().children().indexOf(this.elems[0]) || -1;
+            return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
         },
 
         /**
@@ -1058,9 +1068,6 @@
          * @param {String} sel
          * @param {String} ctx
          * @return {Object}
-         *
-         * @speed: 41% faster then jQuery and Zepto
-         *
          */
 
         add: function (sel, ctx) {
@@ -1077,13 +1084,10 @@
          *
          * @param {String} sel
          * @return {Object}
-         *
-         * @speed: 98%% faster then jQuery and Zepto
          */
 
         parent: function (sel) {
-            if (!sel) return;
-            return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
+            return sel ? hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11) : '';
         },
 
         /**
@@ -1106,6 +1110,7 @@
             while (elements.length > 0 && elements[0] !== undefined) {
                 elements = elements.map(fn);
             }
+
             return hAzzle.create(ancestors, sel);
         },
 
@@ -1119,19 +1124,15 @@
          */
 
         children: function (sel) {
-            if (!sel) return;
-            return cached[sel] ? cached[sel] : cached[sel] = hAzzle.create(this.elems.reduce(function (elements, element) {
-                var childrens = slice.call(element.children);
+            return hAzzle.create(this.reduce(function (elements, elem) {
+                var childrens = slice.call(elem.children);
                 return elements.concat(childrens);
             }, []), sel);
-
         },
 
         /**
          *  Return the element's next sibling
          * @return {Object}
-         *
-         * @speed:  98% faster then jQuery and Zepto
          */
 
         next: function () {
@@ -1141,8 +1142,6 @@
         /**
          *  Return the element's previous sibling
          * @return {Object}
-         *
-         * @speed:  98% faster then jQuery and Zepto
          */
 
         prev: function () {
@@ -1151,8 +1150,6 @@
 
         /**
          * Reduce the set of matched elements to the first in the set.
-         *
-         * @speed:  98% faster then jQuery and Zepto
          */
 
         first: function () {
@@ -1161,8 +1158,6 @@
 
         /**
          * Reduce the set of matched elements to the last one in the set.
-         *
-         * @speed:  98% faster then jQuery and Zepto
          */
 
         last: function () {
@@ -1173,22 +1168,23 @@
          * Return the element's siblings
          * @param {String} sel
          * @return {Object}
-         *
-         * @speed:  98% faster then jQuery and Zepto
          */
 
         siblings: function (sel) {
-            if (!sel) return;
             var siblings = [],
                 children,
+                elem,
                 i,
                 len;
 
             if (!cached[sel]) {
-                this.each(function (index, element) {
-                    children = slice.call(element.parentNode.childNodes); // DO NOT CACHE HERE!!
+                this.each(function () {
+                    elem = this;
+
+                    children = slice.call(elem.parentNode.childNodes);
+
                     for (i = 0, len = children.length; i < len; i++) {
-                        if (hAzzle.isElement(children[i]) && children[i] !== element) {
+                        if (hAzzle.isElement(children[i]) && children[i] !== elem) {
                             siblings.push(children[i]);
                         }
                     }
@@ -1199,9 +1195,8 @@
         }
 
     });
-
     // **************************************************************
-    // DOM TRAVERSING
+    // DATA
     // **************************************************************
 
     var data = {};
@@ -1939,7 +1934,7 @@
         addClass: function (classes, el) {
             if (!classes) return;
             classList ? hAzzle.each(classes.split(expr['specialSplit']), function (cls) {
-                el.classList.add(trim(cls));
+                el.classList.add(cls);
             }) :
                 hAzzle.hasClass(className, el) || (el.className += (el.className ? " " : "") + className);
         },
@@ -3025,7 +3020,7 @@
                     el.style.top = parseNum(pos) + 'px';
                 }
             });
-        },
+        }
 
     });
 
@@ -3118,7 +3113,7 @@
         if (hAzzle.isArray(o))
             for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
         else
-            for (i = 0, prefix; prefix = nativeKeys(o)[i]; i += 1)
+            for (i = 0; prefix = nativeKeys(o)[i]; i += 1)
                 buildParams(prefix, o[prefix], traditional, add, o);
         return s.join('&').replace(/%20/g, '+');
     }
@@ -3419,13 +3414,13 @@
         },
 
         /** Shorthand function to recive POST data with ajax
-		 *
-		 * @param {String} url
-		 * @param {Object} data
-		 * @param {Function} callback
-		 * @param {Function} callback
-		 * @return {Object}
-		 */
+         *
+         * @param {String} url
+         * @param {Object} data
+         * @param {Function} callback
+         * @param {Function} callback
+         * @return {Object}
+         */
 
         post: function (url, data, callback, error) {
             hAzzle.ajax({
