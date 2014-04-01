@@ -266,7 +266,7 @@
                 }));
             }
             if (sel && sel[0] === '!') {
-                sel = sel.substr(1);
+                sel = sel.charAt(1);
                 inverse = true;
             }
             return hAzzle.create(this.elems.filter(function (element) {
@@ -296,7 +296,6 @@
          * @param {String} sel
          * @return {Object}
          *
-         * @speed:  89% faster then jQuery and Zepto
          */
 
         not: function (sel) {
@@ -308,8 +307,6 @@
          *
          * @param {String|Object} sel
          * @return {Boolean}
-         *
-         * @speed:  91% faster then jQuery and Zepto
          */
 
         is: function (sel) {

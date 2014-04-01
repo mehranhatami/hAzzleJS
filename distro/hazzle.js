@@ -348,7 +348,6 @@
          * @param {String} sel
          * @return {Object}
          *
-         * @speed:  89% faster then jQuery and Zepto
          */
 
         not: function (sel) {
@@ -361,7 +360,6 @@
          * @param {String|Object} sel
          * @return {Boolean}
          *
-         * @speed:  91% faster then jQuery and Zepto
          */
 
         is: function (sel) {
@@ -465,8 +463,6 @@
 
         /**
          * Determine if the "elems" stack contains a given value
-         *
-         * NOTE!! This function is not the same as the hAzzle.indexOf
          *
          * @return {Boolean}
          */
@@ -1659,7 +1655,6 @@
          * @param {Object|String} html
          * @return {Object}
          *
-         * @speed: 62% faster then jQuery and 86% faster then Zepto
          */
 
         append: function (html) {
@@ -1681,7 +1676,6 @@
          * @param {Object|String} html
          * @return {Object}
          *
-         * @speed: 62% faster then jQuery and 86% faster then Zepto
          */
 
         prepend: function (html) {

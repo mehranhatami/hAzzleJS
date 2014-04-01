@@ -349,7 +349,6 @@ hAzzle.fn.extend({
      * @param {Object|String} html
      * @return {Object}
      *
-     * @speed: 62% faster then jQuery and 86% faster then Zepto
      */
 
     append: function (html) {
@@ -371,7 +370,6 @@ hAzzle.fn.extend({
      * @param {Object|String} html
      * @return {Object}
      *
-     * @speed: 62% faster then jQuery and 86% faster then Zepto
      */
 
     prepend: function (html) {
