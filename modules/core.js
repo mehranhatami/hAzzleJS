@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.6a
+ * Version: 0.1.6b
  * Released under the MIT License.
  *
  * Date: 2014-04-02
@@ -35,7 +35,6 @@
         slice = ArrayProto.slice,
         splice = ArrayProto.splice,
         concat = ArrayProto.concat,
-        indexOf = ArrayProto.indexOf,
         toString = ObjProto.toString,
 
         getTime = (Date.now || function () {
@@ -415,13 +414,11 @@
         /**
          * Determine if the "elems" stack contains a given value
          *
-         * NOTE!! This function is not the same as the hAzzle.indexOf
-         *
          * @return {Boolean}
          */
 
         indexOf: function (needle) {
-            return this.elems.indexOf(needle);
+            return hAzzle.indexOf(this.elems, needle);
         },
 
         /**
@@ -831,8 +828,13 @@
 
         noop: function () {},
 
-        inArray: function (elem, arr, i) {
-            return arr === null ? -1 : indexOf.call(arr, elem, i);
+        /**
+         *  Same as hAzzle.indexOf.
+         * Added for compability with Zepto and Jquery
+         */
+
+        inArray: function (arr, elem) {
+            return hAzzle.inArray(arr, elem);
         },
 
         /**

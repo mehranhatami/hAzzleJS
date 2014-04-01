@@ -213,8 +213,8 @@ hAzzle.fn.extend({
      */
 
     clone: function () {
-        return this.map(function (index, element) {
-            return element.cloneNode(true);
+        return this.map(function () {
+            return this.cloneNode(true);
         });
     },
 
@@ -228,9 +228,9 @@ hAzzle.fn.extend({
      */
 
     remove: function () {
-        return this.each(function (index, element) {
-            if (element.parentNode) {
-                element.parentNode.removeChild(element);
+        return this.each(function () {
+            if (this.parentNode) {
+                this.parentNode.removeChild(this);
             }
         });
     },
@@ -246,13 +246,13 @@ hAzzle.fn.extend({
     val: function (value) {
 
         if (!value) {
-            return elem && hAzzle.getValue(this[0]);
+            return this[0] && hAzzle.getValue(this[0]);
         }
 
-        return this.each(function (index, element) {
+        return this.each(function () {
             var val;
 
-            if (!hAzzle.nodeType(1, element)) {
+            if (!hAzzle.nodeType(1, this)) {
                 return;
             }
 
@@ -270,7 +270,7 @@ hAzzle.fn.extend({
                 val += "";
             }
 
-            element.value = val;
+            this.value = val;
         });
     },
 
@@ -297,13 +297,13 @@ hAzzle.fn.extend({
                 });
             });
         }
-        return typeof value === 'undefined' ? this[0] && hAzzle.getAttr(this[0], name) : this.each(function (index, element) {
+        return typeof value === 'undefined' ? this[0] && hAzzle.getAttr(this[0], name) : this.each(function () {
 
-            if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
+            if (hAzzle.nodeType(3, this) || hAzzle.nodeType(8, this) || hAzzle.nodeType(2, this)) {
                 return;
             }
 
-            element.setAttribute(name, value + "");
+            this.setAttribute(name, value + "");
         });
     },
 
@@ -317,23 +317,23 @@ hAzzle.fn.extend({
 
     removeAttr: function (elem, value) {
         if (!value) return;
-        return this.each(function (index, element) {
-            hAzzle.removeAttr(element, value);
+        return this.each(function () {
+            hAzzle.removeAttr(this, value);
         });
     },
 
     prop: function (name, value) {
         if (hAzzle.isObject(name)) {
-            return this.each(function (element) {
+            return this.each(function (index, element) {
                 if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
                     return;
                 }
                 hAzzle.each(name, function (value, key) {
                     element[key] = propertyFix[value] || value;
-                })
-            })
+                });
+            });
         }
-        return hAzzle.isUndefined(value) ? this.elem[0] && this.elems[0][name] : this.put(propertyFix[name] || name, value)
+        return hAzzle.isUndefined(value) ? this.elem[0] && this.elems[0][name] : this.put(propertyFix[name] || name, value);
     },
 
     removeProp: function (name) {
@@ -353,13 +353,13 @@ hAzzle.fn.extend({
      */
 
     append: function (html) {
-        return this.each(function (index, elem) {
+        return this.each(function () {
             if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('beforeend', html);
+                this.insertAdjacentHTML('beforeend', html);
             } else {
               
-                if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
-                    elem.appendChild(html);
+                if (hAzzle.nodeType(1, this) || hAzzle.nodeType(11, this) || hAzzle.nodeType(9, this)) {
+                    this.appendChild(html);
                 }
             }
         });
@@ -376,14 +376,14 @@ hAzzle.fn.extend({
 
     prepend: function (html) {
         var first;
-        return this.each(function (index, elem) {
+        return this.each(function () {
             if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('afterbegin', html);
-            } else if (first = elem.childNodes[0]) {
-                elem.insertBefore(html, first);
+                this.insertAdjacentHTML('afterbegin', html);
+            } else if (first = this.childNodes[0]) {
+                this.insertBefore(html, first);
             } else {
-                if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) {
-                    elem.appendChild(html);
+                if (hAzzle.nodeType(1, this) || hAzzle.nodeType(11, this) || hAzzle.nodeType(9, this)) {
+                    this.appendChild(html);
                 }
             }
         });
@@ -397,14 +397,14 @@ hAzzle.fn.extend({
      */
 
     after: function (html) {
-        var next
-        return this.each(function (index, elem) {
+        var next;
+        return this.each(function () {
             if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('afterend', html);
-            } else if (next = hAzzle.getClosestNode(elem, 'nextSibling')) {
-                if (elem.parentNode) elem.parentNode.insertBefore(html, next);
+                this.insertAdjacentHTML('afterend', html);
+            } else if (next = hAzzle.getClosestNode(this, 'nextSibling')) {
+                if (this.parentNode) this.parentNode.insertBefore(html, next);
             } else {
-                if (elem.parentNode) elem.parentNode.appendChild(html);
+                if (this.parentNode) this.parentNode.appendChild(html);
             }
         });
     },
@@ -417,11 +417,11 @@ hAzzle.fn.extend({
      */
 
     before: function (html) {
-        return this.each(function (index, elem) {
+        return this.each(function () {
             if (hAzzle.isString(html)) {
-                elem.insertAdjacentHTML('beforebegin', html);
+                this.insertAdjacentHTML('beforebegin', html);
             } else {
-                if (elem.parentNode) elem.parentNode.insertBefore(html, elem);
+                if (this.parentNode) this.parentNode.insertBefore(html, this);
             }
         });
     }

@@ -16,7 +16,7 @@
 
  function get(element, key) {
      var obj = data[hAzzle.getUID(element)];
-     if (key == null) {
+     if (key === null) {
          return obj;
      }
      return obj && obj[key];
@@ -28,7 +28,7 @@
 
  function has(element, key) {
      var obj = data[hAzzle.getUID(element)];
-     if (key == null) {
+     if (key === null) {
          return false;
      }
      if (obj && obj[key]) return true;
@@ -81,7 +81,7 @@
      },
 	 
 	 data: function (elem, key, value) {
-         return hAzzle.isDefined(value) ? set(elem[0], key, value) : get(elem[0], key);
+         return hAzzle.isDefined(value) ? set(elem, key, value) : get(elem, key);
      }
  });
 
@@ -96,9 +96,9 @@
       */
 
      removeData: function (key) {
-         this.each(function (index, element) {
-             remove(element, key);
-         })
+         this.each(function () {
+             remove(this, key);
+         });
          return this;
      },
 
@@ -119,13 +119,13 @@
       */
 
      data: function (key, value) {
-         return hAzzle.isDefined(value) ? (this.each(function (index, element) {
+         return hAzzle.isDefined(value) ? (this.each(function () {
              // Sets multiple values
-             set(element, key, value);
+             set(this, key, value);
          }), this) : this.elems.length === 1 ? get(this.elems[0], key) : this.elems.map(function (value) {
              // Get data from an single element in the "elems" stack
              return get(value, key);
-         })
+         });
      }
 
  });
