@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.6b
+ * Version: 0.1.7
  * Released under the MIT License.
  *
  * Date: 2014-04-02
@@ -193,83 +193,47 @@
         length: 0,
 
         init: function (sel, ctx) {
-
             var elems, i;
-
-            if (sel instanceof hAzzle) {
-                return sel;
-            }
-
+            if (sel instanceof hAzzle) return sel;
             if (hAzzle.isString(sel)) {
 
+                // If the selector are cache, we return it after giving it some special threatment
+
                 if (cache[sel] && !ctx) {
-
                     this.elems = elems = cache[sel];
-                    this.length = elems.length;
-
-                    for (i = elems.length; i--;) {
-
-                        this[i] = elems[i];
-                    }
-
+                    for (i = this.length = elems.length; i--;) this[i] = elems[i];
                     return this;
                 }
-
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
-
-                // Function - Document ready
-
-            } else if (hAzzle.isFunction(sel)) {
-
-                return hAzzle.ready(sel);
-
-                // Array
-
-            } else if (sel instanceof Array) {
-
-                this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
-
-                // Object
-
-            } else if (hAzzle.isObject(sel)) {
-
-                this.elems = [sel];
-                this.length = 1;
-                this[0] = sel;
-
-                return this;
-
-            } else if (hAzzle.isNodeList(sel)) {
-
-                this.elems = slice.call(sel).filter(hAzzle.isElement);
-
-                // nodeType
-
-            } else if (hAzzle.isElement(sel)) {
-
-                this.elems = [sel];
+                this.elems = cache[sel] = hAzzle.select(sel, ctx)
 
             } else {
 
-                this.elems = [];
+                // Domready
+
+                if (hAzzle.isFunction(sel)) {
+
+                    return hAzzle.ready(sel);
+                }
+
+                //Array
+
+                if (sel instanceof Array) {
+
+                    this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
+                } else {
+                    // Object
+
+                    if (hAzzle.isObject(sel)) return this.elems = [sel], this.length = 1, this[0] = sel, this;
+
+                    // Nodelist
+
+                    hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = []
+                }
             }
 
             elems = this.elems;
-
-            this.length = elems.length;
-
-            for (i = elems.length; i--;) {
-
-                this[i] = elems[i];
-            }
-
-            // Prevent memory leaks
-
-            sel = ctx = i = elems = null;
-
-            // Return the hAzzle object
-
-            return this;
+            for (i = this.length = elems.length; i--;) this[i] = elems[i];
+            return this
         },
 
         /**
@@ -288,13 +252,35 @@
          *
          * @param {String|Function} sel
          * @return {Object}
+         *
+         *
+         *  FIX ME !!!!
+         *
+         * As it is for now, this function only works if the given selector is an string.
+         * Need to fix it so it can handle object or if the elem is an instance of hAzzle.
+         *
+         * As of april 2 - 2014, it works as it should if length === 1
+         *
+         * Here is an example on what is not working YET:
+         *
+         *  find( hAzzle('span' ) );
+         *
          */
 
         find: function (sel) {
+            var i,
+                len = this.length,
+                ret = [],
+                self = this;
+
             if (sel) {
                 var elements;
                 if (this.length === 1) {
-                    elements = hAzzle(this.elems[0], sel);
+                    if (typeof sel !== "string") {
+                        elements = sel[0];
+                    } else {
+                        elements = hAzzle(this.elems[0], sel);
+                    }
                 } else {
                     elements = this.elems.reduce(function (elements, element) {
                         return elements.concat(hAzzle.select(sel, element));
@@ -726,12 +712,10 @@
          * Same as the 'internal' pluck method, except this one is global
          */
 
-        pluck: function (array, property, nt) {
-            return array.map(function (item) {
-                if (nt) {
-                    if (!nodeTypes[nt]) return item[property];
-                } else return item[property];
-            });
+        pluck: function (array, prop) {
+            return array.map(function (itm) {
+                return itm[prop];
+            })
         },
 
         /**
@@ -833,18 +817,12 @@
             }
             return !1;
         },
-        nodeName: function (elem, name) {
-            return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
-
-        },
 
         /** 
          * Return current time
          */
 
-        now: function () {
-            return getTime();
-        },
+        now: getTime,
 
         /**
          * Check if an element are a specific NodeType
@@ -866,8 +844,7 @@
          */
 
         trim: function (str) {
-
-            return String.prototype.trim ? str.trim() : str.replace(/^\s*/, "").replace(/\s*$/, "");
+            return str.trim();
         },
 
         /**
@@ -924,22 +901,6 @@
 
             return first;
         },
-        grep: function (elems, callback, invert) {
-            var callbackInverse,
-                matches = [],
-                i = 0,
-                length = elems.length,
-                callbackExpect = !invert;
-
-            for (; i < length; i++) {
-                callbackInverse = !callback(elems[i], i);
-                if (callbackInverse !== callbackExpect) {
-                    matches.push(elems[i]);
-                }
-            }
-
-            return matches;
-        },
 
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
@@ -954,13 +915,10 @@
             do {
                 element = element[method];
             } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
-
-            // If 'nt' - only return if nodeType match with the 'nt' value
-
             if (hAzzle.isDefined(nt) && (element !== null && !hAzzle.nodeType(nt, element))) {
-                return element || '';
+                return element;
             }
-            return element || '';
+            return element;
         }
 
     });
@@ -1903,6 +1861,162 @@
     //  CLASS MANIPULATION
     // **************************************************************
 
+    var classList_support = !! document.createElement('p').classList;
+
+    /**
+  ClassList is a faster option then the jQuery and Zepto way, but Internet Explorer 9 and some other browsers don't support classList, so we use a shim to get it work.
+ */
+
+
+    if (classList_support) {
+
+        (function (view) {
+
+            "use strict";
+
+            if (!('Element' in view)) return;
+
+            var
+            classListProp = "classList",
+                protoProp = "prototype",
+                elemCtrProto = view.Element[protoProp],
+                objCtr = Object,
+                strTrim = String[protoProp].trim,
+                arrIndexOf = function (item) {
+                    var
+                    i = 0,
+                        len = this.length;
+                    for (var _this = this, i = _this.length; i--;) {
+                        if (i in _this && _this[i] === item) {
+                            return i;
+                        }
+                    }
+                    return -1;
+                }
+                // Vendors: please allow content code to instantiate DOMExceptions
+                , DOMEx = function (type, message) {
+                    this.name = type;
+                    this.code = DOMException[type];
+                    this.message = message;
+                }, checkTokenAndGetIndex = function (classList, token) {
+                    if (token === "") {
+                        throw new DOMEx(
+                            "SYNTAX_ERR", "An invalid or illegal string was specified"
+                        );
+                    }
+                    if (/\s/.test(token)) {
+                        throw new DOMEx(
+                            "INVALID_CHARACTER_ERR", "String contains an invalid character"
+                        );
+                    }
+                    return arrIndexOf.call(classList, token);
+                }, ClassList = function (elem) {
+                    var
+                    trimmedClasses = strTrim.call(elem.getAttribute("class") || ""),
+                        classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [];
+
+                    for (var i = classes.length; i--;) {
+                        this.push(classes[i]);
+                    }
+                    this._updateClassName = function () {
+                        elem.setAttribute("class", this.toString());
+                    };
+                }, classListProto = ClassList[protoProp] = [],
+                classListGetter = function () {
+                    return new ClassList(this);
+                };
+            // Most DOMException implementations don't allow calling DOMException's toString()
+            // on non-DOMExceptions. Error's toString() is sufficient here.
+            DOMEx[protoProp] = Error[protoProp];
+            classListProto.item = function (i) {
+                return this[i] || null;
+            };
+            classListProto.contains = function (token) {
+                token += "";
+                return checkTokenAndGetIndex(this, token) !== -1;
+            };
+            classListProto.add = function () {
+                var
+                tokens = arguments,
+                    i = 0,
+                    l = tokens.length,
+                    token, updated = false;
+                do {
+                    token = tokens[i] + "";
+                    if (checkTokenAndGetIndex(this, token) === -1) {
+                        this.push(token);
+                        updated = true;
+                    }
+                }
+                while (++i < l);
+
+                if (updated) {
+                    this._updateClassName();
+                }
+            };
+            classListProto.remove = function () {
+                var
+                tokens = arguments,
+                    i = 0,
+                    l = tokens.length,
+                    token, updated = false;
+                do {
+                    token = tokens[i] + "";
+                    var index = checkTokenAndGetIndex(this, token);
+                    if (index !== -1) {
+                        this.splice(index, 1);
+                        updated = true;
+                    }
+                }
+                while (++i < l);
+
+                if (updated) {
+                    this._updateClassName();
+                }
+            };
+            classListProto.toggle = function (token, force) {
+                token += "";
+
+                var
+                result = this.contains(token),
+                    method = result ?
+                        force !== true && "remove" :
+                        force !== false && "add";
+
+                if (method) {
+                    this[method](token);
+                }
+
+                return !result;
+            };
+            classListProto.toString = function () {
+                return this.join(" ");
+            };
+
+            if (objCtr.defineProperty) {
+                var classListPropDesc = {
+                    get: classListGetter,
+                    enumerable: true,
+                    configurable: true
+                };
+                try {
+                    objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+                } catch (ex) { // IE 8 doesn't support enumerable:true
+                    if (ex.number === -0x7FF5EC54) {
+                        classListPropDesc.enumerable = false;
+                        objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
+                    }
+                }
+            } else if (objCtr[protoProp].__defineGetter__) {
+                elemCtrProto.__defineGetter__(classListProp, classListGetter);
+            }
+
+        }(document));
+
+    }
+
+
+
     hAzzle.extend({
 
 
@@ -1914,20 +2028,9 @@
          */
 
         removeClass: function (classes, el) {
-            if (classList) {
-                hAzzle.each(classes.split(expr['specialSplit']), function (classes) {
-                    el.classList.remove(classes);
-                })
-            } else {
-
-                var current = el.className.split(expr['specialSplit']);
-                var newClasses = [];
-                for (var i = 0, len = current.length; i < len; i++) {
-                    if (current[i] !== className) newClasses.push(current[i]);
-                }
-                el.className = newClasses.join(' ');
-            }
-
+            hAzzle.each(classes.split(expr['specialSplit']), function () {
+                el.classList.remove(this);
+            });
         },
 
         /**
@@ -1939,63 +2042,29 @@
 
         addClass: function (classes, el) {
             if (!classes) return;
-            classList ? hAzzle.each(classes.split(expr['specialSplit']), function (cls) {
-                el.classList.add(cls);
-            }) :
-                hAzzle.hasClass(className, el) || (el.className += (el.className ? " " : "") + className);
-        },
-
-        hasClass: function (className, el) {
-            if (!className) return;
-            return support.classList ? el.classList.contains(className) : RegExp("(^|\\s)" + " " + className + " " + "(\\s|$)").test(el.className);
-        },
-
-        toggleClass: function (className, el) {
-            if (!className) return;
-            if (classList) el.classList.toggle(className);
-            else {
-
-                var classes = el.className.split(' '),
-                    existingIndex = -1;
-                for (var i = classes.length; i--;) {
-                    if (classes[i] === className)
-                        existingIndex = i;
-                }
-
-                if (existingIndex >= 0)
-                    classes.splice(existingIndex, 1);
-                else
-                    classes.push(className);
-
-                el.className = classes.join(' ');
-
-
-            }
+            hAzzle.each(classes.split(expr['specialSplit']), function () {
+                el.classList.add(this);
+            });
         }
-
     });
 
 
     hAzzle.fn.extend({
+
         /**
          * Add classes to element collection
          * Multiple classnames can be with spaces or comma or both
-         *
-         * Example:
-         *
-         *		    addClass("I like to develop javascript")
-         *			addClass("I, like, to, develop, javascript")
-         *		    addClass("I like, to develop, javascript")
-         *
-         *	will all set the same class names.
-         *
          * @param {String} classes
          */
 
-        addClass: function (className) {
-            if (!className) return;
-            return this.each(function (index, elem) {
-                hAzzle.addClass(hAzzle.trim(className), elem);
+        addClass: function (value) {
+            if (hAzzle.isFunction(value)) {
+                return this.each(function (j) {
+                    hAzzle(this).addClass(value.call(this, j, this.className));
+                });
+            }
+            return this.each(function () {
+                hAzzle.addClass(value, this);
             });
         },
 
@@ -2005,25 +2074,29 @@
          * @param {String} className
          */
 
-        removeClass: function (className) {
-            if (!className) return;
-            return this.each(function (index, elem) {
-                hAzzle.removeClass(hAzzle.trim(className), elem);
+        removeClass: function (value) {
+            if (hAzzle.isFunction(value)) {
+                return this.each(function (j) {
+                    hAzzle(this).removeClass(value.call(this, j, this.className));
+                });
+            }
+            return this.each(function () {
+                // If value is undefined, we do a quick manouver and just earese all clases for that element
+                // without any heavy classList operations
+                hAzzle.isUndefined(value) ? this.className = "" : hAzzle.removeClass(value, this);
             });
         },
 
         /**
+
          * Checks if an element has the given class
          *
          * @param {String} className
          * @return {Boolean}
          */
 
-        hasClass: function (className) {
-            if (!className) return;
-            return this.each(function (index, elem) {
-                hAzzle.hasClass(hAzzle.trim(className), elem);
-            });
+        hasClass: function (value) {
+            return this[0].classList.contains(value);
         },
 
         /**
@@ -2032,20 +2105,22 @@
          * @param {String} className
          */
 
-        replaceClass: function () {},
+        replaceClass: function (clA, clB) {
+            var current, found;
+            return this.each(function () {
+                current = this.className.split(' '),
+                found = false;
 
-        /**
-         * Check if an class has a class matching 'pattern'
-         * @param {String} pattern
-         * @return {String}
-         */
-
-        matchClass: function (Pattern) {
-
-            return this.each(function (index, elem) {
-                for (var el = elem.className.replace(/^\s+|\s+$/g, "").split(" "), clas, i = 0, n = el.length; i < n; i++)
-                    if (clas = el[i], -1 !== hAzzle.indexOf(clas, pattern)) return clas;
-                return "";
+                for (var i = current.length; i--;) {
+                    if (current[i] == clA) {
+                        found = true;
+                        current[i] = clB;
+                    }
+                }
+                if (!found) {
+                    return hAzzle.addClass(clB, this);
+                }
+                this.className = current.join(' ');
             });
         },
 
@@ -2056,10 +2131,13 @@
          */
 
         tempClass: function (clas, duration) {
-            return this.each(function (index, elem) {
-                hAzzle.addClass(hAzzle.trim(clas), elem);
+            var _this;
+            return this.each(function () {
+                _this = this;
+                hAzzle.addClass(clas, _this);
+
                 setTimeout((function () {
-                    hAzzle.removeClass(clas, el);
+                    hAzzle.removeClass(clas, _this);
                 }), duration);
             });
         },
@@ -2069,45 +2147,35 @@
          */
 
         allClass: function () {
-            if (classList) {
-                return this[0].classList;
-            }
-            throw "Syntax error, missing classList support in your browser";
+            return this[0].classList;
         },
 
         /**
-         * Returning the list of classes as a string
-         */
-
-        strClass: function () {
-            if (classList) {
-                return el.classList.toString();
-            }
-            throw "Syntax error, missing classList support in your browser";
-        },
-
-        /**
-         * Checks if an element has the given class
+         * Toggle classes
          *
          * @param {String} className
+         * @param {Boolean} state
          * @return {Boolean}
          */
-        toggleClass: function (className, state) {
 
-            return this.each(function (index, elem) {
+        toggleClass: function (value, stateVal) {
+            var type = typeof value;
 
-                if (hAzzle.isBoolean(state) && hAzzle.isString(type)) {
-                    return state ? hAzzle.addClass(className, elem) : hAzzle.removeClass(className, elem);
-                }
-                hAzzle.toggleClass(className, elem);
+            if (typeof stateVal === "boolean" && type === "string") {
+                return stateVal ? this.addClass(value) : this.removeClass(value);
+            }
 
+            if (hAzzle.isFunction(value)) {
+                return this.each(function (i) {
+                    hAzzle(this).toggleClass(value.call(this, i, this.className, stateVal), stateVal);
+                });
+            }
+
+            return this.each(function () {
+                this.classList.toggle(value);
             });
-
-
         }
-
     });
-
     // **************************************************************
     // EVENT HANDLING
     // **************************************************************
@@ -2153,6 +2221,7 @@
             },
             mousewheel: {
                 base: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
+
             }
         },
 

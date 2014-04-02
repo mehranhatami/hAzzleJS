@@ -356,7 +356,7 @@ hAzzle.fn.extend({
             if (hAzzle.isString(html)) {
                 this.insertAdjacentHTML('beforeend', html);
             } else {
-              
+
                 if (hAzzle.nodeType(1, this) || hAzzle.nodeType(11, this) || hAzzle.nodeType(9, this)) {
                     this.appendChild(html);
                 }

@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.6b
+ * Version: 0.1.7
  * Released under the MIT License.
  *
  * Date: 2014-04-02
@@ -55,10 +55,6 @@
                 return ++this.current;
             }
         },
-
-        // Cache functions for functions and params
-
-        cached = [],
 
         // Selector caching
 
@@ -141,84 +137,47 @@
         length: 0,
 
         init: function (sel, ctx) {
-
             var elems, i;
-
-            if (sel instanceof hAzzle) {
-                return sel;
-            }
-
+            if (sel instanceof hAzzle) return sel;
             if (hAzzle.isString(sel)) {
 
+                // If the selector are cache, we return it after giving it some special threatment
+
                 if (cache[sel] && !ctx) {
-
-
                     this.elems = elems = cache[sel];
-                    this.length = elems.length;
-
-                    for (i = elems.length; i--;) {
-
-                        this[i] = elems[i];
-                    }
-
+                    for (i = this.length = elems.length; i--;) this[i] = elems[i];
                     return this;
                 }
-
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
-
-                // Function - Document ready
-
-            } else if (hAzzle.isFunction(sel)) {
-
-                return hAzzle.ready(sel);
-
-                // Array
-
-            } else if (sel instanceof Array) {
-
-                this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
-
-                // Object
-
-            } else if (hAzzle.isObject(sel)) {
-
-                this.elems = [sel];
-                this.length = 1;
-                this[0] = sel;
-
-                return this;
-
-            } else if (hAzzle.isNodeList(sel)) {
-
-                this.elems = slice.call(sel).filter(hAzzle.isElement);
-
-                // nodeType
-
-            } else if (hAzzle.isElement(sel)) {
-
-                this.elems = [sel];
+                this.elems = cache[sel] = hAzzle.select(sel, ctx)
 
             } else {
 
-                this.elems = [];
+                // Domready
+
+                if (hAzzle.isFunction(sel)) {
+
+                    return hAzzle.ready(sel);
+                }
+
+                //Array
+
+                if (sel instanceof Array) {
+
+                    this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
+                } else {
+                    // Object
+
+                    if (hAzzle.isObject(sel)) return this.elems = [sel], this.length = 1, this[0] = sel, this;
+
+                    // Nodelist
+
+                    hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = []
+                }
             }
 
             elems = this.elems;
-
-            this.length = elems.length;
-
-            for (i = elems.length; i--;) {
-
-                this[i] = elems[i];
-            }
-
-            // Prevent memory leaks
-
-            sel = ctx = i = elems = null;
-
-            // Return the hAzzle object
-
-            return this;
+            for (i = this.length = elems.length; i--;) this[i] = elems[i];
+            return this
         },
 
         /**
@@ -237,13 +196,35 @@
          *
          * @param {String|Function} sel
          * @return {Object}
+         *
+         *
+         *  FIX ME !!!!
+         *
+         * As it is for now, this function only works if the given selector is an string.
+         * Need to fix it so it can handle object or if the elem is an instance of hAzzle.
+         *
+         * As of april 2 - 2014, it works as it should if length === 1
+         *
+         * Here is an example on what is not working YET:
+         *
+         *  find( hAzzle('span' ) );
+         *
          */
 
         find: function (sel) {
+            var i,
+                len = this.length,
+                ret = [],
+                self = this;
+
             if (sel) {
                 var elements;
                 if (this.length === 1) {
-                    elements = hAzzle(this.elems[0], sel);
+                    if (typeof sel !== "string") {
+                        elements = sel[0];
+                    } else {
+                        elements = hAzzle(this.elems[0], sel);
+                    }
                 } else {
                     elements = this.elems.reduce(function (elements, element) {
                         return elements.concat(hAzzle.select(sel, element));
@@ -674,12 +655,10 @@
          * Same as the 'internal' pluck method, except this one is global
          */
 
-        pluck: function (array, property, nt) {
-            return array.map(function (item) {
-                if (nt) {
-                    if (!nodeTypes[nt]) return item[property];
-                } else return item[property];
-            });
+        pluck: function (array, prop) {
+            return array.map(function (itm) {
+                return itm[prop];
+            })
         },
 
         /**
@@ -781,18 +760,12 @@
             }
             return !1;
         },
-        nodeName: function (elem, name) {
-            return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
-
-        },
 
         /** 
          * Return current time
          */
 
-        now: function () {
-            return getTime();
-        },
+        now: getTime,
 
         /**
          * Check if an element are a specific NodeType
@@ -815,8 +788,7 @@
          */
 
         trim: function (str) {
-
-            return String.prototype.trim ? str.trim() : str.replace(/^\s*/, "").replace(/\s*$/, "");
+            return str.trim();
         },
 
         /**
@@ -877,22 +849,6 @@
 
             return first;
         },
-        grep: function (elems, callback, invert) {
-            var callbackInverse,
-                matches = [],
-                i = 0,
-                length = elems.length,
-                callbackExpect = !invert;
-
-            for (; i < length; i++) {
-                callbackInverse = !callback(elems[i], i);
-                if (callbackInverse !== callbackExpect) {
-                    matches.push(elems[i]);
-                }
-            }
-
-            return matches;
-        },
 
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
@@ -903,18 +859,14 @@
          * @param{Number/Null } nt
          */
 
-
         getClosestNode: function (element, method, sel, nt) {
             do {
                 element = element[method];
             } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
-
-            // If 'nt' - only return if nodeType match with the 'nt' value
-
             if (hAzzle.isDefined(nt) && (element !== null && !hAzzle.nodeType(nt, element))) {
-                return element || '';
+                return element;
             }
-            return element || '';
+            return element;
         }
 
     });
