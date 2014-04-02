@@ -23,7 +23,7 @@ Upcoming functionality:
 * animation
  
 
-<strong>Note! </strong>
+<b>Note! </b>
 
 hAzzle is not a jQuery clone, but a stand-alone library with it's own functions, but with some functions in common with other libraries. And hAzzle also use some other functions and techniques. As an example - this library are using:
 
