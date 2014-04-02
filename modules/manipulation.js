@@ -51,29 +51,6 @@ function getBooleanAttrName(element, name) {
   return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
 }
 
-
-
-
-    expres = {
-        scriptstylelink: /<(?:script|style|link)/i,
-        htmlTags: /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-        rtagName: /<([\w:]+)/
-
-    },
-
-
-    // Borrowed from jQuery
-
-    wrapMap = {
-        option: [1, "<select multiple='multiple'>", "</select>"],
-        thead: [1, "<table>", "</table>"],
-        col: [2, "<table><colgroup>", "</colgroup></table>"],
-        tr: [2, "<table><tbody>", "</tbody></table>"],
-        td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
-
-        _default: [0, "", ""]
-    };
-
 function NodeMatching(elem) {
     return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem) ? true : false;
 }
@@ -182,24 +159,16 @@ hAzzle.fn.extend({
      */
 
     html: function (value) {
-
-        if (hAzzle.isUndefined(value) && hAzzle.nodeType(11, this[0])) {
-            return this[0].innerHTML;
-        }
-
-        if (hAzzle.isString(value) && !expres['scriptstylelink'].test(value) && !wrapMap[(expres['rtagName'].exec(value) || ["", ""])[1].toLowerCase()]) {
-
-            value = value.replace(expres['htmlTags'], "<$1></$2>");
-
-            return this.each(function () {
+     
+	 if(hAzzle.isString(value)) {
+		 return this.each(function () {
                 if (hAzzle.nodeType(1, this)) {
-                    this.innerHTML = value || "";
+                   this.insertAdjacentHTML('beforeend', value );
                 }
             });
-        }
+	 }
 
-        // Return innerHTML only from the first elem in the collection
-
+    // Return innerHTML only from the first elem in the collection
         return this[0] && this[0].innerHTML;
     },
 

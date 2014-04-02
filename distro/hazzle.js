@@ -93,12 +93,6 @@
             numbering: /[$]+/g,
             text: /\{(.+)\}/,
 
-            // HTML5 booleans
-
-            scriptstylelink: /<(?:script|style|link)/i,
-            htmlTags: /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-            rtagName: /<([\w:]+)/,
-
             idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
             tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
         },
@@ -117,18 +111,7 @@
             'frameborder': 'frameBorder',
             'contenteditable': 'contentEditable'
         },
-        // Borrowed from jQuery
 
-        wrapMap = {
-
-            option: [1, "<select multiple='multiple'>", "</select>"],
-            thead: [1, "<table>", "</table>"],
-            col: [2, "<table><colgroup>", "</colgroup></table>"],
-            tr: [2, "<table><tbody>", "</tbody></table>"],
-            td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
-
-            _default: [0, "", ""]
-        },
         // Different nodeTypes we are checking against for faster speed
 
         nodeTypes = {
@@ -1442,28 +1425,19 @@
          * @return {Object|String}
          */
 
-        html: function (value) {
+ html: function (value) {
+     
+	 if(hAzzle.isString(value)) {
+		 return this.each(function () {
+                if (hAzzle.nodeType(1, this)) {
+                   this.insertAdjacentHTML('beforeend', value );
+                }
+            });
+	 }
 
-            if (hAzzle.isUndefined(value) && hAzzle.nodeType(11, this[0])) {
-                return this[0].innerHTML;
-            }
-
-            if (hAzzle.isString(value) && !expr['scriptstylelink'].test(value) && !wrapMap[(expr['rtagName'].exec(value) || ["", ""])[1].toLowerCase()]) {
-
-                value = value.replace(expr['htmlTags'], "<$1></$2>");
-
-                return this.each(function () {
-                    if (hAzzle.nodeType(1, this)) {
-                        this.innerHTML = value || "";
-                    }
-                });
-            }
-
-            // Return innerHTML only from the first elem in the collection
-
-
-            return this[0] && this[0].innerHTML;
-        },
+    // Return innerHTML only from the first elem in the collection
+        return this[0] && this[0].innerHTML;
+    },
 
         /**
          * Remove all childNodes from an element
