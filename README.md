@@ -1,4 +1,4 @@
-hAzzleJS v. 0.1.7
+hAzzleJS v. 0.1.8
 ==================
 
 **hAzzle** is a javascript library that tries it best to be the fastest one, and still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
@@ -23,7 +23,7 @@ Upcoming functionality:
 * animation
  
 
-Note! 
+<strong>Note! </strong>
 
 hAzzle is not a jQuery clone, but a stand-alone library with it's own functions, but with some functions in common with other libraries. And hAzzle also use some other functions and techniques. As an example - this library are using:
 
