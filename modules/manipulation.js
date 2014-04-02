@@ -24,9 +24,37 @@ propMap = {
     byTag = 'getElementsByTagName',
     // RegExp we are using
 
-    expres = {
+  boolean_attr = {
+        'multiple': true,
+        'selected': true,
+        'checked': true,
+        'disabled': true,
+        'readOnly': true,
+        'required': true,
+        'open': true
+  },
 
-        booleans: /^(checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped|noresize|declare|nohref|noshade|truespeed|inert|formnovalidate|allowfullscreen|declare|seamless|sortable|typemustmatch)$/i,
+  boolean_elements = {
+        'input': true,
+        'select': true,
+        'option': true,
+        'textarea': true,
+        'button': true,
+        'form': true,
+        'details': true
+  };
+
+function getBooleanAttrName(element, name) {
+  // check dom last since we will most likely fail on name
+  var booleanAttr = boolean_attr[name.toLowerCase()];
+  // booleanAttr is here twice to minimize DOM access
+  return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
+}
+
+
+
+
+    expres = {
         scriptstylelink: /<(?:script|style|link)/i,
         htmlTags: /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
         rtagName: /<([\w:]+)/
@@ -54,33 +82,7 @@ function NodeMatching(elem) {
 
 hAzzle.extend({
 
-    /**
-     * Get attributes
-     */
-
-
-    /**
-     * Remove attributes
-     */
-
-    removeAttr: function (elem, value) {
-        var name, propName,
-            i = 0,
-            attrNames = value && value.match((/\S+/g));
-
-        if (attrNames && hAzzle.nodeType(1, elem)) {
-            while ((name = attrNames[i++])) {
-                propName = propMap[name] || name;
-                if (expres['booleans'].test(name)) {
-                    elem[propName] = false;
-                }
-
-                elem.removeAttribute(name);
-            }
-        }
-    },
-
-    getValue: function (elem) {
+     getValue: function (elem) {
 
         if (elem.nodeName === 'SELECT' && elem.multiple) {
 
@@ -357,7 +359,7 @@ hAzzle.fn.extend({
      *
      * @return {Object}
      */
-
+	 
     removeAttr: function (value) {
         var elem, name, propName, i, attrNames = value && value.match((/\S+/g));
         return this.each(function () {
@@ -367,10 +369,9 @@ hAzzle.fn.extend({
             if (attrNames && hAzzle.nodeType(1, elem)) {
                 while ((name = attrNames[i++])) {
                     propName = propMap[name] || name;
-                    if (expres['booleans'].test(name)) {
-                        elem[propName] = false;
-                    }
-
+              if (getBooleanAttrName(elem, name)) {
+                      elem[propName] = false;
+               }
                     elem.removeAttribute(name);
                 }
             }

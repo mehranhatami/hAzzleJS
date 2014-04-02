@@ -95,7 +95,6 @@
 
             // HTML5 booleans
 
-            booleans: /^(checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped|noresize|declare|nohref|noshade|truespeed|inert|formnovalidate|allowfullscreen|declare|seamless|sortable|typemustmatch)$/i,
             scriptstylelink: /<(?:script|style|link)/i,
             htmlTags: /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
             rtagName: /<([\w:]+)/,
@@ -1308,40 +1307,41 @@
     // DOM MANIPULATION
     // **************************************************************
 
+
+    var boolean_attr = {
+        'multiple': true,
+        'selected': true,
+        'checked': true,
+        'disabled': true,
+        'readOnly': true,
+        'required': true,
+        'open': true
+    },
+
+        boolean_elements = {
+            'input': true,
+            'select': true,
+            'option': true,
+            'textarea': true,
+            'button': true,
+            'form': true,
+            'details': true
+        };
+
+    function getBooleanAttrName(element, name) {
+        // check dom last since we will most likely fail on name
+        var booleanAttr = boolean_attr[name.toLowerCase()];
+        // booleanAttr is here twice to minimize DOM access
+        return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
+    }
+
+
     function NodeMatching(elem) {
         return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem) ? true : false;
     }
 
 
-    // Global
-
     hAzzle.extend({
-
-        /**
-         * Get attributes
-         */
-
-
-        /**
-         * Remove attributes
-         */
-
-        removeAttr: function (elem, value) {
-            var name, propName,
-                i = 0,
-                attrNames = value && value.match((/\S+/g));
-
-            if (attrNames && hAzzle.nodeType(1, elem)) {
-                while ((name = attrNames[i++])) {
-                    propName = propMap[name] || name;
-                    if (expr['booleans'].test(name)) {
-                        elem[propName] = false;
-                    }
-
-                    elem.removeAttribute(name);
-                }
-            }
-        },
 
         getValue: function (elem) {
 
@@ -1460,6 +1460,7 @@
             }
 
             // Return innerHTML only from the first elem in the collection
+
 
             return this[0] && this[0].innerHTML;
         },
@@ -1630,10 +1631,9 @@
                 if (attrNames && hAzzle.nodeType(1, elem)) {
                     while ((name = attrNames[i++])) {
                         propName = propMap[name] || name;
-                        if (expr['booleans'].test(name)) {
+                        if (getBooleanAttrName(elem, name)) {
                             elem[propName] = false;
                         }
-
                         elem.removeAttribute(name);
                     }
                 }
@@ -3585,6 +3585,7 @@
 
         post: function (url, data, callback, error) {
             hAzzle.ajax({
+
                 url: url,
                 method: 'POST',
                 contentType: '',
