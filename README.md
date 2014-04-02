@@ -23,6 +23,9 @@ Upcoming functionality:
 * animation
  
 
+Note! hAzzle is not a jQuery clone, but a stand-alone library with it's own functions, but with some functions in common with other libraries
+
+
 Browser compatiblity
 --------------------
 
