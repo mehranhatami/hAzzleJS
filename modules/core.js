@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.7
+ * Version: 0.1.8
  * Released under the MIT License.
  *
- * Date: 2014-04-02
+ * Date: 2014-04-03
  */
 (function (window, undefined) {
 
@@ -196,38 +196,38 @@
          *
          * @param {String|Function} sel
          * @return {Object}
-         *
-         *
-         *  FIX ME !!!!
-         *
-         * As it is for now, this function only works if the given selector is an string.
-         * Need to fix it so it can handle object or if the elem is an instance of hAzzle.
-         *
-         * As of april 2 - 2014, it works as it should if length === 1
-         *
-         * Here is an example on what is not working YET:
-         *
-         *  find( hAzzle('span' ) );
-         *
+		 *
+		 * 
+		 *  FIX ME !!!!
+		 *
+		 * As it is for now, this function only works if the given selector is an string.
+		 * Need to fix it so it can handle object or if the elem is an instance of hAzzle.
+		 *
+		 * As of april 2 - 2014, it works as it should if length === 1
+		 *
+		 * Here is an example on what is not working YET:
+		 *
+		 *  find( hAzzle('span' ) );
+		 *
          */
 
         find: function (sel) {
-            var i,
-                len = this.length,
-                ret = [],
-                self = this;
-
+			var i,
+			len = this.length,
+			ret = [],
+			self = this;
+			
             if (sel) {
                 var elements;
                 if (this.length === 1) {
-                    if (typeof sel !== "string") {
-                        elements = sel[0];
-                    } else {
-                        elements = hAzzle(this.elems[0], sel);
-                    }
+                   if ( typeof sel !== "string" ) {
+                     elements = sel[0];
+				   } else {
+				     elements = hAzzle(this.elems[0], sel);
+				   }
                 } else {
                     elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(sel, element));
+             return elements.concat(hAzzle.select(sel, element));
                     }, []);
                 }
                 return hAzzle.create(elements);
@@ -867,8 +867,12 @@
                 return element;
             }
             return element;
-        }
-
+        },
+		
+    nodeName: function( elem, name ) {
+		return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
+	}
+	
     });
 
     window['hAzzle'] = hAzzle;

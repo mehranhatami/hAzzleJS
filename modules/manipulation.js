@@ -6,10 +6,25 @@
  */
 var
 
-byTag = 'getElementsByTagName',
+propMap = {
+    'tabindex': 'tabIndex',
+    'readonly': 'readOnly',
+    'for': 'htmlFor',
+    'class': 'className',
+    'maxlength': 'maxLength',
+    'cellspacing': 'cellSpacing',
+    'cellpadding': 'cellPadding',
+    'rowspan': 'rowSpan',
+    'colspan': 'colSpan',
+    'usemap': 'useMap',
+    'frameborder': 'frameBorder',
+    'contenteditable': 'contentEditable'
+},
+
+    byTag = 'getElementsByTagName',
     // RegExp we are using
 
-    expr = {
+    expres = {
 
         booleans: /^(checked|selected|async|autofocus|autoplay|controls|defer|disabled|hidden|ismap|loop|multiple|open|readonly|required|scoped|noresize|declare|nohref|noshade|truespeed|inert|formnovalidate|allowfullscreen|declare|seamless|sortable|typemustmatch)$/i,
         scriptstylelink: /<(?:script|style|link)/i,
@@ -18,10 +33,6 @@ byTag = 'getElementsByTagName',
 
     },
 
-    propertyFix = {
-        "for": "htmlFor",
-        "class": "className"
-    },
 
     // Borrowed from jQuery
 
@@ -47,12 +58,6 @@ hAzzle.extend({
      * Get attributes
      */
 
-    getAttr: function (element, name) {
-        if (name === 'value' && element.nodeName.toLowerCase() == 'input') {
-            return hAzzle.getValue(element);
-        }
-        return element.getAttribute(name);
-    },
 
     /**
      * Remove attributes
@@ -65,8 +70,8 @@ hAzzle.extend({
 
         if (attrNames && hAzzle.nodeType(1, elem)) {
             while ((name = attrNames[i++])) {
-                propName = propertyFix[name] || name;
-                if (expr['booleans'].test(name)) {
+                propName = propMap[name] || name;
+                if (expres['booleans'].test(name)) {
                     elem[propName] = false;
                 }
 
@@ -77,12 +82,39 @@ hAzzle.extend({
 
     getValue: function (elem) {
 
-        // HTML Option
+        if (elem.nodeName === 'SELECT' && elem.multiple) {
 
-        if (elem.multiple) {
-            return hAzzle(elem).find('option').filter(function (option) {
-                return option.selected && !option.disabled;
-            }).pluck('value');
+            var option,
+                options = elem.options,
+                index = elem.selectedIndex,
+                one = elem.type === "select-one" || index < 0,
+                values = one ? null : [],
+                value,
+                max = one ? index + 1 : options.length,
+                i = index < 0 ?
+                    max :
+                    one ? index : 0;
+
+            for (; i < max; i++) {
+
+                option = options[i];
+
+                if ((option.selected || i === index) && !option.disabled &&
+                    (!option.parentNode.disabled || !hAzzle.nodeName(option.parentNode, "optgroup"))) {
+
+                    // Get the specific value for the option
+                    value = hAzzle(option).val();
+
+                    // We don't need an array for one selects
+                    if (one) {
+                        return value;
+                    }
+
+                    // Multi-Selects return an array
+                    values.push(value);
+                }
+            }
+            return values;
         }
 
         // Return normal value
@@ -114,10 +146,6 @@ hAzzle.extend({
     }
 });
 
-function onenielev(elem) {
-    if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem) || hAzzle.nodeType(9, elem)) return true;
-    return false;
-}
 
 // Core
 
@@ -157,15 +185,14 @@ hAzzle.fn.extend({
             return this[0].innerHTML;
         }
 
-        if (hAzzle.isString(value) && !expr['scriptstylelink'].test(value) && !wrapMap[(expr['rtagName'].exec(value) || ["", ""])[1].toLowerCase()]) {
+        if (hAzzle.isString(value) && !expres['scriptstylelink'].test(value) && !wrapMap[(expres['rtagName'].exec(value) || ["", ""])[1].toLowerCase()]) {
 
-            value = value.replace(expr['htmlTags'], "<$1></$2>");
+            value = value.replace(expres['htmlTags'], "<$1></$2>");
 
-            return this.each(function (index, elem) {
-                if (hAzzle.nodeType(1, elem)) {
-                    elem.innerHTML = value || "";
+            return this.each(function () {
+                if (hAzzle.nodeType(1, this)) {
+                    this.innerHTML = value || "";
                 }
-                elem = 0;
             });
         }
 
@@ -187,9 +214,9 @@ hAzzle.fn.extend({
         /* We have to loop through all elemets in the collection, and remove
       all children to prevent memory leaks */
 
-        this.each(function (index, elem) {
+        this.each(function () {
 
-            children = elem[byTag]('*');
+            children = this[byTag]('*');
 
             // Remove all the "ugly" children we want to remove
 
@@ -251,18 +278,19 @@ hAzzle.fn.extend({
     val: function (value) {
 
         if (!value) {
+
             return this[0] && hAzzle.getValue(this[0]);
         }
 
-        return this.each(function () {
+        return this.each(function (index, elem) {
             var val;
 
-            if (!hAzzle.nodeType(1, this)) {
+            if (!hAzzle.nodeType(1, elem)) {
                 return;
             }
 
             if (hAzzle.isFunction(value)) {
-                val = value.call(this, index, hAzzle(this).val());
+                val = value.call(elem, index, hAzzle(elem).val());
             } else {
                 val = value;
             }
@@ -275,7 +303,7 @@ hAzzle.fn.extend({
                 val += "";
             }
 
-            this.value = val;
+            elem.value = val;
         });
     },
 
@@ -291,7 +319,8 @@ hAzzle.fn.extend({
 
     attr: function (name, value) {
 
-        if (typeof name === 'object') {
+        if (hAzzle.isObject(name)) {
+
             return this.each(function (index, element) {
 
                 if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
@@ -302,13 +331,22 @@ hAzzle.fn.extend({
                 });
             });
         }
-        return typeof value === 'undefined' ? this[0] && hAzzle.getAttr(this[0], name) : this.each(function () {
+        if (hAzzle.isUndefined(value)) {
 
-            if (hAzzle.nodeType(3, this) || hAzzle.nodeType(8, this) || hAzzle.nodeType(2, this)) {
-                return;
+            var elem = this[0];
+
+            if (name === 'value' && elem.nodeName.toLowerCase() === 'input') {
+                return hAzzle.getValue(elem);
             }
-
-            this.setAttribute(name, value + "");
+            var ret = elem.getAttribute(name);
+            // Non-existent attributes return null, we normalize to undefined
+            return ret === null ?
+                undefined :
+                ret;
+        }
+		
+        return this.each(function () {
+            hAzzle.nodeType(3, this) || hAzzle.nodeType(8, this) || hAzzle.nodeType(2, this) || this.setAttribute(name, value + "");
         });
     },
 
@@ -320,32 +358,43 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    removeAttr: function (elem, value) {
-        if (!value) return;
+    removeAttr: function (value) {
+        var elem, name, propName, i, attrNames = value && value.match((/\S+/g));
         return this.each(function () {
-            hAzzle.removeAttr(this, value);
-        });
-    },
+            elem = this;
+            i = 0;
 
-    prop: function (name, value) {
-        if (hAzzle.isObject(name)) {
-            return this.each(function (index, element) {
-                if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
-                    return;
+            if (attrNames && hAzzle.nodeType(1, elem)) {
+                while ((name = attrNames[i++])) {
+                    propName = propMap[name] || name;
+                    if (expres['booleans'].test(name)) {
+                        elem[propName] = false;
+                    }
+
+                    elem.removeAttribute(name);
                 }
-                hAzzle.each(name, function (value, key) {
-                    element[key] = propertyFix[value] || value;
-                });
-            });
-        }
-        return hAzzle.isUndefined(value) ? this.elem[0] && this.elems[0][name] : this.put(propertyFix[name] || name, value);
-    },
-
-    removeProp: function (name) {
-        return this.each(function () {
-            delete this[propertyFix[name] || name];
+            }
         });
     },
+
+    /**
+     * Read or set properties of DOM elements
+     *
+     * @param {String/Object}
+     * @param {String/Null}
+     *
+     * @return {Object}
+     */
+    prop: function (name, value) {
+        if ("object" === typeof name) return this.each(function (value, element) {
+            hAzzle.each(name, function (name, value) {
+                name = propMap[name] || name;
+                element[name] = value
+            })
+        });
+        name = propMap[name] || name;
+        return hAzzle.isUndefined(value) ? this[0] && this[0][name] : this.put(name, value)
+   },
 
 
     /**
@@ -425,9 +474,18 @@ hAzzle.fn.extend({
             if (hAzzle.isString(html)) {
                 this.insertAdjacentHTML('afterend', html);
             } else if (next = hAzzle.getClosestNode(this, 'nextSibling')) {
-                if (this.parentNode) this.parentNode.insertBefore(html, next);
+
+                if (html instanceof hAzzle) {
+                    if (this.parentNode) this.parentNode.insertBefore(html[0], next);
+                } else {
+                    if (this.parentNode) this.parentNode.insertBefore(html, next);
+                }
             } else {
-                if (this.parentNode) this.parentNode.appendChild(html);
+                if (html instanceof hAzzle) {
+                    if (this.parentNode) this.parentNode.appendChild(html[0]);
+                } else {
+                    if (this.parentNode) this.parentNode.appendChild(html);
+                }
             }
         });
     },
@@ -444,7 +502,11 @@ hAzzle.fn.extend({
             if (hAzzle.isString(html)) {
                 this.insertAdjacentHTML('beforebegin', html);
             } else {
-                if (this.parentNode) this.parentNode.insertBefore(html, this);
+                if (html instanceof hAzzle) {
+                    if (this.parentNode) this.parentNode.insertBefore(html[0], this);
+                } else {
+                    if (this.parentNode) this.parentNode.insertBefore(html, this);
+                }
             }
         });
     }
