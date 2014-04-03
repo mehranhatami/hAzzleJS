@@ -18,7 +18,7 @@ As of april 1 - 2014 most of the modules are now completed, and hAzzle can be us
 NOTE!! hAzzle is still in a pre-alpha stage and testing and fixed will be done soon.
 
 
-#Work in progress at the moment:
+###Work in progress at the moment:
 ===============================
 
 * Animation engine with RAF support and CSS transitions.
