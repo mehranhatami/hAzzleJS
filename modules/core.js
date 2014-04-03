@@ -248,7 +248,7 @@
                 }));
             }
             if (sel && sel[0] === '!') {
-                sel = sel.charAttr(1);
+                sel = sel.charAt(1);
                 inverse = true;
             }
             return hAzzle.create(this.elems.filter(function (element) {
@@ -437,6 +437,7 @@
             return index === null ? hAzzle() : hAzzle(this.get(index));
         }
     };
+
 
     hAzzle.fn.init.prototype = hAzzle.fn;
 
