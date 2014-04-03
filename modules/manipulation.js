@@ -186,7 +186,7 @@ hAzzle.fn.extend({
             return this.empty().each(function () {
                 // Remove element nodes and prevent memory leaks
                 if (hAzzle.nodeType(1, this)) {
-                    hAzzle.cleanData(getAll(this));
+               // TODO !!Need to clean the data
                     this.insertAdjacentHTML('beforeend', value || '');
                 }
             });
