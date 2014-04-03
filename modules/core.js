@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.8
+ * Version: 0.2
  * Released under the MIT License.
  *
- * Date: 2014-04-03
+ * Date: 2014-04-04
  */
 (function (window, undefined) {
 
@@ -240,21 +240,21 @@
          */
 
         filter: function (sel, inverse) {
-            if (hAzzle.isFunction(sel)) {
+            if (typeof sel === 'function') {
                 var fn = sel;
                 return hAzzle.create(this.elems.filter(function (element, index) {
                     return fn.call(element, element, index) !== (inverse || false);
+
                 }));
             }
             if (sel && sel[0] === '!') {
-                sel = sel.charAt(1);
+                sel = sel.charAttr(1);
                 inverse = true;
             }
             return hAzzle.create(this.elems.filter(function (element) {
                 return hAzzle.matches(element, sel) !== (inverse || false);
             }));
         },
-
 
         /**
          * Check to see if a DOM element is a descendant of another DOM element.
@@ -325,8 +325,8 @@
          * @return {Array}
          */
 
-        put: function (prop, value) {
-            hAzzle.put(this.elems, prop, value);
+        put: function (prop, value, nt) {
+            hAzzle.put(this.elems, prop, value, nt);
             return this;
         },
 
@@ -826,9 +826,13 @@
          * @return{Object}
          */
 
-        put: function (array, prop, value) {
+        put: function (array, prop, value, nt) {
             return hAzzle.each(array, function (index) {
+            if (hAzzle.isDefined(nt) && (array !== null && !hAzzle.nodeType(nt, array))) {
                 array[index][prop] = value;
+            } else {
+			  array[index][prop] = value;	
+			}
             });
         },
 

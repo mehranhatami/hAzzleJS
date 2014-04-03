@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.8
+ * Version: 0.2
  * Released under the MIT License.
  *
- * Date: 2014-04-03
+ * Date: 2014-04-04
  */
 (function (window, undefined) {
 
@@ -96,6 +96,8 @@
             idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
             tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
         },
+
+        // Get the properties right
 
         propMap = {
             'tabindex': 'tabIndex',
@@ -286,8 +288,10 @@
          * Filter the collection to contain only items that match the CSS selector
          */
 
+
+
         filter: function (sel, inverse) {
-            if (hAzzle.isFunction(sel)) {
+            if (typeof sel === 'function') {
                 var fn = sel;
                 return hAzzle.create(this.elems.filter(function (element, index) {
                     return fn.call(element, element, index) !== (inverse || false);
@@ -295,7 +299,7 @@
                 }));
             }
             if (sel && sel[0] === '!') {
-                sel = sel.substr(1);
+                sel = sel.charAttr(1);
                 inverse = true;
             }
             return hAzzle.create(this.elems.filter(function (element) {
@@ -328,7 +332,7 @@
          */
 
         not: function (sel) {
-            return this.filter(sel || [], true);
+            return this.filter(sel, true);
         },
 
         /**
@@ -431,6 +435,7 @@
         },
 
         /**
+
          * Take an element and push it onto the "elems" stack
          */
 
@@ -1029,6 +1034,7 @@
             if (hAzzle.isString(sel)) {
                 elements = cached[sel] ? cached[sel] : cached[sel] = hAzzle(sel, ctx).elems;
             }
+
             return this.concat(elements);
         },
 
@@ -1041,7 +1047,7 @@
          */
 
         parent: function (sel) {
-            return hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
+            return hAzzle(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
         },
         /**
          *  Get the ancestors of each element in the current set of matched elements
@@ -1153,36 +1159,46 @@
     // DATA
     // **************************************************************
 
-    var data = {};
+    var storage = {};
 
     /**
      * Store data on an element
+     *
+     * @param{Object} elem
+     * @param{String} key
+     * @param{String} value
+     * @return {Object}
      */
 
     function set(element, key, value) {
         var id = hAzzle.getUID(element),
-            obj = data[id] || (data[id] = {});
+            obj = storage[id] || (storage[id] = {});
         obj[key] = value;
     }
 
     /**
      * Get data from an element
+     *
+     * @param{Object} elem
+     * @param{String} key
+     * @return {Object}
      */
 
     function get(element, key) {
-        var obj = data[hAzzle.getUID(element)];
-        if (key === null) {
-            return obj;
-        }
-        return obj && obj[key];
+        var obj = storage[hAzzle.getUID(element)];
+        return key === null ? obj : obj && obj[key]
     }
 
     /**
      * Check if an element contains any data
+     *
+     * @param{Object} elem
+     * @param{String} key
+     * @return {Object}
      */
 
     function has(element, key) {
-        var obj = data[hAzzle.getUID(element)];
+        var obj = storage[hAzzle.getUID(element)];
         if (key === null) {
             return false;
         }
@@ -1191,23 +1207,21 @@
 
     /**
      * Remove data from an element
+     *
+     * @param{Object} elem
+     * @param{String} key
+     * @return {Object}
      */
 
+
     function remove(element, key) {
-        var obj = data[hAzzle.getUID(element)];
-
-        if (!key) {
-
-            /* FIX ME !!
-  
-     If no key, need to find all data on the element, and reomve data without knowing the key 
-    */
-
-            return false;
-        }
-        delete obj[key];
-
+        var id = hAzzle.getUID(element);
+        if (key) {
+            var obj = storage[id];
+            obj && delete obj[key];
+        } else storage[id] = {};
     }
+
 
     hAzzle.extend({
 
@@ -1216,6 +1230,7 @@
          *
          * @param{String/Object} elem
          * @param{String} key
+         * @return {Object}
          */
         hasData: function (elem, key) {
 
@@ -1227,7 +1242,12 @@
 
         /**
          * Remove data from an element
+         *
+         * @param {String/Object} elem
+         * @param {String} key
+         * @return {Object}
          */
+
         removeData: function (elem, key) {
             if (elem instanceof hAzzle) {
                 if (remove(elem, key)) return true;
@@ -1260,25 +1280,17 @@
         /**
          * Store random data on the hAzzle Object
          *
-         * @param {String} obj
+         * @param {String} key
          * @param {String|Object} value
          *
          * @return {Object|String}
-         *
-         *
-         * IN THE FUTURE:
-         * =============
-         *
-         * Add option for saving and restoring data with objects
          *
          */
 
         data: function (key, value) {
             return hAzzle.isDefined(value) ? (this.each(function () {
-                // Sets multiple values
                 set(this, key, value);
             }), this) : this.elems.length === 1 ? get(this.elems[0], key) : this.elems.map(function (value) {
-                // Get data from an single element in the "elems" stack
                 return get(value, key);
             });
         }
@@ -1290,6 +1302,7 @@
     // DOM MANIPULATION
     // **************************************************************
 
+    // Boolean attributes and elements
 
     var boolean_attr = {
         'multiple': true,
@@ -1309,7 +1322,15 @@
             'button': true,
             'form': true,
             'details': true
+        },
+
+        direction = {
+            'first': 'beforeBegin', // Beginning of the sentence
+            'middle': 'afterBegin', // Middle of the sentence
+            'center': 'afterBegin', // Middle of the sentence
+            'last': 'beforeEnd' // End of the sentence
         };
+
 
     function getBooleanAttrName(element, name) {
         // check dom last since we will most likely fail on name
@@ -1393,8 +1414,6 @@
     });
 
 
-    // Core
-
     hAzzle.fn.extend({
 
         /**
@@ -1404,40 +1423,64 @@
          * hAzzle('div').text() => div text
          *
          * @param {String} value
+         * @param {String} dir
          * @return {Object|String}
+         *
+         * NOTE!!
+         *
+         *  insertAdjacentText is faster then textContent, but not supported by Firefox, so we have to check for that.
+         *
+         * 'dir' let user choose where to insert the text - start- center - end of a sentence. This is NOT WORKING in
+         *	Firefox because of the missing feature. Need to fix this ASAP!!
          */
 
-        text: function (value) {
-            return hAzzle.isUndefined(value) ?
-                hAzzle.getText(this) :
+        text: function (value, dir) {
+            return hAzzle.isDefined(value) ?
                 this.empty().each(function () {
                     if (NodeMatching(this)) {
-                        this.textContent = value;
+                        if (hAzzle.isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
+                            this.insertAdjacentText(direction[dir] ? direction[dir] : 'beforeEnd', value);
+                        } else {
+                            this.textContent = value;
+                        }
                     }
-                });
+                }) : hAzzle.getText(this);
         },
 
         /**
          * Get html from element.
          * Set html to element.
          *
-         * @param {Object|String} st
+         * @param {String} value
+         * @param {String} dir
          * @return {Object|String}
          */
 
- html: function (value) {
-     
-	 if(hAzzle.isString(value)) {
-		 return this.each(function () {
-                if (hAzzle.nodeType(1, this)) {
-                   this.insertAdjacentHTML('beforeend', value );
-                }
-            });
-	 }
+        html: function (value, dir) {
+            if (hAzzle.isString(value)) {
+                return this.empty().each(function () {
+                    // Remove element nodes and prevent memory leaks
+                    if (hAzzle.nodeType(1, this)) {
+                        // TODO !!Need to clean the data
+                        this.insertAdjacentHTML('beforeend', value || '');
+                    }
+                });
+            }
 
-    // Return innerHTML only from the first elem in the collection
-        return this[0] && this[0].innerHTML;
-    },
+            // Return innerHTML only from the first elem in the collection
+
+            if (hAzzle.nodeType(1, this[0])) {
+                return this[0].innerHTML;
+            }
+        },
+
+        cleanData: function (elems) {
+            // TODO!!!
+
+            // Remove all data attached to the element
+            // Remove all events attached to the element
+        },
+
 
         /**
          * Remove all childNodes from an element
@@ -1446,29 +1489,8 @@
          */
 
         empty: function () {
-
-            var children;
-
-            /* We have to loop through all elemets in the collection, and remove
-      all children to prevent memory leaks */
-
-            this.each(function () {
-
-                children = this[byTag]('*');
-
-                // Remove all the "ugly" children we want to remove
-
-                for (var i = children.length; i--;) {
-
-                    children[i].remove();
-                }
-
-            });
-
-            // Get rid of the textcontext on the parents	
-            // Firefox support 'textContent' or not??
-
-            return this.put('textContent', '');
+            //       return this.cleanData.put('textContent', '', /* Notetype 1*/ 1);
+            return this.put('textContent', '', /* Notetype 1*/ 1);
         },
 
 
@@ -1655,13 +1677,25 @@
 
                         var _this = this;
                         return hAzzle.each(html, function () {
-                            alert(this);
                             _this.appendChild(this);
                         });
                     }
 
                     this.appendChild(html);
                 }
+            });
+        },
+
+        /**
+         * Append the current element to another
+         *
+         * @param {Object|String} sel
+         * @return {Object}
+         */
+
+        appendTo: function (sel) {
+            return this.each(function () {
+                hAzzle(selector).append(this);
             });
         },
 
@@ -1689,12 +1723,24 @@
 
                         var _this = this;
                         return hAzzle.each(html, function () {
-                            alert(this);
                             _this.appendChild(this);
                         });
                     }
                     this.appendChild(html);
                 }
+            });
+        },
+
+        /**
+         * Prepend the current element to another.
+         *
+         * @param {Object|String} sel
+         * @return {Object}
+         */
+
+        prependTo: function (sel) {
+            return this.each(function () {
+                hAzzle(selector).prepend(this);
             });
         },
 
@@ -2187,6 +2233,7 @@
         /**
          * Add class 'clas' to 'element', and remove after 'duration' milliseconds
          * @param {String} clas
+
          * @param {Number} duration
          */
 
@@ -3017,6 +3064,7 @@
 
                 return this.each(function () {
                     var element = this;
+
                     hAzzle.each(name, function (key, value) {
                         setCSS(element, key, value);
                     });

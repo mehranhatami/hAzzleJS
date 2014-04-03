@@ -1,18 +1,74 @@
 // CSS
-var cssNumber = 'fill-opacity font-weight line-height opacity orphans widows z-index zoom'.split(' ');
+var
 
-function getCSS(element, property) {
-    return element.style.getPropertyValue(property) || window.getComputedStyle(element, null).getPropertyValue(property)
+// Don't automatically add "px" to these possibly-unitless properties
+cssNumber = {
+    "columnCount": true,
+    "fillOpacity": true,
+    "flexGrow": true,
+    "flexShrink": true,
+    "fontWeight": true,
+    "lineHeight": true,
+    "opacity": true,
+    "order": true,
+    "orphans": true,
+    "widows": true,
+    "zIndex": true,
+    "zoom": true
+},
+
+
+
+    cached = [],
+
+    cssProps = {
+        "float": "cssFloat"
+    },
+
+    cssPrefixes = ["Webkit", "O", "Moz", "ms"];
+
+function vendorPropName(style, name) {
+    if (!cached[style + name]) {
+        // Shortcut for names that are not vendor prefixed
+        hAzzle.each(style, function (index, style) {
+            if (style === name) return name;
+        });
+
+        // check for vendor prefixed names
+        var capName = name.charAt(0).toUpperCase() + name.slice(1),
+            origName = name,
+            i = cssPrefixes.length;
+
+        while (i--) {
+            name = cssPrefixes[i] + capName;
+            hAzzle.each(style, function (index, style) {
+                if (style === name) return name;
+            });
+        }
+        cached[style + name] = origName;
+
+    }
+    return cached[style + name];
 }
 
-function setCSS(element, property, value) {
+function getCSS(elem, name) {
+
+    name = hAzzle.camelCase(name);
+
+    // Make sure that we're working with the right name
+    name = cssProps[name] || (cssProps[name] = vendorPropName(elem.style, name));
+
+    return elem.style.getPropertyValue(name) || window.getComputedStyle(elem, null).getPropertyValue(name);
+}
+
+function setCSS(element, name, value) {
     // If a number was passed in, add 'px' to the (except for certain CSS properties)
-    if (typeof value == 'number' && cssNumber.indexOf(property) === -1) {
-        value += 'px'
+    if (typeof value === 'number' && cssNumber.indexOf(name) === -1) {
+        value += 'px';
     }
-    var action = (value === null || value === '') ? 'remove' : 'set'
-    element.style[action + 'Property'](property, '' + value)
-    return element
+    var action = (value === null || value === '') ? 'remove' : 'set';
+    element.style[action + 'Property'](name, '' + value);
+    return element;
 }
 
 /**
@@ -39,9 +95,10 @@ function show(elem) {
 }
 
 function commonNodeTypes(elem) {
-  if(hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem)) return true;
-  return false;
-	}
+    if (hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem)) return true;
+    return false;
+}
+
 
 
 hAzzle.fn.extend({
@@ -71,14 +128,11 @@ hAzzle.fn.extend({
     },
 
     /**
-         * Toggle show/hide.
+     * Toggle show/hide.
+     * @return {Object}
+     */
 
-         *
-         * @param {Boolean} state
-         * @return {Object}
-         */
-
-    toggle: function (state) {
+    toggle: function () {
 
         return this.each(function () {
             if (isHidden(this)) show(this);
@@ -90,30 +144,32 @@ hAzzle.fn.extend({
      * Get css property
      * Set css properties
      *
-     * @param {String|Object} prop
+     * @param {String|Object} name
      * @param {String} value
      * @return {String|Object}
      */
 
-    css: function (property, value) {
-        if (value == null) {
-            if (hAzzle.isString(property)) {
-                return this.elems[0] && getCSS(this.elems[0], property);
-            };
+    css: function (name, value) {
 
-            return this.each(function (element) {
-                hAzzle.each(property, function (value, key) {
+        if (hAzzle.isUndefined(value)) {
+            if (hAzzle.isString(name)) {
+                return this[0] && getCSS(this[0], name);
+            }
+
+            // Object
+
+            return this.each(function () {
+                var element = this;
+                hAzzle.each(name, function (key, value) {
                     setCSS(element, key, value);
                 });
             });
         }
+
         return this.each(function () {
-            setCSS(this, property, value);
-        })
+            setCSS(this, name, value);
+        });
     },
-
-
-
 
     /**
      * Reset styles with given, remember old ones and return them
@@ -184,7 +240,7 @@ hAzzle.fn.extend({
      * @param elem
      * @returns {Number}
      */
-	 
+
     pageY: function (elem) {
         var el = this[0];
         return el.offsetParent ? el.offsetTop + this.pageX(el.offsetParent) : el.offsetTop;
@@ -196,7 +252,7 @@ hAzzle.fn.extend({
      * @param elem
      * @returns {Number}
      */
-	 
+
     parentX: function (elem) {
         var el = this[0];
         return el.offsetParent === el.parentNode ? el.offsetLeft : doc.css.pageX(el) - doc.pageX(el.parentNode);
@@ -208,7 +264,7 @@ hAzzle.fn.extend({
      * @param elem
      * @returns {Number}
      */
-	 
+
     parentY: function (elem) {
         var el = this[0];
         return el.offsetParent === el.parentNode ? el.offsetTop : doc.pageY(elem) - doc.pageY(el.parentNode);

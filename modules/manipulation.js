@@ -1,8 +1,6 @@
-/*!
- * Manipulation.js - hAzzle.js module
- */
-
 var
+
+// Get the properties right
 
 propMap = {
     'tabindex': 'tabIndex',
@@ -19,8 +17,7 @@ propMap = {
     'contenteditable': 'contentEditable'
 },
 
-    byTag = 'getElementsByTagName',
-    // RegExp we are using
+    // Boolean attributes and elements
 
     boolean_attr = {
         'multiple': true,
@@ -197,8 +194,6 @@ hAzzle.fn.extend({
         if (hAzzle.nodeType(1, this[0])) {
             return this[0].innerHTML;
         }
-
-
     },
 
     cleanData: function (elems) {

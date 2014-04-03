@@ -37,7 +37,7 @@ hAzzle.fn.extend({
             }
             // Exclude document fragments
             return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
-        })
+        });
     },
 
     /** Determine the position of an element within the matched set of elements
@@ -75,7 +75,7 @@ hAzzle.fn.extend({
      */
 
     parent: function (sel) {
-        return hAzzle.create(this.pluck('parentNode'), sel, /* NodeType 11 */ 11)
+        return hAzzle(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
     },
 
     /**
@@ -89,7 +89,7 @@ hAzzle.fn.extend({
         var ancestors = [],
             elements = this.elems,
             fn = function (element) {
-                if ((element = element.parentNode) && element !== doc && ancestors.indexOf(element) < 0) {
+                if ((element = element.parentNode) && element !== document && ancestors.indexOf(element) < 0) {
                     ancestors.push(element);
                     return element;
                 }
@@ -101,7 +101,6 @@ hAzzle.fn.extend({
 
         return hAzzle.create(ancestors, sel);
     },
-
 
     /**
      * Get all decending elements of a given element
