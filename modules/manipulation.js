@@ -1,9 +1,7 @@
 /*!
  * Manipulation.js - hAzzle.js module
- *
- * NOTE!! hAzzle don't have a hAzzle(HTML) function for creating HTML like jQuery and Zepto.
- *        All this is taken care of with the append, prpend, before and after function.
  */
+
 var
 
 propMap = {
@@ -24,7 +22,7 @@ propMap = {
     byTag = 'getElementsByTagName',
     // RegExp we are using
 
-  boolean_attr = {
+    boolean_attr = {
         'multiple': true,
         'selected': true,
         'checked': true,
@@ -32,9 +30,9 @@ propMap = {
         'readOnly': true,
         'required': true,
         'open': true
-  },
+    },
 
-  boolean_elements = {
+    boolean_elements = {
         'input': true,
         'select': true,
         'option': true,
@@ -42,13 +40,24 @@ propMap = {
         'button': true,
         'form': true,
         'details': true
-  };
+    },
+
+    /**
+     * Direction for where to insert the text
+     */
+
+    direction = {
+        'first': 'beforeBegin', // Beginning of the sentence
+        'middle': 'afterBegin', // Middle of the sentence
+        'center': 'afterBegin', // Middle of the sentence
+        'last': 'beforeEnd' // End of the sentence
+    };
 
 function getBooleanAttrName(element, name) {
-  // check dom last since we will most likely fail on name
-  var booleanAttr = boolean_attr[name.toLowerCase()];
-  // booleanAttr is here twice to minimize DOM access
-  return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
+    // check dom last since we will most likely fail on name
+    var booleanAttr = boolean_attr[name.toLowerCase()];
+    // booleanAttr is here twice to minimize DOM access
+    return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
 }
 
 function NodeMatching(elem) {
@@ -59,7 +68,7 @@ function NodeMatching(elem) {
 
 hAzzle.extend({
 
-     getValue: function (elem) {
+    getValue: function (elem) {
 
         if (elem.nodeName === 'SELECT' && elem.multiple) {
 
@@ -101,6 +110,7 @@ hAzzle.extend({
         return elem.value;
     },
 
+
     /**
      * Get text
      */
@@ -137,15 +147,27 @@ hAzzle.fn.extend({
      * hAzzle('div').text() => div text
      *
      * @param {String} value
+     * @param {String} dir
      * @return {Object|String}
+     *
+     * NOTE!!
+     *
+     *  insertAdjacentText is faster then textContent, but not supported by Firefox, so we have to check for that.
+     *
+     * 'dir' let user choose where to insert the text - start- center - end of a sentence. This is NOT WORKING in
+     *	Firefox because of the missing feature. Need to fix this ASAP!!
      */
 
-    text: function (value) {
+    text: function (value, dir) {
         return hAzzle.isUndefined(value) ?
             hAzzle.getText(this) :
             this.empty().each(function () {
                 if (NodeMatching(this)) {
-                    this.textContent = value;
+                    if (hAzzle.isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
+                        this.insertAdjacentText(direction[dir] ? direction[dir] : 'beforeEnd', value);
+                    } else {
+                        this.textContent = value;
+                    }
                 }
             });
     },
@@ -154,23 +176,38 @@ hAzzle.fn.extend({
      * Get html from element.
      * Set html to element.
      *
-     * @param {Object|String} st
+     * @param {String} value
+     * @param {String} dir
      * @return {Object|String}
      */
 
-    html: function (value) {
-     
-	 if(hAzzle.isString(value)) {
-		 return this.each(function () {
+    html: function (value, dir) {
+        if (hAzzle.isString(value)) {
+            return this.empty().each(function () {
+                // Remove element nodes and prevent memory leaks
                 if (hAzzle.nodeType(1, this)) {
-                   this.insertAdjacentHTML('beforeend', value );
+                    hAzzle.cleanData(getAll(this));
+                    this.insertAdjacentHTML('beforeend', value || '');
                 }
             });
-	 }
+        }
 
-    // Return innerHTML only from the first elem in the collection
-        return this[0] && this[0].innerHTML;
+        // Return innerHTML only from the first elem in the collection
+
+        if (hAzzle.nodeType(1, this[0])) {
+            return this[0].innerHTML;
+        }
+
+
     },
+
+    cleanData: function (elems) {
+        // TODO!!!
+
+        // Remove all data attached to the element
+        // Remove all events attached to the element
+    },
+
 
     /**
      * Remove all childNodes from an element
@@ -179,29 +216,8 @@ hAzzle.fn.extend({
      */
 
     empty: function () {
-
-        var children;
-
-        /* We have to loop through all elemets in the collection, and remove
-      all children to prevent memory leaks */
-
-        this.each(function () {
-
-            children = this[byTag]('*');
-
-            // Remove all the "ugly" children we want to remove
-
-            for (var i = children.length; i--;) {
-
-                children[i].remove();
-            }
-
-        });
-
-        // Get rid of the textcontext on the parents	
-        // Firefox support 'textContent' or not??
-
-        return this.put('textContent', '');
+        //       return this.cleanData.put('textContent', '', /* Notetype 1*/ 1);
+        return this.put('textContent', '', /* Notetype 1*/ 1);
     },
 
 
@@ -315,7 +331,7 @@ hAzzle.fn.extend({
                 undefined :
                 ret;
         }
-		
+
         return this.each(function () {
             hAzzle.nodeType(3, this) || hAzzle.nodeType(8, this) || hAzzle.nodeType(2, this) || this.setAttribute(name, value + "");
         });
@@ -328,7 +344,7 @@ hAzzle.fn.extend({
      *
      * @return {Object}
      */
-	 
+
     removeAttr: function (value) {
         var elem, name, propName, i, attrNames = value && value.match((/\S+/g));
         return this.each(function () {
@@ -338,9 +354,9 @@ hAzzle.fn.extend({
             if (attrNames && hAzzle.nodeType(1, elem)) {
                 while ((name = attrNames[i++])) {
                     propName = propMap[name] || name;
-              if (getBooleanAttrName(elem, name)) {
-                      elem[propName] = false;
-               }
+                    if (getBooleanAttrName(elem, name)) {
+                        elem[propName] = false;
+                    }
                     elem.removeAttribute(name);
                 }
             }
@@ -364,7 +380,7 @@ hAzzle.fn.extend({
         });
         name = propMap[name] || name;
         return hAzzle.isUndefined(value) ? this[0] && this[0][name] : this.put(name, value)
-   },
+    },
 
 
     /**
@@ -388,13 +404,25 @@ hAzzle.fn.extend({
 
                     var _this = this;
                     return hAzzle.each(html, function () {
-                        alert(this);
                         _this.appendChild(this);
                     });
                 }
 
                 this.appendChild(html);
             }
+        });
+    },
+
+    /**
+     * Append the current element to another
+     *
+     * @param {Object|String} sel
+     * @return {Object}
+     */
+
+    appendTo: function (sel) {
+        return this.each(function () {
+            hAzzle(selector).append(this);
         });
     },
 
@@ -422,12 +450,24 @@ hAzzle.fn.extend({
 
                     var _this = this;
                     return hAzzle.each(html, function () {
-                        alert(this);
                         _this.appendChild(this);
                     });
                 }
                 this.appendChild(html);
             }
+        });
+    },
+
+    /**
+     * Prepend the current element to another.
+     *
+     * @param {Object|String} sel
+     * @return {Object}
+     */
+
+    prependTo: function (sel) {
+        return this.each(function () {
+            hAzzle(selector).prepend(this);
         });
     },
 
