@@ -18,11 +18,21 @@ As of april 1 - 2014 most of the modules are now completed, and hAzzle can be us
 NOTE!! hAzzle is still in a pre-alpha stage and testing and fixed will be done soon.
 
 
-###Work in progress at the moment:
-===============================
+###Work in progress:
+===================
 
-* Animation engine with RAF support and CSS transitions.
+Animation engine withsupport for CSS transitions and RAF. If not RAF available, it will be a fallback to normal timeout. Here are some features coming:
 
+- RAF
+- CSS transition support
+- Background animation
+- Color animation
+- fadeIn and fadeOut
+- Paralell animation
+
+and more...
+
+All this will be available in the 0.2 release in a few hours.
 
 
 <b>Note! </b>
