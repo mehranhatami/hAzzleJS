@@ -17,8 +17,6 @@ cssNumber = {
     "zoom": true
 },
 
-
-
     cached = [],
 
     cssProps = {
@@ -51,24 +49,21 @@ function vendorPropName(style, name) {
     return cached[style + name];
 }
 
-function getCSS(elem, name) {
 
-    name = hAzzle.camelCase(name);
 
-    // Make sure that we're working with the right name
-    name = cssProps[name] || (cssProps[name] = vendorPropName(elem.style, name));
+/**
+ * camelCase CSS string
+ * - we are using our prefixCache for faster speed
+ *
+ * @param{String} str
+ * @return{String}
+ */
 
-    return elem.style.getPropertyValue(name) || window.getComputedStyle(elem, null).getPropertyValue(name);
-}
+function camelCase(str) {
 
-function setCSS(element, name, value) {
-    // If a number was passed in, add 'px' to the (except for certain CSS properties)
-    if (typeof value === 'number' && cssNumber.indexOf(name) === -1) {
-        value += 'px';
-    }
-    var action = (value === null || value === '') ? 'remove' : 'set';
-    element.style[action + 'Property'](name, '' + value);
-    return element;
+    return str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
+        return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
+    });
 }
 
 /**
@@ -82,16 +77,16 @@ function isHidden(elem, el) {
 }
 
 function hide(elem) {
-    var _display = getCSS(elem, 'display');
+    var _display = hAzzle.css(elem, 'display');
     if (_display !== 'none') {
         hAzzle.data(elem, '_display', _display);
     }
-    setCSS(elem, 'display', 'none');
+    hAzzle.style(elem, 'display', 'none');
 }
 
 function show(elem) {
 
-    return setCSS(elem, 'display', hAzzle.data(elem, '_display') || 'block');
+    return hAzzle.style(elem, 'display', hAzzle.data(elem, '_display') || 'block');
 }
 
 function commonNodeTypes(elem) {
@@ -100,6 +95,34 @@ function commonNodeTypes(elem) {
 }
 
 
+hAzzle.extend({
+
+    // Globalize CSS
+
+    css: function (elem, name) {
+
+        name = camelCase(name);
+
+        // Make sure that we're working with the right name
+        name = cssProps[name] || (cssProps[name] = vendorPropName(elem.style, name));
+
+        return elem.style.getPropertyValue(name) || window.getComputedStyle(elem, null).getPropertyValue(name);
+    },
+
+    style: function (elem, name, value) {
+
+        // If a number was passed in, add 'px' to the (except for certain CSS properties)
+        if (typeof value === 'number' && cssNumber.indexOf(name) === -1) {
+            value += 'px';
+        }
+        var action = (value === null || value === '') ? 'remove' : 'set';
+        elem.style[action + 'Property'](name, '' + value);
+        return elem;
+    }
+
+
+
+});
 
 hAzzle.fn.extend({
 
@@ -150,24 +173,14 @@ hAzzle.fn.extend({
      */
 
     css: function (name, value) {
-
-        if (hAzzle.isUndefined(value)) {
-            if (hAzzle.isString(name)) {
-                return this[0] && getCSS(this[0], name);
-            }
-
-            // Object
-
-            return this.each(function () {
-                var element = this;
-                hAzzle.each(name, function (key, value) {
-                    setCSS(element, key, value);
-                });
+        if (value !== undefined) return 1 === this.length ? hAzzle.style(this[0], name, value) : this.each(function () {
+            hAzzle.style(this, name, value);
+        });
+        if (hAzzle.isUndefined(value)) return hAzzle.isString(name) ? this[0] && hAzzle.css(this[0], name) : this.each(function () {
+            var elem = this;
+            hAzzle.each(name, function (name, value) {
+                hAzzle.css(elem, name, value);
             });
-        }
-
-        return this.each(function () {
-            setCSS(this, name, value);
         });
     },
 
@@ -182,7 +195,7 @@ hAzzle.fn.extend({
         return this.each(function () {
             var el = this;
             if (commonNodeTypes(el)) {
-                for (var old = {}, i = 0, prop; prop = nativeKeys(props)[i]; i += 1) old[prop] = el.style[prop], el.style[prop] = props[prop];
+                for (var old = {}, i = 0, prop; prop = Object.keys(props)[i]; i += 1) old[prop] = el.style[prop], el.style[prop] = props[prop];
                 return old;
             }
         });
@@ -216,58 +229,9 @@ hAzzle.fn.extend({
         return this.each(function () {
             var el = this;
             if (commonNodeTypes(el)) {
-                for (var i = 0, prop; prop = nativeKeys(props)[i]; i += 1) el.style[prop] = props[prop];
+                for (var i = 0, prop; prop = Object.keys(props)[i]; i += 1) el.style[prop] = props[prop];
             }
         });
-    },
-
-    /**
-     * Finds the Left position of an element
-     * to the entire document
-     *
-     * @param elem
-     * @returns {Number}
-     */
-    pageX: function (elem) {
-        var el = this[0];
-        return el.offsetParent ? el.offsetLeft + this.pageX(el.offsetParent) : el.offsetLeft;
-    },
-
-    /**
-     * Finds the Top position of an element
-     * to the entire document
-     *
-     * @param elem
-     * @returns {Number}
-     */
-
-    pageY: function (elem) {
-        var el = this[0];
-        return el.offsetParent ? el.offsetTop + this.pageX(el.offsetParent) : el.offsetTop;
-    },
-
-    /**
-     * Finds the Horizontal position of an element within its parent
-     *
-     * @param elem
-     * @returns {Number}
-     */
-
-    parentX: function (elem) {
-        var el = this[0];
-        return el.offsetParent === el.parentNode ? el.offsetLeft : doc.css.pageX(el) - doc.pageX(el.parentNode);
-    },
-
-    /**
-     * Finds the Vertical position of an element within its parent
-     *
-     * @param elem
-     * @returns {Number}
-     */
-
-    parentY: function (elem) {
-        var el = this[0];
-        return el.offsetParent === el.parentNode ? el.offsetTop : doc.pageY(elem) - doc.pageY(el.parentNode);
     },
 
     /**
@@ -280,7 +244,7 @@ hAzzle.fn.extend({
         return this.each(function () {
             var el = this;
             if (commonNodeTypes(el)) {
-                el.style.left = parseNum(pos) + 'px';
+                el.style.left = parseInt(pos, 10) + 'px';
             }
         });
     },
@@ -295,9 +259,8 @@ hAzzle.fn.extend({
         return this.each(function () {
             var el = this;
             if (commonNodeTypes(el)) {
-                el.style.top = parseNum(pos) + 'px';
+                el.style.top = parseInt(pos, 10) + 'px';
             }
         });
-    },
-
+    }
 });
