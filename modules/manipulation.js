@@ -139,31 +139,15 @@ hAzzle.extend({
     },
 
     attr: function (elem, name, value) {
-
-        if (hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem)) {
-            return;
-        }
-
-        // Fallback to prop when attributes are not supported
-        if (typeof elem.getAttribute === typeof undefined) {
-            return hAzzle.prop(elem, name, value);
-        }
-
+    if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
+        if ("undefined" === typeof elem.getAttribute) return hAzzle.prop(elem, name, value);
         if (hAzzle.isUndefined(value)) {
-
-            if (name === 'value' && elem.nodeName.toLowerCase() === 'input') {
-                return hAzzle.getValue(elem);
-            }
-
-            var ret = elem.getAttribute(name);
-
-            // Non-existent attributes return null, we normalize to undefined
-            return ret === null ?
-                undefined :
-                ret;
+            if (name === "value"  && name.nodeName.toLowerCase() === "input") return hAzzle.getValue(elem);
+            elem = elem.getAttribute(name);
+            return null === elem ? undefined : elem;
         }
-
         return elem.setAttribute(name, value + "");
+	  }
     }
 
 });
