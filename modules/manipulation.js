@@ -129,7 +129,43 @@ hAzzle.extend({
             return elem.nodeValue;
         }
         return ret;
+    },
+
+    prop: function (elem, name, value) {
+        // don't get/set properties on text, comment and attribute nodes
+        if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
+            return name = propMap[name] || name, value !== undefined ? elem[name] = value : elem[name];
+        }
+    },
+
+    attr: function (elem, name, value) {
+
+        if (hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem)) {
+            return;
+        }
+
+        // Fallback to prop when attributes are not supported
+        if (typeof elem.getAttribute === typeof undefined) {
+            return hAzzle.prop(elem, name, value);
+        }
+
+        if (hAzzle.isUndefined(value)) {
+
+            if (name === 'value' && elem.nodeName.toLowerCase() === 'input') {
+                return hAzzle.getValue(elem);
+            }
+
+            var ret = elem.getAttribute(name);
+
+            // Non-existent attributes return null, we normalize to undefined
+            return ret === null ?
+                undefined :
+                ret;
+        }
+
+        return elem.setAttribute(name, value + "");
     }
+
 });
 
 
@@ -183,7 +219,7 @@ hAzzle.fn.extend({
             return this.empty().each(function () {
                 // Remove element nodes and prevent memory leaks
                 if (hAzzle.nodeType(1, this)) {
-               // TODO !!Need to clean the data
+                    // TODO !!Need to clean the data
                     this.insertAdjacentHTML('beforeend', value || '');
                 }
             });
@@ -300,36 +336,13 @@ hAzzle.fn.extend({
      */
 
     attr: function (name, value) {
-
-        if (hAzzle.isObject(name)) {
-
-            return this.each(function (index, element) {
-
-                if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
-                    return;
-                }
-                hAzzle.each(name, function (value, key) {
-                    element.setAttribute(key, value + "");
-                });
+        return hAzzle.isObject(name) ? this.each(function (index, element) {
+            hAzzle.each(name, function (key, value) {
+                hAzzle.attr(element, key, value);
             });
-        }
-        if (hAzzle.isUndefined(value)) {
-
-            var elem = this[0];
-
-            if (name === 'value' && elem.nodeName.toLowerCase() === 'input') {
-                return hAzzle.getValue(elem);
-            }
-            var ret = elem.getAttribute(name);
-            // Non-existent attributes return null, we normalize to undefined
-            return ret === null ?
-                undefined :
-                ret;
-        }
-
-        return this.each(function () {
-            hAzzle.nodeType(3, this) || hAzzle.nodeType(8, this) || hAzzle.nodeType(2, this) || this.setAttribute(name, value + "");
-        });
+        }) : hAzzle.isUndefined(value) ? hAzzle.attr(this[0], name) : this.length === 1 ? hAzzle.attr(this[0], name, value) : this.each(function () {
+            return hAzzle.attr(this, name, value);
+        })
     },
 
     /**
@@ -367,14 +380,11 @@ hAzzle.fn.extend({
      * @return {Object}
      */
     prop: function (name, value) {
-        if ("object" === typeof name) return this.each(function (value, element) {
-            hAzzle.each(name, function (name, value) {
-                name = propMap[name] || name;
-                element[name] = value
-            })
-        });
-        name = propMap[name] || name;
-        return hAzzle.isUndefined(value) ? this[0] && this[0][name] : this.put(name, value)
+        return hAzzle.isObject(name) ? this.each(function (value, element) {
+            hAzzle.each(name, function (key, value) {
+                hAzzle.prop(element, key, value);
+            });
+        }) : hAzzle.isUndefined(value) ? this[0] && this[0][propMap[name] || name] : hAzzle.prop(element, key, value);
     },
 
 
