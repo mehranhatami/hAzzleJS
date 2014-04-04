@@ -1,29 +1,59 @@
 // CSS
 var
 
-// Don't automatically add "px" to these possibly-unitless properties
-cssNumber = {
-    "columnCount": true,
-    "fillOpacity": true,
-    "flexGrow": true,
-    "flexShrink": true,
-    "fontWeight": true,
-    "lineHeight": true,
-    "opacity": true,
-    "order": true,
-    "orphans": true,
-    "widows": true,
-    "zIndex": true,
-    "zoom": true
+cssNormalTransform = {
+    letterSpacing: "0",
+    fontWeight: "400"
 },
 
     cached = [],
 
-    cssProps = {
-        "float": "cssFloat"
-    },
+    cssPrefixes = ["Webkit", "O", "Moz", "ms"],
 
-    cssPrefixes = ["Webkit", "O", "Moz", "ms"];
+    rmargin = (/^margin/),
+    rnumnonpx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
+    rrelNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
+
+
+function curCSS(elem, name, computed) {
+    var width, minWidth, maxWidth, ret,
+        style = elem.style;
+
+    computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+
+    if (computed) {
+        ret = computed.getPropertyValue(name) || computed[name];
+    }
+
+    if (computed) {
+
+        if (ret === "" && !hAzzle.contains(elem.ownerDocument, elem)) {
+            ret = hAzzle.style(elem, name);
+        }
+
+        if (rnumnonpx.test(ret) && rmargin.test(name)) {
+
+            // Remember the original values
+            width = style.width;
+            minWidth = style.minWidth;
+            maxWidth = style.maxWidth;
+
+            // Put in the new values to get a computed value out
+            style.minWidth = style.maxWidth = style.width = ret;
+            ret = computed.width;
+
+            // Revert the changed values
+            style.width = width;
+            style.minWidth = minWidth;
+            style.maxWidth = maxWidth;
+        }
+    }
+
+    return ret !== undefined ?
+        ret + "" :
+        ret;
+}
+
 
 function vendorPropName(style, name) {
     if (!cached[style + name]) {
@@ -47,23 +77,6 @@ function vendorPropName(style, name) {
 
     }
     return cached[style + name];
-}
-
-
-
-/**
- * camelCase CSS string
- * - we are using our prefixCache for faster speed
- *
- * @param{String} str
- * @return{String}
- */
-
-function camelCase(str) {
-
-    return str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
-        return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
-    });
 }
 
 /**
@@ -97,30 +110,153 @@ function commonNodeTypes(elem) {
 
 hAzzle.extend({
 
-    // Globalize CSS
+    cssProps: {
 
-    css: function (elem, name) {
-
-        name = camelCase(name);
-
-        // Make sure that we're working with the right name
-        name = cssProps[name] || (cssProps[name] = vendorPropName(elem.style, name));
-
-        return elem.style.getPropertyValue(name) || window.getComputedStyle(elem, null).getPropertyValue(name);
+        "float": "cssFloat"
     },
 
-    style: function (elem, name, value) {
+    // Don't automatically add "px" to these possibly-unitless properties
+    cssNumber: {
+        "columnCount": true,
+        "fillOpacity": true,
+        "flexGrow": true,
+        "flexShrink": true,
+        "fontWeight": true,
+        "lineHeight": true,
+        "opacity": true,
+        "order": true,
+        "orphans": true,
+        "widows": true,
+        "zIndex": true,
+        "zoom": true
+    },
 
-        // If a number was passed in, add 'px' to the (except for certain CSS properties)
-        if (typeof value === 'number' && cssNumber.indexOf(name) === -1) {
-            value += 'px';
+    // Convert some pixels into another CSS unity.
+    // It's used in $.style() for the += or -=.
+    // * px   : Number.
+    // * unit : String, like "%", "em", "px", ...
+    // * elem : Node, the current element.
+    // * prop : String, the CSS property.
+    pixelsToUnity: function (px, unit, elem, prop) {
+        switch (unit) {
+        case "":
+        case "px":
+            return px; // Don't waste our time if there is no conversion to do.
+        case "em":
+            return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
+        case "%":
+            if (/^(left$|right$|margin|padding)/.test(prop)) {
+                prop = "width";
+            } else if (/^(top|bottom)$/.test(prop)) {
+                prop = "height";
+            }
+            elem = /^(relative|absolute|fixed)$/.test(hAzzle.css(elem, "position")) ?
+                elem.offsetParent : elem.parentNode;
+            if (elem) {
+                prop = hAzzle.css(elem, prop, true);
+                if (prop !== 0) {
+                    return px / prop * 100;
+                }
+            }
+            return 0;
         }
-        var action = (value === null || value === '') ? 'remove' : 'set';
-        elem.style[action + 'Property'](name, '' + value);
-        return elem;
+        // The first time we calculate how many pixels there is in 1 meter
+        // for calculate what is 1 inch/cm/mm/etc.
+        if (hAzzle.pixelsToUnity.units === undefined) {
+            var units = hAzzle.pixelsToUnity.units = {},
+                div = document.createElement("div");
+            div.style.width = "100cm";
+            document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+            units.mm = div.offsetWidth / 1000;
+            document.body.removeChild(div);
+            units.cm = units.mm * 10;
+            units. in = units.cm * 2.54;
+            units.pt = units. in * 1 / 72;
+            units.pc = units.pt * 12;
+        }
+        // If the unity specified is not recognized we return the value.
+        unit = hAzzle.pixelsToUnity.units[unit];
+        return unit ? px / unit : px;
+    },
+
+
+    // Globalize CSS
+
+    css: function (elem, name, extra, styles) {
+
+        var val, num, origName = hAzzle.camelCase(name);
+
+        // Make sure that we're working with the right name
+        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorPropName(elem.style, origName));
+
+        val = curCSS(elem, name, styles);
+
+        //convert "normal" to computed value
+        if (val === "normal" && name in cssNormalTransform) {
+            val = cssNormalTransform[name];
+        }
+
+        // Return, converting to number if forced or a qualifier was provided and val looks numeric
+        if (extra === "" || extra) {
+            num = parseFloat(val);
+            return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
+        }
+        return val;
+    },
+
+    style: function (elem, name, value, extra) {
+
+        // Don't set styles on text and comment nodes
+        if (!elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style) {
+            return;
+        }
+
+        // Make sure that we're working with the right name
+        var ret, type, hooks,
+            origName = hAzzle.camelCase(name),
+            style = elem.style;
+
+        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorPropName(style, origName));
+
+        // Check if we're setting a value
+        if (value !== undefined) {
+            type = typeof value;
+
+            /**
+             * Convert relative numbers to strings.
+             * It can handle +=, -=, em or %
+             */
+
+            if (type === "string" && (ret = rrelNum.exec(value))) {
+                value = hAzzle.css(elem, name, "");
+                value = hAzzle.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                type = "number";
+            }
+
+            // Make sure that null and NaN values aren't set. See: #7116
+            if (value === null || value !== value) {
+                return;
+            }
+
+            // If a number was passed in, add 'px' to the (except for certain CSS properties)
+            if (type === "number" && !hAzzle.cssNumber[origName]) {
+                //				value += "px";
+                value += ret && ret[3] ? ret[3] : "px";
+            }
+
+            style[name] = value;
+
+        } else {
+            // If a hook was provided get the non-computed value from there
+            if (hooks && "get" in hooks && (ret = hooks.get(elem, false, extra)) !== undefined) {
+                return ret;
+            }
+
+            // Otherwise just get the value from the style object
+            return style[name];
+        }
+
     }
-
-
 
 });
 
@@ -191,11 +327,9 @@ hAzzle.fn.extend({
      */
 
     resetCSS: function (props) {
-
         return this.each(function () {
-            var el = this;
-            if (commonNodeTypes(el)) {
-                for (var old = {}, i = 0, prop; prop = Object.keys(props)[i]; i += 1) old[prop] = el.style[prop], el.style[prop] = props[prop];
+            if (commonNodeTypes(this)) {
+                for (var old = {}, i = 0, prop; prop = Object.keys(props)[i]; i += 1) old[prop] = this.style[prop], this.style[prop] = props[prop];
                 return old;
             }
         });
@@ -209,13 +343,8 @@ hAzzle.fn.extend({
      */
 
     setOpacity: function (value) {
-
         return this.each(function () {
-            var el = this;
-            if (commonNodeTypes(el)) {
-                el.style.opacity = value / 100;
-            }
-
+            commonNodeTypes(this) && (this.style.opacity = value / 100);
         });
     },
 
@@ -227,10 +356,8 @@ hAzzle.fn.extend({
 
     restoreCSS: function (props) {
         return this.each(function () {
-            var el = this;
-            if (commonNodeTypes(el)) {
-                for (var i = 0, prop; prop = Object.keys(props)[i]; i += 1) el.style[prop] = props[prop];
-            }
+            if (commonNodeTypes(this))
+                for (var i = 0, prop; prop = Object.keys(props)[i]; i += 1) this.style[prop] = props[prop];
         });
     },
 
@@ -242,10 +369,7 @@ hAzzle.fn.extend({
      */
     setX: function (pos) {
         return this.each(function () {
-            var el = this;
-            if (commonNodeTypes(el)) {
-                el.style.left = parseInt(pos, 10) + 'px';
-            }
+            commonNodeTypes(this) && (this.style.left = parseInt(pos, 10) + "px");
         });
     },
 
@@ -257,10 +381,7 @@ hAzzle.fn.extend({
      */
     setY: function (pos) {
         return this.each(function () {
-            var el = this;
-            if (commonNodeTypes(el)) {
-                el.style.top = parseInt(pos, 10) + 'px';
-            }
+            commonNodeTypes(this) && (this.style.top = parseInt(pos, 10) + "px");
         });
     }
 });
