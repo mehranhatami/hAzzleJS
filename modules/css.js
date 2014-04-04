@@ -15,6 +15,13 @@ cssNormalTransform = {
     rrelNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
 
 
+var iOSversion = function() {
+  if (/iP(hone|od|ad)/.test(navigator.platform)) {
+    var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
+    return [parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)];
+  }
+}
+
 
 /**
  * Check if an element is hidden
@@ -60,6 +67,10 @@ function curCSS(elem, name, computed) {
             ret = hAzzle.style(elem, name);
         }
 
+      // If IOS v. 6 or older
+      
+	  if (typeof iOSversion() !== 'undefined' && iOSversion()[0] <= 6) {
+
         if (rnumnonpx.test(ret) && rmargin.test(name)) {
 
             // Remember the original values
@@ -76,6 +87,7 @@ function curCSS(elem, name, computed) {
             style.minWidth = minWidth;
             style.maxWidth = maxWidth;
         }
+}
     }
 
     return ret !== undefined ?
