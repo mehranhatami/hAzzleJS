@@ -15,6 +15,35 @@ cssNormalTransform = {
     rrelNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
 
 
+
+/**
+ * Check if an element is hidden
+ *  @return {Boolean}
+ */
+
+function isHidden(elem, el) {
+    elem = el || elem;
+    return elem.style.display === "none";
+}
+
+function hide(elem) {
+    var _display = hAzzle.css(elem, 'display');
+    if (_display !== 'none') {
+        hAzzle.data(elem, '_display', _display);
+    }
+    hAzzle.style(elem, 'display', 'none');
+}
+
+function show(elem) {
+
+    return hAzzle.style(elem, 'display', hAzzle.data(elem, '_display') || 'block');
+}
+
+function commonNodeTypes(elem) {
+    if (hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem)) return true;
+    return false;
+}
+
 function curCSS(elem, name, computed) {
     var width, minWidth, maxWidth, ret,
         style = elem.style;
@@ -79,33 +108,6 @@ function vendorPropName(style, name) {
     return cached[style + name];
 }
 
-/**
- * Check if an element is hidden
- *  @return {Boolean}
- */
-
-function isHidden(elem, el) {
-    elem = el || elem;
-    return elem.style.display === "none";
-}
-
-function hide(elem) {
-    var _display = hAzzle.css(elem, 'display');
-    if (_display !== 'none') {
-        hAzzle.data(elem, '_display', _display);
-    }
-    hAzzle.style(elem, 'display', 'none');
-}
-
-function show(elem) {
-
-    return hAzzle.style(elem, 'display', hAzzle.data(elem, '_display') || 'block');
-}
-
-function commonNodeTypes(elem) {
-    if (hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem)) return true;
-    return false;
-}
 
 
 hAzzle.extend({
@@ -212,7 +214,7 @@ hAzzle.extend({
         }
 
         // Make sure that we're working with the right name
-        var ret, type, hooks,
+        var ret, type
             origName = hAzzle.camelCase(name),
             style = elem.style;
 
@@ -240,19 +242,14 @@ hAzzle.extend({
 
             // If a number was passed in, add 'px' to the (except for certain CSS properties)
             if (type === "number" && !hAzzle.cssNumber[origName]) {
-                //				value += "px";
+
                 value += ret && ret[3] ? ret[3] : "px";
             }
-
             style[name] = value;
 
         } else {
-            // If a hook was provided get the non-computed value from there
-            if (hooks && "get" in hooks && (ret = hooks.get(elem, false, extra)) !== undefined) {
-                return ret;
-            }
 
-            // Otherwise just get the value from the style object
+            // Get the value from the style object
             return style[name];
         }
 
