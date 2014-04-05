@@ -15,7 +15,7 @@ The DOM traversing methods are in average 80% faster then jQuery and Zepto
 
 As of april 1 - 2014 most of the modules are now completed, and hAzzle can be used in webpages.
 
-###NOTE!! hAzzle is still in a pre-alpha stage and testing and fixed will be done soon.
+###NOTE!! hAzzle is still in a pre-alpha stage
 
 <b>Note! </b>
 
