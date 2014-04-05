@@ -7,7 +7,8 @@
  *
  * - RAF support
  * - Animation of single and multiple elements
- * - Animation of border colors
+ * - Animation of all border colors at the same time
+ * - Animation of only one border - top, left, right, bottom
  * - Animation of background colors
  * - Background animation
  * - Build-in hooks for CSS transformation support (external plugin)
@@ -17,7 +18,6 @@
  * - fadeIn
  * - fadeOut
  */
-  
 var dictionary = [],
     defaultEase = 'easeOutQuad',
     engineRunning,
@@ -38,15 +38,15 @@ var dictionary = [],
     color2 = /#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])/,
     color1 = /#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/;
 
- /**
-  * Our animation engine
-  */
+/**
+ * Our animation engine
+ */
 
 function engine() {
 
-  var run = false,
-      leg = length,
-	  internal;
+    var run = false,
+        leg = length,
+        internal;
 
     while (leg--) {
 
@@ -54,7 +54,7 @@ function engine() {
 
         if (!internal) break;
         if (internal.transactive) continue;
-		
+
         if (internal.cycle()) {
 
             run = true;
@@ -99,43 +99,45 @@ function engine() {
 
 function Tween(obj, to, sets) {
 
+    // Get the "running" length
+
     length = dictionary.length;
 
     hAzzle.data(obj, 'cj', dictionary[length++] = this);
 
-    var $this = hAzzle.data(obj, 'cj');
+    var self = hAzzle.data(obj, 'cj');
 
     this.runner = function (force) {
-        $this.obj = obj;
-        $this.complete = sets.callback;
-        $this.completeParams = sets.callbackParams;
+
+        self.obj = obj;
+        self.complete = sets.callback;
+        self.completeParams = sets.callbackParams;
 
         if (force === true) {
 
-            $this.transitions = [];
+            self.transitions = [];
             return;
-
         }
 
         var key,
             i = 0,
             tweens = [],
-            style = obj.style,
             duration = sets.duration || defaultDuration,
             easing = hAzzle.isFunction(hAzzle.easing[defaultEase]) ? hAzzle.easing[defaultEase] : hAzzle.easing[sets.ease];
 
-        style.visibility = "visible";
+        // Set the element to "visible" 
+
+        hAzzle.style(obj, "visibility", "visible");
 
         if (sets.fadeIn) {
 
-            style.display = sets.display || "block";
-            style.opacity = 0;
-
+            hAzzle.style(obj, "display", sets.display || "block");
+            hAzzle.setOpacity(obj, 0);
         }
-        
-		// Animation of border colors
-        
-		if (to.borderColor && !borColor) {
+
+        // Animation of border colors
+
+        if (to.borderColor && !borColor) {
 
             var clr = to.borderColor;
 
@@ -148,24 +150,14 @@ function Tween(obj, to, sets) {
 
         }
 
+        // Animate backgroundPosition or normal animation
+
         for (key in to) {
-
             if (!to.hasOwnProperty(key)) continue;
-
-            // Background animation
-			
-            if (key === "backgroundPosition") {
-
-                tweens[i++] = $this.bgPosition(obj, key, to[key], duration, easing);                
-
-            } else {
-
-                tweens[i++] = $this.animate(obj, key, to[key], duration, easing);
-            }
-
+            tweens[i++] = self[key === "backgroundPosition" ? 'bgPosition' : 'animate'](obj, key, to[key], duration, easing);
         }
 
-        $this.transitions = tweens;
+        self.transitions = tweens;
         (engineRunning) ? setTimeout(checkEngine, 10) : engine();
 
     };
@@ -202,6 +194,8 @@ function Tween(obj, to, sets) {
 
 Tween.prototype = {
 
+    // Allmost the same as "step" in jQuery
+
     cycle: function () {
 
         trans = this.transitions;
@@ -213,18 +207,18 @@ Tween.prototype = {
         while (rip--) {
 
             if (trans[rip]()) moved = true;
-
         }
 
         return moved;
-
     },
 
+    // Run the animation
 
     animate: function (obj, prop, value, duration, ease) {
 
         var tick, opacity = prop === "opacity",
             passed = true;
+
         tick = curCSS(obj, prop);
 
         if (!gotcha.test(tick)) {
@@ -254,7 +248,7 @@ Tween.prototype = {
         var px = !opacity ? "px" : 0,
             constant = value - tick,
             range = tick < value,
-            then = Date.now(),
+            then = hAzzle.now(),
             begin = tick,
             timed = 0,
             finish,
@@ -263,13 +257,19 @@ Tween.prototype = {
 
         finish = value + px;
 
-        if (prop === "opacity") {
+        // Define correct range
 
-            (range) ? value -= 0.025 : value += 0.025;
+        if (range) {
+
+            value -= (opacity ? 0.025 : 0.025);
 
         } else {
-            (range) ? value -= 0.25 : value += 0.25;
+
+            value += (opacity ? 0.025 : 0.025)
         }
+
+
+        // Start transformation
 
         function trans() {
 
@@ -305,7 +305,9 @@ Tween.prototype = {
             }
 
             pTick = tick;
+
             hAzzle.style(obj, prop, tick + px);
+
             return true;
 
         }
@@ -328,163 +330,156 @@ Tween.prototype = {
 
         }
     },
-	
-	/**
-	 * Background animation
-	 */
 
-	bgPosition: function(obj, prop, value, duration, ease) {
-		
-		var style = obj.style,
-		val = style[prop],
-		then = hAzzle.now(),
-		passed = true,
-		timed = 0, 
-		finalX,
-		finalY,
-		finish,
-		prevX,
-		prevY,
-		hasX,
-		hasY,
-		difX,
-		difY,
-		tick, 
-		now,
-		xx,
-		yy,
-		x, 
-		y;
+    /**
+     * Background animation
+     */
 
-   /**
-    * WORK IN PROGRESSS
-	*
-	*/
-      //tick = curCSS(obj, prop);		
-			tick = (val !== "") ? val.split(" ") : compute(obj, null).backgroundPosition.split(" ");
-			
-			x = tick[0];
-			y = tick[1];
-		
-		if(x.search("%") !== -1) {
-				
-			if(x !== "0%") passed = false;
-			
-		}
-		
-		if(y.search("%") !== -1) {
-				
-			if(y !== "0%") passed = false;
-			
-		}
-		
-		x = parseInt(x, 10);
-		y = parseInt(y, 10);
-		
-		if(value.hasOwnProperty("x")) {
-			
-			xx = value.x;
-			hasX = true;
-			
-		}
-		else {
-		
-			xx = x;
-			hasX = false;
-			
-		}
-		
-		if(value.hasOwnProperty("y")) {
-			
-			yy = value.y;
-			hasY = true;
-			
-		}
-		else {
-		
-			yy = y;
-			hasY = false;
-			
-		}
+    bgPosition: function (obj, prop, value, duration, ease) {
 
-		hasX = hasX && x !== xx;
-		hasY = hasY && y !== yy;
-		if(!hasX && !hasY) passed = false;
-		
-		difX = xx - x;
-		difY = yy - y; 
-		finalX = xx + "px";
-		finalY = yy + "px";
-		finish = finalX + " " + finalY;
-		
-		function trans() {
-					
-			now = hAzzle.now();
-			timed += now - then;
-			then = now;
-			
-			tick = ease(timed, 0, 1, duration);
-			
-			if(tick < 0.99) {
-				
-				if(hasX) {
-					
-					xx = ((x + (difX * tick)) + 0.5) | 0;
-					
-				}
-				
-				if(hasY) {
-					
-					yy = ((y + (difY * tick)) + 0.5) | 0;
-					
-				}
-				
-				if(xx === prevX && yy === prevY) return true;
-				
-				prevX = xx;
-				prevY = yy; 
-				
-					style.backgroundPosition = xx + "px" + " " + yy + "px";
-				
-				return true;
-				
-			}
-			else {
-				
-					style[prop] = finish;
+        var style = obj.style,
+            val = style[prop],
+            then = hAzzle.now(),
+            passed = true,
+            timed = 0,
+            finalX,
+            finalY,
+            finish,
+            prevX,
+            prevY,
+            hasX,
+            hasY,
+            difX,
+            difY,
+            tick,
+            now,
+            xx,
+            yy,
+            x,
+            y;
 
-				return false;
-				
-			}
-			
-		}
-		
-		function cancelled() {
-	
-			return false;
-			
-		}
-		
-		if(passed) {
-		
-			trans.stored = [prop, finish];
-			return trans;
-			
-		}
-		else {
-		
-			cancelled.stored = [prop, finish];
-			return cancelled;	
-					
-		}
-		
-	},
-	
-	
-	
-	
-	
-	
+        /**
+         * WORK IN PROGRESSS
+         *
+         */
+        //tick = curCSS(obj, prop);		
+        tick = (val !== "") ? val.split(" ") : compute(obj, null).backgroundPosition.split(" ");
+
+        x = tick[0];
+        y = tick[1];
+
+        if (x.search("%") !== -1) {
+
+            if (x !== "0%") passed = false;
+
+        }
+
+        if (y.search("%") !== -1) {
+
+            if (y !== "0%") passed = false;
+
+        }
+
+        x = parseInt(x, 10);
+        y = parseInt(y, 10);
+
+        if (value.hasOwnProperty("x")) {
+
+            xx = value.x;
+            hasX = true;
+
+        } else {
+
+            xx = x;
+            hasX = false;
+
+        }
+
+        if (value.hasOwnProperty("y")) {
+
+            yy = value.y;
+            hasY = true;
+
+        } else {
+
+            yy = y;
+            hasY = false;
+
+        }
+
+        hasX = hasX && x !== xx;
+        hasY = hasY && y !== yy;
+        if (!hasX && !hasY) passed = false;
+
+        difX = xx - x;
+        difY = yy - y;
+        finalX = xx + "px";
+        finalY = yy + "px";
+        finish = finalX + " " + finalY;
+
+        function trans() {
+
+            now = hAzzle.now();
+            timed += now - then;
+            then = now;
+
+            tick = ease(timed, 0, 1, duration);
+
+            if (tick < 0.99) {
+
+                if (hasX) {
+
+                    xx = ((x + (difX * tick)) + 0.5) | 0;
+
+                }
+
+                if (hasY) {
+
+                    yy = ((y + (difY * tick)) + 0.5) | 0;
+
+                }
+
+                if (xx === prevX && yy === prevY) return true;
+
+                prevX = xx;
+                prevY = yy;
+
+                style.backgroundPosition = xx + "px" + " " + yy + "px";
+
+                return true;
+
+            } else {
+
+                style[prop] = finish;
+
+                return false;
+
+            }
+
+        }
+
+        function cancelled() {
+
+            return false;
+
+        }
+
+        if (passed) {
+
+            trans.stored = [prop, finish];
+            return trans;
+
+        } else {
+
+            cancelled.stored = [prop, finish];
+            return cancelled;
+
+        }
+
+    },
+
+
+
 
     /**
      * Color animation
@@ -639,12 +634,12 @@ hAzzle.fn.extend({
             return this;
         });
     },
-	
+
     /**
      *  FadeIn an element
      *
      */
-	
+
 
     fadeIn: function (settings) {
 
@@ -682,17 +677,16 @@ hAzzle.fn.extend({
     stop: function (complete, callback) {
         return this.each(function () {
             var dcj = hAzzle.data(this, "cj");
-            
-           if (dcj) {
-			// CSS transformation
-			if(dcj.transactive) {
-				return dcj.stop(callback);
-			}
-			else {
-				return dcj.stop(complete, callback);
-				
-			}
-		}
+
+            if (dcj) {
+                // CSS transformation
+                if (dcj.transactive) {
+                    return dcj.stop(callback);
+                } else {
+                    return dcj.stop(complete, callback);
+
+                }
+            }
 
         });
     }
@@ -701,13 +695,13 @@ hAzzle.fn.extend({
 
 
 hAzzle.extend({
-	
-	/**
-	 * Used *ONLY* if we are dealing with CSS transformation (not supported in IE9)
-	 * If CSS transform antimation plugin are added, set 'transactive' to true
-	 */
-	
-	transactive : false,
+
+    /**
+     * Used *ONLY* if we are dealing with CSS transformation (not supported in IE9)
+     * If CSS transform antimation plugin are added, set 'transactive' to true
+     */
+
+    transactive: false,
 
     easing: {
         'easeInQuad': function (t, b, c, d) {
@@ -845,53 +839,52 @@ hAzzle.extend({
         }
 
     },
-	
-	stop: function(obj, complete, callback) {
-		
-            var dcj = hAzzle.data(obj, "cj");
-            
-			// CSS transformation are running
 
-			if(!dcj.transactive) {
-				return dcj.stop(complete, callback);
-			}
-			else {
-				return dcj.stop(callback);
-			}
-			
-	},
+    stop: function (obj, complete, callback) {
+
+        var dcj = hAzzle.data(obj, "cj");
+
+        // CSS transformation are running
+
+        if (!dcj.transactive) {
+            return dcj.stop(complete, callback);
+        } else {
+            return dcj.stop(callback);
+        }
+
+    },
 
     stopAll: function (complete) {
-         
-		 if(cancel) {
 
-			 cancel(engine);
-			 
-		 } else {
-			 
-			 clearInterval(timer);
-		 }
-			var i = dictionary.length, itm;
-			length = 0;
-			
-			while(i--) {
-				
-				itm = dictionary[i];
-				
-				if(!itm.transactive) {
-					
-					itm.stop(complete, false, true, true);
-					
-				}
-				else {
-					
-					itm.stop(false, true);
-				}
-			}
-			
-			dictionary = [];
-			engineRunning = false;
-			itm = trans = null;
+        if (cancel) {
+
+            cancel(engine);
+
+        } else {
+
+            clearInterval(timer);
+        }
+        var i = dictionary.length,
+            itm;
+        length = 0;
+
+        while (i--) {
+
+            itm = dictionary[i];
+
+            if (!itm.transactive) {
+
+                itm.stop(complete, false, true, true);
+
+            } else {
+
+                itm.stop(false, true);
+            }
+        }
+
+        dictionary = [];
+        engineRunning = false;
+        itm = trans = null;
     },
 
     /**
@@ -909,7 +902,6 @@ hAzzle.extend({
     setDuration: function (num) {
         defaultDuration = num;
     }
-
 
 });
 
