@@ -182,7 +182,7 @@ function hide(elem) {
  */
 
 function commonNodeTypes(elem) {
-    return hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem) ? true : false;
+    return hAzzle.nodeType(3,elem) || hAzzle.nodeType(8,elem) ? true : false;
 };
 
 /**
@@ -529,7 +529,7 @@ hAzzle.fn.extend({
      */
 
     css: function (name, value) {
-        if (value !== undefined) return 1 === this.length ? hAzzle.style(this[0], name, value) : this.each(function () {
+        if (hAzzle.isDefined(value)) return 1 === this.length ? hAzzle.style(this[0], name, value) : this.each(function () {
             hAzzle.style(this, name, value);
         });
         if (hAzzle.isUndefined(value)) return hAzzle.isString(name) ? this[0] && hAzzle.css(this[0], name) : this.each(function () {
@@ -540,35 +540,7 @@ hAzzle.fn.extend({
         });
     },
 
-    /**
-     * Reset styles with given, remember old ones and return them
-     * @param {Object} props
-     * @returns {Object}
-     */
-
-    resetCSS: function (props) {
-        return this.each(function () {
-            if (commonNodeTypes(this)) {
-                for (var old = {}, i = 0, prop; prop = Object.keys(props)[i]; i += 1) old[prop] = this.style[prop], this.style[prop] = props[prop];
-                return old;
-            }
-        });
-    },
-
-    /**
-     * Restores element's styles with given properties
-     *
-     * @param {Object} props
-     */
-
-    restoreCSS: function (props) {
-        return this.each(function () {
-            if (commonNodeTypes(this))
-                for (var i = 0, prop; prop = Object.keys(props)[i]; i += 1) this.style[prop] = props[prop];
-        });
-    },
-
-    /**
+     /**
      * Sets the opacity for given element
      *
      * @param elem
@@ -576,33 +548,11 @@ hAzzle.fn.extend({
      */
 
     setOpacity: function (value) {
+	  if (hAzzle.isNumber) {
         return this.each(function () {
-            commonNodeTypes(this) && (this.style.opacity = value / 100);
+          this.style.opacity = value / 100;
         });
-    },
-
-    /**
-     * Sets element's horizontal postion
-     *
-     * @param elem
-     * @param pos
-     */
-    setX: function (pos) {
-        return this.each(function () {
-            commonNodeTypes(this) && (this.style.left = parseInt(pos, 10) + "px");
-        });
-    },
-
-    /**
-     * Sets element's vertical postion
-     *
-     * @param elem
-     * @param pos
-     */
-    setY: function (pos) {
-        return this.each(function () {
-            commonNodeTypes(this) && (this.style.top = parseInt(pos, 10) + "px");
-        });
+	  }
     },
 
     /**
