@@ -1,27 +1,134 @@
-// CSS
+/**
+ * CSS
+ *
+ * NOTE!! Some code here is "borrowed" from jQuery because I tried to follow the jQuery API.
+ *        Even the cssHooks feature.
+ *
+ * Still there are minor and major differences between hAzzle API and jQuery API. Examples are many.
+ * Here are a few:
+ *
+ * - Pixels are not rounded up or down - make the position on the screen more accurate
+ * - Everything is optimized for speed
+ * - Converts %, +=, -= and em to relative numbers ( jQuery only deal with +=, -=)
+ *
+ */
 var
-
 cssNormalTransform = {
     letterSpacing: "0",
     fontWeight: "400"
 },
-
     cached = [],
 
     cssPrefixes = ["Webkit", "O", "Moz", "ms"],
 
+    cssExpand = ["Top", "Right", "Bottom", "Left"],
+
     rmargin = (/^margin/),
     rnumnonpx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
+    rdisplayswap = /^(none|table(?!-c[ea]).+)/,
+    pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
+    rnumsplit = new RegExp("^(" + pnum + ")(.*)$", "i"),
     rrelNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
 
 
-var iOSversion = function() {
-  if (/iP(hone|od|ad)/.test(navigator.platform)) {
-    var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
-    return [parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)];
-  }
+/**
+ * Get the documents width or height
+ * margin / padding are optional
+ */
+
+function predefultValue(elem, name, extra) {
+
+    if (!elem) return;
+
+    if (hAzzle.isWindow(elem)) {
+        return elem.document.documentElement.clientHeight;
+    }
+
+    // Get document width or height
+    if (hAzzle.nodeType(9, elem)) {
+
+        document = elem.documentElement;
+
+        // Either scroll[Width/Height] or offset[Width/Height] or client[Width/Height],
+        // whichever is greatest
+        return Math.max(
+            elem.body["scroll" + name], document["scroll" + name],
+            elem.body["offset" + name], document["offset" + name],
+            document["client" + name]
+        );
+    }
+
+    return hAzzle.css(elem, name, extra);
 }
 
+/*
+ * Get styles
+ **/
+
+var getStyles = function (elem) {
+    return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+};
+
+
+function setPositiveNumber(elem, value, subtract) {
+    var matches = rnumsplit.exec(value);
+    return matches ?
+    // Guard against undefined "subtract", e.g., when used as in cssHooks
+    Math.max(0, matches[1] - (subtract || 0)) + (matches[2] || "px") :
+        value;
+}
+
+function getWidthOrHeight(elem, name, extra) {
+    var valueIsBorderBox = true,
+        val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
+        styles = getStyles(elem),
+        isBorderBox = hAzzle.css(elem, "boxSizing", false, styles) === "border-box";
+    if (val <= 0 || val === null) {
+        val = curCSS(elem, name, styles);
+        if (val < 0 || val === null) val = elem.style[name];
+        if (rnumnonpx.test(val)) return val;
+        valueIsBorderBox = isBorderBox && (support.boxSizingReliable() || val === elem.style[name]);
+        val = parseFloat(val) || 0;
+    }
+    return val + augmentWidthOrHeight(elem, name, extra || (isBorderBox ? "border" : "content"), valueIsBorderBox, styles) + "px"
+};
+
+
+function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
+
+    var i = extra === (isBorderBox ? "border" : "content") ? 4 : name === "width" ? 1 : 0,
+
+        val = 0;
+
+    for (; i < 4; i += 2) {
+        // both box models exclude margin, so add it if we want it
+        if (extra === "margin") {
+            val += hAzzle.css(elem, extra + cssExpand[i], true, styles);
+        }
+
+        if (isBorderBox) {
+            // border-box includes padding, so remove it if we want content
+            if (extra === "content") {
+                val -= hAzzle.css(elem, "padding" + cssExpand[i], true, styles);
+            }
+
+            // at this point, extra isn't border nor margin, so remove border
+            if (extra !== "margin") {
+                val -= hAzzle.css(elem, "border" + cssExpand[i] + "Width", true, styles);
+            }
+        } else {
+            // at this point, extra isn't content, so add padding
+            val += hAzzle.css(elem, "padding" + cssExpand[i], true, styles);
+
+            // at this point, extra isn't content nor padding, so add border
+            if (extra !== "padding") {
+                val += hAzzle.css(elem, "border" + cssExpand[i] + "Width", true, styles);
+            }
+        }
+    }
+
+    return val;
+}
 
 /**
  * Check if an element is hidden
@@ -33,29 +140,65 @@ function isHidden(elem, el) {
     return elem.style.display === "none";
 }
 
-function hide(elem) {
-    var _display = hAzzle.css(elem, 'display');
-    if (_display !== 'none') {
-        hAzzle.data(elem, '_display', _display);
-    }
-    hAzzle.style(elem, 'display', 'none');
-}
+/**
+ * Show an element
+ *
+ * @param {Object} elem
+ * @return Object}
+ */
 
 function show(elem) {
 
-    return hAzzle.style(elem, 'display', hAzzle.data(elem, '_display') || 'block');
+    if (isHidden(elem))
+        return hAzzle.style(elem, 'display', hAzzle.data(elem, 'display') || 'block');
 }
 
-function commonNodeTypes(elem) {
-    if (hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem)) return true;
-    return false;
+/**
+ * Hide an element
+ *
+ * @param {Object} elem
+ * @return Object}
+ */
+
+function hide(elem) {
+
+    if (!isHidden(elem)) {
+
+        var display = hAzzle.css(elem, 'display');
+        if (display !== 'none') {
+            hAzzle.data(elem, 'display', display);
+        }
+
+        // Hide the element
+        hAzzle.style(elem, 'display', 'none');
+    }
 }
+
+/*
+ * Check if elem contain a spesific nodeType
+ *
+ * @param {Object} elem
+ * @param {Return} Boolean
+ */
+
+function commonNodeTypes(elem) {
+    return hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem) ? true : false;
+};
+
+/**
+ * Set and get CSS properties
+ * @param {Object} elem
+ * @param {String} name
+ * @param {String} computed
+ * @return {Object}
+ *
+ */
 
 function curCSS(elem, name, computed) {
     var width, minWidth, maxWidth, ret,
         style = elem.style;
 
-    computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+    computed = computed || getStyles(elem);
 
     if (computed) {
         ret = computed.getPropertyValue(name) || computed[name];
@@ -66,10 +209,6 @@ function curCSS(elem, name, computed) {
         if (ret === "" && !hAzzle.contains(elem.ownerDocument, elem)) {
             ret = hAzzle.style(elem, name);
         }
-
-      // If IOS v. 6 or older
-      
-	  if (typeof iOSversion() !== 'undefined' && iOSversion()[0] <= 6) {
 
         if (rnumnonpx.test(ret) && rmargin.test(name)) {
 
@@ -87,16 +226,15 @@ function curCSS(elem, name, computed) {
             style.minWidth = minWidth;
             style.maxWidth = maxWidth;
         }
-}
     }
-
-    return ret !== undefined ?
-        ret + "" :
-        ret;
+    return ret !== undefined ? ret + "" : ret;
 }
+/*
+ * Check up for vendor prefixed names
+ * This function is cached so we can gain better speed
+ */
 
-
-function vendorPropName(style, name) {
+function vendorCheckUp(style, name) {
     if (!cached[style + name]) {
         // Shortcut for names that are not vendor prefixed
         hAzzle.each(style, function (index, style) {
@@ -119,7 +257,6 @@ function vendorPropName(style, name) {
     }
     return cached[style + name];
 }
-
 
 
 hAzzle.extend({
@@ -145,6 +282,26 @@ hAzzle.extend({
         "zoom": true
     },
 
+    /**
+     * cssHooks similar to hAzzle
+     *
+     * We are in 2014 and hAzzle supports cssHooks because we need to
+     * support short-hands, and a lot of HTML5 features
+     * supported by IE9 and newer browsers
+     */
+
+    cssHooks: {
+        'opacity': {
+            get: function (elem, computed) {
+                if (computed) {
+                    // We should always get a number back from opacity
+                    var ret = curCSS(elem, "opacity");
+                    return ret === "" ? "1" : ret;
+                }
+            }
+        }
+    },
+
     // Convert some pixels into another CSS unity.
     // It's used in $.style() for the += or -=.
     // * px   : Number.
@@ -152,13 +309,11 @@ hAzzle.extend({
     // * elem : Node, the current element.
     // * prop : String, the CSS property.
     pixelsToUnity: function (px, unit, elem, prop) {
-        switch (unit) {
-        case "":
-        case "px":
-            return px; // Don't waste our time if there is no conversion to do.
-        case "em":
-            return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
-        case "%":
+
+        if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
+        else if (unit === "em") return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
+        else if (unit === "%") {
+
             if (/^(left$|right$|margin|padding)/.test(prop)) {
                 prop = "width";
             } else if (/^(top|bottom)$/.test(prop)) {
@@ -198,12 +353,22 @@ hAzzle.extend({
 
     css: function (elem, name, extra, styles) {
 
-        var val, num, origName = hAzzle.camelCase(name);
+        var val, num, hooks, origName = hAzzle.camelCase(name);
 
         // Make sure that we're working with the right name
-        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorPropName(elem.style, origName));
+        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorCheckUp(elem.style, origName));
 
-        val = curCSS(elem, name, styles);
+        hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
+
+        // If a hook was provided get the computed value from there
+        if (hooks && "get" in hooks) {
+            val = hooks.get(elem, true, extra);
+        }
+
+        // Otherwise, if a way to get the computed value exists, use that
+        if (val === undefined) {
+            val = curCSS(elem, name, styles);
+        }
 
         //convert "normal" to computed value
         if (val === "normal" && name in cssNormalTransform) {
@@ -226,11 +391,13 @@ hAzzle.extend({
         }
 
         // Make sure that we're working with the right name
-        var ret, type
+        var ret, type, hooks,
             origName = hAzzle.camelCase(name),
             style = elem.style;
 
-        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorPropName(style, origName));
+        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorCheckUp(style, origName));
+
+        hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
 
         // Check if we're setting a value
         if (value !== undefined) {
@@ -257,7 +424,15 @@ hAzzle.extend({
 
                 value += ret && ret[3] ? ret[3] : "px";
             }
-            style[name] = value;
+
+            if (!hAzzle.support.clearCloneStyle && value === "" && name.indexOf("background") === 0) {
+                style[name] = "inherit";
+            }
+
+            // If a hook was provided, use that value, otherwise just set the specified value
+            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
+                style[name] = value;
+            }
 
         } else {
 
@@ -268,6 +443,39 @@ hAzzle.extend({
     }
 
 });
+
+/**
+ * CSS hooks height && width
+ */
+ 
+hAzzle.each([ "height", "width" ], function( i, name ) {
+
+hAzzle.cssHooks[ name ] = {
+		get: function( elem, computed, extra ) {
+			if ( computed ) {
+				return elem.offsetWidth === 0 && rdisplayswap.test( hAzzle.css( elem, "display" ) ) ?
+					hAzzle.swap( elem, cssShow, function() {
+						return getWidthOrHeight( elem, name, extra );
+					}) :
+					getWidthOrHeight( elem, name, extra );
+			}
+		},
+
+		set: function( elem, value, extra ) {
+			var styles = extra && getStyles( elem );
+			return setPositiveNumber( elem, value, extra ?
+				augmentWidthOrHeight(
+					elem,
+					name,
+					extra,
+					hAzzle.css( elem, "boxSizing", false, styles ) === "border-box",
+					styles
+				) : 0
+			);
+		}
+	};
+
+	});
 
 hAzzle.fn.extend({
 
@@ -300,9 +508,12 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    toggle: function () {
-
+    toggle: function (state) {
+        if (typeof state === "boolean") {
+            return state ? this.show() : this.hide();
+        }
         return this.each(function () {
+
             if (isHidden(this)) show(this);
             else hide(this);
         });
@@ -345,19 +556,6 @@ hAzzle.fn.extend({
     },
 
     /**
-     * Sets the opacity for given element
-     *
-     * @param elem
-     * @param {int} level range (0 .. 100)
-     */
-
-    setOpacity: function (value) {
-        return this.each(function () {
-            commonNodeTypes(this) && (this.style.opacity = value / 100);
-        });
-    },
-
-    /**
      * Restores element's styles with given properties
      *
      * @param {Object} props
@@ -367,6 +565,19 @@ hAzzle.fn.extend({
         return this.each(function () {
             if (commonNodeTypes(this))
                 for (var i = 0, prop; prop = Object.keys(props)[i]; i += 1) this.style[prop] = props[prop];
+        });
+    },
+
+    /**
+     * Sets the opacity for given element
+     *
+     * @param elem
+     * @param {int} level range (0 .. 100)
+     */
+
+    setOpacity: function (value) {
+        return this.each(function () {
+            commonNodeTypes(this) && (this.style.opacity = value / 100);
         });
     },
 
@@ -392,5 +603,55 @@ hAzzle.fn.extend({
         return this.each(function () {
             commonNodeTypes(this) && (this.style.top = parseInt(pos, 10) + "px");
         });
+    },
+
+    /**
+     * Read or write an element's height exluding margin, padding and border
+     *
+     * @param {Integer} value
+     * @return {String}
+     */
+
+    height: function (value) {
+        return hAzzle.isDefined(value) ? this.each(function () {
+            hAzzle.style(this, "height", value);
+        }) : predefultValue(this[0], "height", "content");
+    },
+
+    /**
+     * Read an element's height including padding, border and optional margin
+     *
+     * @param {Boolean} includeMargin
+     * @return {String}
+     */
+    outerHeight: function (margin) {
+        return predefultValue(this[0], 'height', typeof margin === "boolean" ? "margin" : "border");
+    },
+
+    innerHeight: function () {
+        return predefultValue(this[0], 'height', 'padding');
+    },
+
+    width: function (value) {
+        return hAzzle.isDefined(value) ? this.each(function () {
+            hAzzle.style(this, "width", value);
+        }) : predefultValue(this[0], "width", "content");
+    },
+
+    /**
+     * Read an element's width including padding, border and optional margin
+     *
+     * @param {Boolean} includeMargin
+     * @return {String}
+     */
+
+
+    outerWidth: function (margin, value) {
+        return predefultValue(this[0], 'width', typeof margin === "boolean" ? "margin" : "border", typeof value === true ? "margin" : "border");
+    },
+
+    innerWidth: function () {
+        return predefultValue(this[0], 'width', "padding");
     }
+
 });
