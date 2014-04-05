@@ -201,7 +201,7 @@ function curCSS(elem, name, computed) {
     computed = computed || getStyles(elem);
 
     if (computed) {
-        ret = computed.getPropertyValue(name) || computed[name];
+      ret = computed.getPropertyValue(name) || computed[name];
     }
 
     if (computed) {

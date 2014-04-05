@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.2
+ * Version: 0.22
  * Released under the MIT License.
  *
- * Date: 2014-04-04
+ * Date: 2014-04-06
  */
 (function (window, undefined) {
 
@@ -580,6 +580,9 @@
 
         isNumeric: function (obj) {
             return !hAzzle.IsNaN(parseFloat(obj)) && isFinite(obj);
+        },
+        isNumber: function (value) {
+            return typeof value === "number";
         },
         isEmptyObject: function (obj) {
             var name;
