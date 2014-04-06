@@ -23,6 +23,12 @@ cssNormalTransform = {
 
     cssExpand = ["Top", "Right", "Bottom", "Left"],
 
+    cssShow = {
+        position: "absolute",
+        visibility: "hidden",
+        display: "block"
+    },
+
     rmargin = (/^margin/),
     rnumnonpx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     rdisplayswap = /^(none|table(?!-c[ea]).+)/,
@@ -47,35 +53,31 @@ function predefultValue(elem, name, extra) {
     // Get document width or height
     if (hAzzle.nodeType(9, elem)) {
 
-        document = elem.documentElement;
+        var doc = elem.documentElement;
 
         // Either scroll[Width/Height] or offset[Width/Height] or client[Width/Height],
         // whichever is greatest
         return Math.max(
-            elem.body["scroll" + name], document["scroll" + name],
-            elem.body["offset" + name], document["offset" + name],
-            document["client" + name]
+            elem.body["scroll" + name], doc["scroll" + name],
+            elem.body["offset" + name], doc["offset" + name],
+            doc["client" + name]
         );
     }
 
     return hAzzle.css(elem, name, extra);
 }
 
-/*
+/**
  * Get styles
- **/
+ */
 
 var getStyles = function (elem) {
     return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
 };
 
-
-function setPositiveNumber(elem, value, subtract) {
+function setPositiveNumber(value, subs) {
     var matches = rnumsplit.exec(value);
-    return matches ?
-    // Guard against undefined "subtract", e.g., when used as in cssHooks
-    Math.max(0, matches[1] - (subtract || 0)) + (matches[2] || "px") :
-        value;
+    return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value
 }
 
 function getWidthOrHeight(elem, name, extra) {
@@ -83,15 +85,20 @@ function getWidthOrHeight(elem, name, extra) {
         val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
         styles = getStyles(elem),
         isBorderBox = hAzzle.css(elem, "boxSizing", false, styles) === "border-box";
+
     if (val <= 0 || val === null) {
         val = curCSS(elem, name, styles);
+
         if (val < 0 || val === null) val = elem.style[name];
+
         if (rnumnonpx.test(val)) return val;
-        valueIsBorderBox = isBorderBox && (support.boxSizingReliable() || val === elem.style[name]);
+
+        valueIsBorderBox = isBorderBox && (hAzzle.support.boxSizingReliable() || val === elem.style[name]);
         val = parseFloat(val) || 0;
+
     }
-    return val + augmentWidthOrHeight(elem, name, extra || (isBorderBox ? "border" : "content"), valueIsBorderBox, styles) + "px"
-};
+    return val + augmentWidthOrHeight(elem, name, extra || (isBorderBox ? "border" : "content"), valueIsBorderBox, styles) + "px";
+}
 
 
 function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
@@ -101,6 +108,7 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
         val = 0;
 
     for (; i < 4; i += 2) {
+
         // both box models exclude margin, so add it if we want it
         if (extra === "margin") {
             val += hAzzle.css(elem, extra + cssExpand[i], true, styles);
@@ -174,16 +182,6 @@ function hide(elem) {
     }
 }
 
-/*
- * Check if elem contain a spesific nodeType
- *
- * @param {Object} elem
- * @param {Return} Boolean
- */
-
-function commonNodeTypes(elem) {
-    return hAzzle.nodeType(3,elem) || hAzzle.nodeType(8,elem) ? true : false;
-};
 
 /**
  * Set and get CSS properties
@@ -201,7 +199,7 @@ function curCSS(elem, name, computed) {
     computed = computed || getStyles(elem);
 
     if (computed) {
-      ret = computed.getPropertyValue(name) || computed[name];
+        ret = computed.getPropertyValue(name) || computed[name];
     }
 
     if (computed) {
@@ -235,27 +233,29 @@ function curCSS(elem, name, computed) {
  */
 
 function vendorCheckUp(style, name) {
+
     if (!cached[style + name]) {
         // Shortcut for names that are not vendor prefixed
-        hAzzle.each(style, function (index, style) {
-            if (style === name) return name;
-        });
+        if (name in style) {
+            return name;
+        }
 
         // check for vendor prefixed names
-        var capName = name.charAt(0).toUpperCase() + name.slice(1),
+        var capName = name[0].toUpperCase() + name.slice(1),
             origName = name,
             i = cssPrefixes.length;
 
         while (i--) {
             name = cssPrefixes[i] + capName;
-            hAzzle.each(style, function (index, style) {
-                if (style === name) return name;
-            });
+            if (name in style) {
+                return name;
+            }
         }
         cached[style + name] = origName;
 
     }
     return cached[style + name];
+
 }
 
 
@@ -329,8 +329,7 @@ hAzzle.extend({
             }
             return 0;
         }
-        // The first time we calculate how many pixels there is in 1 meter
-        // for calculate what is 1 inch/cm/mm/etc.
+
         if (hAzzle.pixelsToUnity.units === undefined) {
             var units = hAzzle.pixelsToUnity.units = {},
                 div = document.createElement("div");
@@ -339,8 +338,8 @@ hAzzle.extend({
             units.mm = div.offsetWidth / 1000;
             document.body.removeChild(div);
             units.cm = units.mm * 10;
-            units. in = units.cm * 2.54;
-            units.pt = units. in * 1 / 72;
+            units.inn = units.cm * 2.54;
+            units.pt = units.inn * 1 / 72;
             units.pc = units.pt * 12;
         }
         // If the unity specified is not recognized we return the value.
@@ -353,40 +352,23 @@ hAzzle.extend({
 
     css: function (elem, name, extra, styles) {
 
-        var val, num, hooks, origName = hAzzle.camelCase(name);
+        var val, perf;
 
-        // Make sure that we're working with the right name
-        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorCheckUp(elem.style, origName));
+        // Normalize the property name 
 
-        hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
+        perf = hAzzle.camelCase(name);
 
-        // If a hook was provided get the computed value from there
-        if (hooks && "get" in hooks) {
-            val = hooks.get(elem, true, extra);
-        }
-
-        // Otherwise, if a way to get the computed value exists, use that
-        if (val === undefined) {
-            val = curCSS(elem, name, styles);
-        }
-
-        //convert "normal" to computed value
-        if (val === "normal" && name in cssNormalTransform) {
-            val = cssNormalTransform[name];
-        }
-
-        // Return, converting to number if forced or a qualifier was provided and val looks numeric
-        if (extra === "" || extra) {
-            num = parseFloat(val);
-            return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
-        }
-        return val;
+        name = hAzzle.cssProps[perf] || (hAzzle.cssProps[perf] = vendorCheckUp(elem.style, perf));
+        (perf = hAzzle.cssHooks[name] || hAzzle.cssHooks[perf]) && "get" in perf && (val = perf.get(elem, true, extra));
+        val === undefined && (val = curCSS(elem, name, styles));
+        val === "normal" && name in cssNormalTransform && (val = cssNormalTransform[name]);
+        return "" === extra || extra ? (elem = parseFloat(val), extra === true || hAzzle.isNumeric(elem) ? elem || 0 : val) : val
     },
 
     style: function (elem, name, value, extra) {
 
         // Don't set styles on text and comment nodes
-        if (!elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style) {
+        if (!elem || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem) || !elem.style) {
             return;
         }
 
@@ -395,8 +377,7 @@ hAzzle.extend({
             origName = hAzzle.camelCase(name),
             style = elem.style;
 
-        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorCheckUp(style, origName));
-
+        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorCheckUp(elem.style, origName));
         hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
 
         // Check if we're setting a value
@@ -409,12 +390,12 @@ hAzzle.extend({
              */
 
             if (type === "string" && (ret = rrelNum.exec(value))) {
-                value = hAzzle.css(elem, name, "");
+                value = hAzzle.css(elem, name, "", "", name, hooks);
                 value = hAzzle.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = "number";
             }
 
-            // Make sure that null and NaN values aren't set. See: #7116
+            // Make sure that null and NaN values aren't set.
             if (value === null || value !== value) {
                 return;
             }
@@ -425,7 +406,7 @@ hAzzle.extend({
                 value += ret && ret[3] ? ret[3] : "px";
             }
 
-            if (!hAzzle.support.clearCloneStyle && value === "" && name.indexOf("background") === 0) {
+            if (value === "" && /background/i.test(name)) {
                 style[name] = "inherit";
             }
 
@@ -447,35 +428,35 @@ hAzzle.extend({
 /**
  * CSS hooks height && width
  */
- 
-hAzzle.each([ "height", "width" ], function( i, name ) {
 
-hAzzle.cssHooks[ name ] = {
-		get: function( elem, computed, extra ) {
-			if ( computed ) {
-				return elem.offsetWidth === 0 && rdisplayswap.test( hAzzle.css( elem, "display" ) ) ?
-					hAzzle.swap( elem, cssShow, function() {
-						return getWidthOrHeight( elem, name, extra );
-					}) :
-					getWidthOrHeight( elem, name, extra );
-			}
-		},
+hAzzle.each(["height", "width"], function (i, name) {
 
-		set: function( elem, value, extra ) {
-			var styles = extra && getStyles( elem );
-			return setPositiveNumber( elem, value, extra ?
-				augmentWidthOrHeight(
-					elem,
-					name,
-					extra,
-					hAzzle.css( elem, "boxSizing", false, styles ) === "border-box",
-					styles
-				) : 0
-			);
-		}
-	};
+    hAzzle.cssHooks[name] = {
+        get: function (elem, computed, extra) {
+            if (computed) {
+                return elem.offsetWidth === 0 && rdisplayswap.test(hAzzle.css(elem, "display")) ?
+                    hAzzle.swap(elem, cssShow, function () {
+                        return getWidthOrHeight(elem, name, extra);
+                    }) :
+                    getWidthOrHeight(elem, name, extra);
+            }
+        },
 
-	});
+        set: function (elem, value, extra) {
+            var styles = extra && getStyles(elem);
+            return setPositiveNumber(value, extra ?
+                augmentWidthOrHeight(
+                    elem,
+                    name,
+                    extra,
+                    hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
+                    styles
+                ) : 0
+            );
+        }
+    };
+
+});
 
 hAzzle.fn.extend({
 
@@ -529,18 +510,18 @@ hAzzle.fn.extend({
      */
 
     css: function (name, value) {
-        if (hAzzle.isDefined(value)) return 1 === this.length ? hAzzle.style(this[0], name, value) : this.each(function () {
+        if (hAzzle.isDefined(value)) return this.length === 1 ? hAzzle.style(this[0], name, value) : this.each(function () {
             hAzzle.style(this, name, value);
         });
         if (hAzzle.isUndefined(value)) return hAzzle.isString(name) ? this[0] && hAzzle.css(this[0], name) : this.each(function () {
             var elem = this;
             hAzzle.each(name, function (name, value) {
-                hAzzle.css(elem, name, value);
+                hAzzle.style(elem, name, value);
             });
         });
     },
 
-     /**
+    /**
      * Sets the opacity for given element
      *
      * @param elem
@@ -548,11 +529,11 @@ hAzzle.fn.extend({
      */
 
     setOpacity: function (value) {
-	  if (hAzzle.isNumber) {
-        return this.each(function () {
-          this.style.opacity = value / 100;
-        });
-	  }
+        if (hAzzle.isNumber) {
+            return this.each(function () {
+                this.style.opacity = value / 100;
+            });
+        }
     },
 
     /**
