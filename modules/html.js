@@ -72,6 +72,11 @@ hAzzle.extend({
      *
      */
     HTML: function (str, data, selector) {
+    
+	if(typeof data === "string") {
+		
+  	  selector = data;
+	}
 
         var parts = cached[str] ? cached[str] : cached[str] = str.split(exprr['operators']).map(Function.prototype.call, String.prototype.trim),
 

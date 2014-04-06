@@ -1,10 +1,22 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.24
+ * Version: 0.24a
  * Released under the MIT License.
  *
  * Date: 2014-04-07
+ *
+ * NOTE!!
+ *
+ * As it is now, the "selector" engine is very basic and lack support for complex selectors.
+ * I will deal with this soon everything else is fixed.
+ *
+ * I just mention quickly that hAzzle is not jQuery or a jQuery / Zepto clone. And therefor
+ * people can't expect hAzzle to work like that eiter.
+ *
+ * But I will re-build the selector engine ASAP. I also holding back because I want to see the
+ * outcome of the CSS4 specs.
+ *
  */
 (function (window, undefined) {
 
@@ -109,12 +121,6 @@
     (function () {
 
         /**
-         * Detect querySelectorAll support.
-         */
-
-        support.byAll = !! doc[byAll];
-
-        /**
          * Detect classList support.
          */
 
@@ -137,6 +143,7 @@
             "position:absolute";
 
         container.appendChild(div);
+
 
 
         function computePixelPositionAndBoxSizingReliable() {
@@ -283,7 +290,7 @@
                 }));
             }
             if (sel && sel[0] === '!') {
-                sel = sel.charAt(1);
+                sel = sel.substr(1);
                 inverse = true;
             }
             return hAzzle.create(this.elems.filter(function (element) {
@@ -418,6 +425,7 @@
         /**
          * Take an element and push it onto the "elems" stack
 
+
          */
 
         push: function (itm) {
@@ -531,7 +539,6 @@
                     if (callback.call(obj[name], name, obj[name]) === false) {
                         break;
                     }
-
                 }
             }
 
@@ -805,9 +812,7 @@
             }
 
             return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
-
         },
-
 
         /**
          * Check if an element contains another element
