@@ -4,7 +4,7 @@
  * Version: 0.23
  * Released under the MIT License.
  *
- * Date: 2014-04-06
+ * Date: 2014-04-07
  */
 (function (window, undefined) {
 
@@ -18,8 +18,6 @@
         byId = 'getElementById',
         byAll = 'querySelectorAll',
         nodeType = 'nodeType',
-        own = 'hasOwnProperty',
-        call = 'call',
 
         /**
          * Prototype references.
@@ -41,14 +39,6 @@
             return new Date().getTime();
         }),
 
-        nativeKeys = Object.keys || function (obj) {
-            if (obj !== Object(obj)) throw "Syntax error, unrecognized expression: Invalid object";
-            var keys = [];
-            for (var key in obj)
-                if (own[call](obj, key)) keys.push(key);
-            return keys;
-        },
-
         uid = {
             current: 0,
             next: function () {
@@ -56,8 +46,8 @@
             }
         },
 
-         cached = [],
-		 
+        cached = [],
+
         // Selector caching
 
         cache = [],
@@ -131,9 +121,9 @@
         support.classList = !! doc.createElement('p').classList;
 
         var pixelPositionVal, boxSizingReliableVal,
-            docElem = document.documentElement,
-            container = document.createElement("div"),
-            div = document.createElement("div");
+            docElem = doc.documentElement,
+            container = doc.createElement("div"),
+            div = doc.createElement("div");
 
         if (!div.style) {
             return;
@@ -145,6 +135,7 @@
 
         container.style.cssText = "border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;" +
             "position:absolute";
+
         container.appendChild(div);
 
 
@@ -169,12 +160,11 @@
             return pixelPositionVal;
         },
             boxSizingReliable = function () {
-                if (boxSizingReliableVal == null) {
+                if (boxSizingReliableVal === null) {
                     computePixelPositionAndBoxSizingReliable();
                 }
                 return boxSizingReliableVal;
-            }
-
+            };
     }());
 
     hAzzle.fn = hAzzle.prototype = {
@@ -195,7 +185,7 @@
                     for (i = this.length = elems.length; i--;) this[i] = elems[i];
                     return this;
                 }
-                this.elems = cache[sel] = hAzzle.select(sel, ctx)
+                this.elems = cache[sel] = hAzzle.select(sel, ctx);
 
             } else {
 
@@ -218,13 +208,13 @@
 
                     // Nodelist
 
-                    hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = []
+                    hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
                 }
             }
 
             elems = this.elems;
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
-            return this
+            return this;
         },
 
         /**
@@ -259,11 +249,6 @@
          */
 
         find: function (sel) {
-            var i,
-                len = this.length,
-                ret = [],
-                self = this;
-
             if (sel) {
                 var elements;
                 if (this.length === 1) {
@@ -373,8 +358,7 @@
          */
 
         put: function (prop, value, nt) {
-            hAzzle.put(this.elems, prop, value, nt);
-            return this;
+            return hAzzle.put(this.elems, prop, value, nt);
         },
 
         /**
@@ -385,7 +369,7 @@
          */
 
         get: function (num) {
-            return hAzzle.isDefined(num) ? this.elems[0 > num ? this.elems.length + num : num] : this.elems;
+            return num !== null ? this.elems[0 > num ? this.elems.length + num : num] : this.elems;
         },
 
         /**
@@ -450,16 +434,16 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (a, b, c, d) {
-            return this.elems['reduce'](a, b, c, d);
+        reduce: function (iterator, memo) {
+            return this.elems['reduce'](iterator, memo);
         },
 
         /**
          * Reduce to right, the number of elems in the "elems" stack
          */
 
-        reduceRight: function (a, b, c, d) {
-            return this.elems['reduceRight'](a, b, c, d);
+        reduceRight: function (iterator, memo) {
+            return this.elems['reduceRight'](iterator, memo);
         },
 
         /**
@@ -477,11 +461,18 @@
         /**
          * Get the element at position specified by index from the current collection.
          *
+         * +, -, / and * are all allowed to use for collecting elements.
+         *
+         * Example:
+         *            .eq(1+2-1)  - Returnes element 2 in the collection
+         *            .eq(1*2-1)  - Returnes the first element in the collection
+         *
          * @param {Number} index
          * @return {Object}
          */
+
         eq: function (index) {
-            return index === null ? hAzzle() : hAzzle(this.get(index));
+            return hAzzle(this.get(index));
         }
     };
 
@@ -580,7 +571,7 @@
         },
 
         isNumeric: function (obj) {
-            return !hAzzle.IsNaN(parseFloat(obj)) && isFinite(obj);
+            return !this.IsNaN(parseFloat(obj)) && isFinite(obj);
         },
         isNumber: function (value) {
             return typeof value === "number";
@@ -600,7 +591,7 @@
         isArray: Array.isArray,
 
         isArrayLike: function (elem) {
-            if (elem === null || hAzzle.isWindow(elem)) return false;
+            if (elem === null || this.isWindow(elem)) return false;
         },
 
         isWindow: function (obj) {
@@ -608,8 +599,12 @@
                 return obj !== null && obj === obj.window;
         },
 
+        isDocument: function (obj) {
+            return obj !== null && obj.nodeType == obj.DOCUMENT_NODE;
+        },
+
         isPlainObject: function (obj) {
-            return hAzzle.isObject(obj) && !hAzzle.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
+            return this.isObject(obj) && !this.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
         },
         isBoolean: function (str) {
             return typeof str === 'boolean';
@@ -705,7 +700,7 @@
         pluck: function (array, prop) {
             return array.map(function (itm) {
                 return itm[prop];
-            })
+            });
         },
 
         /**
@@ -933,10 +928,10 @@
          * @return{String}
          */
         camelCase: function (str) {
-        cached[str] || (cached[str] = str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
-            return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
-        }));
-        return cached[str];
+            cached[str] || (cached[str] = str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
+                return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
+            }));
+            return cached[str];
         }
 
     });

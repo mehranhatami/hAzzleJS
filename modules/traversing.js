@@ -23,7 +23,7 @@ hAzzle.fn.extend({
     },
 
     /**
-     * Get the first element that matches the selector, beginning at the current element and progressing up through the DOM tree.
+     * Get the  element that matches the selector, beginning at the current element and progressing up through the DOM tree.
      *
      * @param {String} sel
      * @return {Object}
@@ -123,7 +123,7 @@ hAzzle.fn.extend({
      */
 
     next: function () {
-        return hAzzle.create(this.pluckNode('nextSibling'));
+        return hAzzle(this.pluckNode('nextSibling'));
     },
 
     /**
@@ -132,7 +132,7 @@ hAzzle.fn.extend({
      */
 
     prev: function () {
-        return hAzzle.create(this.pluckNode('previousSibling'));
+        return hAzzle(this.pluckNode('previousSibling'));
     },
 
     /**
@@ -140,7 +140,7 @@ hAzzle.fn.extend({
      */
 
     first: function () {
-        return hAzzle.create(this.get(0));
+        return hAzzle(this.get(0));
     },
 
     /**
@@ -148,7 +148,7 @@ hAzzle.fn.extend({
      */
 
     last: function () {
-        return hAzzle.create(this.get(-1));
+        return hAzzle(this.get(-1));
     },
 
     /**
