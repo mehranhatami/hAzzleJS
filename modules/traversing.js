@@ -122,8 +122,8 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    next: function () {
-        return hAzzle(this.pluckNode('nextSibling'));
+    next: function (selector) {
+        return selector ? hAzzle(this.pluckNode('nextSibling')).filter(selector) : hAzzle(this.pluckNode('nextSibling'));
     },
 
     /**
@@ -131,8 +131,8 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    prev: function () {
-        return hAzzle(this.pluckNode('previousSibling'));
+    prev: function (selector) {
+        return selector ? hAzzle(this.pluckNode('previousSibling')).filter(selector) : hAzzle(this.pluckNode('previousSibling'));
     },
 
     /**
