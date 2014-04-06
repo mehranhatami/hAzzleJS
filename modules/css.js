@@ -68,6 +68,14 @@ function predefultValue(elem, name, extra) {
 }
 
 /**
+ * Gets a window from an element
+ */
+function getWindow( elem ) {
+	return hAzzle.isWindow( elem ) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
+}
+
+
+/**
  * Get styles
  */
 
@@ -583,6 +591,30 @@ hAzzle.fn.extend({
 
     innerWidth: function () {
         return predefultValue(this[0], 'width', "padding");
-    }
+    },
+	
+  /**
+   *  ScrollTop
+   */
+	
+	scrollTop: function(val) {
+    var elem = this[0],
+        win = getWindow(elem);
+    if (val === undefined) return val ? val.pageYOffset : elem.scrollTop;
+    win ? win.scrollTo(window.pageYOffset) : elem.scrollTop = val;
+	},
+
+  /**
+   *  ScrollLeft
+   */
+
+  scrollLeft: function(val) {
+    var elem = this[0],
+        win = getWindow(elem);
+    if (val === undefined) return val ? val.pageXOffset : elem.scrollLeft;
+    win ? win.scrollTo(window.pageXOffset) : elem.scrollLeft = val;
+	
+	},
 
 });
+

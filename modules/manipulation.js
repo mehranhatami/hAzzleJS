@@ -199,31 +199,23 @@ hAzzle.fn.extend({
      */
 
     html: function (value, dir) {
+		
+		if ( value === undefined && this[0].nodeType === 1 ) {
+				return this[0].innerHTML;
+		}
+		
         if (hAzzle.isString(value)) {
-            return this.empty().each(function () {
-                // Remove element nodes and prevent memory leaks
+            return this.removeData().each(function () {	
                 if (hAzzle.nodeType(1, this)) {
-                    // TODO !!Need to clean the data
+					this.textContent = '';
                     this.insertAdjacentHTML('beforeend', value || '');
                 }
             });
-        }
-
-        // Return innerHTML only from the first elem in the collection
-
-        if (hAzzle.nodeType(1, this[0])) {
-            return this[0].innerHTML;
-        }
+        } 
+       return this.empty().append( value );
     },
 
-    cleanData: function (elems) {
-        // TODO!!!
-
-        // Remove all data attached to the element
-        // Remove all events attached to the element
-    },
-
-
+   
     /**
      * Remove all childNodes from an element
      *
@@ -231,10 +223,19 @@ hAzzle.fn.extend({
      */
 
     empty: function () {
-        //       return this.cleanData.put('textContent', '', /* Notetype 1*/ 1);
-        return this.put('textContent', '', /* Notetype 1*/ 1);
+     
+     /**
+	  * TODO!! 
+      *
+	  * Stop, and remove all tweens
+	  * Remove events
+	  *
+	  */
+	 
+	 return this.removeData().each(function() {
+	   this.textContent = "";
+		 });
     },
-
 
     /**
      * Create a deep copy of the element and it's children
@@ -258,17 +259,14 @@ hAzzle.fn.extend({
      * TODO!!
      *
      *  - Remove events
-     *  - Remove data
      */
 
     remove: function () {
-        return this.each(function () {
-            if (this.parentNode) {
-                this.parentNode.removeChild(this);
-            }
-        });
+     return this.removeData().each(function(){
+        if (this.parentNode)
+          this.parentNode.removeChild(this)
+      })
     },
-
 
     /**
      * Get value for input/select elements
@@ -279,12 +277,7 @@ hAzzle.fn.extend({
      */
     val: function (value) {
 
-        if (!value) {
-
-            return this[0] && hAzzle.getValue(this[0]);
-        }
-
-        return this.each(function (index, elem) {
+  return value ? this.each(function (index, elem) {
             var val;
 
             if (!hAzzle.nodeType(1, elem)) {
@@ -306,7 +299,7 @@ hAzzle.fn.extend({
             }
 
             elem.value = val;
-        });
+        }) : this[0] && hAzzle.getValue(this[0]);
     },
 
     /**

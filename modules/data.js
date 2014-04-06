@@ -55,10 +55,12 @@ function has(element, key) {
 
 function remove(element, key) {
     var id = hAzzle.getUID(element);
-    if (key) {
+    if (key === undefined && hAzzle.nodeType(1, element)) {
+        storage[id] = {};
+    } else {
         var obj = storage[id];
         obj && delete obj[key];
-    } else storage[id] = {};
+    }
 }
 
 

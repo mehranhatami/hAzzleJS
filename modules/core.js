@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.23
+ * Version: 0.24
  * Released under the MIT License.
  *
  * Date: 2014-04-07
@@ -176,6 +176,7 @@
         init: function (sel, ctx) {
             var elems, i;
             if (sel instanceof hAzzle) return sel;
+
             if (hAzzle.isString(sel)) {
 
                 // If the selector are cache, we return it after giving it some special threatment
@@ -185,6 +186,7 @@
                     for (i = this.length = elems.length; i--;) this[i] = elems[i];
                     return this;
                 }
+
                 this.elems = cache[sel] = hAzzle.select(sel, ctx);
 
             } else {
@@ -201,10 +203,13 @@
                 if (sel instanceof Array) {
 
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
+
                 } else {
                     // Object
 
-                    if (hAzzle.isObject(sel)) return this.elems = [sel], this.length = 1, this[0] = sel, this;
+                    if (hAzzle.isObject(sel)) {
+                        return this.elems = [sel], this.length = 1, this[0] = sel, this;
+                    }
 
                     // Nodelist
 
@@ -234,18 +239,6 @@
          * @param {String|Function} sel
          * @return {Object}
          *
-         *
-         *  FIX ME !!!!
-         *
-         * As it is for now, this function only works if the given selector is an string.
-         * Need to fix it so it can handle object or if the elem is an instance of hAzzle.
-         *
-         * As of april 2 - 2014, it works as it should if length === 1
-         *
-         * Here is an example on what is not working YET:
-         *
-         *  find( hAzzle('span' ) );
-         *
          */
 
         find: function (sel) {
@@ -255,12 +248,22 @@
                     if (typeof sel !== "string") {
                         elements = sel[0];
                     } else {
-                        elements = hAzzle(this.elems[0], sel);
+                        elements = hAzzle(sel, this.elems[0]);
                     }
                 } else {
-                    elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(sel, element));
-                    }, []);
+                    if (typeof sel == 'object') {
+                        var $this = this;
+                        elements = hAzzle(sel).filter(function () {
+                            var node = this;
+                            return $this.elems.some.call($this, function (parent) {
+                                return hAzzle.contains(parent, node);
+                            });
+                        });
+                    } else {
+                        elements = this.elems.reduce(function (elements, element) {
+                            return elements.concat(hAzzle.select(sel, element));
+                        }, []);
+                    }
                 }
                 return hAzzle.create(elements);
             }
@@ -414,6 +417,7 @@
 
         /**
          * Take an element and push it onto the "elems" stack
+
          */
 
         push: function (itm) {
@@ -460,6 +464,7 @@
 
         /**
          * Get the element at position specified by index from the current collection.
+         * If no index specified, return all elemnts in the "elems" stack
          *
          * +, -, / and * are all allowed to use for collecting elements.
          *
@@ -472,12 +477,12 @@
          */
 
         eq: function (index) {
-            return hAzzle(this.get(index));
+            return hAzzle(index === null ? '' : this.get(index));
         }
     };
 
-    hAzzle.fn.init.prototype = hAzzle.fn;
 
+    hAzzle.fn.init.prototype = hAzzle.fn;
 
     /**
      * Extend `hAzzle` with arguments, if the arguments length is one, the extend target is `hAzzle`
@@ -629,7 +634,7 @@
          */
 
         prefix: function (key, obj) {
-            var result, upcased = key[0].toUpperCase() + key.substring(1),
+            var result, upcased = key[0].toUpperCase() + key.slice(1),
                 prefix,
                 prefixes = ['moz', 'webkit', 'ms', 'o'];
 
@@ -654,7 +659,25 @@
 
         matches: function (element, sel) {
 
-            var matchesSelector, match;
+            var matchesSelector, match,
+
+                // Fall back to performing a selector if matchesSelector not supported
+
+                fallback = (function (sel, element) {
+
+                    if (!element.parentNode) {
+
+                        ghost.appendChild(element);
+                    }
+
+                    match = hAzzle.indexOf(hAzzle.select(sel, element.parentNode), element) >= 0;
+
+                    if (element.parentNode === ghost) {
+                        ghost.removeChild(element);
+                    }
+                    return match;
+
+                });
 
             if (!element || !hAzzle.isElement(element) || !sel) {
                 return false;
@@ -673,24 +696,25 @@
             if (element === doc) {
                 return false;
             }
-            matchesSelector = hAzzle.prefix('matchesSelector', ghost);
+            matchesSelector = cached[matchesSelector] ? cached[matchesSelector] : cached[matchesSelector] = hAzzle.prefix('matchesSelector', ghost);
 
             if (matchesSelector) {
-                return matchesSelector.call(element, sel);
+                // IE9 supports matchesSelector, but doesn't work on orphaned elems
+                // check for that
+                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
+
+                if (supportsOrphans) {
+
+                    return matchesSelector.call(element, sel);
+
+                } else { // For IE9 only or other browsers who fail on orphaned elems, we walk the hard way !! :)
+
+                    return fallback(sel, element);
+                }
             }
 
-            // Fall back to performing a selector:
+            return fallback(sel, element);
 
-            if (!element.parentNode) {
-                ghost.appendChild(element);
-            }
-
-            match = hAzzle.indexOf(hAzzle.select(sel, element.parentNode), element) >= 0;
-
-            if (element.parentNode === ghost) {
-                ghost.removeChild(element);
-            }
-            return match;
         },
 
         /**
@@ -769,7 +793,15 @@
                     if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
                 });
             } else { // QuerySelectorAll
-                els = ctx[byAll](sel);
+
+                /**
+                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
+                 *
+                 * TODO! Fix this
+                 **/
+                try {
+                    els = ctx[byAll](sel);
+                } catch (e) {}
             }
 
             return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
