@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.22
+ * Version: 0.23
  * Released under the MIT License.
  *
  * Date: 2014-04-06
@@ -56,6 +56,8 @@
             }
         },
 
+         cached = [],
+		 
         // Selector caching
 
         cache = [],
@@ -528,13 +530,12 @@
                 }
 
             } else {
-                // Use object.keys if the browser supports it
-                var keys = nativeKeys(obj);
 
-                for (i = keys.length; i--;) {
-                    if (callback.call(obj[keys], keys, obj[keys]) === false) {
+                for (name in obj) {
+                    if (callback.call(obj[name], name, obj[name]) === false) {
                         break;
                     }
+
                 }
             }
 
@@ -864,6 +865,7 @@
         },
 
         /**
+
          * Set values on elements in an array
          *
          * @param{Array} array
@@ -930,13 +932,11 @@
          * @param{String} str
          * @return{String}
          */
-
-
         camelCase: function (str) {
-
-            return str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
-                return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
-            });
+        cached[str] || (cached[str] = str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
+            return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
+        }));
+        return cached[str];
         }
 
     });
