@@ -1,31 +1,16 @@
-hAzzleJS v. 0.2
-==================
+hAzzleJS v. 0.26 BETA
+=====================
 
 **hAzzle** is a javascript library that tries it best to be the fastest one, and still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
 
 **hAzzle** are using native browsers functions - ES5 -, and because of that - it has many things common with underscore.js even the API itself follows the Zepto / jQuery way for easier development of plugins.
 
-Only the Core, and modules for DOM traversing / manipulation, and document ready are available for now. 
-
-Other modules for extending the hAzzle core will follow shortly.
-
-The DOM traversing methods are in average 80% faster then jQuery and Zepto
+The DOM traversing methods are in average 80% faster then jQuery and Zepto.
 
 14.66KB minimized
 
-As of april 1 - 2014 most of the modules are now completed, and hAzzle can be used in webpages.
 
-###NOTE!! hAzzle is still in a pre-alpha stage
-
-<b>Note! </b>
-
-hAzzle is not a jQuery clone, but a stand-alone library with it's own functions, but with some functions in common with other libraries. And hAzzle also use some other functions and techniques. As an example - this library are using:
-
-* insertAdjacentText()
-* insertAdjacentHTML()
-* insertAdjacentElement()
- 
-as some of the new features to gain better performance
+###NOTE!! As of april 7 - 2014 - hAzzle have now gone from alpha till beta stage.
 
 
 Browser compatiblity
