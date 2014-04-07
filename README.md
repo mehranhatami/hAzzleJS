@@ -9,10 +9,6 @@ The DOM traversing methods are in average 80% faster then jQuery and Zepto.
 
 31,6 KB minimized
 
-
-###NOTE!! As of april 7 - 2014 - hAzzle have now gone from alpha till beta stage.
-
-
 Browser compatiblity
 --------------------
 
