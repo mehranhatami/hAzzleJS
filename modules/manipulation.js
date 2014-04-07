@@ -215,59 +215,6 @@ hAzzle.fn.extend({
         return this.empty().append(value);
     },
 
-
-    /**
-     * Remove all childNodes from an element
-     *
-     * @return {Object}
-     */
-
-    empty: function () {
-
-        /**
-         * TODO!!
-         *
-         * Stop, and remove all tweens
-         * Remove events
-         *
-         */
-
-        return this.removeData().each(function () {
-            this.textContent = "";
-        });
-    },
-
-    /**
-     * Create a deep copy of the element and it's children
-     *
-     * TODO!!
-     *
-     *  - Use documentfrag
-     *  - Clone data
-     *  - Clone events
-     */
-
-    clone: function () {
-        return this.map(function () {
-            return this.cloneNode(true);
-        });
-    },
-
-    /**
-     *  Remove an element from the DOM
-     *
-     * TODO!!
-     *
-     *  - Remove events
-     */
-
-    remove: function () {
-        return this.removeData().each(function () {
-            if (this.parentNode)
-                this.parentNode.removeChild(this)
-        })
-    },
-
     /**
      * Get value for input/select elements
      * Set value for input/select elements

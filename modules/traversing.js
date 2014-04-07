@@ -51,7 +51,7 @@ hAzzle.fn.extend({
     },
 
     /**
-     * Add elements to the set of matched elements.
+     * Adds one element to the set of matched elements.
      *
      * @param {String} sel
      * @param {String} ctx
@@ -119,20 +119,22 @@ hAzzle.fn.extend({
 
     /**
      *  Return the element's next sibling
+	 * 
      * @return {Object}
      */
 
     next: function (selector) {
-        return selector ? hAzzle(this.pluckNode('nextSibling')).filter(selector) : hAzzle(this.pluckNode('nextSibling'));
+        return selector ? hAzzle(this.pluckNode('nextSibling').filter(selector)) : hAzzle(this.pluckNode('nextSibling'));
     },
 
     /**
      *  Return the element's previous sibling
+	 * 
      * @return {Object}
      */
 
     prev: function (selector) {
-        return selector ? hAzzle(this.pluckNode('previousSibling')).filter(selector) : hAzzle(this.pluckNode('previousSibling'));
+        return selector ? hAzzle(this.pluckNode('previousSibling').filter(selector)) : hAzzle(this.pluckNode('previousSibling'));
     },
 
     /**

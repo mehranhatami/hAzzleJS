@@ -3,7 +3,6 @@ var isFunction = hAzzle.isFunction,
 
     slice = Array.prototype.slice,
 
-    handlers = {},
     specialEvents = {},
     focusinSupported = 'onfocusin' in window,
 
@@ -15,15 +14,8 @@ var isFunction = hAzzle.isFunction,
     hover = {
         mouseenter: 'mouseover',
         mouseleave: 'mouseout'
-    };
-
-
-var returnTrue = function () {
-    return true;
-},
-    returnFalse = function () {
-        return false;
     },
+
     ignoreProperties = /^([A-Z]|returnValue$|layer[XY]$)/,
     eventMethods = {
         preventDefault: 'isDefaultPrevented',
@@ -31,29 +23,34 @@ var returnTrue = function () {
         stopPropagation: 'isPropagationStopped'
     };
 
+
+function returnTrue() {
+	return true;
+}
+
+function returnFalse() {
+	return false;
+}
+
+
+
 /**
  * Event Core Functions ( ECF )
  */
 
+function handlers(element) {
+    return element._hAzzle_handlers || (element._hAzzle_handlers = []);
+}
+
+
 function findHandlers(element, event, fn, selector) {
     event = parse(event);
     if (event.ns) var matcher = matcherFor(event.ns);
-    return (handlers[hAzzle.getUID(element)] || []).filter(function (handler) {
+    return (handlers(element) || []).filter(function (handler) {
         return handler && (!event.e || handler.e == event.e) && (!event.ns || matcher.test(handler.ns)) && (!fn || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn)) && (!selector || handler.sel == selector);
     });
 }
 
-
-function _remove(element, events, fn, selector, capture) {
-    var id = hAzzle.getUID(element);
-    (events || '').split(/\s/).forEach(function (event) {
-        findHandlers(element, event, fn, selector).forEach(function (handler) {
-            delete handlers[id][handler.i];
-            if ('removeEventListener' in element)
-                element.removeEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
-        });
-    });
-}
 
 function parse(event) {
     var parts = ('' + event).split('.');
@@ -72,8 +69,7 @@ function realEvent(type) {
 }
 
 function eventCapture(handler, captureSetting) {
-    return handler.del &&
-        (!focusinSupported && (handler.e in focus)) || !! captureSetting;
+    return handler.del && (!focusinSupported && (handler.e in focus)) || !! captureSetting;
 }
 
 
@@ -92,17 +88,12 @@ function compatible(event, source) {
 
         if (source.defaultPrevented !== undefined ? source.defaultPrevented :
             'returnValue' in source ? source.returnValue === false :
-            source.getPreventDefault && source.getPreventDefault());
-        event.isDefaultPrevented = returnTrue;
+            source.getPreventDefault && source.getPreventDefault())
+            event.isDefaultPrevented = returnTrue;
     }
     return event;
 }
 
-
-hAzzle.event = {
-    add: add,
-    remove: remove
-};
 
 function createProxy(event) {
     var key, proxy = {
@@ -114,39 +105,7 @@ function createProxy(event) {
     return compatible(proxy, event);
 }
 
-function add(element, events, fn, data, selector, delegator, capture) {
 
-    var id = hAzzle.getUID(element),
-        set = (handlers[id] || (handlers[id] = []));
-
-    hAzzle.each(events.split(/\s/), function (_, event) {
-
-        if (event == 'ready') return hAzzle(document).ready(fn);
-        var handler = parse(event);
-        handler.fn = fn;
-        handler.sel = selector;
-        // emulate mouseenter, mouseleave
-        if (handler.e in hover) fn = function (e) {
-            var related = e.relatedTarget;
-            if (!related || (related !== this && !hAzzle.contains(this, related)))
-                return handler.fn.apply(this, arguments);
-        };
-        handler.del = delegator;
-        var callback = delegator || fn;
-        handler.proxy = function (e) {
-            e = compatible(e);
-            if (e.isImmediatePropagationStopped()) return;
-            e.data = data;
-            var result = callback.apply(element, e._args === undefined ? [e] : [e].concat(e._args));
-            if (result === false) e.preventDefault(), e.stopPropagation();
-            return result;
-        };
-        handler.i = set.length;
-        set.push(handler);
-        if ('addEventListener' in element)
-            element.addEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
-    });
-}
 
 
 hAzzle.fn.extend({
@@ -157,7 +116,7 @@ hAzzle.fn.extend({
 
     on: function (types, selector, data, callback, one) {
 
-        var autoRemove, delegator;
+        var autoRemove, delegator, type;
 
         if (typeof types === "object") {
             if (!isString(selector)) {
@@ -165,7 +124,7 @@ hAzzle.fn.extend({
                 selector = undefined;
             }
 
-            for (var type in types) {
+            for (type in types) {
 
                 this.on(type, selector, data, types[type], one);
 
@@ -199,7 +158,7 @@ hAzzle.fn.extend({
 
             if (one) {
                 autoRemove = function (e) {
-                    _remove(element, e.type, callback);
+                    hAzzle.event.remove(element, e.type, callback);
                     return callback.apply(this, arguments);
                 };
             }
@@ -217,7 +176,7 @@ hAzzle.fn.extend({
                 };
             }
 
-            add(element, types, callback, data, selector, delegator || autoRemove);
+            hAzzle.event.add(element, types, callback, data, selector, delegator || autoRemove);
         });
 
     },
@@ -228,13 +187,20 @@ hAzzle.fn.extend({
     off: function (event, selector, callback) {
         var $this = this;
 
+    if (event && !isString(event)) {
+      hAzzle.each(event, function(type, fn){
+        $this.off(type, selector, fn);
+      });
+      return $this;
+    }
+
         if (!isString(selector) && !isFunction(callback) && callback !== false)
             callback = selector, selector = undefined;
 
         if (callback === false) callback = returnFalse;
 
         return $this.each(function () {
-            _remove(this, event, callback, selector);
+            hAzzle.event.remove(this, event, callback, selector);
         });
     },
 
@@ -252,63 +218,113 @@ hAzzle.fn.extend({
     // doesn't trigger an actual event, doesn't bubble
     triggerHandler: function (event, args) {
         var e, result;
-        this.each(function (_, element) {
-            e = createProxy(isString(event) ? hAzzle.Event(event) : event);
-            e._args = args;
-            e.target = element;
-            hAzzle.each(findHandlers(element, event.type || event), function (_, handler) {
-                result = handler.proxy(e);
-                if (e.isImmediatePropagationStopped()) return false;
+            this.each(function (i, element) {
+                e = createProxy(isString(event) ? hAzzle.Event(event) : event);
+                e._args = args;
+                e.target = element;
+                hAzzle.each(findHandlers(element, event.type || event), function (i, handler) {
+                    result = handler.proxy(e);
+                    if (e.isImmediatePropagationStopped()) return false;
+                });
             });
-        });
-        return result;
+            return result;
     },
-
-    bind: function (event, data, callback) {
-        return this.on(event, data, callback);
-    },
-    unbind: function (event, callback) {
-        return this.off(event, callback);
-    }
-
+	
+	hover: function( fnOver, fnOut ) {
+		return this.mouseenter( fnOver ).mouseleave( fnOut || fnOver );
+	}
 });
 
+hAzzle.event = {
 
+    add: function (element, events, fn, data, selector, delegator, capture) {
 
+      if(hAzzle.nodeType(3, element) ||  hAzzle.nodeType(8, element)) return;
 
-hAzzle.Event = function (type, props) {
-    if (!isString(type)) props = type, type = props.type;
-    var event = document.createEvent(specialEvents[type] || 'Events'),
-        bubbles = true;
-    if (props)
-        for (var name in props)(name == 'bubbles') ? (bubbles = !! props[name]) : (event[name] = props[name]);
-    event.initEvent(type, bubbles, true);
-    return compatible(event);
+        var set = handlers(element);
+
+        hAzzle.each(events.split(/\s/), function (_, event) {
+
+            if (event == 'ready') return hAzzle(document).ready(fn);
+            var handler = parse(event);
+            handler.fn = fn;
+            handler.sel = selector;
+
+            // Emulate mouseenter, mouseleave
+
+            if (handler.e in hover) fn = function (e) {
+                var related = e.relatedTarget;
+                if (!related || (related !== this && !hAzzle.contains(this, related)));
+                    return handler.fn.apply(this, arguments);
+            };
+            handler.del = delegator;
+            var callback = delegator || fn;
+            handler.proxy = function (e) {
+                e = compatible(e);
+                if (e.isImmediatePropagationStopped()) return;
+                e.data = data;
+                var result = callback.apply(element, e._args === undefined ? [e] : [e].concat(e._args));
+                if (result === false) e.preventDefault(), e.stopPropagation();
+                return result;
+            };
+            handler.i = set.length;
+            set.push(handler);
+            if ('addEventListener' in element);
+                element.addEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
+        });
+    },
+
+    remove: function (element, events, fn, selector, capture) {
+        (events || '').split(/\s/).forEach(function (event) {
+            findHandlers(element, event, fn, selector).forEach(function (handler) {
+                delete handlers(element)[handler.i];
+                if ('removeEventListener' in element) {
+					
+                    element.removeEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
+			   }
+            });
+        });
+    }
 };
 
 
 
 
-// shortcut methods for `.bind(event, fn)` for each event type
-hAzzle.each(('focusin focusout load resize scroll unload click dblclick ' +
-    'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
-    'change select keydown keypress keyup error').split(' '), function (_, event) {
-    hAzzle.fn[event] = function (callback) {
-        return callback ?
-            this.bind(event, callback) :
-            this.trigger(event);
-    };
-});
+hAzzle.Event = function (type, props) {
+
+    if (!isString(type)) props = type, type = props.type;
+
+    var event = document.createEvent(specialEvents[type] || 'Events'),
+        bubbles = true;
+
+    if (props)
+
+        for (var name in props)(name == 'bubbles') ? (bubbles = !! props[name]) : (event[name] = props[name]);
+
+    event.initEvent(type, bubbles, true);
+
+    return compatible(event);
+};
+
+  /**
+   * Shortcut methods for 'on'
+   */
 
 
-hAzzle.each(['focus', 'blur'], function (_, name) {
-    hAzzle.fn[name] = function (callback) {
-        if (callback) this.bind(name, callback);
-        else this.each(function () {
-            try {
-                this[name]();
-            } catch (e) {}
-        });
-        return this;
+hAzzle.each(("blur focus focusin focusout load resize scroll unload click dblclick " +
+	"mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
+	"change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
+
+    // Handle event binding
+
+    hAzzle.fn[name] = function (data, fn) {
+        if (fn == null) {
+            fn = data;
+            data = null;
+        }
+
+        return arguments.length > 0 ?
+            this.on(name, null, data, fn) :
+            this.trigger(name);
     };
 });

@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.24a
+ * Version: 0.24b
  * Released under the MIT License.
  *
  * Date: 2014-04-07
@@ -18,6 +18,7 @@
  * outcome of the CSS4 specs.
  *
  */
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -143,7 +144,6 @@
             "position:absolute";
 
         container.appendChild(div);
-
 
 
         function computePixelPositionAndBoxSizingReliable() {
