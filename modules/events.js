@@ -52,6 +52,7 @@ function handlers(element) {
  * @return {Object}
  */
 
+
   function findHandlers(element, event, fn, selector) {
 	
 	// Check for namespace
@@ -117,18 +118,19 @@ function returnFalse() {
     return false;
 }
 
+
 /**
- * Deal with preventDefault, stopPropagation, stopImmediatePropagation
+ * Quick fix
  */
 
-function compatible(event, source) {
+function QuickFix(event, original) {
 
-    if (source || !event.isDefaultPrevented) {
-        source || (source = event);
+    if (original || !event.isDefaultPrevented) {
+        original || (original = event);
 
         hAzzle.each(eventMethods, function (name, predicate) {
 
-            var sourceMethod = source[name];
+            var originalMethod = original[name];
 
             event[name] = function () {
 
@@ -140,30 +142,37 @@ function compatible(event, source) {
                     return;
                 }
 
-                return sourceMethod && sourceMethod.apply(source, arguments);
+                return originalMethod && originalMethod.apply(original, arguments);
             };
             event[predicate] = returnFalse;
         });
 
-        if (source.defaultPrevented !== undefined ? source.defaultPrevented :
-            'returnValue' in source ? source.returnValue === false :
-            source.getPreventDefault && source.getPreventDefault())
+        if (original.defaultPrevented !== undefined ? original.defaultPrevented :
+            'returnValue' in original ? original.returnValue === false :
+            original.getPreventDefault && original.getPreventDefault())
             event.isDefaultPrevented = returnTrue;
     }
     return event;
 }
 
+/**
+ * Create event proxy for delegated events.
+ *
+ * @param {Object} event
+ *
+ * @return {Object}
+ */
 
-function createProxy(event) {
-    var key,
-        proxy = {
-            originalEvent: event
-        };
+function createProxy(evt) {
+    var proxy = {
+        originalEvent: evt
+    };
 
-    for (key in event)
-        if (!ignoreProperties.test(key) && event[key] !== undefined) proxy[key] = event[key];
-
-    return compatible(proxy, event);
+    for (var key in evt)
+        if (!ignoreProperties.test(key) && evt[key] !== undefined) {
+            proxy[key] = evt[key];
+        }
+    return QuickFix(proxy, evt);
 }
 
 hAzzle.proxy = function (fn, context) {
@@ -291,18 +300,21 @@ hAzzle.fn.extend({
         });
     },
 
-    trigger: function (events, args) {
-        events = (isString(events) || hAzzle.isPlainObject(events)) ? hAzzle.events(events) : compatible(events);
-        events._args = args;
+    trigger: function (event, args) {
+        event = (isString(event) || hAzzle.isPlainObject(event)) ? hAzzle.Event(event) : QuickFix(event)
+        event._args = args
         return this.each(function () {
-            // items in the collection might not be DOM elements
-            if ('dispatchEvent' in this) this.dispatchEvent(events);
-            else hAzzle(this).triggerHandler(events, args);
-        });
+
+            if (this.type === "checkbox" && this.click && hAzzle.nodeName(this, "input")) {
+                this.click();
+                return false;
+            }
+
+            if ('dispatchEvent' in this) this.dispatchEvent(event)
+            else hAzzle(this).triggerHandler(event, args)
+        })
     },
 
-    // triggers event handlers on current element just as if an event occurred,
-    // doesn't trigger an actual event, doesn't bubble
     triggerHandler: function (events, args) {
         var e, result;
         this.each(function (i, element) {
@@ -323,7 +335,6 @@ hAzzle.fn.extend({
 });
 
 hAzzle.event = {
-
 
     /**
      * Add event to element.
@@ -369,7 +380,7 @@ hAzzle.event = {
             var cb = delegator || fn;
 
             handler.proxy = function (e) {
-                e = compatible(e);
+                e = QuickFix(e);
                 if (e.isImmediatePropagationStopped()) return;
                 e.data = data;
                 var result = cb.apply(element, e._args === undefined ? [e] : [e].concat(e._args));
@@ -417,7 +428,7 @@ hAzzle.Event = function (type, props) {
 
     event.initEvent(type, bubbles, true);
 
-    return compatible(event);
+    return QuickFix(event);
 };
 
 // Shortcut methods for 'on'
