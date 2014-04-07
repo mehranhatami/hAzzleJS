@@ -31,7 +31,7 @@
         byId = 'getElementById',
         byAll = 'querySelectorAll',
         nodeType = 'nodeType',
-
+        html = doc.documentElement,
         /**
          * Prototype references.
          */
@@ -127,10 +127,7 @@
 
         support.classList = !! doc.createElement('p').classList;
 
-        var pixelPositionVal, boxSizingReliableVal,
-            docElem = doc.documentElement,
-            container = doc.createElement("div"),
-            div = doc.createElement("div");
+        var div = doc.createElement("div");
 
         if (!div.style) {
             return;
@@ -140,39 +137,8 @@
         div.cloneNode(true).style.backgroundClip = "";
         support.clearCloneStyle = div.style.backgroundClip === "content-box";
 
-        container.style.cssText = "border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;" +
-            "position:absolute";
-
-        container.appendChild(div);
-
-
-        function computePixelPositionAndBoxSizingReliable() {
-            div.style.cssText =
-            // Support: Firefox<29, Android 2.3
-            // Vendor-prefix box-sizing
-            "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;" +
-                "box-sizing:border-box;display:block;margin-top:1%;top:1%;" +
-                "border:1px;padding:1px;width:4px;position:absolute";
-            div.innerHTML = "";
-            docElem.appendChild(container);
-
-            var divStyle = window.getComputedStyle(div, null);
-            pixelPositionVal = divStyle.top !== "1%";
-            boxSizingReliableVal = divStyle.width === "4px";
-
-            docElem.removeChild(container);
-        }
-
-        var pixelPosition = function () {
-            return pixelPositionVal;
-        },
-            boxSizingReliable = function () {
-                if (boxSizingReliableVal === null) {
-                    computePixelPositionAndBoxSizingReliable();
-                }
-                return boxSizingReliableVal;
-            };
     }());
+
 
     hAzzle.fn = hAzzle.prototype = {
 
@@ -764,60 +730,41 @@
         normalizeCtx: function (ctx) {
             if (!ctx) return doc;
             if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
-            if (!ctx[nodeType] && ctx instanceof Array) return ctx[0];
+            if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
             if (ctx[nodeType]) return ctx;
-        },
-
-        /**
-         * Find elements by selectors.
-         *
-         * @param {String} sel
-         * @param {Object} ctx
-         * @return {Object}
-         */
-
-        select: function (sel, ctx) {
-
-            var m, els = [];
-
-            // Get the right context to use.
-
-            ctx = hAzzle.normalizeCtx(ctx);
-
-            if (m = expr['idClassTagNameExp'].exec(sel)) {
-                if ((sel = m[1])) {
-                    els = ((els = ctx[byId](sel))) ? [els] : [];
-                } else if ((sel = m[2])) {
-                    els = ctx[byClass](sel);
-                } else if ((sel = m[3])) {
-                    els = ctx[byTag](sel);
-                }
-            } else if (m = expr['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
-                var result = ctx[byTag](m[1]),
-                    id = m[2],
-                    className = m[3];
-                hAzzle.each(result, function () {
-                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
-                });
-            } else { // QuerySelectorAll
-
-                /**
-                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
-                 *
-                 * TODO! Fix this
-                 **/
-                try {
-                    els = ctx[byAll](sel);
-                } catch (e) {}
-            }
-
-            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
+			return ctx;
         },
 
         /**
          * Check if an element contains another element
          */
+     contains: function (obj, target) {
 
+    if (html['compareDocumentPosition']) {
+        var adown = nodeTypes[9](obj) ? obj.documentElement : obj,
+            bup = target && target.parentNode;
+        return obj === bup || !! (bup && nodeTypes[1](bup) && (
+            adown.contains ?
+            adown.contains(bup) :
+            obj.compareDocumentPosition && obj.compareDocumentPosition(bup) & 16
+        ));
+
+    } else {
+        if (target) {
+            while ((target = target.parentNode)) {
+                if (target === obj) {
+                    return true;
+                }
+            }
+        }
+        return false;
+
+    }
+},
+        /**
+         * Check if an element contains another element
+         */
+/*
         contains: function (obj, target) {
             if (target) {
                 while ((target = target.parentNode)) {
@@ -828,6 +775,7 @@
             }
             return false;
         },
+		*/
         /**
          * Native indexOf is slow and the value is enough for us as argument.
          * Therefor we create our own
@@ -972,6 +920,59 @@
         }
 
     });
+	
+  /**
+   * hAzzle select are moved down here so it's even easier now to replace this module with another selector engine.
+   */	
+  hAzzle.extend({	
+	
+	        /**
+         * Find elements by selectors.
+         *
+         * @param {String} sel
+         * @param {Object} ctx
+         * @return {Object}
+         */
+
+        select: function (sel, ctx) {
+
+            var m, els = [];
+
+            // Get the right context to use.
+
+            ctx = hAzzle.normalizeCtx(ctx);
+
+            if (m = expr['idClassTagNameExp'].exec(sel)) {
+                if ((sel = m[1])) {
+                    els = ((els = ctx[byId](sel))) ? [els] : [];
+                } else if ((sel = m[2])) {
+                    els = ctx[byClass](sel);
+                } else if ((sel = m[3])) {
+                    els = ctx[byTag](sel);
+                }
+            } else if (m = expr['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
+                var result = ctx[byTag](m[1]),
+                    id = m[2],
+                    className = m[3];
+                hAzzle.each(result, function () {
+                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
+                });
+            } else { // QuerySelectorAll
+
+                /**
+                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
+                 *
+                 * TODO! Fix this
+                 **/
+                try {
+                    els = ctx[byAll](sel);
+                } catch (e) {}
+            }
+
+            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
+        }
+		
+  });
 
     window['hAzzle'] = hAzzle;
 
