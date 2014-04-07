@@ -139,15 +139,15 @@ hAzzle.extend({
     },
 
     attr: function (elem, name, value) {
-    if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
-        if ("undefined" === typeof elem.getAttribute) return hAzzle.prop(elem, name, value);
-        if (hAzzle.isUndefined(value)) {
-            if (name === "value"  && name.nodeName.toLowerCase() === "input") return hAzzle.getValue(elem);
-            elem = elem.getAttribute(name);
-            return null === elem ? undefined : elem;
+        if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
+            if ("undefined" === typeof elem.getAttribute) return hAzzle.prop(elem, name, value);
+            if (hAzzle.isUndefined(value)) {
+                if (name === "value" && name.nodeName.toLowerCase() === "input") return hAzzle.getValue(elem);
+                elem = elem.getAttribute(name);
+                return null === elem ? undefined : elem;
+            }
+            return elem.setAttribute(name, value + "");
         }
-        return elem.setAttribute(name, value + "");
-	  }
     }
 
 });
@@ -199,23 +199,23 @@ hAzzle.fn.extend({
      */
 
     html: function (value, dir) {
-		
-		if ( value === undefined && this[0].nodeType === 1 ) {
-				return this[0].innerHTML;
-		}
-		
+
+        if (value === undefined && this[0].nodeType === 1) {
+            return this[0].innerHTML;
+        }
+
         if (hAzzle.isString(value)) {
-            return this.removeData().each(function () {	
+            return this.removeData().each(function () {
                 if (hAzzle.nodeType(1, this)) {
-					this.textContent = '';
+                    this.textContent = '';
                     this.insertAdjacentHTML('beforeend', value || '');
                 }
             });
-        } 
-       return this.empty().append( value );
+        }
+        return this.empty().append(value);
     },
 
-   
+
     /**
      * Remove all childNodes from an element
      *
@@ -223,18 +223,18 @@ hAzzle.fn.extend({
      */
 
     empty: function () {
-     
-     /**
-	  * TODO!! 
-      *
-	  * Stop, and remove all tweens
-	  * Remove events
-	  *
-	  */
-	 
-	 return this.removeData().each(function() {
-	   this.textContent = "";
-		 });
+
+        /**
+         * TODO!!
+         *
+         * Stop, and remove all tweens
+         * Remove events
+         *
+         */
+
+        return this.removeData().each(function () {
+            this.textContent = "";
+        });
     },
 
     /**
@@ -262,10 +262,10 @@ hAzzle.fn.extend({
      */
 
     remove: function () {
-     return this.removeData().each(function(){
-        if (this.parentNode)
-          this.parentNode.removeChild(this)
-      })
+        return this.removeData().each(function () {
+            if (this.parentNode)
+                this.parentNode.removeChild(this)
+        })
     },
 
     /**
@@ -277,7 +277,7 @@ hAzzle.fn.extend({
      */
     val: function (value) {
 
-  return value ? this.each(function (index, elem) {
+        return value ? this.each(function (index, elem) {
             var val;
 
             if (!hAzzle.nodeType(1, elem)) {
@@ -501,6 +501,91 @@ hAzzle.fn.extend({
                 }
             }
         });
-    }
+    },
+
+    /**
+     * Replace each element in the set of matched elements with the provided new content
+     *
+     * @param {String} html
+     * @return {Object}
+     */
+
+    replaceWith: function (html) {
+        if (typeof html === "string") return this.before(html).remove()
+    },
+
+    /**
+     * WORK IN PROGRESS!!
+     *
+     * Working on a new "wrapper" function, and this is totally different from jQuery.
+     * It does it's job, but the HTML markup is different.
+     *
+     * Need to work on the HTML module to get this work 100%
+     *
+     * In jQuery you can write:
+     *
+     *     $( "p" ).wrap( "<div></div>" );
+     *
+     *
+     * In hAzzle, this will create a bunch of DIV tags.
+     *
+     * To get this working in hAzzle, we have to do it like this:
+     *
+     * $( "p" ).wrap( "div" );
+     *
+     * And we get the same result.
+     *
+     * We use hAzzle.HTML () to create our HTML markup
+     *
+     * My main idea is to simplify everthing.
+     *
+     */
+
+    wrap: function (structure) {
+
+        var func = hAzzle.isFunction(structure)
+        if (this[0] && !func)
+
+        // Create the HTML markup 
+
+            var dom = hAzzle(hAzzle.HTML(structure)).get(0),
+        clone = dom.parentNode || this.length > 1;
+
+        return this.each(function (index) {
+            hAzzle(this).wrapAll(
+                func ? structure.call(this, index) :
+                clone ? dom.cloneNode(true) : dom
+            );
+        });
+    },
+
+    wrapAll: function (structure) {
+        if (this[0]) {
+            hAzzle(this[0]).before(structure = hAzzle(structure))
+            var children
+            // drill down to the inmost element
+            while ((children = structure.children()).length) structure = children.first()
+            hAzzle(structure).append(this)
+        }
+        return this
+    },
+
+    wrapInner: function (structure) {
+        var func = hAzzle.isFunction(structure)
+        return this.each(function (index) {
+            var self = hAzzle(this),
+                contents = self.contents(),
+                dom = func ? structure.call(this, index) : structure
+                contents.length ? contents.wrapAll(dom) : self.append(dom)
+        })
+    },
+
+    unwrap: function () {
+
+        this.parent().each(function () {
+            hAzzle(this).replaceWith(hAzzle(this).children())
+        })
+        return this
+    },
 
 });
