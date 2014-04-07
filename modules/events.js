@@ -6,12 +6,12 @@ var isFunction = hAzzle.isFunction,
     specialEvents = {},
     focusinSupported = 'onfocusin' in window,
 
-    focus = {
+    _focus = {
         focus: 'focusin',
         blur: 'focusout'
     },
 
-    hover = {
+    _mouse = {
         mouseenter: 'mouseover',
         mouseleave: 'mouseout'
     },
@@ -23,36 +23,63 @@ var isFunction = hAzzle.isFunction,
         stopPropagation: 'isPropagationStopped'
     };
 
-
-function returnTrue() {
-	return true;
-}
-
-function returnFalse() {
-	return false;
-}
-
-
+/******************************************
+ * Event Core Functions ( ECF )
+ ******************************************/
 
 /**
- * Event Core Functions ( ECF )
+ * Handlers
+ *
+ * In hAzzle each event handler is attached to the element, and
+ * we check here if the element has the handler we search for,
+ * or not.
+ *
+ * @param {Object} element
+ * @return {Object}
  */
 
 function handlers(element) {
-    return element._hAzzle_handlers || (element._hAzzle_handlers = []);
+    return element._hdlers || (element._hdlers = []);
 }
 
+/**
+ * Find event handler
+ *
+ * @param {Object} element
+ * @param {Function} event
+ * @param {String} fn
+ * @param {Function} selector
+ * @return {Object}
+ */
 
-function findHandlers(element, event, fn, selector) {
-    event = parse(event);
-    if (event.ns) var matcher = matcherFor(event.ns);
-    return (handlers(element) || []).filter(function (handler) {
-        return handler && (!event.e || handler.e == event.e) && (!event.ns || matcher.test(handler.ns)) && (!fn || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn)) && (!selector || handler.sel == selector);
+  function findHandlers(element, event, fn, selector) {
+	
+	// Check for namespace
+	
+    event = getEventParts(event);
+    
+	// If namespace event...
+	
+	if (event.ns) var matcher = matcherFor(event.ns);
+    
+	return (handlers(element) || []).filter(function(handler) {
+      return handler
+        && (!event.e  || handler.e == event.e)
+        && (!event.ns || matcher.test(handler.ns))
+        && (!fn       || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn))
+        && (!selector || handler.sel == selector);
     });
-}
+  }
 
+/**
+ * Get event parts.
+ *
+ * @param {String} event
+ *
+ * @return {Object}
+ */
 
-function parse(event) {
+function getEventParts(event) {
     var parts = ('' + event).split('.');
     return {
         e: parts[0],
@@ -60,21 +87,39 @@ function parse(event) {
     };
 }
 
+
 function matcherFor(ns) {
     return new RegExp('(?:^| )' + ns.replace(' ', ' .* ?') + '(?: |$)');
 }
 
+/**
+ * Get real event.
+ *
+ * @param {String} event
+ *
+ * @return {String}
+ */
+
 function realEvent(type) {
-    return hover[type] || (focusinSupported && focus[type]) || type;
+    return _mouse[type] || (focusinSupported && _focus[type]) || type;
 }
 
-function eventCapture(handler, captureSetting) {
-    return handler.del && (!focusinSupported && (handler.e in focus)) || !! captureSetting;
+
+function BubbleCatching(handler, boobleSetting) {
+    return handler.del && (!focusinSupported && (_focus[handler.e])) || !! boobleSetting;
 }
 
- /**
-  * Deal with preventDefault, stopPropagation, stopImmediatePropagation
-  */
+function returnTrue() {
+    return true;
+}
+
+function returnFalse() {
+    return false;
+}
+
+/**
+ * Deal with preventDefault, stopPropagation, stopImmediatePropagation
+ */
 
 function compatible(event, source) {
 
@@ -87,14 +132,14 @@ function compatible(event, source) {
 
             event[name] = function () {
 
-				this[predicate] = returnTrue;
+                this[predicate] = returnTrue;
 
-				var e = this.originalEvent;
-		
-				if( !e) {
-				   return;
-				}
-				
+                var e = this.originalEvent;
+
+                if (!e) {
+                    return;
+                }
+
                 return sourceMethod && sourceMethod.apply(source, arguments);
             };
             event[predicate] = returnFalse;
@@ -110,55 +155,77 @@ function compatible(event, source) {
 
 
 function createProxy(event) {
-    var key, proxy = {
+    var key,
+        proxy = {
             originalEvent: event
         };
+
     for (key in event)
         if (!ignoreProperties.test(key) && event[key] !== undefined) proxy[key] = event[key];
 
     return compatible(proxy, event);
 }
 
-
-
+hAzzle.proxy = function (fn, context) {
+    if (isFunction(fn)) {
+        var passedArgs = slice.call(arguments, 2),
+            proxyFn = function () {
+                return fn.apply(context, passedArgs.length ? passedArgs : arguments);
+            };
+        proxyFn.hAzzle_id = hAzzle.getUID(fn);
+        return proxyFn;
+    } else if (isString(context)) {
+        return hAzzle.proxy(fn[context], fn);
+    } else {
+        throw new TypeError("expected function");
+    }
+};
 
 hAzzle.fn.extend({
 
     /**
-     * 'on' is such a common word in javascript libraries, so I can't avoid using it
+     * Add event to element
+     *
+     * @param {String/Object} events
+     * @param {String} selector
+     * @param {string} data
+     * @param {Function} fn
+     * @param {Boolean} one
+     * @return {Object}
      */
 
-    on: function (types, selector, data, callback, one) {
-    
-	 var autoRemove, delegator, type;
-	
-    if (types && !isString(types)) {
-    
-	 for (type in types) {
+    on: function (events, selector, data, fn, one) {
 
-       this.on(type, selector, data, types[type], one);
-	 }
-      return this;
-    }
+        var autoRemove, delegator, type;
 
-    if (!isString(selector) && !isFunction(callback) && callback !== false) {
-      callback = data, data = selector, selector = undefined
-	}
-	
-    if (isFunction(data) || data === false) {
-      callback = data, data = undefined
-	}
+        if (events && !isString(events)) {
+
+            for (type in events) {
+
+                this.on(type, selector, data, events[type], one);
+            }
+            return this;
+        }
+
+        if (!isString(selector) && !isFunction(fn) && fn !== false) {
+            fn = data, data = selector, selector = undefined;
+        }
+
+        if (isFunction(data) || data === false) {
+            fn = data, data = undefined;
+        }
         return this.each(function (_, element) {
 
             if (one) {
                 autoRemove = function (e) {
-                    hAzzle.event.remove(element, e.type, callback);
-                    return callback.apply(this, arguments);
+                    hAzzle.event.remove(element, e.type, fn);
+                    return fn.apply(this, arguments);
                 };
             }
 
+            // Event delegation
             if (selector) {
-				
+
                 delegator = function (e) {
                     var evt, match = hAzzle(e.target).closest(selector, element).get(0);
                     if (match && match !== element) {
@@ -166,133 +233,176 @@ hAzzle.fn.extend({
                             currentTarget: match,
                             liveFired: element
                         });
-                        return (autoRemove || callback).apply(match, [evt].concat(slice.call(arguments, 1)));
+                        return (autoRemove || fn).apply(match, [evt].concat(slice.call(arguments, 1)));
                     }
                 };
             }
 
-            hAzzle.event.add(element, types, callback, data, selector, delegator || autoRemove);
+            hAzzle.event.add(element, events, fn, data, selector, delegator || autoRemove);
         });
 
     },
-    one: function (types, selector, data, callback) {
-        return this.on(types, selector, data, callback, true);
+
+    /**
+     * Add event to element only once
+     * The event will be removed after the first time it's triggered
+     *
+     * @param {String/Object} events
+     * @param {String} selector
+     * @param {string} data
+     * @param {Function} fn
+     * @return {Object}
+     */
+
+    one: function (events, selector, data, fn) {
+        return this.on(events, selector, data, fn, true);
     },
 
-    off: function (types, selector, fn ) {
-        
-       if ( typeof types === "object" ) {
-			// ( types-object [, selector] )
-			for ( var type in types ) {
-				this.off( type, selector, types[ type ] );
-			}
-			return this;
-		}
+    /**
+     * Remove event from element
+     *
+     * @param {String} events
+     * @param {String} selector
+     * @param {Function} fn
+     * @return {Object}
+     */
 
-        if ( selector === false || typeof selector === "function" ) {
-			// ( types [, fn] )
-			fn = selector;
-			selector = undefined;
-		}
-		if ( fn === false ) {
-			fn = returnFalse;
-		}
+    off: function (events, selector, fn) {
+
+        if (typeof events === "object") {
+            // ( types-object [, selector] )
+            for (var type in events) {
+                this.off(type, selector, events[type]);
+            }
+            return this;
+        }
+
+        if (selector === false || typeof selector === "function") {
+            // ( types [, fn] )
+            fn = selector;
+            selector = undefined;
+        }
+        if (fn === false) {
+            fn = returnFalse;
+        }
 
         return this.each(function () {
-            hAzzle.event.remove(this, types, fn, selector);
+            hAzzle.event.remove(this, events, fn, selector);
         });
     },
 
-    trigger: function (event, args) {
-        event = (isString(event) || hAzzle.isPlainObject(event)) ? hAzzle.Event(event) : compatible(event);
-        event._args = args;
+    trigger: function (events, args) {
+        events = (isString(events) || hAzzle.isPlainObject(events)) ? hAzzle.events(events) : compatible(events);
+        events._args = args;
         return this.each(function () {
             // items in the collection might not be DOM elements
-            if ('dispatchEvent' in this) this.dispatchEvent(event);
-            else hAzzle(this).triggerHandler(event, args);
+            if ('dispatchEvent' in this) this.dispatchEvent(events);
+            else hAzzle(this).triggerHandler(events, args);
         });
     },
 
     // triggers event handlers on current element just as if an event occurred,
     // doesn't trigger an actual event, doesn't bubble
-    triggerHandler: function (event, args) {
+    triggerHandler: function (events, args) {
         var e, result;
-            this.each(function (i, element) {
-                e = createProxy(isString(event) ? hAzzle.Event(event) : event);
-                e._args = args;
-                e.target = element;
-                hAzzle.each(findHandlers(element, event.type || event), function (i, handler) {
-                    result = handler.proxy(e);
-                    if (e.isImmediatePropagationStopped()) return false;
-                });
+        this.each(function (i, element) {
+            e = createProxy(isString(events) ? hAzzle.Event(events) : events);
+            e._args = args;
+            e.target = element;
+            hAzzle.each(findHandlers(element, events.type || events), function (_, handler) {
+                result = handler.proxy(e);
+                if (e.isImmediatePropagationStopped()) return false;
             });
-            return result;
+        });
+        return result;
     },
-	
-	hover: function( fnOver, fnOut ) {
-		return this.mouseenter( fnOver ).mouseleave( fnOut || fnOver );
-	}
+
+    hover: function (fnOver, fnOut) {
+        return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+    }
 });
 
 hAzzle.event = {
 
-    add: function (element, events, fn, data, selector, delegator, capture) {
 
-      if(hAzzle.nodeType(3, element) ||  hAzzle.nodeType(8, element)) return;
+    /**
+     * Add event to element.
+     * Using addEventListener or attachEvent (IE)
+     *
+     * @param {Object} el
+     * @param {String} events
+     * @param {Function} fn
+     * @param {String} selector
+     */
+    add: function (element, events, fn, data, selector, delegator, bubble) {
+
+        if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element)) return;
 
         // Set handler on the element
-		
-		var set = handlers(element);
 
-       // Handle multiple events separated by comma
+        var set = handlers(element);
 
-        hAzzle.each(events.split(/\s/), function (_, event) {
+        // Handle multiple events seperated by a space
 
-            if (event == 'ready') return hAzzle(document).ready(fn);
-            var handler = parse(event);
+        hAzzle.each(events.split(/\s/), function (index, type) {
+
+            if (type == 'ready') return hAzzle(fn);
+
+            // Namespace check
+
+            var handler = getEventParts(type);
             handler.fn = fn;
             handler.sel = selector;
 
-            // Emulate mouseenter, mouseleave
+            if (_mouse[handler.e]) {
 
-            if (handler.e in hover) fn = function (e) {
-                var related = e.relatedTarget;
-                if (!related || (related !== this && !hAzzle.contains(this, related)));
+                fn = function (e) {
+                    var related = e.relatedTarget;
+                    if (!related || (related !== this && !hAzzle.contains(this, related)));
                     return handler.fn.apply(this, arguments);
-            };
+                };
+
+            }
+
             handler.del = delegator;
-            var callback = delegator || fn;
+
+            var cb = delegator || fn;
+
             handler.proxy = function (e) {
                 e = compatible(e);
                 if (e.isImmediatePropagationStopped()) return;
                 e.data = data;
-                var result = callback.apply(element, e._args === undefined ? [e] : [e].concat(e._args));
+                var result = cb.apply(element, e._args === undefined ? [e] : [e].concat(e._args));
                 if (result === false) e.preventDefault(), e.stopPropagation();
                 return result;
             };
             handler.i = set.length;
             set.push(handler);
-            if ( element.addEventListener ) {
-                element.addEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
-			}
+            if (element.addEventListener) {
+                element.addEventListener(realEvent(handler.e), handler.proxy, BubbleCatching(handler, bubble));
+            }
         });
     },
 
-    remove: function (element, events, fn, selector, capture) {
-        (events || '').split(/\s/).forEach(function (evt) {
-            findHandlers(element, evt, fn, selector).forEach(function (handler) {
+    /**
+     * Remove event to element.
+     *
+     * @param {Object} el
+     * @param {String} events
+     * @param {Function} fn
+     * @param {String} selector
+     */
+    remove: function (element, events, fn, selector, bubble) {
+        hAzzle.each((events || '').split(/\s/), function (_, evt) {
+            hAzzle.each(findHandlers(element, evt, fn, selector), function (_, handler) {
                 delete handlers(element)[handler.i];
-
-                if ( element.removeEventListener ) {
-                    element.removeEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
-			   }
+                if (element.removeEventListener) {
+                    element.removeEventListener(realEvent(handler.e), handler.proxy, BubbleCatching(handler, bubble));
+                }
             });
         });
     }
 };
-
-
-
 
 hAzzle.Event = function (type, props) {
 
@@ -310,19 +420,17 @@ hAzzle.Event = function (type, props) {
     return compatible(event);
 };
 
-  /**
-   * Shortcut methods for 'on'
-   */
-
+// Shortcut methods for 'on'
 
 hAzzle.each(("blur focus focusin focusout load resize scroll unload click dblclick " +
-	"mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
-	"change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
+    "mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
+    "change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
 
     // Handle event binding
 
     hAzzle.fn[name] = function (data, fn) {
-        if (fn == null) {
+
+        if (fn === null) {
             fn = data;
             data = null;
         }
