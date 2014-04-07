@@ -1,638 +1,314 @@
-    var win = window,
-        addEvent = 'addEventListener',
-        removeEvent = 'removeEventListener',
-        own = 'hasOwnProperty',
-        call = 'call',
-        doc = document || {},
-        root = doc.documentElement || {},
+var isFunction = hAzzle.isFunction,
+    isString = hAzzle.isString,
 
-        prefixCache = [],
+    slice = Array.prototype.slice,
 
-       expro = { 
-	   
-        namespaceRegex: /[^\.]*(?=\..*)\.|.*/,
-        nameRegex: /\..*/
-	   
-	   },
+    handlers = {},
+    specialEvents = {},
+    focusinSupported = 'onfocusin' in window,
 
-        /**
-         * Prototype references.
-         */
-
-        ArrayProto = Array.prototype,
-        ObjProto = Object.prototype,
-
-        /**
-         * Create reference for speeding up the access to the prototype.
-         */
-
-        slice = ArrayProto.slice,
-        concat = ArrayProto.concat,
-        toString = ObjProto.toString,
-
-        nativeKeys = Object.keys || function (obj) {
-            if (obj !== Object(obj)) throw "Syntax error, unrecognized expression: Invalid object";
-            var keys = [];
-            for (var key in obj)
-                if (own[call](obj, key)) keys.push(key);
-            return keys;
-        };
-
-    function check(evt) {
-        if (evt = evt.relatedTarget) {
-            var ac;
-            if (ac = evt !== this)
-                if (ac = "xul" !== evt.prefix)
-                    if (ac = !/document/.test(this.toString())) {
-                        a: {
-                            for (; evt = evt.parentNode;)
-                                if (evt === this) {
-                                    evt = 1;
-                                    break a;
-                                }
-                            evt = 0;
-                        }
-                        ac = !evt;
-                    }
-            evt = ac;
-        } else evt = null === evt;
-        return evt;
-    }
-    var specialThreatment = {
-
-        disabeled: function (el, type) {
-            if (el.disabeled && type === "click") return true;
-        },
-        nodeType: function (el) { // Don't do events on text and comment nodes 
-            if (el.nodeType === 3 || el.nodeType === 8) return true;
-        }
+    focus = {
+        focus: 'focusin',
+        blur: 'focusout'
     },
 
-        customEvents = {
-            mouseenter: {
-                base: 'mouseover',
-                condition: check
-            },
-            mouseleave: {
-                base: 'mouseout',
-                condition: check
-            },
-            mousewheel: {
-                base: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
+    hover = {
+        mouseenter: 'mouseover',
+        mouseleave: 'mouseout'
+    };
+
+
+var returnTrue = function () {
+    return true;
+},
+    returnFalse = function () {
+        return false;
+    },
+    ignoreProperties = /^([A-Z]|returnValue$|layer[XY]$)/,
+    eventMethods = {
+        preventDefault: 'isDefaultPrevented',
+        stopImmediatePropagation: 'isImmediatePropagationStopped',
+        stopPropagation: 'isPropagationStopped'
+    };
+
+/**
+ * Event Core Functions ( ECF )
+ */
+
+function findHandlers(element, event, fn, selector) {
+    event = parse(event);
+    if (event.ns) var matcher = matcherFor(event.ns);
+    return (handlers[hAzzle.getUID(element)] || []).filter(function (handler) {
+        return handler && (!event.e || handler.e == event.e) && (!event.ns || matcher.test(handler.ns)) && (!fn || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn)) && (!selector || handler.sel == selector);
+    });
+}
+
+
+function _remove(element, events, fn, selector, capture) {
+    var id = hAzzle.getUID(element);
+    (events || '').split(/\s/).forEach(function (event) {
+        findHandlers(element, event, fn, selector).forEach(function (handler) {
+            delete handlers[id][handler.i];
+            if ('removeEventListener' in element)
+                element.removeEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
+        });
+    });
+}
+
+function parse(event) {
+    var parts = ('' + event).split('.');
+    return {
+        e: parts[0],
+        ns: parts.slice(1).sort().join(' ')
+    };
+}
+
+function matcherFor(ns) {
+    return new RegExp('(?:^| )' + ns.replace(' ', ' .* ?') + '(?: |$)');
+}
+
+function realEvent(type) {
+    return hover[type] || (focusinSupported && focus[type]) || type;
+}
+
+function eventCapture(handler, captureSetting) {
+    return handler.del &&
+        (!focusinSupported && (handler.e in focus)) || !! captureSetting;
+}
+
+
+function compatible(event, source) {
+    if (source || !event.isDefaultPrevented) {
+        source || (source = event);
+
+        hAzzle.each(eventMethods, function (name, predicate) {
+            var sourceMethod = source[name];
+            event[name] = function () {
+                this[predicate] = returnTrue;
+                return sourceMethod && sourceMethod.apply(source, arguments);
+            };
+            event[predicate] = returnFalse;
+        });
+
+        if (source.defaultPrevented !== undefined ? source.defaultPrevented :
+            'returnValue' in source ? source.returnValue === false :
+            source.getPreventDefault && source.getPreventDefault());
+        event.isDefaultPrevented = returnTrue;
+    }
+    return event;
+}
+
+
+hAzzle.event = {
+    add: add,
+    remove: remove
+};
+
+function createProxy(event) {
+    var key, proxy = {
+            originalEvent: event
+        };
+    for (key in event)
+        if (!ignoreProperties.test(key) && event[key] !== undefined) proxy[key] = event[key];
+
+    return compatible(proxy, event);
+}
+
+function add(element, events, fn, data, selector, delegator, capture) {
+
+    var id = hAzzle.getUID(element),
+        set = (handlers[id] || (handlers[id] = []));
+
+    hAzzle.each(events.split(/\s/), function (_, event) {
+
+        if (event == 'ready') return hAzzle(document).ready(fn);
+        var handler = parse(event);
+        handler.fn = fn;
+        handler.sel = selector;
+        // emulate mouseenter, mouseleave
+        if (handler.e in hover) fn = function (e) {
+            var related = e.relatedTarget;
+            if (!related || (related !== this && !hAzzle.contains(this, related)))
+                return handler.fn.apply(this, arguments);
+        };
+        handler.del = delegator;
+        var callback = delegator || fn;
+        handler.proxy = function (e) {
+            e = compatible(e);
+            if (e.isImmediatePropagationStopped()) return;
+            e.data = data;
+            var result = callback.apply(element, e._args === undefined ? [e] : [e].concat(e._args));
+            if (result === false) e.preventDefault(), e.stopPropagation();
+            return result;
+        };
+        handler.i = set.length;
+        set.push(handler);
+        if ('addEventListener' in element)
+            element.addEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
+    });
+}
+
+
+hAzzle.fn.extend({
+
+    /**
+     * 'on' is such a common word in javascript libraries, so I can't avoid using it
+     */
+
+    on: function (types, selector, data, callback, one) {
+
+        var autoRemove, delegator;
+
+        if (typeof types === "object") {
+            if (!isString(selector)) {
+                data = data || selector;
+                selector = undefined;
             }
-        },
 
-        // Includes some event props shared by different events
+            for (var type in types) {
 
-        commonProps = ["altKey", "bubbles", "cancelable", "ctrlKey", "currentTarget", "eventPhase", "metaKey", "relatedTarget", "shiftKey", "target", "timeStamp", "view", "which"],
+                this.on(type, selector, data, types[type], one);
 
-        // some event types need special handling and some need special properties, do that all here
-
-        typeFixers = [{ // key events
-            reg: /^key/,
-            fix: function (event, newEvent) {
-                newEvent.keyCode = event.keyCode || event.which;
-                return commonProps.concat(["char", "charCode", "key", "keyCode"]);
             }
-        }, { // mouse events
-            reg: /^(?:mouse|contextmenu)|click/,
-            fix: function (event, newEvent) {
+            return this;
+        }
 
-                newEvent.rightClick = event.which === 3 || event.button === 2;
+        if (data === null && callback === null) {
+            // ( types, fn )
+            callback = selector;
+            data = selector = undefined;
+        } else if (callback === null) {
+            if (typeof selector === "string") {
+                // ( types, selector, fn )
+                callback = data;
+                data = undefined;
+            } else {
+                // ( types, data, fn )
+                callback = data;
+                data = selector;
+                selector = undefined;
+            }
+        }
+        if (callback === false) {
+            callback = returnFalse;
+        } else if (!callback) {
+            return this;
+        }
 
-                newEvent.pos = {
-                    x: 0,
-                    y: 0
+        return this.each(function (_, element) {
+
+            if (one) {
+                autoRemove = function (e) {
+                    _remove(element, e.type, callback);
+                    return callback.apply(this, arguments);
                 };
-
-                // Calculate pageX/Y if missing and clientX/Y available
-
-                if (event.pageX || event.pageY) {
-                    newEvent.clientX = event.pageX;
-                    newEvent.clientY = event.pageY;
-                } else if (event.clientX || event.clientY) {
-                    newEvent.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft;
-                    newEvent.clientY = event.clientY + doc.body.scrollTop + root.scrollTop;
-                }
-
-                return commonProps.concat(["button", "buttons", "clientX", "clientY", "offsetX", "offsetY", "pageX", "pageY", "screenX", "screenY", "toElement"]);
             }
-        }, { // mouse wheel events
-            reg: /mouse.*(wheel|scroll)/i,
-            fix: function () {
-                return ["button", "buttons", "clientX", "clientY", "offsetX", "offsetY", "pageX", "pageY", "screenX", "screenY", "toElement", "wheelDelta", "wheelDeltaX", "wheelDeltaY", "wheelDeltaZ", "axis"];
-            }
-        }, { // TextEvent
-            reg: /^text/i,
-            fix: function () {
-                return commonProps.concat(["data"]);
-            }
-        }, { // touch and gesture events
-            reg: /^touch|^gesture/i,
-            fix: function () {
-                return commonProps.concat(["touches", "targetTouches", "changedTouches", "scale", "rotation"]);
-            }
-        }, { // message events
-            reg: /^message$/i,
-            fix: function () {
-                return commonProps.concat(["data", "origin", "source"]);
-            }
-        }, { // popstate events
-            reg: /^popstate$/i,
-            fix: function () {
-                return commonProps.concat(["state"]);
-            }
-        }, { // everything else
-            reg: /.*/,
-            fix: function () {
-                return commonProps;
-            }
-        }]
 
-        ,
-        typeFixerMap = {} // used to map event types to fixer functions (above), a basic cache mechanism
-
-        , Event = function (event, element) {
-
-            if (!arguments.length) return;
-
-            event = event || ((element.ownerDocument || element.document || element).parentWindow || win).event;
-
-            this.originalEvent = event;
-
-            if (!event) return;
-
-            var type = event.type,
-                target = event.target,
-                i, l, p, props, fixer;
-
-            this.target = target && target.nodeType === 3 ? target.parentNode : target;
-
-            fixer = typeFixerMap[type];
-
-            if (!fixer) { // haven't encountered this event type before, map a fixer function for it
-                for (i = 0, l = typeFixers.length; i < l; i++) {
-                    if (typeFixers[i].reg.test(type)) { // guaranteed to match at least one, last is .*
-                        typeFixerMap[type] = fixer = typeFixers[i].fix;
-                        break;
+            if (selector) {
+                delegator = function (e) {
+                    var evt, match = hAzzle(e.target).closest(selector, element).get(0);
+                    if (match && match !== element) {
+                        evt = hAzzle.extend(createProxy(e), {
+                            currentTarget: match,
+                            liveFired: element
+                        });
+                        return (autoRemove || callback).apply(match, [evt].concat(slice.call(arguments, 1)));
                     }
-                }
+                };
             }
 
-            props = fixer(event, this, type);
-
-            for (i = props.length; i--;) {
-                if (!((p = props[i]) in this) && p in event) this[p] = event[p];
-            }
-        };
-
-    Event.prototype = {
-
-        preventDefault: function () {
-            if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
-            else this.originalEvent.returnValue = false;
-        },
-        stopPropagation: function () {
-            if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
-            else this.originalEvent.cancelBubble = true;
-        },
-        stop: function () {
-            this.preventDefault();
-            this.stopPropagation();
-            this.stopped = true;
-        },
-        stopImmediatePropagation: function () {
-            if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
-            this.isImmediatePropagationStopped = function () {
-                return true;
-            };
-        },
-        isImmediatePropagationStopped: function () {
-            return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
-        }
-    };
-
-    function wrappedHandler(element, fn, condition, args) {
-        var call = function (event, eargs) {
-            return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
-        }, findTarget = function (event, eventElement) {
-                return fn._RachelleDel ? fn._RachelleDel.ft(event.target, element) : eventElement;
-            }, handler = condition ? function (event) {
-                var target = findTarget(event, this); // delegated event
-                if (condition.apply(target, arguments)) {
-                    if (event) event.currentTarget = target;
-                    return call(event, arguments);
-                }
-            } : function (event) {
-                return call(event, arguments);
-            };
-        handler._RachelleDel = fn._RachelleDel;
-        return handler;
-    }
-
-    function Access(element, type, handler, original, namespaces, args) {
-
-        if (!(this instanceof Access)) return false;
-
-        var customType = customEvents[type];
-
-        if (type === 'unload') handler = once(removeListener, element, type, handler, original);
-
-        if (customType) {
-            if (customType.condition) {
-                handler = wrappedHandler(element, handler, customType.condition, args);
-            }
-
-            type = customType.base || type;
-        }
-
-        this.element = element;
-        this.type = type;
-        this.original = original;
-        this.namespaces = namespaces;
-        this.eventType = type;
-        this.target = element;
-        this.handler = wrappedHandler(element, handler, null, args);
-    }
-
-    // given a list of namespaces, is our entry in any of them?
-
-    Access.prototype = {
-
-        inNamespaces: function (checkNamespaces) {
-            var i, j, c = 0;
-            if (!checkNamespaces) return true;
-            if (!this.namespaces) return false;
-            for (i = checkNamespaces.length; i--;) {
-                for (j = this.namespaces.length; j--;) {
-                    if (checkNamespaces[i] == this.namespaces[j]) c++;
-                }
-            }
-            return checkNamespaces.length === c;
-        },
-
-        // match by element, original fn (opt), handler fn (opt)
-        matches: function (checkElement, checkOriginal, checkHandler) {
-            return this.element === checkElement &&
-                (!checkOriginal || this.original === checkOriginal) &&
-                (!checkHandler || this.handler === checkHandler);
-        }
-    };
-
-
-
-    var registry = (function () {
-
-        var map = {};
-
-        function forAll(element, type, original, handler, root, fn) {
-            var pfx = root ? 'r' : '$';
-            if (!type || type === '*') {
-                // search the whole registry
-                for (var t in map) {
-                    if (t.charAt(0) === pfx) {
-                        forAll(element, t.substr(1), original, handler, root, fn);
-                    }
-                }
-            } else {
-                var i = 0,
-                    l, list = map[pfx + type],
-                    all = element === '*';
-                if (!list) return;
-                for (l = list.length; i < l; i++) {
-                    if ((all || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
-                }
-            }
-        }
-        return {
-            has: function (element, type, original, root) {
-                if (root = map[(root ? "r" : "$") + type])
-                    for (type = root.length; type--;)
-                        if (!root[type].root && root[type].matches(element, original, null)) return true;
-                return false;
-            },
-            get: function (element, type, original, root) {
-                var entries = [];
-                forAll(element, type, original, null, root, function (entry) {
-                    entries.push(entry);
-                });
-                return entries;
-            },
-            put: function (entry) {
-                var has = !entry.root && !this.has(entry.element, entry.type, null, false),
-                    key = (entry.root ? 'r' : '$') + entry.type;
-                (map[key] || (map[key] = [])).push(entry);
-                return has;
-            },
-            del: function (entry) {
-                forAll(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
-                    list.splice(i, 1);
-                    entry.removed = true;
-                    if (list.length === 0) delete map[(entry.root ? 'r' : '$') + entry.type];
-                    return false;
-                });
-            }
-        };
-    }());
-	
-    // we attach this listener to each DOM event that we need to listen to, only once
-    // per event type per DOM element
-    function subHandler(event, type) {
-        var listeners = registry.get(this, type || event.type, null, false),
-            l = listeners.length,
-            i = 0;
-
-        event = new Event(event, this, true);
-        if (type) event.type = type;
-
-        // iterate through all handlers registered for this type, calling them unless they have
-        // been removed by a previous handler or stopImmediatePropagation() has been called
-        for (; i < l && !event.isImmediatePropagationStopped(); i++) {
-            if (!listeners[i].removed) listeners[i].handler.call(this, event);
-        }
-    }
-
-    function once(rm, element, type, fn, originalFn) {
-        return function () {
-            fn.apply(this, arguments);
-            rm(element, type, originalFn);
-        };
-    }
-
-
-    /**
-     *   Remove event listener
-     **/
-    function removeListener(el, events, handler, namespaces) {
-
-        events = events && events.replace(expr['nameRegex'], "");
-
-        var handlers = registry.get(el, events, null, false),
-            i = 0,
-            l;
-
-        events = {};
-
-        // Namespace
-
-        for (l = handlers.length; i < l; i++) handler && handlers[i].original !== handler || !handlers[i].inNamespaces(namespaces) || (registry.del(handlers[i]), events[handlers[i].eventType] || (events[handlers[i].eventType] = {
-            t: handlers[i].eventType,
-            c: handlers[i].type
-        }));
-
-        // For improved speed we are using object keys with fallback to for / in loop
-
-        handler = nativeKeys(events);
-
-        for (namespaces = handler.length; namespaces--;)
-            if (!registry.has(el, events[handler[namespaces]].t, null, false) && el[removeEvent]) el[removeEvent](events[handler[namespaces]].t, subHandler, false);
-    }
-
-
-
-    // set up a delegate helper using the given selector, wrap the handler function
-    function delegate(selector, fn) {
-
-        function findTarget(target, root) {
-            var i, array = hAzzle.isString(selector) ? hAzzle.select(selector, root) : selector;
-            for (; target && target !== root; target = target.parentNode) {
-                for (i = array.length; i--;) {
-                    if (array[i] === target) return target;
-                }
-            }
-        }
-
-        function handler(e) {
-            if (e.target.disabled !== true) {
-                var match = findTarget(e.target, this);
-                if (match) fn.apply(match, arguments);
-            }
-        }
-
-        handler._RachelleDel = {
-            ft: findTarget // attach it here for customEvents to use too
-            ,
-            selector: selector
-        };
-        return handler;
-    }
-
-    /**
-     * off(element[, eventType(s)[, handler ]])
-     */
-
-    function off(el, typeSpec, fn) {
-        var isTypeStr = hAzzle.isString(typeSpec),
-            type, namespaces, i;
-
-        if (isTypeStr && typeSpec.indexOf(' ') > 0) {
-
-            // off(el, 't1 t2 t3', fn) or off(el, 't1 t2 t3')
-
-            typeSpec = typeSpec.split(typeSpec);
-
-            for (i = typeSpec.length; i--;)
-                off(el, typeSpec[i], fn);
-            return el;
-        }
-
-        type = isTypeStr && typeSpec.replace(expr['nameRegex'], '');
-
-        if (type && customEvents[type]) type = customEvents[type].base;
-
-        if (!typeSpec || isTypeStr) {
-            // off(el) or off(el, t1.ns) or off(el, .ns) or off(el, .ns1.ns2.ns3)
-            if (namespaces = isTypeStr && typeSpec.replace(expro['namespaceRegex'], '')) namespaces = namespaces.split('.');
-            removeListener(el, type, fn, namespaces);
-        } else if (hAzzle.isFunction(typeSpec)) {
-            // off(el, fn);
-            removeListener(el, null, typeSpec);
-        } else {
-
-            // off(el, { t1: fn1, t2, fn2 })
-            for (var te = nativeKeys(typeSpec), ii = te.length; ii--;) {
-                off(el, te[ii], typeSpec[te[ii]]);
-            }
-        }
-
-        return el;
-    }
-
-    /**
-     * on(el, eventType(s)[, selector], handler[, args ])
-     */
-
-
-    function on(el, events, selector, fn, /* INTERNAL */ one) {
-        var originalFn, type, types, i, args, entry, first;
-
-        // Dont' allow click on disabeled elements, or events on text and comment nodes
-
-        if ((el.disabeled && specialThreatment[disabeled](el, type)) || specialThreatment.nodeType(el)) return false;
-
-        if (selector === undefined && typeof events === 'object')
-            for (type = nativeKeys(events), i = type.length; i--;) on.call(this, el, type[i], events[type[i]]);
-        else {
-
-            // Delegated event
-
-            if (!hAzzle.isFunction(selector)) {
-                originalFn = fn;
-                args = slice.call(arguments, 4);
-                fn = delegate(selector, originalFn);
-            } else {
-                args = slice.call(arguments, 3);
-                fn = originalFn = selector;
-            }
-
-            types = events.split(' ');
-
-            // One
-
-            if (one) fn = once(off, el, events, fn, originalFn);
-
-            for (i = types.length; i--;) {
-                first = registry.put(entry = new Access(
-                    el, types[i].replace(expr['nameRegex'], '') // event type
-                    , fn, originalFn, types[i].replace(expro['namespaceRegex'], '').split('.') // namespaces
-                    , args, false
-                ));
-
-                // First event of this type on this el, add root listener
-
-                if (first) el[addEvent](entry.eventType, subHandler, false);
-            }
-            return el;
-        }
-    }
-
-
-
-    hAzzle.fn.extend({
-
-        /**
-         * Add event to element
-         *
-         * @param {String} events
-         * @param {String} selector
-         * @param {Function} callback
-         * @return {Object}
-         */
-
-        on: function (events, selector, fn, /* INTERNAL */ one) {
-            var el;
-            return this.each(function () {
-                el = this;
-                var originalFn, type, types, i, args, entry, first;
-
-                // Dont' allow click on disabeled elements, or events on text and comment nodes
-
-                if ((el.disabeled && specialThreatment[disabeled](el, type)) || specialThreatment.nodeType(el)) return false;
-
-                if (selector === undefined && typeof events === 'object')
-                    for (type = nativeKeys(events), i = type.length; i--;) on.call(this, el, type[i], events[type[i]]);
-                else {
-
-                    // Delegated event
-
-                    if (!hAzzle.isFunction(selector)) {
-                        originalFn = fn;
-                        args = slice.call(arguments, 4);
-                        fn = delegate(selector, originalFn);
-                    } else {
-                        args = slice.call(arguments, 3);
-                        fn = originalFn = selector;
-                    }
-
-                    types = events.split(' ');
-
-                    // One
-
-                    if (one) fn = once(off, el, events, fn, originalFn);
-
-                    for (i = types.length; i--;) {
-                        first = registry.put(entry = new Access(
-                            el, types[i].replace(expr['nameRegex'], '') // event type
-                            , fn, originalFn, types[i].replace(expro['namespaceRegex'], '').split('.') // namespaces
-                            , args, false
-                        ));
-
-                        // First event of this type on this el, add root listener
-
-                        if (first) el[addEvent](entry.eventType, subHandler, false);
-                    }
-                    return el;
-                }
-
+            add(element, types, callback, data, selector, delegator || autoRemove);
+        });
+
+    },
+    one: function (types, selector, data, callback) {
+        return this.on(types, selector, data, callback, true);
+    },
+
+    off: function (event, selector, callback) {
+        var $this = this;
+
+        if (!isString(selector) && !isFunction(callback) && callback !== false)
+            callback = selector, selector = undefined;
+
+        if (callback === false) callback = returnFalse;
+
+        return $this.each(function () {
+            _remove(this, event, callback, selector);
+        });
+    },
+
+    trigger: function (event, args) {
+        event = (isString(event) || hAzzle.isPlainObject(event)) ? hAzzle.Event(event) : compatible(event);
+        event._args = args;
+        return this.each(function () {
+            // items in the collection might not be DOM elements
+            if ('dispatchEvent' in this) this.dispatchEvent(event);
+            else hAzzle(this).triggerHandler(event, args);
+        });
+    },
+
+    // triggers event handlers on current element just as if an event occurred,
+    // doesn't trigger an actual event, doesn't bubble
+    triggerHandler: function (event, args) {
+        var e, result;
+        this.each(function (_, element) {
+            e = createProxy(isString(event) ? hAzzle.Event(event) : event);
+            e._args = args;
+            e.target = element;
+            hAzzle.each(findHandlers(element, event.type || event), function (_, handler) {
+                result = handler.proxy(e);
+                if (e.isImmediatePropagationStopped()) return false;
             });
-        },
+        });
+        return result;
+    },
 
-        /**
-         * Same as on() but the event will "die" after the first time it's triggered
-         **/
+    bind: function (event, data, callback) {
+        return this.on(event, data, callback);
+    },
+    unbind: function (event, callback) {
+        return this.off(event, callback);
+    }
 
-        one: function (events, fn, delfn) {
-            return this.on(events, fn, delfn, true);
-        },
-
-        /**
-         * Remove event from element
-         *
-         * @param {String} events
-         * @param {String} selector
-         * @param {Function} callback
-         * @return {Object}
-         */
-
-        off: function (events, fn) {
-            return this.each(function () {
-                off(this, events, fn);
-            });
-        }
-
-    });
+});
 
 
-    hAzzle.extend({
 
-        /**
-         * Trigger specific event for element collection
-         *
-         * @param {Object|String} type
-         * @return {Object}
-         */
 
-        trigger: function (el, type, args) {
+hAzzle.Event = function (type, props) {
+    if (!isString(type)) props = type, type = props.type;
+    var event = document.createEvent(specialEvents[type] || 'Events'),
+        bubbles = true;
+    if (props)
+        for (var name in props)(name == 'bubbles') ? (bubbles = !! props[name]) : (event[name] = props[name]);
+    event.initEvent(type, bubbles, true);
+    return compatible(event);
+};
 
-            if (hAzzle.isString(el)) el = hAzzle.select(el)[0];
-            else el = el[0];
 
-            var types = type.split(' '),
-                i, j, l, call, event, names, handlers;
 
-            if ((el.disabeled && specialThreatment[disabeled](el, type)) || specialThreatment.nodeType(el)) return false;
 
-            for (i = types.length; i--;) {
-                type = types[i].replace(expr['nameRegex'], '');
-                if (names = types[i].replace(expro['namespaceRegex'], '')) names = names.split('.');
-                if (!names && !args) {
-                    var HTMLEvt = doc.createEvent('HTMLEvents');
-                    HTMLEvt['initEvent'](type, true, true, win, 1);
-                    el.dispatchEvent(HTMLEvt);
+// shortcut methods for `.bind(event, fn)` for each event type
+hAzzle.each(('focusin focusout load resize scroll unload click dblclick ' +
+    'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
+    'change select keydown keypress keyup error').split(' '), function (_, event) {
+    hAzzle.fn[event] = function (callback) {
+        return callback ?
+            this.bind(event, callback) :
+            this.trigger(event);
+    };
+});
 
-                } else {
-                    handlers = registry.get(el, type, null, false);
-                    event = new Event(null, el);
-                    event.type = type;
-                    call = args ? 'apply' : 'call';
-                    args = args ? [event].concat(args) : event;
-                    for (j = 0, l = handlers.length; j < l; j++) {
-                        if (handlers[j].inNamespaces(names)) {
-                            handlers[j].handler[call](el, args);
-                        }
-                    }
-                }
-            }
-            return el;
-        }
-    });
+
+hAzzle.each(['focus', 'blur'], function (_, name) {
+    hAzzle.fn[name] = function (callback) {
+        if (callback) this.bind(name, callback);
+        else this.each(function () {
+            try {
+                this[name]();
+            } catch (e) {}
+        });
+        return this;
+    };
+});
