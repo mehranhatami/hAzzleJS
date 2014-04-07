@@ -72,15 +72,29 @@ function eventCapture(handler, captureSetting) {
     return handler.del && (!focusinSupported && (handler.e in focus)) || !! captureSetting;
 }
 
+ /**
+  * Deal with preventDefault, stopPropagation, stopImmediatePropagation
+  */
 
 function compatible(event, source) {
+
     if (source || !event.isDefaultPrevented) {
         source || (source = event);
 
         hAzzle.each(eventMethods, function (name, predicate) {
+
             var sourceMethod = source[name];
+
             event[name] = function () {
-                this[predicate] = returnTrue;
+
+				this[predicate] = returnTrue;
+
+				var e = this.originalEvent;
+		
+				if( !e) {
+				   return;
+				}
+				
                 return sourceMethod && sourceMethod.apply(source, arguments);
             };
             event[predicate] = returnFalse;
@@ -115,45 +129,25 @@ hAzzle.fn.extend({
      */
 
     on: function (types, selector, data, callback, one) {
+    
+	 var autoRemove, delegator, type;
+	
+    if (types && !isString(types)) {
+    
+	 for (type in types) {
 
-        var autoRemove, delegator, type;
+       this.on(type, selector, data, types[type], one);
+	 }
+      return this;
+    }
 
-        if (typeof types === "object") {
-            if (!isString(selector)) {
-                data = data || selector;
-                selector = undefined;
-            }
-
-            for (type in types) {
-
-                this.on(type, selector, data, types[type], one);
-
-            }
-            return this;
-        }
-
-        if (data === null && callback === null) {
-            // ( types, fn )
-            callback = selector;
-            data = selector = undefined;
-        } else if (callback === null) {
-            if (typeof selector === "string") {
-                // ( types, selector, fn )
-                callback = data;
-                data = undefined;
-            } else {
-                // ( types, data, fn )
-                callback = data;
-                data = selector;
-                selector = undefined;
-            }
-        }
-        if (callback === false) {
-            callback = returnFalse;
-        } else if (!callback) {
-            return this;
-        }
-
+    if (!isString(selector) && !isFunction(callback) && callback !== false) {
+      callback = data, data = selector, selector = undefined
+	}
+	
+    if (isFunction(data) || data === false) {
+      callback = data, data = undefined
+	}
         return this.each(function (_, element) {
 
             if (one) {
@@ -164,6 +158,7 @@ hAzzle.fn.extend({
             }
 
             if (selector) {
+				
                 delegator = function (e) {
                     var evt, match = hAzzle(e.target).closest(selector, element).get(0);
                     if (match && match !== element) {
@@ -184,23 +179,27 @@ hAzzle.fn.extend({
         return this.on(types, selector, data, callback, true);
     },
 
-    off: function (event, selector, callback) {
-        var $this = this;
+    off: function (types, selector, fn ) {
+        
+       if ( typeof types === "object" ) {
+			// ( types-object [, selector] )
+			for ( var type in types ) {
+				this.off( type, selector, types[ type ] );
+			}
+			return this;
+		}
 
-    if (event && !isString(event)) {
-      hAzzle.each(event, function(type, fn){
-        $this.off(type, selector, fn);
-      });
-      return $this;
-    }
+        if ( selector === false || typeof selector === "function" ) {
+			// ( types [, fn] )
+			fn = selector;
+			selector = undefined;
+		}
+		if ( fn === false ) {
+			fn = returnFalse;
+		}
 
-        if (!isString(selector) && !isFunction(callback) && callback !== false)
-            callback = selector, selector = undefined;
-
-        if (callback === false) callback = returnFalse;
-
-        return $this.each(function () {
-            hAzzle.event.remove(this, event, callback, selector);
+        return this.each(function () {
+            hAzzle.event.remove(this, types, fn, selector);
         });
     },
 
@@ -241,7 +240,11 @@ hAzzle.event = {
 
       if(hAzzle.nodeType(3, element) ||  hAzzle.nodeType(8, element)) return;
 
-        var set = handlers(element);
+        // Set handler on the element
+		
+		var set = handlers(element);
+
+       // Handle multiple events separated by comma
 
         hAzzle.each(events.split(/\s/), function (_, event) {
 
@@ -269,17 +272,18 @@ hAzzle.event = {
             };
             handler.i = set.length;
             set.push(handler);
-            if ('addEventListener' in element);
+            if ( element.addEventListener ) {
                 element.addEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
+			}
         });
     },
 
     remove: function (element, events, fn, selector, capture) {
-        (events || '').split(/\s/).forEach(function (event) {
-            findHandlers(element, event, fn, selector).forEach(function (handler) {
+        (events || '').split(/\s/).forEach(function (evt) {
+            findHandlers(element, evt, fn, selector).forEach(function (handler) {
                 delete handlers(element)[handler.i];
-                if ('removeEventListener' in element) {
-					
+
+                if ( element.removeEventListener ) {
                     element.removeEventListener(realEvent(handler.e), handler.proxy, eventCapture(handler, capture));
 			   }
             });
