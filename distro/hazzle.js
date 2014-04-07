@@ -1,10 +1,22 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.2
+ * Version: 0.26a
  * Released under the MIT License.
  *
- * Date: 2014-04-04
+ * Date: 2014-04-08
+ *
+ * NOTE!!
+ *
+ * As it is now, the "selector" engine is very basic and lack support for complex selectors.
+ * I will deal with this soon everything else is fixed.
+ *
+ * I just mention quickly that hAzzle is not jQuery or a jQuery / Zepto clone. And therefor
+ * people can't expect hAzzle to work like that eiter.
+ *
+ * But I will re-build the selector engine ASAP. I also holding back because I want to see the
+ * outcome of the CSS4 specs.
+ *
  */
 (function (window, undefined) {
 
@@ -12,20 +24,16 @@
 
     if (window['hAzzle']) return;
 
-    var
-    doc = window.document,
+    var doc = window.document,
         byClass = 'getElementsByClassName',
         byTag = 'getElementsByTagName',
         byId = 'getElementById',
         byAll = 'querySelectorAll',
-        addEvent = 'addEventListener',
-        removeEvent = 'removeEventListener',
         nodeType = 'nodeType',
-        own = 'hasOwnProperty',
+
         xmlHttpRequest = 'XMLHttpRequest',
         crElm = 'createElement',
-        call = 'call',
-        root = doc.documentElement || {},
+        own = 'hasOwnProperty',
 
         /**
          * Prototype references.
@@ -47,22 +55,12 @@
             return new Date().getTime();
         }),
 
-        nativeKeys = Object.keys || function (obj) {
-            if (obj !== Object(obj)) throw "Syntax error, unrecognized expression: Invalid object";
-            var keys = [];
-            for (var key in obj)
-                if (own[call](obj, key)) keys.push(key);
-            return keys;
-        },
-
         uid = {
             current: 0,
             next: function () {
                 return ++this.current;
             }
         },
-
-        // Cache functions for functions and params
 
         cached = [],
 
@@ -74,44 +72,9 @@
 
         expr = {
 
-            // Events
-
-            namespaceRegex: /[^\.]*(?=\..*)\.|.*/,
-            nameRegex: /\..*/,
-
             specialSplit: /\s*,\s*|\s+/,
-
-            // HTML manipulation
-
-            operators: /[>+]/g,
-            multiplier: /\*(\d+)$/,
-            id: /#[\w-$]+/g,
-            tagname: /^\w+/,
-            classname: /\.[\w-$]+/g,
-            attributes: /\[([^\]]+)\]/g,
-            values: /([\w-]+)(\s*=\s*(['"]?)([^,\]]+)(\3))?/g,
-            numbering: /[$]+/g,
-            text: /\{(.+)\}/,
-
             idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
             tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
-        },
-
-        // Get the properties right
-
-        propMap = {
-            'tabindex': 'tabIndex',
-            'readonly': 'readOnly',
-            'for': 'htmlFor',
-            'class': 'className',
-            'maxlength': 'maxLength',
-            'cellspacing': 'cellSpacing',
-            'cellpadding': 'cellPadding',
-            'rowspan': 'rowSpan',
-            'colspan': 'colSpan',
-            'usemap': 'useMap',
-            'frameborder': 'frameBorder',
-            'contenteditable': 'contentEditable'
         },
 
         // Different nodeTypes we are checking against for faster speed
@@ -136,7 +99,6 @@
             '8': function (elem) {
                 if (elem["nodeType"] === 8) return true; // Comment
             },
-
             '9': function (elem) {
                 if (elem["nodeType"] === 9) return true; // Document
             },
@@ -163,21 +125,24 @@
 
     (function () {
 
-
-
-        /**
-         * Detect querySelectorAll support.
-         */
-
-        support.byAll = !! doc[byAll];
-
         /**
          * Detect classList support.
          */
 
         support.classList = !! doc.createElement('p').classList;
 
+        var div = doc.createElement("div");
+
+        if (!div.style) {
+            return;
+        }
+
+        div.style.backgroundClip = "content-box";
+        div.cloneNode(true).style.backgroundClip = "";
+        support.clearCloneStyle = div.style.backgroundClip === "content-box";
+
     }());
+
 
     hAzzle.fn = hAzzle.prototype = {
 
@@ -188,6 +153,7 @@
         init: function (sel, ctx) {
             var elems, i;
             if (sel instanceof hAzzle) return sel;
+
             if (hAzzle.isString(sel)) {
 
                 // If the selector are cache, we return it after giving it some special threatment
@@ -197,7 +163,8 @@
                     for (i = this.length = elems.length; i--;) this[i] = elems[i];
                     return this;
                 }
-                this.elems = cache[sel] = hAzzle.select(sel, ctx)
+
+                this.elems = cache[sel] = hAzzle.select(sel, ctx);
 
             } else {
 
@@ -213,20 +180,23 @@
                 if (sel instanceof Array) {
 
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
+
                 } else {
                     // Object
 
-                    if (hAzzle.isObject(sel)) return this.elems = [sel], this.length = 1, this[0] = sel, this;
+                    if (hAzzle.isObject(sel)) {
+                        return this.elems = [sel], this.length = 1, this[0] = sel, this;
+                    }
 
                     // Nodelist
 
-                    hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = []
+                    hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
                 }
             }
 
             elems = this.elems;
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
-            return this
+            return this;
         },
 
         /**
@@ -246,38 +216,31 @@
          * @param {String|Function} sel
          * @return {Object}
          *
-         *
-         *  FIX ME !!!!
-         *
-         * As it is for now, this function only works if the given selector is an string.
-         * Need to fix it so it can handle object or if the elem is an instance of hAzzle.
-         *
-         * As of april 2 - 2014, it works as it should if length === 1
-         *
-         * Here is an example on what is not working YET:
-         *
-         *  find( hAzzle('span' ) );
-         *
          */
 
         find: function (sel) {
-            var i,
-                len = this.length,
-                ret = [],
-                self = this;
-
             if (sel) {
                 var elements;
                 if (this.length === 1) {
                     if (typeof sel !== "string") {
                         elements = sel[0];
                     } else {
-                        elements = hAzzle(this.elems[0], sel);
+                        elements = hAzzle(sel, this.elems[0]);
                     }
                 } else {
-                    elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(sel, element));
-                    }, []);
+                    if (typeof sel == 'object') {
+                        var $this = this;
+                        elements = hAzzle(sel).filter(function () {
+                            var node = this;
+                            return $this.elems.some.call($this, function (parent) {
+                                return hAzzle.contains(parent, node);
+                            });
+                        });
+                    } else {
+                        elements = this.elems.reduce(function (elements, element) {
+                            return elements.concat(hAzzle.select(sel, element));
+                        }, []);
+                    }
                 }
                 return hAzzle.create(elements);
             }
@@ -288,8 +251,6 @@
          * Filter the collection to contain only items that match the CSS selector
          */
 
-
-
         filter: function (sel, inverse) {
             if (typeof sel === 'function') {
                 var fn = sel;
@@ -299,14 +260,13 @@
                 }));
             }
             if (sel && sel[0] === '!') {
-                sel = sel.charAt(1);
+                sel = sel.substr(1);
                 inverse = true;
             }
             return hAzzle.create(this.elems.filter(function (element) {
                 return hAzzle.matches(element, sel) !== (inverse || false);
             }));
         },
-
 
         /**
          * Check to see if a DOM element is a descendant of another DOM element.
@@ -332,7 +292,7 @@
          */
 
         not: function (sel) {
-            return this.filter(sel, true);
+            return this.filter(sel || [], true);
         },
 
         /**
@@ -340,7 +300,6 @@
          *
          * @param {String|Object} sel
          * @return {Boolean}
-         *
          */
 
         is: function (sel) {
@@ -378,9 +337,8 @@
          * @return {Array}
          */
 
-        put: function (prop, value) {
-            hAzzle.put(this.elems, prop, value);
-            return this;
+        put: function (prop, value, nt) {
+            return hAzzle.put(this.elems, prop, value, nt);
         },
 
         /**
@@ -391,7 +349,7 @@
          */
 
         get: function (num) {
-            return hAzzle.isDefined(num) ? this.elems[0 > num ? this.elems.length + num : num] : this.elems;
+            return num !== null ? this.elems[0 > num ? this.elems.length + num : num] : this.elems;
         },
 
         /**
@@ -435,8 +393,9 @@
         },
 
         /**
-
          * Take an element and push it onto the "elems" stack
+
+
          */
 
         push: function (itm) {
@@ -457,16 +416,16 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (a, b, c, d) {
-            return this.elems['reduce'](a, b, c, d);
+        reduce: function (iterator, memo) {
+            return this.elems['reduce'](iterator, memo);
         },
 
         /**
          * Reduce to right, the number of elems in the "elems" stack
          */
 
-        reduceRight: function (a, b, c, d) {
-            return this.elems['reduceRight'](a, b, c, d);
+        reduceRight: function (iterator, memo) {
+            return this.elems['reduceRight'](iterator, memo);
         },
 
         /**
@@ -483,14 +442,23 @@
 
         /**
          * Get the element at position specified by index from the current collection.
+         * If no index specified, return all elemnts in the "elems" stack
+         *
+         * +, -, / and * are all allowed to use for collecting elements.
+         *
+         * Example:
+         *            .eq(1+2-1)  - Returnes element 2 in the collection
+         *            .eq(1*2-1)  - Returnes the first element in the collection
          *
          * @param {Number} index
          * @return {Object}
          */
+
         eq: function (index) {
-            return index === null ? hAzzle() : hAzzle(this.get(index));
+            return hAzzle(index === null ? '' : this.get(index));
         }
     };
+
 
     hAzzle.fn.init.prototype = hAzzle.fn;
 
@@ -537,13 +505,8 @@
 
             } else {
 
-                // Use object.keys if the browser supports it
-
-                var keys = nativeKeys(obj);
-
-                for (i = keys.length; i--;) {
-
-                    if (callback.call(obj[keys], keys, obj[keys]) === false) {
+                for (name in obj) {
+                    if (callback.call(obj[name], name, obj[name]) === false) {
                         break;
                     }
                 }
@@ -556,7 +519,6 @@
             var ref = toString.call(obj).match(/\s(\w+)\]$/);
             return ref && ref[1].toLowerCase();
         },
-
 
         is: function (kind, obj) {
             return hAzzle.indexOf(kind, hAzzle.type(obj)) >= 0;
@@ -591,7 +553,10 @@
         },
 
         isNumeric: function (obj) {
-            return !hAzzle.IsNaN(parseFloat(obj)) && isFinite(obj);
+            return !this.IsNaN(parseFloat(obj)) && isFinite(obj);
+        },
+        isNumber: function (value) {
+            return typeof value === "number";
         },
         isEmptyObject: function (obj) {
             var name;
@@ -608,15 +573,20 @@
         isArray: Array.isArray,
 
         isArrayLike: function (elem) {
-            if (elem === null || hAzzle.isWindow(elem)) return false;
+            if (elem === null || this.isWindow(elem)) return false;
         },
 
         isWindow: function (obj) {
-            return obj !== null && obj === obj.window;
+            if (obj)
+                return obj !== null && obj === obj.window;
+        },
+
+        isDocument: function (obj) {
+            return obj !== null && obj.nodeType == obj.DOCUMENT_NODE;
         },
 
         isPlainObject: function (obj) {
-            return hAzzle.isObject(obj) && !hAzzle.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
+            return this.isObject(obj) && !this.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
         },
         isBoolean: function (str) {
             return typeof str === 'boolean';
@@ -641,7 +611,7 @@
          */
 
         prefix: function (key, obj) {
-            var result, upcased = key[0].toUpperCase() + key.substring(1),
+            var result, upcased = key[0].toUpperCase() + key.slice(1),
                 prefix,
                 prefixes = ['moz', 'webkit', 'ms', 'o'];
 
@@ -666,7 +636,25 @@
 
         matches: function (element, sel) {
 
-            var matchesSelector, match;
+            var matchesSelector, match,
+
+                // Fall back to performing a selector if matchesSelector not supported
+
+                fallback = (function (sel, element) {
+
+                    if (!element.parentNode) {
+
+                        ghost.appendChild(element);
+                    }
+
+                    match = hAzzle.indexOf(hAzzle.select(sel, element.parentNode), element) >= 0;
+
+                    if (element.parentNode === ghost) {
+                        ghost.removeChild(element);
+                    }
+                    return match;
+
+                });
 
             if (!element || !hAzzle.isElement(element) || !sel) {
                 return false;
@@ -685,24 +673,25 @@
             if (element === doc) {
                 return false;
             }
-            matchesSelector = hAzzle.prefix('matchesSelector', ghost);
+            matchesSelector = cached[matchesSelector] ? cached[matchesSelector] : cached[matchesSelector] = hAzzle.prefix('matchesSelector', ghost);
 
             if (matchesSelector) {
-                return matchesSelector.call(element, sel);
+                // IE9 supports matchesSelector, but doesn't work on orphaned elems
+                // check for that
+                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
+
+                if (supportsOrphans) {
+
+                    return matchesSelector.call(element, sel);
+
+                } else { // For IE9 only or other browsers who fail on orphaned elems, we walk the hard way !! :)
+
+                    return fallback(sel, element);
+                }
             }
 
-            // Fall back to performing a selector:
+            return fallback(sel, element);
 
-            if (!element.parentNode) {
-                ghost.appendChild(element);
-            }
-
-            match = hAzzle.indexOf(hAzzle.select(sel, element.parentNode), element) >= 0;
-
-            if (element.parentNode === ghost) {
-                ghost.removeChild(element);
-            }
-            return match;
         },
 
         /**
@@ -712,7 +701,7 @@
         pluck: function (array, prop) {
             return array.map(function (itm) {
                 return itm[prop];
-            })
+            });
         },
 
         /**
@@ -781,13 +770,19 @@
                     if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
                 });
             } else { // QuerySelectorAll
-                els = ctx[byAll](sel);
+
+                /**
+                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
+                 *
+                 * TODO! Fix this
+                 **/
+                try {
+                    els = ctx[byAll](sel);
+                } catch (e) {}
             }
 
             return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
-
         },
-
 
         /**
          * Check if an element contains another element
@@ -831,6 +826,7 @@
 
         nodeType: function (val, elem) {
             if (nodeTypes[val]) return nodeTypes[val](elem);
+            return false;
         },
 
         /**
@@ -850,13 +846,17 @@
 
         noop: function () {},
 
+        /**
+         *  Same as hAzzle.indexOf.
+         * Added for compability with Zepto and Jquery
+         */
+
         inArray: function (arr, elem) {
             return hAzzle.inArray(arr, elem);
         },
 
         /**
          * Get / set an elements ID
-
          *
          * @param{Object} elem
          * @return{Object}
@@ -867,6 +867,7 @@
         },
 
         /**
+
          * Set values on elements in an array
          *
          * @param{Array} array
@@ -875,9 +876,13 @@
          * @return{Object}
          */
 
-        put: function (array, prop, value) {
+        put: function (array, prop, value, nt) {
             return hAzzle.each(array, function (index) {
-                array[index][prop] = value;
+                if (hAzzle.isDefined(nt) && (array !== null && !hAzzle.nodeType(nt, array))) {
+                    array[index][prop] = value;
+                } else {
+                    array[index][prop] = value;
+                }
             });
         },
 
@@ -916,17 +921,33 @@
                 return element;
             }
             return element;
+        },
+
+        nodeName: function (elem, name) {
+            return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
+        },
+
+        /**
+         * camelCase CSS string
+         * - we are using our prefixCache for faster speed
+         *
+         * @param{String} str
+         * @return{String}
+         */
+        camelCase: function (str) {
+            cached[str] || (cached[str] = str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
+                return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
+            }));
+            return cached[str];
         }
 
     });
 
-    // **************************************************************
-    // DOM READY (module)
-    // **************************************************************
-
+    // Dom ready
 
     var fns = [],
         args = [],
+        call = 'call',
         isReady = false,
         errorHandler = null;
 
@@ -975,189 +996,7 @@
 
     });
 
-
-    // **************************************************************
-    // DOM TRAVERSING
-    // **************************************************************
-
-    hAzzle.fn.extend({
-
-        /**
-         * Fetch property from elements
-         *
-         * @param {String} prop
-         * @return {Array}
-         */
-
-        pluckNode: function (prop) {
-            return this.map(function (element) {
-                return hAzzle.getClosestNode(element, prop);
-            });
-        },
-        /**
-         * Get the first element that matches the selector, beginning at the current element and progressing up through the DOM tree.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        closest: function (sel) {
-            return this.map(function (elem) {
-                // Only check for match if nodeType 1
-                if (hAzzle.nodeType(1, elem) && hAzzle.matches(elem, sel)) {
-                    return elem;
-                }
-                // Exclude document fragments
-                return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
-            });
-        },
-        /** Determine the position of an element within the matched set of elements
-         *
-         * @param {string} elem
-         * @param {return} Object
-         */
-
-        index: function (elem) {
-            return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
-        },
-
-        /**
-         * Add elements to the set of matched elements.
-         *
-         * @param {String} sel
-         * @param {String} ctx
-         * @return {Object}
-         */
-
-        add: function (sel, ctx) {
-            var elements = sel;
-            if (hAzzle.isString(sel)) {
-                elements = cached[sel] ? cached[sel] : cached[sel] = hAzzle(sel, ctx).elems;
-            }
-
-            return this.concat(elements);
-        },
-
-        /**
-         * Get immediate parents of each element in the collection.
-         * If CSS selector is given, filter results to include only ones matching the selector.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        parent: function (sel) {
-            return hAzzle(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
-        },
-        /**
-         *  Get the ancestors of each element in the current set of matched elements
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        parents: function (sel) {
-            var ancestors = [],
-                elements = this.elems,
-                fn = function (element) {
-                    if ((element = element.parentNode) && element !== doc && ancestors.indexOf(element) < 0) {
-                        ancestors.push(element);
-                        return element;
-                    }
-                };
-
-            while (elements.length > 0 && elements[0] !== undefined) {
-                elements = elements.map(fn);
-            }
-
-            return hAzzle.create(ancestors, sel);
-        },
-
-
-        /**
-         * Get all decending elements of a given element
-         * If selector is given, filter the results to only include ones matching the CSS selector.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        children: function (sel) {
-            return hAzzle.create(this.reduce(function (elements, elem) {
-                var childrens = slice.call(elem.children);
-                return elements.concat(childrens);
-            }, []), sel);
-        },
-
-        /**
-         *  Return the element's next sibling
-         * @return {Object}
-         */
-
-        next: function () {
-            return hAzzle.create(this.pluckNode('nextSibling'));
-        },
-
-        /**
-         *  Return the element's previous sibling
-         * @return {Object}
-         */
-
-        prev: function () {
-            return hAzzle.create(this.pluckNode('previousSibling'));
-        },
-
-        /**
-         * Reduce the set of matched elements to the first in the set.
-         */
-
-        first: function () {
-            return hAzzle.create(this.get(0));
-        },
-
-        /**
-         * Reduce the set of matched elements to the last one in the set.
-         */
-
-        last: function () {
-            return hAzzle.create(this.get(-1));
-        },
-
-        /**
-         * Return the element's siblings
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        siblings: function (sel) {
-
-            var siblings = [],
-                children,
-                elem,
-                i,
-                len;
-
-            if (!cached[sel]) {
-                this.each(function () {
-                    elem = this;
-
-                    children = slice.call(elem.parentNode.childNodes);
-
-                    for (i = 0, len = children.length; i < len; i++) {
-                        if (hAzzle.isElement(children[i]) && children[i] !== elem) {
-                            siblings.push(children[i]);
-                        }
-                    }
-                });
-                cached[sel] = siblings;
-            }
-            return hAzzle.create(cached[sel], sel);
-        }
-
-    });
-    // **************************************************************
-    // DATA
-    // **************************************************************
+    // Storage
 
     var storage = {};
 
@@ -1216,10 +1055,12 @@
 
     function remove(element, key) {
         var id = hAzzle.getUID(element);
-        if (key) {
+        if (key === undefined && hAzzle.nodeType(1, element)) {
+            storage[id] = {};
+        } else {
             var obj = storage[id];
             obj && delete obj[key];
-        } else storage[id] = {};
+        }
     }
 
 
@@ -1298,21 +1139,554 @@
     });
 
 
-    // **************************************************************
-    // DOM MANIPULATION
-    // **************************************************************
 
-    // Boolean attributes and elements
+    // Events 
 
-    var boolean_attr = {
-        'multiple': true,
-        'selected': true,
-        'checked': true,
-        'disabled': true,
-        'readOnly': true,
-        'required': true,
-        'open': true
+
+    var isFunction = hAzzle.isFunction,
+        isString = hAzzle.isString,
+
+        slice = Array.prototype.slice,
+
+        specialEvents = {},
+        focusinSupported = 'onfocusin' in window,
+
+        _focus = {
+            focus: 'focusin',
+            blur: 'focusout'
+        },
+
+        _mouse = {
+            mouseenter: 'mouseover',
+            mouseleave: 'mouseout'
+        },
+
+        ignoreProperties = /^([A-Z]|returnValue$|layer[XY]$)/,
+        eventMethods = {
+            preventDefault: 'isDefaultPrevented',
+            stopImmediatePropagation: 'isImmediatePropagationStopped',
+            stopPropagation: 'isPropagationStopped'
+        };
+
+    /******************************************
+     * Event Core Functions ( ECF )
+     ******************************************/
+
+    /**
+     * Handlers
+     *
+     * In hAzzle each event handler is attached to the element, and
+     * we check here if the element has the handler we search for,
+     * or not.
+     *
+     * @param {Object} element
+     * @return {Object}
+     */
+
+    function handlers(element) {
+        return element._hdlers || (element._hdlers = []);
+    }
+
+    /**
+     * Find event handler
+     *
+     * @param {Object} element
+     * @param {Function} event
+     * @param {String} fn
+     * @param {Function} selector
+     * @return {Object}
+     */
+
+
+    function findHandlers(element, event, fn, selector) {
+
+        // Check for namespace
+
+        event = getEventParts(event);
+
+        // If namespace event...
+
+        if (event.ns) var matcher = matcherFor(event.ns);
+
+        return (handlers(element) || []).filter(function (handler) {
+            return handler && (!event.e || handler.e == event.e) && (!event.ns || matcher.test(handler.ns)) && (!fn || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn)) && (!selector || handler.sel == selector);
+        });
+    }
+
+    /**
+     * Get event parts.
+     *
+     * @param {String} event
+     *
+     * @return {Object}
+     */
+
+    function getEventParts(event) {
+        var parts = ('' + event).split('.');
+        return {
+            e: parts[0],
+            ns: parts.slice(1).sort().join(' ')
+        };
+    }
+
+
+    function matcherFor(ns) {
+        return new RegExp('(?:^| )' + ns.replace(' ', ' .* ?') + '(?: |$)');
+    }
+
+    /**
+     * Get real event.
+     *
+     * @param {String} event
+     *
+     * @return {String}
+     */
+
+    function realEvent(type) {
+        return _mouse[type] || (focusinSupported && _focus[type]) || type;
+    }
+
+
+    function BubbleCatching(handler, boobleSetting) {
+        return handler.del && (!focusinSupported && (_focus[handler.e])) || !! boobleSetting;
+    }
+
+    function returnTrue() {
+        return true;
+    }
+
+    function returnFalse() {
+        return false;
+    }
+
+
+    /**
+     * Quick fix
+     */
+
+    function QuickFix(event, original) {
+
+        if (original || !event.isDefaultPrevented) {
+            original || (original = event);
+
+            hAzzle.each(eventMethods, function (name, predicate) {
+
+                var originalMethod = original[name];
+
+                event[name] = function () {
+
+                    this[predicate] = returnTrue;
+
+                    var e = this.originalEvent;
+
+                    if (!e) {
+                        return;
+                    }
+
+                    return originalMethod && originalMethod.apply(original, arguments);
+                };
+                event[predicate] = returnFalse;
+            });
+
+            if (original.defaultPrevented !== undefined ? original.defaultPrevented :
+                'returnValue' in original ? original.returnValue === false :
+                original.getPreventDefault && original.getPreventDefault())
+                event.isDefaultPrevented = returnTrue;
+        }
+        return event;
+    }
+
+    /**
+     * Create event proxy for delegated events.
+     *
+     * @param {Object} event
+     *
+     * @return {Object}
+     */
+
+    function createProxy(evt) {
+        var proxy = {
+            originalEvent: evt
+        };
+
+        for (var key in evt)
+            if (!ignoreProperties.test(key) && evt[key] !== undefined) {
+                proxy[key] = evt[key];
+            }
+        return QuickFix(proxy, evt);
+    }
+
+    hAzzle.proxy = function (fn, context) {
+        if (isFunction(fn)) {
+            var passedArgs = slice.call(arguments, 2),
+                proxyFn = function () {
+                    return fn.apply(context, passedArgs.length ? passedArgs : arguments);
+                };
+            proxyFn.hAzzle_id = hAzzle.getUID(fn);
+            return proxyFn;
+        } else if (isString(context)) {
+            return hAzzle.proxy(fn[context], fn);
+        } else {
+            throw new TypeError("expected function");
+        }
+    };
+
+    hAzzle.fn.extend({
+
+        /**
+         * Add event to element
+         *
+         * @param {String/Object} events
+         * @param {String} selector
+         * @param {string} data
+         * @param {Function} fn
+         * @param {Boolean} one
+         * @return {Object}
+
+         */
+
+        on: function (events, selector, data, fn, one) {
+
+            var autoRemove, delegator, type;
+
+            if (events && !isString(events)) {
+
+                for (type in events) {
+
+                    this.on(type, selector, data, events[type], one);
+                }
+                return this;
+            }
+
+            if (!isString(selector) && !isFunction(fn) && fn !== false) {
+                fn = data, data = selector, selector = undefined;
+            }
+
+            if (isFunction(data) || data === false) {
+                fn = data, data = undefined;
+            }
+            return this.each(function (_, element) {
+
+                if (one) {
+                    autoRemove = function (e) {
+                        hAzzle.event.remove(element, e.type, fn);
+                        return fn.apply(this, arguments);
+                    };
+                }
+
+                // Event delegation
+                if (selector) {
+
+                    delegator = function (e) {
+                        var evt, match = hAzzle(e.target).closest(selector, element).get(0);
+                        if (match && match !== element) {
+                            evt = hAzzle.extend(createProxy(e), {
+                                currentTarget: match,
+                                liveFired: element
+                            });
+                            return (autoRemove || fn).apply(match, [evt].concat(slice.call(arguments, 1)));
+                        }
+                    };
+                }
+
+                hAzzle.event.add(element, events, fn, data, selector, delegator || autoRemove);
+            });
+
+        },
+
+        /**
+         * Add event to element only once
+         * The event will be removed after the first time it's triggered
+         *
+         * @param {String/Object} events
+         * @param {String} selector
+         * @param {string} data
+         * @param {Function} fn
+         * @return {Object}
+         */
+
+        one: function (events, selector, data, fn) {
+            return this.on(events, selector, data, fn, true);
+        },
+
+        /**
+         * Remove event from element
+         *
+         * @param {String} events
+         * @param {String} selector
+         * @param {Function} fn
+         * @return {Object}
+         */
+
+        off: function (events, selector, fn) {
+
+            if (typeof events === "object") {
+                // ( types-object [, selector] )
+                for (var type in events) {
+                    this.off(type, selector, events[type]);
+                }
+                return this;
+            }
+
+            if (selector === false || typeof selector === "function") {
+                // ( types [, fn] )
+                fn = selector;
+                selector = undefined;
+            }
+            if (fn === false) {
+                fn = returnFalse;
+            }
+
+            return this.each(function () {
+                hAzzle.event.remove(this, events, fn, selector);
+            });
+        },
+
+        trigger: function (event, args) {
+            event = (isString(event) || hAzzle.isPlainObject(event)) ? hAzzle.Event(event) : QuickFix(event)
+            event._args = args
+            return this.each(function () {
+
+                if (this.type === "checkbox" && this.click && hAzzle.nodeName(this, "input")) {
+                    this.click();
+                    return false;
+                }
+
+                if ('dispatchEvent' in this) this.dispatchEvent(event)
+                else hAzzle(this).triggerHandler(event, args)
+            })
+        },
+
+        triggerHandler: function (events, args) {
+            var e, result;
+            this.each(function (i, element) {
+                e = createProxy(isString(events) ? hAzzle.Event(events) : events);
+                e._args = args;
+                e.target = element;
+                hAzzle.each(findHandlers(element, events.type || events), function (_, handler) {
+                    result = handler.proxy(e);
+                    if (e.isImmediatePropagationStopped()) return false;
+                });
+            });
+            return result;
+        },
+
+        hover: function (fnOver, fnOut) {
+            return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+        }
+    });
+
+    hAzzle.event = {
+
+        /**
+         * Add event to element.
+         * Using addEventListener or attachEvent (IE)
+         *
+         * @param {Object} el
+         * @param {String} events
+         * @param {Function} fn
+         * @param {String} selector
+         */
+        add: function (element, events, fn, data, selector, delegator, bubble) {
+
+            if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element)) return;
+
+            // Set handler on the element
+
+            var set = handlers(element);
+
+            // Handle multiple events seperated by a space
+
+            hAzzle.each(events.split(/\s/), function (index, type) {
+
+                if (type == 'ready') return hAzzle(fn);
+
+                // Namespace check
+
+                var handler = getEventParts(type);
+                handler.fn = fn;
+                handler.sel = selector;
+
+                if (_mouse[handler.e]) {
+
+                    fn = function (e) {
+                        var related = e.relatedTarget;
+                        if (!related || (related !== this && !hAzzle.contains(this, related)));
+                        return handler.fn.apply(this, arguments);
+                    };
+
+                }
+
+                handler.del = delegator;
+
+                var cb = delegator || fn;
+
+                handler.proxy = function (e) {
+                    e = QuickFix(e);
+                    if (e.isImmediatePropagationStopped()) return;
+                    e.data = data;
+                    var result = cb.apply(element, e._args === undefined ? [e] : [e].concat(e._args));
+                    if (result === false) e.preventDefault(), e.stopPropagation();
+                    return result;
+                };
+                handler.i = set.length;
+                set.push(handler);
+                if (element.addEventListener) {
+                    element.addEventListener(realEvent(handler.e), handler.proxy, BubbleCatching(handler, bubble));
+                }
+            });
+        },
+
+        /**
+         * Remove event to element.
+         *
+         * @param {Object} el
+         * @param {String} events
+         * @param {Function} fn
+         * @param {String} selector
+         */
+        remove: function (element, events, fn, selector, bubble) {
+            hAzzle.each((events || '').split(/\s/), function (_, evt) {
+                hAzzle.each(findHandlers(element, evt, fn, selector), function (_, handler) {
+                    delete handlers(element)[handler.i];
+                    if (element.removeEventListener) {
+                        element.removeEventListener(realEvent(handler.e), handler.proxy, BubbleCatching(handler, bubble));
+                    }
+                });
+            });
+        }
+    };
+
+    hAzzle.Event = function (type, props) {
+
+        if (!isString(type)) props = type, type = props.type;
+
+        var event = document.createEvent(specialEvents[type] || 'Events'),
+            bubbles = true;
+
+        if (props)
+
+            for (var name in props)(name == 'bubbles') ? (bubbles = !! props[name]) : (event[name] = props[name]);
+
+        event.initEvent(type, bubbles, true);
+
+        return QuickFix(event);
+    };
+
+    // Shortcut methods for 'on'
+
+    hAzzle.each(("blur focus focusin focusout load resize scroll unload click dblclick " +
+        "mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
+        "change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
+
+        // Handle event binding
+
+        hAzzle.fn[name] = function (data, fn) {
+
+            if (fn === null) {
+                fn = data;
+                data = null;
+            }
+
+            return arguments.length > 0 ?
+                this.on(name, null, data, fn) :
+                this.trigger(name);
+        };
+    });
+
+    // Util
+
+    hAzzle.fn.extend({
+
+
+
+        /**
+         * Remove all childNodes from an element
+         *
+         * @return {Object}
+         */
+
+        empty: function () {
+
+            return this.removeData().each(function () {
+
+                this.textContent = "";
+            });
+        },
+
+
+        /**
+         *  Remove an element from the DOM
+         */
+
+        remove: function () {
+            return this.removeData().each(function () {
+
+                // Locate all nodes that belong to this element
+
+                var elements = hAzzle(this).find('*');
+                elements = elements.add(this);
+
+                // Remove all attached event handlers
+                hAzzle.each(elements, function () {
+                    hAzzle.event.remove(this);
+                });
+
+                if (this.parentNode)
+                    this.parentNode.removeChild(this)
+            })
+        },
+
+        /**
+         * Create a deep copy of the element and it's children
+         *
+         * TODO!!
+         *
+         *  - Use documentfrag
+         *  - Clone data
+         *  - Clone events
+         */
+
+        clone: function () {
+            return this.map(function () {
+                return this.cloneNode(true);
+            });
+        }
+    });
+
+    // Manipulation
+
+
+    var
+
+    // Get the properties right
+
+    propMap = {
+        'tabindex': 'tabIndex',
+        'readonly': 'readOnly',
+        'for': 'htmlFor',
+        'class': 'className',
+        'maxlength': 'maxLength',
+        'cellspacing': 'cellSpacing',
+        'cellpadding': 'cellPadding',
+        'rowspan': 'rowSpan',
+        'colspan': 'colSpan',
+        'usemap': 'useMap',
+        'frameborder': 'frameBorder',
+        'contenteditable': 'contentEditable'
     },
+
+        // Boolean attributes and elements
+
+        boolean_attr = {
+            'multiple': true,
+            'selected': true,
+            'checked': true,
+            'disabled': true,
+            'readOnly': true,
+            'required': true,
+            'open': true
+        },
 
         boolean_elements = {
             'input': true,
@@ -1324,13 +1698,16 @@
             'details': true
         },
 
+        /**
+         * Direction for where to insert the text
+         */
+
         direction = {
             'first': 'beforeBegin', // Beginning of the sentence
             'middle': 'afterBegin', // Middle of the sentence
             'center': 'afterBegin', // Middle of the sentence
             'last': 'beforeEnd' // End of the sentence
         };
-
 
     function getBooleanAttrName(element, name) {
         // check dom last since we will most likely fail on name
@@ -1339,11 +1716,11 @@
         return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
     }
 
-
     function NodeMatching(elem) {
         return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem) ? true : false;
     }
 
+    // Global
 
     hAzzle.extend({
 
@@ -1389,6 +1766,7 @@
             return elem.value;
         },
 
+
         /**
          * Get text
          */
@@ -1410,9 +1788,31 @@
                 return elem.nodeValue;
             }
             return ret;
+        },
+
+        prop: function (elem, name, value) {
+            // don't get/set properties on text, comment and attribute nodes
+            if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
+                return name = propMap[name] || name, value !== undefined ? elem[name] = value : elem[name];
+            }
+        },
+
+        attr: function (elem, name, value) {
+            if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
+                if ("undefined" === typeof elem.getAttribute) return hAzzle.prop(elem, name, value);
+                if (hAzzle.isUndefined(value)) {
+                    if (name === "value" && name.nodeName.toLowerCase() === "input") return hAzzle.getValue(elem);
+                    elem = elem.getAttribute(name);
+                    return null === elem ? undefined : elem;
+                }
+                return elem.setAttribute(name, value + "");
+            }
         }
+
     });
 
+
+    // Core
 
     hAzzle.fn.extend({
 
@@ -1435,7 +1835,8 @@
          */
 
         text: function (value, dir) {
-            return hAzzle.isDefined(value) ?
+            return hAzzle.isUndefined(value) ?
+                hAzzle.getText(this) :
                 this.empty().each(function () {
                     if (NodeMatching(this)) {
                         if (hAzzle.isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
@@ -1444,7 +1845,7 @@
                             this.textContent = value;
                         }
                     }
-                }) : hAzzle.getText(this);
+                });
         },
 
         /**
@@ -1457,76 +1858,21 @@
          */
 
         html: function (value, dir) {
+
+            if (value === undefined && this[0].nodeType === 1) {
+                return this[0].innerHTML;
+            }
+
             if (hAzzle.isString(value)) {
-                return this.empty().each(function () {
-                    // Remove element nodes and prevent memory leaks
+                return this.removeData().each(function () {
                     if (hAzzle.nodeType(1, this)) {
-                        // TODO !!Need to clean the data
+                        this.textContent = '';
                         this.insertAdjacentHTML('beforeend', value || '');
                     }
                 });
             }
-
-            // Return innerHTML only from the first elem in the collection
-
-            if (hAzzle.nodeType(1, this[0])) {
-                return this[0].innerHTML;
-            }
+            return this.empty().append(value);
         },
-
-        cleanData: function (elems) {
-            // TODO!!!
-
-            // Remove all data attached to the element
-            // Remove all events attached to the element
-        },
-
-
-        /**
-         * Remove all childNodes from an element
-         *
-         * @return {Object}
-         */
-
-        empty: function () {
-            //       return this.cleanData.put('textContent', '', /* Notetype 1*/ 1);
-            return this.put('textContent', '', /* Notetype 1*/ 1);
-        },
-
-
-        /**
-         * Create a deep copy of the element and it's children
-         *
-         * TODO!!
-         *
-         *  - Use documentfrag
-         *  - Clone data
-         *  - Clone events
-         */
-
-        clone: function () {
-            return this.map(function () {
-                return this.cloneNode(true);
-            });
-        },
-
-        /**
-         *  Remove an element from the DOM
-         *
-         * TODO!!
-         *
-         *  - Remove events
-         *  - Remove data
-         */
-
-        remove: function () {
-            return this.each(function () {
-                if (this.parentNode) {
-                    this.parentNode.removeChild(this);
-                }
-            });
-        },
-
 
         /**
          * Get value for input/select elements
@@ -1537,12 +1883,7 @@
          */
         val: function (value) {
 
-            if (!value) {
-
-                return this[0] && hAzzle.getValue(this[0]);
-            }
-
-            return this.each(function (index, elem) {
+            return value ? this.each(function (index, elem) {
                 var val;
 
                 if (!hAzzle.nodeType(1, elem)) {
@@ -1564,7 +1905,7 @@
                 }
 
                 elem.value = val;
-            });
+            }) : this[0] && hAzzle.getValue(this[0]);
         },
 
         /**
@@ -1578,36 +1919,13 @@
          */
 
         attr: function (name, value) {
-
-            if (hAzzle.isObject(name)) {
-
-                return this.each(function (index, element) {
-
-                    if (hAzzle.nodeType(3, element) || hAzzle.nodeType(8, element) || hAzzle.nodeType(2, element)) {
-                        return;
-                    }
-                    hAzzle.each(name, function (value, key) {
-                        element.setAttribute(key, value + "");
-                    });
+            return hAzzle.isObject(name) ? this.each(function (index, element) {
+                hAzzle.each(name, function (key, value) {
+                    hAzzle.attr(element, key, value);
                 });
-            }
-            if (hAzzle.isUndefined(value)) {
-
-                var elem = this[0];
-
-                if (name === 'value' && elem.nodeName.toLowerCase() === 'input') {
-                    return hAzzle.getValue(elem);
-                }
-                var ret = elem.getAttribute(name);
-                // Non-existent attributes return null, we normalize to undefined
-                return ret === null ?
-                    undefined :
-                    ret;
-            }
-
-            return this.each(function () {
-                hAzzle.nodeType(3, this) || hAzzle.nodeType(8, this) || hAzzle.nodeType(2, this) || this.setAttribute(name, value + "");
-            });
+            }) : hAzzle.isUndefined(value) ? hAzzle.attr(this[0], name) : this.length === 1 ? hAzzle.attr(this[0], name, value) : this.each(function () {
+                return hAzzle.attr(this, name, value);
+            })
         },
 
         /**
@@ -1645,14 +1963,11 @@
          * @return {Object}
          */
         prop: function (name, value) {
-            if ("object" === typeof name) return this.each(function (value, element) {
-                hAzzle.each(name, function (name, value) {
-                    name = propMap[name] || name;
-                    element[name] = value
-                })
-            });
-            name = propMap[name] || name;
-            return hAzzle.isUndefined(value) ? this[0] && this[0][name] : this.put(name, value)
+            return hAzzle.isObject(name) ? this.each(function (value, element) {
+                hAzzle.each(name, function (key, value) {
+                    hAzzle.prop(element, key, value);
+                });
+            }) : hAzzle.isUndefined(value) ? this[0] && this[0][propMap[name] || name] : hAzzle.prop(element, key, value);
         },
 
 
@@ -1792,180 +2107,249 @@
                     }
                 }
             });
+        },
+
+        /**
+         * Replace each element in the set of matched elements with the provided new content
+         *
+         * @param {String} html
+         * @return {Object}
+         */
+
+        replaceWith: function (html) {
+            if (typeof html === "string") return this.before(html).remove()
         }
 
     });
 
 
-    // **************************************************************
-    // HTML
-    // **************************************************************
+    // Traversing
 
-    function toHTML() {
-        var div = document.createElement('div');
-        div.appendChild(this.cloneNode(true));
-        return div.innerHTML;
-    }
 
-    // Pads number `n` with `ln` zeroes.
-    function pad(n, ln) {
-        n = n.toString();
-        while (n.length < ln) n = '0' + n;
-        return n;
-    }
-
-    /** Replaces ocurrences of '$' with the equivalent padded index.
-     * `$$ == 01`, `$$$$ == 0001`
+    /*!
+     * Traversing.js
      */
+    var
+    cached = [],
+        slice = Array.prototype.slice;
 
-    function numbered(value, n) {
-        return value.replace(expr['numbering'], function (m) {
-            return pad(n + 1, m.length);
-        });
-    }
+    // Extend hAzzle
+
+    hAzzle.fn.extend({
+
+        /**
+         * Fetch property from elements
+         *
+         * @param {String} prop
+         * @return {Array}
+         */
+
+        pluckNode: function (prop) {
+            return this.map(function (element) {
+                return hAzzle.getClosestNode(element, prop);
+            });
+        },
+
+        /**
+         * Get the  element that matches the selector, beginning at the current element and progressing up through the DOM tree.
+         *
+         * @param {String} sel
+         * @return {Object}
+         */
+
+        closest: function (sel) {
+            return this.map(function (elem) {
+                // Only check for match if nodeType 1
+                if (hAzzle.nodeType(1, elem) && hAzzle.matches(elem, sel)) {
+                    return elem;
+                }
+                // Exclude document fragments
+                return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
+            });
+        },
+
+        /** Determine the position of an element within the matched set of elements
+         *
+         * @param {string} elem
+         * @param {return} Object
+         */
+
+        index: function (elem) {
+            return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
+        },
+
+        /**
+         * Adds one element to the set of matched elements.
+         *
+         * @param {String} sel
+         * @param {String} ctx
+         * @return {Object}
+         */
+
+        add: function (sel, ctx) {
+            var elements = sel;
+            if (hAzzle.isString(sel)) {
+                elements = hAzzle(sel, ctx).elems;
+            }
+            return this.concat(elements);
+        },
+
+        /**
+         * Get immediate parents of each element in the collection.
+         * If CSS selector is given, filter results to include only ones matching the selector.
+         *
+         * @param {String} sel
+         * @return {Object}
+         */
+
+        parent: function (sel) {
+            return hAzzle(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
+        },
+
+        /**
+         *  Get the ancestors of each element in the current set of matched elements
+         *
+         * @param {String} sel
+         * @return {Object}
+         */
+
+        parents: function (sel) {
+            var ancestors = [],
+                elements = this.elems,
+                fn = function (element) {
+                    if ((element = element.parentNode) && element !== document && ancestors.indexOf(element) < 0) {
+                        ancestors.push(element);
+                        return element;
+                    }
+                };
+
+            while (elements.length > 0 && elements[0] !== undefined) {
+                elements = elements.map(fn);
+            }
+
+            return hAzzle.create(ancestors, sel);
+        },
+
+        /**
+         * Get all decending elements of a given element
+         * If selector is given, filter the results to only include ones matching the CSS selector.
+         *
+         * @param {String} sel
+         * @return {Object}
+         */
+
+        children: function (sel) {
+            return hAzzle.create(this.reduce(function (elements, elem) {
+                var childrens = slice.call(elem.children);
+                return elements.concat(childrens);
+            }, []), sel);
+        },
+
+        /**
+         *  Return the element's next sibling
+         *
+         * @return {Object}
+         */
+
+        next: function (selector) {
+            return selector ? hAzzle(this.pluckNode('nextSibling').filter(selector)) : hAzzle(this.pluckNode('nextSibling'));
+        },
+
+        /**
+         *  Return the element's previous sibling
+         *
+         * @return {Object}
+         */
+
+        prev: function (selector) {
+            return selector ? hAzzle(this.pluckNode('previousSibling').filter(selector)) : hAzzle(this.pluckNode('previousSibling'));
+        },
+
+        /**
+         * Reduce the set of matched elements to the first in the set.
+         */
+
+        first: function () {
+            return hAzzle(this.get(0));
+        },
+
+        /**
+         * Reduce the set of matched elements to the last one in the set.
+         */
+
+        last: function () {
+            return hAzzle(this.get(-1));
+        },
+
+        /**
+         * Return the element's siblings
+         * @param {String} sel
+         * @return {Object}
+         */
+
+        siblings: function (sel) {
+            var siblings = [],
+                children,
+                elem,
+                i,
+                len;
+
+            if (!cached[sel]) {
+                this.each(function () {
+                    elem = this;
+                    children = slice.call(elem.parentNode.childNodes);
+
+                    for (i = 0, len = children.length; i < len; i++) {
+                        if (hAzzle.isElement(children[i]) && children[i] !== elem) {
+                            siblings.push(children[i]);
+                        }
+                    }
+                });
+                cached[sel] = siblings;
+            }
+            return hAzzle.create(cached[sel], sel);
+        }
+
+    });
+
+    // Parsing
 
     hAzzle.extend({
 
         /**
-         * Create a DOM element.
+         * Cross-browser JSON parsing
          *
-         * @param{Number} index
-         * @param{String} tag
-         * @param{String} id
-         * @param{String} className
-         * @param{String} text
-         * @param{Object} attrs
-         *
-         * @return{Object}
+         * @param {String} data
          */
 
-        createDOMElem: function (index, tag, id, className, text, attrs) {
-
-            var element = document.createElement(tag);
-
-            if (id) element.id = numbered(id, index);
-            if (className) element.className = numbered(className, index);
-            if (text) element.appendChild(document.createTextNode(text));
-
-            if (attrs)
-
-                for (var key in attrs) {
-                    if (!attrs.hasOwnProperty(key)) continue;
-                    element.setAttribute(key, numbered(attrs[key], index));
-                }
-
-            return element;
+        parseJSON: function (data) {
+            return JSON.parse(data + "");
         },
 
-        parseHTML: function (str, data) {
+        parseXML: function (data) {
+            var xml, tmp;
+            if (!data || typeof data !== "string") {
+                return null;
+            }
 
-            var parts = cached[str] ? cached[str] : cached[str] = str.split(expr['operators']).map(call, trim),
+            // Support: IE9
+            try {
+                tmp = new DOMParser();
+                xml = tmp.parseFromString(data, "text/xml");
+            } catch (e) {
+                xml = undefined;
+            }
 
-                // Avoid DOM insertion too many times, so we cache
-                tree = cached[data] ? cached[data] : cached[data] = document.createDocumentFragment(),
-                match,
-                parents = [tree];
-
-            // Go over the abbreviations one level at a time, and process
-            // corresponding element values
-
-            hAzzle.each(parts, function (i, original) {
-
-                var part = original,
-                    op = (expr['operators'].exec(str) || [])[0],
-                    count = 1,
-                    tag, id, classes, text, attrs = {};
-
-                // #### Attributes
-                // Attributes are parsed first then removed so that it takes precedence
-                // over IDs and classNames for the `#.` characters.
-
-                if (match = part.match(expr['attributes'])) {
-
-                    var matched = match[match.length - 1];
-
-                    while (match = expr['values'].exec(matched)) {
-                        attrs[match[1]] = (match[4] || '').replace(/['"]/g, '').trim();
-                    }
-
-                    part = part.replace(expr['attributes'], '');
-                }
-
-                // #### Multipliers
-                if (match = part.match(expr['multiplier'])) {
-                    var times = +match[1];
-                    if (times > 0) count = times;
-                }
-
-                // #### IDs
-                if (match = part.match(expr['id'])) {
-                    id = match[match.length - 1].slice(1);
-                }
-
-                // #### Tag names
-                if (match = part.match(expr['tagname'])) {
-                    tag = match[0];
-                } else {
-                    tag = 'div';
-                }
-
-                // #### Class names
-                if (match = part.match(expr['classname'])) {
-                    classes = match.map(function (c) {
-                        return c.slice(1);
-                    }).join(' ');
-                }
-
-                // #### Text
-                if (match = part.match(expr['text'])) {
-                    text = match[1];
-                    if (data) {
-                        text = text.replace(/\$(\w+)/g, function (m, key) {
-                            return data[key];
-                        });
-                    }
-                }
-
-                // Insert `count` copies of the element per parent. If the current operator
-                // is `+` we mark the elements to remove it from `parents` in the next iteration.
-
-
-                hAzzle.each(slice.call(parents, 0), function (parentIndex, parent) {
-
-                    for (var index = 0; index < count; index++) {
-                        // Use parentIndex if this element has a count of 1
-                        var _index = count > 1 ? index : parentIndex;
-
-                        var element = hAzzle.createDOMElem(_index, tag, id, classes, text, attrs);
-
-                        if (op === '+') element._sibling = true;
-
-                        parent.appendChild(element);
-                    }
-                });
-
-                // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
-                if (op === '>') {
-                    parents = parents.reduce(function (p, c, i, a) {
-                        return p.concat(slice.call(c.childNodes, 0).filter(function (el) {
-                            return el.nodeType === 1 && !el._sibling;
-                        }));
-                    }, []);
-                }
-            });
-
-            // Augment the documentFragment with the `toHTML` method.
-
-            tree.toHTML = toHTML;
-
-            return tree;
+            if (!xml || xml.getElementsByTagName("parsererror").length) {
+                return new Error("Invalid XML: " + data);
+            }
+            return xml;
         }
+
     });
 
+    // classes
 
-    // **************************************************************
-    //  CLASS MANIPULATION
-    // **************************************************************
 
     var classList_support = !! document.createElement('p').classList;
 
@@ -2194,7 +2578,6 @@
         },
 
         /**
-
          * Checks if an element has the given class
          *
          * @param {String} className
@@ -2233,7 +2616,6 @@
         /**
          * Add class 'clas' to 'element', and remove after 'duration' milliseconds
          * @param {String} clas
-
          * @param {Number} duration
          */
 
@@ -2261,6 +2643,7 @@
          * Toggle classes
          *
          * @param {String} className
+
          * @param {Boolean} state
          * @return {Boolean}
          */
@@ -2283,980 +2666,75 @@
             });
         }
     });
-    // **************************************************************
-    // EVENT HANDLING
-    // **************************************************************
 
-    function check(evt) {
-        if (evt = evt.relatedTarget) {
-            var ac;
-            if (ac = evt !== this)
-                if (ac = "xul" !== evt.prefix)
-                    if (ac = !/document/.test(this.toString())) {
-                        a: {
-                            for (; evt = evt.parentNode;)
-                                if (evt === this) {
-                                    evt = 1;
-                                    break a;
-                                }
-                            evt = 0;
-                        }
-                        ac = !evt;
-                    }
-            evt = ac;
-        } else evt = null === evt;
-        return evt;
-    }
-    var specialThreatment = {
 
-        disabeled: function (el, type) {
-            if (el.disabeled && type === "click") return true;
-        },
-        nodeType: function (el) { // Don't do events on text and comment nodes 
-            if (el.nodeType === 3 || el.nodeType === 8) return true;
-        }
-    },
-
-        customEvents = {
-            mouseenter: {
-                base: 'mouseover',
-                condition: check
-            },
-            mouseleave: {
-                base: 'mouseout',
-                condition: check
-            },
-            mousewheel: {
-                base: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
-
-            }
-        },
-
-        // Includes some event props shared by different events
-
-        commonProps = ["altKey", "bubbles", "cancelable", "ctrlKey", "currentTarget", "eventPhase", "metaKey", "relatedTarget", "shiftKey", "target", "timeStamp", "view", "which"],
-
-        // some event types need special handling and some need special properties, do that all here
-
-        typeFixers = [{ // key events
-            reg: /^key/,
-            fix: function (event, newEvent) {
-                newEvent.keyCode = event.keyCode || event.which;
-                return commonProps.concat(["char", "charCode", "key", "keyCode"]);
-            }
-        }, { // mouse events
-            reg: /^(?:mouse|contextmenu)|click/,
-            fix: function (event, newEvent) {
-
-                newEvent.rightClick = event.which === 3 || event.button === 2;
-
-                newEvent.pos = {
-                    x: 0,
-                    y: 0
-                };
-
-                // Calculate pageX/Y if missing and clientX/Y available
-
-                if (event.pageX || event.pageY) {
-                    newEvent.clientX = event.pageX;
-                    newEvent.clientY = event.pageY;
-                } else if (event.clientX || event.clientY) {
-                    newEvent.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft;
-                    newEvent.clientY = event.clientY + doc.body.scrollTop + root.scrollTop;
-                }
-
-                return commonProps.concat(["button", "buttons", "clientX", "clientY", "offsetX", "offsetY", "pageX", "pageY", "screenX", "screenY", "toElement"]);
-            }
-        }, { // mouse wheel events
-            reg: /mouse.*(wheel|scroll)/i,
-            fix: function () {
-                return ["button", "buttons", "clientX", "clientY", "offsetX", "offsetY", "pageX", "pageY", "screenX", "screenY", "toElement", "wheelDelta", "wheelDeltaX", "wheelDeltaY", "wheelDeltaZ", "axis"];
-            }
-        }, { // TextEvent
-            reg: /^text/i,
-            fix: function () {
-                return commonProps.concat(["data"]);
-            }
-        }, { // touch and gesture events
-            reg: /^touch|^gesture/i,
-            fix: function () {
-                return commonProps.concat(["touches", "targetTouches", "changedTouches", "scale", "rotation"]);
-            }
-        }, { // message events
-            reg: /^message$/i,
-            fix: function () {
-                return commonProps.concat(["data", "origin", "source"]);
-            }
-        }, { // popstate events
-            reg: /^popstate$/i,
-            fix: function () {
-                return commonProps.concat(["state"]);
-            }
-        }, { // everything else
-            reg: /.*/,
-            fix: function () {
-                return commonProps;
-            }
-        }]
-
-        ,
-        typeFixerMap = {} // used to map event types to fixer functions (above), a basic cache mechanism
-
-        , Event = function (event, element) {
-
-            if (!arguments.length) return;
-
-            event = event || ((element.ownerDocument || element.document || element).parentWindow || win).event;
-
-            this.originalEvent = event;
-
-            if (!event) return;
-
-            var type = event.type,
-                target = event.target,
-                i, l, p, props, fixer;
-
-            this.target = target && target.nodeType === 3 ? target.parentNode : target;
-
-            fixer = typeFixerMap[type];
-
-            if (!fixer) { // haven't encountered this event type before, map a fixer function for it
-                for (i = 0, l = typeFixers.length; i < l; i++) {
-                    if (typeFixers[i].reg.test(type)) { // guaranteed to match at least one, last is .*
-                        typeFixerMap[type] = fixer = typeFixers[i].fix;
-                        break;
-                    }
-                }
-            }
-
-            props = fixer(event, this, type);
-
-            for (i = props.length; i--;) {
-                if (!((p = props[i]) in this) && p in event) this[p] = event[p];
-            }
-        };
-
-    Event.prototype = {
-
-        preventDefault: function () {
-            if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
-            else this.originalEvent.returnValue = false;
-        },
-        stopPropagation: function () {
-            if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
-            else this.originalEvent.cancelBubble = true;
-        },
-        stop: function () {
-            this.preventDefault();
-            this.stopPropagation();
-            this.stopped = true;
-        },
-        stopImmediatePropagation: function () {
-            if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
-            this.isImmediatePropagationStopped = function () {
-                return true;
-            };
-        },
-        isImmediatePropagationStopped: function () {
-            return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
-        }
-    };
-
-    function wrappedHandler(element, fn, condition, args) {
-        var call = function (event, eargs) {
-            return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
-        }, findTarget = function (event, eventElement) {
-                return fn._RachelleDel ? fn._RachelleDel.ft(event.target, element) : eventElement;
-            }, handler = condition ? function (event) {
-                var target = findTarget(event, this); // delegated event
-                if (condition.apply(target, arguments)) {
-                    if (event) event.currentTarget = target;
-                    return call(event, arguments);
-                }
-            } : function (event) {
-                return call(event, arguments);
-            };
-        handler._RachelleDel = fn._RachelleDel;
-        return handler;
-    }
-
-    function Access(element, type, handler, original, namespaces, args) {
-
-        if (!(this instanceof Access)) return false;
-
-        var customType = customEvents[type];
-
-        if (type === 'unload') handler = once(removeListener, element, type, handler, original);
-
-        if (customType) {
-            if (customType.condition) {
-                handler = wrappedHandler(element, handler, customType.condition, args);
-            }
-
-            type = customType.base || type;
-        }
-
-        this.element = element;
-        this.type = type;
-        this.original = original;
-        this.namespaces = namespaces;
-        this.eventType = type;
-        this.target = element;
-        this.handler = wrappedHandler(element, handler, null, args);
-    }
-
-    // given a list of namespaces, is our entry in any of them?
-
-    Access.prototype = {
-
-        inNamespaces: function (checkNamespaces) {
-            var i, j, c = 0;
-            if (!checkNamespaces) return true;
-            if (!this.namespaces) return false;
-            for (i = checkNamespaces.length; i--;) {
-                for (j = this.namespaces.length; j--;) {
-                    if (checkNamespaces[i] == this.namespaces[j]) c++;
-                }
-            }
-            return checkNamespaces.length === c;
-        },
-
-        // match by element, original fn (opt), handler fn (opt)
-        matches: function (checkElement, checkOriginal, checkHandler) {
-            return this.element === checkElement &&
-                (!checkOriginal || this.original === checkOriginal) &&
-                (!checkHandler || this.handler === checkHandler);
-        }
-    };
-
-
-
-    var registry = (function () {
-
-        var map = {};
-
-        function forAll(element, type, original, handler, root, fn) {
-            var pfx = root ? 'r' : '$';
-            if (!type || type === '*') {
-                // search the whole registry
-                for (var t in map) {
-                    if (t.charAt(0) === pfx) {
-                        forAll(element, t.substr(1), original, handler, root, fn);
-                    }
-                }
-            } else {
-                var i = 0,
-                    l, list = map[pfx + type],
-                    all = element === '*';
-                if (!list) return;
-                for (l = list.length; i < l; i++) {
-                    if ((all || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
-                }
-            }
-        }
-        return {
-            has: function (element, type, original, root) {
-                if (root = map[(root ? "r" : "$") + type])
-                    for (type = root.length; type--;)
-                        if (!root[type].root && root[type].matches(element, original, null)) return true;
-                return false;
-            },
-            get: function (element, type, original, root) {
-                var entries = [];
-                forAll(element, type, original, null, root, function (entry) {
-                    entries.push(entry);
-                });
-                return entries;
-            },
-            put: function (entry) {
-                var has = !entry.root && !this.has(entry.element, entry.type, null, false),
-                    key = (entry.root ? 'r' : '$') + entry.type;
-                (map[key] || (map[key] = [])).push(entry);
-                return has;
-            },
-            del: function (entry) {
-                forAll(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
-                    list.splice(i, 1);
-                    entry.removed = true;
-                    if (list.length === 0) delete map[(entry.root ? 'r' : '$') + entry.type];
-                    return false;
-                });
-            }
-        };
-    }());
-
-    // we attach this listener to each DOM event that we need to listen to, only once
-    // per event type per DOM element
-    function subHandler(event, type) {
-        var listeners = registry.get(this, type || event.type, null, false),
-            l = listeners.length,
-            i = 0;
-
-        event = new Event(event, this, true);
-        if (type) event.type = type;
-
-        // iterate through all handlers registered for this type, calling them unless they have
-        // been removed by a previous handler or stopImmediatePropagation() has been called
-        for (; i < l && !event.isImmediatePropagationStopped(); i++) {
-            if (!listeners[i].removed) listeners[i].handler.call(this, event);
-        }
-    }
-
-    function once(rm, element, type, fn, originalFn) {
-        return function () {
-            fn.apply(this, arguments);
-            rm(element, type, originalFn);
-        };
-    }
-
-
-    /**
-     *   Remove event listener
-     **/
-    function removeListener(el, events, handler, namespaces) {
-
-        events = events && events.replace(expr['nameRegex'], "");
-
-        var handlers = registry.get(el, events, null, false),
-            i = 0,
-            l;
-
-        events = {};
-
-        // Namespace
-
-        for (l = handlers.length; i < l; i++) handler && handlers[i].original !== handler || !handlers[i].inNamespaces(namespaces) || (registry.del(handlers[i]), events[handlers[i].eventType] || (events[handlers[i].eventType] = {
-            t: handlers[i].eventType,
-            c: handlers[i].type
-        }));
-
-        // For improved speed we are using object keys with fallback to for / in loop
-
-        handler = nativeKeys(events);
-
-        for (namespaces = handler.length; namespaces--;)
-            if (!registry.has(el, events[handler[namespaces]].t, null, false) && el[removeEvent]) el[removeEvent](events[handler[namespaces]].t, subHandler, false);
-    }
-
-
-
-    // set up a delegate helper using the given selector, wrap the handler function
-    function delegate(selector, fn) {
-
-        function findTarget(target, root) {
-            var i, array = hAzzle.isString(selector) ? hAzzle.select(selector, root) : selector;
-            for (; target && target !== root; target = target.parentNode) {
-                for (i = array.length; i--;) {
-                    if (array[i] === target) return target;
-                }
-            }
-        }
-
-        function handler(e) {
-            if (e.target.disabled !== true) {
-                var match = findTarget(e.target, this);
-                if (match) fn.apply(match, arguments);
-            }
-        }
-
-        handler._RachelleDel = {
-            ft: findTarget // attach it here for customEvents to use too
-            ,
-            selector: selector
-        };
-        return handler;
-    }
-
-    /**
-     * off(element[, eventType(s)[, handler ]])
-     */
-
-    function off(el, typeSpec, fn) {
-        var isTypeStr = hAzzle.isString(typeSpec),
-            type, namespaces, i;
-
-        if (isTypeStr && typeSpec.indexOf(' ') > 0) {
-
-            // off(el, 't1 t2 t3', fn) or off(el, 't1 t2 t3')
-
-            typeSpec = typeSpec.split(typeSpec);
-
-            for (i = typeSpec.length; i--;)
-                off(el, typeSpec[i], fn);
-            return el;
-        }
-
-        type = isTypeStr && typeSpec.replace(expr['nameRegex'], '');
-
-        if (type && customEvents[type]) type = customEvents[type].base;
-
-        if (!typeSpec || isTypeStr) {
-            // off(el) or off(el, t1.ns) or off(el, .ns) or off(el, .ns1.ns2.ns3)
-            if (namespaces = isTypeStr && typeSpec.replace(expr['namespaceRegex'], '')) namespaces = namespaces.split('.');
-            removeListener(el, type, fn, namespaces);
-        } else if (hAzzle.isFunction(typeSpec)) {
-            // off(el, fn);
-            removeListener(el, null, typeSpec);
-        } else {
-
-            // off(el, { t1: fn1, t2, fn2 })
-            for (var te = nativeKeys(typeSpec), ii = te.length; ii--;) {
-                off(el, te[ii], typeSpec[te[ii]]);
-            }
-        }
-
-        return el;
-    }
-
-    /**
-     * on(el, eventType(s)[, selector], handler[, args ])
-     */
-
-
-    function on(el, events, selector, fn, /* INTERNAL */ one) {
-        var originalFn, type, types, i, args, entry, first;
-
-        // Dont' allow click on disabeled elements, or events on text and comment nodes
-
-        if ((el.disabeled && specialThreatment[disabeled](el, type)) || specialThreatment.nodeType(el)) return false;
-
-        if (selector === undefined && typeof events === 'object')
-            for (type = nativeKeys(events), i = type.length; i--;) on.call(this, el, type[i], events[type[i]]);
-        else {
-
-            // Delegated event
-
-            if (!hAzzle.isFunction(selector)) {
-                originalFn = fn;
-                args = slice.call(arguments, 4);
-                fn = delegate(selector, originalFn);
-            } else {
-                args = slice.call(arguments, 3);
-                fn = originalFn = selector;
-            }
-
-            types = events.split(' ');
-
-            // One
-
-            if (one) fn = once(off, el, events, fn, originalFn);
-
-            for (i = types.length; i--;) {
-                first = registry.put(entry = new Access(
-                    el, types[i].replace(expr['nameRegex'], '') // event type
-                    , fn, originalFn, types[i].replace(expr['namespaceRegex'], '').split('.') // namespaces
-                    , args, false
-                ));
-
-                // First event of this type on this el, add root listener
-
-                if (first) el[addEvent](entry.eventType, subHandler, false);
-            }
-            return el;
-        }
-    }
-
-
+    // Wrap
 
     hAzzle.fn.extend({
 
-        /**
-         * Add event to element
-         *
-         * @param {String} events
-         * @param {String} selector
-         * @param {Function} callback
-         * @return {Object}
-         */
+        wrap: function (html) {
 
-        on: function (events, selector, fn, /* INTERNAL */ one) {
-            var el;
-            return this.each(function () {
-                el = this;
-                var originalFn, type, types, i, args, entry, first;
+            var func = hAzzle.isFunction(html)
 
-                // Dont' allow click on disabeled elements, or events on text and comment nodes
+            if (this[0] && !func) {
 
-                if ((el.disabeled && specialThreatment[disabeled](el, type)) || specialThreatment.nodeType(el)) return false;
+                // Create the HTML markup 
 
-                if (selector === undefined && typeof events === 'object')
-                    for (type = nativeKeys(events), i = type.length; i--;) on.call(this, el, type[i], events[type[i]]);
-                else {
-
-                    // Delegated event
-
-                    if (!hAzzle.isFunction(selector)) {
-                        originalFn = fn;
-                        args = slice.call(arguments, 4);
-                        fn = delegate(selector, originalFn);
-                    } else {
-                        args = slice.call(arguments, 3);
-                        fn = originalFn = selector;
-                    }
-
-                    types = events.split(' ');
-
-                    // One
-
-                    if (one) fn = once(off, el, events, fn, originalFn);
-
-                    for (i = types.length; i--;) {
-                        first = registry.put(entry = new Access(
-                            el, types[i].replace(expr['nameRegex'], '') // event type
-                            , fn, originalFn, types[i].replace(expr['namespaceRegex'], '').split('.') // namespaces
-                            , args, false
-                        ));
-
-                        // First event of this type on this el, add root listener
-
-                        if (first) el[addEvent](entry.eventType, subHandler, false);
-                    }
-                    return el;
-                }
-
-            });
-        },
-
-        /**
-         * Same as on() but the event will "die" after the first time it's triggered
-         **/
-
-        one: function (events, fn, delfn) {
-            return this.on(events, fn, delfn, true);
-        },
-
-        /**
-         * Remove event from element
-         *
-         * @param {String} events
-         * @param {String} selector
-         * @param {Function} callback
-         * @return {Object}
-         */
-
-        off: function (events, fn) {
-            return this.each(function () {
-                off(this, events, fn);
-            });
-        }
-
-    });
-
-
-    hAzzle.extend({
-
-        /**
-         * Trigger specific event for element collection
-         *
-         * @param {Object|String} type
-         * @return {Object}
-         */
-
-        trigger: function (el, type, args) {
-
-            if (hAzzle.isString(el)) el = hAzzle.select(el)[0];
-            else el = el[0];
-
-            var types = type.split(' '),
-                i, j, l, call, event, names, handlers;
-
-            if ((el.disabeled && specialThreatment[disabeled](el, type)) || specialThreatment.nodeType(el)) return false;
-
-            for (i = types.length; i--;) {
-                type = types[i].replace(expr['nameRegex'], '');
-                if (names = types[i].replace(expr['namespaceRegex'], '')) names = names.split('.');
-                if (!names && !args) {
-                    var HTMLEvt = doc.createEvent('HTMLEvents');
-                    HTMLEvt['initEvent'](type, true, true, win, 1);
-                    el.dispatchEvent(HTMLEvt);
-
-                } else {
-                    handlers = registry.get(el, type, null, false);
-                    event = new Event(null, el);
-                    event.type = type;
-                    call = args ? 'apply' : 'call';
-                    args = args ? [event].concat(args) : event;
-                    for (j = 0, l = handlers.length; j < l; j++) {
-                        if (handlers[j].inNamespaces(names)) {
-                            handlers[j].handler[call](el, args);
-                        }
-                    }
-                }
+                var markup = hAzzle.HTML(html);
+                dom = hAzzle(hAzzle.HTML(markup)).get(0),
+                clone = dom.parentNode || this.length > 1;
             }
-            return el;
+            return this.each(function (index) {
+                hAzzle(this).wrapAll(
+                    func ? html.call(this, index) :
+                    clone ? dom.cloneNode(true) : dom
+                );
+            });
+        },
+
+        wrapAll: function (html) {
+            if (this[0]) {
+                hAzzle(this[0]).before(html = hAzzle(html))
+                var children
+                // drill down to the inmost element
+                while ((children = html.children()).length) html = children.first()
+                hAzzle(html).append(this)
+            }
+            return this
+        },
+
+        wrapInner: function (html) {
+            var func = hAzzle.isFunction(html)
+            return this.each(function (index) {
+                var self = hAzzle(this),
+                    contents = self.contents(),
+                    dom = func ? html.call(this, index) : html
+                    contents.length ? contents.wrapAll(dom) : self.append(dom)
+            })
+        },
+
+        unwrap: function () {
+
+            this.parent().each(function () {
+                hAzzle(this).replaceWith(hAzzle(this).children())
+            })
+            return this
         }
+
+
     });
 
-    // **************************************************************
-    // CSS
-    // **************************************************************
 
-    /* TODO!!  A lot to change here, will fix it later on ! */
+    // Ajax
 
     var
-
-    // Don't automatically add "px" to these possibly-unitless properties
-    cssNumber = {
-        "columnCount": true,
-        "fillOpacity": true,
-        "flexGrow": true,
-        "flexShrink": true,
-        "fontWeight": true,
-        "lineHeight": true,
-        "opacity": true,
-        "order": true,
-        "orphans": true,
-        "widows": true,
-        "zIndex": true,
-        "zoom": true
-    },
-
-        cssProps = {
-            "float": "cssFloat"
-        },
-
-        cssPrefixes = ["Webkit", "O", "Moz", "ms"];
-
-    function vendorPropName(style, name) {
-        if (!cached[style + name]) {
-            // Shortcut for names that are not vendor prefixed
-            hAzzle.each(style, function (index, style) {
-                if (style === name) return name;
-            });
-
-            // check for vendor prefixed names
-            var capName = name.charAt(0).toUpperCase() + name.slice(1),
-                origName = name,
-                i = cssPrefixes.length;
-
-            while (i--) {
-                name = cssPrefixes[i] + capName;
-                hAzzle.each(style, function (index, style) {
-                    if (style === name) return name;
-                });
-            }
-            cached[style + name] = origName;
-
-        }
-        return cached[style + name];
-    }
-
-    function getCSS(elem, name) {
-
-        name = camelCase(name);
-
-        // Make sure that we're working with the right name
-        name = cssProps[name] || (cssProps[name] = vendorPropName(elem.style, name));
-
-        return elem.style.getPropertyValue(name) || window.getComputedStyle(elem, null).getPropertyValue(name);
-    }
-
-    function setCSS(element, name, value) {
-        // If a number was passed in, add 'px' to the (except for certain CSS properties)
-        if (typeof value === 'number' && cssNumber.indexOf(name) === -1) {
-            value += 'px';
-        }
-        var action = (value === null || value === '') ? 'remove' : 'set';
-        element.style[action + 'Property'](name, '' + value);
-        return element;
-    }
-
-    /**
-     * Check if an element is hidden
-     *  @return {Boolean}
-     */
-
-    function isHidden(elem, el) {
-        elem = el || elem;
-        return elem.style.display === "none";
-    }
-
-    function hide(elem) {
-        var _display = getCSS(elem, 'display');
-        if (_display !== 'none') {
-            hAzzle.data(elem, '_display', _display);
-        }
-        setCSS(elem, 'display', 'none');
-    }
-
-    function show(elem) {
-
-        return setCSS(elem, 'display', hAzzle.data(elem, '_display') || 'block');
-    }
-
-    function commonNodeTypes(elem) {
-        if (hAzzle.nodeTypes[3](elem) || hAzzle.nodeTypes[8](elem)) return true;
-        return false;
-    }
-
-    /**
-     * camelCase CSS string
-     * - we are using our prefixCache for faster speed
-     *
-     * @param{String} str
-     * @return{String}
-     */
-
-    function camelCase(str) {
-        cached[str] || (cached[str] = str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
-            return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
-        }));
-        return cached[str];
-    }
-
-
-    hAzzle.fn.extend({
-
-        /**
-         * Show elements in collection
-         *
-         * @return {Object}
-         */
-
-        show: function () {
-            return this.each(function () {
-                show(this);
-            });
-        },
-
-        /**
-         * Hide elements in collection
-         *
-         * @return {Object}
-         */
-
-        hide: function () {
-            return this.each(function () {
-                hide(this);
-            });
-        },
-
-        /**
-         * Toggle show/hide.
-         * @return {Object}
-         */
-
-        toggle: function () {
-
-            return this.each(function () {
-                if (isHidden(this)) show(this);
-                else hide(this);
-            });
-        },
-
-        /**
-         * Get css property
-         * Set css properties
-         *
-         * @param {String|Object} name
-         * @param {String} value
-         * @return {String|Object}
-         */
-
-        css: function (name, value) {
-
-            if (hAzzle.isUndefined(value)) {
-                if (hAzzle.isString(name)) {
-                    return this[0] && getCSS(this[0], name);
-                }
-
-                // Object
-
-                return this.each(function () {
-                    var element = this;
-
-                    hAzzle.each(name, function (key, value) {
-                        setCSS(element, key, value);
-                    });
-                });
-            }
-
-            return this.each(function () {
-                setCSS(this, name, value);
-            });
-        },
-
-        /**
-         * Reset styles with given, remember old ones and return them
-         * @param {Object} props
-         * @returns {Object}
-         */
-
-        resetCSS: function (props) {
-
-            return this.each(function () {
-                var el = this;
-                if (commonNodeTypes(el)) {
-                    for (var old = {}, i = 0, prop; prop = nativeKeys(props)[i]; i += 1) old[prop] = el.style[prop], el.style[prop] = props[prop];
-                    return old;
-                }
-            });
-        },
-
-        /**
-         * Sets the opacity for given element
-         *
-         * @param elem
-         * @param {int} level range (0 .. 100)
-         */
-
-        setOpacity: function (value) {
-
-            return this.each(function () {
-                var el = this;
-                if (commonNodeTypes(el)) {
-                    el.style.opacity = value / 100;
-                }
-
-            });
-        },
-
-        /**
-         * Restores element's styles with given properties
-         *
-         * @param {Object} props
-         */
-
-        restoreCSS: function (props) {
-            return this.each(function () {
-                var el = this;
-                if (commonNodeTypes(el)) {
-                    for (var i = 0, prop; prop = nativeKeys(props)[i]; i += 1) el.style[prop] = props[prop];
-                }
-            });
-        },
-
-        /**
-         * Finds the Left position of an element
-         * to the entire document
-         *
-         * @param elem
-         * @returns {Number}
-         */
-        pageX: function (elem) {
-            var el = this[0];
-            return el.offsetParent ? el.offsetLeft + this.pageX(el.offsetParent) : el.offsetLeft;
-        },
-
-        /**
-         * Finds the Top position of an element
-         * to the entire document
-         *
-         * @param elem
-         * @returns {Number}
-         */
-
-        pageY: function (elem) {
-            var el = this[0];
-            return el.offsetParent ? el.offsetTop + this.pageX(el.offsetParent) : el.offsetTop;
-        },
-
-        /**
-         * Finds the Horizontal position of an element within its parent
-         *
-         * @param elem
-         * @returns {Number}
-         */
-
-        parentX: function (elem) {
-            var el = this[0];
-            return el.offsetParent === el.parentNode ? el.offsetLeft : doc.css.pageX(el) - doc.pageX(el.parentNode);
-        },
-
-        /**
-         * Finds the Vertical position of an element within its parent
-         *
-         * @param elem
-         * @returns {Number}
-         */
-
-        parentY: function (elem) {
-            var el = this[0];
-            return el.offsetParent === el.parentNode ? el.offsetTop : doc.pageY(elem) - doc.pageY(el.parentNode);
-        },
-
-        /**
-         * Sets element's horizontal postion
-         *
-         * @param elem
-         * @param pos
-         */
-        setX: function (pos) {
-            return this.each(function () {
-                var el = this;
-                if (commonNodeTypes(el)) {
-                    el.style.left = parseNum(pos) + 'px';
-                }
-            });
-        },
-
-        /**
-         * Sets element's vertical postion
-         *
-         * @param elem
-         * @param pos
-         */
-        setY: function (pos) {
-            return this.each(function () {
-                var el = this;
-                if (commonNodeTypes(el)) {
-                    el.style.top = parseNum(pos) + 'px';
-                }
-            });
-        }
-
-    });
-
-    // **************************************************************
-    // Parsing
-    // **************************************************************
-
-    hAzzle.extend({
-
-        /**
-         * Cross-browser JSON parsing
-         *
-         * @param {String} data
-         */
-
-        parseJSON: function (data) {
-            return JSON.parse(data + "");
-        },
-
-        parseXML: function (data) {
-            var xml, tmp;
-            if (!data || typeof data !== "string") {
-                return null;
-            }
-
-            // Support: IE9
-            try {
-                tmp = new DOMParser();
-                xml = tmp.parseFromString(data, "text/xml");
-            } catch (e) {
-                xml = undefined;
-            }
-
-            if (!xml || xml.getElementsByTagName("parsererror").length) {
-                return new Error("Invalid XML: " + data);
-            }
-            return xml;
-        }
-
-    });
-
-    // **************************************************************
-    // Ajax
-    // **************************************************************
-
-    var head = doc.head || doc[byTag]('head')[0],
+    head = doc.head || doc[byTag]('head')[0],
         uniqid = 0,
         lastValue, // data stored by the most recent JSONP callback
         nav = navigator,
         isIE10 = hAzzle.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
         uniqid = 0,
         lastValue,
-
         defaultHeaders = {
             contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
             requestedWith: xmlHttpRequest,
@@ -3361,6 +2839,7 @@
 		* @return {Object}
 		
 		**/
+
     function handleJsonp(o, fn, url) {
 
         var reqId = uniqid++,
@@ -3421,13 +2900,12 @@
     hAzzle.extend({
 
         /**
-     * Ajax method to create ajax request with XMLHTTPRequest
-
-     *
-     * @param {Object|Function} opt
-     * @param {function|callback} fn
-     * @return {Object}
-     */
+         * Ajax method to create ajax request with XMLHTTPRequest
+         *
+         * @param {Object|Function} opt
+         * @param {function|callback} fn
+         * @return {Object}
+         */
 
         ajax: function (opt, fn) {
 
@@ -3597,17 +3075,17 @@
         },
 
         /** Shorthand function to recive POST data with ajax
-         *
-         * @param {String} url
-         * @param {Object} data
-         * @param {Function} callback
-         * @param {Function} callback
-         * @return {Object}
-         */
+	
+		 *
+		 * @param {String} url
+		 * @param {Object} data
+		 * @param {Function} callback
+		 * @param {Function} callback
+		 * @return {Object}
+		 */
 
         post: function (url, data, callback, error) {
             hAzzle.ajax({
-
                 url: url,
                 method: 'POST',
                 contentType: '',
@@ -3617,6 +3095,618 @@
             });
         }
     });
+
+    // CSS
+
+    var
+    cssNormalTransform = {
+        letterSpacing: "0",
+        fontWeight: "400"
+    },
+        cached = [],
+
+        cssPrefixes = ["Webkit", "O", "Moz", "ms"],
+
+        cssExpand = ["Top", "Right", "Bottom", "Left"],
+
+        cssShow = {
+            position: "absolute",
+            visibility: "hidden",
+            display: "block"
+        },
+
+        rmargin = (/^margin/),
+        rnumnonpx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
+        rdisplayswap = /^(none|table(?!-c[ea]).+)/,
+        pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
+        rnumsplit = new RegExp("^(" + pnum + ")(.*)$", "i"),
+        rrelNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
+
+
+    /**
+     * Get the documents width or height
+     * margin / padding are optional
+     */
+
+    function predefultValue(elem, name, extra) {
+
+        if (!elem) return;
+
+        if (hAzzle.isWindow(elem)) {
+            return elem.document.documentElement.clientHeight;
+        }
+
+        // Get document width or height
+        if (hAzzle.nodeType(9, elem)) {
+
+            var doc = elem.documentElement;
+
+            // Either scroll[Width/Height] or offset[Width/Height] or client[Width/Height],
+            // whichever is greatest
+            return Math.max(
+                elem.body["scroll" + name], doc["scroll" + name],
+                elem.body["offset" + name], doc["offset" + name],
+                doc["client" + name]
+            );
+        }
+
+        return hAzzle.css(elem, name, extra);
+    }
+
+    /**
+     * Gets a window from an element
+     */
+    function getWindow(elem) {
+        return hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
+    }
+
+
+    /**
+     * Get styles
+     */
+
+    var getStyles = function (elem) {
+        return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+    };
+
+    function setPositiveNumber(value, subs) {
+        var matches = rnumsplit.exec(value);
+        return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value
+    }
+
+    function getWidthOrHeight(elem, name, extra) {
+        var valueIsBorderBox = true,
+            val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
+            styles = getStyles(elem),
+            isBorderBox = hAzzle.css(elem, "boxSizing", false, styles) === "border-box";
+
+        if (val <= 0 || val === null) {
+            val = curCSS(elem, name, styles);
+
+            if (val < 0 || val === null) val = elem.style[name];
+
+            if (rnumnonpx.test(val)) return val;
+
+            valueIsBorderBox = isBorderBox && (hAzzle.support.boxSizingReliable() || val === elem.style[name]);
+            val = parseFloat(val) || 0;
+
+        }
+        return val + augmentWidthOrHeight(elem, name, extra || (isBorderBox ? "border" : "content"), valueIsBorderBox, styles) + "px";
+    }
+
+
+    function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
+
+        var i = extra === (isBorderBox ? "border" : "content") ? 4 : name === "width" ? 1 : 0,
+
+            val = 0;
+
+        for (; i < 4; i += 2) {
+
+            // both box models exclude margin, so add it if we want it
+            if (extra === "margin") {
+                val += hAzzle.css(elem, extra + cssExpand[i], true, styles);
+            }
+
+            if (isBorderBox) {
+                // border-box includes padding, so remove it if we want content
+                if (extra === "content") {
+                    val -= hAzzle.css(elem, "padding" + cssExpand[i], true, styles);
+                }
+
+                // at this point, extra isn't border nor margin, so remove border
+                if (extra !== "margin") {
+                    val -= hAzzle.css(elem, "border" + cssExpand[i] + "Width", true, styles);
+                }
+            } else {
+                // at this point, extra isn't content, so add padding
+                val += hAzzle.css(elem, "padding" + cssExpand[i], true, styles);
+
+                // at this point, extra isn't content nor padding, so add border
+                if (extra !== "padding") {
+                    val += hAzzle.css(elem, "border" + cssExpand[i] + "Width", true, styles);
+                }
+            }
+        }
+
+        return val;
+    }
+
+    /**
+     * Check if an element is hidden
+     *  @return {Boolean}
+     */
+
+    function isHidden(elem, el) {
+        elem = el || elem;
+        return elem.style.display === "none";
+    }
+
+    /**
+     * Show an element
+     *
+     * @param {Object} elem
+     * @return Object}
+     */
+
+    function show(elem) {
+
+        if (isHidden(elem))
+            return hAzzle.style(elem, 'display', hAzzle.data(elem, 'display') || 'block');
+    }
+
+    /**
+     * Hide an element
+     *
+     * @param {Object} elem
+     * @return Object}
+     */
+
+    function hide(elem) {
+
+        if (!isHidden(elem)) {
+
+            var display = hAzzle.css(elem, 'display');
+            if (display !== 'none') {
+                hAzzle.data(elem, 'display', display);
+            }
+
+            // Hide the element
+            hAzzle.style(elem, 'display', 'none');
+        }
+    }
+
+
+    /**
+     * Set and get CSS properties
+     * @param {Object} elem
+     * @param {String} name
+     * @param {String} computed
+     * @return {Object}
+     *
+     */
+
+    function curCSS(elem, name, computed) {
+        var width, minWidth, maxWidth, ret,
+            style = elem.style;
+
+        computed = computed || getStyles(elem);
+
+        if (computed) {
+            ret = computed.getPropertyValue(name) || computed[name];
+        }
+
+        if (computed) {
+
+            if (ret === "" && !hAzzle.contains(elem.ownerDocument, elem)) {
+                ret = hAzzle.style(elem, name);
+            }
+
+            if (rnumnonpx.test(ret) && rmargin.test(name)) {
+
+                // Remember the original values
+                width = style.width;
+                minWidth = style.minWidth;
+                maxWidth = style.maxWidth;
+
+                // Put in the new values to get a computed value out
+                style.minWidth = style.maxWidth = style.width = ret;
+                ret = computed.width;
+
+                // Revert the changed values
+                style.width = width;
+                style.minWidth = minWidth;
+                style.maxWidth = maxWidth;
+            }
+        }
+        return ret !== undefined ? ret + "" : ret;
+    }
+    /*
+     * Check up for vendor prefixed names
+     * This function is cached so we can gain better speed
+     */
+
+    function vendorCheckUp(style, name) {
+
+        if (!cached[style + name]) {
+            // Shortcut for names that are not vendor prefixed
+            if (name in style) {
+                return name;
+            }
+
+            // check for vendor prefixed names
+            var capName = name[0].toUpperCase() + name.slice(1),
+                origName = name,
+                i = cssPrefixes.length;
+
+            while (i--) {
+                name = cssPrefixes[i] + capName;
+                if (name in style) {
+                    return name;
+                }
+            }
+            cached[style + name] = origName;
+
+        }
+        return cached[style + name];
+
+    }
+
+
+    hAzzle.extend({
+
+        cssProps: {
+
+            "float": "cssFloat"
+        },
+
+        // Don't automatically add "px" to these possibly-unitless properties
+        cssNumber: {
+            "columnCount": true,
+            "fillOpacity": true,
+            "flexGrow": true,
+            "flexShrink": true,
+            "fontWeight": true,
+            "lineHeight": true,
+            "opacity": true,
+            "order": true,
+            "orphans": true,
+            "widows": true,
+            "zIndex": true,
+            "zoom": true
+        },
+
+        /**
+         * cssHooks similar to hAzzle
+         *
+         * We are in 2014 and hAzzle supports cssHooks because we need to
+         * support short-hands, and a lot of HTML5 features
+         * supported by IE9 and newer browsers
+         */
+
+        cssHooks: {
+            'opacity': {
+                get: function (elem, computed) {
+                    if (computed) {
+                        // We should always get a number back from opacity
+                        var ret = curCSS(elem, "opacity");
+                        return ret === "" ? "1" : ret;
+                    }
+                }
+            }
+        },
+
+        // Convert some pixels into another CSS unity.
+        // It's used in $.style() for the += or -=.
+        // * px   : Number.
+        // * unit : String, like "%", "em", "px", ...
+        // * elem : Node, the current element.
+        // * prop : String, the CSS property.
+        pixelsToUnity: function (px, unit, elem, prop) {
+
+            if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
+
+            else if (unit === "em") return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
+            else if (unit === "%") {
+
+                if (/^(left$|right$|margin|padding)/.test(prop)) {
+                    prop = "width";
+                } else if (/^(top|bottom)$/.test(prop)) {
+                    prop = "height";
+                }
+                elem = /^(relative|absolute|fixed)$/.test(hAzzle.css(elem, "position")) ?
+                    elem.offsetParent : elem.parentNode;
+                if (elem) {
+                    prop = hAzzle.css(elem, prop, true);
+                    if (prop !== 0) {
+                        return px / prop * 100;
+                    }
+                }
+                return 0;
+            }
+
+            if (hAzzle.pixelsToUnity.units === undefined) {
+                var units = hAzzle.pixelsToUnity.units = {},
+                    div = document.createElement("div");
+                div.style.width = "100cm";
+                document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+                units.mm = div.offsetWidth / 1000;
+                document.body.removeChild(div);
+                units.cm = units.mm * 10;
+                units.inn = units.cm * 2.54;
+                units.pt = units.inn * 1 / 72;
+                units.pc = units.pt * 12;
+            }
+            // If the unity specified is not recognized we return the value.
+            unit = hAzzle.pixelsToUnity.units[unit];
+            return unit ? px / unit : px;
+        },
+
+
+        // Globalize CSS
+
+        css: function (elem, name, extra, styles) {
+
+            var val, perf;
+
+            // Normalize the property name 
+
+            perf = hAzzle.camelCase(name);
+
+            name = hAzzle.cssProps[perf] || (hAzzle.cssProps[perf] = vendorCheckUp(elem.style, perf));
+            (perf = hAzzle.cssHooks[name] || hAzzle.cssHooks[perf]) && "get" in perf && (val = perf.get(elem, true, extra));
+            val === undefined && (val = curCSS(elem, name, styles));
+            val === "normal" && name in cssNormalTransform && (val = cssNormalTransform[name]);
+            return "" === extra || extra ? (elem = parseFloat(val), extra === true || hAzzle.isNumeric(elem) ? elem || 0 : val) : val
+        },
+
+        style: function (elem, name, value, extra) {
+
+            // Don't set styles on text and comment nodes
+            if (!elem || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem) || !elem.style) {
+                return;
+            }
+
+            // Make sure that we're working with the right name
+            var ret, type, hooks,
+                origName = hAzzle.camelCase(name),
+                style = elem.style;
+
+            name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorCheckUp(elem.style, origName));
+            hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
+
+            // Check if we're setting a value
+            if (value !== undefined) {
+                type = typeof value;
+
+                /**
+                 * Convert relative numbers to strings.
+                 * It can handle +=, -=, em or %
+                 */
+
+                if (type === "string" && (ret = rrelNum.exec(value))) {
+                    value = hAzzle.css(elem, name, "", "", name, hooks);
+                    value = hAzzle.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    type = "number";
+                }
+
+                // Make sure that null and NaN values aren't set.
+                if (value === null || value !== value) {
+                    return;
+                }
+
+                // If a number was passed in, add 'px' to the (except for certain CSS properties)
+                if (type === "number" && !hAzzle.cssNumber[origName]) {
+
+                    value += ret && ret[3] ? ret[3] : "px";
+                }
+
+                if (value === "" && /background/i.test(name)) {
+                    style[name] = "inherit";
+                }
+
+                // If a hook was provided, use that value, otherwise just set the specified value
+                if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
+                    style[name] = value;
+                }
+
+            } else {
+
+                // Get the value from the style object
+                return style[name];
+            }
+
+        }
+
+    });
+
+    /**
+     * CSS hooks height && width
+     */
+
+    hAzzle.each(["height", "width"], function (i, name) {
+
+        hAzzle.cssHooks[name] = {
+            get: function (elem, computed, extra) {
+                if (computed) {
+                    return elem.offsetWidth === 0 && rdisplayswap.test(hAzzle.css(elem, "display")) ?
+                        hAzzle.swap(elem, cssShow, function () {
+                            return getWidthOrHeight(elem, name, extra);
+                        }) :
+                        getWidthOrHeight(elem, name, extra);
+                }
+            },
+
+            set: function (elem, value, extra) {
+                var styles = extra && getStyles(elem);
+                return setPositiveNumber(value, extra ?
+                    augmentWidthOrHeight(
+                        elem,
+                        name,
+                        extra,
+                        hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
+                        styles
+                    ) : 0
+                );
+            }
+        };
+
+    });
+
+    hAzzle.fn.extend({
+
+        /**
+         * Show elements in collection
+         *
+         * @return {Object}
+         */
+
+        show: function () {
+            return this.each(function () {
+                show(this);
+            });
+        },
+
+        /**
+         * Hide elements in collection
+         *
+         * @return {Object}
+         */
+
+        hide: function () {
+            return this.each(function () {
+                hide(this);
+            });
+        },
+
+        /**
+         * Toggle show/hide.
+         * @return {Object}
+         */
+
+        toggle: function (state) {
+            if (typeof state === "boolean") {
+                return state ? this.show() : this.hide();
+            }
+            return this.each(function () {
+
+                if (isHidden(this)) show(this);
+                else hide(this);
+            });
+        },
+
+        /**
+         * Get css property
+         * Set css properties
+         *
+         * @param {String|Object} name
+         * @param {String} value
+         * @return {String|Object}
+         */
+
+        css: function (name, value) {
+            if (hAzzle.isDefined(value)) return this.length === 1 ? hAzzle.style(this[0], name, value) : this.each(function () {
+                hAzzle.style(this, name, value);
+            });
+            if (hAzzle.isUndefined(value)) return hAzzle.isString(name) ? this[0] && hAzzle.css(this[0], name) : this.each(function () {
+                var elem = this;
+                hAzzle.each(name, function (name, value) {
+                    hAzzle.style(elem, name, value);
+                });
+            });
+        },
+
+        /**
+         * Sets the opacity for given element
+         *
+         * @param elem
+         * @param {int} level range (0 .. 100)
+         */
+
+        setOpacity: function (value) {
+            if (hAzzle.isNumber) {
+                return this.each(function () {
+                    this.style.opacity = value / 100;
+                });
+            }
+        },
+
+        /**
+         * Read or write an element's height exluding margin, padding and border
+         *
+         * @param {Integer} value
+         * @return {String}
+         */
+
+        height: function (value) {
+            return hAzzle.isDefined(value) ? this.each(function () {
+                hAzzle.style(this, "height", value);
+            }) : predefultValue(this[0], "height", "content");
+        },
+
+        /**
+         * Read an element's height including padding, border and optional margin
+         *
+         * @param {Boolean} includeMargin
+         * @return {String}
+         */
+        outerHeight: function (margin) {
+            return predefultValue(this[0], 'height', typeof margin === "boolean" ? "margin" : "border");
+        },
+
+        innerHeight: function () {
+            return predefultValue(this[0], 'height', 'padding');
+        },
+
+        width: function (value) {
+            return hAzzle.isDefined(value) ? this.each(function () {
+                hAzzle.style(this, "width", value);
+            }) : predefultValue(this[0], "width", "content");
+        },
+
+        /**
+         * Read an element's width including padding, border and optional margin
+         *
+         * @param {Boolean} includeMargin
+         * @return {String}
+         */
+
+
+        outerWidth: function (margin, value) {
+            return predefultValue(this[0], 'width', typeof margin === "boolean" ? "margin" : "border", typeof value === true ? "margin" : "border");
+        },
+
+        innerWidth: function () {
+            return predefultValue(this[0], 'width', "padding");
+        },
+
+        /**
+         *  ScrollTop
+         */
+
+        scrollTop: function (val) {
+            var elem = this[0],
+                win = getWindow(elem);
+            if (val === undefined) return val ? val.pageYOffset : elem.scrollTop;
+            win ? win.scrollTo(window.pageYOffset) : elem.scrollTop = val;
+        },
+
+        /**
+         *  ScrollLeft
+         */
+
+        scrollLeft: function (val) {
+            var elem = this[0],
+                win = getWindow(elem);
+            if (val === undefined) return val ? val.pageXOffset : elem.scrollLeft;
+            win ? win.scrollTo(window.pageXOffset) : elem.scrollLeft = val;
+
+        }
+
+    });
+
+
+
 
     window['hAzzle'] = hAzzle;
 
