@@ -1,24 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.24b
+ * Version: 0.24c
  * Released under the MIT License.
  *
- * Date: 2014-04-07
- *
- * NOTE!!
- *
- * As it is now, the "selector" engine is very basic and lack support for complex selectors.
- * I will deal with this soon everything else is fixed.
- *
- * I just mention quickly that hAzzle is not jQuery or a jQuery / Zepto clone. And therefor
- * people can't expect hAzzle to work like that eiter.
- *
- * But I will re-build the selector engine ASAP. I also holding back because I want to see the
- * outcome of the CSS4 specs.
+ * Date: 2014-04-08
  *
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -26,10 +14,6 @@
     if (window['hAzzle']) return;
 
     var doc = window.document,
-        byClass = 'getElementsByClassName',
-        byTag = 'getElementsByTagName',
-        byId = 'getElementById',
-        byAll = 'querySelectorAll',
         nodeType = 'nodeType',
         html = doc.documentElement,
         /**
@@ -52,6 +36,10 @@
             return new Date().getTime();
         }),
 
+        /*
+         * ID used on elements for data, animation and events
+         */
+
         uid = {
             current: 0,
             next: function () {
@@ -60,18 +48,6 @@
         },
 
         cached = [],
-
-        // Selector caching
-
-        cache = [],
-
-        // RegExp we are using
-
-        expr = {
-
-            idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-            tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
-        },
 
         // Different nodeTypes we are checking against for faster speed
 
@@ -148,6 +124,7 @@
 
         init: function (sel, ctx) {
             var elems, i;
+
             if (sel instanceof hAzzle) return sel;
 
             if (hAzzle.isString(sel)) {
@@ -178,12 +155,17 @@
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
 
                 } else {
+
                     // Object
 
-                    if (hAzzle.isObject(sel)) {
-                        return this.elems = [sel], this.length = 1, this[0] = sel, this;
-                    }
+                    if (sel && (sel.document || (sel.nodeType && nodeTypes[9](sel)))) {
 
+                        if (!ctx) {
+
+                            return this.elems = [sel], this.length = 1, this[0] = sel, this;
+
+                        } else return [];
+                    }
                     // Nodelist
 
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
@@ -320,7 +302,7 @@
 
         pluck: function (prop, nt) {
             if (nt && hAzzle.isNumber(nt)) {
-                if (!nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
+                if (nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
             }
             return hAzzle.pluck(this.elems, prop);
         },
@@ -701,70 +683,35 @@
         },
 
         /**
-         * Determine if the element contains the klass.
-         * Uses the `classList` api if it's supported.
-         * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
-         *
-         * @param {Object} el
-         * @param {String} klass
-         *
-         * @return {Array}
+         * Check if an element contains another element
          */
+        contains: function (obj, target) {
 
-        containsClass: function (el, klass) {
-            if (support.classList) {
-                return el.classList.contains(klass);
+            if (html['compareDocumentPosition']) {
+                var adown = nodeTypes[9](obj) ? obj.documentElement : obj,
+                    bup = target && target.parentNode;
+                return obj === bup || !! (bup && nodeTypes[1](bup) && (
+                    adown.contains ?
+                    adown.contains(bup) :
+                    obj.compareDocumentPosition && obj.compareDocumentPosition(bup) & 16
+                ));
+
             } else {
-                return hAzzle.contains(('' + el.className).split(' '), klass);
-            }
-        },
-
-        /**
-         * Normalize context.
-         *
-         * @param {String|Array} ctx
-         *
-         * @return {Object}
-         */
-
-        normalizeCtx: function (ctx) {
-            if (!ctx) return doc;
-            if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
-            if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
-            if (ctx[nodeType]) return ctx;
-			return ctx;
-        },
-
-        /**
-         * Check if an element contains another element
-         */
-     contains: function (obj, target) {
-
-    if (html['compareDocumentPosition']) {
-        var adown = nodeTypes[9](obj) ? obj.documentElement : obj,
-            bup = target && target.parentNode;
-        return obj === bup || !! (bup && nodeTypes[1](bup) && (
-            adown.contains ?
-            adown.contains(bup) :
-            obj.compareDocumentPosition && obj.compareDocumentPosition(bup) & 16
-        ));
-
-    } else {
-        if (target) {
-            while ((target = target.parentNode)) {
-                if (target === obj) {
-                    return true;
+                if (target) {
+                    while ((target = target.parentNode)) {
+                        if (target === obj) {
+                            return true;
+                        }
+                    }
                 }
-            }
-        }
-        return false;
+                return false;
 
-    }
-},
+            }
+        },
         /**
          * Check if an element contains another element
          */
-/*
+        /*
         contains: function (obj, target) {
             if (target) {
                 while ((target = target.parentNode)) {
@@ -920,59 +867,7 @@
         }
 
     });
-	
-  /**
-   * hAzzle select are moved down here so it's even easier now to replace this module with another selector engine.
-   */	
-  hAzzle.extend({	
-	
-	        /**
-         * Find elements by selectors.
-         *
-         * @param {String} sel
-         * @param {Object} ctx
-         * @return {Object}
-         */
 
-        select: function (sel, ctx) {
-
-            var m, els = [];
-
-            // Get the right context to use.
-
-            ctx = hAzzle.normalizeCtx(ctx);
-
-            if (m = expr['idClassTagNameExp'].exec(sel)) {
-                if ((sel = m[1])) {
-                    els = ((els = ctx[byId](sel))) ? [els] : [];
-                } else if ((sel = m[2])) {
-                    els = ctx[byClass](sel);
-                } else if ((sel = m[3])) {
-                    els = ctx[byTag](sel);
-                }
-            } else if (m = expr['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
-                var result = ctx[byTag](m[1]),
-                    id = m[2],
-                    className = m[3];
-                hAzzle.each(result, function () {
-                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
-                });
-            } else { // QuerySelectorAll
-
-                /**
-                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
-                 *
-                 * TODO! Fix this
-                 **/
-                try {
-                    els = ctx[byAll](sel);
-                } catch (e) {}
-            }
-
-            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
-        }
-		
-  });
 
     window['hAzzle'] = hAzzle;
 
