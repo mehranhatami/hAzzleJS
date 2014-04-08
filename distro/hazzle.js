@@ -1,23 +1,13 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.26a
+ * Version: 0.2.6 - BETA
  * Released under the MIT License.
  *
  * Date: 2014-04-08
  *
- * NOTE!!
- *
- * As it is now, the "selector" engine is very basic and lack support for complex selectors.
- * I will deal with this soon everything else is fixed.
- *
- * I just mention quickly that hAzzle is not jQuery or a jQuery / Zepto clone. And therefor
- * people can't expect hAzzle to work like that eiter.
- *
- * But I will re-build the selector engine ASAP. I also holding back because I want to see the
- * outcome of the CSS4 specs.
- *
  */
+
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -25,16 +15,8 @@
     if (window['hAzzle']) return;
 
     var doc = window.document,
-        byClass = 'getElementsByClassName',
-        byTag = 'getElementsByTagName',
-        byId = 'getElementById',
-        byAll = 'querySelectorAll',
         nodeType = 'nodeType',
-
-        xmlHttpRequest = 'XMLHttpRequest',
-        crElm = 'createElement',
-        own = 'hasOwnProperty',
-
+        html = doc.documentElement,
         /**
          * Prototype references.
          */
@@ -55,6 +37,10 @@
             return new Date().getTime();
         }),
 
+        /*
+         * ID used on elements for data, animation and events
+         */
+
         uid = {
             current: 0,
             next: function () {
@@ -67,15 +53,6 @@
         // Selector caching
 
         cache = [],
-
-        // RegExp we are using
-
-        expr = {
-
-            specialSplit: /\s*,\s*|\s+/,
-            idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-            tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
-        },
 
         // Different nodeTypes we are checking against for faster speed
 
@@ -152,6 +129,7 @@
 
         init: function (sel, ctx) {
             var elems, i;
+
             if (sel instanceof hAzzle) return sel;
 
             if (hAzzle.isString(sel)) {
@@ -177,17 +155,22 @@
 
                 //Array
 
-                if (sel instanceof Array) {
+                if (hAzzle.isArray(sel)) {
 
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
 
                 } else {
+
                     // Object
 
-                    if (hAzzle.isObject(sel)) {
-                        return this.elems = [sel], this.length = 1, this[0] = sel, this;
-                    }
+                    if (sel && (sel.document || (sel.nodeType && nodeTypes[9](sel)))) {
 
+                        if (!ctx) {
+
+                            return this.elems = [sel], this.length = 1, this[0] = sel, this;
+
+                        } else return [];
+                    }
                     // Nodelist
 
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
@@ -195,6 +178,7 @@
             }
 
             elems = this.elems;
+
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
         },
@@ -324,7 +308,7 @@
 
         pluck: function (prop, nt) {
             if (nt && hAzzle.isNumber(nt)) {
-                if (!nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
+                if (nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
             }
             return hAzzle.pluck(this.elems, prop);
         },
@@ -705,89 +689,35 @@
         },
 
         /**
-         * Determine if the element contains the klass.
-         * Uses the `classList` api if it's supported.
-         * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
-         *
-         * @param {Object} el
-         * @param {String} klass
-         *
-         * @return {Array}
+         * Check if an element contains another element
          */
+        contains: function (obj, target) {
 
-        containsClass: function (el, klass) {
-            if (support.classList) {
-                return el.classList.contains(klass);
+            if (html['compareDocumentPosition']) {
+                var adown = nodeTypes[9](obj) ? obj.documentElement : obj,
+                    bup = target && target.parentNode;
+                return obj === bup || !! (bup && nodeTypes[1](bup) && (
+                    adown.contains ?
+                    adown.contains(bup) :
+                    obj.compareDocumentPosition && obj.compareDocumentPosition(bup) & 16
+                ));
+
             } else {
-                return hAzzle.contains(('' + el.className).split(' '), klass);
-            }
-        },
-
-        /**
-         * Normalize context.
-         *
-         * @param {String|Array} ctx
-         *
-         * @return {Object}
-         */
-
-        normalizeCtx: function (ctx) {
-            if (!ctx) return doc;
-            if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
-            if (!ctx[nodeType] && ctx instanceof Array) return ctx[0];
-            if (ctx[nodeType]) return ctx;
-        },
-
-        /**
-         * Find elements by selectors.
-         *
-         * @param {String} sel
-         * @param {Object} ctx
-         * @return {Object}
-         */
-
-        select: function (sel, ctx) {
-
-            var m, els = [];
-
-            // Get the right context to use.
-
-            ctx = hAzzle.normalizeCtx(ctx);
-
-            if (m = expr['idClassTagNameExp'].exec(sel)) {
-                if ((sel = m[1])) {
-                    els = ((els = ctx[byId](sel))) ? [els] : [];
-                } else if ((sel = m[2])) {
-                    els = ctx[byClass](sel);
-                } else if ((sel = m[3])) {
-                    els = ctx[byTag](sel);
+                if (target) {
+                    while ((target = target.parentNode)) {
+                        if (target === obj) {
+                            return true;
+                        }
+                    }
                 }
-            } else if (m = expr['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
-                var result = ctx[byTag](m[1]),
-                    id = m[2],
-                    className = m[3];
-                hAzzle.each(result, function () {
-                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
-                });
-            } else { // QuerySelectorAll
+                return false;
 
-                /**
-                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
-                 *
-                 * TODO! Fix this
-                 **/
-                try {
-                    els = ctx[byAll](sel);
-                } catch (e) {}
             }
-
-            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
         },
-
         /**
          * Check if an element contains another element
          */
-
+        /*
         contains: function (obj, target) {
             if (target) {
                 while ((target = target.parentNode)) {
@@ -798,6 +728,7 @@
             }
             return false;
         },
+		*/
         /**
          * Native indexOf is slow and the value is enough for us as argument.
          * Therefor we create our own
@@ -942,6 +873,112 @@
         }
 
     });
+
+    // Selector engine
+
+
+    var doc = document,
+        byClass = 'getElementsByClassName',
+        byTag = 'getElementsByTagName',
+        byId = 'getElementById',
+        byAll = 'querySelectorAll',
+
+
+        // RegExp we are using
+
+        expresso = {
+
+            idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
+            tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
+        };
+
+    /**
+     * Normalize context.
+     *
+     * @param {String|Array} ctx
+     *
+     * @return {Object}
+     */
+
+    function normalizeCtx(ctx) {
+        if (!ctx) return doc;
+        if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
+        if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
+        if (ctx[nodeType]) return ctx;
+        return ctx;
+    }
+
+    /**
+     * Determine if the element contains the klass.
+     * Uses the `classList` api if it's supported.
+     * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
+     *
+     * @param {Object} el
+     * @param {String} klass
+     *
+     * @return {Array}
+     */
+
+    function containsClass(el, klass) {
+        if (hAzzle.support.classList) {
+            return el.classList.contains(klass);
+        } else {
+            return hAzzle.contains(('' + el.className).split(' '), klass);
+        }
+    }
+
+    hAzzle.extend({
+
+        /**
+         * Find elements by selectors.
+         *
+         * @param {String} sel
+         * @param {Object} ctx
+         * @return {Object}
+         */
+
+        select: function (sel, ctx) {
+
+            var m, els = [];
+
+            // Get the right context to use.
+
+            ctx = normalizeCtx(ctx);
+
+            if (m = expresso['idClassTagNameExp'].exec(sel)) {
+                if ((sel = m[1])) {
+                    els = ((els = ctx[byId](sel))) ? [els] : [];
+                } else if ((sel = m[2])) {
+                    els = ctx[byClass](sel);
+                } else if ((sel = m[3])) {
+                    els = ctx[byTag](sel);
+                }
+            } else if (m = expresso['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
+                var result = ctx[byTag](m[1]),
+                    id = m[2],
+                    className = m[3];
+                hAzzle.each(result, function () {
+                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
+                });
+            } else { // QuerySelectorAll
+
+                /**
+                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
+                 *
+                 * TODO! Fix this
+                 **/
+                try {
+                    els = ctx[byAll](sel);
+                } catch (e) {
+                    console.error('error performing selector: %o', sel)
+                }
+            }
+
+            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
+        }
+    });
+
+
 
     // Dom ready
 
@@ -1198,20 +1235,24 @@
      */
 
 
-    function findHandlers(element, event, fn, selector) {
-
-        // Check for namespace
-
-        event = getEventParts(event);
-
-        // If namespace event...
-
-        if (event.ns) var matcher = matcherFor(event.ns);
-
-        return (handlers(element) || []).filter(function (handler) {
-            return handler && (!event.e || handler.e == event.e) && (!event.ns || matcher.test(handler.ns)) && (!fn || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn)) && (!selector || handler.sel == selector);
-        });
-    }
+     function findHandlers(element, event, fn, selector) {
+	
+	// Check for namespace
+	
+    event = getEventParts(event);
+    
+	// If namespace event...
+	
+	if (event.ns) var matcher = matcherFor(event.ns);
+    
+	return (handlers(element) || []).filter(function(handler) {
+      return handler
+        && (!event.e  || handler.e == event.e)
+        && (!event.ns || matcher.test(handler.ns))
+        && (!fn       || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn))
+        && (!selector || handler.sel == selector);
+    });
+  }
 
     /**
      * Get event parts.
@@ -1564,6 +1605,8 @@
         var event = document.createEvent(specialEvents[type] || 'Events'),
             bubbles = true;
 
+
+
         if (props)
 
             for (var name in props)(name == 'bubbles') ? (bubbles = !! props[name]) : (event[name] = props[name]);
@@ -1597,8 +1640,6 @@
     // Util
 
     hAzzle.fn.extend({
-
-
 
         /**
          * Remove all childNodes from an element
@@ -1655,7 +1696,6 @@
     });
 
     // Manipulation
-
 
     var
 
@@ -2097,6 +2137,7 @@
 
         before: function (html) {
             return this.each(function () {
+
                 if (hAzzle.isString(html)) {
                     this.insertAdjacentHTML('beforebegin', html);
                 } else {
@@ -2125,15 +2166,6 @@
 
     // Traversing
 
-
-    /*!
-     * Traversing.js
-     */
-    var
-    cached = [],
-        slice = Array.prototype.slice;
-
-    // Extend hAzzle
 
     hAzzle.fn.extend({
 
@@ -2313,7 +2345,6 @@
     });
 
     // Parsing
-
     hAzzle.extend({
 
         /**
@@ -2348,755 +2379,8 @@
 
     });
 
-    // classes
-
-
-    var classList_support = !! document.createElement('p').classList;
-
-    /**
-  ClassList is a faster option then the jQuery and Zepto way, but Internet Explorer 9 and some other browsers don't support classList, so we use a shim to get it work.
- */
-
-
-    if (classList_support) {
-
-        (function (view) {
-
-            "use strict";
-
-            if (!('Element' in view)) return;
-
-            var
-            classListProp = "classList",
-                protoProp = "prototype",
-                elemCtrProto = view.Element[protoProp],
-                objCtr = Object,
-                strTrim = String[protoProp].trim,
-                arrIndexOf = function (item) {
-                    var
-                    i = 0,
-                        len = this.length;
-                    for (var _this = this, i = _this.length; i--;) {
-                        if (i in _this && _this[i] === item) {
-                            return i;
-                        }
-                    }
-                    return -1;
-                }
-                // Vendors: please allow content code to instantiate DOMExceptions
-                , DOMEx = function (type, message) {
-                    this.name = type;
-                    this.code = DOMException[type];
-                    this.message = message;
-                }, checkTokenAndGetIndex = function (classList, token) {
-                    if (token === "") {
-                        throw new DOMEx(
-                            "SYNTAX_ERR", "An invalid or illegal string was specified"
-                        );
-                    }
-                    if (/\s/.test(token)) {
-                        throw new DOMEx(
-                            "INVALID_CHARACTER_ERR", "String contains an invalid character"
-                        );
-                    }
-                    return arrIndexOf.call(classList, token);
-                }, ClassList = function (elem) {
-                    var
-                    trimmedClasses = strTrim.call(elem.getAttribute("class") || ""),
-                        classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [];
-
-                    for (var i = classes.length; i--;) {
-                        this.push(classes[i]);
-                    }
-                    this._updateClassName = function () {
-                        elem.setAttribute("class", this.toString());
-                    };
-                }, classListProto = ClassList[protoProp] = [],
-                classListGetter = function () {
-                    return new ClassList(this);
-                };
-            // Most DOMException implementations don't allow calling DOMException's toString()
-            // on non-DOMExceptions. Error's toString() is sufficient here.
-            DOMEx[protoProp] = Error[protoProp];
-            classListProto.item = function (i) {
-                return this[i] || null;
-            };
-            classListProto.contains = function (token) {
-                token += "";
-                return checkTokenAndGetIndex(this, token) !== -1;
-            };
-            classListProto.add = function () {
-                var
-                tokens = arguments,
-                    i = 0,
-                    l = tokens.length,
-                    token, updated = false;
-                do {
-                    token = tokens[i] + "";
-                    if (checkTokenAndGetIndex(this, token) === -1) {
-                        this.push(token);
-                        updated = true;
-                    }
-                }
-                while (++i < l);
-
-                if (updated) {
-                    this._updateClassName();
-                }
-            };
-            classListProto.remove = function () {
-                var
-                tokens = arguments,
-                    i = 0,
-                    l = tokens.length,
-                    token, updated = false;
-                do {
-                    token = tokens[i] + "";
-                    var index = checkTokenAndGetIndex(this, token);
-                    if (index !== -1) {
-                        this.splice(index, 1);
-                        updated = true;
-                    }
-                }
-                while (++i < l);
-
-                if (updated) {
-                    this._updateClassName();
-                }
-            };
-            classListProto.toggle = function (token, force) {
-                token += "";
-
-                var
-                result = this.contains(token),
-                    method = result ?
-                        force !== true && "remove" :
-                        force !== false && "add";
-
-                if (method) {
-                    this[method](token);
-                }
-
-                return !result;
-            };
-            classListProto.toString = function () {
-                return this.join(" ");
-            };
-
-            if (objCtr.defineProperty) {
-                var classListPropDesc = {
-                    get: classListGetter,
-                    enumerable: true,
-                    configurable: true
-                };
-                try {
-                    objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-                } catch (ex) { // IE 8 doesn't support enumerable:true
-                    if (ex.number === -0x7FF5EC54) {
-                        classListPropDesc.enumerable = false;
-                        objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-                    }
-                }
-            } else if (objCtr[protoProp].__defineGetter__) {
-                elemCtrProto.__defineGetter__(classListProp, classListGetter);
-            }
-
-        }(document));
-
-    }
-
-
-
-    hAzzle.extend({
-
-
-        /**
-         * Internal remove class function. Uses Classlist for better performance if supported by browser
-         *
-         * @param {string} class
-         * @param {string} el
-         */
-
-        removeClass: function (classes, el) {
-            hAzzle.each(classes.split(expr['specialSplit']), function () {
-                el.classList.remove(this);
-            });
-        },
-
-        /**
-         * Internal addClass function. Uses Classlist for better performance if supported by browser
-         *
-         * @param {string} class
-         * @param {string} el
-         */
-
-        addClass: function (classes, el) {
-            if (!classes) return;
-            hAzzle.each(classes.split(expr['specialSplit']), function () {
-                el.classList.add(this);
-            });
-        }
-    });
-
-
-    hAzzle.fn.extend({
-
-        /**
-         * Add classes to element collection
-         * Multiple classnames can be with spaces or comma or both
-         * @param {String} classes
-         */
-
-        addClass: function (value) {
-            if (hAzzle.isFunction(value)) {
-                return this.each(function (j) {
-                    hAzzle(this).addClass(value.call(this, j, this.className));
-                });
-            }
-            return this.each(function () {
-                hAzzle.addClass(value, this);
-            });
-        },
-
-        /**
-         * Remove classes from element collection
-         *
-         * @param {String} className
-         */
-
-        removeClass: function (value) {
-            if (hAzzle.isFunction(value)) {
-                return this.each(function (j) {
-                    hAzzle(this).removeClass(value.call(this, j, this.className));
-                });
-            }
-            return this.each(function () {
-                // If value is undefined, we do a quick manouver and just earese all clases for that element
-                // without any heavy classList operations
-                hAzzle.isUndefined(value) ? this.className = "" : hAzzle.removeClass(value, this);
-            });
-        },
-
-        /**
-         * Checks if an element has the given class
-         *
-         * @param {String} className
-         * @return {Boolean}
-         */
-
-        hasClass: function (value) {
-            return this[0].classList.contains(value);
-        },
-
-        /**
-         * Replace a class in a element collection
-         *
-         * @param {String} className
-         */
-
-        replaceClass: function (clA, clB) {
-            var current, found;
-            return this.each(function () {
-                current = this.className.split(' '),
-                found = false;
-
-                for (var i = current.length; i--;) {
-                    if (current[i] == clA) {
-                        found = true;
-                        current[i] = clB;
-                    }
-                }
-                if (!found) {
-                    return hAzzle.addClass(clB, this);
-                }
-                this.className = current.join(' ');
-            });
-        },
-
-        /**
-         * Add class 'clas' to 'element', and remove after 'duration' milliseconds
-         * @param {String} clas
-         * @param {Number} duration
-         */
-
-        tempClass: function (clas, duration) {
-            var _this;
-            return this.each(function () {
-                _this = this;
-                hAzzle.addClass(clas, _this);
-
-                setTimeout((function () {
-                    hAzzle.removeClass(clas, _this);
-                }), duration);
-            });
-        },
-
-        /**
-         * Retrive all classes that belong to one element
-         */
-
-        allClass: function () {
-            return this[0].classList;
-        },
-
-        /**
-         * Toggle classes
-         *
-         * @param {String} className
-
-         * @param {Boolean} state
-         * @return {Boolean}
-         */
-
-        toggleClass: function (value, stateVal) {
-            var type = typeof value;
-
-            if (typeof stateVal === "boolean" && type === "string") {
-                return stateVal ? this.addClass(value) : this.removeClass(value);
-            }
-
-            if (hAzzle.isFunction(value)) {
-                return this.each(function (i) {
-                    hAzzle(this).toggleClass(value.call(this, i, this.className, stateVal), stateVal);
-                });
-            }
-
-            return this.each(function () {
-                this.classList.toggle(value);
-            });
-        }
-    });
-
-
-    // Wrap
-
-    hAzzle.fn.extend({
-
-        wrap: function (html) {
-
-            var func = hAzzle.isFunction(html)
-
-            if (this[0] && !func) {
-
-                // Create the HTML markup 
-
-                var markup = hAzzle.HTML(html);
-                dom = hAzzle(hAzzle.HTML(markup)).get(0),
-                clone = dom.parentNode || this.length > 1;
-            }
-            return this.each(function (index) {
-                hAzzle(this).wrapAll(
-                    func ? html.call(this, index) :
-                    clone ? dom.cloneNode(true) : dom
-                );
-            });
-        },
-
-        wrapAll: function (html) {
-            if (this[0]) {
-                hAzzle(this[0]).before(html = hAzzle(html))
-                var children
-                // drill down to the inmost element
-                while ((children = html.children()).length) html = children.first()
-                hAzzle(html).append(this)
-            }
-            return this
-        },
-
-        wrapInner: function (html) {
-            var func = hAzzle.isFunction(html)
-            return this.each(function (index) {
-                var self = hAzzle(this),
-                    contents = self.contents(),
-                    dom = func ? html.call(this, index) : html
-                    contents.length ? contents.wrapAll(dom) : self.append(dom)
-            })
-        },
-
-        unwrap: function () {
-
-            this.parent().each(function () {
-                hAzzle(this).replaceWith(hAzzle(this).children())
-            })
-            return this
-        }
-
-
-    });
-
-
-    // Ajax
-
-    var
-    head = doc.head || doc[byTag]('head')[0],
-        uniqid = 0,
-        lastValue, // data stored by the most recent JSONP callback
-        nav = navigator,
-        isIE10 = hAzzle.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
-        uniqid = 0,
-        lastValue,
-        defaultHeaders = {
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
-            requestedWith: xmlHttpRequest,
-            accepts: {
-                '*': "*/".concat("*"),
-                'text': 'text/plain',
-                'html': 'text/html',
-                'xml': 'application/xml, text/xml',
-                'json': 'application/json, text/javascript',
-                'js': 'application/javascript, text/javascript'
-            }
-        };
-
-    /**
-     * Convert to query string
-     *
-     * @param {Object} obj
-     *
-     * @return {String}
-     *
-     * - Taken from jQuery and optimized it for speed
-     *
-     */
-
-    function ctqs(o, trad) {
-
-        var prefix, i,
-            traditional = trad || false,
-            s = [],
-            enc = encodeURIComponent,
-            add = function (key, value) {
-                // If value is a function, invoke it and return its value
-                value = (hAzzle.isFunction(value)) ? value() : (value === null ? '' : value);
-                s[s.length] = enc(key) + '=' + enc(value);
-            };
-        // If an array was passed in, assume that it is an array of form elements.
-        if (hAzzle.isArray(o))
-            for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
-        else
-            for (i = 0; prefix = nativeKeys(o)[i]; i += 1)
-                buildParams(prefix, o[prefix], traditional, add, o);
-        return s.join('&').replace(/%20/g, '+');
-    }
-
-    /**
-     * Build params
-     */
-
-    function buildParams(prefix, obj, traditional, add, o) {
-        var name, i, v, rbracket = /\[\]$/;
-
-        if (hAzzle.isArray(obj)) {
-            for (i = 0; obj && i < obj.length; i++) {
-                v = obj[i];
-                if (traditional || rbracket.test(prefix)) {
-                    // Treat each array item as a scalar.
-                    add(prefix, v);
-                } else buildParams(prefix + '[' + (hAzzle.isObject(v) ? i : '') + ']', v, traditional, add);
-            }
-        } else if (obj && obj.toString() === '[object Object]') {
-            // Serialize object item.
-            for (name in obj) {
-                if (o[own](prefix)) buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
-            }
-
-        } else add(prefix, obj);
-    }
-
-    /**
-     *  Url append
-     *
-     * @param {String} url
-     * @param {String} query
-     * @return {String}
-     */
-
-    function appendQuery(url, query) {
-        return (url + '&' + query).replace(/[&?]+/, '?')
-    }
-
-    /**
-     * General jsonP callback
-     *
-     * @param {String} url
-     * @param {String} s
-     *
-     * @return {String}
-     **/
-
-    function generalCallback(data) {
-        lastValue = data;
-    }
-
-    /**
-		* jsonP
-
-		*
-		* @param {Object} o
-		* @param {Function} fn
-		* @param {String} url
-		*
-		* @return {Object}
-		
-		**/
-
-    function handleJsonp(o, fn, url) {
-
-        var reqId = uniqid++,
-            cbkey = o.jsonpCallback || 'callback'; // the 'callback' key
-
-        o = o.jsonpCallbackName || 'hAzzel_' + getTime(); // the 'callback' value
-
-        var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
-            match = url.match(cbreg),
-            script = doc[crElm]('script'),
-            loaded = 0;
-
-        if (match) {
-            if (match[3] === '?') url = url.replace(cbreg, '$1=' + o); // wildcard callback func name
-            else o = match[3]; // provided callback func name
-        } else url = appendQuery(url, cbkey + '=' + o); // no callback details, add 'em
-
-
-        win[o] = generalCallback;
-
-        script.type = 'text/javascript';
-        script.src = url;
-        script.async = true;
-
-
-        hAzzle.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
-
-        script.onload = script.onreadystatechange = function () {
-
-            if (script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded' || loaded) {
-                return false;
-            }
-            script.onload = script.onreadystatechange = null;
-            if (script.onclick) script.onclick();
-            // Call the user callback with the last value stored and clean up values and scripts.
-            fn(lastValue);
-            lastValue = undefined;
-            head.removeChild(script);
-            loaded = 1;
-        };
-
-        // Add the script to the DOM head
-        head.appendChild(script);
-
-        // Enable JSONP timeout
-        return {
-            abort: function () {
-                script.onload = script.onreadystatechange = null;
-                lastValue = undefined;
-                head.removeChild(script);
-                loaded = 1;
-            }
-        };
-    }
-
-
-
-    hAzzle.extend({
-
-        /**
-         * Ajax method to create ajax request with XMLHTTPRequest
-         *
-         * @param {Object|Function} opt
-         * @param {function|callback} fn
-         * @return {Object}
-         */
-
-        ajax: function (opt, fn) {
-
-            // Force options to be an object
-
-            opt = opt || {};
-
-            fn = fn || function () {};
-
-            var xhr,
-                xDomainRequest = 'XDomainRequest',
-
-                error = 'error',
-                headers = opt.headers || {},
-                props = nativeKeys(headers),
-                index = -1,
-                length = props.length,
-                method = (opt.method || 'GET').toLowerCase(),
-                url = hAzzle.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
-            var type = (opt.type) ? opt.type.toLowerCase() : '',
-                abortTimeout = null,
-                processData = opt.processData || true, // Set to true as default
-                data = (processData !== false && opt.data && !hAzzle.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
-                sendWait = false;
-
-            // If no url, stop here and return.
-
-            if (!url) return false;
-
-            // If jsonp or GET, append the query string to end of URL
-
-            if ((type === 'jsonp' || method.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
-
-            // If jsonp, we stop it here 
-
-            if (type === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
-
-            if (opt.crossOrigin === true) {
-                var _xhr = win.XMLHttpRequest ? new XMLHttpRequest() : null;
-                if (_xhr && 'withCredentials' in _xhr) xhr = _xhr;
-                else if (win.xDomainRequest) xhr = new xDomainRequest();
-                else throw "Browser does not support cross-origin requests";
-            }
-
-            xhr.open(method, url, opt.async === false ? false : true);
-
-            // Set headers
-
-            headers.Accept = headers.Accept || defaultHeaders.accepts[type] || defaultHeaders.accepts['*'];
-
-            if (!opt.crossOrigin && !headers.requestedWith) headers.requestedWith = defaultHeaders.requestedWith;
-
-            if (opt.contentType || opt.data && type.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
-
-            // Set headers
-
-            while (++index < length) {
-                xhr.setRequestHeader(hAzzle.trim(props[index]), headers[props[index]]);
-            }
-
-            // Set credentials
-
-            if (hAzzle.isDefined(opt.withCredentials) && hAzzle.isDefined(xhr.withCredentials)) {
-                xhr.withCredentials = !! opt.withCredentials;
-            }
-
-            if (opt.timeout > 0) {
-                abortTimeout = setTimeout(function () {
-                    xhr.abort(); // Or should we use self.abort() ??
-                }, opt.timeout);
-            }
-
-            if (win[xDomainRequest] && xhr instanceof win.xDomainRequest) {
-                xhr.onload = fn;
-                xhr.onerror = err;
-                xhr.onprogress = function () {};
-                sendWait = true;
-            } else {
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-
-                        // Determine if successful
-
-                        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
-                            var res;
-                            if (xhr) {
-
-                                // json
-
-                                if ((type === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
-
-                                // xml
-
-                                if (type === 'xml') {
-
-                                    res = xhr.responseXML && xhr.responseXML.parseError && xhr.responseXML.parseError.errorCode && xhr.responseXML.parseError.reason ? null : xhr.responseXML;
-
-                                } else {
-
-                                    res = res || xhr.responseText;
-                                }
-                            }
-                            if (!res && data) res = data;
-                            if (opt.success) opt.success(res);
-                        } else if (opt.error !== undefined) {
-                            if (abortTimeout !== null) clearTimeout(abortTimeout);
-                            opt.error(error, opt, xhr);
-                        }
-                    }
-                };
-            }
-
-            // Before open
-
-            if (opt.before) opt.before(xhr);
-
-            if (sendWait) {
-                setTimeout(function () {
-
-                    xhr.send(data);
-                }, 200);
-            } else xhr.send(data);
-
-            return xhr;
-        },
-
-        /** Shorthand function to recive JSON data with ajax
-         *
-         * @param {String} url
-         * @param {Object} data
-         * @param {Function} callback
-         * @param {Function} callback
-         * @return {Object}
-         */
-
-        getJSON: function (url, data, callback, error) {
-
-            hAzzle.ajax({
-                url: url,
-                method: 'JSON',
-                contentType: 'application/json',
-                error: hAzzle.isFunction(error) ? error : function (err) {},
-                data: hAzzle.isObject(data) ? data : {},
-                success: hAzzle.isFunction ? callback : function (err) {}
-            });
-        },
-
-        /** Shorthand function to recive GET data with ajax
-         *
-         * @param {String} url
-         * @param {Object} data
-         * @param {Function} callback
-         * @param {Function} callback
-         * @return {Object}
-         */
-
-        get: function (url, data, callback, error) {
-
-            hAzzle.ajax({
-                url: url,
-                method: 'GET',
-                contentType: '',
-                error: hAzzle.isFunction(error) ? error : function (err) {},
-                data: hAzzle.isObject(data) ? data : {},
-                success: hAzzle.isFunction ? callback : function (err) {}
-            });
-        },
-
-        /** Shorthand function to recive POST data with ajax
-	
-		 *
-		 * @param {String} url
-		 * @param {Object} data
-		 * @param {Function} callback
-		 * @param {Function} callback
-		 * @return {Object}
-		 */
-
-        post: function (url, data, callback, error) {
-            hAzzle.ajax({
-                url: url,
-                method: 'POST',
-                contentType: '',
-                error: hAzzle.isFunction(error) ? error : function (err) {},
-                data: hAzzle.isObject(data) ? data : {},
-                success: hAzzle.isFunction ? callback : function (err) {}
-            });
-        }
-    });
-
     // CSS
+
 
     var
     cssNormalTransform = {
@@ -3705,7 +2989,383 @@
 
     });
 
+    // Ajax
 
+    var xmlHttpRequest = 'XMLHttpRequest',
+        crElm = 'createElement',
+        own = 'hasOwnProperty',
+        head = doc.head || doc[byTag]('head')[0],
+        uniqid = 0,
+        lastValue, // data stored by the most recent JSONP callback
+        nav = navigator,
+        isIE10 = hAzzle.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
+        uniqid = 0,
+        lastValue,
+
+        getTime = (Date.now || function () {
+            return new Date().getTime();
+        }),
+
+        defaultHeaders = {
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
+            requestedWith: xmlHttpRequest,
+            accepts: {
+                '*': "*/".concat("*"),
+                'text': 'text/plain',
+                'html': 'text/html',
+                'xml': 'application/xml, text/xml',
+                'json': 'application/json, text/javascript',
+                'js': 'application/javascript, text/javascript'
+            }
+        };
+
+    /**
+     * Convert to query string
+     *
+     * @param {Object} obj
+     *
+     * @return {String}
+     *
+     * - Taken from jQuery and optimized it for speed
+     *
+     */
+
+    function ctqs(o, trad) {
+
+        var prefix, i,
+            traditional = trad || false,
+            s = [],
+            enc = encodeURIComponent,
+            add = function (key, value) {
+                // If value is a function, invoke it and return its value
+                value = (hAzzle.isFunction(value)) ? value() : (value === null ? '' : value);
+                s[s.length] = enc(key) + '=' + enc(value);
+            };
+        // If an array was passed in, assume that it is an array of form elements.
+        if (hAzzle.isArray(o))
+            for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
+        else
+            for (i = 0; prefix = nativeKeys(o)[i]; i += 1)
+                buildParams(prefix, o[prefix], traditional, add, o);
+        return s.join('&').replace(/%20/g, '+');
+    }
+
+    /**
+     * Build params
+     */
+
+    function buildParams(prefix, obj, traditional, add, o) {
+        var name, i, v, rbracket = /\[\]$/;
+
+        if (hAzzle.isArray(obj)) {
+            for (i = 0; obj && i < obj.length; i++) {
+                v = obj[i];
+                if (traditional || rbracket.test(prefix)) {
+                    // Treat each array item as a scalar.
+                    add(prefix, v);
+                } else buildParams(prefix + '[' + (hAzzle.isObject(v) ? i : '') + ']', v, traditional, add);
+            }
+        } else if (obj && obj.toString() === '[object Object]') {
+            // Serialize object item.
+            for (name in obj) {
+                if (o[own](prefix)) buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
+            }
+
+        } else add(prefix, obj);
+    }
+
+    /**
+     *  Url append
+     *
+     * @param {String} url
+     * @param {String} query
+     * @return {String}
+     */
+
+    function appendQuery(url, query) {
+        return (url + '&' + query).replace(/[&?]+/, '?')
+    }
+
+    /**
+     * General jsonP callback
+     *
+     * @param {String} url
+     * @param {String} s
+     *
+     * @return {String}
+     **/
+
+    function generalCallback(data) {
+        lastValue = data;
+    }
+
+    /**
+		* jsonP
+
+		*
+		* @param {Object} o
+		* @param {Function} fn
+		* @param {String} url
+		*
+		* @return {Object}
+		
+		**/
+    function handleJsonp(o, fn, url) {
+
+        var reqId = uniqid++,
+            cbkey = o.jsonpCallback || 'callback'; // the 'callback' key
+
+        o = o.jsonpCallbackName || 'hAzzel_' + getTime(); // the 'callback' value
+
+        var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
+            match = url.match(cbreg),
+            script = doc[crElm]('script'),
+            loaded = 0;
+
+        if (match) {
+            if (match[3] === '?') url = url.replace(cbreg, '$1=' + o); // wildcard callback func name
+            else o = match[3]; // provided callback func name
+        } else url = appendQuery(url, cbkey + '=' + o); // no callback details, add 'em
+
+
+        win[o] = generalCallback;
+
+        script.type = 'text/javascript';
+        script.src = url;
+        script.async = true;
+
+
+        hAzzle.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
+
+        script.onload = script.onreadystatechange = function () {
+
+            if (script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded' || loaded) {
+                return false;
+            }
+            script.onload = script.onreadystatechange = null;
+            if (script.onclick) script.onclick();
+            // Call the user callback with the last value stored and clean up values and scripts.
+            fn(lastValue);
+            lastValue = undefined;
+            head.removeChild(script);
+            loaded = 1;
+        };
+
+        // Add the script to the DOM head
+        head.appendChild(script);
+
+        // Enable JSONP timeout
+        return {
+            abort: function () {
+                script.onload = script.onreadystatechange = null;
+                lastValue = undefined;
+                head.removeChild(script);
+                loaded = 1;
+            }
+        };
+    }
+
+
+
+    hAzzle.extend({
+
+        /**
+         * Ajax method to create ajax request with XMLHTTPRequest
+         *
+         * @param {Object|Function} opt
+         * @param {function|callback} fn
+         * @return {Object}
+         */
+
+        ajax: function (opt, fn) {
+
+            // Force options to be an object
+
+            opt = opt || {};
+
+            fn = fn || function () {};
+
+            var xhr,
+                xDomainRequest = 'XDomainRequest',
+
+                error = 'error',
+                headers = opt.headers || {},
+                props = nativeKeys(headers),
+                index = -1,
+                length = props.length,
+                method = (opt.method || 'GET').toLowerCase(),
+                url = hAzzle.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
+            var type = (opt.type) ? opt.type.toLowerCase() : '',
+                abortTimeout = null,
+                processData = opt.processData || true, // Set to true as default
+                data = (processData !== false && opt.data && !hAzzle.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
+                sendWait = false;
+
+            // If no url, stop here and return.
+
+            if (!url) return false;
+
+            // If jsonp or GET, append the query string to end of URL
+
+            if ((type === 'jsonp' || method.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
+
+            // If jsonp, we stop it here 
+
+            if (type === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
+
+            if (opt.crossOrigin === true) {
+                var _xhr = win.XMLHttpRequest ? new XMLHttpRequest() : null;
+                if (_xhr && 'withCredentials' in _xhr) xhr = _xhr;
+                else if (win.xDomainRequest) xhr = new xDomainRequest();
+                else throw "Browser does not support cross-origin requests";
+            }
+
+            xhr.open(method, url, opt.async === false ? false : true);
+
+            // Set headers
+
+            headers.Accept = headers.Accept || defaultHeaders.accepts[type] || defaultHeaders.accepts['*'];
+
+            if (!opt.crossOrigin && !headers.requestedWith) headers.requestedWith = defaultHeaders.requestedWith;
+
+            if (opt.contentType || opt.data && type.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
+
+            // Set headers
+
+            while (++index < length) {
+                xhr.setRequestHeader(hAzzle.trim(props[index]), headers[props[index]]);
+            }
+
+            // Set credentials
+
+            if (hAzzle.isDefined(opt.withCredentials) && hAzzle.isDefined(xhr.withCredentials)) {
+                xhr.withCredentials = !! opt.withCredentials;
+            }
+
+            if (opt.timeout > 0) {
+                abortTimeout = setTimeout(function () {
+                    xhr.abort(); // Or should we use self.abort() ??
+                }, opt.timeout);
+            }
+
+            if (win[xDomainRequest] && xhr instanceof win.xDomainRequest) {
+                xhr.onload = fn;
+                xhr.onerror = err;
+                xhr.onprogress = function () {};
+                sendWait = true;
+            } else {
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+
+                        // Determine if successful
+
+                        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
+                            var res;
+                            if (xhr) {
+
+                                // json
+
+                                if ((type === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
+
+                                // xml
+
+                                if (type === 'xml') {
+
+                                    res = xhr.responseXML && xhr.responseXML.parseError && xhr.responseXML.parseError.errorCode && xhr.responseXML.parseError.reason ? null : xhr.responseXML;
+
+                                } else {
+
+                                    res = res || xhr.responseText;
+                                }
+                            }
+                            if (!res && data) res = data;
+                            if (opt.success) opt.success(res);
+                        } else if (opt.error !== undefined) {
+                            if (abortTimeout !== null) clearTimeout(abortTimeout);
+                            opt.error(error, opt, xhr);
+                        }
+                    }
+                };
+            }
+
+            // Before open
+
+            if (opt.before) opt.before(xhr);
+
+            if (sendWait) {
+                setTimeout(function () {
+
+                    xhr.send(data);
+                }, 200);
+            } else xhr.send(data);
+
+            return xhr;
+        },
+
+
+        /** Shorthand function to recive JSON data with ajax
+         *
+         * @param {String} url
+         * @param {Object} data
+         * @param {Function} callback
+         * @param {Function} callback
+         * @return {Object}
+         */
+
+        getJSON: function (url, data, callback, error) {
+
+            hAzzle.ajax({
+                url: url,
+                method: 'JSON',
+                contentType: 'application/json',
+                error: hAzzle.isFunction(error) ? error : function (err) {},
+                data: hAzzle.isObject(data) ? data : {},
+                success: hAzzle.isFunction ? callback : function (err) {}
+            });
+        },
+
+        /** Shorthand function to recive GET data with ajax
+         *
+         * @param {String} url
+         * @param {Object} data
+         * @param {Function} callback
+         * @param {Function} callback
+         * @return {Object}
+         */
+
+        get: function (url, data, callback, error) {
+
+            hAzzle.ajax({
+                url: url,
+                method: 'GET',
+                contentType: '',
+                error: hAzzle.isFunction(error) ? error : function (err) {},
+                data: hAzzle.isObject(data) ? data : {},
+                success: hAzzle.isFunction ? callback : function (err) {}
+            });
+        },
+
+        /** Shorthand function to recive POST data with ajax
+	
+		 *
+		 * @param {String} url
+		 * @param {Object} data
+		 * @param {Function} callback
+		 * @param {Function} callback
+		 * @return {Object}
+		 */
+
+        post: function (url, data, callback, error) {
+            hAzzle.ajax({
+                url: url,
+                method: 'POST',
+                contentType: '',
+                error: hAzzle.isFunction(error) ? error : function (err) {},
+                data: hAzzle.isObject(data) ? data : {},
+                success: hAzzle.isFunction ? callback : function (err) {}
+            });
+        }
+    });
 
 
     window['hAzzle'] = hAzzle;
