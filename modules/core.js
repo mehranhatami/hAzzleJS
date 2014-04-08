@@ -1,14 +1,13 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.26a - BETA
+ * Version: 0.2.6b - BETA
  * Released under the MIT License.
  *
  * Date: 2014-04-08
  *
  */
- 
- (function (window, undefined) {
+(function (window, undefined) {
 
     // hAzzle already defined, leave now
 
@@ -713,6 +712,7 @@
         /**
          * Check if an element contains another element
          */
+
         /*
         contains: function (obj, target) {
             if (target) {
@@ -885,6 +885,7 @@
         }
 
     });
+
 
     window['hAzzle'] = hAzzle;
 

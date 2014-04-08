@@ -351,7 +351,7 @@ hAzzle.fn.extend({
 
     appendTo: function (sel) {
         return this.each(function () {
-            hAzzle(selector).append(this);
+            hAzzle(sel).append(this);
         });
     },
 
@@ -396,7 +396,7 @@ hAzzle.fn.extend({
 
     prependTo: function (sel) {
         return this.each(function () {
-            hAzzle(selector).prepend(this);
+            hAzzle(sel).prepend(this);
         });
     },
 

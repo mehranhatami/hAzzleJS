@@ -1,8 +1,6 @@
-
+var cahce = [], timeout;
 
 hAzzle.fn.extend({
-
-
 
     /**
      * Remove all childNodes from an element
@@ -24,6 +22,9 @@ hAzzle.fn.extend({
      */
 
     remove: function () {
+
+		// Discard any data on the element
+
         return this.removeData().each(function () {
 			
 		// Locate all nodes that belong to this element
@@ -32,28 +33,23 @@ hAzzle.fn.extend({
 		      elements  = elements.add(this);
 
 		// Remove all attached event handlers
+		
 		hAzzle.each(elements, function() {
 			hAzzle.event.remove(this);
 		});
-
-            if (this.parentNode)
-                this.parentNode.removeChild(this)
-        })
-    },
-
-    /**
-     * Create a deep copy of the element and it's children
-     *
-     * TODO!!
-     *
-     *  - Use documentfrag
-     *  - Clone data
-     *  - Clone events
-     */
-
-    clone: function () {
-        return this.map(function () {
-            return this.cloneNode(true);
-        });
+        
+		// Remove all parent nodes
+        if (this.parentNode)
+          if(this.tagName === 'IMG'){
+          cache.push(this)
+          this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+          if (timeout) clearTimeout(timeout)
+          timeout = setTimeout(function(){ cache = [] }, 60000)
+        }		
+        this.parentNode.removeChild(this)
+       })
     }
 });
+
+
+
