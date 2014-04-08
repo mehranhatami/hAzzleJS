@@ -104,7 +104,7 @@ hAzzle.extend({
             if (hAzzle(this).text().indexOf(text) > -1) return this;
         },
         has: function (elem, _, sel) {
-            if (hAzzle.select(this, sel).length) return this;
+            if (hAzzle.qsa(this, sel).length) return this;
         },
         radio: function () {
             return "radio" === this.type;
@@ -128,13 +128,30 @@ hAzzle.extend({
             var name = this.nodeName.toLowerCase();
             return name === "input" && this.type === "button" || name === "button";
         },
-        "target": function () {
+        target: function () {
 
             var hash = window.location && window.location.hash;
             return hash && hash.slice(1) === this.id;
         },
         input: function () {
             return (/input|select|textarea|button/i).test(this.nodeName);
+        },
+        focus: function () {
+            return this === document.activeElement && (!document.hasFocus || document.hasFocus()) && !! (this.type || this.href || ~this.tabIndex);
+        }
+    },
+
+    /*
+     * QuerySelectorAll function
+     */
+
+    qsa: function (sel, ctx) {
+
+        try {
+            return ctx[byAll](sel);
+
+        } catch (e) {
+            console.error('error performing selector: %o', sel);
         }
     },
 
@@ -166,8 +183,8 @@ hAzzle.extend({
             var result = ctx[byTag](m[1]),
                 id = m[2],
                 className = m[3];
-            hAzzle.each(result, function () {
-                if (this.id === id || containsClass(this, className)) els.push(this);
+            hAzzle.each(result, function (_, res) {
+                if (res.id === id || containsClass(res, className)) els.push(res);
             });
         } else { // Pseudos
 
@@ -176,24 +193,15 @@ hAzzle.extend({
                 var filter = hAzzle.pseudos[m[2]],
                     arg = m[3];
 
-                try {
+                sel = this.qsa(m[1], ctx);
 
-                    sel = ctx[byAll](m[1]);
-
-                } catch (e) {
-                    console.error('error performing selector: %o', sel);
-                }
                 els = hAzzle.unique(hAzzle.map(sel, function (n, i) {
                     return filter.call(n, i, sel, arg);
                 }));
 
             } else { // QuerySelectorAll
 
-                try {
-                    els = ctx[byAll](sel);
-                } catch (e) {
-                    console.error('error performing selector: %o', sel);
-                }
+                els = this.qsa(sel, ctx);
             }
         }
         return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
