@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.24c
+ * Version: 0.2.4c
  * Released under the MIT License.
  *
  * Date: 2014-04-08
@@ -150,7 +150,7 @@
 
                 //Array
 
-                if (sel instanceof Array) {
+                if (hAzzle.isArray(sel) ) {
 
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
 
@@ -158,7 +158,7 @@
 
                     // Object
 
-                    if (sel && (sel.document || (sel.nodeType && nodeTypes[9](sel)))) {
+                    if (sel && (sel.doc || (sel.nodeType && nodeTypes[9](sel)))) {
 
                         if (!ctx) {
 
@@ -173,6 +173,7 @@
             }
 
             elems = this.elems;
+			
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
         },
@@ -302,7 +303,7 @@
 
         pluck: function (prop, nt) {
             if (nt && hAzzle.isNumber(nt)) {
-                if (nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
+                if (!nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
             }
             return hAzzle.pluck(this.elems, prop);
         },
