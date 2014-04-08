@@ -303,6 +303,7 @@ hAzzle.fn.extend({
      *
      * @return {Object}
      */
+
     prop: function (name, value) {
         return hAzzle.isObject(name) ? this.each(function (value, element) {
             hAzzle.each(name, function (key, value) {
@@ -310,7 +311,21 @@ hAzzle.fn.extend({
             });
         }) : hAzzle.isUndefined(value) ? this[0] && this[0][propMap[name] || name] : hAzzle.prop(element, key, value);
     },
+	
+    /*
+	 * Remove properties from DOM elements
+     *
+     * @param {String}
+     *
+     * @return {Object}
+	 */
+	 
+ 	removeProp: function( name ) {
 
+		return this.each(function() {
+			delete this[ propMap[ name ] || name ];
+		});
+	},
 
     /**
      * Append node to one or more elements.
@@ -436,7 +451,7 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    before: function (html) {
+      before: function (html) {
         return this.each(function () {
             if (hAzzle.isString(html)) {
                 this.insertAdjacentHTML('beforebegin', html);
@@ -458,7 +473,22 @@ hAzzle.fn.extend({
      */
 
     replaceWith: function (html) {
-        if (typeof html === "string") return this.before(html).remove()
+	  
+	  // String / pure HTML
+	  
+	  if (typeof html === "string") return this.before(html).remove();  
+
+      // Object
+	  
+	   return this.each(function (i, el) {
+      hAzzle.each(html, function () {
+        el.parentNode.insertBefore(this, el);
+      });
+    });
+	  
+
     }
 
+
 });
+

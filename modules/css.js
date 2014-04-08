@@ -1,22 +1,24 @@
 /**
  * CSS
  *
- * NOTE!! Some code here is "borrowed" from jQuery because I tried to follow the jQuery API.
+ * NOTE!! Some code here is "borrowed" from hAzzle because I tried to follow the hAzzle API.
  *        Even the cssHooks feature.
  *
- * Still there are minor and major differences between hAzzle API and jQuery API. Examples are many.
+ * Still there are minor and major differences between hAzzle API and hAzzle API. Examples are many.
  * Here are a few:
  *
  * - Pixels are not rounded up or down - make the position on the screen more accurate
  * - Everything is optimized for speed
- * - Converts %, +=, -= and em to relative numbers ( jQuery only deal with +=, -=)
+ * - Converts %, +=, -= and em to relative numbers ( hAzzle only deal with +=, -=)
  *
  */
 var
-cssNormalTransform = {
-    letterSpacing: "0",
-    fontWeight: "400"
-},
+docElem = window.document.documentElement,
+    rootNodeRE = /^(?:body|html)$/i,
+    cssNormalTransform = {
+        letterSpacing: "0",
+        fontWeight: "400"
+    },
     cached = [],
 
     cssPrefixes = ["Webkit", "O", "Moz", "ms"],
@@ -70,8 +72,8 @@ function predefultValue(elem, name, extra) {
 /**
  * Gets a window from an element
  */
-function getWindow( elem ) {
-	return hAzzle.isWindow( elem ) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
+function getWindow(elem) {
+    return hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
 }
 
 
@@ -306,6 +308,55 @@ hAzzle.extend({
                     var ret = curCSS(elem, "opacity");
                     return ret === "" ? "1" : ret;
                 }
+            }
+        }
+    },
+
+    offset: {
+        setOffset: function (elem, coordinates, i) {
+            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+                position = hAzzle.css(elem, "position"),
+                curElem = hAzzle(elem),
+                props = {};
+
+            // Set position first, in-case top/left are set even on static elem
+            if (position === "static") {
+                elem.style.position = "relative";
+            }
+
+            curOffset = curElem.offset();
+            curCSSTop = hAzzle.css(elem, "top");
+            curCSSLeft = hAzzle.css(elem, "left");
+            calculatePosition = (position === "absolute" || position === "fixed") &&
+                (curCSSTop + curCSSLeft).indexOf("auto") > -1;
+
+            // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+            if (calculatePosition) {
+                curPosition = curElem.position();
+                curTop = curPosition.top;
+                curLeft = curPosition.left;
+
+            } else {
+                curTop = parseFloat(curCSSTop) || 0;
+                curLeft = parseFloat(curCSSLeft) || 0;
+            }
+
+            if (hAzzle.isFunction(coordinates)) {
+                coordinates = coordinates.call(elem, i, curOffset);
+            }
+
+            if (coordinates.top != null) {
+                props.top = (coordinates.top - curOffset.top) + curTop;
+            }
+            if (coordinates.left != null) {
+                props.left = (coordinates.left - curOffset.left) + curLeft;
+            }
+
+            if ("using" in coordinates) {
+                coordinates.using.call(elem, props);
+
+            } else {
+                curElem.css(props);
             }
         }
     },
@@ -592,29 +643,121 @@ hAzzle.fn.extend({
     innerWidth: function () {
         return predefultValue(this[0], 'width', "padding");
     },
-	
-  /**
-   *  ScrollTop
-   */
-	
-	scrollTop: function(val) {
-    var elem = this[0],
-        win = getWindow(elem);
-    if (val === undefined) return val ? val.pageYOffset : elem.scrollTop;
-    win ? win.scrollTo(window.pageYOffset) : elem.scrollTop = val;
-	},
 
-  /**
-   *  ScrollLeft
-   */
+    /**
+     *  ScrollTop
+     */
 
-  scrollLeft: function(val) {
-    var elem = this[0],
-        win = getWindow(elem);
-    if (val === undefined) return val ? val.pageXOffset : elem.scrollLeft;
-    win ? win.scrollTo(window.pageXOffset) : elem.scrollLeft = val;
-	
-	},
+    scrollTop: function (val) {
+        var elem = this[0],
+            win = getWindow(elem);
+        if (val === undefined) return val ? val.pageYOffset : elem.scrollTop;
+        win ? win.scrollTo(window.pageYOffset) : elem.scrollTop = val;
+    },
+
+    /**
+     *  ScrollLeft
+     */
+
+    scrollLeft: function (val) {
+        var elem = this[0],
+            win = getWindow(elem);
+        if (val === undefined) return val ? val.pageXOffset : elem.scrollLeft;
+        win ? win.scrollTo(window.pageXOffset) : elem.scrollLeft = val;
+
+    },
+
+    offset: function (coordinates) {
+        if (arguments.length) {
+            return coordinates === undefined ?
+                this :
+                this.each(function (i) {
+                    hAzzle.offset.setOffset(this, coordinates, i);
+                });
+        }
+
+        var docElem, win,
+            elem = this[0],
+            box = {
+                top: 0,
+                left: 0
+            },
+            doc = elem && elem.ownerDocument;
+
+        if (!doc) {
+            return;
+        }
+
+        docElem = doc.documentElement;
+
+        // Make sure it's not a disconnected DOM node
+        if (!hAzzle.contains(docElem, elem)) {
+            return box;
+        }
+        if (typeof elem.getBoundingClientRect !== typeof undefined) {
+            box = elem.getBoundingClientRect();
+        }
+        win = getWindow(doc);
+        return {
+            top: box.top + win.pageYOffset - docElem.clientTop,
+            left: box.left + win.pageXOffset - docElem.clientLeft
+        };
+    },
+
+    position: function () {
+
+        if (this.length) {
+
+            var offsetParent, offset,
+                elem = this[0],
+                parentOffset = {
+                    top: 0,
+                    left: 0
+                };
+
+            if (hAzzle.css(elem, "position") === "fixed") {
+
+                offset = elem.getBoundingClientRect();
+
+            } else {
+
+                // Get *real* offsetParent
+
+                offsetParent = this.offsetParent();
+
+                // Get correct offsets
+                offset = this.offset();
+
+                if (!hAzzle.nodeName(offsetParent[0], "html")) {
+                    parentOffset = offsetParent.offset();
+                }
+
+                // Subtract element margins
+
+                parentOffset.top += hAzzle.css(offsetParent[0], "borderTopWidth", true);
+                parentOffset.left += hAzzle.css(offsetParent[0], "borderLeftWidth", true);
+            }
+
+            // Subtract parent offsets and element margins
+            return {
+                top: offset.top - parentOffset.top - hAzzle.css(elem, "marginTop", true),
+                left: offset.left - parentOffset.left - hAzzle.css(elem, "marginLeft", true)
+            };
+        }
+    },
+
+    /**  
+     * Get the closest ancestor element that is positioned.
+     */
+
+    offsetParent: function () {
+        return this.map(function () {
+            var offsetParent = this.offsetParent || docElem;
+            while (offsetParent && (!hAzzle.nodeName(offsetParent, "html") && hAzzle.css(offsetParent, "position") === "static")) {
+                offsetParent = offsetParent.offsetParent;
+            }
+            return offsetParent || docElem;
+        });
+    }
 
 });
-

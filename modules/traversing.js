@@ -152,6 +152,12 @@ hAzzle.fn.extend({
     last: function () {
         return hAzzle(this.get(-1));
     },
+	
+	contents: function() {
+      return this.map(function(elem) { 
+ 	        return elem.contentDocument || slice.call(elem.childNodes) 
+	  })
+    },
 
     /**
      * Return the element's siblings

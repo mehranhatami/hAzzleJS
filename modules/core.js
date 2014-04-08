@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.2.6b - BETA
+ * Version: 0.2.7 - BETA
  * Released under the MIT License.
  *
- * Date: 2014-04-08
+ * Date: 2014-04-09
  *
  */
 (function (window, undefined) {
@@ -132,16 +132,23 @@
 
             if (hAzzle.isString(sel)) {
 
-                // If the selector are cache, we return it after giving it some special threatment
+                if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                if (cache[sel] && !ctx) {
-                    this.elems = elems = cache[sel];
-                    for (i = this.length = elems.length; i--;) this[i] = elems[i];
-                    return this;
+                    var frag = hAzzle.fragment(sel.trim(), RegExp.$1, ctx);
+
+                    return this.elems = frag, this.length = 1, this[0] = frag, this;
+
+                } else {
+                    // If the selector are cache, we return it after giving it some special threatment
+
+                    if (cache[sel] && !ctx) {
+                        this.elems = elems = cache[sel];
+                        for (i = this.length = elems.length; i--;) this[i] = elems[i];
+                        return this;
+                    }
+
+                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
                 }
-
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
-
             } else {
 
                 // Domready
@@ -712,7 +719,6 @@
         /**
          * Check if an element contains another element
          */
-
         /*
         contains: function (obj, target) {
             if (target) {
