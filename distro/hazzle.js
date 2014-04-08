@@ -1,13 +1,13 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.2.6 - BETA
+ * Version: 0.26a - BETA
  * Released under the MIT License.
  *
  * Date: 2014-04-08
  *
  */
-
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -49,9 +49,9 @@
         },
 
         cached = [],
-
+		
         // Selector caching
-
+		
         cache = [],
 
         // Different nodeTypes we are checking against for faster speed
@@ -127,9 +127,8 @@
 
         length: 0,
 
-        init: function (sel, ctx) {
+init: function (sel, ctx) {
             var elems, i;
-
             if (sel instanceof hAzzle) return sel;
 
             if (hAzzle.isString(sel)) {
@@ -155,22 +154,17 @@
 
                 //Array
 
-                if (hAzzle.isArray(sel)) {
+                if (sel instanceof Array) {
 
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
 
                 } else {
-
                     // Object
 
-                    if (sel && (sel.document || (sel.nodeType && nodeTypes[9](sel)))) {
-
-                        if (!ctx) {
-
-                            return this.elems = [sel], this.length = 1, this[0] = sel, this;
-
-                        } else return [];
+                    if (hAzzle.isObject(sel)) {
+                        return this.elems = [sel], this.length = 1, this[0] = sel, this;
                     }
+
                     // Nodelist
 
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
@@ -178,7 +172,6 @@
             }
 
             elems = this.elems;
-
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
         },
@@ -559,6 +552,10 @@
         isArrayLike: function (elem) {
             if (elem === null || this.isWindow(elem)) return false;
         },
+		
+		likeArray: function(obj) {
+          return typeof obj.length == 'number'
+        },
 
         isWindow: function (obj) {
             if (obj)
@@ -870,114 +867,220 @@
                 return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
             }));
             return cached[str];
+        },
+		
+		map: function (elements, callback) {
+    var value, values = [],
+        i, key
+    if (hAzzle.likeArray(elements))
+        for (i = 0; i < elements.length; i++) {
+            value = callback(elements[i], i)
+            if (value != null) values.push(value)
+        } else
+        for (key in elements) {
+            value = callback(elements[key], key)
+            if (value != null) values.push(value)
         }
 
-    });
+        return values
+}
+
+    });	
+	
 
     // Selector engine
 
+var byClass = 'getElementsByClassName',
+    byTag = 'getElementsByTagName',
+    byId = 'getElementById',
+    nodeType = 'nodeType',
+    byAll = 'querySelectorAll',
 
-    var doc = document,
-        byClass = 'getElementsByClassName',
-        byTag = 'getElementsByTagName',
-        byId = 'getElementById',
-        byAll = 'querySelectorAll',
+    // RegExp we are using
 
+    expresso = {
 
-        // RegExp we are using
+        idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
+        tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/,
+        pseudos: /(.*):(\w+)(?:\(([^)]+)\))?$\s*/
+    };
 
-        expresso = {
+/**
+ * Normalize context.
+ *
+ * @param {String|Array} ctx
+ *
+ * @return {Object}
+ */
 
-            idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-            tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
-        };
+function normalizeCtx(ctx) {
+    if (!ctx) return doc;
+    if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
+    if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
+    if (ctx[nodeType]) return ctx;
+    return ctx;
+}
+
+/**
+ * Determine if the element contains the klass.
+ * Uses the `classList` api if it's supported.
+ * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
+ *
+ * @param {Object} el
+ * @param {String} klass
+ *
+ * @return {Array}
+ */
+
+function containsClass(el, klass) {
+    if (hAzzle.support.classList) {
+        return el.classList.contains(klass);
+    } else {
+        return hAzzle.contains(('' + el.className).split(' '), klass);
+    }
+}
+
+hAzzle.extend({
+
+    pseudos: {
+        disabled: function () {
+            return this.disabled === true;
+        },
+        enabled: function () {
+            return this.disabled === false && this.type !== "hidden";
+        },
+        selected: function () {
+
+            if (this.parentNode) {
+                this.parentNode.selectedIndex;
+            }
+
+            return this.selected === true;
+        },
+        checked: function () {
+            var nodeName = this.nodeName.toLowerCase();
+            return (nodeName === "input" && !! this.checked) || (nodeName === "option" && !! this.selected);
+        },
+        parent: function () {
+            return this.parentNode;
+        },
+        first: function (elem) {
+            if (elem === 0) return this;
+        },
+        last: function (elem, nodes) {
+            if (elem === nodes.length - 1) return this;
+        },
+        empty: function () {
+            var elem = this;
+            for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+                if (elem.nodeType < 6) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        eq: function (elem, _, value) {
+            if (elem === value) return this;
+        },
+        contains: function (elem, _, text) {
+            if (hAzzle(this).text().indexOf(text) > -1) return this;
+        },
+        has: function (elem, _, sel) {
+            if (hAzzle.select(this, sel).length) return this;
+        },
+        radio: function () {
+            return "radio" === this.type;
+        },
+        checkbox: function () {
+            return "checkbox" === this.type;
+        },
+        file: function () {
+            return "file" === this.type;
+        },
+        password: function () {
+            return "password" === this.type;
+        },
+        submit: function () {
+            return "submit" === this.type;
+        },
+        image: function () {
+            return "image" === this.type;
+        },
+        button: function () {
+            var name = this.nodeName.toLowerCase();
+            return name === "input" && this.type === "button" || name === "button";
+        },
+        "target": function () {
+
+            var hash = window.location && window.location.hash;
+            return hash && hash.slice(1) === this.id;
+        },
+        input: function () {
+            return (/input|select|textarea|button/i).test(this.nodeName);
+        }
+    },
 
     /**
-     * Normalize context.
+     * Find elements by selectors.
      *
-     * @param {String|Array} ctx
-     *
+     * @param {String} sel
+     * @param {Object} ctx
      * @return {Object}
      */
 
-    function normalizeCtx(ctx) {
-        if (!ctx) return doc;
-        if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
-        if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
-        if (ctx[nodeType]) return ctx;
-        return ctx;
-    }
+    select: function (sel, ctx) {
 
-    /**
-     * Determine if the element contains the klass.
-     * Uses the `classList` api if it's supported.
-     * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
-     *
-     * @param {Object} el
-     * @param {String} klass
-     *
-     * @return {Array}
-     */
+        var m, els = [];
 
-    function containsClass(el, klass) {
-        if (hAzzle.support.classList) {
-            return el.classList.contains(klass);
-        } else {
-            return hAzzle.contains(('' + el.className).split(' '), klass);
-        }
-    }
+        // Get the right context to use.
 
-    hAzzle.extend({
+        ctx = normalizeCtx(ctx);
 
-        /**
-         * Find elements by selectors.
-         *
-         * @param {String} sel
-         * @param {Object} ctx
-         * @return {Object}
-         */
+        if (m = expresso['idClassTagNameExp'].exec(sel)) {
+            if ((sel = m[1])) {
+                els = ((els = ctx[byId](sel))) ? [els] : [];
+            } else if ((sel = m[2])) {
+                els = ctx[byClass](sel);
+            } else if ((sel = m[3])) {
+                els = ctx[byTag](sel);
+            }
+        } else if (m = expresso['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
+            var result = ctx[byTag](m[1]),
+                id = m[2],
+                className = m[3];
+            hAzzle.each(result, function () {
+                if (this.id === id || containsClass(this, className)) els.push(this);
+            });
+        } else { // Pseudos
 
-        select: function (sel, ctx) {
+            if (m = expresso['pseudos'].exec(sel)) {
 
-            var m, els = [];
+                var filter = hAzzle.pseudos[m[2]],
+                    arg = m[3];
 
-            // Get the right context to use.
+                try {
 
-            ctx = normalizeCtx(ctx);
+                    sel = ctx[byAll](m[1]);
 
-            if (m = expresso['idClassTagNameExp'].exec(sel)) {
-                if ((sel = m[1])) {
-                    els = ((els = ctx[byId](sel))) ? [els] : [];
-                } else if ((sel = m[2])) {
-                    els = ctx[byClass](sel);
-                } else if ((sel = m[3])) {
-                    els = ctx[byTag](sel);
+                } catch (e) {
+                    console.error('error performing selector: %o', sel);
                 }
-            } else if (m = expresso['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
-                var result = ctx[byTag](m[1]),
-                    id = m[2],
-                    className = m[3];
-                hAzzle.each(result, function () {
-                    if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
-                });
+                els = hAzzle.unique(hAzzle.map(sel, function (n, i) {
+                    return filter.call(n, i, sel, arg);
+                }));
+
             } else { // QuerySelectorAll
 
-                /**
-                 * try / catch are going to be removed. Added now just to stop an error message from being thrown.
-                 *
-                 * TODO! Fix this
-                 **/
                 try {
                     els = ctx[byAll](sel);
                 } catch (e) {
-                    console.error('error performing selector: %o', sel)
+                    console.error('error performing selector: %o', sel);
                 }
             }
-
-            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
         }
-    });
-
+        return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
+    }
+});
 
 
     // Dom ready

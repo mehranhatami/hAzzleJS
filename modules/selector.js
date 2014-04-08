@@ -1,27 +1,26 @@
 /**
  * hAzzle selector engine
  *
- * This is a separate modue, can can be replaced with the selector engine you want to use.
- * Just make sure the returned result are a "flattened" array befor returning to hAzzle Core.
+ * This is a separate module. It can can be replaced with the selector engine you want to use.
+ * Just make sure the returned result are a "flattened" array before returning to hAzzle Core.
+ *
+ * It's using QuerySelectorAll (QSA) with a few pseudos
  *
  **/
-
 var doc = document,
     byClass = 'getElementsByClassName',
     byTag = 'getElementsByTagName',
     byId = 'getElementById',
+    nodeType = 'nodeType',
     byAll = 'querySelectorAll',
-
-    // Selector caching
-
-    cache = [],
 
     // RegExp we are using
 
     expresso = {
 
         idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-        tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/
+        tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/,
+        pseudos: /(.*):(\w+)(?:\(([^)]+)\))?$\s*/
     };
 
 /**
@@ -61,6 +60,84 @@ function containsClass(el, klass) {
 
 hAzzle.extend({
 
+    pseudos: {
+        disabled: function () {
+            return this.disabled === true;
+        },
+        enabled: function () {
+            return this.disabled === false && this.type !== "hidden";
+        },
+        selected: function () {
+
+            if (this.parentNode) {
+                this.parentNode.selectedIndex;
+            }
+
+            return this.selected === true;
+        },
+        checked: function () {
+            var nodeName = this.nodeName.toLowerCase();
+            return (nodeName === "input" && !! this.checked) || (nodeName === "option" && !! this.selected);
+        },
+        parent: function () {
+            return this.parentNode;
+        },
+        first: function (elem) {
+            if (elem === 0) return this;
+        },
+        last: function (elem, nodes) {
+            if (elem === nodes.length - 1) return this;
+        },
+        empty: function () {
+            var elem = this;
+            for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+                if (elem.nodeType < 6) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        eq: function (elem, _, value) {
+            if (elem === value) return this;
+        },
+        contains: function (elem, _, text) {
+            if (hAzzle(this).text().indexOf(text) > -1) return this;
+        },
+        has: function (elem, _, sel) {
+            if (hAzzle.select(this, sel).length) return this;
+        },
+        radio: function () {
+            return "radio" === this.type;
+        },
+        checkbox: function () {
+            return "checkbox" === this.type;
+        },
+        file: function () {
+            return "file" === this.type;
+        },
+        password: function () {
+            return "password" === this.type;
+        },
+        submit: function () {
+            return "submit" === this.type;
+        },
+        image: function () {
+            return "image" === this.type;
+        },
+        button: function () {
+            var name = this.nodeName.toLowerCase();
+            return name === "input" && this.type === "button" || name === "button";
+        },
+        "target": function () {
+
+            var hash = window.location && window.location.hash;
+            return hash && hash.slice(1) === this.id;
+        },
+        input: function () {
+            return (/input|select|textarea|button/i).test(this.nodeName);
+        }
+    },
+
     /**
      * Find elements by selectors.
      *
@@ -90,22 +167,35 @@ hAzzle.extend({
                 id = m[2],
                 className = m[3];
             hAzzle.each(result, function () {
-                if (this.id === id || hAzzle.containsClass(this, className)) els.push(this);
+                if (this.id === id || containsClass(this, className)) els.push(this);
             });
-        } else { // QuerySelectorAll
+        } else { // Pseudos
 
-            /**
-             * try / catch are going to be removed. Added now just to stop an error message from being thrown.
-             *
-             * TODO! Fix this
-             **/
-            try {
-                els = ctx[byAll](sel);
-            } catch (e) {
-                console.error('error performing selector: %o', sel)
+            if (m = expresso['pseudos'].exec(sel)) {
+
+                var filter = hAzzle.pseudos[m[2]],
+                    arg = m[3];
+
+                try {
+
+                    sel = ctx[byAll](m[1]);
+
+                } catch (e) {
+                    console.error('error performing selector: %o', sel);
+                }
+                els = hAzzle.unique(hAzzle.map(sel, function (n, i) {
+                    return filter.call(n, i, sel, arg);
+                }));
+
+            } else { // QuerySelectorAll
+
+                try {
+                    els = ctx[byAll](sel);
+                } catch (e) {
+                    console.error('error performing selector: %o', sel);
+                }
             }
         }
-
         return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
     }
 });
