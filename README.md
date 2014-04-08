@@ -7,6 +7,8 @@ hAzzleJS v. 0.26 BETA
 
 The DOM traversing methods are in average 80% faster then jQuery and Zepto.
 
+You can use your own selector engine if you want, just replace it with the selector.js module.
+
 31,6 KB minimized
 
 Browser compatiblity
