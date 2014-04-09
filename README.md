@@ -1,4 +1,4 @@
-hAzzleJS v. 0.26 BETA
+hAzzleJS v. 0.28 BETA
 =====================
 
 **hAzzle** is a javascript library that tries it best to be the fastest one, and still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
@@ -9,7 +9,7 @@ The DOM traversing methods are in average 80% faster then jQuery and Zepto.
 
 You can use your own selector engine if you want, just replace it with the selector.js module.
 
-28,6 KB minimized
+33,2 KB minimized
 
 
 Browser compatiblity
