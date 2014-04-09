@@ -25,7 +25,13 @@ function set(element, key, value) {
 
 function get(element, key) {
     var obj = storage[hAzzle.getUID(element)];
-    return key === null ? obj : obj && obj[key]
+
+    if (arguments.length === 1) {
+        return obj;
+    } else {
+        return obj[key];
+    }
+
 }
 
 /**
@@ -76,7 +82,7 @@ hAzzle.extend({
     hasData: function (elem, key) {
 
         if (elem instanceof hAzzle) {
-            if (has(elem, key)) return true;
+            if (has(elem[0], key)) return true;
         } else if (has(hAzzle(elem)[0], key)) return true;
         return false;
     },
@@ -91,7 +97,7 @@ hAzzle.extend({
 
     removeData: function (elem, key) {
         if (elem instanceof hAzzle) {
-            if (remove(elem, key)) return true;
+            if (remove(elem[0], key)) return true;
         } else if (remove(hAzzle(elem)[0], key)) return true;
         return false;
     },
@@ -99,7 +105,7 @@ hAzzle.extend({
     data: function (elem, key, value) {
         len = arguments.length;
         keyType = typeof key;
-        len === 1 ? set(elem, key, value) : len === 2 && get(elem, key)
+        len === 1 ? set(elem[0], key, value) : len === 2 && get(elem[0], key);
     },
 
     /**
@@ -107,8 +113,8 @@ hAzzle.extend({
      */
 
     getAllData: function (elem) {
-        return storage[hAzzle.getUID(elem)] || false;
-    },
+        return get(elem[0]);
+    }
 });
 
 hAzzle.fn.extend({
@@ -158,8 +164,9 @@ hAzzle.fn.extend({
             return this.each(function () {
                 set(this, key, value);
             })
+        } else {
+            return get(this[0]);
         }
-
     }
 
 });
