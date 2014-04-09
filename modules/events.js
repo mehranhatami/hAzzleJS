@@ -15,7 +15,7 @@
      rkeyEvent = /^key/,
      rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/,
 
-     threated = {},
+     treated = {},
 
      /**
       * Prototype references.
@@ -126,17 +126,19 @@
          target = evt.target,
          i, l, p, props, fixHook;
 
-     this.target = target && target.nodeType === 3 ? target.parentNode : target;
+     this.target = target && hAzzle.nodeType(3, target) ? target.parentNode : target;
 
-     fixHook = threated[type];
+     fixHook = treated[type];
 
      if (!fixHook) {
 
          // More or less the same way as jQuery does it, but
-		 // I introduced "eventHooks" to it's possible to check
-		 // against other events too.
-
-         threated[type] = fixHook = rmouseEvent.test(type) ? hAzzle.eventHooks['mouse'] :
+		 // I introduced "eventHooks", so it's possible to check
+		 // against other events too from plugins.
+         //
+         // NOTE!! I used the same "props" as in jQuery. I hope that was the right thing to do :)
+		 
+         treated[type] = fixHook = rmouseEvent.test(type) ? hAzzle.eventHooks['mouse'] :
              rkeyEvent.test(type) ? hAzzle.eventHooks['keys'] :
              function () {
                  return commonProps;
@@ -219,7 +221,7 @@
                  if (one === 1) fn = hAzzle.Events.once(hAzzle.Events.remove, el, events, fn, originalFn);
 
                  for (i = types.length; i--;) {
-                     first = hAzzle.Events.put(entry = hAzzle.Kernel(
+                     first = hAzzle.Events.putHandler(entry = hAzzle.Kernel(
                          el, types[i].replace(nameRegex, '') // event type
                          , fn, originalFn, types[i].replace(namespaceRegex, '').split('.') // namespaces
                          , args, false
@@ -307,13 +309,14 @@
      removeListener: function (element, orgType, handler, namespaces) {
 
          var type = orgType && orgType.replace(nameRegex, ''),
-             handlers = hAzzle.Events.get(element, type, null, false),
+             handlers = hAzzle.Events.getHandler(element, type, null, false),
              removed = {}, i, l;
 
-             // Namespace
+         // Namespace
+		 
          for (i = 0, l = handlers.length; i < l; i++) {
              if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                 hAzzle.Events.del(handlers[i]);
+                 hAzzle.Events.delHandler(handlers[i]);
                  if (!removed[handlers[i].eventType])
                      removed[handlers[i].eventType] = {
                          t: handlers[i].eventType,
@@ -323,7 +326,7 @@
          }
 
          for (i in removed) {
-             if (!hAzzle.Events.has(element, removed[i].t, null, false)) {
+             if (!hAzzle.Events.hasHandler(element, removed[i].t, null, false)) {
                  // last listener of this type, remove the rootListener
                  element[removeEvent](removed[i].t, hAzzle.Events.rootListener, false);
              }
@@ -338,7 +341,7 @@
      },
 
      rootListener: function (evt, type) {
-         var listeners = hAzzle.Events.get(this, type || evt.type, null, false),
+         var listeners = hAzzle.Events.getHandler(this, type || evt.type, null, false),
              l = listeners.length,
              i = 0;
 
@@ -353,13 +356,22 @@
      },
 
      wrappedHandler: function (element, fn, condition, args) {
-         var call = function (evt, eargs) {
-             return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
-         }, findTarget = function (evt, eventElement) {
-                 return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
-             }, handler = condition ? function (evt) {
-                 var target = findTarget(evt, this); // delegated event
-                 if (condition.apply(target, arguments)) {
+
+        function call (evt, eargs) {
+           
+		     return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
+         }
+		 
+		 function findTarget (evt, eventElement) {
+           
+		         return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
+             }
+			 
+	     var handler = condition ? function (evt) {
+         
+		         var target = findTarget(evt, this); // delegated event
+         
+		         if (condition.apply(target, arguments)) {
                      if (evt) evt.currentTarget = target;
                      return call(evt, arguments);
                  }
@@ -367,22 +379,27 @@
                  if (fn.__handlers) evt = evt.clone(findTarget(evt));
                  return call(evt, arguments);
              };
+			 
          handler.__handlers = fn.__handlers;
          return handler;
      },
 
      findIt: function (element, type, original, handler, root, fn) {
-         var pfx = root ? 'r' : '$';
-         if (!type || type === '*') {
-             for (var t in container) {
-                 if (t.charAt(0) === pfx) {
-                     hAzzle.Events.findIt(element, t.substr(1), original, handler, root, fn);
+
+	     if (!type || type === '*') {
+      
+	         for (var t in container) {
+
+	             if (t.charAt(0) === root ? 'r' : '#') {
+      
+	                 hAzzle.Events.findIt(element, t.substr(1), original, handler, root, fn);
                  }
              }
-         } else {
+      
+	     } else {
 
              var i = 0,
-                 l, list = container[pfx + type],
+                 l, list = container[root ? 'r' : '#' + type],
                  all = element === '*';
              if (!list) return;
              for (l = list.length; i < l; i++) {
@@ -391,30 +408,31 @@
          }
      },
 
-     has: function (element, type, original, root) {
-         if (root = container[(root ? "r" : "$") + type])
+     hasHandler: function (element, type, original, root) {
+         if (root = container[(root ? "r" : "#") + type])
              for (type = root.length; type--;)
                  if (!root[type].root && root[type].matches(element, original, null)) return true;
          return false;
      },
-     get: function (element, type, original, root) {
+     getHandler: function (element, type, original, root) {
          var entries = [];
          hAzzle.Events.findIt(element, type, original, null, root, function (entry) {
              entries.push(entry);
          });
          return entries;
      },
-     put: function (entry) {
-         var has = !entry.root && !this.has(entry.element, entry.type, null, false),
-             key = (entry.root ? 'r' : '$') + entry.type;
+     putHandler: function (entry) {
+         var has = !entry.root && !this.hasHandler(entry.element, entry.type, null, false),
+             key = (entry.root ? 'r' : '#') + entry.type;
          (container[key] || (container[key] = [])).push(entry);
          return has;
      },
-     del: function (entry) {
+	 // Find handlers for event delegation
+     delHandler: function (entry) {
          hAzzle.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
              list.splice(i, 1);
              entry.removed = true;
-             if (list.length === 0) delete container[(entry.root ? 'r' : '$') + entry.type];
+             if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
              return false;
          });
      }
@@ -424,28 +442,28 @@
 
      eventHooks: {
 
-         keys: function (event, newEvent) {
-             newEvent.keyCode = event.keyCode || event.which;
+         keys: function (evt, original ) {
+             original .keyCode = evt.keyCode || evt.which;
              return commonProps.concat(["char", "charCode", "key", "keyCode"]);
 
          },
-         mouse: function (event, newEvent) {
+         mouse: function (evt, original ) {
 
-             newEvent.rightClick = event.which === 3 || event.button === 2;
+             original .rightClick = evt.which === 3 || evt.button === 2;
 
-             newEvent.pos = {
+             original .pos = {
                  x: 0,
                  y: 0
              };
 
              // Calculate pageX/Y if missing and clientX/Y available
 
-             if (event.pageX || event.pageY) {
-                 newEvent.clientX = event.pageX;
-                 newEvent.clientY = event.pageY;
-             } else if (event.clientX || event.clientY) {
-                 newEvent.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft;
-                 newEvent.clientY = event.clientY + doc.body.scrollTop + root.scrollTop;
+             if (evt.pageX || evt.pageY) {
+                 original .clientX = evt.pageX;
+                 original .clientY = evt.pageY;
+             } else if (evt.clientX || evt.clientY) {
+                 original .clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
+                 original .clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
              }
 
              return commonProps.concat("button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "));
@@ -482,10 +500,10 @@
          this.target = element;
          this.handler = hAzzle.Events.wrappedHandler(element, handler, null, args);
      }
-
  });
 
- hAzzle.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
+
+hAzzle.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
 
      var i, j, c = 0;
      if (!checkNamespaces) return true;
@@ -576,7 +594,7 @@
                  el.dispatchEvent(HTMLEvt);
 
              } else {
-                 handlers = hAzzle.Events.get(el, type, null, false);
+                 handlers = hAzzle.Events.getHandler(el, type, null, false);
                  evt = Event(null, el);
                  evt.type = type;
                  call = args ? 'apply' : 'call';
