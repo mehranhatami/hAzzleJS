@@ -196,7 +196,15 @@ hAzzle.extend({
                 sel = this.qsa(m[1], ctx);
 
                 els = hAzzle.unique(hAzzle.map(sel, function (n, i) {
-                    return filter.call(n, i, sel, arg);
+
+                    try {
+                        return filter.call(n, i, sel, arg);
+
+                    } catch (e) {
+                        console.error('error performing selector: %o', sel);
+                    }
+
+
                 }));
 
             } else { // QuerySelectorAll

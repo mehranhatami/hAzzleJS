@@ -1,58 +1,65 @@
 /*!
- * Document Ready function . hAzzle.js
- * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.1.1
- * Released under the MIT License.
- *
- * Date: 2014-03-30
- */
-var fns = [],
-    args = [],
-    call = 'call',
-    isReady = false,
-    errorHandler = null;
-
-/**
- * Prepare a ready handler
- * @private
- * @param {function} fn
+ * DOM ready
  */
 
-function prepareDOM(fn) {
+    var readyList = [],
+        readyFired = false,
+        readyEventHandlersInstalled = false;
 
-    try {
-        // Call function
-        fn.apply(this, args);
-    } catch (e) {
-        // Error occured while executing function
-        if (null !== errorHandler) errorHandler[call](this, fn);
+    // call this when the document is ready
+    // this function protects itself against being called more than once
+   
+    function ready() {
+   
+        if (!readyFired) {
+            // this must be set to true before we start calling callbacks
+            readyFired = true;
+            for (var i = 0; i < readyList.length; i++) {
+                // if a callback here happens to add new ready handlers,
+                // the docReady() function will see that it already fired
+                // and will schedule the callback to run right after
+                // this event loop finishes so all handlers will still execute
+                // in order and no new ones will be added to the readyList
+                // while we are processing the list
+				
+                readyList[i].fn.call(window, readyList[i].ctx);
+            }
+            // allow any closures held by these functions to free
+            readyList = [];
+        }
     }
-}
-
-/**
- * Call all ready handlers
- */
-
-function run() {
-
-    isReady = true;
-
-    for (var x = 0, len = fns.length; x < len; x = x + 1) prepareDOM(fns[x]);
-    fns = [];
-}
 
 hAzzle.extend({
+    
+	ready: function (callback, context) {
+         
+		 // context are are optional, but document by default
+	     
+		 context = context || document;
+	
+		if (readyFired) {
+            setTimeout(function() { callback(context); }, 1);
+            return;
+        } else {
 
-    ready: function (fn) {
+            // add the function and context to the list
 
-        // Let the event live only once and then die...
+            readyList.push({fn: callback, ctx: context});
+        }
+		// if document already ready to go, schedule the ready function to run
+        if (document.readyState === "complete") {
+			
+            setTimeout(ready, 1);
 
-        document.addEventListener('DOMContentLoaded', function () {
-            run();
-        }, true);
+		} else if (!readyEventHandlersInstalled) {
 
-        if (isReady) prepareDOM(fn);
-        else fns[fns.length] = fn;
+            // otherwise if we don't have event handlers installed, install them
+
+                document.addEventListener("DOMContentLoaded", ready, false);
+                // backup is window load event
+                window.addEventListener("load", ready, false);
+
+            readyEventHandlersInstalled = true;
+        }
     }
-
 });

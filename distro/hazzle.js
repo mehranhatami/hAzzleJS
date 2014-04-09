@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.26a - BETA
+ * Version: 0.2.8 - BETA
  * Released under the MIT License.
  *
- * Date: 2014-04-08
+ * Date: 2014-04-09
  *
  */
  
@@ -49,9 +49,9 @@
         },
 
         cached = [],
-		
+
         // Selector caching
-		
+
         cache = [],
 
         // Different nodeTypes we are checking against for faster speed
@@ -120,36 +120,54 @@
 
     }());
 
-
     hAzzle.fn = hAzzle.prototype = {
 
         // Default length allways 0
 
         length: 0,
 
-init: function (sel, ctx) {
+        init: function (sel, ctx) {
             var elems, i;
             if (sel instanceof hAzzle) return sel;
 
             if (hAzzle.isString(sel)) {
 
-                // If the selector are cache, we return it after giving it some special threatment
+                if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                if (cache[sel] && !ctx) {
-                    this.elems = elems = cache[sel];
-                    for (i = this.length = elems.length; i--;) this[i] = elems[i];
-                    return this;
+                    var frag = hAzzle.fragment(sel.trim(), RegExp.$1, ctx);
+
+                    return this.elems = frag, this.length = 1, this[0] = frag, this;
+
+                } else {
+
+                    // If the selector are cached, we return it after giving it some special threatment
+
+                    if (cache[sel] && !ctx) {
+                        this.elems = elems = cache[sel];
+                        for (i = this.length = elems.length; i--;) this[i] = elems[i];
+                        return this;
+                    }
+
+                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
                 }
-
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
-
             } else {
 
                 // Domready
 
                 if (hAzzle.isFunction(sel)) {
 
-                    return hAzzle.ready(sel);
+                    // Only run if this module are included
+
+                    if (hAzzle['ready']) {
+
+                        return hAzzle.ready(sel);
+
+                    } else {
+                        // To avoid some serious bugs, we inform about what happend
+                        console.log("The DOM Ready module are not installed!!");
+                        return [];
+
+                    }
                 }
 
                 //Array
@@ -175,7 +193,6 @@ init: function (sel, ctx) {
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
         },
-
         /**
          * Run callback for each element in the collection
          *
@@ -196,20 +213,21 @@ init: function (sel, ctx) {
          */
 
         find: function (sel) {
-            if (sel) {
+            var selType = typeof sel;
+            if (selType === "string") {
                 var elements;
                 if (this.length === 1) {
-                    if (typeof sel !== "string") {
+                    if (selType !== "string") {
                         elements = sel[0];
                     } else {
                         elements = hAzzle(sel, this.elems[0]);
                     }
                 } else {
-                    if (typeof sel == 'object') {
-                        var $this = this;
+                    if (selType == 'object') {
+                        var _ = this;
                         elements = hAzzle(sel).filter(function () {
                             var node = this;
-                            return $this.elems.some.call($this, function (parent) {
+                            return _.elems.some.call(_, function (parent) {
                                 return hAzzle.contains(parent, node);
                             });
                         });
@@ -552,12 +570,13 @@ init: function (sel, ctx) {
         isArrayLike: function (elem) {
             if (elem === null || this.isWindow(elem)) return false;
         },
-		
-		likeArray: function(obj) {
-          return typeof obj.length == 'number'
+
+        likeArray: function (obj) {
+            return typeof obj.length == 'number'
         },
 
         isWindow: function (obj) {
+
             if (obj)
                 return obj !== null && obj === obj.window;
         },
@@ -823,15 +842,20 @@ init: function (sel, ctx) {
                 j = 0,
                 i = first.length;
 
-            for (; j < len; j++) {
-                first[i++] = second[j];
+            while (j < len) {
+                first[i++] = second[j++];
+            }
+
+            if (len !== len) {
+                while (second[j] !== undefined) {
+                    first[i++] = second[j++];
+                }
             }
 
             first.length = i;
 
             return first;
         },
-
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
          *
@@ -868,275 +892,293 @@ init: function (sel, ctx) {
             }));
             return cached[str];
         },
-		
-		map: function (elements, callback) {
-    var value, values = [],
-        i, key
-    if (hAzzle.likeArray(elements))
-        for (i = 0; i < elements.length; i++) {
-            value = callback(elements[i], i)
-            if (value != null) values.push(value)
-        } else
-        for (key in elements) {
-            value = callback(elements[key], key)
-            if (value != null) values.push(value)
-        }
 
-        return values
-}
+        map: function (elements, callback) {
+            var value, values = [],
+                i, key
+            if (hAzzle.likeArray(elements))
+                for (i = 0; i < elements.length; i++) {
+                    value = callback(elements[i], i)
+                    if (value != null) values.push(value)
+                } else
+                    for (key in elements) {
+                        value = callback(elements[key], key)
+                        if (value != null) values.push(value)
+                    }
 
-    });	
-	
-
-    // Selector engine
-
-var byClass = 'getElementsByClassName',
-    byTag = 'getElementsByTagName',
-    byId = 'getElementById',
-    nodeType = 'nodeType',
-    byAll = 'querySelectorAll',
-
-    // RegExp we are using
-
-    expresso = {
-
-        idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-        tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/,
-        pseudos: /(.*):(\w+)(?:\(([^)]+)\))?$\s*/
-    };
-
-/**
- * Normalize context.
- *
- * @param {String|Array} ctx
- *
- * @return {Object}
- */
-
-function normalizeCtx(ctx) {
-    if (!ctx) return doc;
-    if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
-    if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
-    if (ctx[nodeType]) return ctx;
-    return ctx;
-}
-
-/**
- * Determine if the element contains the klass.
- * Uses the `classList` api if it's supported.
- * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
- *
- * @param {Object} el
- * @param {String} klass
- *
- * @return {Array}
- */
-
-function containsClass(el, klass) {
-    if (hAzzle.support.classList) {
-        return el.classList.contains(klass);
-    } else {
-        return hAzzle.contains(('' + el.className).split(' '), klass);
-    }
-}
-
-hAzzle.extend({
-
-    pseudos: {
-        disabled: function () {
-            return this.disabled === true;
-        },
-        enabled: function () {
-            return this.disabled === false && this.type !== "hidden";
-        },
-        selected: function () {
-
-            if (this.parentNode) {
-                this.parentNode.selectedIndex;
-            }
-
-            return this.selected === true;
-        },
-        checked: function () {
-            var nodeName = this.nodeName.toLowerCase();
-            return (nodeName === "input" && !! this.checked) || (nodeName === "option" && !! this.selected);
-        },
-        parent: function () {
-            return this.parentNode;
-        },
-        first: function (elem) {
-            if (elem === 0) return this;
-        },
-        last: function (elem, nodes) {
-            if (elem === nodes.length - 1) return this;
-        },
-        empty: function () {
-            var elem = this;
-            for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-                if (elem.nodeType < 6) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        eq: function (elem, _, value) {
-            if (elem === value) return this;
-        },
-        contains: function (elem, _, text) {
-            if (hAzzle(this).text().indexOf(text) > -1) return this;
-        },
-        has: function (elem, _, sel) {
-            if (hAzzle.select(this, sel).length) return this;
-        },
-        radio: function () {
-            return "radio" === this.type;
-        },
-        checkbox: function () {
-            return "checkbox" === this.type;
-        },
-        file: function () {
-            return "file" === this.type;
-        },
-        password: function () {
-            return "password" === this.type;
-        },
-        submit: function () {
-            return "submit" === this.type;
-        },
-        image: function () {
-            return "image" === this.type;
-        },
-        button: function () {
-            var name = this.nodeName.toLowerCase();
-            return name === "input" && this.type === "button" || name === "button";
-        },
-        "target": function () {
-
-            var hash = window.location && window.location.hash;
-            return hash && hash.slice(1) === this.id;
-        },
-        input: function () {
-            return (/input|select|textarea|button/i).test(this.nodeName);
-        }
-    },
-
-    /**
-     * Find elements by selectors.
-     *
-     * @param {String} sel
-     * @param {Object} ctx
-     * @return {Object}
-     */
-
-    select: function (sel, ctx) {
-
-        var m, els = [];
-
-        // Get the right context to use.
-
-        ctx = normalizeCtx(ctx);
-
-        if (m = expresso['idClassTagNameExp'].exec(sel)) {
-            if ((sel = m[1])) {
-                els = ((els = ctx[byId](sel))) ? [els] : [];
-            } else if ((sel = m[2])) {
-                els = ctx[byClass](sel);
-            } else if ((sel = m[3])) {
-                els = ctx[byTag](sel);
-            }
-        } else if (m = expresso['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
-            var result = ctx[byTag](m[1]),
-                id = m[2],
-                className = m[3];
-            hAzzle.each(result, function () {
-                if (this.id === id || containsClass(this, className)) els.push(this);
-            });
-        } else { // Pseudos
-
-            if (m = expresso['pseudos'].exec(sel)) {
-
-                var filter = hAzzle.pseudos[m[2]],
-                    arg = m[3];
-
-                try {
-
-                    sel = ctx[byAll](m[1]);
-
-                } catch (e) {
-                    console.error('error performing selector: %o', sel);
-                }
-                els = hAzzle.unique(hAzzle.map(sel, function (n, i) {
-                    return filter.call(n, i, sel, arg);
-                }));
-
-            } else { // QuerySelectorAll
-
-                try {
-                    els = ctx[byAll](sel);
-                } catch (e) {
-                    console.error('error performing selector: %o', sel);
-                }
-            }
-        }
-        return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
-    }
-});
-
-
-    // Dom ready
-
-    var fns = [],
-        args = [],
-        call = 'call',
-        isReady = false,
-        errorHandler = null;
-
-    /**
-     * Prepare a ready handler
-     * @private
-     * @param {function} fn
-     */
-
-    function prepareDOM(fn) {
-
-        try {
-            // Call function
-            fn.apply(this, args);
-        } catch (e) {
-            // Error occured while executing function
-            if (null !== errorHandler) errorHandler[call](this, fn);
-        }
-    }
-
-    /**
-     * Call all ready handlers
-     */
-
-    function run() {
-
-        isReady = true;
-
-        for (var x = 0, len = fns.length; x < len; x = x + 1) prepareDOM(fns[x]);
-        fns = [];
-    }
-
-    hAzzle.extend({
-
-        ready: function (fn) {
-
-            // Let the event live only once and then die...
-
-            document.addEventListener('DOMContentLoaded', function () {
-                run();
-            }, true);
-
-            if (isReady) prepareDOM(fn);
-            else fns[fns.length] = fn;
+            return values
         }
 
     });
 
-    // Storage
+
+    // Selector engine
+
+    var byClass = 'getElementsByClassName',
+        byTag = 'getElementsByTagName',
+        byId = 'getElementById',
+        nodeType = 'nodeType',
+        byAll = 'querySelectorAll',
+
+        // RegExp we are using
+
+        expresso = {
+
+            idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
+            tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/,
+            pseudos: /(.*):(\w+)(?:\(([^)]+)\))?$\s*/
+        };
+
+    /**
+     * Normalize context.
+     *
+     * @param {String|Array} ctx
+     *
+     * @return {Object}
+     */
+
+    function normalizeCtx(ctx) {
+        if (!ctx) return doc;
+        if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
+        if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
+        if (ctx[nodeType]) return ctx;
+        return ctx;
+    }
+
+    /**
+     * Determine if the element contains the klass.
+     * Uses the `classList` api if it's supported.
+     * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
+     *
+     * @param {Object} el
+     * @param {String} klass
+     *
+     * @return {Array}
+     */
+
+    function containsClass(el, klass) {
+        if (hAzzle.support.classList) {
+            return el.classList.contains(klass);
+        } else {
+            return hAzzle.contains(('' + el.className).split(' '), klass);
+        }
+    }
+
+    hAzzle.extend({
+
+        pseudos: {
+            disabled: function () {
+                return this.disabled === true;
+            },
+            enabled: function () {
+                return this.disabled === false && this.type !== "hidden";
+            },
+            selected: function () {
+
+                if (this.parentNode) {
+                    this.parentNode.selectedIndex;
+                }
+
+                return this.selected === true;
+            },
+            checked: function () {
+                var nodeName = this.nodeName.toLowerCase();
+                return (nodeName === "input" && !! this.checked) || (nodeName === "option" && !! this.selected);
+            },
+            parent: function () {
+                return this.parentNode;
+            },
+            first: function (elem) {
+                if (elem === 0) return this;
+            },
+            last: function (elem, nodes) {
+                if (elem === nodes.length - 1) return this;
+            },
+            empty: function () {
+                var elem = this;
+                for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+                    if (elem.nodeType < 6) {
+                        return false;
+                    }
+                }
+                return true;
+            },
+            eq: function (elem, _, value) {
+                if (elem === value) return this;
+            },
+            contains: function (elem, _, text) {
+                if (hAzzle(this).text().indexOf(text) > -1) return this;
+            },
+            has: function (elem, _, sel) {
+                if (hAzzle.select(this, sel).length) return this;
+            },
+            radio: function () {
+                return "radio" === this.type;
+            },
+            checkbox: function () {
+                return "checkbox" === this.type;
+            },
+            file: function () {
+                return "file" === this.type;
+            },
+            password: function () {
+                return "password" === this.type;
+            },
+            submit: function () {
+                return "submit" === this.type;
+            },
+            image: function () {
+                return "image" === this.type;
+            },
+            button: function () {
+                var name = this.nodeName.toLowerCase();
+                return name === "input" && this.type === "button" || name === "button";
+            },
+            "target": function () {
+
+                var hash = window.location && window.location.hash;
+                return hash && hash.slice(1) === this.id;
+            },
+            input: function () {
+                return (/input|select|textarea|button/i).test(this.nodeName);
+            }
+        },
+
+        /**
+         * Find elements by selectors.
+         *
+         * @param {String} sel
+         * @param {Object} ctx
+         * @return {Object}
+         */
+
+        select: function (sel, ctx) {
+
+            var m, els = [];
+
+            // Get the right context to use.
+
+            ctx = normalizeCtx(ctx);
+
+            if (m = expresso['idClassTagNameExp'].exec(sel)) {
+                if ((sel = m[1])) {
+                    els = ((els = ctx[byId](sel))) ? [els] : [];
+                } else if ((sel = m[2])) {
+                    els = ctx[byClass](sel);
+                } else if ((sel = m[3])) {
+                    els = ctx[byTag](sel);
+                }
+            } else if (m = expresso['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
+                var result = ctx[byTag](m[1]),
+                    id = m[2],
+                    className = m[3];
+                hAzzle.each(result, function () {
+                    if (this.id === id || containsClass(this, className)) els.push(this);
+                });
+            } else { // Pseudos
+
+                if (m = expresso['pseudos'].exec(sel)) {
+
+                    var filter = hAzzle.pseudos[m[2]],
+                        arg = m[3];
+
+                    try {
+
+                        sel = ctx[byAll](m[1]);
+
+                    } catch (e) {
+                        console.error('error performing selector: %o', sel);
+                    }
+                    els = hAzzle.unique(hAzzle.map(sel, function (n, i) {
+                        try {
+                            return filter.call(n, i, sel, arg);
+
+                        } catch (e) {
+                            console.error('error performing selector: %o', sel);
+                        }
+                    }));
+
+                } else { // QuerySelectorAll
+
+                    try {
+                        els = ctx[byAll](sel);
+                    } catch (e) {
+                        console.error('error performing selector: %o', sel);
+                    }
+                }
+            }
+            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
+        }
+    });
+
+
+    // Dom ready
+    var readyList = [],
+        readyFired = false,
+        readyEventHandlersInstalled = false;
+
+    // call this when the document is ready
+    // this function protects itself against being called more than once
+
+    function ready() {
+
+        if (!readyFired) {
+            // this must be set to true before we start calling callbacks
+            readyFired = true;
+            for (var i = 0; i < readyList.length; i++) {
+                // if a callback here happens to add new ready handlers,
+                // the docReady() function will see that it already fired
+                // and will schedule the callback to run right after
+                // this event loop finishes so all handlers will still execute
+                // in order and no new ones will be added to the readyList
+                // while we are processing the list
+
+                readyList[i].fn.call(window, readyList[i].ctx);
+            }
+            // allow any closures held by these functions to free
+            readyList = [];
+        }
+    }
+
+    hAzzle.extend({
+
+        ready: function (callback, context) {
+
+            // context are are optional, but document by default
+
+            context = context || document;
+
+            if (readyFired) {
+                setTimeout(function () {
+                    callback(context);
+                }, 1);
+                return;
+            } else {
+
+                // add the function and context to the list
+
+                readyList.push({
+                    fn: callback,
+                    ctx: context
+                });
+            }
+            // if document already ready to go, schedule the ready function to run
+            if (document.readyState === "complete") {
+
+                setTimeout(ready, 1);
+
+            } else if (!readyEventHandlersInstalled) {
+
+                // otherwise if we don't have event handlers installed, install them
+
+                document.addEventListener("DOMContentLoaded", ready, false);
+                // backup is window load event
+                window.addEventListener("load", ready, false);
+
+                readyEventHandlersInstalled = true;
+            }
+        }
+    });
 
     var storage = {};
 
@@ -1237,7 +1279,17 @@ hAzzle.extend({
         },
 
         data: function (elem, key, value) {
-            return hAzzle.isDefined(value) ? set(elem, key, value) : get(elem, key);
+            len = arguments.length;
+            keyType = typeof key;
+            len === 1 ? set(elem, key, value) : len === 2 && get(elem, key)
+        },
+
+        /**
+         * Get all data stored on an element
+         */
+
+        getAllData: function (elem) {
+            return storage[hAzzle.getUID(elem)] || false;
         }
     });
 
@@ -1252,16 +1304,15 @@ hAzzle.extend({
          */
 
         removeData: function (key) {
-            this.each(function () {
+            return this.each(function () {
                 remove(this, key);
             });
-            return this;
         },
 
         /**
          * Store random data on the hAzzle Object
          *
-         * @param {String} key
+         * @param {String} key(s)
          * @param {String|Object} value
          *
          * @return {Object|String}
@@ -1269,15 +1320,31 @@ hAzzle.extend({
          */
 
         data: function (key, value) {
-            return hAzzle.isDefined(value) ? (this.each(function () {
-                set(this, key, value);
-            }), this) : this.elems.length === 1 ? get(this.elems[0], key) : this.elems.map(function (value) {
-                return get(value, key);
-            });
+            len = arguments.length;
+            keyType = typeof key;
+
+            if (len === 1) {
+
+                if (this.elems.length === 1) {
+
+                    return get(this.elems[0], key);
+                } else {
+
+                    return this.elems.map(function (value) {
+                        return get(value, key);
+                    });
+                }
+
+            } else if (len === 2) {
+
+                return this.each(function () {
+                    set(this, key, value);
+                })
+            }
+
         }
 
     });
-
 
 
     // Events 
@@ -1338,24 +1405,20 @@ hAzzle.extend({
      */
 
 
-     function findHandlers(element, event, fn, selector) {
-	
-	// Check for namespace
-	
-    event = getEventParts(event);
-    
-	// If namespace event...
-	
-	if (event.ns) var matcher = matcherFor(event.ns);
-    
-	return (handlers(element) || []).filter(function(handler) {
-      return handler
-        && (!event.e  || handler.e == event.e)
-        && (!event.ns || matcher.test(handler.ns))
-        && (!fn       || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn))
-        && (!selector || handler.sel == selector);
-    });
-  }
+    function findHandlers(element, event, fn, selector) {
+
+        // Check for namespace
+
+        event = getEventParts(event);
+
+        // If namespace event...
+
+        if (event.ns) var matcher = matcherFor(event.ns);
+
+        return (handlers(element) || []).filter(function (handler) {
+            return handler && (!event.e || handler.e == event.e) && (!event.ns || matcher.test(handler.ns)) && (!fn || hAzzle.getUID(handler.fn) === hAzzle.getUID(fn)) && (!selector || handler.sel == selector);
+        });
+    }
 
     /**
      * Get event parts.
@@ -1364,6 +1427,7 @@ hAzzle.extend({
      *
      * @return {Object}
      */
+
 
     function getEventParts(event) {
         var parts = ('' + event).split('.');
@@ -2138,8 +2202,11 @@ hAzzle.extend({
                             _this.appendChild(this);
                         });
                     }
-
-                    this.appendChild(html);
+                    try {
+                        this.appendChild(html);
+                    } catch (e) {
+                        console.error("What you try to do, can't be done! Sorry!!", '');
+                    }
                 }
             });
         },
@@ -2184,7 +2251,11 @@ hAzzle.extend({
                             _this.appendChild(this);
                         });
                     }
-                    this.appendChild(html);
+                    try {
+                        this.appendChild(html);
+                    } catch (e) {
+                        console.error("What you try to do, can't be done! Sorry!!", '');
+                    }
                 }
             });
         },
@@ -3470,6 +3541,317 @@ hAzzle.extend({
         }
     });
 
+
+    // Class manipulation
+
+    // Check we can support classList
+    var csp = !! document.createElement('p').classList,
+        whitespace = (/\S+/g),
+        rclass = /[\t\r\n\f]/g;
+
+    hAzzle.fn.extend({
+
+        /**
+         * Add classes to element collection
+         * Multiple classnames can be with spaces or comma or both
+         * @param {String} classes
+         */
+
+        addClass: function (value) {
+            if (hAzzle.isFunction(value)) {
+                return this.each(function (j) {
+                    hAzzle(this).addClass(value.call(this, j, this.className));
+                });
+            }
+
+            var cur,
+                j,
+                clazz,
+                finalValue,
+                classes = (value || "").match(whitespace) || [];
+
+            return this.each(function (_, elem) {
+
+                // classList
+
+                if (csp && hAzzle.nodeType(1, elem)) {
+                    return hAzzle.each(classes, function (_, cls) {
+                        return elem.classList.add(cls);
+                    });
+                }
+
+                // The old way
+
+                cur = hAzzle.nodeType(1, elem) && (elem.className ?
+
+                    (" " + elem.className + " ").replace(rclass, " ") : " ");
+
+                if (cur) {
+                    j = 0;
+                    while ((clazz = classes[j++])) {
+                        if (cur.indexOf(" " + clazz + " ") < 0) {
+                            cur += clazz + " ";
+                        }
+                    }
+
+                    // only assign if different to avoid unneeded rendering.
+                    finalValue = hAzzle.trim(cur);
+                    if (elem.className !== finalValue) {
+                        elem.className = finalValue;
+                    }
+                }
+            });
+        },
+
+        /**
+         * Remove classes from element collection
+         *
+         * @param {String} className
+         */
+
+        removeClass: function (value) {
+
+            var classes, cur, clazz, j, finalValue;
+
+            if (hAzzle.isFunction(value)) {
+                return this.each(function (j) {
+                    hAzzle(this).removeClass(value.call(this, j, this.className));
+                });
+            }
+
+            classes = (value || "").match(whitespace) || [];
+
+            return this.each(function (_, elem) {
+
+                if (!value) {
+
+                    return elem.className = "";
+                }
+
+                // ClassList
+
+                if (csp && hAzzle.nodeType(1, elem)) {
+                    return hAzzle.each(classes, function (_, classes) {
+                        elem.classList.remove(classes);
+                    });
+                }
+
+                // Old way of doing things
+
+                cur = hAzzle.nodeType(1, elem) && (elem.className ?
+                    (" " + elem.className + " ").replace(rclass, " ") :
+                    ""
+                );
+
+                if (cur) {
+                    j = 0;
+                    while ((clazz = classes[j++])) {
+                        // Remove *all* instances
+                        while (cur.indexOf(" " + clazz + " ") >= 0) {
+                            cur = cur.replace(" " + clazz + " ", " ");
+                        }
+                    }
+
+                    // Only assign if different to avoid unneeded rendering.
+
+                    finalValue = value ? hAzzle.trim(cur) : "";
+                    if (elem.className !== finalValue) {
+                        elem.className = finalValue;
+                    }
+                }
+            });
+        },
+
+        /**
+         * Checks if an element has the given class
+         *
+         * @param {String} className
+         * @return {Boolean}
+         */
+
+        hasClass: function (selector) {
+
+            for (var className = " " + selector + " ", i = 0, d = this.length; i < d; i++) {
+
+                // Use classList if browser supports it
+
+                if (csp && hAzzle.nodeType(1, this[i])) return this[i].classList.contains(selector);
+
+                // Fallback to the "old way" if classList not supported
+
+                if (hAzzle.nodeType(1, this[i]) && 0 <= (" " + this[i].className + " ").replace(rclass, " ").indexOf(className)) return true;
+
+            }
+            return false;
+        },
+
+
+        /**
+         * Replace a class in a element collection
+         *
+         * @param {String} className
+         */
+
+        replaceClass: function (clA, clB) {
+            var current, found;
+            return this.each(function () {
+                current = this.className.split(' '),
+                found = false;
+
+                for (var i = current.length; i--;) {
+                    if (current[i] == clA) {
+                        found = true;
+                        current[i] = clB;
+                    }
+                }
+                if (!found) {
+                    return hAzzle(this).addClass(clB, this);
+                }
+                this.className = current.join(' ');
+            });
+        },
+
+        /**
+         * Add class 'clas' to 'element', and remove after 'duration' milliseconds
+         * @param {String} clas
+         * @param {Number} duration
+         */
+
+        tempClass: function (clas, duration) {
+            return this.each(function (_, elem) {
+                hAzzle(elem).addClass(clas);
+                setTimeout((function () {
+                    hAzzle(elem).removeClass(clas);
+                }), duration || 60);
+            });
+        },
+
+        /**
+         * Retrive all classes that belong to one element
+         */
+
+        allClass: function () {
+            if (csp) return this[0].classList;
+            else return this;
+        },
+
+        /**
+         * Toggle classes
+         *
+         * @param {String} className
+         * @param {Boolean} state
+         * @return {Boolean}
+         */
+
+        toggleClass: function (value, stateVal) {
+            var type = typeof value;
+
+            if (typeof stateVal === "boolean" && type === "string") {
+                return stateVal ? this.addClass(value) : this.removeClass(value);
+            }
+
+            if (hAzzle.isFunction(value)) {
+                return this.each(function (i) {
+                    hAzzle(this).toggleClass(value.call(this, i, this.className, stateVal), stateVal);
+                });
+            }
+
+            return this.each(function () {
+
+                // ClassList
+                if (csp) {
+                    this.classList.toggle(value);
+                }
+                // The "old way"	
+
+                if (type === "string") {
+                    // toggle individual class names
+                    var className,
+                        i = 0,
+                        self = hAzzle(this),
+                        classNames = value.match(whitespace) || [];
+
+                    while ((className = classNames[i++])) {
+                        // check each className given, space separated list
+                        if (self.hasClass(className)) {
+                            self.removeClass(className);
+                        } else {
+                            self.addClass(className);
+                        }
+                    }
+
+                    // Toggle whole class name
+                } else if (type === typeof undefined || type === "boolean") {
+                    if (this.className) {
+                        // store className if set
+                        hAzzle.data(this, "__className__", this.className);
+                    }
+
+                    this.className = this.className || value === false ? "" : hAzzle.data(this, "__className__") || "";
+                }
+            });
+        }
+    });
+
+
+    // HTML
+
+    var singleTagRE = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
+        fragmentRE = /^\s*<(\w+|!)[^>]*>/,
+        tagExpanderRE = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig,
+        rootNodeRE = /^(?:body|html)$/i,
+        table = document.createElement('table'),
+        tableRow = document.createElement('tr'),
+        containers = {
+            'tr': document.createElement('tbody'),
+            'tbody': table,
+            'thead': table,
+            'tfoot': table,
+            'td': tableRow,
+            'th': tableRow,
+            '*': document.createElement('div')
+        },
+
+        methodAttributes = ['val', 'css', 'html', 'text', 'data', 'width', 'height', 'offset'],
+
+        capitalRE = /([A-Z])/g;
+
+    hAzzle.extend({
+
+
+        fragment: function (html, name, properties) {
+
+
+            var dom, nodes, container
+
+                // A special case optimization for a single tag
+            if (singleTagRE.test(html)) dom = hAzzle(document.createElement(RegExp.$1))
+
+            if (!dom) {
+                if (html.replace) html = html.replace(tagExpanderRE, "<$1></$2>")
+                if (name === undefined) name = fragmentRE.test(html) && RegExp.$1
+                if (!(name in containers)) name = '*'
+
+                container = containers[name]
+                container.innerHTML = '' + html
+                dom = hAzzle.each(slice.call(container.childNodes), function () {
+                    container.removeChild(this)
+                })
+            }
+
+            if (hAzzle.isPlainObject(properties)) {
+                nodes = hAzzle(dom)
+                hAzzle.each(properties, function (key, value) {
+                    if (methodAttributes.indexOf(key) > -1) nodes[key](value)
+                    else nodes.attr(key, value)
+                })
+            }
+
+            return dom;
+
+
+        }
+    });
 
     window['hAzzle'] = hAzzle;
 

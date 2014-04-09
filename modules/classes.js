@@ -1,200 +1,14 @@
-var expr = {
-    specialSplit: /\s*,\s*|\s+/
-},
-    classList_support = !! document.createElement('p').classList;
-
-/**
-  ClassList is a faster option then the jQuery and Zepto way, but Internet Explorer 9 and some other browsers don't support classList, so we use a shim to get it work.
- */
-
-
-if (classList_support) {
-
-    (function (view) {
-
-        "use strict";
-
-        if (!('Element' in view)) return;
-
-        var
-        classListProp = "classList",
-            protoProp = "prototype",
-            elemCtrProto = view.Element[protoProp],
-            objCtr = Object,
-            strTrim = String[protoProp].trim,
-            arrIndexOf = function (item) {
-                var
-                i = 0,
-                    len = this.length;
-                for (var _this = this, i = _this.length; i--;) {
-                    if (i in _this && _this[i] === item) {
-                        return i;
-                    }
-                }
-                return -1;
-            }
-            // Vendors: please allow content code to instantiate DOMExceptions
-            , DOMEx = function (type, message) {
-                this.name = type;
-                this.code = DOMException[type];
-                this.message = message;
-            }, checkTokenAndGetIndex = function (classList, token) {
-                if (token === "") {
-                    throw new DOMEx(
-                        "SYNTAX_ERR", "An invalid or illegal string was specified"
-                    );
-                }
-                if (/\s/.test(token)) {
-                    throw new DOMEx(
-                        "INVALID_CHARACTER_ERR", "String contains an invalid character"
-                    );
-                }
-                return arrIndexOf.call(classList, token);
-            }, ClassList = function (elem) {
-                var
-                trimmedClasses = strTrim.call(elem.getAttribute("class") || ""),
-                    classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [];
-
-                for (var i = classes.length; i--;) {
-                    this.push(classes[i]);
-                }
-                this._updateClassName = function () {
-                    elem.setAttribute("class", this.toString());
-                };
-            }, classListProto = ClassList[protoProp] = [],
-            classListGetter = function () {
-                return new ClassList(this);
-            };
-        // Most DOMException implementations don't allow calling DOMException's toString()
-        // on non-DOMExceptions. Error's toString() is sufficient here.
-        DOMEx[protoProp] = Error[protoProp];
-        classListProto.item = function (i) {
-            return this[i] || null;
-        };
-        classListProto.contains = function (token) {
-            token += "";
-            return checkTokenAndGetIndex(this, token) !== -1;
-        };
-        classListProto.add = function () {
-            var
-            tokens = arguments,
-                i = 0,
-                l = tokens.length,
-                token, updated = false;
-            do {
-                token = tokens[i] + "";
-                if (checkTokenAndGetIndex(this, token) === -1) {
-                    this.push(token);
-                    updated = true;
-                }
-            }
-            while (++i < l);
-
-            if (updated) {
-                this._updateClassName();
-            }
-        };
-        classListProto.remove = function () {
-            var
-            tokens = arguments,
-                i = 0,
-                l = tokens.length,
-                token, updated = false;
-            do {
-                token = tokens[i] + "";
-                var index = checkTokenAndGetIndex(this, token);
-                if (index !== -1) {
-                    this.splice(index, 1);
-                    updated = true;
-                }
-            }
-            while (++i < l);
-
-            if (updated) {
-                this._updateClassName();
-            }
-        };
-        classListProto.toggle = function (token, force) {
-            token += "";
-
-            var
-            result = this.contains(token),
-                method = result ?
-                    force !== true && "remove" :
-                    force !== false && "add";
-
-            if (method) {
-                this[method](token);
-            }
-
-            return !result;
-        };
-        classListProto.toString = function () {
-            return this.join(" ");
-        };
-
-        if (objCtr.defineProperty) {
-            var classListPropDesc = {
-                get: classListGetter,
-                enumerable: true,
-                configurable: true
-            };
-            try {
-                objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-            } catch (ex) { // IE 8 doesn't support enumerable:true
-                if (ex.number === -0x7FF5EC54) {
-                    classListPropDesc.enumerable = false;
-                    objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-                }
-            }
-        } else if (objCtr[protoProp].__defineGetter__) {
-            elemCtrProto.__defineGetter__(classListProp, classListGetter);
-        }
-
-    }(document));
-
-}
-
-
-
-hAzzle.extend({
-
-
-    /**
-     * Internal remove class function. Uses Classlist for better performance if supported by browser
-     *
-     * @param {string} class
-     * @param {string} el
-     */
-
-    removeClass: function (classes, el) {
-        hAzzle.each(classes.split(expr['specialSplit']), function () {
-            el.classList.remove(this);
-        });
-    },
-
-    /**
-     * Internal addClass function. Uses Classlist for better performance if supported by browser
-     *
-     * @param {string} class
-     * @param {string} el
-     */
-
-    addClass: function (classes, el) {
-        if (!classes) return;
-        hAzzle.each(classes.split(expr['specialSplit']), function () {
-            el.classList.add(this);
-        });
-    }
-});
-
+// Check we can support classList
+var csp = !! document.createElement('p').classList,
+    whitespace = (/\S+/g),
+    rclass = /[\t\r\n\f]/g;
 
 hAzzle.fn.extend({
 
     /**
-     * Add classes to element collection
-     * Multiple classnames can be with spaces or comma or both
-     * @param {String} classes
+     * Add class(es) to element collection
+     *
+     * @param {String} value
      */
 
     addClass: function (value) {
@@ -203,45 +17,134 @@ hAzzle.fn.extend({
                 hAzzle(this).addClass(value.call(this, j, this.className));
             });
         }
-        return this.each(function () {
-            hAzzle.addClass(value, this);
+
+        var cur,
+            j,
+            clazz,
+            finalValue,
+            classes = (value || "").match(whitespace) || [];
+
+        return this.each(function (_, elem) {
+
+            // classList
+
+            if (csp && hAzzle.nodeType(1, elem)) {
+                return hAzzle.each(classes, function (_, cls) {
+                    return elem.classList.add(cls);
+                });
+            }
+
+            // The old way
+
+            cur = hAzzle.nodeType(1, elem) && (elem.className ?
+
+                (" " + elem.className + " ").replace(rclass, " ") : " ");
+
+            if (cur) {
+                j = 0;
+                while ((clazz = classes[j++])) {
+                    if (cur.indexOf(" " + clazz + " ") < 0) {
+                        cur += clazz + " ";
+                    }
+                }
+
+                // only assign if different to avoid unneeded rendering.
+                finalValue = hAzzle.trim(cur);
+                if (elem.className !== finalValue) {
+                    elem.className = finalValue;
+                }
+            }
         });
     },
 
     /**
-     * Remove classes from element collection
+     * Remove class(es) from element
      *
-     * @param {String} className
+     * @param {String} value
      */
 
     removeClass: function (value) {
+
+        var classes, cur, clazz, j, finalValue;
+
         if (hAzzle.isFunction(value)) {
             return this.each(function (j) {
                 hAzzle(this).removeClass(value.call(this, j, this.className));
             });
         }
-        return this.each(function () {
-            // If value is undefined, we do a quick manouver and just earese all clases for that element
-            // without any heavy classList operations
-            hAzzle.isUndefined(value) ? this.className = "" : hAzzle.removeClass(value, this);
+
+        classes = (value || "").match(whitespace) || [];
+
+        return this.each(function (_, elem) {
+
+            if (!value) {
+
+                return elem.className = "";
+            }
+
+            // ClassList
+
+            if (csp && hAzzle.nodeType(1, elem)) {
+                return hAzzle.each(classes, function (_, classes) {
+                    elem.classList.remove(classes);
+                });
+            }
+
+            // Old way of doing things
+
+            cur = hAzzle.nodeType(1, elem) && (elem.className ?
+                (" " + elem.className + " ").replace(rclass, " ") :
+                ""
+            );
+
+            if (cur) {
+                j = 0;
+                while ((clazz = classes[j++])) {
+                    // Remove *all* instances
+                    while (cur.indexOf(" " + clazz + " ") >= 0) {
+                        cur = cur.replace(" " + clazz + " ", " ");
+                    }
+                }
+
+                // Only assign if different to avoid unneeded rendering.
+
+                finalValue = value ? hAzzle.trim(cur) : "";
+                if (elem.className !== finalValue) {
+                    elem.className = finalValue;
+                }
+            }
         });
     },
 
     /**
      * Checks if an element has the given class
      *
-     * @param {String} className
-     * @return {Boolean}
+     * @param {String} selector(s)
+     * @return {Boolean} true if the element contains all classes
      */
 
-    hasClass: function (value) {
-        return this[0].classList.contains(value);
+    hasClass: function (selector) {
+
+        for (var className = " " + selector + " ", i = 0, d = this.length; i < d; i++) {
+
+            // Use classList if browser supports it
+
+            if (csp && hAzzle.nodeType(1, this[i])) return this[i].classList.contains(selector);
+
+            // Fallback to the "old way" if classList not supported
+
+            if (hAzzle.nodeType(1, this[i]) && 0 <= (" " + this[i].className + " ").replace(rclass, " ").indexOf(className)) return true;
+
+        }
+        return false;
     },
+
 
     /**
      * Replace a class in a element collection
      *
-     * @param {String} className
+     * @param {String} clA
+     * @param {String} clB	 
      */
 
     replaceClass: function (clA, clB) {
@@ -257,27 +160,24 @@ hAzzle.fn.extend({
                 }
             }
             if (!found) {
-                return hAzzle.addClass(clB, this);
+                return hAzzle(this).addClass(clB, this);
             }
             this.className = current.join(' ');
         });
     },
 
     /**
-     * Add class 'clas' to 'element', and remove after 'duration' milliseconds
+     * Add class(es) to element, and remove after 'duration' milliseconds
      * @param {String} clas
-     * @param {Number} duration
+     * @param {Number} duration 
      */
 
     tempClass: function (clas, duration) {
-        var _this;
-        return this.each(function () {
-            _this = this;
-            hAzzle.addClass(clas, _this);
-
+        return this.each(function (_, elem) {
+            hAzzle(elem).addClass(clas);
             setTimeout((function () {
-                hAzzle.removeClass(clas, _this);
-            }), duration);
+                hAzzle(elem).removeClass(clas);
+            }), duration || /* default 100ms */ 100);
         });
     },
 
@@ -286,32 +186,64 @@ hAzzle.fn.extend({
      */
 
     allClass: function () {
-        return this[0].classList;
+        if (csp) return this[0].classList;
+        else return this;
     },
 
     /**
-     * Toggle classes
+     * Toggle class(es) on element
      *
-     * @param {String} className
+     * @param {String} value
      * @param {Boolean} state
      * @return {Boolean}
      */
 
-    toggleClass: function (value, stateVal) {
+    toggleClass: function (value, state) {
         var type = typeof value;
 
-        if (typeof stateVal === "boolean" && type === "string") {
-            return stateVal ? this.addClass(value) : this.removeClass(value);
+        if (typeof state === "boolean" && type === "string") {
+            return state ? this.addClass(value) : this.removeClass(value);
         }
 
         if (hAzzle.isFunction(value)) {
             return this.each(function (i) {
-                hAzzle(this).toggleClass(value.call(this, i, this.className, stateVal), stateVal);
+                hAzzle(this).toggleClass(value.call(this, i, this.className, state), state);
             });
         }
 
         return this.each(function () {
-            this.classList.toggle(value);
+
+            // ClassList
+            if (csp) {
+                this.classList.toggle(value);
+            }
+            // The "old way"	
+
+            if (type === "string") {
+                // toggle individual class names
+                var className,
+                    i = 0,
+                    self = hAzzle(this),
+                    classNames = value.match(whitespace) || [];
+
+                while ((className = classNames[i++])) {
+                    // check each className given, space separated list
+                    if (self.hasClass(className)) {
+                        self.removeClass(className);
+                    } else {
+                        self.addClass(className);
+                    }
+                }
+
+                // Toggle whole class name
+            } else if (type === typeof undefined || type === "boolean") {
+                if (this.className) {
+                    // store className if set
+                    hAzzle.data(this, "__className__", this.className);
+                }
+
+                this.className = this.className || value === false ? "" : hAzzle.data(this, "__className__") || "";
+            }
         });
     }
 });

@@ -5,6 +5,7 @@ var
 cached = [],
     slice = Array.prototype.slice;
 
+
 // Extend hAzzle
 
 hAzzle.fn.extend({

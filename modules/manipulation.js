@@ -343,6 +343,7 @@ hAzzle.fn.extend({
                 if (html instanceof hAzzle) {
 
                     if (html.length === 1) {
+						alert(html[0]);
                         return this.appendChild(html[0]);
                     }
 
@@ -352,7 +353,11 @@ hAzzle.fn.extend({
                     });
                 }
 
-                this.appendChild(html);
+               try {
+				   this.appendChild(html);
+				   }catch(e) {
+				   console.error("What you try to do, can't be done! Sorry!!", '');
+					    }
             }
         });
     },
@@ -397,7 +402,11 @@ hAzzle.fn.extend({
                         _this.appendChild(this);
                     });
                 }
-                this.appendChild(html);
+              try {
+				   this.appendChild(html);
+				   }catch(e) {
+				   console.error("What you try to do, can't be done! Sorry!!", '');
+			    }
             }
         });
     },

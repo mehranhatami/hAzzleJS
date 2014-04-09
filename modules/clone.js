@@ -74,7 +74,7 @@ hAzzle.fn.extend({
      *  - Clone events
      */
 
-    clone: function () {
+    clone: function (deep) {
 
         var clone,
             srcElements, destElements;

@@ -1,12 +1,13 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.2.7 - BETA
+ * Version: 0.2.8 - BETA
  * Released under the MIT License.
  *
  * Date: 2014-04-09
  *
  */
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -139,7 +140,8 @@
                     return this.elems = frag, this.length = 1, this[0] = frag, this;
 
                 } else {
-                    // If the selector are cache, we return it after giving it some special threatment
+                  
+				    // If the selector are cached, we return it after giving it some special threatment
 
                     if (cache[sel] && !ctx) {
                         this.elems = elems = cache[sel];
@@ -155,8 +157,19 @@
 
                 if (hAzzle.isFunction(sel)) {
 
+                    if ( hAzzle['ready'] ) {
+
                     return hAzzle.ready(sel);
-                }
+					
+				   } else {
+					   
+				   // To avoid some serious bugs, we inform about what happend
+					   
+					console.log("The DOM Ready module are not installed!!");   
+				   return [];
+				   
+				   }
+	          }
 
                 //Array
 
@@ -201,20 +214,21 @@
          */
 
         find: function (sel) {
-            if (sel) {
+            var selType = typeof sel;
+            if (selType === "string") {
                 var elements;
                 if (this.length === 1) {
-                    if (typeof sel !== "string") {
+                    if (selType !== "string") {
                         elements = sel[0];
                     } else {
                         elements = hAzzle(sel, this.elems[0]);
                     }
                 } else {
-                    if (typeof sel == 'object') {
-                        var $this = this;
+                    if (selType == 'object') {
+                        var _ = this;
                         elements = hAzzle(sel).filter(function () {
                             var node = this;
-                            return $this.elems.some.call($this, function (parent) {
+                            return _.elems.some.call(_, function (parent) {
                                 return hAzzle.contains(parent, node);
                             });
                         });
@@ -276,6 +290,7 @@
         not: function (sel) {
             return this.filter(sel || [], true);
         },
+
 
         /**
          * Check if the first element in the element collection matches the selector
@@ -828,15 +843,20 @@
                 j = 0,
                 i = first.length;
 
-            for (; j < len; j++) {
-                first[i++] = second[j];
+            while (j < len) {
+                first[i++] = second[j++];
+            }
+
+            if (len !== len) {
+                while (second[j] !== undefined) {
+                    first[i++] = second[j++];
+                }
             }
 
             first.length = i;
 
             return first;
         },
-
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
          *
