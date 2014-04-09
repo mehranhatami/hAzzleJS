@@ -97,8 +97,18 @@ hAzzle.extend({
     },
 
     data: function (elem, key, value) {
-        return hAzzle.isDefined(value) ? set(elem, key, value) : get(elem, key);
-    }
+        len = arguments.length;
+        keyType = typeof key;
+        len === 1 ? set(elem, key, value) : len === 2 && get(elem, key)
+    },
+
+    /**
+     * Get all data stored on an element
+     */
+
+    getAllData: function (elem) {
+        return storage[hAzzle.getUID(elem)] || false;
+    },
 });
 
 hAzzle.fn.extend({
@@ -112,16 +122,15 @@ hAzzle.fn.extend({
      */
 
     removeData: function (key) {
-        this.each(function () {
+        return this.each(function () {
             remove(this, key);
         });
-        return this;
     },
 
     /**
      * Store random data on the hAzzle Object
      *
-     * @param {String} key
+     * @param {String} key(s)
      * @param {String|Object} value
      *
      * @return {Object|String}
@@ -129,11 +138,28 @@ hAzzle.fn.extend({
      */
 
     data: function (key, value) {
-        return hAzzle.isDefined(value) ? (this.each(function () {
-            set(this, key, value);
-        }), this) : this.elems.length === 1 ? get(this.elems[0], key) : this.elems.map(function (value) {
-            return get(value, key);
-        });
+        len = arguments.length;
+        keyType = typeof key;
+
+        if (len === 1) {
+
+            if (this.elems.length === 1) {
+
+                return get(this.elems[0], key);
+            } else {
+
+                return this.elems.map(function (value) {
+                    return get(value, key);
+                });
+            }
+
+        } else if (len === 2) {
+
+            return this.each(function () {
+                set(this, key, value);
+            })
+        }
+
     }
 
 });
