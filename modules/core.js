@@ -1,13 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.2.8 - BETA
+ * Version: 0.29 - Beta 3
  * Released under the MIT License.
  *
- * Date: 2014-04-09
+ * Date: 2014-04-10
  *
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -15,7 +14,6 @@
     if (window['hAzzle']) return;
 
     var doc = window.document,
-        nodeType = 'nodeType',
         html = doc.documentElement,
         /**
          * Prototype references.
@@ -135,13 +133,14 @@
 
                 if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    var frag = hAzzle.fragment(sel.trim(), RegExp.$1, ctx);
-
-                    return this.elems = frag, this.length = 1, this[0] = frag, this;
+                   this.elems =  hAzzle.parseHTML(
+                        sel,
+                        ctx && ctx.nodeType ? ctx.ownerDocument || ctx : document,
+                        true
+                    );
 
                 } else {
-                  
-				    // If the selector are cached, we return it after giving it some special threatment
+                    // If the selector are cached, we return it after giving it some special threatment
 
                     if (cache[sel] && !ctx) {
                         this.elems = elems = cache[sel];
@@ -157,19 +156,19 @@
 
                 if (hAzzle.isFunction(sel)) {
 
-                    if ( hAzzle['ready'] ) {
+                    // Only run if this module are included
 
-                    return hAzzle.ready(sel);
-					
-				   } else {
-					   
-				   // To avoid some serious bugs, we inform about what happend
-					   
-					console.log("The DOM Ready module are not installed!!");   
-				   return [];
-				   
-				   }
-	          }
+                    if (hAzzle['ready']) {
+
+                        return hAzzle.ready(sel);
+
+                    } else {
+                        // To avoid some serious bugs, we inform about what happend
+                        console.log("The DOM Ready module are not installed!!");
+                        return [];
+
+                    }
+                }
 
                 //Array
 
@@ -290,7 +289,6 @@
         not: function (sel) {
             return this.filter(sel || [], true);
         },
-
 
         /**
          * Check if the first element in the element collection matches the selector
@@ -429,6 +427,7 @@
          * Iterate through elements in the collection
          */
 
+
         iterate: function (method, ctx) {
             return function (a, b, c, d) {
                 return this.each(function () {
@@ -490,6 +489,7 @@
 
         each: function (obj, callback) {
             var i = 0,
+                name,
                 length = obj.length;
 
             if (obj.length === +obj.length) {
@@ -569,12 +569,13 @@
 
         isArray: Array.isArray,
 
+
         isArrayLike: function (elem) {
             if (elem === null || this.isWindow(elem)) return false;
         },
 
         likeArray: function (obj) {
-            return typeof obj.length == 'number'
+            return typeof obj.length == 'number';
         },
 
         isWindow: function (obj) {
@@ -811,7 +812,9 @@
          */
 
         getUID: function (elem) {
-            return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
+            if (hAzzle.isDefined(elem)) {
+                return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
+            }
         },
 
         /**
@@ -896,18 +899,48 @@
 
         map: function (elements, callback) {
             var value, values = [],
-                i, key
+                i, len, key;
+
+            // Go through the array, translating each of the items to their new values
+
             if (hAzzle.likeArray(elements))
-                for (i = 0; i < elements.length; i++) {
-                    value = callback(elements[i], i)
-                    if (value != null) values.push(value)
+                for (i = 0, len = elements.length; i < len; i++) {
+
+                    value = callback(elements[i], i);
+
+                    if (value !== null) {
+
+                        values.push(value);
+                    }
                 } else
                     for (key in elements) {
-                        value = callback(elements[key], key)
-                        if (value != null) values.push(value)
-                    }
+                        value = callback(elements[key], key);
 
-            return values
+                        if (value !== null) {
+
+                            values.push(value);
+                        }
+                    }
+            return values;
+        },
+
+        isXML: function (elem) {
+            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
+            return documentElement ? documentElement.nodeName !== "HTML" : false;
+        },
+
+        /***
+         * Get all child nodes...:
+         */
+
+      getChildren: function( context, tag ) {
+	var ret = context.getElementsByTagName ? context.getElementsByTagName( tag || "*" ) :
+			context.querySelectorAll ? context.querySelectorAll( tag || "*" ) :
+			[];
+
+	return tag === undefined || tag && hAzzle.nodeName( context, tag ) ?
+		hAzzle.merge( [ context ], ret ) :
+		ret;
         }
 
     });
