@@ -1,14 +1,34 @@
+// Support check 
+(function () {
+
+    var fragment = document.createDocumentFragment(),
+        div = fragment.appendChild(document.createElement("div")),
+        input = document.createElement("input");
+
+    div.appendChild(input);
+
+    support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+
+    div.innerHTML = "<textarea>x</textarea>";
+
+    support.noCloneChecked = !! div.cloneNode(true).lastChild.defaultValue;
+
+}());
+
+var rcheckableType = (/^(?:checkbox|radio)$/i);
+
 /**
  *  TODO!!!
  *
  * - Clone data
  * - deal with the script tags
  */
-// Support: IE >= 9
+
+
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
     if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
-    else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue
+    else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
 };
 
 function getChildren(context, tag) {
@@ -22,9 +42,10 @@ function getChildren(context, tag) {
 
 hAzzle.fn.extend({
 
-    clone: function (deep) {
+    clone: function () {
 
-        var _clone,
+        var clone,
+            storage,
             srcElements, destElements;
 
         return this.map(function (elem) {
@@ -41,29 +62,67 @@ hAzzle.fn.extend({
                 i = 0,
                 args, hDlr;
 
+            // Get the data before we clone
+
+            storage = hAzzle(elem).data();
+
             // Clone the elem
 
-            _clone = elem.cloneNode(true);
+            clone = elem.cloneNode(true);
 
             // Copy the events from the original to the clone
 
             for (; i < l; i++) {
                 if (handlers[i].original) {
 
-                    args = [_clone, handlers[i].type];
+                    args = [clone, handlers[i].type];
                     if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
                     args.push(handlers[i].original);
                     hAzzle.Events.add.apply(null, args);
                 }
             }
-            destElements = getChildren(_clone);
-            srcElements = getChildren(elem);
 
-            for (i = 0, l = srcElements.length; i < l; i++) {
-                fixInput(srcElements[i], destElements[i]);
+            // Copy data from the original to the clone
+
+            hAzzle.each(storage, function (key, value) {
+                hAzzle.data(clone, key, value);
+            });
+
+            // Preserve the rest 
+
+            if (!hAzzle.support.noCloneChecked && (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem)) && !hAzzle.isXML(elem)) {
+
+                destElements = getChildren(clone);
+                srcElements = getChildren(elem);
+
+                for (i = 0, l = srcElements.length; i < l; i++) {
+                    fixInput(srcElements[i], destElements[i]);
+                }
             }
 
-            return _clone;
+            // Preserve script evaluation history
+
+            destElements = getChildren(clone, "script");
+
+            if (destElements.length > 0) {
+
+                setGlobalEval(destElements, !hAzzle.contains(elem.ownerDocument, elem) && getChildren(elem, "script"));
+
+            }
+            // Return the cloned set
+            return clone;
         });
     }
 });
+
+
+// Mark scripts as having already been evaluated
+
+function setGlobalEval(elems, refElements) {
+    var i = 0,
+        l = elems.length;
+
+    for (; i < l; i++) {
+        hAzzle.data(elems[i], "globalEval", !refElements || hAzzle.data(refElements[i], "globalEval"));
+    }
+}
