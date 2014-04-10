@@ -9,6 +9,8 @@ The DOM traversing methods are in average 80% faster then jQuery and Zepto.
 
 You can use your own selector engine if you want, just replace it with the selector.js module.
 
+HTML 6 are supported from 3d parts plugins.
+
 33,2 KB minimized
 
 
