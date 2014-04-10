@@ -9,7 +9,7 @@
 
     support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
 
-   div.innerHTML = "<textarea>x</textarea>";
+    div.innerHTML = "<textarea>x</textarea>";
 
     support.noCloneChecked = !! div.cloneNode(true).lastChild.defaultValue;
 
@@ -30,22 +30,6 @@ function fixInput(src, dest) {
     if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
     else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
 };
-
-
-hAzzle.fn.extend({ 
-
-
-getChildren: function (context, tag) {
-    var ret = context.getElementsByTagName ? context.getElementsByTagName(tag || "*") :
-        context.querySelectorAll ? context.querySelectorAll(tag || "*") : [];
-
-    return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
-        hAzzle.merge([context], ret) :
-        ret;
-}
-
-
-});
 
 hAzzle.fn.extend({
 
@@ -100,7 +84,7 @@ hAzzle.fn.extend({
             if (!hAzzle.support.noCloneChecked && (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem)) && !hAzzle.isXML(elem)) {
 
                 destElements = hAzzle.getChildren(clone);
-                srcElements =  hAzzle.getChildren(elem);
+                srcElements = hAzzle.getChildren(elem);
 
                 for (i = 0, l = srcElements.length; i < l; i++) {
                     fixInput(srcElements[i], destElements[i]);
@@ -109,11 +93,11 @@ hAzzle.fn.extend({
 
             // Preserve script evaluation history
 
-            destElements =  hAzzle.getChildren(clone, "script");
+            destElements = hAzzle.getChildren(clone, "script");
 
             if (destElements.length > 0) {
 
-                hAzzle.Evaluated(destElements, !hAzzle.contains(elem.ownerDocument, elem) &&  hAzzle.getChildren(elem, "script"));
+                hAzzle.Evaluated(destElements, !hAzzle.contains(elem.ownerDocument, elem) && hAzzle.getChildren(elem, "script"));
 
             }
             // Return the cloned set
