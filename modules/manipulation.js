@@ -538,18 +538,7 @@ hAzzle.fn.extend({
      */
 
     replaceWith: function (html) {
-
-        // String / pure HTML
-
-        if (typeof html === "string") return this.before(html).remove();
-
-        // Object
-
-        return this.each(function (i, el) {
-            hAzzle.each(html, function () {
-                el.parentNode.insertBefore(this, el);
-            });
-        });
+        return this.before(html).remove();
     },
 
     /**
@@ -664,59 +653,6 @@ hAzzle.fn.extend({
         return this;
     },
 
- 
- 
-    /**
-     * Add node after element.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     */
-
-    after: function (html) {
-        var next;
-        return this.each(function () {
-            if (hAzzle.isString(html)) {
-                this.insertAdjacentHTML('afterend', html);
-            } else if (next = hAzzle.getClosestNode(this, 'nextSibling')) {
-
-                if (html instanceof hAzzle) {
-                    if (this.parentNode) this.parentNode.insertBefore(html[0], next);
-                } else {
-                    if (this.parentNode) this.parentNode.insertBefore(html, next);
-                }
-            } else {
-                if (html instanceof hAzzle) {
-                    if (this.parentNode) this.parentNode.appendChild(html[0]);
-                } else {
-                    if (this.parentNode) this.parentNode.appendChild(html);
-                }
-            }
-        });
-    },
-
-    /**
-     * Add node before element.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     */
-
-      before: function (html) {
-		  
-        return this.each(function () {
-            if (hAzzle.isString(html)) {
-                this.insertAdjacentHTML('beforebegin', html);
-            } else {
-                if (html instanceof hAzzle) {
-                    if (this.parentNode) this.parentNode.insertBefore(html[0], this);
-                } else {
-                    if (this.parentNode) this.parentNode.insertBefore(html, this);
-                }
-            }
-        });
-    },
-
     /**
      * Wrap html string with a `div` or wrap special tags with their containers.
      *
@@ -728,7 +664,7 @@ hAzzle.fn.extend({
 
         var isFunction = hAzzle.isFunction(html);
 
-        return this.each(function ( i) {
+        return this.each(function (i) {
             hAzzle(this).wrapAll(hAzzle.isFunction(html) ? html.call(this, i) : html);
         });
     },
@@ -757,23 +693,23 @@ hAzzle.fn.extend({
     },
 
     wrapInner: function (html) {
-      if ( hAzzle.isFunction( html ) ) {
-			return this.each(function( i ) {
-				hAzzle( this ).wrapInner( html.call(this, i) );
-			});
-		}
+        if (hAzzle.isFunction(html)) {
+            return this.each(function (i) {
+                hAzzle(this).wrapInner(html.call(this, i));
+            });
+        }
 
-		return this.each(function() {
-			var self = hAzzle( this ),
-				contents = self.contents();
+        return this.each(function () {
+            var self = hAzzle(this),
+                contents = self.contents();
 
-			if ( contents.length ) {
-				contents.wrapAll( html );
+            if (contents.length) {
+                contents.wrapAll(html);
 
-			} else {
-				self.append( html );
-			}
-		});
+            } else {
+                self.append(html);
+            }
+        });
 
     },
 
@@ -796,8 +732,6 @@ hAzzle.fn.extend({
 });
 
 
-
-
 /**
  * Extend the HTMLHook
  */
@@ -809,17 +743,18 @@ hAzzle.each(['optgroup', 'tbody', 'tfoot', 'colgroup', 'caption'], function (nam
 });
 
 /* 
- * Prepend and Append
+ * Prepend, Append, Befor and After
  *
  *  NOTE!!!
  *
  *  If 'html' are plain text, we use the insertAdjacentHTML to inject the content.
  *	   This method is faster, and now supported by all major browsers.
  *
- *	   If not a pure string, we have to go the long walk jQuery walked before us :)
+ *	   If not a pure string, we have to go the long way jQuery walked before us :)
  *
  *	   K.F
  */
+
 
 hAzzle.each({
     prepend: "afterbegin",
@@ -849,4 +784,27 @@ hAzzle.each({
             });
         }
     };
+});
+
+/**
+ * Before and After
+ */
+
+hAzzle.each({
+    before: "beforebegin",
+    after: "afterend"
+}, function (name, second) {
+
+    hAzzle.fn[name] = function (html) {
+        if (hAzzle.isString(html)) {
+            return this.each(function () {
+                this.insertAdjacentHTML(second, html);
+            });
+        }
+        return this.manipulateDOM(arguments, function (elem) {
+            if (this.parentNode) {
+                this.parentNode.insertBefore(elem, name === 'after' ? this : this.nextSibling);
+            }
+        });
+    }
 });
