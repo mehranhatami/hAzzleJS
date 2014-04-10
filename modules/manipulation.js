@@ -48,7 +48,17 @@ propMap = {
         'middle': 'afterBegin', // Middle of the sentence
         'center': 'afterBegin', // Middle of the sentence
         'last': 'beforeEnd' // End of the sentence
-    };
+    },
+
+    tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+    rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
+    rtagName = /<([\w:]+)/,
+    rhtml = /<|&#?\w+;/,
+    rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
+    rscriptType = /^$|\/(?:java|ecma)script/i,
+    rscriptTypeMasked = /^true\/(.*)/,
+    rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
+
 
 function getBooleanAttrName(element, name) {
     // check dom last since we will most likely fail on name
@@ -57,13 +67,76 @@ function getBooleanAttrName(element, name) {
     return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
 }
 
+/**
+ * Check if the elem matches the current nodeType
+ */
+
 function NodeMatching(elem) {
     return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem) ? true : false;
 }
 
+/**
+ * Disable "script" tags
+ **/
+
+
+function disableScript(elem) {
+    elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+    return elem;
+}
+
+/**
+ * Restore "script" tags
+ **/
+
+
+function restoreScript(elem) {
+    var m = rscriptTypeMasked.exec(elem.type);
+    m ? elem.type = m[1] : elem.removeAttribute("type");
+    return elem;
+}
+
+
+
 // Global
 
 hAzzle.extend({
+    /**
+     * HTML Hook created for the future. If hAzzle need to support HTML 6 or other
+     * HTML tags, it's easy enough to do it from plugins
+     */
+
+    htmlHooks: {
+
+        regex: /<([\w:]+)/,
+
+        'option': function () {
+
+            return [1, "<select multiple='multiple'>", "</select>"];
+        },
+
+        'thead': function () {
+
+            return [1, "<table>", "</table>"];
+
+        },
+
+        'col': function () {
+
+            return [2, "<table><colgroup>", "</colgroup></table>"];
+
+        },
+        'tr': function () {
+
+            return [2, "<table><tbody>", "</tbody></table>"];
+
+        },
+        'td': function () {
+
+            return [3, "<table><tbody><tr>", "</tr></tbody></table>"];
+
+        }
+    },
 
     getValue: function (elem) {
 
@@ -148,6 +221,135 @@ hAzzle.extend({
             }
             return elem.setAttribute(name, value + "");
         }
+    },
+
+    Evaluated: function (elems, refElements) {
+        var i = 0,
+            l = elems.length;
+
+        for (; i < l; i++) {
+            hAzzle.data(elems[i], "evaluated", !refElements || hAzzle.data(refElements[i], "evaluated"));
+        }
+    },
+
+    parseHTML: function (data, context, keepScripts) {
+
+        if (!data || typeof data !== "string") {
+            return null;
+        }
+
+        if (typeof context === "boolean") {
+            keepScripts = context;
+            context = false;
+        }
+        context = context || document;
+
+        var parsed = rsingleTag.exec(data),
+            scripts = !keepScripts && [];
+
+        // Single tag
+
+        if (parsed) {
+            return [context.createElement(parsed[1])];
+        }
+
+        parsed = hAzzle.createHTML([data], context, scripts);
+
+        if (scripts && scripts.length) {
+            hAzzle(scripts).remove();
+        }
+
+        return hAzzle.merge([], parsed.childNodes);
+    },
+
+    /*
+	  Create the HTML
+	  *
+	  * Support for HTML 6 through the 'htmlHooks'
+	   *
+	*/
+
+    createHTML: function (elems, context, scripts, selection) {
+
+        var elem, tmp, tag, wrap, contains, j,
+            fragment = context.createDocumentFragment(),
+            nodes = [],
+            i = 0,
+            l = elems.length;
+
+        hAzzle.each(elems, function (_, elem) {
+
+            if (elem || elem === 0) {
+
+                // Add nodes directly
+
+                if (typeof elem === "object") {
+
+                    hAzzle.merge(nodes, elem.nodeType ? [elem] : elem);
+
+                } else if (!rhtml.test(elem)) {
+
+                    nodes.push(context.createTextNode(elem));
+
+                } else { // Suport for HTML 6
+
+                    tmp = tmp || fragment.appendChild(context.createElement("div"));
+
+                    // RegEx used here is to recognize HTML5 tags, but can be extended through the 'hook'
+
+                    tag = (hAzzle.htmlHooks['regex'].exec(elem) || ["", ""])[1].toLowerCase();
+
+                    wrap = hAzzle.htmlHooks[tag] || [0, "", ""];
+
+                    tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
+
+                    // Descend through wrappers to the right content
+                    j = wrap[0];
+
+                    while (j--) {
+                        tmp = tmp.lastChild;
+                    }
+
+                    hAzzle.merge(nodes, tmp.childNodes);
+
+                    tmp = fragment.firstChild;
+
+                    tmp.textContent = "";
+                }
+            }
+        });
+
+        // Remove wrapper from fragment
+        fragment.textContent = "";
+
+        i = 0;
+        while ((elem = nodes[i++])) {
+
+            if (selection && hAzzle.indexOf.call(selection, elem) === -1) continue;
+
+            contains = hAzzle.contains(elem.ownerDocument, elem);
+
+            // Append to fragment
+
+            tmp = hAzzle.getChildren(fragment.appendChild(elem), "script");
+
+            if (contains) {
+
+                hAzzle.Evaluated(tmp);
+            }
+
+            // Capture executables
+            if (scripts) {
+                j = 0;
+                while ((elem = tmp[j++])) {
+                    if (rscriptType.test(elem.type || "")) {
+                        scripts.push(elem);
+                    }
+                }
+            }
+        }
+
+        return fragment;
     }
 
 });
@@ -235,6 +437,7 @@ hAzzle.fn.extend({
                 val = value.call(elem, index, hAzzle(elem).val());
             } else {
                 val = value;
+
             }
 
             if (val === null) {
@@ -311,54 +514,41 @@ hAzzle.fn.extend({
             });
         }) : hAzzle.isUndefined(value) ? this[0] && this[0][propMap[name] || name] : hAzzle.prop(element, key, value);
     },
-	
+
     /*
-	 * Remove properties from DOM elements
+     * Remove properties from DOM elements
      *
      * @param {String}
      *
      * @return {Object}
-	 */
-	 
- 	removeProp: function( name ) {
-
-		return this.each(function() {
-			delete this[ propMap[ name ] || name ];
-		});
-	},
-
-    /**
-     * Append node to one or more elements.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     *
      */
 
-    append: function (html) {
+    removeProp: function (name) {
+
         return this.each(function () {
-            if (hAzzle.isString(html)) {
-                this.insertAdjacentHTML('beforeend', html);
-            } else {
-                if (html instanceof hAzzle) {
+            delete this[propMap[name] || name];
+        });
+    },
 
-                    if (html.length === 1) {
-						alert(html[0]);
-                        return this.appendChild(html[0]);
-                    }
+    /**
+     * Replace each element in the set of matched elements with the provided new content
+     *
+     * @param {String} html
+     * @return {Object}
+     */
 
-                    var _this = this;
-                    return hAzzle.each(html, function () {
-                        _this.appendChild(this);
-                    });
-                }
+    replaceWith: function (html) {
 
-               try {
-				   this.appendChild(html);
-				   }catch(e) {
-				   console.error("What you try to do, can't be done! Sorry!!", '');
-					    }
-            }
+        // String / pure HTML
+
+        if (typeof html === "string") return this.before(html).remove();
+
+        // Object
+
+        return this.each(function (i, el) {
+            hAzzle.each(html, function () {
+                el.parentNode.insertBefore(this, el);
+            });
         });
     },
 
@@ -376,42 +566,6 @@ hAzzle.fn.extend({
     },
 
     /**
-     * Prepend node to element.
-     *
-     * @param {Object|String} html
-     * @return {Object}
-     *
-     */
-
-    prepend: function (html) {
-        var first;
-        return this.each(function () {
-            if (hAzzle.isString(html)) {
-                this.insertAdjacentHTML('afterbegin', html);
-            } else if (first = this.childNodes[0]) {
-                this.insertBefore(html, first);
-            } else {
-                if (html instanceof hAzzle) {
-
-                    if (html.length === 1) {
-                        return this.appendChild(html[0]);
-                    }
-
-                    var _this = this;
-                    return hAzzle.each(html, function () {
-                        _this.appendChild(this);
-                    });
-                }
-              try {
-				   this.appendChild(html);
-				   }catch(e) {
-				   console.error("What you try to do, can't be done! Sorry!!", '');
-			    }
-            }
-        });
-    },
-
-    /**
      * Prepend the current element to another.
      *
      * @param {Object|String} sel
@@ -424,6 +578,94 @@ hAzzle.fn.extend({
         });
     },
 
+
+    manipulateDOM: function (args, callback) {
+
+        // Flatten any nested arrays
+        args = concat.apply([], args);
+
+        var fragment, first, scripts, hasScripts, node, doc,
+            i = 0,
+            l = this.length,
+            set = this,
+            iNoClone = l - 1,
+            value = args[0],
+            isFunction = hAzzle.isFunction(value);
+
+        // We can't cloneNode fragments that contain checked, in WebKit
+        if (isFunction ||
+            (l > 1 && typeof value === "string" && !support.checkClone && rchecked.test(value))) {
+            return this.each(function (index) {
+                var self = set.eq(index);
+                if (isFunction) {
+                    args[0] = value.call(this, index, self.html());
+                }
+                self.manipulateDOM(args, callback);
+            });
+        }
+
+        if (l) {
+            fragment = hAzzle.createHTML(args, this[0].ownerDocument, false, this);
+            first = fragment.firstChild;
+
+            if (fragment.childNodes.length === 1) {
+                fragment = first;
+            }
+
+            if (first) {
+                scripts = hAzzle.map(hAzzle.getChildren(fragment, "script"), disableScript);
+                hasScripts = scripts.length;
+
+                // Use the original fragment for the last item instead of the first because it can end up
+                // being emptied incorrectly in certain situations (#8070).
+                for (; i < l; i++) {
+                    node = fragment;
+
+                    if (i !== iNoClone) {
+                        node = hAzzle.clone(node, true, true);
+
+                        // Keep references to cloned scripts for later restoration
+                        if (hasScripts) {
+                            // Support: QtWebKit
+                            // hAzzle.merge because push.apply(_, arraylike) throws
+                            hAzzle.merge(scripts, hAzzle.getChildren(node, "script"));
+                        }
+                    }
+
+                    callback.call(this[i], node, i);
+                }
+
+                if (hasScripts) {
+                    doc = scripts[scripts.length - 1].ownerDocument;
+
+                    // Reenable scripts
+                    hAzzle.map(scripts, restoreScript);
+
+                    // Evaluate executable scripts on first document insertion
+                    for (i = 0; i < hasScripts; i++) {
+
+                        node = scripts[i];
+                        if (rscriptType.test(node.type || "") && !hAzzle.data(node, "evaluated") && hAzzle.contains(doc, node)) {
+
+                            if (node.src) {
+                                // Optional AJAX dependency, but won't run scripts if not present
+                                if (hAzzle._evalUrl) {
+                                    hAzzle._evalUrl(node.src);
+                                }
+                            } else {
+                                hAzzle.Evaluated(node.textContent.replace(rcleanScript, ""));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return this;
+    },
+
+ 
+ 
     /**
      * Add node after element.
      *
@@ -461,6 +703,7 @@ hAzzle.fn.extend({
      */
 
       before: function (html) {
+		  
         return this.each(function () {
             if (hAzzle.isString(html)) {
                 this.insertAdjacentHTML('beforebegin', html);
@@ -475,29 +718,135 @@ hAzzle.fn.extend({
     },
 
     /**
-     * Replace each element in the set of matched elements with the provided new content
+     * Wrap html string with a `div` or wrap special tags with their containers.
      *
      * @param {String} html
      * @return {Object}
      */
 
-    replaceWith: function (html) {
-	  
-	  // String / pure HTML
-	  
-	  if (typeof html === "string") return this.before(html).remove();  
+    wrap: function (html) {
 
-      // Object
-	  
-	   return this.each(function (i, el) {
-      hAzzle.each(html, function () {
-        el.parentNode.insertBefore(this, el);
-      });
-    });
-	  
+        var isFunction = hAzzle.isFunction(html);
 
+        return this.each(function ( i) {
+            hAzzle(this).wrapAll(hAzzle.isFunction(html) ? html.call(this, i) : html);
+        });
+    },
+
+    /**
+     *  Wrap an HTML structure around the content of each element in the set of matched elements.
+     *
+     * @param {String} html
+     * @return {Object}
+     *
+     */
+
+    wrapAll: function (html) {
+
+        if (this[0]) {
+
+            hAzzle(this[0]).before(html = hAzzle(html, this[0].ownerDocument).eq(0)); //.clone(true));
+
+            var children;
+            // drill down to the inmost element
+            while ((children = html.children()).length) html = children.first();
+
+            hAzzle(html).append(this);
+        }
+        return this;
+    },
+
+    wrapInner: function (html) {
+      if ( hAzzle.isFunction( html ) ) {
+			return this.each(function( i ) {
+				hAzzle( this ).wrapInner( html.call(this, i) );
+			});
+		}
+
+		return this.each(function() {
+			var self = hAzzle( this ),
+				contents = self.contents();
+
+			if ( contents.length ) {
+				contents.wrapAll( html );
+
+			} else {
+				self.append( html );
+			}
+		});
+
+    },
+
+    /**
+     *  Wrap an HTML structure around the content of each element in the set of matched elements.
+     *
+     * @param {String} html
+     * @return {Object}
+     *
+     */
+
+    unwrap: function () {
+        this.parent().each(function () {
+            if (!hAzzle.nodeName(this, "body")) {
+                hAzzle(this).replaceWith(hAzzle(this).children()).remove();
+            }
+        });
+        return this;
     }
-
-
 });
 
+
+
+
+/**
+ * Extend the HTMLHook
+ */
+
+hAzzle.each(['optgroup', 'tbody', 'tfoot', 'colgroup', 'caption'], function (name) {
+    hAzzle.htmlHooks[name] = function () {
+        return hAzzle.htmlHooks['thead'];
+    };
+});
+
+/* 
+ * Prepend and Append
+ *
+ *  NOTE!!!
+ *
+ *  If 'html' are plain text, we use the insertAdjacentHTML to inject the content.
+ *	   This method is faster, and now supported by all major browsers.
+ *
+ *	   If not a pure string, we have to go the long walk jQuery walked before us :)
+ *
+ *	   K.F
+ */
+
+hAzzle.each({
+    prepend: "afterbegin",
+    append: "beforeend"
+}, function (name, second) {
+
+    hAzzle.fn[name] = function (html) {
+        // Take the easy and fastest way if it's a string
+        if (typeof html === 'string') {
+            return this.each(function (_, elem) {
+                if (NodeMatching(this)) {
+                    elem.insertAdjacentHTML(second, html);
+                }
+            });
+        } else { // The long walk :(
+            return this.manipulateDOM(arguments, function (elem) {
+                if (NodeMatching(this)) {
+
+                    var target = hAzzle.nodeName(this, "table") &&
+                        hAzzle.nodeName(hAzzle.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
+                        this.getElementsByTagName("tbody")[0] ||
+                        elem.appendChild(this.ownerDocument.createElement("tbody")) :
+                        this;
+                    // Choose correct method	
+                    name === 'prepend' ? target.insertBefore(elem, target.firstChild) : target.appendChild(elem);
+                }
+            });
+        }
+    };
+});

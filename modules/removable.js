@@ -35,7 +35,7 @@ hAzzle.fn.extend({
 		// Remove all attached event handlers
 		
 		hAzzle.each(elements, function() {
-			hAzzle.event.remove(this);
+			hAzzle.Events.remove(this);
 		});
         
 		// Remove all parent nodes
