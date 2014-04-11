@@ -11,13 +11,15 @@ var storage = {};
 
 function set(elem, key, value) {
 
-    if (!hAzzle.acceptData(elem)) {
+    if (!hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
         return 0;
     }
 
+    // Get or create and unique ID
     var id = hAzzle.getUID(elem),
         obj = storage[id] || (storage[id] = {});
-    obj[hAzzle.camelCase(key)] = value;
+
+    obj[key] = value;
 }
 
 /**
@@ -32,10 +34,20 @@ function get(elem, key) {
 
     var obj = storage[hAzzle.getUID(elem)];
 
+    if (!obj) {
+
+        return;
+    }
+
+    // If no key, return all data stored on the object
+
     if (arguments.length === 1) {
+
         return obj;
+
     } else {
-        return obj[hAzzle.camelCase(key)];
+
+        return obj[key];
     }
 
 }
@@ -67,11 +79,20 @@ function has(elem, key) {
 
 function remove(elem, key) {
     var id = hAzzle.getUID(elem);
+
+    // If no key, remove all data
+
     if (key === undefined && hAzzle.nodeType(1, elem)) {
         storage[id] = {};
+
     } else {
-        var obj = storage[id];
-        obj && delete obj[key];
+
+        if (storage[id]) {
+            delete storage[id].key;
+        } else {
+            storage[id] = null;
+
+        }
     }
 }
 
@@ -86,11 +107,16 @@ hAzzle.extend({
      * @return {Object}
      */
     hasData: function (elem, key) {
+        if (elem[0].nodeType) {
+            if (storage[hAzzle.getUID(elem[0])]) return true;
 
-        if (elem instanceof hAzzle) {
-            if (has(elem[0], key)) return true;
-        } else if (has(hAzzle(elem)[0], key)) return true;
-        return false;
+            else {
+
+                return false;
+
+            }
+
+        }
     },
 
     /**
@@ -112,24 +138,6 @@ hAzzle.extend({
         len = arguments.length;
         keyType = typeof key;
         len === 1 ? set(elem[0], key, value) : len === 2 && get(elem[0], key);
-    },
-
-    /**
-     * Get all data stored on an element
-     */
-
-    getAllData: function (elem) {
-        return get(elem[0]);
-    },
-
-    /**
-     * Determines whether an object can have data
-     */
-
-    acceptData: function (elem) {
-
-        return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType);
-
     }
 
 });
