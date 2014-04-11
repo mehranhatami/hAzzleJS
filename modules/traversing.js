@@ -1,8 +1,7 @@
 /*!
  * Traversing.js
  */
-var
-cached = [],
+var cached = [],
     slice = Array.prototype.slice;
 
 // Extend hAzzle
@@ -29,13 +28,11 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    closest: function (sel) {
+    closest: function (sel, context) {
         return this.map(function (elem) {
-            // Only check for match if nodeType 1
-            if (hAzzle.nodeType(1, elem) && hAzzle.matches(elem, sel)) {
+            if (hAzzle.nodeType(1, elem) && elem !== context && !hAzzle.isDocument(elem) && hAzzle.matches(elem, typeof sel == 'object' ? hAzzle(sel) : sel)) {
                 return elem;
             }
-            // Exclude document fragments
             return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
         });
     },
@@ -47,7 +44,7 @@ hAzzle.fn.extend({
      */
 
     index: function (elem) {
-        return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
+        return elem ? this.indexOf(hAzzle(elem)[0]) || -1 : this.parent().children().indexOf(this[0]) || -1;
     },
 
     /**
@@ -90,8 +87,10 @@ hAzzle.fn.extend({
             elements = this.elems,
             fn = function (element) {
                 if ((element = element.parentNode) && element !== document && ancestors.indexOf(element) < 0) {
-                    ancestors.push(element);
-                    return element;
+                    if (hAzzle.nodeType(1, element)) {
+                        ancestors.push(element);
+                        return element;
+                    }
                 }
             };
 
@@ -119,7 +118,7 @@ hAzzle.fn.extend({
 
     /**
      *  Return the element's next sibling
-	 * 
+     *
      * @return {Object}
      */
 
@@ -129,7 +128,7 @@ hAzzle.fn.extend({
 
     /**
      *  Return the element's previous sibling
-	 * 
+     *
      * @return {Object}
      */
 
@@ -152,11 +151,11 @@ hAzzle.fn.extend({
     last: function () {
         return hAzzle(this.get(-1));
     },
-	
-	contents: function() {
-      return this.map(function(elem) { 
- 	        return elem.contentDocument || slice.call(elem.childNodes) 
-	  })
+
+    contents: function () {
+        return this.map(function (elem) {
+            return elem.contentDocument || slice.call(elem.childNodes)
+        })
     },
 
     /**
