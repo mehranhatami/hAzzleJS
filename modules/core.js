@@ -488,13 +488,8 @@
             return hAzzle.indexOf(kind, hAzzle.type(obj)) >= 0;
         },
 
-        isElement: function (o) {
-
-            return (
-
-                typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
-                o && typeof o === "object" && nodeTypes[1](o) && nodeTypes[9](o) && typeof o.nodeName === "string"
-            )
+ isElement: function (elem) {
+            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem));
         },
 
         isNodeList: function (obj) {
@@ -649,20 +644,21 @@
             if (element === doc) {
                 return false;
             }
-            matchesSelector = cached[matchesSelector] ? cached[matchesSelector] : cached[matchesSelector] = hAzzle.prefix('matchesSelector', ghost);
+			
+            matchesSelector = hAzzle.prefix('matchesSelector', ghost);
 
             if (matchesSelector) {
                 // IE9 supports matchesSelector, but doesn't work on orphaned elems
                 // check for that
-                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
+               var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
 
-                if (supportsOrphans) {
+               if (supportsOrphans) {
 
                     return matchesSelector.call(element, sel);
 
                 } else { // For IE9 only or other browsers who fail on orphaned elems, we walk the hard way !! :)
 
-                    return fallback(sel, element);
+                   return fallback(sel, element);
                 }
             }
 

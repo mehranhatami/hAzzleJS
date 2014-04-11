@@ -199,6 +199,7 @@ hAzzle.fn.extend({
      */
 
     toggleClass: function (value, state) {
+
         var type = typeof value;
 
         if (typeof state === "boolean" && type === "string") {
@@ -211,15 +212,16 @@ hAzzle.fn.extend({
             });
         }
 
-        return this.each(function () {
+        return this.each(function (_, elem) {
 
             // ClassList
             if (csp) {
-                this.classList.toggle(value);
+
+               return this.classList.toggle(value);
             }
             // The "old way"	
 
-            if (type === "string") {
+            if (typeof value === "string") {
                 // toggle individual class names
                 var className,
                     i = 0,

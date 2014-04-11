@@ -1,21 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29a - BETA 3
+ * Version: 0.29a - Beta 3
  * Released under the MIT License.
- *
- *
- * NOTE!!  hAzzle IS the fastest javascript library this days. Run different tests here: http://jsperf.com/testers123/27
- *
- *         But beaware that this is only Beta 3 and still things can be slow. In the RC 1
- *         I will speed up things even more. 
- *
- *        The code size will also be much smaller in the upcoming versions.
  *
  * Date: 2014-04-11
  *
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -24,6 +15,7 @@
 
     var doc = window.document,
         html = doc.documentElement,
+
         /**
          * Prototype references.
          */
@@ -63,33 +55,7 @@
 
         // Different nodeTypes we are checking against for faster speed
 
-        nodeTypes = {
-            '1': function (elem) {
-                if (elem["nodeType"] === 1) return true; // Element
-            },
-            '2': function (elem) {
-                if (elem["nodeType"] === 2) return true; // Attr
-            },
-
-            '3': function (elem) {
-                if (elem["nodeType"] === 3) return true; // Text
-            },
-            '4': function (elem) {
-                if (elem["nodeType"] === 4) return true; // CDATASection
-            },
-            '6': function (elem) {
-                if (elem["nodeType"] === 6) return true; // Entity
-            },
-            '8': function (elem) {
-                if (elem["nodeType"] === 8) return true; // Comment
-            },
-            '9': function (elem) {
-                if (elem["nodeType"] === 9) return true; // Document
-            },
-            '11': function (elem) {
-                if (elem["nodeType"] === 11) return true; // Documentfragment
-            }
-        },
+        nodeTypes = {},
 
         // Dummy div we are using in different functions
 
@@ -115,24 +81,17 @@
 
         support.classList = !! doc.createElement('p').classList;
 
-        var div = doc.createElement("div");
-
-        if (!div.style) {
+        if (!ghost.style) {
             return;
         }
 
-        div.style.backgroundClip = "content-box";
-        div.cloneNode(true).style.backgroundClip = "";
-        support.clearCloneStyle = div.style.backgroundClip === "content-box";
+        ghost.style.backgroundClip = "content-box";
+        ghost.cloneNode(true).style.backgroundClip = "";
+        support.clearCloneStyle = ghost.style.backgroundClip === "content-box";
 
     }());
 
-
     hAzzle.fn = hAzzle.prototype = {
-
-        // Default length allways 0
-
-        length: 0,
 
         init: function (sel, ctx) {
             var elems, i;
@@ -142,13 +101,14 @@
 
                 if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    this.elems = hAzzle.parseHTML(
-                        sel,
-                        ctx && ctx.nodeType ? ctx.ownerDocument || ctx : document,
-                        true
-                    );
+                    /**
+                     * The parsed HTML has to be set as an elem in the "elem stack", and not merged with the hAzzle Object
+                     */
+
+                    this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
 
                 } else {
+
                     // If the selector are cached, we return it after giving it some special threatment
 
                     if (cache[sel] && !ctx) {
@@ -156,6 +116,8 @@
                         for (i = this.length = elems.length; i--;) this[i] = elems[i];
                         return this;
                     }
+
+                    // TODO!! Fix a better selector engine
 
                     this.elems = cache[sel] = hAzzle.select(sel, ctx);
                 }
@@ -197,7 +159,6 @@
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
                 }
             }
-
             elems = this.elems;
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
@@ -318,6 +279,7 @@
          * @return {Array}
          *
          * 'nt' are used if we need to exclude certain nodeTypes.
+
          *
          * Example: pluck('parentNode'), selector, 11)
          *
@@ -398,8 +360,6 @@
 
         /**
          * Take an element and push it onto the "elems" stack
-
-
          */
 
         push: function (itm) {
@@ -436,7 +396,6 @@
          * Iterate through elements in the collection
          */
 
-
         iterate: function (method, ctx) {
             return function (a, b, c, d) {
                 return this.each(function () {
@@ -463,7 +422,6 @@
             return hAzzle(index === null ? '' : this.get(index));
         }
     };
-
 
     hAzzle.fn.init.prototype = hAzzle.fn;
 
@@ -530,7 +488,7 @@
             return hAzzle.indexOf(kind, hAzzle.type(obj)) >= 0;
         },
 
-        isElement: function (elem) {
+ isElement: function (elem) {
             return elem && (nodeTypes[1](elem) || nodeTypes[9](elem));
         },
 
@@ -550,23 +508,25 @@
             return typeof value !== 'undefined';
         },
 
-        isObject: function (value) {
-            return value !== null && typeof value == 'object';
+        isObject: function (o) {
+            return o !== null && typeof o == 'object';
         },
 
-        isString: function (value) {
-            return typeof value === 'string';
+        isString: function (s) {
+            return typeof s === 'string';
         },
 
         isNumeric: function (obj) {
             return !this.IsNaN(parseFloat(obj)) && isFinite(obj);
         },
+
         isNumber: function (value) {
             return typeof value === "number";
         },
+
         isEmptyObject: function (obj) {
-            var name;
-            for (name in obj) {
+
+            for (var name in obj) {
                 return false;
             }
             return true;
@@ -576,8 +536,7 @@
             return typeof value === 'function';
         },
 
-        isArray: Array.isArray,
-
+        isArray: Array.isArray, //use native version here
 
         isArrayLike: function (elem) {
             if (elem === null || this.isWindow(elem)) return false;
@@ -588,8 +547,7 @@
         },
 
         isWindow: function (obj) {
-            if (obj)
-                return obj !== null && obj === obj.window;
+            return obj != null && obj == obj.window
         },
 
         isDocument: function (obj) {
@@ -599,6 +557,7 @@
         isPlainObject: function (obj) {
             return this.isObject(obj) && !this.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
         },
+
         isBoolean: function (str) {
             return typeof str === 'boolean';
         },
@@ -624,6 +583,7 @@
         prefix: function (key, obj) {
             var result, upcased = key[0].toUpperCase() + key.slice(1),
                 prefix,
+
                 prefixes = ['moz', 'webkit', 'ms', 'o'];
 
             obj = obj || window;
@@ -684,20 +644,21 @@
             if (element === doc) {
                 return false;
             }
-            matchesSelector = cached[matchesSelector] ? cached[matchesSelector] : cached[matchesSelector] = hAzzle.prefix('matchesSelector', ghost);
+			
+            matchesSelector = hAzzle.prefix('matchesSelector', ghost);
 
             if (matchesSelector) {
                 // IE9 supports matchesSelector, but doesn't work on orphaned elems
                 // check for that
-                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
+               var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
 
-                if (supportsOrphans) {
+               if (supportsOrphans) {
 
                     return matchesSelector.call(element, sel);
 
                 } else { // For IE9 only or other browsers who fail on orphaned elems, we walk the hard way !! :)
 
-                    return fallback(sel, element);
+                   return fallback(sel, element);
                 }
             }
 
@@ -799,12 +760,6 @@
         },
 
         /**
-         * Nothing at all
-         */
-
-        noop: function () {},
-
-        /**
          *  Same as hAzzle.indexOf.
          * Added for compability with Zepto and Jquery
          */
@@ -851,24 +806,13 @@
          */
 
         merge: function (first, second) {
-            var len = +second.length,
-                j = 0,
-                i = first.length;
-
-            while (j < len) {
-                first[i++] = second[j++];
-            }
-
-            if (len !== len) {
-                while (second[j] !== undefined) {
-                    first[i++] = second[j++];
-                }
-            }
-
-            first.length = i;
-
+            for (var len = +second.length, i = 0, fl = first.length; i < len;) first[fl++] = second[i++];
+            if (len !== len)
+                for (; second[i] !== undefined;) first[fl++] = second[i++];
+            first.length = fl;
             return first;
         },
+		
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
          *
@@ -951,6 +895,18 @@
                 ret;
         }
 
+    });
+
+
+
+    /**
+     * Setting up the nodeTypes we are using
+     */
+
+    hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
+        nodeTypes[value] = function (elem) {
+            if (elem.nodeType === value) return true;
+        };
     });
 
     /**
@@ -1636,7 +1592,7 @@
 
                 // ClassList
                 if (csp) {
-                    this.classList.toggle(value);
+                  return this.classList.toggle(value);
                 }
                 // The "old way"	
 
