@@ -9,10 +9,15 @@ var storage = {};
  * @return {Object}
  */
 
-function set(element, key, value) {
-    var id = hAzzle.getUID(element),
+function set(elem, key, value) {
+
+    if (!hAzzle.acceptData(elem)) {
+        return 0;
+    }
+
+    var id = hAzzle.getUID(elem),
         obj = storage[id] || (storage[id] = {});
-    obj[key] = value;
+    obj[hAzzle.camelCase(key)] = value;
 }
 
 /**
@@ -23,13 +28,14 @@ function set(element, key, value) {
  * @return {Object}
  */
 
-function get(element, key) {
-    var obj = storage[hAzzle.getUID(element)];
+function get(elem, key) {
+
+    var obj = storage[hAzzle.getUID(elem)];
 
     if (arguments.length === 1) {
         return obj;
     } else {
-        return obj[key];
+        return obj[hAzzle.camelCase(key)];
     }
 
 }
@@ -42,8 +48,8 @@ function get(element, key) {
  * @return {Object}
  */
 
-function has(element, key) {
-    var obj = storage[hAzzle.getUID(element)];
+function has(elem, key) {
+    var obj = storage[hAzzle.getUID(elem)];
     if (key === null) {
         return false;
     }
@@ -59,9 +65,9 @@ function has(element, key) {
  */
 
 
-function remove(element, key) {
-    var id = hAzzle.getUID(element);
-    if (key === undefined && hAzzle.nodeType(1, element)) {
+function remove(elem, key) {
+    var id = hAzzle.getUID(elem);
+    if (key === undefined && hAzzle.nodeType(1, elem)) {
         storage[id] = {};
     } else {
         var obj = storage[id];
@@ -114,7 +120,18 @@ hAzzle.extend({
 
     getAllData: function (elem) {
         return get(elem[0]);
+    },
+
+    /**
+     * Determines whether an object can have data
+     */
+
+    acceptData: function (elem) {
+
+        return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType);
+
     }
+
 });
 
 hAzzle.fn.extend({
@@ -144,8 +161,10 @@ hAzzle.fn.extend({
      */
 
     data: function (key, value) {
-        len = arguments.length;
-        keyType = typeof key;
+
+
+        var len = arguments.length,
+            keyType = typeof key;
 
         if (len === 1) {
 
