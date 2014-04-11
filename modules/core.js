@@ -101,14 +101,14 @@
 
                 if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                  /**
-				   * The parsed HTML has to be set as an elem in the "elem stack", and not merged with the hAzzle Object
-				   */
-				   
-                  this.elems =  hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true );
+                    /**
+                     * The parsed HTML has to be set as an elem in the "elem stack", and not merged with the hAzzle Object
+                     */
+
+                    this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
 
                 } else {
-					
+
                     // If the selector are cached, we return it after giving it some special threatment
 
                     if (cache[sel] && !ctx) {
@@ -116,10 +116,10 @@
                         for (i = this.length = elems.length; i--;) this[i] = elems[i];
                         return this;
                     }
-                     
-					 // TODO!! Fix a better selector engine
-                    
-					this.elems = cache[sel] = hAzzle.select(sel, ctx);
+
+                    // TODO!! Fix a better selector engine
+
+                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
                 }
             } else {
 
@@ -489,31 +489,45 @@
         },
 
         isElement: function (o) {
-			
-			return (
-			
-			 typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
-                o && typeof o === "object" && nodeTypes[1](o) && nodeTypes[9](o) && typeof o.nodeName==="string"
-			)
+
+            return (
+
+                typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
+                o && typeof o === "object" && nodeTypes[1](o) && nodeTypes[9](o) && typeof o.nodeName === "string"
+            )
         },
 
         isNodeList: function (obj) {
             return obj && hAzzle.is(['nodelist', 'htmlcollection', 'htmlformcontrolscollection'], obj);
         },
 
-        IsNaN: function (val) {  return !(0 >= val) && !(0 < val); },
+        IsNaN: function (val) {
+            return !(0 >= val) && !(0 < val);
+        },
 
-        isUndefined: function (value) { return typeof value === 'undefined'; },
+        isUndefined: function (value) {
+            return typeof value === 'undefined';
+        },
 
-        isDefined: function (value) { return typeof value !== 'undefined'; },
+        isDefined: function (value) {
+            return typeof value !== 'undefined';
+        },
 
-        isObject: function (o) { return o !== null && typeof o == 'object'; },
+        isObject: function (o) {
+            return o !== null && typeof o == 'object';
+        },
 
-        isString: function (s) { return typeof s === 'string'; },
+        isString: function (s) {
+            return typeof s === 'string';
+        },
 
-        isNumeric: function (obj) { return !this.IsNaN(parseFloat(obj)) && isFinite(obj);  },
+        isNumeric: function (obj) {
+            return !this.IsNaN(parseFloat(obj)) && isFinite(obj);
+        },
 
-        isNumber: function (value) { return typeof value === "number"; },
+        isNumber: function (value) {
+            return typeof value === "number";
+        },
 
         isEmptyObject: function (obj) {
 
@@ -523,21 +537,35 @@
             return true;
         },
 
-        isFunction: function (value) { return typeof value === 'function'; },
+        isFunction: function (value) {
+            return typeof value === 'function';
+        },
 
         isArray: Array.isArray, //use native version here
 
-        isArrayLike: function (elem) { if (elem === null || this.isWindow(elem)) return false; },
+        isArrayLike: function (elem) {
+            if (elem === null || this.isWindow(elem)) return false;
+        },
 
-        likeArray: function (obj) { return typeof obj.length == 'number'; },
+        likeArray: function (obj) {
+            return typeof obj.length == 'number';
+        },
 
-        isWindow: function (obj) { return obj != null && obj == obj.window },
+        isWindow: function (obj) {
+            return obj != null && obj == obj.window
+        },
 
-        isDocument: function (obj) { return obj !== null && obj.nodeType == obj.DOCUMENT_NODE; },
+        isDocument: function (obj) {
+            return obj !== null && obj.nodeType == obj.DOCUMENT_NODE;
+        },
 
-        isPlainObject: function (obj) { return this.isObject(obj) && !this.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;  },
+        isPlainObject: function (obj) {
+            return this.isObject(obj) && !this.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
+        },
 
-        isBoolean: function (str) { return typeof str === 'boolean'; },
+        isBoolean: function (str) {
+            return typeof str === 'boolean';
+        },
 
         unique: function (array) {
             return array.filter(function (item, idx) {
@@ -736,12 +764,6 @@
         },
 
         /**
-         * Nothing at all
-         */
-
-        noop: function () {},
-
-        /**
          *  Same as hAzzle.indexOf.
          * Added for compability with Zepto and Jquery
          */
@@ -788,24 +810,13 @@
          */
 
         merge: function (first, second) {
-            var len = +second.length,
-                j = 0,
-                i = first.length;
-
-            while (j < len) {
-                first[i++] = second[j++];
-            }
-
-            if (len !== len) {
-                while (second[j] !== undefined) {
-                    first[i++] = second[j++];
-                }
-            }
-
-            first.length = i;
-
+            for (var len = +second.length, i = 0, fl = first.length; i < len;) first[fl++] = second[i++];
+            if (len !== len)
+                for (; second[i] !== undefined;) first[fl++] = second[i++];
+            first.length = fl;
             return first;
         },
+		
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
          *
@@ -879,28 +890,29 @@
          * Get all child nodes...:
          */
 
-      getChildren: function( context, tag ) {
-	var ret = context.getElementsByTagName ? context.getElementsByTagName( tag || "*" ) :
-			context.querySelectorAll ? context.querySelectorAll( tag || "*" ) :
-			[];
+        getChildren: function (context, tag) {
+            var ret = context.getElementsByTagName ? context.getElementsByTagName(tag || "*") :
+                context.querySelectorAll ? context.querySelectorAll(tag || "*") : [];
 
-	return tag === undefined || tag && hAzzle.nodeName( context, tag ) ?
-		hAzzle.merge( [ context ], ret ) :
-		ret;
+            return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
+                hAzzle.merge([context], ret) :
+                ret;
         }
 
     });
 
 
 
- /**
-  * Setting up the nodeTypes we are using
-  */
-  
-hAzzle.each(['1','2','3','4','5','6','7','8','9','10','11','12'], function (value) {
-    nodeTypes[value] = function (elem) { if (elem.nodeType === value) return true; };
-});
-  
+    /**
+     * Setting up the nodeTypes we are using
+     */
+
+    hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
+        nodeTypes[value] = function (elem) {
+            if (elem.nodeType === value) return true;
+        };
+    });
+
 
     window['hAzzle'] = hAzzle;
 
