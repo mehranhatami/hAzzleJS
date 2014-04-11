@@ -289,9 +289,7 @@
          */
 
         pluck: function (prop, nt) {
-            if (nt && hAzzle.isNumber(nt)) {
-                if (nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
-            }
+            if (nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
             return hAzzle.pluck(this.elems, prop);
         },
 
@@ -427,6 +425,8 @@
 
     /**
      * Extend `hAzzle` with arguments, if the arguments length is one, the extend target is `hAzzle`
+
+
      */
 
     hAzzle.extend = hAzzle.fn.extend = function () {
@@ -488,7 +488,7 @@
             return hAzzle.indexOf(kind, hAzzle.type(obj)) >= 0;
         },
 
- isElement: function (elem) {
+        isElement: function (elem) {
             return elem && (nodeTypes[1](elem) || nodeTypes[9](elem));
         },
 
@@ -644,21 +644,21 @@
             if (element === doc) {
                 return false;
             }
-			
+
             matchesSelector = hAzzle.prefix('matchesSelector', ghost);
 
             if (matchesSelector) {
                 // IE9 supports matchesSelector, but doesn't work on orphaned elems
                 // check for that
-               var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
+                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
 
-               if (supportsOrphans) {
+                if (supportsOrphans) {
 
                     return matchesSelector.call(element, sel);
 
                 } else { // For IE9 only or other browsers who fail on orphaned elems, we walk the hard way !! :)
 
-                   return fallback(sel, element);
+                    return fallback(sel, element);
                 }
             }
 
@@ -702,21 +702,7 @@
 
             }
         },
-        /**
-         * Check if an element contains another element
-         */
-        /*
-        contains: function (obj, target) {
-            if (target) {
-                while ((target = target.parentNode)) {
-                    if (target === obj) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        },
-		*/
+ 
         /**
          * Native indexOf is slow and the value is enough for us as argument.
          * Therefor we create our own
@@ -812,7 +798,7 @@
             first.length = fl;
             return first;
         },
-		
+
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
          *
@@ -893,11 +879,24 @@
             return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
                 hAzzle.merge([context], ret) :
                 ret;
+        },
+        grep: function (elems, callback, invert) {
+            var callbackInverse,
+                matches = [],
+                i = 0,
+                length = elems.length,
+                callbackExpect = !invert;
+
+            for (; i < length; i++) {
+                callbackInverse = !callback(elems[i], i);
+                if (callbackInverse !== callbackExpect) {
+                    matches.push(elems[i]);
+                }
+            }
+
+            return matches;
         }
-
     });
-
-
 
     /**
      * Setting up the nodeTypes we are using
