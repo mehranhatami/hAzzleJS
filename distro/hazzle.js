@@ -1,12 +1,13 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29c - BETA 
+ * Version: 0.29d - Beta 3
  * Released under the MIT License.
  *
  * Date: 2014-04-12
  *
  */
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -14,7 +15,7 @@
     if (window['hAzzle']) return;
 
     var doc = window.document,
-        html = doc.documentElement,
+        html = window.document.documentElement,
 
         /**
          * Prototype references.
@@ -109,17 +110,15 @@
 
                 } else {
 
-                    // If the selector are cached, we return it after giving it some special threatment
-
-                    if (cache[sel] && !ctx) {
+                   if (cache[sel] && !ctx) {
                         this.elems = elems = cache[sel];
                         for (i = this.length = elems.length; i--;) this[i] = elems[i];
                         return this;
                     }
 
-                    // TODO!! Fix a better selector engine
 
                     this.elems = cache[sel] = hAzzle.select(sel, ctx);
+
                 }
             } else {
 
@@ -159,6 +158,7 @@
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
                 }
             }
+
             elems = this.elems;
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
@@ -312,16 +312,32 @@
          * @return {object}
          */
 
-        get: function (num) {
-            return num !== null ? this.elems[0 > num ? this.elems.length + num : num] : this.elems;
+        get: function (index) {
+
+            if (index == null) {
+                return this.elems.slice();
+            }
+            return this.elems[0 > index ? this.elems.length + index : index];
         },
 
         /**
          * Map the elements in the "elems" stack
+         *
+         * Native 'map' are not fastest solution, and the speed
+         * are different from browser to browser. To get same
+         * speed in all browsers, we have to do it this way.
+         *
+         *  http://jsperf.com/eam-map-vs-for-loop/3
          */
 
         map: function (callback) {
-            return hAzzle(this.elems['map'](callback));
+            var results = [],
+                elems = this.elems;
+
+            for (var i = 0; i < elems.length; i++) {
+                results.push(callback(elems[i]));
+            }
+            return hAzzle(results);
         },
 
 
@@ -358,6 +374,7 @@
 
         /**
          * Take an element and push it onto the "elems" stack
+         * Maybe concat is faster?
          */
 
         push: function (itm) {
@@ -378,8 +395,16 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (iterator, memo) {
-            return this.elems['reduce'](iterator, memo);
+        reduce: function (index, list) {
+            var initial = arguments.length > 2;
+            hAzzle.each(this.elems, function (value, index, list) {
+                if (!initial) {
+                    memo = value;
+                    initial = true;
+                } else {
+                    memo = iterator.call(context, memo, value, index, list);
+                }
+            })
         },
 
         /**
@@ -425,8 +450,6 @@
 
     /**
      * Extend `hAzzle` with arguments, if the arguments length is one, the extend target is `hAzzle`
-
-
 
      */
 
@@ -566,6 +589,8 @@
 
         unique: function (array) {
             return array.filter(function (item, idx) {
+
+
                 return hAzzle.indexOf(array, item) === idx;
             });
         },
@@ -580,9 +605,11 @@
 
         /**
          * Get correct CSS browser prefix
+
          */
 
         prefix: function (key, obj) {
+
             var result, upcased = key[0].toUpperCase() + key.slice(1),
                 prefix,
 
@@ -599,6 +626,7 @@
                     break;
                 }
             }
+
             return result;
         },
 
