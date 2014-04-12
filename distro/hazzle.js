@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29a - Beta 3
+ * Version: 0.29c - BETA 
  * Released under the MIT License.
  *
- * Date: 2014-04-11
+ * Date: 2014-04-12
  *
  */
 (function (window, undefined) {
@@ -427,6 +427,7 @@
      * Extend `hAzzle` with arguments, if the arguments length is one, the extend target is `hAzzle`
 
 
+
      */
 
     hAzzle.extend = hAzzle.fn.extend = function () {
@@ -540,6 +541,7 @@
 
         isArrayLike: function (elem) {
             if (elem === null || this.isWindow(elem)) return false;
+
         },
 
         likeArray: function (obj) {
@@ -702,7 +704,7 @@
 
             }
         },
- 
+
         /**
          * Native indexOf is slow and the value is enough for us as argument.
          * Therefor we create our own
@@ -755,7 +757,7 @@
         },
 
         /**
-         * Get / set an elements ID
+         *  Return or compute a unique ID for the element
          *
          * @param{Object} elem
          * @return{Object}
@@ -1198,6 +1200,7 @@
         }
     });
 
+    // Data
 
     var storage = {};
 
@@ -1210,9 +1213,16 @@
      * @return {Object}
      */
 
-    function set(element, key, value) {
-        var id = hAzzle.getUID(element),
+    function set(elem, key, value) {
+
+        if (!hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
+            return 0;
+        }
+
+        // Get or create and unique ID
+        var id = hAzzle.getUID(elem),
             obj = storage[id] || (storage[id] = {});
+
         obj[key] = value;
     }
 
@@ -1224,12 +1234,23 @@
      * @return {Object}
      */
 
-    function get(element, key) {
-        var obj = storage[hAzzle.getUID(element)];
+    function get(elem, key) {
+
+        var obj = storage[hAzzle.getUID(elem)];
+
+        if (!obj) {
+
+            return;
+        }
+
+        // If no key, return all data stored on the object
 
         if (arguments.length === 1) {
+
             return obj;
+
         } else {
+
             return obj[key];
         }
 
@@ -1243,8 +1264,8 @@
      * @return {Object}
      */
 
-    function has(element, key) {
-        var obj = storage[hAzzle.getUID(element)];
+    function has(elem, key) {
+        var obj = storage[hAzzle.getUID(elem)];
         if (key === null) {
             return false;
         }
@@ -1260,13 +1281,22 @@
      */
 
 
-    function remove(element, key) {
-        var id = hAzzle.getUID(element);
-        if (key === undefined && hAzzle.nodeType(1, element)) {
+    function remove(elem, key) {
+        var id = hAzzle.getUID(elem);
+
+        // If no key, remove all data
+
+        if (key === undefined && hAzzle.nodeType(1, elem)) {
             storage[id] = {};
+
         } else {
-            var obj = storage[id];
-            obj && delete obj[key];
+
+            if (storage[id]) {
+                delete storage[id].key;
+            } else {
+                storage[id] = null;
+
+            }
         }
     }
 
@@ -1281,11 +1311,16 @@
          * @return {Object}
          */
         hasData: function (elem, key) {
+            if (elem[0].nodeType) {
+                if (storage[hAzzle.getUID(elem[0])]) return true;
 
-            if (elem instanceof hAzzle) {
-                if (has(elem[0], key)) return true;
-            } else if (has(hAzzle(elem)[0], key)) return true;
-            return false;
+                else {
+
+                    return false;
+
+                }
+
+            }
         },
 
         /**
@@ -1307,15 +1342,8 @@
             len = arguments.length;
             keyType = typeof key;
             len === 1 ? set(elem[0], key, value) : len === 2 && get(elem[0], key);
-        },
-
-        /**
-         * Get all data stored on an element
-         */
-
-        getAllData: function (elem) {
-            return get(elem[0]);
         }
+
     });
 
     hAzzle.fn.extend({
@@ -1345,8 +1373,9 @@
          */
 
         data: function (key, value) {
-            len = arguments.length;
-            keyType = typeof key;
+
+            var len = arguments.length,
+                keyType = typeof key;
 
             if (len === 1) {
 
@@ -1374,7 +1403,7 @@
 
     // Class manipulation
 
-    // Check we can support classList
+    // Check if we can support classList
     var csp = !! document.createElement('p').classList,
         whitespace = (/\S+/g),
         rclass = /[\t\r\n\f]/g;
@@ -1411,6 +1440,7 @@
                 }
 
                 // The old way
+
 
                 cur = hAzzle.nodeType(1, elem) && (elem.className ?
 
@@ -1575,6 +1605,7 @@
          */
 
         toggleClass: function (value, state) {
+
             var type = typeof value;
 
             if (typeof state === "boolean" && type === "string") {
@@ -1587,15 +1618,16 @@
                 });
             }
 
-            return this.each(function () {
+            return this.each(function (_, elem) {
 
                 // ClassList
                 if (csp) {
-                  return this.classList.toggle(value);
+
+                    return this.classList.toggle(value);
                 }
                 // The "old way"	
 
-                if (type === "string") {
+                if (typeof value === "string") {
                     // toggle individual class names
                     var className,
                         i = 0,
@@ -1623,7 +1655,6 @@
             });
         }
     });
-
 
     // Clone
 
@@ -2873,6 +2904,7 @@
                         hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
                         styles
                     ) : 0
+
                 );
             }
         };
@@ -4047,8 +4079,6 @@
     cached = [],
         slice = Array.prototype.slice;
 
-    // Extend hAzzle
-
     hAzzle.fn.extend({
 
         /**
@@ -4071,13 +4101,11 @@
          * @return {Object}
          */
 
-        closest: function (sel) {
+        closest: function (sel, context) {
             return this.map(function (elem) {
-                // Only check for match if nodeType 1
-                if (hAzzle.nodeType(1, elem) && hAzzle.matches(elem, sel)) {
+                if (hAzzle.nodeType(1, elem) && elem !== context && !hAzzle.isDocument(elem) && hAzzle.matches(elem, typeof sel == 'object' ? hAzzle(sel) : sel)) {
                     return elem;
                 }
-                // Exclude document fragments
                 return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
             });
         },
@@ -4108,6 +4136,19 @@
             return this.concat(elements);
         },
 
+        has: function (target) {
+            var targets = hAzzle(target, this),
+                l = targets.length;
+
+            return this.filter(function () {
+			   for ( var i = 0; i < l; i++ ) {
+                    if (hAzzle.contains(this, targets[i])) {
+                        return true;
+                    }
+                }
+            });
+        },
+
         /**
          * Get immediate parents of each element in the collection.
          * If CSS selector is given, filter results to include only ones matching the selector.
@@ -4132,8 +4173,10 @@
                 elements = this.elems,
                 fn = function (element) {
                     if ((element = element.parentNode) && element !== document && ancestors.indexOf(element) < 0) {
-                        ancestors.push(element);
-                        return element;
+                        if (hAzzle.nodeType(1, element)) {
+                            ancestors.push(element);
+                            return element;
+                        }
                     }
                 };
 
@@ -4220,7 +4263,7 @@
                     children = slice.call(elem.parentNode.childNodes);
 
                     for (i = 0, len = children.length; i < len; i++) {
-                        if (hAzzle.isElement(children[i]) && children[i] !== elem) {
+                        if (hAzzle.isElement(children[i]) && hAzzle.nodeType(1, children[i]) && children[i] !== elem) {
                             siblings.push(children[i]);
                         }
                     }
@@ -4940,6 +4983,7 @@
 
         easing: {
             'easeInQuad': function (t, b, c, d) {
+
                 return c * (t /= d) * t + b;
             },
             'easeOutQuad': function (t, b, c, d) {
@@ -5162,6 +5206,7 @@
 
     function checkEngine() {
         if (!engineRunning) engine();
+
     }
 
     /**
@@ -5195,9 +5240,6 @@
         }
 
     }
-
-
-
 
     window['hAzzle'] = hAzzle;
 
