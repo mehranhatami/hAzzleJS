@@ -1,16 +1,38 @@
-// Event handler
+/* Event handler
+ *
+ * NOTE!! This event system are different from jQuery, and more powerfull. The basic funcions are the same, 
+ * but hAzzle supports different types of namespaces, multiple handlers etc. etc.
+ *
+ * Example on a multiple handler:  
+ * 
+ *     hAzzle('p').on({
+ *        click: function (e) { alert('click') },
+ *        mouseover: function (e) { alert('mouse')  }
+ *     });
+ *
+ * hAzzle don't support multiple delegated selectors like:
+ *
+ *  $( "#dataTable tbody tr" )
+ *
+ * Todo!! Fix this maybe?
+ */
+
 var win = window,
-    namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
-    nameRegex = /\..*/,
     doc = document || {},
     root = doc.documentElement || {},
+   
+	// Cached handlers
+    
+	container = {},
 
-    container = {},
-
-    rkeyEvent = /^key/,
-    rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/,
-
-    treated = {},
+    rkeyEvent = /^key/, // key
+    rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, // mouse
+    ns = /[^\.]*(?=\..*)\.|.*/, // Namespace regEx
+    names = /\..*/,
+    
+	// Event and handlers we have fixed
+    
+	treated = {},
 
     /**
      * Prototype references.
@@ -209,6 +231,7 @@ hAzzle.Events = {
                     originalFn = fn;
                     args = slice.call(arguments, 4);
                     fn = hAzzle.Events.delegate(selector, originalFn);
+
                 } else {
                     args = slice.call(arguments, 3);
                     fn = originalFn = selector;
@@ -230,12 +253,12 @@ hAzzle.Events = {
 
                 for (i = types.length; i--;) {
                     first = hAzzle.Events.putHandler(entry = hAzzle.Kernel(
-                        el, types[i].replace(nameRegex, '') // event type
-                        , fn, originalFn, types[i].replace(namespaceRegex, '').split('.') // namespaces
+                        el, types[i].replace(names, '') // event type
+                        , fn, originalFn, types[i].replace(ns, '').split('.') // namespaces
                         , args, false
                     ));
 
-                    // First event of this type on this el, add root listener
+                    // Add root listener only if we're the first
 
                     if (first) el.addEventListener(entry.eventType, hAzzle.Events.rootListener, false);
                 }
@@ -252,8 +275,6 @@ hAzzle.Events = {
 
         if (isTypeStr && typeSpec.indexOf(' ') > 0) {
 
-            // off(el, 't1 t2 t3', fn) or off(el, 't1 t2 t3')
-
             typeSpec = typeSpec.split(typeSpec);
 
             for (i = typeSpec.length; i--;)
@@ -261,13 +282,13 @@ hAzzle.Events = {
             return el;
         }
 
-        type = isTypeStr && typeSpec.replace(nameRegex, '');
+        type = isTypeStr && typeSpec.replace(names, '');
 
         if (type && special[type]) type = special[type].fix;
 
         if (!typeSpec || isTypeStr) {
-            // off(el) or off(el, t1.ns) or off(el, .ns) or off(el, .ns1.ns2.ns3)
-            if (namespaces = isTypeStr && typeSpec.replace(namespaceRegex, '')) namespaces = namespaces.split('.');
+
+            if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
             hAzzle.Events.removeListener(el, type, fn, namespaces);
         } else if (hAzzle.isFunction(typeSpec)) {
             // off(el, fn);
@@ -301,14 +322,13 @@ hAzzle.Events = {
 
         function handler(e) {
             if (e.target.disabled !== true) {
-                var match = findTarget(e.target, this);
-                if (match) fn.apply(match, arguments);
+                var m = findTarget(e.target, this);
+                if (m) fn.apply(m, arguments);
             }
         }
 
         handler.__handlers = {
-            ft: findTarget // attach it here for special to use too
-            ,
+            ft: findTarget,
             selector: selector
         };
         return handler;
@@ -316,7 +336,7 @@ hAzzle.Events = {
 
     removeListener: function (element, orgType, handler, namespaces) {
 
-        var type = orgType && orgType.replace(nameRegex, ''),
+        var type = orgType && orgType.replace(names, ''),
             handlers = hAzzle.Events.getHandler(element, type, null, false),
             removed = {}, i, l;
 
@@ -454,6 +474,8 @@ hAzzle.Events = {
 };
 
 hAzzle.extend({
+
+    // Event hooks
 
     eventHooks: {
 
@@ -604,8 +626,8 @@ hAzzle.fn.extend({
         if (threatment['disabeled'](el, type) || threatment['nodeType'](el)) return false;
 
         for (i = types.length; i--;) {
-            type = types[i].replace(nameRegex, '');
-            if (names = types[i].replace(namespaceRegex, '')) names = names.split('.');
+            type = types[i].replace(names, '');
+            if (names = types[i].replace(ns, '')) names = names.split('.');
             if (!names && !args) {
                 var HTMLEvt = doc.createEvent('HTMLEvents');
                 HTMLEvt['initEvent'](type, true, true, win, 1);
