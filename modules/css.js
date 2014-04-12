@@ -1,5 +1,5 @@
-var
-html = window.document.documentElement,
+var html = window.document.documentElement,
+
     cssNormalTransform = {
         letterSpacing: "0",
         fontWeight: "400"
@@ -472,38 +472,6 @@ hAzzle.extend({
 
 });
 
-/**
- * CSS hooks height && width
- */
-
-hAzzle.each(["height", "width"], function (i, name) {
-
-    hAzzle.cssHooks[name] = {
-        get: function (elem, computed, extra) {
-            if (computed) {
-                return elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display")) ?
-                    hAzzle.swap(elem, cssShow, function () {
-                        return getWidthOrHeight(elem, name, extra);
-                    }) :
-                    getWidthOrHeight(elem, name, extra);
-            }
-        },
-
-        set: function (elem, value, extra) {
-            var styles = extra && getStyles(elem);
-            return setPositiveNumber(value, extra ?
-                augmentWidthOrHeight(
-                    elem,
-                    name,
-                    extra,
-                    hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
-                    styles
-                ) : 0
-            );
-        }
-    };
-
-});
 
 hAzzle.fn.extend({
 
@@ -585,49 +553,8 @@ hAzzle.fn.extend({
         }
     },
 
-    /**
-     * Read or write an element's height exluding margin, padding and border
-     *
-     * @param {Integer} value
-     * @return {String}
-     */
-
-    height: function (value) {
-        return hAzzle.isDefined(value) ? this.each(function () {
-            hAzzle.style(this, "height", value);
-        }) : predefultValue(this[0], "height", "content");
-    },
-
-    /**
-     * Read an element's height including padding, border and optional margin
-     *
-     * @param {Boolean} includeMargin
-     * @return {String}
-     */
-    outerHeight: function (margin) {
-        return predefultValue(this[0], 'height', typeof margin === "boolean" ? "margin" : "border");
-    },
-
     innerHeight: function () {
         return predefultValue(this[0], 'height', 'padding');
-    },
-
-    width: function (value) {
-        return hAzzle.isDefined(value) ? this.each(function () {
-            hAzzle.style(this, "width", value);
-        }) : predefultValue(this[0], "width", "content");
-    },
-
-    /**
-     * Read an element's width including padding, border and optional margin
-     *
-     * @param {Boolean} includeMargin
-     * @return {String}
-     */
-
-
-    outerWidth: function (margin, value) {
-        return predefultValue(this[0], 'width', typeof margin === "boolean" ? "margin" : "border", typeof value === true ? "margin" : "border");
     },
 
     innerWidth: function () {
@@ -749,5 +676,59 @@ hAzzle.fn.extend({
             return offsetParent || html;
         });
     }
+
+});
+
+
+// Width and height
+hAzzle.each(["height", "width"], function (_, name) {
+    hAzzle.fn[name] = function (value) {
+        return hAzzle.isDefined(value) ? this.each(function () {
+            hAzzle.style(this, name, value);
+        }) : predefultValue(this[0], name, "content");
+    }
+});
+
+// Outerwidth and Outerheight
+hAzzle.each({
+    outerHeight: "height",
+    outerWidth: "width"
+}, function (name, type) {
+    hAzzle.fn[name] = function (margin, value) {
+        return predefultValue(this[0], type, typeof margin === "boolean" ? "margin" : "border", typeof value === true ? "margin" : "border");
+    }
+});
+
+
+/**
+ * CSS hooks height && width
+ */
+
+hAzzle.each(["height", "width"], function (i, name) {
+
+    hAzzle.cssHooks[name] = {
+        get: function (elem, computed, extra) {
+            if (computed) {
+                return elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display")) ?
+                    hAzzle.swap(elem, cssShow, function () {
+                        return getWidthOrHeight(elem, name, extra);
+                    }) :
+                    getWidthOrHeight(elem, name, extra);
+            }
+        },
+
+        set: function (elem, value, extra) {
+            var styles = extra && getStyles(elem);
+            return setPositiveNumber(value, extra ?
+                augmentWidthOrHeight(
+                    elem,
+                    name,
+                    extra,
+                    hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
+                    styles
+                ) : 0
+            );
+        }
+    };
 
 });
