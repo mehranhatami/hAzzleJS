@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29e - Beta 3
+ * Version: 0.29f - Beta 3
  * Released under the MIT License.
  *
  * Date: 2014-04-12
@@ -35,6 +35,26 @@
         getTime = (Date.now || function () {
             return new Date().getTime();
         }),
+
+        /** 
+         * Inspired by YUI3: :)
+         *
+         * Note!! Typeof HTMLElementCollection in Safari will report function, but type(HTMLElementCollection) will return object
+         */
+
+        hAzzleTypes = {
+            'undefined': 'undefined',
+            'number': 'number',
+            'boolean': 'boolean',
+            'string': 'string',
+            '[object Function]': 'function',
+            '[object RegExp]': 'regexp',
+            '[object Array]': 'array',
+            '[object Date]': 'date',
+            '[object Error]': 'error'
+        },
+
+        toString = hAzzleTypes.toString,
 
         /*
          * ID used on elements for data, animation and events
@@ -503,12 +523,16 @@
         },
 
         type: function (obj) {
-            var ref = toString.call(obj).match(/\s(\w+)\]$/);
-            return ref && ref[1].toLowerCase();
+
+            if (obj == null) {
+                return obj + "";
+            }
+            return typeof obj === "object" || typeof obj === "function" ?
+                hAzzleTypes[toString.call(obj)] || "object" : typeof obj;
         },
 
         is: function (kind, obj) {
-            return hAzzle.indexOf(kind, hAzzle.type(obj)) >= 0;
+            return hAzzle.indexOf(kind, this.type(obj)) >= 0;
         },
 
         isElement: function (elem) {
@@ -516,7 +540,7 @@
         },
 
         isNodeList: function (obj) {
-            return obj && hAzzle.is(['nodelist', 'htmlcollection', 'htmlformcontrolscollection'], obj);
+            return obj && this.is(['nodelist', 'htmlcollection', 'htmlformcontrolscollection'], obj);
         },
 
         IsNaN: function (val) {
@@ -555,15 +579,27 @@
             return true;
         },
 
-        isFunction: function (value) {
-            return typeof value === 'function';
+        isFunction: function (obj) {
+            return hAzzle.type(obj) === "function";
         },
 
         isArray: Array.isArray, //use native version here
 
         isArrayLike: function (elem) {
-            if (elem === null || this.isWindow(elem)) return false;
 
+            var length = obj.length,
+                type = hAzzle.type(obj);
+
+            if (type === "function" || hAzzle.isWindow(obj)) {
+                return false;
+            }
+
+            if (nodeTypes[1](obj) && length) {
+                return true;
+            }
+
+            return type === "array" || length === 0 ||
+                typeof length === "number" && length > 0 && (length - 1) in obj;
         },
 
         likeArray: function (obj) {
@@ -579,7 +615,17 @@
         },
 
         isPlainObject: function (obj) {
-            return this.isObject(obj) && !this.isWindow(obj) && Object.getPrototypeOf(obj) === ObjProto;
+
+            if (hAzzle.type(obj) !== "object" || obj.nodeType || hAzzle.isWindow(obj)) {
+                return false;
+            }
+
+            if (obj.constructor && !hAzzleTypes.hasOwnProperty.call(obj.constructor.prototype, "isPrototypeOf")) {
+                return false;
+            }
+
+            return true;
+
         },
 
         isBoolean: function (str) {
@@ -928,11 +974,11 @@
         },
 
         /*
-		 * Finds the elements of an array which satisfy a filter function.
-		 */
-		 
+         * Finds the elements of an array which satisfy a filter function.
+         */
+
         grep: function (elems, callback, inv, args) {
-			var ret = [],
+            var ret = [],
                 retVal;
             inv = !! inv;
             for (var i = 0, length = elems.length; i < length; i++) {
