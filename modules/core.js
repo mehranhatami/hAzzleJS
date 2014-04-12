@@ -1,12 +1,15 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29f - Beta 3
+ * Version: 0.29g - Beta 3
  * Released under the MIT License.
  *
  * Date: 2014-04-12
  *
  */
+
+// AMD and CommonJS support will be added in RC3
+
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -21,7 +24,6 @@
          */
 
         ArrayProto = Array.prototype,
-        ObjProto = Object.prototype,
 
         /**
          * Create reference for speeding up the access to the prototype.
@@ -30,7 +32,6 @@
         slice = ArrayProto.slice,
         splice = ArrayProto.splice,
         concat = ArrayProto.concat,
-        toString = ObjProto.toString,
 
         getTime = (Date.now || function () {
             return new Date().getTime();
@@ -333,7 +334,7 @@
 
         get: function (index) {
 
-            if (index == null) {
+            if (index === null) {
                 return this.elems.slice();
             }
             return this.elems[0 > index ? this.elems.length + index : index];
@@ -413,18 +414,34 @@
         /**
          * Reduce the number of elems in the "elems" stack
          */
+       reduce: function (iterator, memo) {
 
-        reduce: function (index, list) {
-            var initial = arguments.length > 2;
-            hAzzle.each(this.elems, function (value, index, list) {
-                if (!initial) {
-                    memo = value;
-                    initial = true;
-                } else {
-                    memo = iterator.call(context, memo, value, index, list);
-                }
-            })
-        },
+        var arr = this.elems, 
+			len = arr.length, 
+		    reduced, 
+			i;
+    
+        // If zero-length array, return memo, even if undefined
+        if(!len) return memo;
+    
+        // If no memo, use first item of array (we know length !== 0 here)
+        // and adjust i to start at second item
+        if(arguments.length === 1) {
+            reduced = arr[0];
+            i = 1;
+        } else {
+            reduced = memo;
+            i = 0;
+        }
+    
+        while(i < len) {
+            // Test for sparse array
+            if(i in arr) reduced = iterator(reduced, arr[i], i, arr);
+            ++i;
+        }
+    
+        return reduced;
+    },
 
         /**
          * Reduce to right, the number of elems in the "elems" stack
@@ -524,7 +541,7 @@
 
         type: function (obj) {
 
-            if (obj == null) {
+            if (obj === null) {
                 return obj + "";
             }
             return typeof obj === "object" || typeof obj === "function" ?
@@ -572,8 +589,8 @@
         },
 
         isEmptyObject: function (obj) {
-
-            for (var name in obj) {
+         var name;
+            for ( name in obj) {
                 return false;
             }
             return true;
@@ -585,7 +602,7 @@
 
         isArray: Array.isArray, //use native version here
 
-        isArrayLike: function (elem) {
+        isArrayLike: function (obj) {
 
             var length = obj.length,
                 type = hAzzle.type(obj);
@@ -607,7 +624,7 @@
         },
 
         isWindow: function (obj) {
-            return obj != null && obj == obj.window
+            return obj !== null && obj == obj.window;
         },
 
         isDocument: function (obj) {
@@ -984,9 +1001,7 @@
      */
 
     hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
-        nodeTypes[value] = function (elem) {
-            if (elem.nodeType === value) return true;
-        };
+        nodeTypes[value] = function (elem) { if (elem.nodeType === value) return true; };
     });
 
 
