@@ -33,7 +33,7 @@ function fixInput(src, dest) {
 
 hAzzle.fn.extend({
 
-    clone: function () {
+    clone: function (deep) {
 
         var clone,
             storage,
@@ -59,7 +59,7 @@ hAzzle.fn.extend({
 
             // Clone the elem
 
-            clone = elem.cloneNode(true);
+            clone = elem.cloneNode(deep || true);
 
             // Copy the events from the original to the clone
 

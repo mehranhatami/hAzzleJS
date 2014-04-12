@@ -44,7 +44,7 @@ hAzzle.fn.extend({
      */
 
     index: function (elem) {
-        return elem ? this.indexOf(hAzzle(elem)[0]) || -1 : this.parent().children().indexOf(this[0]) || -1;
+        return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
     },
 
     /**
@@ -62,6 +62,19 @@ hAzzle.fn.extend({
         }
         return this.concat(elements);
     },
+	
+	has: function( target ) {
+		var targets = hAzzle( target, this ),
+			l = targets.length;
+
+		return this.filter(function() {
+			for ( var i = 0; i < l; i++ ) {
+				if ( hAzzle.contains( this, targets[i] ) ) {
+					return true;
+				}
+			}
+		});
+	},
 
     /**
      * Get immediate parents of each element in the collection.
@@ -135,7 +148,7 @@ hAzzle.fn.extend({
     prev: function (selector) {
         return selector ? hAzzle(this.pluckNode('previousSibling').filter(selector)) : hAzzle(this.pluckNode('previousSibling'));
     },
-
+	
     /**
      * Reduce the set of matched elements to the first in the set.
      */
@@ -177,7 +190,7 @@ hAzzle.fn.extend({
                 children = slice.call(elem.parentNode.childNodes);
 
                 for (i = 0, len = children.length; i < len; i++) {
-                    if (hAzzle.isElement(children[i]) && children[i] !== elem) {
+                    if (hAzzle.isElement(children[i]) && hAzzle.nodeType(1, children[i]) && children[i] !== elem) {
                         siblings.push(children[i]);
                     }
                 }
