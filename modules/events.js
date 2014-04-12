@@ -3,7 +3,7 @@ var win = window,
     namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
     nameRegex = /\..*/,
     doc = document || {},
-    html = doc.documentElement || {},
+    root = doc.documentElement || {},
 
     container = {},
 
