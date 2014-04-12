@@ -1,27 +1,13 @@
-/**
- * CSS
- *
- * NOTE!! Some code here is "borrowed" from hAzzle because I tried to follow the hAzzle API.
- *        Even the cssHooks feature.
- *
- * Still there are minor and major differences between hAzzle API and hAzzle API. Examples are many.
- * Here are a few:
- *
- * - Pixels are not rounded up or down - make the position on the screen more accurate
- * - Everything is optimized for speed
- * - Converts %, +=, -= and em to relative numbers ( hAzzle only deal with +=, -=)
- *
- */
 var
-docElem = window.document.documentElement,
-    rootNodeRE = /^(?:body|html)$/i,
+html = window.document.documentElement,
     cssNormalTransform = {
         letterSpacing: "0",
         fontWeight: "400"
     },
-    cached = [],
 
-    cssPrefixes = ["Webkit", "O", "Moz", "ms"],
+    // Used for cache some functions for better performance
+
+    cached = [],
 
     cssExpand = ["Top", "Right", "Bottom", "Left"],
 
@@ -31,12 +17,13 @@ docElem = window.document.documentElement,
         display: "block"
     },
 
-    rmargin = (/^margin/),
-    rnumnonpx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
-    rdisplayswap = /^(none|table(?!-c[ea]).+)/,
-    pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
-    rnumsplit = new RegExp("^(" + pnum + ")(.*)$", "i"),
-    rrelNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
+    // Some regEx we are using
+
+    numberOrPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
+    displaySwap = /^(none|table(?!-c[ea]).+)/,
+    margin = (/^margin/),
+    numSplit = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
+    relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
 
 
 /**
@@ -86,7 +73,7 @@ var getStyles = function (elem) {
 };
 
 function setPositiveNumber(value, subs) {
-    var matches = rnumsplit.exec(value);
+    var matches = numSplit.exec(value);
     return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value
 }
 
@@ -101,7 +88,7 @@ function getWidthOrHeight(elem, name, extra) {
 
         if (val < 0 || val === null) val = elem.style[name];
 
-        if (rnumnonpx.test(val)) return val;
+        if (numberOrPx.test(val)) return val;
 
         valueIsBorderBox = isBorderBox && (hAzzle.support.boxSizingReliable() || val === elem.style[name]);
         val = parseFloat(val) || 0;
@@ -151,6 +138,7 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
 /**
  * Check if an element is hidden
  *  @return {Boolean}
+
  */
 
 function isHidden(elem, el) {
@@ -218,7 +206,7 @@ function curCSS(elem, name, computed) {
             ret = hAzzle.style(elem, name);
         }
 
-        if (rnumnonpx.test(ret) && rmargin.test(name)) {
+        if (numberOrPx.test(ret) && margin.test(name)) {
 
             // Remember the original values
             width = style.width;
@@ -245,27 +233,25 @@ function curCSS(elem, name, computed) {
 function vendorCheckUp(style, name) {
 
     if (!cached[style + name]) {
+
         // Shortcut for names that are not vendor prefixed
+
         if (name in style) {
             return name;
         }
 
         // check for vendor prefixed names
-        var capName = name[0].toUpperCase() + name.slice(1),
-            origName = name,
-            i = cssPrefixes.length;
 
-        while (i--) {
-            name = cssPrefixes[i] + capName;
-            if (name in style) {
-                return name;
-            }
+        var origName = name,
+            name = hAzzle.prefix(name);
+
+        if (name in style) {
+            return name;
         }
-        cached[style + name] = origName;
 
+        cached[style + name] = origName;
     }
     return cached[style + name];
-
 }
 
 
@@ -415,9 +401,10 @@ hAzzle.extend({
 
         // Normalize the property name 
 
-        perf = hAzzle.camelCase(name);
+        name = hAzzle.camelCase(name);
 
-        name = hAzzle.cssProps[perf] || (hAzzle.cssProps[perf] = vendorCheckUp(elem.style, perf));
+        name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorCheckUp(elem.style, name));
+
         (perf = hAzzle.cssHooks[name] || hAzzle.cssHooks[perf]) && "get" in perf && (val = perf.get(elem, true, extra));
         val === undefined && (val = curCSS(elem, name, styles));
         val === "normal" && name in cssNormalTransform && (val = cssNormalTransform[name]);
@@ -427,6 +414,7 @@ hAzzle.extend({
     style: function (elem, name, value, extra) {
 
         // Don't set styles on text and comment nodes
+
         if (!elem || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem) || !elem.style) {
             return;
         }
@@ -448,7 +436,7 @@ hAzzle.extend({
              * It can handle +=, -=, em or %
              */
 
-            if (type === "string" && (ret = rrelNum.exec(value))) {
+            if (type === "string" && (ret = relNum.exec(value))) {
                 value = hAzzle.css(elem, name, "", "", name, hooks);
                 value = hAzzle.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = "number";
@@ -493,7 +481,7 @@ hAzzle.each(["height", "width"], function (i, name) {
     hAzzle.cssHooks[name] = {
         get: function (elem, computed, extra) {
             if (computed) {
-                return elem.offsetWidth === 0 && rdisplayswap.test(hAzzle.css(elem, "display")) ?
+                return elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display")) ?
                     hAzzle.swap(elem, cssShow, function () {
                         return getWidthOrHeight(elem, name, extra);
                     }) :
@@ -569,14 +557,16 @@ hAzzle.fn.extend({
      */
 
     css: function (name, value) {
-        if (hAzzle.isDefined(value)) return this.length === 1 ? hAzzle.style(this[0], name, value) : this.each(function () {
-            hAzzle.style(this, name, value);
-        });
-        if (hAzzle.isUndefined(value)) return hAzzle.isString(name) ? this[0] && hAzzle.css(this[0], name) : this.each(function () {
+        var len = arguments.length;
+
+        if (len === 1) return typeof name === 'string' ? this[0] && hAzzle.css(this[0], name) : this.each(function () {
             var elem = this;
             hAzzle.each(name, function (name, value) {
                 hAzzle.style(elem, name, value);
             });
+        });
+        else if (len === 2) return this.each(function () {
+            hAzzle.style(this, name, value);
         });
     },
 
@@ -676,7 +666,7 @@ hAzzle.fn.extend({
                 });
         }
 
-        var docElem, win,
+        var html, win,
             elem = this[0],
             box = {
                 top: 0,
@@ -688,10 +678,10 @@ hAzzle.fn.extend({
             return;
         }
 
-        docElem = doc.documentElement;
+        html = doc.documentElement;
 
         // Make sure it's not a disconnected DOM node
-        if (!hAzzle.contains(docElem, elem)) {
+        if (!hAzzle.contains(html, elem)) {
             return box;
         }
         if (typeof elem.getBoundingClientRect !== typeof undefined) {
@@ -699,8 +689,8 @@ hAzzle.fn.extend({
         }
         win = getWindow(doc);
         return {
-            top: box.top + win.pageYOffset - docElem.clientTop,
-            left: box.left + win.pageXOffset - docElem.clientLeft
+            top: box.top + win.pageYOffset - html.clientTop,
+            left: box.left + win.pageXOffset - html.clientLeft
         };
     },
 
@@ -752,11 +742,11 @@ hAzzle.fn.extend({
 
     offsetParent: function () {
         return this.map(function () {
-            var offsetParent = this.offsetParent || docElem;
+            var offsetParent = this.offsetParent || html;
             while (offsetParent && (!hAzzle.nodeName(offsetParent, "html") && hAzzle.css(offsetParent, "position") === "static")) {
                 offsetParent = offsetParent.offsetParent;
             }
-            return offsetParent || docElem;
+            return offsetParent || html;
         });
     }
 
