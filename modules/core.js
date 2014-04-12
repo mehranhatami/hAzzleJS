@@ -638,23 +638,9 @@
          */
 
         unique: function (array) {
-
-            var hash = Object.create(null),
-                out = [],
-                i = array.length;
-
-            while (i--) {
-                if (!hash[array[i]]) {
-                    hash[array[i]] = true;
-                    out.push(array[i]);
-                }
-            }
-
-            // Need to reverse to get correct order, else
-            // the output will be "c, b, a" and not "a, b, c"
-
-            return out.reverse();
-
+            return array.filter(function (item, idx) {
+                return hAzzle.indexOf(array, item) === idx;
+            });
         },
 
         /**
