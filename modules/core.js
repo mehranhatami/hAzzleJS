@@ -1,13 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29d - Beta 3
+ * Version: 0.29e - Beta 3
  * Released under the MIT License.
  *
  * Date: 2014-04-12
  *
  */
-
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -109,8 +108,8 @@
                     this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
 
                 } else {
-					
-                   if (cache[sel] && !ctx) {
+
+                    if (cache[sel] && !ctx) {
                         this.elems = elems = cache[sel];
                         for (i = this.length = elems.length; i--;) this[i] = elems[i];
                         return this;
@@ -162,6 +161,7 @@
             for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
         },
+
         /**
          * Run callback for each element in the collection
          *
@@ -586,11 +586,29 @@
             return typeof str === 'boolean';
         },
 
-        unique: function (array) {
-            return array.filter(function (item, idx) {
+        /**
+         * Re-wrote this one, so we now only deal with one While-loop,
+         * 40% faster now.
+         */
 
-                return hAzzle.indexOf(array, item) === idx;
-            });
+        unique: function (array) {
+
+            var hash = Object.create(null),
+                out = [],
+                i = array.length;
+
+            while (i--) {
+                if (!hash[array[i]]) {
+                    hash[array[i]] = true;
+                    out.push(array[i]);
+                }
+            }
+
+            // Need to reverse to get correct order, else
+            // the output will be "c, b, a" and not "a, b, c"
+
+            return out.reverse();
+
         },
 
         /**
@@ -908,21 +926,24 @@
                 hAzzle.merge([context], ret) :
                 ret;
         },
-        grep: function (elems, callback, invert) {
-            var callbackInverse,
-                matches = [],
-                i = 0,
-                length = elems.length,
-                callbackExpect = !invert;
 
-            for (; i < length; i++) {
-                callbackInverse = !callback(elems[i], i);
-                if (callbackInverse !== callbackExpect) {
-                    matches.push(elems[i]);
+        /*
+		 * Finds the elements of an array which satisfy a filter function.
+		 */
+		 
+        grep: function (elems, callback, inv, args) {
+			var ret = [],
+                retVal;
+            inv = !! inv;
+            for (var i = 0, length = elems.length; i < length; i++) {
+                if (i in elems) { // check existance
+                    retVal = !! callback.call(args, elems[i], i); // set callback this
+                    if (inv !== retVal) {
+                        ret.push(elems[i]);
+                    }
                 }
             }
-
-            return matches;
+            return ret;
         }
     });
 
