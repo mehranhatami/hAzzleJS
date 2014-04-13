@@ -70,6 +70,29 @@ hAzzle.fn.extend({
     },
 
     /**
+     *  Pick elements by tagNames in the "elems stack"
+     *
+     * @param {string} tag
+     * @return {Object}
+     */
+    tags: function (tag) {
+        var result = [],
+            elements = this.elems;
+        fn = function (element) {
+
+            if (element.tagName.toLowerCase() === tag) {
+                result.push(element);
+                return element;
+            }
+        };
+
+        while (elements.length > 0 && elements[0] !== undefined) {
+            elements = elements.map(fn);
+        }
+        return hAzzle(result);
+    },
+
+    /**
      * Adds one element to the set of matched elements.
      *
      * @param {String} sel
