@@ -1,13 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29g - Beta 3
+ * Version: 0.29f - Beta 3
  * Released under the MIT License.
  *
  * Date: 2014-04-12
  *
  */
-// AMD and CommonJS support will be added in RC3
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -22,6 +21,7 @@
          */
 
         ArrayProto = Array.prototype,
+        ObjProto = Object.prototype,
 
         /**
          * Create reference for speeding up the access to the prototype.
@@ -30,6 +30,7 @@
         slice = ArrayProto.slice,
         splice = ArrayProto.splice,
         concat = ArrayProto.concat,
+        toString = ObjProto.toString,
 
         getTime = (Date.now || function () {
             return new Date().getTime();
@@ -126,13 +127,21 @@
 
                     this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
 
-
                 } else {
 
                     if (cache[sel] && !ctx) {
-                        this.elems = elems = cache[sel];
-                        for (i = this.length = elems.length; i--;) this[i] = elems[i];
-                        return this;
+                        
+						 // Backup the "elems stack" before we loop through
+						 
+						this.elems = elems = cache[sel];
+                        
+						 // Copy the stack over to the hAzzle object so we can access the Protoype
+						 
+						for (i = this.length = elems.length; i--;) this[i] = elems[i];
+                        
+						// Return the hAzzle Object
+						
+						return this;
                     }
 
 
@@ -177,19 +186,8 @@
                 }
             }
 
-            // Backup the "elems stack" before we loop through
-
             elems = this.elems;
-
-            // Copy the stack over to the hAzzle object so we can access the Protoype
-
-            for (i = this.length = elems.length; i--;) {
-
-                this[i] = elems[i];
-
-            }
-
-            // Return the hAzzle Object
+            for (i = this.length = elems.length; i--;) this[i] = elems[i];
             return this;
         },
 
@@ -344,7 +342,7 @@
 
         get: function (index) {
 
-            if (index === null) {
+            if (index == null) {
                 return this.elems.slice();
             }
             return this.elems[0 > index ? this.elems.length + index : index];
@@ -421,17 +419,10 @@
             return hAzzle.indexOf(this.elems, needle);
         },
 
-        lastIndexOf: function (item, from) {
-            var hasIndex = from !== null;
-            var i = (hasIndex ? from : this.elems);
-            while (i--)
-                if (this.elems[i] === item) return i;
-            return -1;
-        },
-
         /**
          * Reduce the number of elems in the "elems" stack
          */
+
         reduce: function (iterator, memo) {
 
             var arr = this.elems,
@@ -457,8 +448,9 @@
                 if (i in arr) reduced = iterator(reduced, arr[i], i, arr);
                 ++i;
             }
-
-            return reduced;
+			
+			return reduced;
+           
         },
 
         /**
@@ -559,7 +551,7 @@
 
         type: function (obj) {
 
-            if (obj === null) {
+            if (obj == null) {
                 return obj + "";
             }
             return typeof obj === "object" || typeof obj === "function" ?
@@ -582,26 +574,33 @@
             return !(0 >= val) && !(0 < val);
         },
 
+        isUndefined: function (value) {
+            return typeof value === 'undefined';
+        },
+
         isDefined: function (value) {
             return typeof value !== 'undefined';
         },
 
         isObject: function (o) {
-            return typeof o == 'object';
+            return o !== null && typeof o == 'object';
         },
 
-        isNull: function (o) {
-
-            return obj === null;
+        isString: function (s) {
+            return typeof s === 'string';
         },
 
         isNumeric: function (obj) {
             return !this.IsNaN(parseFloat(obj)) && isFinite(obj);
         },
 
+        isNumber: function (value) {
+            return typeof value === "number";
+        },
+
         isEmptyObject: function (obj) {
-            var name;
-            for (name in obj) {
+
+            for (var name in obj) {
                 return false;
             }
             return true;
@@ -613,7 +612,7 @@
 
         isArray: Array.isArray, //use native version here
 
-        isArrayLike: function (obj) {
+        isArrayLike: function (elem) {
 
             var length = obj.length,
                 type = hAzzle.type(obj);
@@ -634,6 +633,10 @@
             return typeof obj.length == 'number';
         },
 
+        isWindow: function (obj) {
+            return obj != null && obj == obj.window
+        },
+
         isDocument: function (obj) {
             return obj !== null && obj.nodeType == obj.DOCUMENT_NODE;
         },
@@ -652,7 +655,9 @@
 
         },
 
-
+        isBoolean: function (str) {
+            return typeof str === 'boolean';
+        },
 
         /**
          * Re-wrote this one, so we now only deal with one While-loop,
@@ -660,9 +665,10 @@
          */
 
         unique: function (array) {
-            return array.filter(function (item, idx) {
-                return hAzzle.indexOf(array, item) === idx;
-            });
+          return array.filter(function (item, idx) {
+                 return hAzzle.indexOf(array, item) === idx;
+             });
+
         },
 
         /**
@@ -909,7 +915,6 @@
          */
 
         getClosestNode: function (element, method, sel, nt) {
-
             do {
                 element = element[method];
             } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
@@ -917,7 +922,52 @@
                 return element;
             }
             return element;
-        },
+      },
+ 
+         /**
+          * Delays a function for the given number of milliseconds, and then calls it with the arguments supplied.
+          *
+          * @param {Function} func
+          * @return {String} wait
+          * @return {Function}
+          */
+ 
+         delay: function (func, wait) {
+            var args = slice.call(arguments, 2);
+             return setTimeout(function () {
+                 return func.apply(null, args);
+             }, wait);
+         },
+ 
+         /**
+          * Defers a function, scheduling it to run after the current call stack has cleared
+          *
+          * @param {Function} func
+          * @return {Function}
+          */
+ 
+         defer: function (func) {
+             return hAzzle.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
+         },
+ 
+         /**
+          * Returns a function that will be executed at most one time
+          *
+          * @param {Function} func
+          * @return {Function}
+          */
+ 
+         once: function (func) {
+             var ran = false,
+                 memo;
+             return function () {
+                 if (ran) return memo;
+                 ran = true;
+                 memo = func.apply(this, arguments);
+                 func = null;
+                 return memo;
+             };
+		 },
 
         nodeName: function (elem, name) {
             return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
@@ -999,74 +1049,22 @@
                 }
             }
             return ret;
-        },
-
-        /**
-         * Delays a function for the given number of milliseconds, and then calls it with the arguments supplied.
-         *
-         * @param {Function} func
-         * @return {String} wait
-         * @return {Function}
-         */
-
-        delay: function (func, wait) {
-            var args = slice.call(arguments, 2);
-            return setTimeout(function () {
-                return func.apply(null, args);
-            }, wait);
-        },
-
-        /**
-         * Defers a function, scheduling it to run after the current call stack has cleared
-         *
-         * @param {Function} func
-         * @return {Function}
-         */
-
-        defer: function (func) {
-            return hAzzle.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
-        },
-
-        /**
-         * Returns a function that will be executed at most one time
-         *
-         * @param {Function} func
-         * @return {Function}
-         */
-
-        once: function (func) {
-            var ran = false,
-                memo;
-            return function () {
-                if (ran) return memo;
-                ran = true;
-                memo = func.apply(this, arguments);
-                func = null;
-                return memo;
-            };
         }
-
     });
 
     /**
      * Setting up the nodeTypes we are using
      */
 
-    hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function () {
-        nodeTypes[this] = function (elem) {
-            if (elem.nodeType === this) return true;
-        };
-    });
-
-    // Save some space we are doing it like this
-    hAzzle.each(['undefined', 'Object', 'String', 'Number', 'Window', 'Boolean'], function (_, name) {
-        hAzzle['is' + name] = function (o) {
-            return typeof o === name;
+    hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
+        nodeTypes[value] = function (elem) {
+            if (elem.nodeType === value) return true;
         };
     });
 
 
-    if (typeof window['hAzzle'] === "undefined") {
-        window['hAzzle'] = hAzzle;
-    }
+     if (typeof window['hAzzle'] === "undefined") {
+         window['hAzzle'] = hAzzle;
+     }
+
 })(window);

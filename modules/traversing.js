@@ -47,6 +47,28 @@ hAzzle.fn.extend({
         return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
     },
 
+    /** Get elements from a spesific position inside the "elems stack"
+     *
+     * @param {arr} arr
+     * @param {return} Object
+     */
+
+    selectedIndex: function (arr) {
+
+        if (!hAzzle.isArray(arr)) {
+
+            return;
+        }
+
+        var result = [],
+            i = 0;
+
+        for (i = arr.length; i--;) {
+            result.push(this.get(arr[i]));
+        }
+        return hAzzle(result);
+    },
+
     /**
      * Adds one element to the set of matched elements.
      *
@@ -62,19 +84,19 @@ hAzzle.fn.extend({
         }
         return this.concat(elements);
     },
-	
-	has: function( target ) {
-		var targets = hAzzle( target, this ),
-			l = targets.length;
 
-		return this.filter(function() {
-			for ( var i = 0; i < l; i++ ) {
-				if ( hAzzle.contains( this, targets[i] ) ) {
-					return true;
-				}
-			}
-		});
-	},
+    has: function (target) {
+        var targets = hAzzle(target, this),
+            l = targets.length;
+
+        return this.filter(function () {
+            for (var i = 0; i < l; i++) {
+                if (hAzzle.contains(this, targets[i])) {
+                    return true;
+                }
+            }
+        });
+    },
 
     /**
      * Get immediate parents of each element in the collection.
@@ -139,6 +161,10 @@ hAzzle.fn.extend({
         return selector ? hAzzle(this.pluckNode('nextSibling').filter(selector)) : hAzzle(this.pluckNode('nextSibling'));
     },
 
+    nextUntil: function (elem, i, until) {
+        return hAzzle.getClosestNode(elem, "nextSibling", until);
+    },
+
     /**
      *  Return the element's previous sibling
      *
@@ -148,7 +174,7 @@ hAzzle.fn.extend({
     prev: function (selector) {
         return selector ? hAzzle(this.pluckNode('previousSibling').filter(selector)) : hAzzle(this.pluckNode('previousSibling'));
     },
-	
+
     /**
      * Reduce the set of matched elements to the first in the set.
      */
