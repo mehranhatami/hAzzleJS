@@ -76,11 +76,11 @@ hAzzle.fn.extend({
      * @return {Object}
      */
     tags: function (tag) {
-       return this.map(function (elem) {
-			if (elem.tagName.toLowerCase() === tag && hAzzle.nodeType(1, elem)) {
-                    return elem;
+        return this.map(function (elem) {
+            if (elem.tagName.toLowerCase() === tag && hAzzle.nodeType(1, elem)) {
+                return elem;
             }
-        })
+        });
     },
 
     /**
@@ -92,16 +92,14 @@ hAzzle.fn.extend({
      */
 
     add: function (sel, ctx) {
-        var elements = sel;
-        if (hAzzle.isString(sel)) {
-            elements = hAzzle(sel, ctx).elems;
+        if (arguments.length === 1) {
+            return sel = hAzzle(sel, ctx).elems, this.concat(sel);
         }
-        return this.concat(elements);
     },
-	
-     /**
-	  * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
-	  */
+
+    /**
+     * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
+     */
     has: function (target) {
         var targets = hAzzle(target, this),
             l = targets.length;
@@ -204,14 +202,14 @@ hAzzle.fn.extend({
     last: function () {
         return hAzzle(this.get(-1));
     },
-    
-	/**
-	 * FIX ME!! Seems to have problems finding elems inside an iFrame
-	 */
+
+    /**
+     * FIX ME!! Seems to have problems finding elems inside an iFrame
+     */
     contents: function () {
         return this.map(function (elem) {
-            return elem.contentDocument || slice.call(elem.childNodes)
-        })
+            return elem.contentDocument || slice.call(elem.childNodes);
+        });
     },
 
     /**
@@ -243,4 +241,27 @@ hAzzle.fn.extend({
         return hAzzle.create(cached[sel], sel);
     }
 
+});
+
+
+/**
+ * Process nextAll and prevAll
+ */
+
+hAzzle.each({
+    'nextAll': 'next',
+    'prevAll': 'prev'
+}, function (name, subn) {
+
+    hAzzle.fn[name] = function (sel) {
+        var els = hAzzle(),
+            el = this[subn]();
+        while (el.length) {
+            if (typeof sel === 'undefined' || el.is(sel)) {
+                els = els.add(el);
+            }
+            el = el[subn]();
+        }
+        return els;
+    };
 });
