@@ -176,42 +176,54 @@ hAzzle.fn.extend({
     next: function (selector) {
         return selector ? hAzzle(this.pluckNode('nextSibling').filter(selector)) : hAzzle(this.pluckNode('nextSibling'));
     },
-	
-	/**
-	 * Find the next class after given element.
-	 *
-	 * @param {String} className
-	 * @return {Object}
-	 *
-	 **/
-	
-	nextOfClass: function(className) {
-    var nextEl,
-        el = this;
-		
-    // Leading period will confuse hAzzle. 
-    
-	if (className[0] === '.') className = className.slice(1); 
 
-    while (el.next()) {
+    /**
+     * Find the next class after given element.
+     *
+     * @param {String} className
+     * @return {Object}
+     *
+     **/
 
-        // If target element is found, stop
-        if (el.hasClass(className)) return el; 
+    nextOfClass: function (className) {
+        var nextEl,
+            el = this;
 
-        nextEl = el.next(); 
-        if (nextEl.length === 0) {
-            // No more siblings. Go up in DOM and restart loop to check parent
-            el = el.parent(); 
-            continue; 
+        // Leading period will confuse hAzzle. 
+
+        if (className[0] === '.') className = className.slice(1);
+
+        while (el.next()) {
+
+            // If target element is found, stop
+            if (el.hasClass(className)) return el;
+
+            nextEl = el.next();
+            if (nextEl.length === 0) {
+                // No more siblings. Go up in DOM and restart loop to check parent
+                el = el.parent();
+                continue;
+            }
+
+            el = nextEl;
+
+            // End of doc. Give up. 
+            if (el.parent().length === 0) return false;
         }
 
-        el = nextEl;  
+    },
 
-         // End of doc. Give up. 
-        if (el.parent().length === 0) return false;
-    }
-	
-	},
+    nextUntil: function (until) {
+
+        var matches = [];
+
+        this.nextAll().each(function () {
+            if (hAzzle(this).is(until)) return false;
+            matches.push(this);
+        });
+
+        return hAzzle(matches)
+    },
 
     /**
      *  Return the element's previous sibling
@@ -219,9 +231,20 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-
     prev: function (selector) {
         return selector ? hAzzle(this.pluckNode('previousSibling').filter(selector)) : hAzzle(this.pluckNode('previousSibling'));
+    },
+
+    prevUntil: function (until) {
+
+        var matches = [];
+
+        this.prevAll().each(function () {
+            if (hAzzle(this).is(until)) return false;
+            matches.push(this);
+        });
+
+        return hAzzle(matches)
     },
 
     /**

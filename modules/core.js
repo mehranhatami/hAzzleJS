@@ -1,12 +1,13 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.29f - Beta 3
+ * Version: 0.30 - Beta 4
  * Released under the MIT License.
  *
- * Date: 2014-04-12
+ * Date: 2014-04-13
  *
  */
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now

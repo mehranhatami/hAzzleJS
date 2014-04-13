@@ -102,7 +102,7 @@ function restoreScript(elem) {
 
 hAzzle.extend({
     /**
-     * HTML Hook created for the future. If hAzzle need to support HTML 6 or other
+     * HTML Hook created for the future. If hAzzle need to support HTML6 or other
      * HTML tags, it's easy enough to do it from plugins
      */
 
@@ -137,7 +137,9 @@ hAzzle.extend({
 
         }
     },
-
+    /**
+	 * jQuery uses valHooks, we don't use that. Too slow !!
+	 */
     getValue: function (elem) {
 
         if (elem.nodeName === 'SELECT' && elem.multiple) {
