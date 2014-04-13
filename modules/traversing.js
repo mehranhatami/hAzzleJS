@@ -70,26 +70,17 @@ hAzzle.fn.extend({
     },
 
     /**
-     *  Pick elements by tagNames in the "elems stack"
+     *  Pick elements by tagNames from the "elems stack"
      *
      * @param {string} tag
      * @return {Object}
      */
     tags: function (tag) {
-        var result = [],
-            elements = this.elems;
-        fn = function (element) {
-
-            if (element.tagName.toLowerCase() === tag) {
-                result.push(element);
-                return element;
+       return this.map(function (elem) {
+			if (elem.tagName.toLowerCase() === tag && hAzzle.nodeType(1, elem)) {
+                    return elem;
             }
-        };
-
-        while (elements.length > 0 && elements[0] !== undefined) {
-            elements = elements.map(fn);
-        }
-        return hAzzle(result);
+        })
     },
 
     /**
@@ -107,7 +98,10 @@ hAzzle.fn.extend({
         }
         return this.concat(elements);
     },
-
+	
+     /**
+	  * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
+	  */
     has: function (target) {
         var targets = hAzzle(target, this),
             l = targets.length;
@@ -150,6 +144,7 @@ hAzzle.fn.extend({
                         return element;
                     }
                 }
+
             };
 
         while (elements.length > 0 && elements[0] !== undefined) {
@@ -184,10 +179,6 @@ hAzzle.fn.extend({
         return selector ? hAzzle(this.pluckNode('nextSibling').filter(selector)) : hAzzle(this.pluckNode('nextSibling'));
     },
 
-    nextUntil: function (elem, i, until) {
-        return hAzzle.getClosestNode(elem, "nextSibling", until);
-    },
-
     /**
      *  Return the element's previous sibling
      *
@@ -213,7 +204,10 @@ hAzzle.fn.extend({
     last: function () {
         return hAzzle(this.get(-1));
     },
-
+    
+	/**
+	 * FIX ME!! Seems to have problems finding elems inside an iFrame
+	 */
     contents: function () {
         return this.map(function (elem) {
             return elem.contentDocument || slice.call(elem.childNodes)

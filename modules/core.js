@@ -214,7 +214,7 @@
             if (typeof sel === "string") {
                 var elements;
                 if (this.length === 1) {
-                    if (selType !== "string") {
+                    if (typeof sel !== "string") {
                         elements = sel[0];
                     } else {
                         elements = hAzzle(sel, this.elems[0]);
