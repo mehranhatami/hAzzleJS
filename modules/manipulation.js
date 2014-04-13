@@ -46,7 +46,9 @@ propMap = {
     rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
     rscriptType = /^$|\/(?:java|ecma)script/i,
     rscriptTypeMasked = /^true\/(.*)/,
-    rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
+    rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+
+    cached = [];
 
 function getBooleanAttrName(element, name) {
     // check dom last since we will most likely fail on name
@@ -126,12 +128,10 @@ hAzzle.extend({
 
         }
     },
-    /**
-     * jQuery uses valHooks, we don't use that. Too slow !!
-     */
-    getValue: function (elem) {
 
-        if (elem.nodeName === 'SELECT' && elem.multiple) {
+    Hooks: {
+
+        'SELECT': function (elem) {
 
             var option,
                 options = elem.options,
@@ -164,13 +164,17 @@ hAzzle.extend({
                 }
             }
             return values;
+        },
+
+        'OPTION': function (elem) {
+            var val = hAzzle(elem).filter(function (option) {
+                return option.selected && !option.disabled;
+            }).pluck('value');
+
+            return val !== null ? val : hAzzle.trim(getText(elem));
+
         }
-
-        // Return normal value
-
-        return elem.value;
     },
-
 
     /**
      * Get text
@@ -204,12 +208,20 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
         if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
+
             if ("undefined" === typeof elem.getAttribute) return hAzzle.prop(elem, name, value);
+
             if (hAzzle.isUndefined(value)) {
-                if (name === "value" && name.nodeName.toLowerCase() === "input") return hAzzle.getValue(elem);
+
+
+                if (hAzzle.Hooks[elem.nodeName]) {
+
+                    return hAzzle.Hooks[elem.nodeName](elem);
+                }
                 elem = elem.getAttribute(name);
                 return null === elem ? undefined : elem;
             }
+
             return elem.setAttribute(name, value + "");
         }
     },
@@ -379,16 +391,16 @@ hAzzle.fn.extend({
 
                     } else {
 
-						this.textContent = value;
+                        this.textContent = value;
                     }
                 }
             });
 
         } else {
-            
-			// Get the textvalue
-            
-			return hAzzle.getText(this);
+
+            // Get the textvalue
+
+            return hAzzle.getText(this);
         }
     },
 
@@ -402,50 +414,51 @@ hAzzle.fn.extend({
      */
 
     html: function (value, keep) {
-     
-	 if(! arguments.length && hAzzle.nodeType(1, this[0])) {
-     
-	        return this[0].innerHTML;
-     
-	 } else {
 
-		    return each(function () {
-				
-				/**
-				 * 'keep' if we want to keep the existing children of the node and add some more.
-				 */
-				if(keep && hAzzle.nodeType(1, this)) {
-                 
-				 // insertAdjacentHTML are supported by all major browsers
- 				 
-				   this.insertAdjacentHTML('beforeend', value || '');
+        if (!arguments.length && hAzzle.nodeType(1, this[0])) {
 
-				} else {
-					
-                if (hAzzle.nodeType(1, this)) {
-                    
-					if( typeof value === "string" && !/<(?:script|style|link)/i.test( value ) 
-					 && ! hAzzle.htmlHooks[ ( rtagName.exec( value ) || [ "", "" ] )[ 1 ].toLowerCase() ] ) {
+            return this[0].innerHTML;
 
-                   // Do some magic
-				   
-				    value = value.replace( /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, "<$1></$2>" );
-				   
- 		          // Remove stored data on the object to avoid memory leaks
-				  
-				  this.removeData();
-				  
-				  // Get rid of existing children
-				  
-				  this.textContent = '';
-					
-				  // Do innerHTML
-					
-                  this.innerHTML = value;
+        } else {
+
+            // We could have used 'this' inside the loop, but faster if we don't
+
+            return this.each(function (_, elem) {
+
+                /**
+                 * 'keep' if we want to keep the existing children of the node and add some more.
+                 */
+                if (keep && hAzzle.nodeType(1, elem)) {
+
+                    // insertAdjacentHTML are supported by all major browsers
+
+                    elem.insertAdjacentHTML('beforeend', value || '');
+
+                } else {
+
+                    if (hAzzle.nodeType(1, elem)) {
+
+                        if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !hAzzle.htmlHooks[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+
+                            // Do some magic
+
+                            value = cached[value] ? cached[value] : cached[value] = value.replace(/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, "<$1></$2>");
+
+                            // Remove stored data on the object to avoid memory leaks
+
+                            hAzzle(elem).removeData();
+
+                            // Get rid of existing children
+
+                            elem.textContent = '';
+
+                            // Do innerHTML
+
+                            elem.innerHTML = value;
+                        }
+                    }
                 }
-              }				
-		  }
-       });
+            });
         }
         return this.empty().append(value);
     },
@@ -457,32 +470,46 @@ hAzzle.fn.extend({
      * @param {String} value
      * @return {Object|String}
      */
+
     val: function (value) {
 
-        return value ? this.each(function (index, elem) {
-            var val;
+        if (arguments.length) {
 
-            if (!hAzzle.nodeType(1, elem)) {
-                return;
-            }
+            return this.each(function (index, elem) {
 
-            if (hAzzle.isFunction(value)) {
-                val = value.call(elem, index, hAzzle(elem).val());
-            } else {
-                val = value;
+                var val;
 
-            }
+                if (!hAzzle.nodeType(1, elem)) {
+                    return;
+                }
 
-            if (val === null) {
+                if (hAzzle.isFunction(value)) {
+                    val = value.call(elem, index, hAzzle(elem).val());
 
-                val = "";
+                } else {
+                    val = value;
+                }
 
-            } else if (typeof val === "number") {
-                val += "";
-            }
+                if (val === null) {
 
-            elem.value = val;
-        }) : this[0] && hAzzle.getValue(this[0]);
+                    val = "";
+
+                } else if (typeof val === "number") {
+
+                    val += "";
+                }
+
+                elem.value = val;
+            })
+
+        } else {
+
+            var elem = this[0];
+
+            return hAzzle.Hooks[elem.tagName] ? hAzzle.Hooks[elem.tagName](elem) : elem.value;
+
+        }
+
     },
 
     /**
