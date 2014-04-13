@@ -1,4 +1,4 @@
-hAzzleJS v. 0.28 BETA
+hAzzleJS v. 0.30 BETA
 =====================
 
 **hAzzle** is a javascript library that tries it best to be the fastest one, and still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
@@ -11,7 +11,7 @@ You can use your own selector engine if you want, just replace it with the selec
 
 HTML 6 are supported from 3d parts plugins.
 
-33,2 KB minimized
+39,2 KB minimized
 
 
 Browser compatiblity
