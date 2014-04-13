@@ -7,7 +7,6 @@
  * Date: 2014-04-13
  *
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -280,29 +279,6 @@
         },
 
         /**
-         * Get elements in list but not with this selector
-         *
-         * @param {String} sel
-         * @return {Object}
-         *
-         */
-
-        not: function (sel) {
-            return this.filter(sel || [], true);
-        },
-
-        /**
-         * Check if the first element in the element collection matches the selector
-         *
-         * @param {String|Object} sel
-         * @return {Boolean}
-         */
-
-        is: function (sel) {
-            return this.length > 0 && this.filter(sel || []).length > 0;
-        },
-
-        /**
          * Fetch property from the "elems" stack
          *
          * @param {String} prop
@@ -421,14 +397,14 @@
         indexOf: function (needle) {
             return hAzzle.indexOf(this.elems, needle);
         },
-		
-		/**
-		 * Make the 'elems stack'  unique
-		 */
-		 
-		unique: function() {
-		   return hAzzle.unique(this.elems);
-		},
+
+        /**
+         * Make the 'elems stack'  unique
+         */
+
+        unique: function () {
+            return hAzzle.unique(this.elems);
+        },
 
         /**
          * Reduce the number of elems in the "elems" stack
@@ -440,7 +416,6 @@
                 len = arr.length,
                 reduced,
                 i;
-
 
             // If zero-length array, return memo, even if undefined
             if (!len) return memo;
@@ -712,7 +687,7 @@
 
             return result;
         },
-     
+
         /**
          * Same as the 'internal' pluck method, except this one is global
          */
@@ -999,7 +974,7 @@
 
     hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
         nodeTypes[value] = function (elem) {
-            if (elem.nodeType === value) return true;
+            return elem.nodeType === value;
         };
     });
 

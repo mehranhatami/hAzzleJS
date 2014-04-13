@@ -114,6 +114,29 @@ hAzzle.fn.extend({
     },
 
     /**
+     * Get elements in list but not with this selector
+     *
+     * @param {String} sel
+     * @return {Object}
+     *
+     */
+
+    not: function (sel) {
+        return this.filter(sel || [], true);
+    },
+
+    /**
+     * Check if the first element in the element collection matches the selector
+     *
+     * @param {String|Object} sel
+     * @return {Boolean}
+     */
+
+    is: function (sel) {
+        return this.length > 0 && this.filter(sel || []).length > 0;
+    },
+
+    /**
      * Get immediate parents of each element in the collection.
      * If CSS selector is given, filter results to include only ones matching the selector.
      *

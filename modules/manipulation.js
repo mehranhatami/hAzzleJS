@@ -39,17 +39,6 @@ propMap = {
         'details': true
     },
 
-    /**
-     * Direction for where to insert the text
-     */
-
-    direction = {
-        'first': 'beforeBegin', // Beginning of the sentence
-        'middle': 'afterBegin', // Middle of the sentence
-        'center': 'afterBegin', // Middle of the sentence
-        'last': 'beforeEnd' // End of the sentence
-    },
-
     tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
     rtagName = /<([\w:]+)/,
@@ -58,7 +47,6 @@ propMap = {
     rscriptType = /^$|\/(?:java|ecma)script/i,
     rscriptTypeMasked = /^true\/(.*)/,
     rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
-
 
 function getBooleanAttrName(element, name) {
     // check dom last since we will most likely fail on name
@@ -74,6 +62,7 @@ function getBooleanAttrName(element, name) {
 function NodeMatching(elem) {
     return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem) ? true : false;
 }
+
 
 /**
  * Disable "script" tags
@@ -138,8 +127,8 @@ hAzzle.extend({
         }
     },
     /**
-	 * jQuery uses valHooks, we don't use that. Too slow !!
-	 */
+     * jQuery uses valHooks, we don't use that. Too slow !!
+     */
     getValue: function (elem) {
 
         if (elem.nodeName === 'SELECT' && elem.multiple) {
@@ -370,27 +359,37 @@ hAzzle.fn.extend({
      * @param {String} value
      * @param {String} dir
      * @return {Object|String}
-     *
-     * NOTE!!
-     *
-     *  insertAdjacentText is faster then textContent, but not supported by Firefox, so we have to check for that.
-     *
-     * 'dir' let user choose where to insert the text - start- center - end of a sentence. This is NOT WORKING in
-     *	Firefox because of the missing feature. Need to fix this ASAP!!
      */
 
     text: function (value, dir) {
-        return hAzzle.isUndefined(value) ?
-            hAzzle.getText(this) :
+
+        if (arguments.length) {
+
+            // Avoid memory leaks, do empty()
+
             this.empty().each(function () {
+
                 if (NodeMatching(this)) {
-                    if (hAzzle.isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
-                        this.insertAdjacentText(direction[dir] ? direction[dir] : 'beforeEnd', value);
+
+                    // Firefox does not support insertAdjacentText 
+
+                    if (typeof HTMLElement !== 'undefined' && HTMLElement.prototype.insertAdjacentText) {
+
+                        this.insertAdjacentText('beforeEnd', value);
+
                     } else {
-                        this.textContent = value;
+
+						this.textContent = value;
                     }
                 }
             });
+
+        } else {
+            
+			// Get the textvalue
+            
+			return hAzzle.getText(this);
+        }
     },
 
     /**
@@ -398,23 +397,55 @@ hAzzle.fn.extend({
      * Set html to element.
      *
      * @param {String} value
-     * @param {String} dir
+     * @param {String} keep
      * @return {Object|String}
      */
 
-    html: function (value, dir) {
+    html: function (value, keep) {
+     
+	 if(! arguments.length && hAzzle.nodeType(1, this[0])) {
+     
+	        return this[0].innerHTML;
+     
+	 } else {
 
-        if (value === undefined && this[0].nodeType === 1) {
-            return this[0].innerHTML;
-        }
+		    return each(function () {
+				
+				/**
+				 * 'keep' if we want to keep the existing children of the node and add some more.
+				 */
+				if(keep && hAzzle.nodeType(1, this)) {
+                 
+				 // insertAdjacentHTML are supported by all major browsers
+ 				 
+				   this.insertAdjacentHTML('beforeend', value || '');
 
-        if (hAzzle.isString(value)) {
-            return this.removeData().each(function () {
+				} else {
+					
                 if (hAzzle.nodeType(1, this)) {
-                    this.textContent = '';
-                    this.insertAdjacentHTML('beforeend', value || '');
+                    
+					if( typeof value === "string" && !/<(?:script|style|link)/i.test( value ) 
+					 && ! hAzzle.htmlHooks[ ( rtagName.exec( value ) || [ "", "" ] )[ 1 ].toLowerCase() ] ) {
+
+                   // Do some magic
+				   
+				    value = value.replace( /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, "<$1></$2>" );
+				   
+ 		          // Remove stored data on the object to avoid memory leaks
+				  
+				  this.removeData();
+				  
+				  // Get rid of existing children
+				  
+				  this.textContent = '';
+					
+				  // Do innerHTML
+					
+                  this.innerHTML = value;
                 }
-            });
+              }				
+		  }
+       });
         }
         return this.empty().append(value);
     },

@@ -22,19 +22,19 @@
 	},
     Chrome: {
 	
-	// Functions that perform faster in Firefox here
+	// Functions that perform faster in Chrome here
 	
 	},
     
 	IE: {
 	
-	// Functions that perform faster in Firefox here
+	// Functions that perform faster in IE here
 	
 	},
     
 	Opera: {
 	
-	// Functions that perform faster in Firefox here
+	// Functions that perform faster in Opera here
 	
 	} 
 	 
