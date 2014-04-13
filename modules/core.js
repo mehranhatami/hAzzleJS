@@ -130,18 +130,18 @@
                 } else {
 
                     if (cache[sel] && !ctx) {
-                        
-						 // Backup the "elems stack" before we loop through
-						 
-						this.elems = elems = cache[sel];
-                        
-						 // Copy the stack over to the hAzzle object so we can access the Protoype
-						 
-						for (i = this.length = elems.length; i--;) this[i] = elems[i];
-                        
-						// Return the hAzzle Object
-						
-						return this;
+
+                        // Backup the "elems stack" before we loop through
+
+                        this.elems = elems = cache[sel];
+
+                        // Copy the stack over to the hAzzle object so we can access the Protoype
+
+                        for (i = this.length = elems.length; i--;) this[i] = elems[i];
+
+                        // Return the hAzzle Object
+
+                        return this;
                     }
 
 
@@ -211,8 +211,7 @@
          */
 
         find: function (sel) {
-            var selType = typeof sel;
-            if (selType === "string") {
+            if (typeof sel === "string") {
                 var elements;
                 if (this.length === 1) {
                     if (selType !== "string") {
@@ -221,22 +220,25 @@
                         elements = hAzzle(sel, this.elems[0]);
                     }
                 } else {
-                    if (selType == 'object') {
-                        var _ = this;
-                        elements = hAzzle(sel).filter(function () {
-                            var node = this;
-                            return _.elems.some.call(_, function (parent) {
-                                return hAzzle.contains(parent, node);
-                            });
-                        });
-                    } else {
-                        elements = this.elems.reduce(function (elements, element) {
-                            return elements.concat(hAzzle.select(sel, element));
-                        }, []);
-                    }
+                    elements = this.elems.reduce(function (elements, element) {
+                        return elements.concat(hAzzle.select(sel, element));
+                    }, []);
                 }
                 return hAzzle.create(elements);
             }
+
+            if (typeof sel === 'object') {
+                var _ = this;
+                elements = hAzzle(sel).filter(function () {
+                    var node = this;
+                    return _.elems.some.call(_, function (parent) {
+                        return hAzzle.contains(parent, node);
+                    });
+                });
+                return hAzzle.create(elements);
+            }
+
+
             return this;
         },
 
@@ -448,9 +450,9 @@
                 if (i in arr) reduced = iterator(reduced, arr[i], i, arr);
                 ++i;
             }
-			
-			return reduced;
-           
+
+            return reduced;
+
         },
 
         /**
@@ -665,9 +667,9 @@
          */
 
         unique: function (array) {
-          return array.filter(function (item, idx) {
-                 return hAzzle.indexOf(array, item) === idx;
-             });
+            return array.filter(function (item, idx) {
+                return hAzzle.indexOf(array, item) === idx;
+            });
 
         },
 
@@ -922,52 +924,52 @@
                 return element;
             }
             return element;
-      },
- 
-         /**
-          * Delays a function for the given number of milliseconds, and then calls it with the arguments supplied.
-          *
-          * @param {Function} func
-          * @return {String} wait
-          * @return {Function}
-          */
- 
-         delay: function (func, wait) {
+        },
+
+        /**
+         * Delays a function for the given number of milliseconds, and then calls it with the arguments supplied.
+         *
+         * @param {Function} func
+         * @return {String} wait
+         * @return {Function}
+         */
+
+        delay: function (func, wait) {
             var args = slice.call(arguments, 2);
-             return setTimeout(function () {
-                 return func.apply(null, args);
-             }, wait);
-         },
- 
-         /**
-          * Defers a function, scheduling it to run after the current call stack has cleared
-          *
-          * @param {Function} func
-          * @return {Function}
-          */
- 
-         defer: function (func) {
-             return hAzzle.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
-         },
- 
-         /**
-          * Returns a function that will be executed at most one time
-          *
-          * @param {Function} func
-          * @return {Function}
-          */
- 
-         once: function (func) {
-             var ran = false,
-                 memo;
-             return function () {
-                 if (ran) return memo;
-                 ran = true;
-                 memo = func.apply(this, arguments);
-                 func = null;
-                 return memo;
-             };
-		 },
+            return setTimeout(function () {
+                return func.apply(null, args);
+            }, wait);
+        },
+
+        /**
+         * Defers a function, scheduling it to run after the current call stack has cleared
+         *
+         * @param {Function} func
+         * @return {Function}
+         */
+
+        defer: function (func) {
+            return hAzzle.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
+        },
+
+        /**
+         * Returns a function that will be executed at most one time
+         *
+         * @param {Function} func
+         * @return {Function}
+         */
+
+        once: function (func) {
+            var ran = false,
+                memo;
+            return function () {
+                if (ran) return memo;
+                ran = true;
+                memo = func.apply(this, arguments);
+                func = null;
+                return memo;
+            };
+        },
 
         nodeName: function (elem, name) {
             return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
@@ -1063,8 +1065,8 @@
     });
 
 
-     if (typeof window['hAzzle'] === "undefined") {
-         window['hAzzle'] = hAzzle;
-     }
+    if (typeof window['hAzzle'] === "undefined") {
+        window['hAzzle'] = hAzzle;
+    }
 
 })(window);
