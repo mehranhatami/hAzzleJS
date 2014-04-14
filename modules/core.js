@@ -4,7 +4,7 @@
  * Version: 0.31 - Beta 4
  * Released under the MIT License.
  *
- * Date: 2014-04-13
+ * Date: 2014-04-14
  *
  */
 (function (window, undefined) {
@@ -35,6 +35,28 @@
         getTime = (Date.now || function () {
             return new Date().getTime();
         }),
+
+        userAgent = navigator.userAgent.toLowerCase(),
+
+        // Detect Opera browser
+
+        Opera = /opera/i.test(navigator.userAgent),
+
+        /**
+         *  Holds a list over all modules and where they are located. Each module will be
+         * injected into the document upon run-time if needed.
+         *
+         * The modules can be in your webfolder or from a CDN.
+         *
+         * NOTE!! Don't include the modules in your HTML files.
+         *
+         */
+
+        modules = {
+
+            'ready': 'domready.js'
+
+        },
 
         /** 
          * Inspired by YUI3: :)
@@ -160,10 +182,17 @@
                         return hAzzle.ready(sel);
 
                     } else {
-                        // To avoid some serious bugs, we inform about what happend
-                        console.log("The DOM Ready module are not installed!!");
-                        return [];
 
+                        // Inject the DOM ready module
+
+                        hAzzle.loadJs(modules['ready'], function () {
+
+                            // Inject all other modules after the DOM is ready
+                            // Lazy loading
+
+                            return hAzzle.ready(sel);
+
+                        });
                     }
                 }
 
@@ -409,6 +438,7 @@
         /**
          * Reduce the number of elems in the "elems" stack
          */
+
 
         reduce: function (iterator, memo) {
 
@@ -966,24 +996,55 @@
             }
             return ret;
         },
-		makeArray: function( arr, results ) {
+        makeArray: function (arr, results) {
 
-		var ret = results || [];
+            var ret = results || [];
 
-		if ( arr !== null ) {
-			if ( hAzzle.isArraylike( Object(arr) ) ) {
-				hAzzle.merge( ret,
-					typeof arr === "string" ?
-					[ arr ] : arr
-				);
-			} else {
-				push.call( ret, arr );
-			}
-		}
+            if (arr !== null) {
+                if (hAzzle.isArraylike(Object(arr))) {
+                    hAzzle.merge(ret,
+                        typeof arr === "string" ? [arr] : arr
+                    );
+                } else {
+                    push.call(ret, arr);
+                }
+            }
 
-		return ret;
-	}
-	
+            return ret;
+        },
+
+        /**
+         * Dynamicly inject the Javascript modules into the document when needed
+         */
+
+        loadJs: function (url, cb) {
+
+            // Prevent injection of other files then Javascript
+
+            if (url.match(/js/) && url != "") {
+
+                var head = doc.getElementsByTagName('head')[0] || doc.getElementsByTagName('body')[0],
+                    script = doc.createElement("script"),
+                    firstScript = doc.scripts[0],
+                    loaded = false;
+                script.async = true; // or false;
+                script.type = "text/javascript";
+                script.id = "script" + Math.floor(Math.random() * 911); // Unique ID for each javascript file on each pagelet
+
+                // Hack for older Opera browsers. Some of them fires load event multiple times, even when the DOM is not ready yet.
+                // This have no impact on the newest Opera browsers, because they share the same engine as Chrome.
+
+                Opera && this.readyState && "complete" != this.readyState || (script.onload = function () {
+                        loaded || (console.log("loaded " + url + ' - id:' + script.id), loaded = !0, cb && cb())
+                    }, // Fall-back for older IE versions ( IE 6 & 7), they do not support the onload event on the script tag  
+                    script.onreadystatechange = function () {
+
+                        loaded || this.readyState && "loaded" !== this.readyState && "complete" !== this.readyState || (script.onerror = script.onload = script.onreadystatechange = null, console.log("loaded " + url + ' - id:' + script.id), loaded = !0, head && script.parentNode && head.removeChild(script))
+                    },
+                    // Because of a bug in IE8, the src needs to be set after the element has been added to the document.
+                    firstScript.parentNode.insertBefore(script, firstScript), script.src = url);
+            }
+        }
     });
 
     /**
