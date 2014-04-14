@@ -56,11 +56,26 @@ hAzzle.fn.extend({
         
 		 var parent = elem.parentNode;
 		 
-		// Remove all children
-		
         if (parent) {
-		
-		   this.parentNode.removeChild(elem);
+          
+		  // Slowly fadeOut and remove all images		
+          
+		  if(elem.tagName === 'IMG'){
+
+          // Push to cache stack 
+
+		  cache.push(elem)
+          
+		  // Set image to blank
+		  
+		  elem.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+          if (timeout) clearTimeout(timeout)
+          timeout = setTimeout(function(){ cache = [] }, 60000)
+        }		
+
+		// Remove all children
+
+	     this.parentNode.removeChild(elem);
 		}
         
        })
