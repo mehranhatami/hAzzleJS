@@ -303,28 +303,22 @@ hAzzle.fn.extend({
      * @param {String} sel
      * @return {Object}
      */
+ siblings: function (sel) {
 
-    siblings: function (sel) {
-        var siblings = [],
-            children,
-            elem,
-            i,
-            len;
+       var siblings = [];
 
         if (!cached[sel]) {
-            this.each(function () {
-                elem = this;
-                children = slice.call(elem.parentNode.childNodes);
-
-                for (i = 0, len = children.length; i < len; i++) {
-                    if (hAzzle.isElement(children[i]) && hAzzle.nodeType(1, children[i]) && children[i] !== elem) {
-                        siblings.push(children[i]);
-                    }
-                }
+            this.each(function (_, elem) {
+	            hAzzle.each(slice.call(elem.parentNode.childNodes), function(_, child) {
+            if (hAzzle.isElement(child) && hAzzle.nodeType(1, child) && child !== elem) {
+                        siblings.push(child);
+              }
+	       });
             });
-            cached[sel] = siblings;
-        }
-        return hAzzle.create(cached[sel], sel);
+                cached[sel] = siblings;
+            }
+	
+            return hAzzle.create(cached[sel], sel);
     }
 
 });
