@@ -6,7 +6,12 @@
  *
  * Date: 2014-04-14
  *
+ *
+ * TO DO! Just now we are using jQuery's DOM ready way to do things. We let it be up to the developer to use the DOM ready function or not.
+ *        My idea is that we skip that, and run the DOM ready automaticly before the library can be used.
+ *        Followed by injection of all modules - modular loading.
  */
+
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
