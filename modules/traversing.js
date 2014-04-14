@@ -184,9 +184,10 @@ hAzzle.fn.extend({
      */
 
     children: function (sel) {
-        return hAzzle.create(this.reduce(function (elements, elem) {
-            var childrens = slice.call(elem.children);
-            return elements.concat(childrens);
+        return hAzzle(this.reduce(function (elements, elem) {
+			if(hAzzle.nodeType(1, elem)) {
+               return elements.concat(slice.call(elem.children));
+			}
         }, []), sel);
     },
 
@@ -288,10 +289,12 @@ hAzzle.fn.extend({
 
     /**
      * FIX ME!! Seems to have problems finding elems inside an iFrame
+     *
+	 * NOTE!! The iFrame problem happend because we don't have a selector engine.
      */
     contents: function () {
         return this.map(function (elem) {
-            return elem.contentDocument || slice.call(elem.childNodes);
+          return elem.contentDocument || slice.call(elem.childNodes);
         });
     },
 

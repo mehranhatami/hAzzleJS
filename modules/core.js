@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.30 - Beta 4
+ * Version: 0.31 - Beta 4
  * Released under the MIT License.
  *
  * Date: 2014-04-13
@@ -658,7 +658,7 @@
          */
 
         create: function (elements, sel) {
-            return hAzzle.isUndefined(sel) ? hAzzle(elements) : hAzzle(elements).filter(sel);
+            return typeof sel === 'undefined' ? hAzzle(elements) : hAzzle(elements).filter(sel);
         },
 
         /**
@@ -965,7 +965,25 @@
                 }
             }
             return ret;
-        }
+        },
+		makeArray: function( arr, results ) {
+
+		var ret = results || [];
+
+		if ( arr !== null ) {
+			if ( hAzzle.isArraylike( Object(arr) ) ) {
+				hAzzle.merge( ret,
+					typeof arr === "string" ?
+					[ arr ] : arr
+				);
+			} else {
+				push.call( ret, arr );
+			}
+		}
+
+		return ret;
+	}
+	
     });
 
     /**

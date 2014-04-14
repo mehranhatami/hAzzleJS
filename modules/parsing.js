@@ -8,7 +8,9 @@ hAzzle.extend({
      */
 
     parseJSON: function (data) {
-        return JSON.parse(data + "");
+		 return hAzzle.isString(data)
+      ? JSON.parse(data + "")
+      : data;
     },
 
     parseXML: function (data) {

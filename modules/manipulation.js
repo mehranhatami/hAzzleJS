@@ -202,27 +202,56 @@ hAzzle.extend({
     prop: function (elem, name, value) {
         // don't get/set properties on text, comment and attribute nodes
         if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
-            return name = propMap[name] || name, value !== undefined ? elem[name] = value : elem[name];
+            return name = propMap[name] || name, typeof value !== "undefined" ? elem[name] = value : elem[name];
         }
     },
 
     attr: function (elem, name, value) {
+
         if (!(hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem))) {
 
-            if ("undefined" === typeof elem.getAttribute) return hAzzle.prop(elem, name, value);
+            if (typeof elem.getAttribute === "undefined") return hAzzle.prop(elem, name, value);
 
-            if (hAzzle.isUndefined(value)) {
-
+            if (typeof value === "undefined") {
 
                 if (hAzzle.Hooks[elem.nodeName]) {
 
                     return hAzzle.Hooks[elem.nodeName](elem);
                 }
-                elem = elem.getAttribute(name);
-                return null === elem ? undefined : elem;
+
+                // The extra argument "2" is to get the right thing for a.href in IE, see jQuery code
+                // some elements (e.g. Document) don't have get attribute, so return undefined
+
+                elem = elem.getAttribute(name, 2);
+
+                return elem === null ? undefined : elem;
             }
 
-            return elem.setAttribute(name, value + "");
+            if (elem.nodeName === 'SELECT') {
+
+                var optionSet, option,
+                    options = elem.options,
+                    values = hAzzle.makeArray(value),
+                    i = options.length;
+
+                while (i--) {
+                    option = options[i];
+                    if ((option.selected = hAzzle.inArray(option.value, values) >= 0)) {
+                        optionSet = true;
+                    }
+                }
+
+                // force browsers to behave consistently when non-matching value is set
+                if (!optionSet) {
+                    elem.selectedIndex = -1;
+                }
+                return values;
+
+            } else {
+
+                return elem.setAttribute(name, value + "");
+
+            }
         }
     },
 
@@ -541,17 +570,22 @@ hAzzle.fn.extend({
      */
 
     removeAttr: function (value) {
-        var elem, name, propName, i, attrNames = value && value.match((/\S+/g));
-        return this.each(function () {
-            elem = this;
-            i = 0;
+
+        var name, propName, i = 0,
+            attrNames = value && value.match((/\S+/g));
+
+        return this.each(function (_, elem) {
 
             if (attrNames && hAzzle.nodeType(1, elem)) {
+
                 while ((name = attrNames[i++])) {
                     propName = propMap[name] || name;
+
                     if (getBooleanAttrName(elem, name)) {
+
                         elem[propName] = false;
                     }
+
                     elem.removeAttribute(name);
                 }
             }
@@ -572,7 +606,7 @@ hAzzle.fn.extend({
             hAzzle.each(name, function (key, value) {
                 hAzzle.prop(element, key, value);
             });
-        }) : hAzzle.isUndefined(value) ? this[0] && this[0][propMap[name] || name] : hAzzle.prop(element, key, value);
+        }) : typeof value === "undefined" ? this[0] && this[0][propMap[name] || name] : hAzzle.prop(this[0], key, value);
     },
 
     /*
@@ -584,7 +618,6 @@ hAzzle.fn.extend({
      */
 
     removeProp: function (name) {
-
         return this.each(function () {
             delete this[propMap[name] || name];
         });
@@ -598,7 +631,27 @@ hAzzle.fn.extend({
      */
 
     replaceWith: function (html) {
-        return this.before(html).remove();
+    
+	    // Use the faster 'insertAdjacentHTML' if we can
+
+        if (typeof html === "string") {
+
+            return this.before(html).remove();
+
+        } else {
+
+            var arg = arguments[0];
+            this.manipulateDOM(arguments, function (elem) {
+                arg = this.parentNode;
+
+                if (arg) {
+                    arg.replaceChild(elem, this);
+                }
+            });
+
+            // Force removal if there was no new content (e.g., from empty arguments)
+            return arg && (arg.length || arg.nodeType) ? this : this.remove();
+        }
     },
 
     /**
@@ -741,7 +794,7 @@ hAzzle.fn.extend({
 
         if (this[0]) {
 
-            hAzzle(this[0]).before(html = hAzzle(html, this[0].ownerDocument).eq(0)); //.clone(true));
+            hAzzle(this[0]).before(html = hAzzle(html, this[0].ownerDocument).eq(0).clone(true));
 
             var children;
             // drill down to the inmost element
