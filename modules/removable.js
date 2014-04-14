@@ -1,21 +1,36 @@
-var cahce = [], timeout;
+
+// Contains: Empty() and Remove()
+
+   var cahce = [], 
+   timeout;
 
 hAzzle.fn.extend({
 
     /**
-     * Remove all childNodes from an element
+     * Remove all child nodes of the set of matched elements from the DOM.
      *
      * @return {Object}
      */
 
     empty: function () {
-
-        return this.removeData().each(function () {
-
-            this.textContent = "";
+       
+	   // Remove all data to prevent memory leaks
+	   
+        return this.removeData().each(function (_, elem) {
+         if ( hAzzle.nodeType(1, this)) {
+			 
+		 // Remove all event handlers
+		
+		hAzzle.each(elem, function() {
+			hAzzle.Events.remove(elem);
+		});
+			 
+		 // Remove any remaining nodes
+        
+		 this.textContent = "";
+		 }
         });
     },
-	
 	
 	 /**
      *  Remove an element from the DOM
@@ -25,29 +40,31 @@ hAzzle.fn.extend({
 
 		// Discard any data on the element
 
-        return this.removeData().each(function () {
+        return this.removeData().each(function (_, elem) {
 			
 		// Locate all nodes that belong to this element
+		// and add them to the "elems stack"
 			
-		  var elements = hAzzle(this).find('*');
-		      elements  = elements.add(this);
+		  var elements = hAzzle(elem).find('*');
+		      elements  = elements.add(elem);
 
-		// Remove all attached event handlers
+	    // Remove all event handlers
 		
 		hAzzle.each(elements, function() {
-			hAzzle.Events.remove(this);
+			hAzzle.Events.remove(elem);
 		});
         
-		// Remove all parent nodes
-        if (this.parentNode)
-          if(this.tagName === 'IMG'){
-          cache.push(this)
-          this.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
-          if (timeout) clearTimeout(timeout)
-          timeout = setTimeout(function(){ cache = [] }, 60000)
-        }		
-        this.parentNode.removeChild(this)
+		 var parent = elem.parentNode;
+		 
+		// Remove all children
+		
+        if (parent) {
+		
+		   this.parentNode.removeChild(elem);
+		}
+        
        })
+	   return false;
     }
 });
 
