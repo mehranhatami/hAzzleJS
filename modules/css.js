@@ -19,6 +19,7 @@
  * once. This increase the performance.
  *
  */
+ 
 var html = window.document.documentElement,
 
     cssNormalTransform = {
@@ -32,12 +33,6 @@ var html = window.document.documentElement,
 
     cssDirection = ["Top", "Right", "Bottom", "Left"],
 
-    cssShow = {
-        position: "absolute",
-        visibility: "hidden",
-        display: "block"
-    },
-
     // Some regEx we are using
 
     numberOrPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
@@ -45,7 +40,6 @@ var html = window.document.documentElement,
     margin = (/^margin/),
     numSplit = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
     relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
-
 
 /**
  * Get the documents width or height
@@ -100,63 +94,6 @@ function setPositiveNumber(value, subs) {
     return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value
 }
 
-function getWidthOrHeight(elem, name, extra) {
-    var valueIsBorderBox = true,
-        val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
-        styles = getStyles(elem),
-        isBorderBox = hAzzle.css(elem, "boxSizing", false, styles) === "border-box";
-
-    if (val <= 0 || val === null) {
-        val = curCSS(elem, name, styles);
-
-        if (val < 0 || val === null) val = elem.style[name];
-
-        if (numberOrPx.test(val)) return val;
-
-        valueIsBorderBox = isBorderBox && (hAzzle.support.boxSizingReliable() || val === elem.style[name]);
-        val = parseFloat(val) || 0;
-
-    }
-    return val + augmentWidthOrHeight(elem, name, extra || (isBorderBox ? "border" : "content"), valueIsBorderBox, styles) + "px";
-}
-
-
-function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
-
-    var i = extra === (isBorderBox ? "border" : "content") ? 4 : name === "width" ? 1 : 0,
-
-        val = 0;
-
-    for (; i < 4; i += 2) {
-
-        // both box models exclude margin, so add it if we want it
-        if (extra === "margin") {
-            val += hAzzle.css(elem, extra + cssDirection[i], true, styles);
-        }
-
-        if (isBorderBox) {
-            // border-box includes padding, so remove it if we want content
-            if (extra === "content") {
-                val -= hAzzle.css(elem, "padding" + cssDirection[i], true, styles);
-            }
-
-            // at this point, extra isn't border nor margin, so remove border
-            if (extra !== "margin") {
-                val -= hAzzle.css(elem, "border" + cssDirection[i] + "Width", true, styles);
-            }
-        } else {
-            // at this point, extra isn't content, so add padding
-            val += hAzzle.css(elem, "padding" + cssDirection[i], true, styles);
-
-            // at this point, extra isn't content nor padding, so add border
-            if (extra !== "padding") {
-                val += hAzzle.css(elem, "border" + cssDirection[i] + "Width", true, styles);
-            }
-        }
-    }
-
-    return val;
-}
 
 /**
  * Check if an element is hidden
@@ -748,14 +685,137 @@ hAzzle.fn.extend({
  * Process Width and height
  */
 
-hAzzle.each(["height", "width"], function (_, name) {
+// Width and height
+hAzzle.each(["height", "width"], function (i, name) {
+
+    // hAzzle 'fn'
+
     hAzzle.fn[name] = function (value) {
         return hAzzle.isDefined(value) ? this.each(function () {
             hAzzle.style(this, name, value);
         }) : predefultValue(this[0], name, "content");
     }
-});
 
+    // cssHooks	
+
+    hAzzle.cssHooks[name] = {
+
+        get: function (elem, computed, extra) {
+
+            var cssShow = {
+                position: "absolute",
+                visibility: "hidden",
+                display: "block"
+            };
+
+            if (computed) {
+
+                if (elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display"))) {
+
+                    var ret, name,
+                        old = {};
+
+                    // Remember the old values, and insert the new ones
+                    for (name in cssShow) {
+                        old[name] = elem.style[name];
+                        elem.style[name] = cssShow[name];
+                    }
+
+                    ret = this.getWidthOrHeight(elem, args || []);
+
+                    // Revert the old values
+                    for (name in cssShow) {
+                        elem.style[name] = old[name];
+                    }
+
+                    return ret;
+
+                } else {
+
+                    this.getWidthOrHeight(elem, name, extra);
+                }
+
+            }
+        },
+
+        set: function (elem, value, extra) {
+            var styles = extra && getStyles(elem);
+            return setPositiveNumber(value, extra ?
+                this.augmentWidthOrHeight(
+                    elem,
+                    name,
+                    extra,
+                    hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
+                    styles
+                ) : 0
+            );
+        },
+
+        getWidthOrHeight: function (elem, name, extra) {
+
+            var valueIsBorderBox = true,
+                val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
+                styles = getStyles(elem),
+                isBorderBox = hAzzle.css(elem, "boxSizing", false, styles, name) === "border-box";
+
+            if (val <= 0 || val === null) {
+                val = curCSS(elem, name, styles);
+
+                if (val < 0 || val === null) val = elem.style[name];
+
+                if (numberOrPx.test(val)) return val;
+
+                valueIsBorderBox = cached[elem] ? cached[elem] : cached[elem] = isBorderBox && (hAzzle.support.boxSizingReliable() || val === elem.style[name]);
+                val = cached[valueIsBorderBox] ? cached[valueIsBorderBox] : cached[valueIsBorderBox] = parseFloat(val) || 0;
+
+            }
+            return val + this.augmentWidthOrHeight(elem, name, extra || (isBorderBox ? "border" : "content"), valueIsBorderBox, styles) + "px";
+        },
+        augmentWidthOrHeight: function (elem, name, extra, isBorderBox, styles) {
+
+            var i = extra === (isBorderBox ? "border" : "content") ? 4 : name === "width" ? 1 : 0,
+                val;
+
+            if (!cached[elem + name]) {
+
+                val = 0;
+
+                for (; i < 4; i += 2) {
+
+                    // both box models exclude margin, so add it if we want it
+                    if (extra === "margin") {
+                        val += hAzzle.css(elem, extra + cssDirection[i], true, styles, name);
+                    }
+
+                    if (isBorderBox) {
+                        // border-box includes padding, so remove it if we want content
+                        if (extra === "content") {
+                            val -= hAzzle.css(elem, "padding" + cssDirection[i], true, styles, name);
+                        }
+
+                        // at this point, extra isn't border nor margin, so remove border
+                        if (extra !== "margin") {
+                            val -= hAzzle.css(elem, "border" + cssDirection[i] + "Width", true, styles, name);
+                        }
+                    } else {
+                        // at this point, extra isn't content, so add padding
+                        val += hAzzle.css(elem, "padding" + cssDirection[i], true, styles, name);
+
+                        // at this point, extra isn't content nor padding, so add border
+                        if (extra !== "padding") {
+                            val += hAzzle.css(elem, "border" + cssDirection[i] + "Width", true, styles, name);
+                        }
+                    }
+                }
+
+                cached[elem + name] = val;
+            }
+            return cached[elem + name];
+        }
+
+
+    };
+});
 /**
  * Process Outerwidth and Outerheight
  */
@@ -795,38 +855,6 @@ hAzzle.each({
  * CSS HOOKS
  *
  ***********************************************************************************/
-
-/**
- * CSS hooks height && width
- */
-
-hAzzle.each(["height", "width"], function (i, name) {
-
-    hAzzle.cssHooks[name] = {
-        get: function (elem, computed, extra) {
-            if (computed) {
-                return elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display")) ?
-                    hAzzle.swap(elem, cssShow, function () {
-                        return getWidthOrHeight(elem, name, extra);
-                    }) :
-                    getWidthOrHeight(elem, name, extra);
-            }
-        },
-
-        set: function (elem, value, extra) {
-            var styles = extra && getStyles(elem);
-            return setPositiveNumber(value, extra ?
-                augmentWidthOrHeight(
-                    elem,
-                    name,
-                    extra,
-                    hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
-                    styles
-                ) : 0
-            );
-        }
-    };
-});
 
 
 /**
