@@ -1,17 +1,23 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.31 - Beta 4
+ * Version: 0.31a - Beta 4
  * Released under the MIT License.
  *
  * Date: 2014-04-14
  *
- *
  * TO DO! Just now we are using jQuery's DOM ready way to do things. We let it be up to the developer to use the DOM ready function or not.
  *        My idea is that we skip that, and run the DOM ready automaticly before the library can be used.
  *        Followed by injection of all modules - modular loading.
+ *
+ *
+ * IN THE FUTURE:
+ * ===============
+ *
+ * Automaticly module loading. Load the Core.js upon pagelaod, and inject the rest of the modules after the document become ready.
+ * Option to load modules from CDN or locale.
+ *
  */
-
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -46,22 +52,6 @@
         // Detect Opera browser
 
         Opera = /opera/i.test(navigator.userAgent),
-
-        /**
-         *  Holds a list over all modules and where they are located. Each module will be
-         * injected into the document upon run-time if needed.
-         *
-         * The modules can be in your webfolder or from a CDN.
-         *
-         * NOTE!! Don't include the modules in your HTML files.
-         *
-         */
-
-        modules = {
-
-            'ready': 'domready.js'
-
-        },
 
         /** 
          * Inspired by YUI3: :)
@@ -186,18 +176,10 @@
 
                         return hAzzle.ready(sel);
 
-                    } else {
-
-                        // Inject the DOM ready module
-
-                        hAzzle.loadJs(modules['ready'], function () {
-
-                            // Inject all other modules after the DOM is ready
-                            // Lazy loading
-
-                            return hAzzle.ready(sel);
-
-                        });
+                   } else {
+                        // To avoid some serious bugs, we inform about what happend
+                        console.log("The DOM Ready module are not installed!!");
+                        return [];
                     }
                 }
 
@@ -330,8 +312,7 @@
          */
 
         pluck: function (prop, nt) {
-            if (nodeTypes[nt]) return hAzzle.pluck(this.elems, prop);
-            return hAzzle.pluck(this.elems, prop);
+            return hAzzle.pluck(this.elems, prop, nt);
         },
 
         /**
@@ -443,7 +424,6 @@
         /**
          * Reduce the number of elems in the "elems" stack
          */
-
 
         reduce: function (iterator, memo) {
 
@@ -727,9 +707,24 @@
          * Same as the 'internal' pluck method, except this one is global
          */
 
-        pluck: function (array, prop) {
-            return array.map(function (itm) {
-                return itm[prop];
+        pluck: function (array, prop, nt) {
+
+            return array.map(function (elem) {
+
+                // Filter by 'nodeType' if 'nt' are set
+
+                if (nt && !nodeTypes[nt](elem)) {
+
+                    return elem[prop];
+
+                    // No nodeType to filter with, return everything
+
+                } else {
+
+                    return elem[prop];
+
+                }
+
             });
         },
 
@@ -1016,39 +1011,6 @@
             }
 
             return ret;
-        },
-
-        /**
-         * Dynamicly inject the Javascript modules into the document when needed
-         */
-
-        loadJs: function (url, cb) {
-
-            // Prevent injection of other files then Javascript
-
-            if (url.match(/js/) && url != "") {
-
-                var head = doc.getElementsByTagName('head')[0] || doc.getElementsByTagName('body')[0],
-                    script = doc.createElement("script"),
-                    firstScript = doc.scripts[0],
-                    loaded = false;
-                script.async = true; // or false;
-                script.type = "text/javascript";
-                script.id = "script" + Math.floor(Math.random() * 911); // Unique ID for each javascript file on each pagelet
-
-                // Hack for older Opera browsers. Some of them fires load event multiple times, even when the DOM is not ready yet.
-                // This have no impact on the newest Opera browsers, because they share the same engine as Chrome.
-
-                Opera && this.readyState && "complete" != this.readyState || (script.onload = function () {
-                        loaded || (console.log("loaded " + url + ' - id:' + script.id), loaded = !0, cb && cb())
-                    }, // Fall-back for older IE versions ( IE 6 & 7), they do not support the onload event on the script tag  
-                    script.onreadystatechange = function () {
-
-                        loaded || this.readyState && "loaded" !== this.readyState && "complete" !== this.readyState || (script.onerror = script.onload = script.onreadystatechange = null, console.log("loaded " + url + ' - id:' + script.id), loaded = !0, head && script.parentNode && head.removeChild(script))
-                    },
-                    // Because of a bug in IE8, the src needs to be set after the element has been added to the document.
-                    firstScript.parentNode.insertBefore(script, firstScript), script.src = url);
-            }
         }
     });
 
@@ -1058,7 +1020,7 @@
 
     hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
         nodeTypes[value] = function (elem) {
-            return elem.nodeType === value;
+            return elem.nodeType === value
         };
     });
 

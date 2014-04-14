@@ -145,7 +145,7 @@ hAzzle.fn.extend({
      */
 
     parent: function (sel) {
-        return hAzzle(this.pluck('parentNode'), sel, /* NodeType 11 */ 11);
+        return hAzzle(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
     },
 
     /**
