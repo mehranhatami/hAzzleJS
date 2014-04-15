@@ -1,45 +1,58 @@
 /**
- * CSS Module
- *
- * hAzzle supports cssHooks in the same way as jQuery, and there is possibilities to add
- * extra set of rules for CSS.
- *
- * 'boxSizing' is the only property hAzzle support for now, because a lot of the other
- * CSS properties requires IE 10 or newer etc.
- *
- * hAzzle supports both width / height and padding / margin short-hand.
- *
- * Example:  hAzzle('div').css('margin')  ( Output margin for all directions)
- *
- * There are also support for Objects. CSS properties can be set in a serie, like this:
- *
- * hAzzle('div').css({ 'top': 10px, 'left': 20px, 'bottom': '300px' });
- *
- * This for faster development and the CSS selector only need to be requested
- * once. This increase the performance.
- *
+ * WARNING!!! jQuery sucks!! It will cost you a lot of hours with extra work if you try to use some of the
+ *            jQuery code. They don't even support some CSS attributes like !important !!!
  */
- 
-var html = window.document.documentElement,
-
-    cssNormalTransform = {
-        letterSpacing: "0",
-        fontWeight: "400"
-    },
-
-    // Used for cache some functions for better performance
-
-    cached = [],
-
-    cssDirection = ["Top", "Right", "Bottom", "Left"],
-
-    // Some regEx we are using
-
-    numberOrPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
+var numberOrPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     displaySwap = /^(none|table(?!-c[ea]).+)/,
     margin = (/^margin/),
     numSplit = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
-    relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
+    relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+	
+    cssDirection = ["Top", "Right", "Bottom", "Left"];
+
+
+function dasherize(str) {
+    return str.replace(/::/g, '/')
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+        .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+        .replace(/_/g, '-')
+        .toLowerCase()
+}
+
+function vendorCheckUp(style, name) {
+
+    // Shortcut for names that are not vendor prefixed
+
+    if (name in style) {
+        return name;
+    }
+
+    // check for vendor prefixed names
+
+    var origName = name,
+        name = hAzzle.prefix(name);
+
+    if (name in style) {
+        return name;
+    }
+
+    return origName;
+}
+
+/**
+ * Get styles
+ * Note: The getComputedStyle method is supported in Internet Explorer from version 9,
+ *       and IE 10 for mobile. Need to find solution for mobile phones
+ */
+
+function getStyles(elem) {
+    return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+};
+
+function setPositiveNumber(value, subs) {
+    var matches = numSplit.exec(value);
+    return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value
+}
 
 /**
  * Get the documents width or height
@@ -80,21 +93,6 @@ function getWindow(elem) {
     return hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
 }
 
-
-/**
- * Get styles
- */
-
-var getStyles = function (elem) {
-    return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-};
-
-function setPositiveNumber(value, subs) {
-    var matches = numSplit.exec(value);
-    return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value
-}
-
-
 /**
  * Check if an element is hidden
  *  @return {Boolean}
@@ -116,7 +114,8 @@ function isHidden(elem, el) {
 function show(elem) {
 
     if (isHidden(elem))
-        return hAzzle.style(elem, 'display', hAzzle.data(elem, 'display') || 'block');
+
+        elem.style.cssText += hAzzle.style(elem, 'display', hAzzle.data(elem, 'display') || 'block');
 }
 
 /**
@@ -136,19 +135,11 @@ function hide(elem) {
         }
 
         // Hide the element
-        hAzzle.style(elem, 'display', 'none');
+       elem.style.cssText += hAzzle.style(elem, 'display', 'none');
     }
 }
 
 
-/**
- * Set and get CSS properties
- * @param {Object} elem
- * @param {String} name
- * @param {String} computed
- * @return {Object}
- *
- */
 
 function curCSS(elem, name, computed) {
     var width, minWidth, maxWidth, ret,
@@ -185,57 +176,22 @@ function curCSS(elem, name, computed) {
     }
     return ret !== undefined ? ret + "" : ret;
 }
-/*
- * Check up for vendor prefixed names
- * This function is cached so we can gain better speed
- */
-
-function vendorCheckUp(style, name) {
-
-    if (!cached[style + name]) {
-
-        // Shortcut for names that are not vendor prefixed
-
-        if (name in style) {
-            return name;
-        }
-
-        // check for vendor prefixed names
-
-        var origName = name,
-            name = hAzzle.prefix(name);
-
-        if (name in style) {
-            return name;
-        }
-
-        cached[style + name] = origName;
-    }
-    return cached[style + name];
-}
-
 
 hAzzle.extend({
 
-    cssProps: {
-
-        "float": "cssFloat"
+    cssNumber: {
+        'column-count': 1,
+        'columns': 1,
+        'font-weight': 1,
+        'line-height': 1,
+        'opacity': 1,
+        'z-index': 1,
+        'zoom': 1
     },
 
-    // Don't add 'px' on certain CSS properties
-
-    cssNumber: hAzzle.makeMap("fillOpacity, flexGrow, flexShrink, fontWeight, lineHeight, opacity, orphans, widows, zIndex, zoom"),
-
-    /**
-     * cssHooks similar to jQuery
-     *
-     * We are in 2014 and hAzzle supports cssHooks because we need to
-     * support short-hands, and a lot of HTML5 features
-     * supported by IE9 and newer browsers
-     */
-
     cssHooks: {
-        'opacity': {
+
+        opacity: {
             get: function (elem, computed) {
                 if (computed) {
                     // We should always get a number back from opacity
@@ -244,6 +200,7 @@ hAzzle.extend({
                 }
             }
         }
+
     },
 
     offset: {
@@ -295,12 +252,135 @@ hAzzle.extend({
         }
     },
 
+    cssNormalTransform: {
+        letterSpacing: "0",
+        fontWeight: "400"
+    },
+
+    cssProps: {
+
+        "float": "cssFloat"
+    },
+
+    // Globalize CSS
+
+    css: function (elem, name, extra, styles, normalized) {
+
+        var val;
+        /**
+         * If this function are called from within hAzzle.style(), we don't
+         * need to normalize the name again.
+         */
+
+        if (!normalized) {
+
+            // Normalize the name
+
+            name = hAzzle.camelCase(name)
+
+            // Transform to normal properties - vendor or not
+
+            name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorCheckUp(elem.style, name));
+
+        }
+
+        // Do we have any cssHooks available?
+
+        var hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[name]
+
+        // If a hook was provided get the computed value from there
+        if (hooks) {
+            val = hooks['get'](elem, true, extra);
+        }
+
+        // Otherwise, if a way to get the computed value exists, use that
+
+        if (val === undefined) {
+            val = curCSS(elem, name, styles);
+        }
+
+        // Convert "normal" to computed value
+
+        if (val === "normal" && name in hAzzle.cssNormalTransform) {
+            val = hAzzle.cssNormalTransform[name];
+        }
+
+        // Return, converting to number if forced or a qualifier was provided and val looks numeric
+
+        if (extra === "" || extra) {
+            num = parseFloat(val);
+            return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
+        }
+        return val;
+    },
+
+    style: function (elem, name, value, extra) {
+
+        // Don't set styles on text and comment nodes
+
+        if (!elem || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem) || !elem.style) {
+            return;
+        }
+
+        // Transform to normal properties - vendor or not
+
+        name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorCheckUp(elem.style, name));
+
+        name = cached[name] ? cached[name] : cached[name] = dasherize(name);
+
+        // Do we have any cssHooks available?
+
+        var hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[name],
+            style = elem.style,
+            digit = false;
+
+        /**
+         * Convert relative numbers to strings.
+         * It can handle +=, -=, em or %
+         */
+
+        if (typeof value === "string" && (ret = relNum.exec(value))) {
+            value = hAzzle.css(elem, name, "", "", name);
+            value = hAzzle.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+
+            // We are dealing with relative numbers, set till true
+
+            digit = true;
+        }
+
+        // Make sure that null and NaN values aren't set.
+
+        if (value === null || value !== value) {
+            return;
+        }
+
+        // If a number was passed in, add 'px' to the (except for certain CSS properties)
+
+        if (digit && !hAzzle.cssNumber[name]) {
+
+            value += ret && ret[3] ? ret[3] : "px";
+        }
+
+        // Check for background
+
+        if (value === "" && /background/i.test(name)) {
+
+            return name + ":" + "inherit";
+        }
+
+        if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
+
+            return name + ":" + value;
+        }
+    },
+
     // Convert some pixels into another CSS unity.
     // It's used in $.style() for the += or -=.
     // * px   : Number.
     // * unit : String, like "%", "em", "px", ...
     // * elem : Node, the current element.
     // * prop : String, the CSS property.
+
     pixelsToUnity: function (px, unit, elem, prop) {
 
         if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
@@ -333,145 +413,15 @@ hAzzle.extend({
             units.cm = units.mm * 10;
             units.inn = units.cm * 2.54;
             units.pt = units.inn * 1 / 72;
-
             units.pc = units.pt * 12;
         }
         // If the unity specified is not recognized we return the value.
         unit = hAzzle.pixelsToUnity.units[unit];
         return unit ? px / unit : px;
-    },
-
-
-    // Globalize CSS
-
-    css: function (elem, name, extra, styles, normalized) {
-
-        var val;
-
-        /**
-         * If this function are called from within hAzzle.style(), we don't
-         * need to normalize the name again.
-         */
-
-        if (!normalized) {
-
-            // Normalize the name
-
-            name = hAzzle.camelCase(name)
-
-            // Transform to normal properties - vendor or not
-
-            name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorCheckUp(elem.style, name));
-
-        }
-
-        // Do we have any cssHooks available?
-
-        var hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[name]
-
-        // If a hook was provided get the computed value from there
-        if (hooks) {
-            val = hooks['get'](elem, true, extra);
-        }
-
-        // Otherwise, if a way to get the computed value exists, use that
-
-        if (typeof val === "undefined") {
-
-            val = curCSS(elem, name, styles);
-        }
-
-        // Convert "normal" to computed value
-
-        if (val === "normal" && name in hAzzle.cssNormalTransform) {
-
-            val = hAzzle.cssNormalTransform[name];
-        }
-
-        // Return, converting to number if forced or a qualifier was provided and val looks numeric
-
-        if (extra === "" || extra) {
-            num = parseFloat(val);
-            return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
-        }
-        return val;
-    },
-
-    style: function (elem, name, value, extra) {
-
-        // Don't set styles on text and comment nodes
-
-        if (!elem || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem) || !elem.style) {
-            return;
-        }
-
-        // Normalize the name
-
-        name = hAzzle.camelCase(name)
-
-        // Transform to normal properties - vendor or not
-
-        name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorCheckUp(elem.style, name));
-
-        // Do we have any cssHooks available?
-
-        var hooks = hAzzle.cssHooks[name],
-            style = elem.style,
-            digit = false;
-
-        // Check if we're setting a value
-        if (typeof value !== "undefined") {
-
-            /**
-             * Convert relative numbers to strings.
-             * It can handle +=, -=, em or %
-             */
-
-            if (typeof value === "string" && (ret = relNum.exec(value))) {
-                value = hAzzle.css(elem, name, "", "", name);
-                value = hAzzle.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
-
-                // We are dealing with relative numbers
-
-                digit = true;
-            }
-
-            // Make sure that null and NaN values aren't set.
-
-            if (value === null || value !== value) {
-                return;
-            }
-
-            // If a number was passed in, add 'px' to the (except for certain CSS properties)
-
-            if (digit && !hAzzle.cssNumber[name]) {
-
-                value += ret && ret[3] ? ret[3] : "px";
-            }
-
-            // Check for background
-
-            if (value === "" && /background/i.test(name)) {
-
-                style[name] = "inherit";
-            }
-
-            // If a cssHook was provided, use that value, otherwise just set the specified value
-
-            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
-                style[name] = value;
-            }
-
-        } else {
-
-            // Get the value from the style object
-            return style[name];
-        }
-
     }
 
-});
 
+});
 
 hAzzle.fn.extend({
 
@@ -483,7 +433,7 @@ hAzzle.fn.extend({
 
     show: function () {
         return this.each(function () {
-            show(this);
+			show(this);
         });
     },
 
@@ -525,16 +475,28 @@ hAzzle.fn.extend({
      * @return {String|Object}
      */
 
-    css: function (name, value) {
-        if (typeof value === "undefined") return typeof name === 'string' ? this[0] && hAzzle.css(this[0], name) : this.each(function () {
-            var elem = this;
-            hAzzle.each(name, function (name, value) {
-                hAzzle.style(elem, name, value);
-            });
-        });
-        else {
-            return this.each(function () {
-                hAzzle.style(this, name, value);
+    css: function (property, value) {
+
+        if (arguments.length === 1) {
+
+            if (typeof property === 'string') {
+                return this[0] && hAzzle.css(this[0], property)
+            }
+
+            for (var key in property) {
+
+                this.each(function () {
+
+                    this.style.cssText += hAzzle.style(this, key, property[key]);
+                });
+            }
+
+        } else {
+
+            this.each(function () {
+
+                this.style.cssText += hAzzle.style(this, property, value);
+
             });
         }
     },
