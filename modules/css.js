@@ -70,6 +70,111 @@ function vendorCheckUp(style, name) {
     return name in style ? name : origName;
 }
 
+
+/**
+ * Check if an element is hidden
+ *  @return {Boolean}
+
+ */
+
+function isHidden(elem, el) {
+    elem = el || elem;
+    return elem.style.display === "none";
+}
+
+/**
+ * Show an element
+ *
+ * @param {Object} elem
+ * @return Object}
+ *
+ *
+ * FIXME!! Need a lot of tests and fixes to work correctly everywhere
+ *
+ */
+
+function show(elem) {
+
+    var counte = 0,
+        style = elem.style;
+
+    if (style.display === "none") {
+
+        style.display = "";
+
+    }
+
+    if ((style.display === "" && curCSS(elem, "display") === "none") || !hAzzle.contains(elem.ownerDocument.documentElement, elem)) {
+        hAzzle.data(elem, 'display', css_defaultDisplay(elem.nodeName));
+    }
+}
+
+var elemdisplay = {};
+
+// Try to determine the default display value of an element
+function css_defaultDisplay(nodeName) {
+    if (elemdisplay[nodeName]) {
+        return elemdisplay[nodeName];
+    }
+
+    var elem = hAzzle("<" + nodeName + ">").appendTo(document.body),
+        display = elem.css("display");
+    elem.remove();
+
+    // If the simple way fails,
+    // get element's real default display by attaching it to a temp iframe
+    if (display === "none" || display === "") {
+        // Use the already-created iframe if possible
+        iframe = document.body.appendChild(
+            iframe || hAzzle.extend(document.createElement("iframe"), {
+                frameBorder: 0,
+                width: 0,
+                height: 0
+            })
+        );
+
+        // Create a cacheable copy of the iframe document on first call.
+        // IE and Opera will allow us to reuse the iframeDoc without re-writing the fake HTML
+        // document to it; WebKit & Firefox won't allow reusing the iframe document.
+        if (!iframeDoc || !iframe.createElement) {
+            iframeDoc = (iframe.contentWindow || iframe.contentDocument).document;
+            iframeDoc.write("<!doctype html><html><body>");
+            iframeDoc.close();
+        }
+
+        elem = iframeDoc.body.appendChild(iframeDoc.createElement(nodeName));
+
+        display = curCSS(elem, "display");
+        document.body.removeChild(iframe);
+    }
+
+    // Store the correct default display
+    elemdisplay[nodeName] = display;
+
+    return display;
+}
+
+
+/**
+ * Hide an element
+ *
+ * @param {Object} elem
+ * @return Object}
+ */
+
+function hide(elem) {
+    if (!isHidden(elem)) {
+        var display = hAzzle.css(elem, 'display');
+        if (display !== 'none') {
+            hAzzle.data(elem, 'display', display);
+        }
+
+        // Hide the element
+        hAzzle.style(elem, 'display', 'none');
+    }
+}
+
+
 /**
  * Get styles
  * Note: The getComputedStyle method is supported in Internet Explorer from version 9,
@@ -275,6 +380,10 @@ hAzzle.extend({
         return val;
     },
 
+    /**
+     * CSS properties accessor for an element
+     */
+
     style: function (elem, name, value, extra) {
 
         // Don't set styles on text and comment nodes
@@ -412,6 +521,47 @@ hAzzle.extend({
 
 
 hAzzle.fn.extend({
+
+    /**
+     * Show elements in collection
+     *
+     * @return {Object}
+     */
+
+    show: function () {
+        return this.each(function () {
+            show(this);
+        });
+    },
+
+    /**
+
+     * Hide elements in collection
+     *
+     * @return {Object}
+     */
+
+    hide: function () {
+        return this.each(function () {
+            hide(this);
+        });
+    },
+
+    /**
+     * Toggle show/hide.
+     * @return {Object}
+     */
+
+    toggle: function (state) {
+        if (typeof state === "boolean") {
+            return state ? this.show() : this.hide();
+        }
+        return this.each(function () {
+
+            if (isHidden(this)) show(this);
+            else hide(this);
+        });
+    },
 
     css: function (property, value) {
 
@@ -767,7 +917,7 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
     for (; i < 4; i += 2) {
         // both box models exclude margin, so add it if we want it
         if (extra === "margin") {
-            // we use jQuery.css instead of curCSS here
+            // we use hAzzle.css instead of curCSS here
             // because of the reliableMarginRight CSS hook!
             val += hAzzle.css(elem, extra + cssDirection[i], true);
         }
