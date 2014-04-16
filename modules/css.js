@@ -173,31 +173,6 @@ function hide(elem) {
     }
 }
 
-
-/**
- * Get styles
- * Note: The getComputedStyle method is supported in Internet Explorer from version 9,
- *       and IE 10 for mobile. Need to find solution for mobile phones
- */
-
-function getStyles(elem) {
-    return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-}
-
-/**
- * Get the documents width or height
- * margin / padding are optional
- */
-
-
-
-/**
- * Gets a window from an element
- */
-function getWindow(elem) {
-    return hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
-}
-
 function curCSS(elem, name, computed, style) {
 
     var width, minWidth, maxWidth, ret;
@@ -207,7 +182,7 @@ function curCSS(elem, name, computed, style) {
         style = elem.style;
     }
 
-    computed = computed || getStyles(elem);
+    computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
 
     if (computed) {
 
@@ -551,7 +526,7 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    toggle: function (fn, fn2) {
+    toggle: function (state) {
 
         if (typeof state === "boolean") {
             return state ? this.show() : this.hide();
@@ -783,7 +758,7 @@ hAzzle.each(["Height", "Width"], function (i, name) {
             return elem.document.documentElement["client" + name];
 
             // Get document width or height
-        } else if (elem.nodeType === 9) {
+        } else if (hAzzle.nodeType(9, elem)) {
 
             doc = elem.documentElement;
 
@@ -860,7 +835,7 @@ hAzzle.each(["height", "width"], function (i, name) {
         },
 
         set: function (elem, value, extra) {
-            var styles = extra && getStyles(elem);
+            var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
             return this.setPositiveNumber(value, extra ?
                 this.augmentWidthOrHeight(
                     elem,
@@ -965,7 +940,8 @@ hAzzle.each({
 }, function (name, dir) {
     hAzzle.fn[name] = function (val) {
         var elem = this[0],
-            win = getWindow(elem);
+            win = hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
+			
         if (typeof val === "undefined") return val ? val[dir] : elem[name];
         win ? win.scrollTo(window[name]) : elem[name] = val;
     };
