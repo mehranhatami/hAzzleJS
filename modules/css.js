@@ -95,8 +95,7 @@ function isHidden(elem, el) {
 
 function show(elem) {
 
-    var counte = 0,
-        style = elem.style;
+    var style = elem.style;
 
     if (style.display === "none") {
 
@@ -105,52 +104,62 @@ function show(elem) {
     }
 
     if ((style.display === "" && curCSS(elem, "display") === "none") || !hAzzle.contains(elem.ownerDocument.documentElement, elem)) {
-        hAzzle.data(elem, 'display', css_defaultDisplay(elem.nodeName));
+        hAzzle.data(elem, 'display', defaultDisplay(elem.nodeName));
     }
 }
 
 var elemdisplay = {};
 
-// Try to determine the default display value of an element
-function css_defaultDisplay(nodeName) {
-    var db = document.body;
+function actualDisplay(name, doc) {
+    var style,
+        elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
 
-    if (elemdisplay[nodeName]) {
-        return elemdisplay[nodeName];
-    }
+        // getDefaultComputedStyle might be reliably used only on attached element
+        display = window.getDefaultComputedStyle && (style = window.getDefaultComputedStyle(elem[0])) ?
 
-    var elem = hAzzle("<" + nodeName + ">").appendTo(db),
-        display = elem.css("display");
+        // Use of this method is a temporary fix (more like optmization) until something better comes along,
+        // since it was removed from specification and supported only in FF
+        style.display : hAzzle.css(elem[0], "display");
 
-    elem.remove();
-
-
-    if (display === "none" || display === "") {
-
-        iframe = db.appendChild(
-            iframe || hAzzle.extend(document.createElement("iframe"), {
-                frameBorder: 0,
-                width: 0,
-                height: 0
-            })
-        );
-
-        if (!iframeDoc || !iframe.createElement) {
-            iframeDoc = (iframe.contentWindow || iframe.contentDocument).document;
-            iframeDoc.write("<!doctype html><html><body>");
-            iframeDoc.close();
-        }
-
-        elem = iframeDoc.body.appendChild(iframeDoc.createElement(nodeName));
-
-        display = curCSS(elem, "display");
-        db.removeChild(iframe);
-    }
-
-    // Store the correct default display
-    elemdisplay[nodeName] = display;
+    // We don't have any data stored on the element,
+    // so use "detach" method as fast way to get rid of the element
+    elem.detach();
 
     return display;
+}
+
+
+// Try to determine the default display value of an element
+function defaultDisplay(nodeName) {
+    var doc = document,
+        display = elemdisplay[nodeName];
+
+    if (!display) {
+        display = actualDisplay(nodeName, doc);
+
+        // If the simple way fails, read from inside an iframe
+        if (display === "none" || !display) {
+
+            // Use the already-created iframe if possible
+            var iframe = (iframe || hAzzle("<iframe frameborder='0' width='0' height='0'/>")).appendTo(doc.documentElement);
+
+            // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
+            doc = iframe[0].contentDocument;
+
+            // Support: IE
+            doc.write();
+            doc.close();
+
+            display = actualDisplay(nodeName, doc);
+            iframe.detach();
+        }
+
+        // Store the correct default display
+        elemdisplay[nodeName] = display;
+    }
+
+    return display;
+
 }
 
 
@@ -366,7 +375,7 @@ hAzzle.extend({
         }
 
         var style = elem.style,
-            hooks,
+            hooks = '',
             ret,
             digit = false;
 
@@ -431,15 +440,14 @@ hAzzle.extend({
             style[name] = "inherit";
         }
 
-        if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
 
-            if (extra) {
+        if (extra) {
 
-                return name + ":" + value;
-            }
-
-            style[name] = value;
+            return name + ":" + value;
         }
+
+        style[name] = value;
+
     },
 
 
@@ -645,7 +653,7 @@ hAzzle.fn.extend({
             // Make sure it's not a disconnected DOM node
 
             if (!hAzzle.contains(html, elem)) {
-                return box;
+                return boundingRect;
             }
 
             if (typeof elem.getBoundingClientRect !== typeof undefined) {
@@ -810,24 +818,23 @@ hAzzle.each(["height", "width"], function (i, name) {
         },
 
         get: function (elem, computed, extra) {
-            var val;
 
             if (computed) {
-                if (elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display"))) {
+                if (elem.offsetWidth === 0 && this.displaySwap.test(hAzzle.css(elem, "display"))) {
 
                     var ret, name,
                         old = {};
 
                     // Remember the old values, and insert the new ones
-                    for (name in cssShow) {
+                    for (name in this.cssShow) {
                         old[name] = elem.style[name];
                         elem.style[name] = this.cssShow[name];
                     }
 
-                    ret = getWH(elem, args || []);
+                    ret = getWH(elem);
 
                     // Revert the old values
-                    for (name in cssShow) {
+                    for (name in this.cssShow) {
                         elem.style[name] = old[name];
                     }
 
@@ -843,10 +850,11 @@ hAzzle.each(["height", "width"], function (i, name) {
 
         setPositiveNumber: function (value, subs) {
             var matches = this.numsplit.exec(value);
-            return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value
+            return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value;
         },
 
         set: function (elem, value, extra) {
+            alert("dd");
             var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
             return this.setPositiveNumber(value, extra ?
                 augmentWidthOrHeight(
@@ -901,30 +909,21 @@ function getWH(elem, name, extra) {
 }
 
 function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
-    var i = extra === (isBorderBox ? "border" : "content") ?
-    // If we already have the right measurement, avoid augmentation
-    4 :
-    // Otherwise initialize for horizontal or vertical properties
-    name === "width" ? 1 : 0,
 
+    var i = extra === (isBorderBox ? "border" : "content") ? 4 : name === "width" ? 1 : 0,
         val = 0;
 
     for (; i < 4; i += 2) {
-        // both box models exclude margin, so add it if we want it
+
         if (extra === "margin") {
-            // we use hAzzle.css instead of curCSS here
-            // because of the reliableMarginRight CSS hook!
             val += hAzzle.css(elem, extra + cssDirection[i], true);
         }
-
-        // From this point on we use curCSS for maximum performance (relevant in animations)
         if (isBorderBox) {
             // border-box includes padding, so remove it if we want content
             if (extra === "content") {
                 val -= parseFloat(curCSS(elem, "padding" + cssDirection[i])) || 0;
             }
 
-            // at this point, extra isnt border nor margin, so remove border
             if (extra !== "margin") {
                 val -= parseFloat(curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
             }
