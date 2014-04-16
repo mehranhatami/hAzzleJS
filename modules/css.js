@@ -113,19 +113,21 @@ var elemdisplay = {};
 
 // Try to determine the default display value of an element
 function css_defaultDisplay(nodeName) {
+	var db = document.body;
+	
     if (elemdisplay[nodeName]) {
         return elemdisplay[nodeName];
     }
 
-    var elem = hAzzle("<" + nodeName + ">").appendTo(document.body),
+    var elem = hAzzle("<" + nodeName + ">").appendTo(db),
         display = elem.css("display");
-    elem.remove();
 
-    // If the simple way fails,
-    // get element's real default display by attaching it to a temp iframe
+        elem.remove();
+
+ 
     if (display === "none" || display === "") {
-        // Use the already-created iframe if possible
-        iframe = document.body.appendChild(
+
+        iframe = db.appendChild(
             iframe || hAzzle.extend(document.createElement("iframe"), {
                 frameBorder: 0,
                 width: 0,
@@ -133,9 +135,6 @@ function css_defaultDisplay(nodeName) {
             })
         );
 
-        // Create a cacheable copy of the iframe document on first call.
-        // IE and Opera will allow us to reuse the iframeDoc without re-writing the fake HTML
-        // document to it; WebKit & Firefox won't allow reusing the iframe document.
         if (!iframeDoc || !iframe.createElement) {
             iframeDoc = (iframe.contentWindow || iframe.contentDocument).document;
             iframeDoc.write("<!doctype html><html><body>");
@@ -145,7 +144,7 @@ function css_defaultDisplay(nodeName) {
         elem = iframeDoc.body.appendChild(iframeDoc.createElement(nodeName));
 
         display = curCSS(elem, "display");
-        document.body.removeChild(iframe);
+        db.removeChild(iframe);
     }
 
     // Store the correct default display
@@ -552,15 +551,24 @@ hAzzle.fn.extend({
      * @return {Object}
      */
 
-    toggle: function (state) {
+    toggle: function (fn, fn2) {
+
         if (typeof state === "boolean") {
             return state ? this.show() : this.hide();
         }
-        return this.each(function () {
+		
+		return this.each(function() {
 
-            if (isHidden(this)) show(this);
-            else hide(this);
-        });
+			 if (isHidden(this)) {
+
+			 show(this);
+
+			 } else {
+ 			 
+			 hide(this);
+			 
+			}
+		});
     },
 
     css: function (property, value) {
