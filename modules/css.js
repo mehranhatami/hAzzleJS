@@ -199,8 +199,6 @@ function curCSS(elem, name, computed, style) {
             minWidth = style.minWidth;
             maxWidth = style.maxWidth;
 
-
-
             // Put in the new values to get a computed value out
             style.minWidth = style.maxWidth = style.width = ret;
             ret = computed.width;
@@ -358,7 +356,7 @@ hAzzle.extend({
      * CSS properties accessor for an element
      */
 
-    style: function (elem, name, value, extra) {
+    style: function (elem, name, value, extra, hook) {
 
         // Don't set styles on text and comment nodes
 
@@ -392,7 +390,7 @@ hAzzle.extend({
 
         // Do we have any cssHooks available?
 
-        hooks = hAzzle.cssHooks[name];
+        hooks = hook || hAzzle.cssHooks[name];
 
         /**
          * Convert relative numbers to strings.
@@ -804,28 +802,31 @@ hAzzle.each(["height", "width"], function (i, name) {
             var val;
 
             if (computed) {
-                if (elem.offsetWidth !== 0 && this.displaySwap.test(hAzzle.css(elem, "display"))) {
-                    return getWH(elem, name, extra);
-                } else {
+            if (elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display"))) {
 
-                    var old = {},
-                        style = elem.style;
+                    var ret, name,
+                        old = {};
 
                     // Remember the old values, and insert the new ones
-                    for (name in this.cssShow) {
-                        old[name] = style[name];
-                        style[name] = this.cssShow[name];
+                    for (name in cssShow) {
+                        old[name] = elem.style[name];
+                        elem.style[name] = this.cssShow[name];
                     }
 
-                    val = getWH(elem, name, extra);
+                    ret = getWH(elem, args || []);
 
                     // Revert the old values
-                    for (name in this.cssShow) {
-                        style[name] = old[name];
+                    for (name in cssShow) {
+                        elem.style[name] = old[name];
                     }
+
+                    return ret;
+
+                } else {
+
+                    getWH(elem, name, extra);
                 }
 
-                return val;
             }
         },
 
@@ -837,7 +838,7 @@ hAzzle.each(["height", "width"], function (i, name) {
         set: function (elem, value, extra) {
             var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
             return this.setPositiveNumber(value, extra ?
-                this.augmentWidthOrHeight(
+                augmentWidthOrHeight(
                     elem,
                     name,
                     extra,
@@ -944,5 +945,32 @@ hAzzle.each({
 			
         if (typeof val === "undefined") return val ? val[dir] : elem[name];
         win ? win.scrollTo(window[name]) : elem[name] = val;
+    };
+});
+
+
+/**
+ * CSS hooks - margin and padding
+ */
+
+hAzzle.each(["margin", "padding"], function (i, hook) {
+    hAzzle.cssHooks[hook] = {
+        get: function (elem, computed, extra) {
+            return hAzzle.map(cssDirection, function (dir) {
+                return hAzzle.css(elem, hook + dir);
+            }).join(" ");
+        },
+        set: function (elem, value) {
+            var parts = value.split(/\s/),
+                values = {
+                    "Top": parts[0],
+                    "Right": parts[1] || parts[0],
+                    "Bottom": parts[2] || parts[0],
+                    "Left": parts[3] || parts[1] || parts[0]
+                };
+            hAzzle.each(cssDirection, function (i, dir) {
+                elem.style[hook + dir] = values[dir];
+            });
+        }
     };
 });
