@@ -113,8 +113,8 @@ var elemdisplay = {};
 
 // Try to determine the default display value of an element
 function css_defaultDisplay(nodeName) {
-	var db = document.body;
-	
+    var db = document.body;
+
     if (elemdisplay[nodeName]) {
         return elemdisplay[nodeName];
     }
@@ -122,9 +122,9 @@ function css_defaultDisplay(nodeName) {
     var elem = hAzzle("<" + nodeName + ">").appendTo(db),
         display = elem.css("display");
 
-        elem.remove();
+    elem.remove();
 
- 
+
     if (display === "none" || display === "") {
 
         iframe = db.appendChild(
@@ -529,19 +529,19 @@ hAzzle.fn.extend({
         if (typeof state === "boolean") {
             return state ? this.show() : this.hide();
         }
-		
-		return this.each(function() {
 
-			 if (isHidden(this)) {
+        return this.each(function () {
 
-			 show(this);
+            if (isHidden(this)) {
 
-			 } else {
- 			 
-			 hide(this);
-			 
-			}
-		});
+                show(this);
+
+            } else {
+
+                hide(this);
+
+            }
+        });
     },
 
     css: function (property, value) {
@@ -608,6 +608,7 @@ hAzzle.fn.extend({
      * @param{coordinates}
      * @return object with left, top, bottom, right, width and height properties
      */
+
     offset: function (coordinates) {
 
         if (arguments.length) {
@@ -619,10 +620,20 @@ hAzzle.fn.extend({
         }
 
         var elem = this[0],
+            _win,
             clientTop = html.clientTop,
             clientLeft = html.clientLeft,
-            _win = hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView,
-            scrollTop = _win.pageYOffset || html.scrollTop,
+            doc = elem && elem.ownerDocument;
+
+        if (!doc) {
+
+            return;
+
+        }
+
+        _win = hAzzle.isWindow(doc) ? doc : hAzzle.nodeType(9, doc) && doc.defaultView;
+
+        var scrollTop = _win.pageYOffset || html.scrollTop,
             scrollLeft = _win.pageXOffset || html.scrollLeft,
             boundingRect = {
                 top: 0,
@@ -802,7 +813,7 @@ hAzzle.each(["height", "width"], function (i, name) {
             var val;
 
             if (computed) {
-            if (elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display"))) {
+                if (elem.offsetWidth === 0 && displaySwap.test(hAzzle.css(elem, "display"))) {
 
                     var ret, name,
                         old = {};
@@ -942,7 +953,7 @@ hAzzle.each({
     hAzzle.fn[name] = function (val) {
         var elem = this[0],
             win = hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
-			
+
         if (typeof val === "undefined") return val ? val[dir] : elem[name];
         win ? win.scrollTo(window[name]) : elem[name] = val;
     };
