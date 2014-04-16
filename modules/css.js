@@ -60,11 +60,11 @@ function dasherize(str) {
 
 
 function vendorCheckUp(style, name) {
-    
-	if (name in style) {
-		return name;
-	}
-		
+
+    if (name in style) {
+        return name;
+    }
+
     var origName = name;
     name = hAzzle.prefix(name);
     return name in style ? name : origName;
@@ -169,54 +169,6 @@ hAzzle.extend({
     cssProps: {
 
         "float": "cssFloat"
-    },
-    offset: {
-        setOffset: function (elem, coordinates, i) {
-            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-                position = hAzzle.css(elem, "position"),
-                curElem = hAzzle(elem),
-                props = {};
-
-            // Set position first, in-case top/left are set even on static elem
-            if (position === "static") {
-                elem.style.position = "relative";
-            }
-
-            curOffset = curElem.offset();
-            curCSSTop = hAzzle.css(elem, "top");
-            curCSSLeft = hAzzle.css(elem, "left");
-            calculatePosition = (position === "absolute" || position === "fixed") &&
-                (curCSSTop + curCSSLeft).indexOf("auto") > -1;
-
-            // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
-            if (calculatePosition) {
-                curPosition = curElem.position();
-                curTop = curPosition.top;
-                curLeft = curPosition.left;
-
-            } else {
-                curTop = parseFloat(curCSSTop) || 0;
-                curLeft = parseFloat(curCSSLeft) || 0;
-            }
-
-            if (hAzzle.isFunction(coordinates)) {
-                coordinates = coordinates.call(elem, i, curOffset);
-            }
-
-            if (coordinates.top !== null) {
-                props.top = (coordinates.top - curOffset.top) + curTop;
-            }
-            if (coordinates.left !== null) {
-                props.left = (coordinates.left - curOffset.left) + curLeft;
-            }
-
-            if ("using" in coordinates) {
-                coordinates.using.call(elem, props);
-
-            } else {
-                curElem.css(props);
-            }
-        }
     },
 
     // Convert some pixels into another CSS unity.
@@ -407,6 +359,54 @@ hAzzle.extend({
 
             style[name] = value;
         }
+    },
+
+
+    setOffset: function (elem, coordinates, i) {
+        var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+            position = hAzzle.css(elem, "position"),
+            curElem = hAzzle(elem),
+            props = {};
+
+        // Set position first, in-case top/left are set even on static elem
+        if (position === "static") {
+            elem.style.position = "relative";
+        }
+
+        curOffset = curElem.offset();
+        curCSSTop = hAzzle.css(elem, "top");
+        curCSSLeft = hAzzle.css(elem, "left");
+        calculatePosition = (position === "absolute" || position === "fixed") &&
+            (curCSSTop + curCSSLeft).indexOf("auto") > -1;
+
+        // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+        if (calculatePosition) {
+            curPosition = curElem.position();
+            curTop = curPosition.top;
+            curLeft = curPosition.left;
+
+        } else {
+            curTop = parseFloat(curCSSTop) || 0;
+            curLeft = parseFloat(curCSSLeft) || 0;
+        }
+
+        if (hAzzle.isFunction(coordinates)) {
+            coordinates = coordinates.call(elem, i, curOffset);
+        }
+
+        if (coordinates.top !== null) {
+            props.top = (coordinates.top - curOffset.top) + curTop;
+        }
+        if (coordinates.left !== null) {
+            props.left = (coordinates.left - curOffset.left) + curLeft;
+        }
+
+        if ("using" in coordinates) {
+            coordinates.using.call(elem, props);
+
+        } else {
+            curElem.css(props);
+        }
     }
 });
 
@@ -460,7 +460,7 @@ hAzzle.fn.extend({
     /**
      * Sets the opacity for given element
      *
-     * @param elem
+     * @param {elem}
      * @param {int} level range (0 .. 100)
      */
 
@@ -472,42 +472,53 @@ hAzzle.fn.extend({
         }
     },
 
+    /**
+     * Calculates offset of the current element
+     * @param{coordinates}
+     * @return object with left, top, bottom, right, width and height properties
+     */
     offset: function (coordinates) {
-		
+
         if (arguments.length) {
             return coordinates === undefined ?
                 this :
                 this.each(function (i) {
-                    hAzzle.offset.setOffset(this, coordinates, i);
+                    hAzzle.setOffset(this, coordinates, i);
                 });
         }
 
-        var win,
-            elem = this[0],
-            box = {
+        var elem = this[0],
+            clientTop = html.clientTop,
+            clientLeft = html.clientLeft,
+            _win = hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView,
+            scrollTop = _win.pageYOffset || html.scrollTop,
+            scrollLeft = _win.pageXOffset || html.scrollLeft,
+            boundingRect = {
                 top: 0,
                 left: 0
-            },
-            doc = elem && elem.ownerDocument;
+            };
 
-        if (!doc) {
-            return;
-        }
+        if (elem && elem.ownerDocument) {
 
-        // Make sure it's not a disconnected DOM node
-        if (!hAzzle.contains(html, elem)) {
-            return box;
+            // Make sure it's not a disconnected DOM node
+
+            if (!hAzzle.contains(html, elem)) {
+                return box;
+            }
+
+            if (typeof elem.getBoundingClientRect !== typeof undefined) {
+                boundingRect = elem.getBoundingClientRect();
+            }
+
+            return {
+                top: boundingRect.top + scrollTop - clientTop,
+                left: boundingRect.left + scrollLeft - clientLeft,
+                right: boundingRect.right + scrollLeft - clientLeft,
+                bottom: boundingRect.bottom + scrollTop - clientTop,
+                width: boundingRect.right - boundingRect.left,
+                height: boundingRect.bottom - boundingRect.top
+            };
         }
-        if (typeof elem.getBoundingClientRect !== typeof undefined) {
-            box = elem.getBoundingClientRect();
-        }
-        
-		win = getWindow(doc);
-		
-        return {
-            top: box.top + win.pageYOffset - html.clientTop,
-            left: box.left + win.pageXOffset - html.clientLeft
-        };
     },
 
     position: function () {
