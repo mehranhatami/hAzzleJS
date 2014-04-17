@@ -1,7 +1,11 @@
-// Common 5MB localStorage limit among current browsers
 
 var isObject = hAzzle.isObject,
-    defaultSize = 5242880;
+    
+	// Common 5MB localStorage
+    
+	defaultSize = 5242880;
+
+// Extend the hAzzle object
 
 hAzzle.extend({
 
@@ -30,7 +34,6 @@ hAzzle.extend({
      */
 
     storageContains: function (key) {
-
         if (typeof key === 'string') {
             return hAzzle.indexOf(this.getStorageKeys(), key) !== -1;
         }
@@ -176,7 +179,6 @@ hAzzle.extend({
         }
     },
 
-
     /**
      * Returns an object representation of the current state of localStorage
      *
@@ -195,7 +197,5 @@ hAzzle.extend({
 
         return o;
     }
-
-
 
 });
