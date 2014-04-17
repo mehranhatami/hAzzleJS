@@ -184,7 +184,7 @@ hAzzle.extend({
                 return arguments.length === 2 ? defaultValue : null;
             }
 
-            if (!hAzzle.isNaN(number)) {
+            if (!hAzzle.IsNaN(number)) {
                 return number; // value was of type number
             }
 

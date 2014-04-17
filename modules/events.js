@@ -1,10 +1,10 @@
 /* Event handler
  *
- * NOTE!! This event system are different from jQuery, and more powerfull. The basic funcions are the same, 
+ * NOTE!! This event system are different from jQuery, and more powerfull. The basic funcions are the same,
  * but hAzzle supports different types of namespaces, multiple handlers etc. etc.
  *
- * Example on a multiple handler:  
- * 
+ * Example on a multiple handler:
+ *
  *     hAzzle('p').on({
  *        click: function (e) { alert('click') },
  *        mouseover: function (e) { alert('mouse')  }
@@ -14,25 +14,27 @@
  *
  *  $( "#dataTable tbody tr" )
  *
- * Todo!! Fix this maybe?
+ * Todo!! Fix this maybe!!
  */
-
 var win = window,
     doc = document || {},
     root = doc.documentElement || {},
-   
-	// Cached handlers
-    
-	container = {},
+    isString = hAzzle.isString,
+    isFunction = hAzzle.isFunction,
 
+    // Cached handlers
+
+    container = {},
+    
+	specialsplit = /\s*,\s*|\s+/,
     rkeyEvent = /^key/, // key
     rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, // mouse
     ns = /[^\.]*(?=\..*)\.|.*/, // Namespace regEx
     names = /\..*/,
-    
-	// Event and handlers we have fixed
-    
-	treated = {},
+
+    // Event and handlers we have fixed
+
+    treated = {},
 
     /**
      * Prototype references.
@@ -227,7 +229,7 @@ hAzzle.Events = {
 
                 // Delegated event
 
-                if (!hAzzle.isFunction(selector)) {
+                if (!isFunction(selector)) {
                     originalFn = fn;
                     args = slice.call(arguments, 4);
                     fn = hAzzle.Events.delegate(selector, originalFn);
@@ -241,7 +243,7 @@ hAzzle.Events = {
                 // Compare to jQuery, hAzzle don't need a bunch of regEx tests
                 // That speed things up
 
-                types = events.split(' ');
+                types = events.split(specialsplit);
 
                 // One
 
@@ -264,13 +266,12 @@ hAzzle.Events = {
                 }
                 return el;
             }
-
     },
 
     // Remove event listener
 
     remove: function (el, typeSpec, fn) {
-        var isTypeStr = hAzzle.isString(typeSpec),
+        var isTypeStr = isString(typeSpec),
             type, namespaces, i;
 
         if (isTypeStr && typeSpec.indexOf(' ') > 0) {
@@ -290,7 +291,7 @@ hAzzle.Events = {
 
             if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
             hAzzle.Events.removeListener(el, type, fn, namespaces);
-        } else if (hAzzle.isFunction(typeSpec)) {
+        } else if (isFunction(typeSpec)) {
             // off(el, fn);
             hAzzle.Events.removeListener(el, null, typeSpec);
         } else {
@@ -310,7 +311,7 @@ hAzzle.Events = {
     delegate: function (selector, fn) {
 
         function findTarget(target, root) {
-            var i, array = hAzzle.isString(selector) ? hAzzle.select(selector, root) : selector;
+            var i, array = isString(selector) ? hAzzle.select(selector, root) : selector;
             for (; target && target !== root; target = target.parentNode) {
                 if (array !== null) {
                     for (i = array.length; i--;) {
@@ -620,7 +621,7 @@ hAzzle.fn.extend({
 
         var el = this[0];
 
-        var types = type.split(' '),
+        var types = type.split(specialsplit),
             i, j, l, call, evt, names, handlers;
 
         if (threatment['disabeled'](el, type) || threatment['nodeType'](el)) return false;
@@ -648,7 +649,7 @@ hAzzle.fn.extend({
             }
         }
         return el;
-    }
+    },
 });
 
 // Shortcut methods for 'on'
