@@ -107,8 +107,8 @@ hAzzle.extend({
      * @return {Object}
      */
     hasData: function (elem, key) {
-        if (elem[0].nodeType) {
-            if (storage[hAzzle.getUID(elem[0])]) return true;
+        if (elem.nodeType) {
+            if (storage[hAzzle.getUID(elem)]) return true;
 
             else {
 
@@ -129,15 +129,22 @@ hAzzle.extend({
 
     removeData: function (elem, key) {
         if (elem instanceof hAzzle) {
-            if (remove(elem[0], key)) return true;
-        } else if (remove(hAzzle(elem)[0], key)) return true;
+            if (remove(elem, key)) return true;
+        } else if (remove(hAzzle(elem), key)) return true;
         return false;
     },
 
     data: function (elem, key, value) {
-        len = arguments.length;
-        keyType = typeof key;
-        len === 1 ? set(elem[0], key, value) : len === 2 && get(elem[0], key);
+		
+     if(typeof value === 'undefined') {
+		 
+		 return get(elem, key)
+
+	 } else {
+		 
+		 set(elem, key, value)
+	}
+
     }
 
 });
@@ -169,7 +176,6 @@ hAzzle.fn.extend({
      */
 
     data: function (key, value) {
-
 
         var len = arguments.length,
             keyType = typeof key;

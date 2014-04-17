@@ -35,6 +35,7 @@ hAzzle.fn.extend({
 
     clone: function (deep) {
 
+
         var clone,
             storage,
             srcElements, destElements;
@@ -74,11 +75,11 @@ hAzzle.fn.extend({
             }
 
             // Copy data from the original to the clone
-
+if(storage) {
             hAzzle.each(storage, function (key, value) {
-                hAzzle.data(clone, key, value);
-            });
-
+                         hAzzle.data(clone, key, value);
+                });
+}
             // Preserve the rest 
 
             if (!hAzzle.support.noCloneChecked && (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem)) && !hAzzle.isXML(elem)) {
