@@ -1,4 +1,4 @@
-var storage = {};
+var data = {};
 
 /**
  * Store data on an element
@@ -17,7 +17,7 @@ function set(elem, key, value) {
 
     // Get or create and unique ID
     var id = hAzzle.getUID(elem),
-        obj = storage[id] || (storage[id] = {});
+        obj = data[id] || (data[id] = {});
 
     obj[key] = value;
 }
@@ -32,7 +32,7 @@ function set(elem, key, value) {
 
 function get(elem, key) {
 
-    var obj = storage[hAzzle.getUID(elem)];
+    var obj = data[hAzzle.getUID(elem)];
 
     if (!obj) {
 
@@ -61,7 +61,7 @@ function get(elem, key) {
  */
 
 function has(elem, key) {
-    var obj = storage[hAzzle.getUID(elem)];
+    var obj = data[hAzzle.getUID(elem)];
     if (key === null) {
         return false;
     }
@@ -83,14 +83,14 @@ function remove(elem, key) {
     // If no key, remove all data
 
     if (key === undefined && hAzzle.nodeType(1, elem)) {
-        storage[id] = {};
+        data[id] = {};
 
     } else {
 
-        if (storage[id]) {
-            delete storage[id].key;
+        if (data[id]) {
+            delete data[id].key;
         } else {
-            storage[id] = null;
+            data[id] = null;
 
         }
     }
@@ -108,7 +108,7 @@ hAzzle.extend({
      */
     hasData: function (elem, key) {
         if (elem.nodeType) {
-            if (storage[hAzzle.getUID(elem)]) return true;
+            if (data[hAzzle.getUID(elem)]) return true;
 
             else {
 
