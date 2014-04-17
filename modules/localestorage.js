@@ -1,9 +1,68 @@
-
 var isObject = hAzzle.isObject,
-    
+    isString = hAzzle.isString,
+    doc = document,
+	
 	// Common 5MB localStorage
     
 	defaultSize = 5242880;
+
+  
+ // Inital check to see if localStorage is supported in the browser
+  (function() {
+    var supported = false;
+
+    // Derived from Modernizer (http://github.com/Modernizr/Modernizr)
+    try {
+      localStorage.setItem('hAzzle', 'hAzzle');
+      localStorage.removeItem('hAzzle');
+      supported = true;
+    } catch(e) {
+      supported = false;
+    }
+
+    /**
+	 *  Implements localStorage if not supported
+	 *
+	 * NOTE !! We are going to remove this 'shim' in the future. Just now Opera Mini and IE Mobile 9 and older are not supporting this one.
+	 *
+     * From https://developer.mozilla.org/en-US/docs/Web/Guide/DOM/Storage?redirectlocale=en-US&redirectslug=DOM%2FStorage
+	 */
+	
+    if(!supported) {
+      window.localStorage = {
+        getItem: function (sKey) {
+          if (!sKey || !this.hasOwnProperty(sKey)) { return null; }
+          return unescape(doc.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") +
+            "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+        },
+
+        key: function (nKeyId) {
+          return unescape(doc.cookie.replace(/\s*\=(?:.(?!;))*$/, "").split(/\s*\=(?:[^;](?!;))*[^;]?;\s*/)[nKeyId]);
+        },
+
+        setItem: function (sKey, sValue) {
+          if(!sKey) { return; }
+          doc.cookie = escape(sKey) + "=" + escape(sValue) + "; expires=Tue, 19 Jan 2038 03:14:07 GMT; path=/";
+          this.length = doc.cookie.match(/\=/g).length;
+        },
+
+        length: 0,
+
+        removeItem: function (sKey) {
+          if (!sKey || !this.hasOwnProperty(sKey)) { return; }
+          doc.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+          this.length--;
+        },
+
+        hasOwnProperty: function (sKey) {
+          return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(doc.cookie);
+        }
+      };
+
+      window.localStorage.length = (doc.cookie.match(/\=/g) || window.localStorage).length;
+    }
+  })();
+
 
 // Extend the hAzzle object
 
@@ -34,7 +93,7 @@ hAzzle.extend({
      */
 
     storageContains: function (key) {
-        if (typeof key === 'string') {
+        if (isString(key)) {
             return hAzzle.indexOf(this.getStorageKeys(), key) !== -1;
         }
     },
@@ -94,7 +153,7 @@ hAzzle.extend({
 
     removeStorage: function (key) {
 
-        if (typeof key === 'string') {
+        if (isString(key)) {
 
             localStorage.removeItem(key);
 
@@ -102,7 +161,7 @@ hAzzle.extend({
 
             for (var i = key.length; i--;) {
 
-                if (typeof key[i] === 'string') {
+                if (isString(key[i])) {
 
                     localStorage.removeItem(key[i]);
                 }
@@ -115,7 +174,7 @@ hAzzle.extend({
      */
     getStorage: function (key, defaultValue) {
 
-        if (typeof key === 'string') {
+        if (isString(key)) {
 
             var value = localStorage.getItem(key).toLowerCase(), // retrieve value
                 number = parseFloat(value); // to allow for number checking
@@ -153,7 +212,7 @@ hAzzle.extend({
 
             this.store(key);
 
-        } else if (typeof key === 'string') {
+        } else if (isString(key)) {
 
             if (isObject(value)) {
 
