@@ -25,8 +25,8 @@ var win = window,
     // Cached handlers
 
     container = {},
-    
-	specialsplit = /\s*,\s*|\s+/,
+
+    specialsplit = /\s*,\s*|\s+/,
     rkeyEvent = /^key/, // key
     rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, // mouse
     ns = /[^\.]*(?=\..*)\.|.*/, // Namespace regEx
@@ -124,7 +124,6 @@ function checkMouse(evt) {
 function checkPointer(evt) {
     return evt;
 }
-
 
 function Event(evt, element) {
 
