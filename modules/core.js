@@ -526,46 +526,33 @@
         // async-each    
 
 
-        each: function (target, callback) {
+each: function (obj, callback) {
+            var i = 0,
+                name,
+                length = obj.length;
 
-            var i, name;
+            if (obj.length === +obj.length) {
 
-            if (typeof target === 'function') {
-
-                // Quick swap
-
-                callback = target;
-                target = this;
-            }
-
-            if (target === this || target instanceof Array) {
-                for (i = target.length; i--;) {
-                    if (callback.call(target[i], i, target[i]) === false) break;
+                for (; i < length;) {
+                    if (callback.call(obj[i], i, obj[i++]) === false) {
+                        break;
+                    }
                 }
 
             } else {
 
-                if (target instanceof hAzzle) {
-
-                    return hAzzle.each(slice.call(target), callback);
-
-                } else if (hAzzle.isObject(target)) {
-
-
-                    for (name in target) {
-                        if (callback.call(target[name], name, target[name]) === false) {
-                            break;
-                        }
+                for (name in obj) {
+                    if (callback.call(obj[name], name, obj[name]) === false) {
+                        break;
                     }
                 }
             }
 
-            return target;
+            return obj;
         },
 
         type: function (obj) {
-            var ref = toString.call(obj).match(/\s(\w+)\]$/);
-            return ref && ref[1].toLowerCase();
+            return toString.call(obj);
         },
 
         is: function (kind, obj) {
@@ -884,6 +871,7 @@
          * @return {String} wait
          * @return {Function}
          */
+
 
         delay: function (func, wait) {
             var args = slice.call(arguments, 2);
