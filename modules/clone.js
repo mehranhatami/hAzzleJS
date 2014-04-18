@@ -5,6 +5,10 @@
         div = fragment.appendChild(document.createElement("div")),
         input = document.createElement("input");
 
+    input.setAttribute("type", "radio");
+    input.setAttribute("checked", "checked");
+    input.setAttribute("name", "t");
+
     div.appendChild(input);
 
     support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
@@ -75,11 +79,11 @@ hAzzle.fn.extend({
             }
 
             // Copy data from the original to the clone
-if(storage) {
-            hAzzle.each(storage, function (key, value) {
-                         hAzzle.data(clone, key, value);
+            if (storage) {
+                hAzzle.each(storage, function (key, value) {
+                    hAzzle.data(clone, key, value);
                 });
-}
+            }
             // Preserve the rest 
 
             if (!hAzzle.support.noCloneChecked && (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem)) && !hAzzle.isXML(elem)) {
@@ -99,9 +103,10 @@ if(storage) {
             if (destElements.length > 0) {
 
                 hAzzle.Evaluated(destElements, !hAzzle.contains(elem.ownerDocument, elem) && hAzzle.getChildren(elem, "script"));
-
             }
+
             // Return the cloned set
+
             return clone;
         });
     }

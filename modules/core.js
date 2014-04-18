@@ -564,7 +564,8 @@ each: function (obj, callback) {
          */
 
         isElement: function (elem) {
-            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem));
+
+			return nodeTypes[1](elem) || nodeTypes[9](elem) || !( +elem.nodeType );
         },
 
         /**
@@ -611,7 +612,7 @@ each: function (obj, callback) {
         },
 
         isNumeric: function (obj) {
-            return !this.IsNaN(parseFloat(obj)) && isFinite(obj);
+            return !hAzzle.isArray( obj ) && obj - parseFloat( obj ) >= 0;
         },
 
         isEmptyObject: function (obj) {

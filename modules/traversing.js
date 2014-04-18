@@ -4,6 +4,7 @@
 var cached = [],
     slice = Array.prototype.slice;
 
+
 hAzzle.extend({
 
     /**
@@ -26,6 +27,8 @@ hAzzle.extend({
     }
 });
 
+
+// Extend hAzzle
 
 hAzzle.fn.extend({
 
@@ -330,7 +333,7 @@ hAzzle.fn.extend({
 
         if (!cached[sel]) {
             this.each(function (_, elem) {
-                hAzzle.each(slice.call(elem.parentNode.childNodes), function (_, child) {
+                hAzzle.each(slice.call((elem.parentNode || {}).childNodes), function (_, child) {
                     if (hAzzle.isElement(child) && hAzzle.nodeType(1, child) && child !== elem) {
                         siblings.push(child);
                     }
