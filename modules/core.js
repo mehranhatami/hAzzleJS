@@ -585,16 +585,21 @@ each: function (obj, callback) {
             return typeof value === 'undefined';
         },
 
+        isDefined: function (value) {
+
+            return typeof value !== 'undefined';
+        },
+
         isString: function (value) {
 
             return typeof value === 'string';
 
         },
-
-        isDefined: function (value) {
-
-            return typeof value !== 'undefined';
-        },
+		
+		isFunction: function (value) {
+			
+			return typeof value === 'function';
+		},
 
         isNumber: function (value) {
 
@@ -871,7 +876,6 @@ each: function (obj, callback) {
          * @return {String} wait
          * @return {Function}
          */
-
 
         delay: function (func, wait) {
             var args = slice.call(arguments, 2);
