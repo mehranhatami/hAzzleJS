@@ -34,7 +34,7 @@
  */
 var html = window.document.documentElement,
 
-    important = /\!important/,
+    important = /\s+(!important)/g,
     background = /background/i,
     numberOrPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i,
@@ -580,7 +580,7 @@ hAzzle.fn.extend({
 
         } else {
 
-            this.each(function () {
+            return this.each(function () {
 
                 // !Important property check
 

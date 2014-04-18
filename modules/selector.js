@@ -213,5 +213,24 @@ hAzzle.extend({
             }
         }
         return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
-    }
+    },
+
+       /***
+        * Get all child nodes...:
+		*
+		* THIS FUNCTION IS IMPORTANT!!!  But have to be done different and speeded up!!!
+		*
+		*
+		*
+        */
+
+	        getChildren: function (context, tag) {
+	            var ret = context.getElementsByTagName ? context.getElementsByTagName(tag || "*") :
+	                context.querySelectorAll ? context.querySelectorAll(tag || "*") : [];
+
+	            return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
+	                hAzzle.merge([context], ret) :
+	                ret;
+	        },
+
 });

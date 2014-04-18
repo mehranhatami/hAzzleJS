@@ -4,7 +4,28 @@
 var cached = [],
     slice = Array.prototype.slice;
 
-// Extend hAzzle
+hAzzle.extend({
+
+    /**
+     * Walks the DOM tree using `method`, returns when an element node is found
+     *
+     * @param{Object} element
+     * @param{String} method
+     * @param{String} sel
+     * @param{Number/Null } nt
+     */
+
+    getClosestNode: function (element, method, sel, nt) {
+        do {
+            element = element[method];
+        } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
+        if (hAzzle.isDefined(nt) && (element !== null && !hAzzle.nodeType(nt, element))) {
+            return element;
+        }
+        return element;
+    }
+});
+
 
 hAzzle.fn.extend({
 
@@ -185,9 +206,9 @@ hAzzle.fn.extend({
 
     children: function (sel) {
         return hAzzle(this.reduce(function (elements, elem) {
-			if(hAzzle.nodeType(1, elem)) {
-               return elements.concat(slice.call(elem.children));
-			}
+            if (hAzzle.nodeType(1, elem)) {
+                return elements.concat(slice.call(elem.children));
+            }
         }, []), sel);
     },
 
@@ -290,11 +311,11 @@ hAzzle.fn.extend({
     /**
      * FIX ME!! Seems to have problems finding elems inside an iFrame
      *
-	 * NOTE!! The iFrame problem happend because we don't have a selector engine.
+     * NOTE!! The iFrame problem happend because we don't have a selector engine.
      */
     contents: function () {
         return this.map(function (elem) {
-          return elem.contentDocument || slice.call(elem.childNodes);
+            return elem.contentDocument || slice.call(elem.childNodes);
         });
     },
 
@@ -303,22 +324,22 @@ hAzzle.fn.extend({
      * @param {String} sel
      * @return {Object}
      */
- siblings: function (sel) {
+    siblings: function (sel) {
 
-       var siblings = [];
+        var siblings = [];
 
         if (!cached[sel]) {
             this.each(function (_, elem) {
-	            hAzzle.each(slice.call(elem.parentNode.childNodes), function(_, child) {
-            if (hAzzle.isElement(child) && hAzzle.nodeType(1, child) && child !== elem) {
+                hAzzle.each(slice.call(elem.parentNode.childNodes), function (_, child) {
+                    if (hAzzle.isElement(child) && hAzzle.nodeType(1, child) && child !== elem) {
                         siblings.push(child);
-              }
-	       });
+                    }
+                });
             });
-                cached[sel] = siblings;
-            }
-	
-            return hAzzle.create(cached[sel], sel);
+            cached[sel] = siblings;
+        }
+
+        return hAzzle.create(cached[sel], sel);
     }
 
 });
