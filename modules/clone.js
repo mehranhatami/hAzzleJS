@@ -1,3 +1,5 @@
+; (function ($) {
+	
 // Support check 
 (function () {
 
@@ -35,7 +37,7 @@ function fixInput(src, dest) {
     else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
 };
 
-hAzzle.fn.extend({
+$.extend($.fn, {
 
     clone: function (deep) {
 
@@ -53,14 +55,14 @@ hAzzle.fn.extend({
 			  'identical' elems to get the handlers and data from
 	*/
 
-            var handlers = hAzzle.Events.getHandler(elem, '', null, false),
+            var handlers = $.Events.getHandler(elem, '', null, false),
                 l = handlers.length,
                 i = 0,
                 args, hDlr;
 
             // Get the data before we clone
 
-            storage = hAzzle(elem).data();
+            storage = $(elem).data();
 
             // Clone the elem
 
@@ -74,22 +76,22 @@ hAzzle.fn.extend({
                     args = [clone, handlers[i].type];
                     if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
                     args.push(handlers[i].original);
-                    hAzzle.Events.add.apply(null, args);
+                    $.Events.add.apply(null, args);
                 }
             }
 
             // Copy data from the original to the clone
             if (storage) {
-                hAzzle.each(storage, function (key, value) {
-                    hAzzle.data(clone, key, value);
+                $.each(storage, function (key, value) {
+                    $.data(clone, key, value);
                 });
             }
             // Preserve the rest 
 
-            if (!hAzzle.support.noCloneChecked && (hAzzle.nodeType(1, elem) || hAzzle.nodeType(11, elem)) && !hAzzle.isXML(elem)) {
+            if (!$.support.noCloneChecked && ($.nodeType(1, elem) || $.nodeType(11, elem)) && !$.isXML(elem)) {
 
-                destElements = hAzzle.getChildren(clone);
-                srcElements = hAzzle.getChildren(elem);
+                destElements = $.getChildren(clone);
+                srcElements = $.getChildren(elem);
 
                 for (i = 0, l = srcElements.length; i < l; i++) {
                     fixInput(srcElements[i], destElements[i]);
@@ -98,11 +100,11 @@ hAzzle.fn.extend({
 
             // Preserve script evaluation history
 
-            destElements = hAzzle.getChildren(clone, "script");
+            destElements = $.getChildren(clone, "script");
 
             if (destElements.length > 0) {
 
-                hAzzle.Evaluated(destElements, !hAzzle.contains(elem.ownerDocument, elem) && hAzzle.getChildren(elem, "script"));
+                $.Evaluated(destElements, !$.contains(elem.ownerDocument, elem) && $.getChildren(elem, "script"));
             }
 
             // Return the cloned set
@@ -111,3 +113,4 @@ hAzzle.fn.extend({
         });
     }
 });
+})(hAzzle);

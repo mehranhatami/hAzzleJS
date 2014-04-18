@@ -564,8 +564,7 @@ each: function (obj, callback) {
          */
 
         isElement: function (elem) {
-
-			return nodeTypes[1](elem) || nodeTypes[9](elem) || !( +elem.nodeType );
+            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem) || !( +elem.nodeType ) );
         },
 
         /**

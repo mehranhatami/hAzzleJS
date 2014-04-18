@@ -1,9 +1,13 @@
-// Check we can support classList
+;
+(function ($) {
+
+
+// Check if we can support classList
 var csp = !! document.createElement('p').classList,
     whitespace = (/\S+/g),
     rclass = /[\t\r\n\f]/g;
 
-hAzzle.fn.extend({
+  $.extend($.fn, {
 
     /**
      * Add class(es) to element collection
@@ -249,3 +253,5 @@ hAzzle.fn.extend({
         });
     }
 });
+
+})(hAzzle);

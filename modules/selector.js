@@ -7,12 +7,18 @@
  * It's using QuerySelectorAll (QSA) with a few pseudos
  *
  **/
+
+;(function ($) {
+
+
+var slice = Array.prototype.slice;
 var doc = document,
     byClass = 'getElementsByClassName',
     byTag = 'getElementsByTagName',
     byId = 'getElementById',
     nodeType = 'nodeType',
     byAll = 'querySelectorAll',
+
 
     // RegExp we are using
 
@@ -234,3 +240,4 @@ hAzzle.extend({
 	        },
 
 });
+})(hAzzle);

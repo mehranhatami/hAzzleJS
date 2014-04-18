@@ -1,3 +1,5 @@
+; (function ($) {
+
 var data = {};
 
 /**
@@ -11,12 +13,12 @@ var data = {};
 
 function set(elem, key, value) {
 
-    if (!hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
+    if (!$.nodeType(1, elem) || $.nodeType(9, elem) || !(+elem.nodeType)) {
         return 0;
     }
 
     // Get or create and unique ID
-    var id = hAzzle.getUID(elem),
+    var id = $.getUID(elem),
         obj = data[id] || (data[id] = {});
 
     obj[key] = value;
@@ -32,7 +34,7 @@ function set(elem, key, value) {
 
 function get(elem, key) {
 
-    var obj = data[hAzzle.getUID(elem)];
+    var obj = data[$.getUID(elem)];
 
     if (!obj) {
 
@@ -61,7 +63,7 @@ function get(elem, key) {
  */
 
 function has(elem, key) {
-    var obj = data[hAzzle.getUID(elem)];
+    var obj = data[$.getUID(elem)];
     if (key === null) {
         return false;
     }
@@ -78,11 +80,11 @@ function has(elem, key) {
 
 
 function remove(elem, key) {
-    var id = hAzzle.getUID(elem);
+    var id = $.getUID(elem);
 
     // If no key, remove all data
 
-    if (key === undefined && hAzzle.nodeType(1, elem)) {
+    if (key === undefined && $.nodeType(1, elem)) {
         data[id] = {};
 
     } else {
@@ -97,7 +99,9 @@ function remove(elem, key) {
 }
 
 
-hAzzle.extend({
+    // Extend the hAzzle object
+
+    $.extend({
 
     /**
      * Check if an element contains data
@@ -108,7 +112,7 @@ hAzzle.extend({
      */
     hasData: function (elem, key) {
         if (elem.nodeType) {
-            if (data[hAzzle.getUID(elem)]) return true;
+            if (data[$.getUID(elem)]) return true;
 
             else {
 
@@ -128,9 +132,9 @@ hAzzle.extend({
      */
 
     removeData: function (elem, key) {
-        if (elem instanceof hAzzle) {
+        if (elem instanceof $) {
             if (remove(elem, key)) return true;
-        } else if (remove(hAzzle(elem), key)) return true;
+        } else if (remove($(elem), key)) return true;
         return false;
     },
 
@@ -149,7 +153,7 @@ hAzzle.extend({
 
 });
 
-hAzzle.fn.extend({
+$.extend($.fn, {
 
     /**
      * Remove attributes from element collection
@@ -203,3 +207,5 @@ hAzzle.fn.extend({
     }
 
 });
+
+})(hAzzle);

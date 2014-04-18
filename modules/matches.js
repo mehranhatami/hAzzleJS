@@ -1,7 +1,13 @@
-// hAzzle matches
-var ghost = doc.createElement('div');
 
-hAzzle.extend({
+;(function ($) {
+
+
+// hAzzle matches
+var doc = document,
+    ghost = doc.createElement('div');
+
+
+$.extend($, {
 
     /** 
      * Returns a predicate for checking whether an object has a given set of `key:value` pairs.
@@ -11,7 +17,7 @@ hAzzle.extend({
 
         // Make sure that attribute selectors are quoted
 
-        sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
+//        sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
 
         var matchesSelector, match,
 
@@ -76,3 +82,5 @@ hAzzle.extend({
         return fallback(sel, element);
     }
 })
+
+})(hAzzle);

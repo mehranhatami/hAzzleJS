@@ -1,3 +1,5 @@
+; (function ($) {
+
 // Ajax
 var win = window,
     doc = document,
@@ -9,7 +11,7 @@ var win = window,
     uniqid = 0,
     lastValue, // data stored by the most recent JSONP callback
     nav = navigator,
-    isIE10 = hAzzle.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
+    isIE10 = $.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
     uniqid = 0,
     lastValue,
 
@@ -49,11 +51,11 @@ function ctqs(o, trad) {
         enc = encodeURIComponent,
         add = function (key, value) {
             // If value is a function, invoke it and return its value
-            value = (hAzzle.isFunction(value)) ? value() : (value === null ? '' : value);
+            value = ($.isFunction(value)) ? value() : (value === null ? '' : value);
             s[s.length] = enc(key) + '=' + enc(value);
         };
     // If an array was passed in, assume that it is an array of form elements.
-    if (hAzzle.isArray(o))
+    if ($.isArray(o))
         for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
     else
         for (i = 0; prefix = nativeKeys(o)[i]; i += 1)
@@ -68,13 +70,13 @@ function ctqs(o, trad) {
 function buildParams(prefix, obj, traditional, add, o) {
     var name, i, v, rbracket = /\[\]$/;
 
-    if (hAzzle.isArray(obj)) {
+    if ($.isArray(obj)) {
         for (i = 0; obj && i < obj.length; i++) {
             v = obj[i];
             if (traditional || rbracket.test(prefix)) {
                 // Treat each array item as a scalar.
                 add(prefix, v);
-            } else buildParams(prefix + '[' + (hAzzle.isObject(v) ? i : '') + ']', v, traditional, add);
+            } else buildParams(prefix + '[' + ($.isObject(v) ? i : '') + ']', v, traditional, add);
         }
     } else if (obj && obj.toString() === '[object Object]') {
         // Serialize object item.
@@ -146,7 +148,7 @@ function handleJsonp(o, fn, url) {
     script.async = true;
 
 
-    hAzzle.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
+    $.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
 
     script.onload = script.onreadystatechange = function () {
 
@@ -176,9 +178,9 @@ function handleJsonp(o, fn, url) {
     };
 }
 
+    // Extend the hAzzle object
 
-
-hAzzle.extend({
+    $.extend({
 
     /**
      * Ajax method to create ajax request with XMLHTTPRequest
@@ -205,11 +207,11 @@ hAzzle.extend({
             index = -1,
             length = props.length,
             method = (opt.method || 'GET').toLowerCase(),
-            url = hAzzle.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
+            url = $.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
         var type = (opt.type) ? opt.type.toLowerCase() : '',
             abortTimeout = null,
             processData = opt.processData || true, // Set to true as default
-            data = (processData !== false && opt.data && !hAzzle.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
+            data = (processData !== false && opt.data && !$.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
             sendWait = false;
 
         // If no url, stop here and return.
@@ -244,12 +246,12 @@ hAzzle.extend({
         // Set headers
 
         while (++index < length) {
-            xhr.setRequestHeader(hAzzle.trim(props[index]), headers[props[index]]);
+            xhr.setRequestHeader($.trim(props[index]), headers[props[index]]);
         }
 
         // Set credentials
 
-        if (hAzzle.isDefined(opt.withCredentials) && hAzzle.isDefined(xhr.withCredentials)) {
+        if ($.isDefined(opt.withCredentials) && $.isDefined(xhr.withCredentials)) {
             xhr.withCredentials = !! opt.withCredentials;
         }
 
@@ -324,13 +326,13 @@ hAzzle.extend({
 
     getJSON: function (url, data, callback, error) {
 
-        hAzzle.ajax({
+        $.ajax({
             url: url,
             method: 'JSON',
             contentType: 'application/json',
-            error: hAzzle.isFunction(error) ? error : function (err) {},
-            data: hAzzle.isObject(data) ? data : {},
-            success: hAzzle.isFunction ? callback : function (err) {}
+            error: $.isFunction(error) ? error : function (err) {},
+            data: $.isObject(data) ? data : {},
+            success: $.isFunction ? callback : function (err) {}
         });
     },
 
@@ -345,13 +347,13 @@ hAzzle.extend({
 
     get: function (url, data, callback, error) {
 
-        hAzzle.ajax({
+        $.ajax({
             url: url,
             method: 'GET',
             contentType: '',
-            error: hAzzle.isFunction(error) ? error : function (err) {},
-            data: hAzzle.isObject(data) ? data : {},
-            success: hAzzle.isFunction ? callback : function (err) {}
+            error: $.isFunction(error) ? error : function (err) {},
+            data: $.isObject(data) ? data : {},
+            success: $.isFunction ? callback : function (err) {}
         });
     },
 
@@ -366,13 +368,16 @@ hAzzle.extend({
 		 */
 
     post: function (url, data, callback, error) {
-        hAzzle.ajax({
+        $.ajax({
             url: url,
             method: 'POST',
             contentType: '',
-            error: hAzzle.isFunction(error) ? error : function (err) {},
-            data: hAzzle.isObject(data) ? data : {},
-            success: hAzzle.isFunction ? callback : function (err) {}
+            error: $.isFunction(error) ? error : function (err) {},
+            data: $.isObject(data) ? data : {},
+            success: $.isFunction ? callback : function (err) {}
         });
     }
 });
+
+
+})(hAzzle);

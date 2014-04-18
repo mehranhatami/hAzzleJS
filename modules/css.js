@@ -32,6 +32,9 @@
  *            jQuery code. I tried it, and there are lack of humanity :) Still this code are
  *            'inspired' from jQuery code base.
  */
+ 
+; (function ($) {
+ 
 var html = window.document.documentElement,
 
     important = /\s+(!important)/g,
@@ -66,7 +69,7 @@ function vendorCheckUp(style, name) {
     }
 
     var origName = name;
-    name = hAzzle.prefix(name);
+    name = $.prefix(name);
     return name in style ? name : origName;
 }
 
@@ -103,8 +106,8 @@ function show(elem) {
 
     }
 
-    if ((style.display === "" && curCSS(elem, "display") === "none") || !hAzzle.contains(elem.ownerDocument.documentElement, elem)) {
-        hAzzle.data(elem, 'display', defaultDisplay(elem.nodeName));
+    if ((style.display === "" && curCSS(elem, "display") === "none") || !$.contains(elem.ownerDocument.documentElement, elem)) {
+        $.data(elem, 'display', defaultDisplay(elem.nodeName));
     }
 }
 
@@ -112,14 +115,14 @@ var elemdisplay = {};
 
 function actualDisplay(name, doc) {
     var style,
-        elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
+        elem = $(doc.createElement(name)).appendTo(doc.body),
 
         // getDefaultComputedStyle might be reliably used only on attached element
         display = window.getDefaultComputedStyle && (style = window.getDefaultComputedStyle(elem[0])) ?
 
         // Use of this method is a temporary fix (more like optmization) until something better comes along,
         // since it was removed from specification and supported only in FF
-        style.display : hAzzle.css(elem[0], "display");
+        style.display : $.css(elem[0], "display");
 
     // We don't have any data stored on the element,
     // so use "detach" method as fast way to get rid of the element
@@ -141,7 +144,7 @@ function defaultDisplay(nodeName) {
         if (display === "none" || !display) {
 
             // Use the already-created iframe if possible
-            var iframe = (iframe || hAzzle("<iframe frameborder='0' width='0' height='0'/>")).appendTo(doc.documentElement);
+            var iframe = (iframe || $("<iframe frameborder='0' width='0' height='0'/>")).appendTo(doc.documentElement);
 
             // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
             doc = iframe[0].contentDocument;
@@ -172,13 +175,13 @@ function defaultDisplay(nodeName) {
 
 function hide(elem) {
     if (!isHidden(elem)) {
-        var display = hAzzle.css(elem, 'display');
+        var display = $.css(elem, 'display');
         if (display !== 'none') {
-            hAzzle.data(elem, 'display', display);
+            $.data(elem, 'display', display);
         }
 
         // Hide the element
-        hAzzle.style(elem, 'display', 'none');
+        $.style(elem, 'display', 'none');
     }
 }
 
@@ -197,8 +200,8 @@ function curCSS(elem, name, computed, style) {
 
         ret = computed.getPropertyValue(name) || computed[name];
 
-        if (ret === "" && !hAzzle.contains(elem.ownerDocument, elem)) {
-            ret = hAzzle.style(elem, name);
+        if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
+            ret = $.style(elem, name);
         }
 
         if (margin.test(name) && numberOrPx.test(ret)) {
@@ -221,7 +224,10 @@ function curCSS(elem, name, computed, style) {
     return ret !== undefined ? ret + "" : ret;
 }
 
-hAzzle.extend({
+    // Extend the $ object
+
+    $.extend({
+
 
     cssNumber: {
         'column-count': 1,
@@ -274,10 +280,10 @@ hAzzle.extend({
             } else if (/^(top|bottom)$/.test(prop)) {
                 prop = "height";
             }
-            elem = /^(relative|absolute|fixed)$/.test(hAzzle.css(elem, "position")) ?
+            elem = /^(relative|absolute|fixed)$/.test($.css(elem, "position")) ?
                 elem.offsetParent : elem.parentNode;
             if (elem) {
-                prop = hAzzle.css(elem, prop, true);
+                prop = $.css(elem, prop, true);
                 if (prop !== 0) {
                     return px / prop * 100;
                 }
@@ -285,8 +291,8 @@ hAzzle.extend({
             return 0;
         }
 
-        if (hAzzle.pixelsToUnity.units === undefined) {
-            var units = hAzzle.pixelsToUnity.units = {},
+        if ($.pixelsToUnity.units === undefined) {
+            var units = $.pixelsToUnity.units = {},
                 div = document.createElement("div");
             div.style.width = "100cm";
             document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
@@ -299,7 +305,7 @@ hAzzle.extend({
             units.pc = units.pt * 12;
         }
         // If the unity specified is not recognized we return the value.
-        unit = hAzzle.pixelsToUnity.units[unit];
+        unit = $.pixelsToUnity.units[unit];
         return unit ? px / unit : px;
     },
 
@@ -319,17 +325,17 @@ hAzzle.extend({
 
             // Normalize the name
 
-            name = hAzzle.camelCase(name);
+            name = $.camelCase(name);
 
             // Transform to normal properties - vendor or not
 
-            name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorCheckUp(style, name));
+            name = $.cssProps[name] || ($.cssProps[name] = vendorCheckUp(style, name));
 
         }
 
         // Do we have any cssHooks available?
 
-        var hooks = hAzzle.cssHooks[name];
+        var hooks = $.cssHooks[name];
 
         // If a hook was provided get the computed value from there
 
@@ -347,15 +353,15 @@ hAzzle.extend({
 
         // Convert "normal" to computed value
 
-        if (val === "normal" && name in hAzzle.cssNormalTransform) {
-            val = hAzzle.cssNormalTransform[name];
+        if (val === "normal" && name in $.cssNormalTransform) {
+            val = $.cssNormalTransform[name];
         }
 
         // Return, converting to number if forced or a qualifier was provided and val looks numeric
 
         if (extra === "" || extra) {
             num = parseFloat(val);
-            return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
+            return extra === true || $.isNumeric(num) ? num || 0 : val;
         }
 
         return val;
@@ -369,7 +375,7 @@ hAzzle.extend({
 
         // Don't set styles on text and comment nodes
 
-        if (!elem || hAzzle.nodeType(3, elem) || hAzzle.nodeType(8, elem)) {
+        if (!elem || $.nodeType(3, elem) || $.nodeType(8, elem)) {
 
             return;
         }
@@ -386,7 +392,7 @@ hAzzle.extend({
 
         // Transform to normal properties - vendor or not
 
-        name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorCheckUp(style, name));
+        name = $.cssProps[name] || ($.cssProps[name] = vendorCheckUp(style, name));
 
         if (extra) {
 
@@ -394,12 +400,12 @@ hAzzle.extend({
 
         } else { // Normalize the name
 
-            name = hAzzle.camelCase(name);
+            name = $.camelCase(name);
         }
 
         // Do we have any cssHooks available?
 
-        hooks = hook || hAzzle.cssHooks[name];
+        hooks = hook || $.cssHooks[name];
 
         /**
          * Convert relative numbers to strings.
@@ -407,8 +413,8 @@ hAzzle.extend({
          */
 
         if (typeof value === "string" && (ret = relNum.exec(value))) {
-            value = hAzzle.css(elem, name, "", "", name);
-            value = hAzzle.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+            value = $.css(elem, name, "", "", name);
+            value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
 
             // We are dealing with relative numbers, set till true
 
@@ -423,7 +429,7 @@ hAzzle.extend({
 
         // If a number was passed in, add 'px' to the (except for certain CSS properties)
 
-        if (digit && !hAzzle.cssNumber[name]) {
+        if (digit && !$.cssNumber[name]) {
 
             value += ret && ret[3] ? ret[3] : "px";
         }
@@ -453,8 +459,8 @@ hAzzle.extend({
 
     setOffset: function (elem, coordinates, i) {
         var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-            position = hAzzle.css(elem, "position"),
-            curElem = hAzzle(elem),
+            position = $.css(elem, "position"),
+            curElem = $(elem),
             props = {};
 
         // Set position first, in-case top/left are set even on static elem
@@ -463,8 +469,8 @@ hAzzle.extend({
         }
 
         curOffset = curElem.offset();
-        curCSSTop = hAzzle.css(elem, "top");
-        curCSSLeft = hAzzle.css(elem, "left");
+        curCSSTop = $.css(elem, "top");
+        curCSSLeft = $.css(elem, "left");
         calculatePosition = (position === "absolute" || position === "fixed") &&
             (curCSSTop + curCSSLeft).indexOf("auto") > -1;
 
@@ -479,7 +485,7 @@ hAzzle.extend({
             curLeft = parseFloat(curCSSLeft) || 0;
         }
 
-        if (hAzzle.isFunction(coordinates)) {
+        if ($.isFunction(coordinates)) {
             coordinates = coordinates.call(elem, i, curOffset);
         }
 
@@ -500,7 +506,7 @@ hAzzle.extend({
 });
 
 
-hAzzle.fn.extend({
+$.extend($.fn, {
 
     /**
      * Show elements in collection
@@ -558,7 +564,7 @@ hAzzle.fn.extend({
 
             if (typeof property === 'string') {
 
-                return this[0] && hAzzle.css(this[0], property);
+                return this[0] && $.css(this[0], property);
             }
 
             for (var key in property) {
@@ -569,11 +575,11 @@ hAzzle.fn.extend({
 
                     if (important.test(property[key])) {
 
-                        this.style.cssText += hAzzle.style(this, key, property[key], true);
+                        this.style.cssText += $.style(this, key, property[key], true);
 
                     } else {
 
-                        hAzzle.style(this, key, property[key]);
+                        $.style(this, key, property[key]);
                     }
                 });
             }
@@ -586,11 +592,11 @@ hAzzle.fn.extend({
 
                 if (important.test(value)) {
 
-                    this.style.cssText += hAzzle.style(this, property, value, true);
+                    this.style.cssText += $.style(this, property, value, true);
 
                 } else {
 
-                    hAzzle.style(this, property, value);
+                    $.style(this, property, value);
                 }
             });
         }
@@ -604,7 +610,7 @@ hAzzle.fn.extend({
      */
 
     setOpacity: function (value) {
-        if (hAzzle.isNumber) {
+        if ($.isNumber) {
             return this.each(function () {
                 this.style.opacity = value / 100;
             });
@@ -623,7 +629,7 @@ hAzzle.fn.extend({
             return coordinates === undefined ?
                 this :
                 this.each(function (i) {
-                    hAzzle.setOffset(this, coordinates, i);
+                    $.setOffset(this, coordinates, i);
                 });
         }
 
@@ -639,7 +645,7 @@ hAzzle.fn.extend({
 
         }
 
-        _win = hAzzle.isWindow(doc) ? doc : hAzzle.nodeType(9, doc) && doc.defaultView;
+        _win = $.isWindow(doc) ? doc : $.nodeType(9, doc) && doc.defaultView;
 
         var scrollTop = _win.pageYOffset || html.scrollTop,
             scrollLeft = _win.pageXOffset || html.scrollLeft,
@@ -652,7 +658,7 @@ hAzzle.fn.extend({
 
             // Make sure it's not a disconnected DOM node
 
-            if (!hAzzle.contains(html, elem)) {
+            if (!$.contains(html, elem)) {
                 return boundingRect;
             }
 
@@ -682,7 +688,7 @@ hAzzle.fn.extend({
                     left: 0
                 };
 
-            if (hAzzle.css(elem, "position") === "fixed") {
+            if ($.css(elem, "position") === "fixed") {
 
                 offset = elem.getBoundingClientRect();
 
@@ -695,20 +701,20 @@ hAzzle.fn.extend({
                 // Get correct offsets
                 offset = this.offset();
 
-                if (!hAzzle.nodeName(offsetParent[0], "html")) {
+                if (!$.nodeName(offsetParent[0], "html")) {
                     parentOffset = offsetParent.offset();
                 }
 
                 // Subtract element margins
 
-                parentOffset.top += hAzzle.css(offsetParent[0], "borderTopWidth", true);
-                parentOffset.left += hAzzle.css(offsetParent[0], "borderLeftWidth", true);
+                parentOffset.top += $.css(offsetParent[0], "borderTopWidth", true);
+                parentOffset.left += $.css(offsetParent[0], "borderLeftWidth", true);
             }
 
             // Subtract parent offsets and element margins
             return {
-                top: offset.top - parentOffset.top - hAzzle.css(elem, "marginTop", true),
-                left: offset.left - parentOffset.left - hAzzle.css(elem, "marginLeft", true)
+                top: offset.top - parentOffset.top - $.css(elem, "marginTop", true),
+                left: offset.left - parentOffset.left - $.css(elem, "marginLeft", true)
             };
         }
     },
@@ -720,7 +726,7 @@ hAzzle.fn.extend({
     offsetParent: function () {
         return this.map(function (elem) {
             var offsetParent = elem.offsetParent || html;
-            while (offsetParent && (!hAzzle.nodeName(offsetParent, "html") && hAzzle.css(offsetParent, "position") === "static")) {
+            while (offsetParent && (!$.nodeName(offsetParent, "html") && $.css(offsetParent, "position") === "static")) {
                 offsetParent = offsetParent.offsetParent;
             }
             return offsetParent || html;
@@ -730,31 +736,31 @@ hAzzle.fn.extend({
 });
 
 // Create width, height, innerHeight, innerWidth, outerHeight and outerWidth methods
-hAzzle.each(["Height", "Width"], function (i, name) {
+$.each(["Height", "Width"], function (i, name) {
 
     var type = name.toLowerCase();
 
     // innerHeight and innerWidth
-    hAzzle.fn["inner" + name] = function () {
+    $.fn["inner" + name] = function () {
         var elem = this[0];
         return elem ?
             elem.style ?
-            parseFloat(hAzzle.css(elem, type, "padding")) :
+            parseFloat($.css(elem, type, "padding")) :
             this[type]() :
             null;
     };
 
     // outerHeight and outerWidth
-    hAzzle.fn["outer" + name] = function (margin) {
+    $.fn["outer" + name] = function (margin) {
         var elem = this[0];
         return elem ?
             elem.style ?
-            parseFloat(hAzzle.css(elem, type, margin ? "margin" : "border")) :
+            parseFloat($.css(elem, type, margin ? "margin" : "border")) :
             this[type]() :
             null;
     };
 
-    hAzzle.fn[type] = function (size) {
+    $.fn[type] = function (size) {
         // Get window width or height
         var elem = this[0],
             doc;
@@ -763,19 +769,19 @@ hAzzle.each(["Height", "Width"], function (i, name) {
             return size === null ? null : this;
         }
 
-        if (hAzzle.isFunction(size)) {
+        if ($.isFunction(size)) {
             return this.each(function (i) {
-                var self = hAzzle(this);
+                var self = $(this);
                 self[type](size.call(this, i, self[type]()));
             });
         }
 
-        if (hAzzle.isWindow(elem)) {
+        if ($.isWindow(elem)) {
 
             return elem.document.documentElement["client" + name];
 
             // Get document width or height
-        } else if (hAzzle.nodeType(9, elem)) {
+        } else if ($.nodeType(9, elem)) {
 
             doc = elem.documentElement;
 
@@ -791,22 +797,22 @@ hAzzle.each(["Height", "Width"], function (i, name) {
             // Get or set width or height on the element
         } else if (size === undefined) {
 
-            return parseFloat(hAzzle.css(elem, type));
+            return parseFloat($.css(elem, type));
 
             // Set the width or height on the element (default to pixels if value is unitless)
         } else {
 
             // Set the width or height on the element
-            hAzzle.style(elem, type, size);
+            $.style(elem, type, size);
         }
         return this;
     };
 
 });
 
-hAzzle.each(["height", "width"], function (i, name) {
+$.each(["height", "width"], function (i, name) {
 
-    hAzzle.cssHooks[name] = {
+    $.cssHooks[name] = {
 
         displaySwap: /^(none|table(?!-c[ea]).+)/,
         numsplit: /^([\-+]?(?:\d*\.)?\d+)(.*)$/i,
@@ -875,7 +881,7 @@ function getWH(elem, name, extra) {
     // Start with offset property, which is equivalent to the border-box value
     var val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
         valueIsBorderBox = true,
-        isBorderBox = hAzzle.support.boxSizing && hAzzle.css(elem, "boxSizing") === "border-box";
+        isBorderBox = $.support.boxSizing && $.css(elem, "boxSizing") === "border-box";
 
     if (val <= 0) {
         // Fall back to computed then uncomputed css if necessary
@@ -891,7 +897,7 @@ function getWH(elem, name, extra) {
 
         // we need the check for style in case a browser which returns unreliable values
         // for getComputedStyle silently falls back to the reliable elem.style
-        valueIsBorderBox = isBorderBox && (hAzzle.support.boxSizingReliable || val === elem.style[name]);
+        valueIsBorderBox = isBorderBox && ($.support.boxSizingReliable || val === elem.style[name]);
 
         // Normalize "", auto, and prepare for extra
         val = parseFloat(val) || 0;
@@ -916,7 +922,7 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
     for (; i < 4; i += 2) {
 
         if (extra === "margin") {
-            val += hAzzle.css(elem, extra + cssDirection[i], true);
+            val += $.css(elem, extra + cssDirection[i], true);
         }
         if (isBorderBox) {
             // border-box includes padding, so remove it if we want content
@@ -945,13 +951,13 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
  * Process scrollTop and scrollLeft
  */
 
-hAzzle.each({
+$.each({
     'scrollTop': 'pageYOffset',
     'scrollLeft': 'pageXOffset'
 }, function (name, dir) {
-    hAzzle.fn[name] = function (val) {
+    $.fn[name] = function (val) {
         var elem = this[0],
-            win = hAzzle.isWindow(elem) ? elem : hAzzle.nodeType(9, elem) && elem.defaultView;
+            win = $.isWindow(elem) ? elem : $.nodeType(9, elem) && elem.defaultView;
 
         if (typeof val === "undefined") return val ? val[dir] : elem[name];
         win ? win.scrollTo(window[name]) : elem[name] = val;
@@ -963,11 +969,11 @@ hAzzle.each({
  * CSS hooks - margin and padding
  */
 
-hAzzle.each(["margin", "padding"], function (i, hook) {
-    hAzzle.cssHooks[hook] = {
+$.each(["margin", "padding"], function (i, hook) {
+    $.cssHooks[hook] = {
         get: function (elem, computed, extra) {
-            return hAzzle.map(cssDirection, function (dir) {
-                return hAzzle.css(elem, hook + dir);
+            return $.map(cssDirection, function (dir) {
+                return $.css(elem, hook + dir);
             }).join(" ");
         },
         set: function (elem, value) {
@@ -978,9 +984,11 @@ hAzzle.each(["margin", "padding"], function (i, hook) {
                     "Bottom": parts[2] || parts[0],
                     "Left": parts[3] || parts[1] || parts[0]
                 };
-            hAzzle.each(cssDirection, function (i, dir) {
+            $.each(cssDirection, function (i, dir) {
                 elem.style[hook + dir] = values[dir];
             });
         }
     };
 });
+
+})(hAzzle);

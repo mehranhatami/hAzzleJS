@@ -16,11 +16,20 @@
  *
  * Todo!! Fix this maybe!!
  */
+
+/*!
+ * Traversing.js
+ */
+
+;(function ($) {
+
+
+
 var win = window,
     doc = document || {},
     root = doc.documentElement || {},
-    isString = hAzzle.isString,
-    isFunction = hAzzle.isFunction,
+    isString = $.isString,
+    isFunction = $.isFunction,
 
     // Cached handlers
 
@@ -62,7 +71,7 @@ var win = window,
         // Don't do events on text and comment nodes 
 
         nodeType: function (el) {
-            if (hAzzle.nodeType(3, el) || hAzzle.nodeType(8, el)) return true;
+            if ($.nodeType(3, el) || $.nodeType(8, el)) return true;
         }
     },
 
@@ -144,7 +153,7 @@ function Event(evt, element) {
         target = evt.target,
         i, p, props, fixHook;
 
-    this.target = target && hAzzle.nodeType(3, target) ? target.parentNode : target;
+    this.target = target && $.nodeType(3, target) ? target.parentNode : target;
 
     fixHook = treated[type];
 
@@ -156,8 +165,8 @@ function Event(evt, element) {
         //
         // NOTE!! I used the same "props" as in jQuery. I hope that was the right thing to do :)
 
-        treated[type] = fixHook = rmouseEvent.test(type) ? hAzzle.eventHooks['mouse'] :
-            rkeyEvent.test(type) ? hAzzle.eventHooks['keys'] :
+        treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
+            rkeyEvent.test(type) ? $.eventHooks['keys'] :
             function () {
                 return commonProps;
         };
@@ -202,7 +211,7 @@ Event.prototype = {
 };
 // Same as jQuery / Zepto
 
-hAzzle.Events = {
+$.Events = {
 
     // Add event listener
 
@@ -221,7 +230,7 @@ hAzzle.Events = {
             for (type in events) {
 
                 if (events.hasOwnProperty(type)) {
-                    hAzzle.Events.add.call(this, el, type, events[type]);
+                    $.Events.add.call(this, el, type, events[type]);
                 }
 
             } else {
@@ -231,7 +240,7 @@ hAzzle.Events = {
                 if (!isFunction(selector)) {
                     originalFn = fn;
                     args = slice.call(arguments, 4);
-                    fn = hAzzle.Events.delegate(selector, originalFn);
+                    fn = $.Events.delegate(selector, originalFn);
 
                 } else {
                     args = slice.call(arguments, 3);
@@ -249,11 +258,11 @@ hAzzle.Events = {
                 if (one === 1) {
 
                     // Make a unique handlet that get removed after first time it's triggered
-                    fn = hAzzle.Events.once(hAzzle.Events.remove, el, events, fn, originalFn);
+                    fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
                 }
 
                 for (i = types.length; i--;) {
-                    first = hAzzle.Events.putHandler(entry = hAzzle.Kernel(
+                    first = $.Events.putHandler(entry = $.Kernel(
                         el, types[i].replace(names, '') // event type
                         , fn, originalFn, types[i].replace(ns, '').split('.') // namespaces
                         , args, false
@@ -261,7 +270,7 @@ hAzzle.Events = {
 
                     // Add root listener only if we're the first
 
-                    if (first) el.addEventListener(entry.eventType, hAzzle.Events.rootListener, false);
+                    if (first) el.addEventListener(entry.eventType, $.Events.rootListener, false);
                 }
                 return el;
             }
@@ -278,7 +287,7 @@ hAzzle.Events = {
             typeSpec = typeSpec.split(typeSpec);
 
             for (i = typeSpec.length; i--;)
-                hAzzle.Events.remove(el, typeSpec[i], fn);
+                $.Events.remove(el, typeSpec[i], fn);
             return el;
         }
 
@@ -289,14 +298,14 @@ hAzzle.Events = {
         if (!typeSpec || isTypeStr) {
 
             if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
-            hAzzle.Events.removeListener(el, type, fn, namespaces);
+            $.Events.removeListener(el, type, fn, namespaces);
         } else if (isFunction(typeSpec)) {
             // off(el, fn);
-            hAzzle.Events.removeListener(el, null, typeSpec);
+            $.Events.removeListener(el, null, typeSpec);
         } else {
 
             for (var k in typeSpec) {
-                if (typeSpec.hasOwnProperty(k)) hAzzle.Events.remove(el, k, typeSpec[k]);
+                if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
             }
         }
 
@@ -310,7 +319,7 @@ hAzzle.Events = {
     delegate: function (selector, fn) {
 
         function findTarget(target, root) {
-            var i, array = isString(selector) ? hAzzle.select(selector, root) : selector;
+            var i, array = isString(selector) ? $.select(selector, root) : selector;
             for (; target && target !== root; target = target.parentNode) {
                 if (array !== null) {
                     for (i = array.length; i--;) {
@@ -337,14 +346,14 @@ hAzzle.Events = {
     removeListener: function (element, orgType, handler, namespaces) {
 
         var type = orgType && orgType.replace(names, ''),
-            handlers = hAzzle.Events.getHandler(element, type, null, false),
+            handlers = $.Events.getHandler(element, type, null, false),
             removed = {}, i, l;
 
         // Namespace
 
         for (i = 0, l = handlers.length; i < l; i++) {
             if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                hAzzle.Events.delHandler(handlers[i]);
+                $.Events.delHandler(handlers[i]);
                 if (!removed[handlers[i].eventType])
                     removed[handlers[i].eventType] = {
                         t: handlers[i].eventType,
@@ -354,9 +363,9 @@ hAzzle.Events = {
         }
 
         for (i in removed) {
-            if (!hAzzle.Events.hasHandler(element, removed[i].t, null, false)) {
+            if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
                 // last listener of this type, remove the rootListener
-                element.removeEventListener(removed[i].t, hAzzle.Events.rootListener, false);
+                element.removeEventListener(removed[i].t, $.Events.rootListener, false);
             }
         }
     },
@@ -369,7 +378,7 @@ hAzzle.Events = {
     },
 
     rootListener: function (evt, type) {
-        var listeners = hAzzle.Events.getHandler(this, type || evt.type, null, false),
+        var listeners = $.Events.getHandler(this, type || evt.type, null, false),
             l = listeners.length,
             i = 0;
 
@@ -419,7 +428,7 @@ hAzzle.Events = {
             for (var t in container) {
 
                 if (t.charAt(0) === root ? 'r' : '#') {
-                    hAzzle.Events.findIt(element, t.substr(1), original, handler, root, fn);
+                    $.Events.findIt(element, t.substr(1), original, handler, root, fn);
                 }
             }
 
@@ -451,7 +460,7 @@ hAzzle.Events = {
 
         var entries = [];
 
-        hAzzle.Events.findIt(element, type, original, null, root, function (entry) {
+        $.Events.findIt(element, type, original, null, root, function (entry) {
             entries.push(entry);
         });
         return entries;
@@ -464,7 +473,7 @@ hAzzle.Events = {
     },
     // Find handlers for event delegation
     delHandler: function (entry) {
-        hAzzle.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
+        $.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
             list.splice(i, 1);
             entry.removed = true;
             if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
@@ -473,7 +482,7 @@ hAzzle.Events = {
     }
 };
 
-hAzzle.extend({
+$.extend($, {
 
     // Event hooks
 
@@ -513,19 +522,19 @@ hAzzle.extend({
 
         // Allow instantiation without the 'new' keyword
 
-        if (!(this instanceof hAzzle.Kernel)) {
-            return new hAzzle.Kernel(element, type, handler, original, namespaces, args);
+        if (!(this instanceof $.Kernel)) {
+            return new $.Kernel(element, type, handler, original, namespaces, args);
         }
 
         var _special = special[type];
 
         // Only load the event once upon unload
 
-        if (type === 'unload') handler = hAzzle.Events.once(hAzzle.Events.removeListener, element, type, handler, original);
+        if (type === 'unload') handler = $.Events.once($.Events.removeListener, element, type, handler, original);
 
         if (_special) {
             if (_special.condition) {
-                handler = hAzzle.Events.wrappedHandler(element, handler, _special.condition, args);
+                handler = $.Events.wrappedHandler(element, handler, _special.condition, args);
             }
 
             type = _special.fix || type;
@@ -537,12 +546,12 @@ hAzzle.extend({
         this.namespaces = namespaces;
         this.eventType = type;
         this.target = element;
-        this.handler = hAzzle.Events.wrappedHandler(element, handler, null, args);
+        this.handler = $.Events.wrappedHandler(element, handler, null, args);
     }
 });
 
 
-hAzzle.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
+$.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
 
     var i, j, c = 0;
 
@@ -556,14 +565,14 @@ hAzzle.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
     return checkNamespaces.length === c;
 };
 
-hAzzle.Kernel.prototype['matches'] = function (checkElement, checkOriginal, checkHandler) {
+$.Kernel.prototype['matches'] = function (checkElement, checkOriginal, checkHandler) {
     return this.element === checkElement &&
         (!checkOriginal || this.original === checkOriginal) &&
         (!checkHandler || this.handler === checkHandler);
 };
 
 
-hAzzle.fn.extend({
+$.extend($.fn, {
 
     /**
      * Bind a DOM event to element
@@ -577,7 +586,7 @@ hAzzle.fn.extend({
 
     on: function (events, selector, fn, one) {
         return this.each(function () {
-            hAzzle.Events.add(this, events, selector, fn, one);
+            $.Events.add(this, events, selector, fn, one);
         });
     },
 
@@ -604,7 +613,7 @@ hAzzle.fn.extend({
 
     off: function (events, fn) {
         return this.each(function () {
-            hAzzle.Events.remove(this, events, fn);
+            $.Events.remove(this, events, fn);
         });
     },
 
@@ -635,7 +644,7 @@ hAzzle.fn.extend({
 
             } else {
 
-                handlers = hAzzle.Events.getHandler(el, type, null, false);
+                handlers = $.Events.getHandler(el, type, null, false);
                 evt = Event(null, el);
                 evt.type = type;
                 call = args ? 'apply' : 'call';
@@ -653,16 +662,17 @@ hAzzle.fn.extend({
 
 // Shortcut methods for 'on'
 
-hAzzle.each(("blur focus focusin focusout load resize scroll unload click dblclick " +
+$.each(("blur focus focusin focusout load resize scroll unload click dblclick " +
     "mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
     "change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
 
     // Handle event binding
 
-    hAzzle.fn[name] = function (data, fn) {
+    $.fn[name] = function (data, fn) {
         //events, fn, delfn, one
         return arguments.length > 0 ?
             this.on(name, data, fn) :
             this.trigger(name);
     };
 });
+})(hAzzle);
