@@ -2,8 +2,7 @@
 
 // Contains: Empty() and Remove()
 
-   var cahce = [], 
-   timeout;
+   var timeout;
 
   $.extend($.fn, {
 
