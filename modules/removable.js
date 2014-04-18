@@ -1,10 +1,11 @@
+; (function ($) {
 
 // Contains: Empty() and Remove()
 
    var cahce = [], 
    timeout;
 
-hAzzle.fn.extend({
+  $.extend($.fn, {
 
     /**
      * Remove all child nodes of the set of matched elements from the DOM.
@@ -17,12 +18,12 @@ hAzzle.fn.extend({
 	   // Remove all data to prevent memory leaks
 	   
         return this.removeData().each(function (_, elem) {
-         if ( hAzzle.nodeType(1, this)) {
+         if ( $.nodeType(1, this)) {
 			 
 		 // Remove all event handlers
 		
-		hAzzle.each(elem, function(_, el) {
-			hAzzle.Events.remove(el);
+		$.each(elem, function(_, el) {
+			$.Events.remove(el);
 		});
 			 
 		 // Remove any remaining nodes
@@ -45,13 +46,13 @@ hAzzle.fn.extend({
 		// Locate all nodes that belong to this element
 		// and add them to the "elems stack"
 			
-		  var elements = hAzzle(elem).find('*');
+		  var elements = $(elem).find('*');
 		      elements  = elements.add(elem);
 
 	    // Remove all event handlers
 		
-		hAzzle.each(elements, function() {
-			hAzzle.Events.remove(elem);
+		$.each(elements, function() {
+			$.Events.remove(elem);
 		});
         
 		 var parent = elem.parentNode;
@@ -85,3 +86,4 @@ hAzzle.fn.extend({
 
 
 
+})(hAzzle);
