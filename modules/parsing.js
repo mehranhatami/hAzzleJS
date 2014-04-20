@@ -1,5 +1,8 @@
+;
+(function ($) {
+
 // Parsing
-hAzzle.extend({
+ $.extend($, {
 
     /**
      * Cross-browser JSON parsing
@@ -34,3 +37,5 @@ hAzzle.extend({
     }
 
 });
+
+})(hAzzle);

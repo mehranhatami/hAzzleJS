@@ -17,10 +17,6 @@
  * Todo!! Fix this maybe!!
  */
 
-/*!
- * Traversing.js
- */
-
 ;(function ($) {
 
 
@@ -662,7 +658,7 @@ $.extend($.fn, {
             }
         }
         return el;
-    },
+    }
 });
 
 // Shortcut methods for 'on'

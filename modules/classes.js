@@ -3,7 +3,7 @@
 
 
 // Check if we can support classList
-var csp = !! document.createElement('p').classList,
+var csp = hAzzle.support.classList,
     whitespace = (/\S+/g),
     rclass = /[\t\r\n\f]/g;
 
@@ -16,7 +16,7 @@ var csp = !! document.createElement('p').classList,
      */
 
     addClass: function (value) {
-        if (hAzzle.isFunction(value)) {
+        if (typeof value === "function") {
             return this.each(function (j) {
                 hAzzle(this).addClass(value.call(this, j, this.className));
             });

@@ -237,7 +237,7 @@ hAzzle.extend({
 	            return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
 	                hAzzle.merge([context], ret) :
 	                ret;
-	        },
+	        }
 
 });
 })(hAzzle);

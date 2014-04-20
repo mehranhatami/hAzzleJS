@@ -13,11 +13,11 @@
 
     div.appendChild(input);
 
-    support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+    hAzzle.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
 
     div.innerHTML = "<textarea>x</textarea>";
 
-    support.noCloneChecked = !! div.cloneNode(true).lastChild.defaultValue;
+    hAzzle.support.noCloneChecked = !! div.cloneNode(true).lastChild.defaultValue;
 
 }());
 
