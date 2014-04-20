@@ -1,8 +1,8 @@
 /*!
  * Traversing.js
  */
-
-;(function ($) {
+;
+(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -93,9 +93,13 @@
          */
 
         add: function (sel, ctx) {
-            if (arguments.length === 1) {
-                return sel = $(sel, ctx).elems, this.concat(sel);
+
+            var elements = sel;
+
+            if (typeof sel === 'string') {
+                elements = hAzzle(sel, ctx).elems;
             }
+            return this.concat(elements);
         },
 
         /**

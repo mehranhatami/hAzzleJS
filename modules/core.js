@@ -100,9 +100,6 @@
          * Detect classList support.
          */
         support.classList = !! doc.createElement('p').classList;
-        if (!ghost.style) {
-            return;
-        }
 
         ghost.style.backgroundClip = "content-box";
         ghost.cloneNode(true).style.backgroundClip = "";
@@ -111,6 +108,7 @@
     }());
 
     hAzzle.fn = hAzzle.prototype = {
+
         init: function (sel, ctx) {
             var elems, i;
             if (sel instanceof hAzzle) return sel;
@@ -325,7 +323,7 @@
          */
 
         get: function (index) {
-            return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice()
+           return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice()
         },
 
         /**
@@ -416,7 +414,6 @@
         reduce: function (iterator, memo) {
 
             var arr = this.elems,
-
                 len = arr.length,
                 reduced,
                 i;
@@ -486,7 +483,13 @@
             if (arguments) {
                 return hAzzle(this.get(index));
             }
+        },
+
+        toArray: function () {
+
+            return slice.call(this);
         }
+
     };
 
     hAzzle.fn.init.prototype = hAzzle.fn;
@@ -617,7 +620,7 @@
         },
 
 
-        isArray: Array.isArray || toString.call(value) === '[object Array]', //use native version here
+        isArray: Array.isArray, //use native version here
 
         isArrayLike: function (obj) {
 
@@ -816,7 +819,7 @@
                 return typeof value === "string" ? value.trim() : value;
             };
         })(),
-		
+
         /**
          *  Same as hAzzle.indexOf.
          * Added for compability with Zepto and Jquery
@@ -986,10 +989,6 @@
             return ret;
         },
 
-        toArray: function () {
-            return slice.call(this, 0);
-        },
-
         makeArray: function (arr, results) {
 
             var ret = results || [];
@@ -1009,7 +1008,6 @@
         noop: function () {
 
         }
-
 
     });
 
@@ -1032,6 +1030,7 @@
             return toString.call(obj) == '[object ' + name + ']';
         };
     });
+
 
     if (typeof window['hAzzle'] === "undefined") {
 
