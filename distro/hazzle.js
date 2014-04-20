@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.32b - Beta 4
+ * Version: 0.32c - Beta 4
  * Released under the MIT License.
  *
  * Date: 2014-04-21
@@ -399,6 +399,20 @@
             return hAzzle.indexOf(this.elems, needle || '');
         },
 
+        lastIndexOf: function (array, itm, from) {
+
+            if (array === null) return -1;
+
+            var hasIndex = from !== null,
+                i = (hasIndex ? from : array.length);
+
+            while (i--) {
+
+                if (array[i] === itm) return i;
+            }
+            return -1;
+        },
+
         /**
          * Make the 'elems stack'  unique
          */
@@ -612,8 +626,8 @@
         },
 
         isEmptyObject: function (obj) {
-
-            for (var name in obj) {
+          var name;
+            for (name in obj) {
                 return false;
             }
             return true;
@@ -1154,7 +1168,6 @@
                 if (hAzzle(this).text().indexOf(text) > -1) return this;
             },
             has: function (elem, _, sel) {
-
                 if (hAzzle.qsa(this, sel).length) return this;
             },
             radio: function () {
@@ -1877,6 +1890,7 @@
     },
 
         // Boolean attributes and elements
+
 
         boolean_attr = {
             'multiple': true,
@@ -3446,6 +3460,7 @@
                 } else {
 
                     handlers = $.Events.getHandler(el, type, null, false);
+
                     evt = Event(null, el);
                     evt.type = type;
                     call = args ? 'apply' : 'call';
@@ -4580,6 +4595,7 @@
                 style.minWidth = minWidth;
                 style.maxWidth = maxWidth;
             }
+
         }
         return ret !== undefined ? ret + "" : ret;
     }
@@ -5264,7 +5280,6 @@
             val = parseFloat(val) || 0;
         }
 
-
         // use the active box-sizing model to add/subtract irrelevant styles
         return (val +
             augmentWidthOrHeight(
@@ -5892,4 +5907,5 @@
             });
         }
     });
+	
 })(hAzzle);

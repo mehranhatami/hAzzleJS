@@ -4,6 +4,7 @@
 
 // hAzzle matches
 var doc = document,
+     cached = [],
     ghost = doc.createElement('div');
 
 

@@ -56,8 +56,6 @@
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
 
-        hasOwn = ObjProto.hasOwnProperty,
-
         getTime = (Date.now || function () {
             return new Date().getTime();
         }),
@@ -323,7 +321,7 @@
          */
 
         get: function (index) {
-           return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice()
+            return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice();
         },
 
         /**
@@ -399,6 +397,19 @@
             return hAzzle.indexOf(this.elems, needle || '');
         },
 
+        lastIndexOf: function (array, itm, from) {
+
+            if (array === null) return -1;
+
+            var hasIndex = from !== null,
+                i = (hasIndex ? from : array.length);
+
+            while (i--) {
+
+                if (array[i] === itm) return i;
+            }
+            return -1;
+        },
         /**
          * Make the 'elems stack'  unique
          */
@@ -612,8 +623,8 @@
         },
 
         isEmptyObject: function (obj) {
-
-            for (var name in obj) {
+          var name;
+            for ( name in obj) {
                 return false;
             }
             return true;
