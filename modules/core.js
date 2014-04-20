@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.31d - Beta 4
+ * Version: 0.32 - Beta 4
  * Released under the MIT License.
  *
- * Date: 2014-04-19
+ * Date: 2014-04-21
  *
  * TO DO! Just now we are using jQuery's DOM ready way to do things. We let it be up to the developer to use the DOM ready function or not.
  *        My idea is that we skip that, and run the DOM ready automaticly before the library can be used.
@@ -30,7 +30,6 @@
  * The Core have been optimized for speed and the average speed is 60 - 70% fater then Underscore.js, zepto, jQuery and Angular JS.
  *
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -134,7 +133,12 @@
 
                         // Copy the stack over to the hAzzle object so we can access the Protoype
 
-                        for (i = this.length = elems.length; i--;) this[i] = elems[i];
+                        i = this.length = elems.length;
+
+                        while (i--) {
+
+                            this[i] = elems[i];
+                        }
 
                         // Return the hAzzle Object
 
@@ -182,8 +186,14 @@
                 }
             }
 
-            elems = this.elems;
-            for (i = this.length = elems.length; i--;) this[i] = elems[i];
+            elems = this.elems,
+            i = this.length = elems.length;
+
+            while (i--) {
+
+                this[i] = elems[i];
+
+            }
             return this;
         },
 
@@ -315,11 +325,7 @@
          */
 
         get: function (index) {
-
-            if (index === null) {
-                return this.elems.slice();
-            }
-            return this.elems[0 > index ? this.elems.length + index : index];
+            return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice()
         },
 
         /**
@@ -333,10 +339,13 @@
          */
 
         map: function (callback) {
-            var results = [],
-                elems = this.elems;
 
-            for (var i = 0; i < elems.length; i++) {
+            var results = [],
+                elems = this.elems,
+                i = 0,
+                len = elems.length;
+
+            for (; i < len; i++) {
                 results.push(callback(elems[i]));
             }
             return hAzzle(results);
@@ -389,7 +398,7 @@
          */
 
         indexOf: function (needle) {
-            return hAzzle.indexOf(this.elems, needle);
+            return hAzzle.indexOf(this.elems, needle || '');
         },
 
         /**
@@ -407,6 +416,7 @@
         reduce: function (iterator, memo) {
 
             var arr = this.elems,
+
                 len = arr.length,
                 reduced,
                 i;
@@ -431,7 +441,6 @@
             }
 
             return reduced;
-
         },
 
         /**
@@ -443,22 +452,9 @@
         },
 
         compact: function (a) {
-
             return this.filter(a, function (value) {
-
                 return !!value;
             });
-        },
-
-        memo: function (fn, hasher) {
-            var store = {};
-            hasher || (hasher = function (v) {
-                return v;
-            });
-            return function () {
-                var key = hasher.apply(this, arguments);
-                return hasOwn.call(store, key) ? store[key] : (store[key] = fn.apply(this, arguments));
-            };
         },
 
         /**
@@ -475,7 +471,6 @@
 
         /**
          * Get the element at position specified by index from the current collection.
-         * If no index specified, return all elemnts in the "elems" stack
          *
          * +, -, / and * are all allowed to use for collecting elements.
          *
@@ -488,7 +483,9 @@
          */
 
         eq: function (index) {
-            return hAzzle(index === null ? '' : this.get(index));
+            if (arguments) {
+                return hAzzle(this.get(index));
+            }
         }
     };
 
@@ -523,10 +520,7 @@
 
     hAzzle.extend({
 
-        // async-each    
-
-
-each: function (obj, callback) {
+        each: function (obj, callback) {
             var i = 0,
                 name,
                 length = obj.length;
@@ -564,7 +558,7 @@ each: function (obj, callback) {
          */
 
         isElement: function (elem) {
-            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem) || !( +elem.nodeType ) );
+            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem) || !(+elem.nodeType));
         },
 
         /**
@@ -595,11 +589,11 @@ each: function (obj, callback) {
             return typeof value === 'string';
 
         },
-		
-		isFunction: function (value) {
-			
-			return typeof value === 'function';
-		},
+
+        isFunction: function (value) {
+
+            return typeof value === 'function';
+        },
 
         isNumber: function (value) {
 
@@ -611,7 +605,7 @@ each: function (obj, callback) {
         },
 
         isNumeric: function (obj) {
-            return !hAzzle.isArray( obj ) && obj - parseFloat( obj ) >= 0;
+            return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
         },
 
         isEmptyObject: function (obj) {
@@ -623,7 +617,7 @@ each: function (obj, callback) {
         },
 
 
-        isArray: Array.isArray || toString.call(value) === '[object Array]',  //use native version here
+        isArray: Array.isArray || toString.call(value) === '[object Array]', //use native version here
 
         isArrayLike: function (obj) {
 
@@ -812,10 +806,17 @@ each: function (obj, callback) {
          * @return{String}
          */
 
-        trim: function (str) {
-            return str.trim();
-        },
-
+        trim: (function () {
+            if (!String.prototype.trim) {
+                return function (value) {
+                    return typeof value === "string" ? value.replace(/^\s\s*/, '').replace(/\s\s*$/, '') : value;
+                };
+            }
+            return function (value) {
+                return typeof value === "string" ? value.trim() : value;
+            };
+        })(),
+		
         /**
          *  Same as hAzzle.indexOf.
          * Added for compability with Zepto and Jquery
@@ -1008,6 +1009,7 @@ each: function (obj, callback) {
         noop: function () {
 
         }
+
 
     });
 

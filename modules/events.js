@@ -134,6 +134,9 @@ function checkPointer(evt) {
     return evt;
 }
 
+// hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
+// http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
+
 function Event(evt, element) {
 
     // Allow instantiation without the 'new' keyword
@@ -178,6 +181,7 @@ function Event(evt, element) {
         if (!((p = props[i]) in this) && p in evt) this[p] = evt[p];
     }
 }
+
 
 Event.prototype = {
 
@@ -237,7 +241,7 @@ $.Events = {
 
                 // Delegated event
 
-                if (!isFunction(selector)) {
+                if (! isFunction(selector)) {
                     originalFn = fn;
                     args = slice.call(arguments, 4);
                     fn = $.Events.delegate(selector, originalFn);
@@ -279,6 +283,7 @@ $.Events = {
     // Remove event listener
 
     remove: function (el, typeSpec, fn) {
+		
         var isTypeStr = isString(typeSpec),
             type, namespaces, i;
 
@@ -675,4 +680,8 @@ $.each(("blur focus focusin focusout load resize scroll unload click dblclick " 
             this.trigger(name);
     };
 });
+
+
+
+
 })(hAzzle);
