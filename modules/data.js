@@ -1,211 +1,219 @@
-; (function ($) {
-
-var data = {};
-
-/**
- * Store data on an element
+/** 
+ * Data
  *
- * @param{Object} elem
- * @param{String} key
- * @param{String} value
- * @return {Object}
- */
-
-function set(elem, key, value) {
-
-    if (!$.nodeType(1, elem) || $.nodeType(9, elem) || !(+elem.nodeType)) {
-        return 0;
-    }
-
-    // Get or create and unique ID
-    var id = $.getUID(elem),
-        obj = data[id] || (data[id] = {});
-
-    obj[key] = value;
-}
-
-/**
- * Get data from an element
+ * Save data on elements
  *
- * @param{Object} elem
- * @param{String} key
- * @return {Object}
- */
-
-function get(elem, key) {
-
-    var obj = data[$.getUID(elem)];
-
-    if (!obj) {
-
-        return;
-    }
-
-    // If no key, return all data stored on the object
-
-    if (arguments.length === 1) {
-
-        return obj;
-
-    } else {
-
-        return obj[key];
-    }
-
-}
-
-/**
- * Check if an element contains any data
+ * I tried to make this module so simple and fast as possible. And I don't like to publish data to the rest of the world. THEREFOR 
+ * hAzzle *only* store data on elements, and not with the HTML5 attribute. However. hAzzle collects data from the HTML5 data- attribute
+ * as a fallback if no key present.
  *
- * @param{Object} elem
- * @param{String} key
- * @return {Object}
- */
-
-function has(elem, key) {
-    var obj = data[$.getUID(elem)];
-    if (key === null) {
-        return false;
-    }
-    if (obj && obj[key]) return true;
-}
-
-/**
- * Remove data from an element
+ * Shoot me if I'm wrong, but I did this because the developer who use hAzzle lib, can set data on the HTML 5 data- attribute. If so,
+ * we get it, save it internally and return it's value. When we save data on that object again, we save the normal way.
+ * This should be the fastest, and most safest method I guess.
  *
- * @param{Object} elem
- * @param{String} key
- * @return {Object}
- */
+ */ 
 
-
-function remove(elem, key) {
-    var id = $.getUID(elem);
-
-    // If no key, remove all data
-
-    if (key === undefined && $.nodeType(1, elem)) {
-        data[id] = {};
-
-    } else {
-
-        if (data[id]) {
-            delete data[id].key;
-        } else {
-            data[id] = null;
-
-        }
-    }
-}
-
+;
+(function ($) {
 
     // Extend the hAzzle object
 
     $.extend({
+        _data: {},
+        /**
+         * Check if an element contains data
+         *
+         * @param{String/Object} elem
+         * @param{String} key
+         * @return {Object}
+         */
+        hasData: function (elem) {
 
-    /**
-     * Check if an element contains data
-     *
-     * @param{String/Object} elem
-     * @param{String} key
-     * @return {Object}
-     */
-    hasData: function (elem, key) {
-        if (elem.nodeType) {
-            if (data[$.getUID(elem)]) return true;
+            if (elem.nodeType) {
+                if ($._data[$.getUID(elem)]) {
+				
+				return true;
+				
+				}
 
-            else {
+                else {
 
-                return false;
+                    return false;
+
+                }
+
+            }
+        },
+
+        /**
+         * Remove data from an element
+         *
+         * @param {String/Object} elem
+         * @param {String} key
+         * @return {Object}
+         */
+
+        removeData: function (elem, key) {
+
+            if (!elem instanceof $) {
+                elem = $(elem);
+            }
+
+            var id = $.getUID(elem);
+
+            if (id) {
+
+                if (typeof key === "undefined" && $.nodeType(1, elem)) {
+
+                    $._data[id] = {};
+
+                } else {
+
+                    if ($._data[id]) {
+                        delete $._data[id][key];
+                    } else {
+                        $._data[id] = null;
+                    }
+                }
+
+            }
+        },
+
+        data: function (elem, key, value) {
+
+            var id = $._data[$.getUID(elem)];
+
+            // Create and unique ID for this elem
+
+            if (!id && elem.nodeType) {
+                var pid = $.getUID(elem);
+                id = $._data[pid] = {};
+            }
+
+            // Return all data on saved on the element
+
+            if (typeof key === 'undefined') {
+
+                return id;
+            }
+
+
+            if (typeof value === 'undefined') {
+
+                return id[key];
 
             }
 
+            if (typeof value !== 'undefined') {
+
+                // Set and return the value
+                id[key] = value;
+
+                return id[key];
+            }
         }
-    },
+    });
 
-    /**
-     * Remove data from an element
-     *
-     * @param {String/Object} elem
-     * @param {String} key
-     * @return {Object}
-     */
+    $.extend($.fn, {
 
-    removeData: function (elem, key) {
-        if (elem instanceof $) {
-            if (remove(elem, key)) return true;
-        } else if (remove($(elem), key)) return true;
-        return false;
-    },
+        /**
+         * Remove attributes from element collection
+         *
+         * @param {String} key
+         *
+         * @return {Object}
+         */
 
-    data: function (elem, key, value) {
-		
-     if(typeof value === 'undefined') {
-		 
-		 return get(elem, key)
+        removeData: function (key) {
+            return this.each(function () {
+                $.removeData(this, key);
+            });
+        },
 
-	 } else {
-		 
-		 set(elem, key, value)
-	}
+        /**
+         * Store random data on the hAzzle Object
+         *
+         * @param {String} key(s)
+         * @param {String|Object} value
+         *
+         * @return {Object|String}
+         *
+         */
 
-    }
+        data: function (key, value) {
 
-});
+            if (typeof key === "undefined") {
 
-$.extend($.fn, {
+                var data = $.data(this[0]);
 
-    /**
-     * Remove attributes from element collection
-     *
-     * @param {String} key
-     *
-     * @return {Object}
-     */
+                if (hAzzle.nodeType(1, this[0]) && !$.data( this[0], "parsedAttrs" ) ) {
 
-    removeData: function (key) {
-        return this.each(function () {
-            remove(this, key);
-        });
-    },
+                    var attr = this[0].attributes,
+                        name;
 
-    /**
-     * Store random data on the hAzzle Object
-     *
-     * @param {String} key(s)
-     * @param {String|Object} value
-     *
-     * @return {Object|String}
-     *
-     */
+                    for (var i = 0, l = attr.length; i < l; i++) {
+                        name = attr[i].name;
 
-    data: function (key, value) {
+                        if (name.indexOf("data-") === 0) {
+                            name = $.camelCase(name.substring(5));
 
-        var len = arguments.length,
-            keyType = typeof key;
+                            return GetHTML5DataAttr(this[0], name, data[name]);
+                        }
+                    }
+					$.data( this[0], "parsedAttrs", true );
+                }
 
-        if (len === 1) {
 
-            if (this.elems.length === 1) {
+            } else if (typeof value === "undefined") {
 
-                return get(this.elems[0], key);
+                if (this.length === 1) {
+
+                    return $.data(this.elems[0], key);
+
+                } else {
+
+                    return this.elems.map(function (value) {
+                        return $.data(value, key);
+                    });
+                }
+
             } else {
 
-                return this.elems.map(function (value) {
-                    return get(value, key);
-                });
+                return $.data(this[0], key, value);
             }
-
-        } else if (len === 2) {
-
-            return this.each(function () {
-                set(this, key, value);
-            })
-        } else {
-            return get(this[0]);
         }
-    }
 
-});
+    });
+
+
+
+
+    function GetHTML5DataAttr(elem, key, data) {
+
+        if (data === undefined && hAzzle.nodeType(1, elem)) {
+
+           var name = "data-" + key.replace( /([A-Z])/g, "-$1" ).toLowerCase();
+
+            data = elem.getAttribute(name);
+
+            if (typeof data === "string") {
+                try {
+                    data = data === "true" ? true :
+                        data === "false" ? false :
+                        data === "null" ? null : 
+						+data + "" === data ? +data :
+                        /(?:\{[\s\S]*\}|\[[\s\S]*\])$/.test(data) ? $.parseJSON(data) : data;
+                } catch (e) {}
+
+                // Make sure we set the data so it isn't changed later
+
+                $.data(elem, key, data);
+
+            } else {
+                data = undefined;
+            }
+        }
+        return data;
+    }
 
 })(hAzzle);

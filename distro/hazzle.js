@@ -626,7 +626,7 @@
         },
 
         isEmptyObject: function (obj) {
-          var name;
+            var name;
             for (name in obj) {
                 return false;
             }
@@ -1003,16 +1003,17 @@
             return ret;
         },
 
-        makeArray: function (arr, results) {
+        makeArray: function (array) {
+            var ret = [];
 
-            var ret = results || [];
-
-            if (arr !== null) {
-                if (hAzzle.isArraylike(Object(arr))) {
-                    hAzzle.merge(ret, typeof arr === "string" ? [arr] : arr);
-                } else {
-                    push.call(ret, arr);
-                }
+            if (array != null) {
+                var i = array.length;
+                // The window, strings (and functions) also have 'length'
+                if (i == null || typeof array === "string" || hAzzle.isFunction(array) || array.setInterval)
+                    ret[0] = array;
+                else
+                    while (i)
+                        ret[--i] = array[i];
             }
 
             return ret;
@@ -1155,6 +1156,8 @@
             empty: function () {
                 var elem = this;
                 for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+
+
                     if (elem.nodeType < 6) {
                         return false;
                     }
@@ -1313,6 +1316,7 @@
 
     // hAzzle matches
     var doc = document,
+        cached = [],
         ghost = doc.createElement('div');
 
 
@@ -1872,24 +1876,24 @@
 
     var
 
-      concat = Array.prototype.concat,
-	  
-    // Get the properties right
+    concat = Array.prototype.concat,
 
-    propMap = {
-        'tabindex': 'tabIndex',
-        'readonly': 'readOnly',
-        'for': 'htmlFor',
-        'class': 'className',
-        'maxlength': 'maxLength',
-        'cellspacing': 'cellSpacing',
-        'cellpadding': 'cellPadding',
-        'rowspan': 'rowSpan',
-        'colspan': 'colSpan',
-        'usemap': 'useMap',
-        'frameborder': 'frameBorder',
-        'contenteditable': 'contentEditable'
-    },
+        // Get the properties right
+
+        propMap = {
+            'tabindex': 'tabIndex',
+            'readonly': 'readOnly',
+            'for': 'htmlFor',
+            'class': 'className',
+            'maxlength': 'maxLength',
+            'cellspacing': 'cellSpacing',
+            'cellpadding': 'cellPadding',
+            'rowspan': 'rowSpan',
+            'colspan': 'colSpan',
+            'usemap': 'useMap',
+            'frameborder': 'frameBorder',
+            'contenteditable': 'contentEditable'
+        },
 
         // Boolean attributes and elements
 
@@ -2302,6 +2306,8 @@
 
                         } else {
 
+
+
                             this.textContent = value;
                         }
                     }
@@ -2583,6 +2589,7 @@
                     var self = set.eq(index);
                     if (isFunction) {
                         args[0] = value.call(this, index, self.html());
+
                     }
                     self.manipulateDOM(args, callback);
                 });
@@ -2700,6 +2707,7 @@
                     contents = self.contents();
 
                 if (contents.length) {
+
                     contents.wrapAll(html);
 
                 } else {
@@ -3215,6 +3223,7 @@
                 return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
             }
 
+
             function findTarget(evt, eventElement) {
 
                 return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
@@ -3508,109 +3517,10 @@
 ;
 (function ($) {
 
-    var data = {};
-
-    /**
-     * Store data on an element
-     *
-     * @param{Object} elem
-     * @param{String} key
-     * @param{String} value
-     * @return {Object}
-     */
-
-    function set(elem, key, value) {
-
-        if (!$.nodeType(1, elem) || $.nodeType(9, elem) || !(+elem.nodeType)) {
-            return 0;
-        }
-
-        // Get or create and unique ID
-        var id = $.getUID(elem),
-            obj = data[id] || (data[id] = {});
-
-        obj[key] = value;
-    }
-
-    /**
-     * Get data from an element
-     *
-     * @param{Object} elem
-     * @param{String} key
-     * @return {Object}
-     */
-
-    function get(elem, key) {
-
-        var obj = data[$.getUID(elem)];
-
-        if (!obj) {
-
-            return;
-        }
-
-        // If no key, return all data stored on the object
-
-        if (arguments.length === 1) {
-
-            return obj;
-
-        } else {
-
-            return obj[key];
-        }
-
-    }
-
-    /**
-     * Check if an element contains any data
-     *
-     * @param{Object} elem
-     * @param{String} key
-     * @return {Object}
-     */
-
-    function has(elem, key) {
-        var obj = data[$.getUID(elem)];
-        if (key === null) {
-            return false;
-        }
-        if (obj && obj[key]) return true;
-    }
-
-    /**
-     * Remove data from an element
-     *
-     * @param{Object} elem
-     * @param{String} key
-     * @return {Object}
-     */
-
-
-    function remove(elem, key) {
-        var id = $.getUID(elem);
-
-        // If no key, remove all data
-
-        if (key === undefined && $.nodeType(1, elem)) {
-            data[id] = {};
-
-        } else {
-
-            if (data[id]) {
-                delete data[id].key;
-            } else {
-                data[id] = null;
-
-            }
-        }
-    }
-
-
     // Extend the hAzzle object
 
     $.extend({
-
+        _data: {},
         /**
          * Check if an element contains data
          *
@@ -3618,9 +3528,14 @@
          * @param{String} key
          * @return {Object}
          */
-        hasData: function (elem, key) {
+        hasData: function (elem) {
+
             if (elem.nodeType) {
-                if (data[$.getUID(elem)]) return true;
+                if ($._data[$.getUID(elem)]) {
+				
+				return true;
+				
+				}
 
                 else {
 
@@ -3640,25 +3555,64 @@
          */
 
         removeData: function (elem, key) {
-            if (elem instanceof $) {
-                if (remove(elem, key)) return true;
-            } else if (remove($(elem), key)) return true;
-            return false;
+
+            if (!elem instanceof $) {
+                elem = $(elem);
+            }
+
+            var id = $.getUID(elem);
+
+            if (id) {
+
+                if (typeof key === "undefined" && $.nodeType(1, elem)) {
+
+                    $._data[id] = {};
+
+                } else {
+
+                    if ($._data[id]) {
+                        delete $._data[id][key];
+                    } else {
+                        $._data[id] = null;
+                    }
+                }
+
+            }
         },
 
         data: function (elem, key, value) {
 
-            if (typeof value === 'undefined') {
+            var id = $._data[$.getUID(elem)];
 
-                return get(elem, key)
+            // Create and unique ID for this elem
 
-            } else {
-
-                set(elem, key, value)
+            if (!id && elem.nodeType) {
+                var pid = $.getUID(elem);
+                id = $._data[pid] = {};
             }
 
-        }
+            // Return all data on saved on the element
 
+            if (typeof key === 'undefined') {
+
+                return id;
+            }
+
+
+            if (typeof value === 'undefined') {
+
+                return id[key];
+
+            }
+
+            if (typeof value !== 'undefined') {
+
+                // Set and return the value
+                id[key] = value;
+
+                return id[key];
+            }
+        }
     });
 
     $.extend($.fn, {
@@ -3673,7 +3627,7 @@
 
         removeData: function (key) {
             return this.each(function () {
-                remove(this, key);
+                $.removeData(this, key);
             });
         },
 
@@ -3689,32 +3643,79 @@
 
         data: function (key, value) {
 
-            var len = arguments.length,
-                keyType = typeof key;
+            if (typeof key === "undefined") {
 
-            if (len === 1) {
+                var data = $.data(this[0]);
 
-                if (this.elems.length === 1) {
+                if (hAzzle.nodeType(1, this[0]) && !$.data( this[0], "parsedAttrs" ) ) {
 
-                    return get(this.elems[0], key);
+                    var attr = this[0].attributes,
+                        name;
+
+                    for (var i = 0, l = attr.length; i < l; i++) {
+                        name = attr[i].name;
+
+                        if (name.indexOf("data-") === 0) {
+                            name = $.camelCase(name.substring(5));
+
+                            return GetHTML5DataAttr(this[0], name, data[name]);
+                        }
+                    }
+					$.data( this[0], "parsedAttrs", true );
+                }
+
+
+            } else if (typeof value === "undefined") {
+
+                if (this.length === 1) {
+
+                    return $.data(this.elems[0], key);
+
                 } else {
 
                     return this.elems.map(function (value) {
-                        return get(value, key);
+                        return $.data(value, key);
                     });
                 }
 
-            } else if (len === 2) {
-
-                return this.each(function () {
-                    set(this, key, value);
-                })
             } else {
-                return get(this[0]);
+
+                return $.data(this[0], key, value);
             }
         }
 
     });
+
+
+
+
+    function GetHTML5DataAttr(elem, key, data) {
+
+        if (data === undefined && hAzzle.nodeType(1, elem)) {
+
+           var name = "data-" + key.replace( /([A-Z])/g, "-$1" ).toLowerCase();
+
+            data = elem.getAttribute(name);
+
+            if (typeof data === "string") {
+                try {
+                    data = data === "true" ? true :
+                        data === "false" ? false :
+                        data === "null" ? null : 
+						+data + "" === data ? +data :
+                        /(?:\{[\s\S]*\}|\[[\s\S]*\])$/.test(data) ? $.parseJSON(data) : data;
+                } catch (e) {}
+
+                // Make sure we set the data so it isn't changed later
+
+                $.data(elem, key, data);
+
+            } else {
+                data = undefined;
+            }
+        }
+        return data;
+    }
 
 })(hAzzle);
 
@@ -4051,6 +4052,7 @@
 
         getJSON: function (url, data, callback, error) {
 
+
             $.ajax({
                 url: url,
                 method: 'JSON',
@@ -4241,6 +4243,7 @@
          */
 
         hasClass: function (selector) {
+
 
             for (var className = " " + selector + " ", i = 0, d = this.length; i < d; i++) {
 
@@ -4503,8 +4506,8 @@
 
         // We don't have any data stored on the element,
         // so use "detach" method as fast way to get rid of the element
-        elem.detach();
-
+        // elem.detach();
+        //elem.detach();
         return display;
     }
 
@@ -5313,6 +5316,7 @@
                     val -= parseFloat(curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
                 }
             } else {
+
                 // at this point, extra isnt content, so add padding
                 val += parseFloat(curCSS(elem, "padding" + cssDirection[i])) || 0;
 
@@ -5909,5 +5913,5 @@
             });
         }
     });
-	
+
 })(hAzzle);
