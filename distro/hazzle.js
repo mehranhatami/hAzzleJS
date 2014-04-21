@@ -1872,6 +1872,8 @@
 
     var
 
+      concat = Array.prototype.concat,
+	  
     // Get the properties right
 
     propMap = {
