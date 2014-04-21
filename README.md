@@ -11,9 +11,13 @@ You can use your own selector engine if you want, just replace it with the selec
 
 39,2 KB minimized
 
-### Modular loadiing
+### Animation
 
-From latest Beta release hAzzle introduce modular loading of the hAzzle modules. This is done to increase the pageload performance. Each module will be injected into the document after the DOM are ready and page loaded.
+Coming soon an lightning fast animation engine. It's using RAF and are running at 60 FPS wihtout any problems. Just now it's have some basic animation effect such as fadeIn, fadeOut, slideToggle etc. All you may know from jQuery and other libraries. 
+
+My goal is not to make it to bloated, so it will not contain promises etc. That has to come in a plugin. BUT you can animate colours, background, etc.
+
+Again. Coming soon. :)
 
 
 Browser compatiblity
