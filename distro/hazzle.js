@@ -3532,12 +3532,10 @@
 
             if (elem.nodeType) {
                 if ($._data[$.getUID(elem)]) {
-				
-				return true;
-				
-				}
 
-                else {
+                    return true;
+
+                } else {
 
                     return false;
 
@@ -3556,61 +3554,67 @@
 
         removeData: function (elem, key) {
 
-            if (!elem instanceof $) {
-                elem = $(elem);
-            }
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem)) {
 
-            var id = $.getUID(elem);
-
-            if (id) {
-
-                if (typeof key === "undefined" && $.nodeType(1, elem)) {
-
-                    $._data[id] = {};
-
-                } else {
-
-                    if ($._data[id]) {
-                        delete $._data[id][key];
-                    } else {
-                        $._data[id] = null;
-                    }
+                if (!elem instanceof $) {
+                    elem = $(elem);
                 }
 
+                var id = $.getUID(elem);
+
+                if (id) {
+
+                    if (typeof key === "undefined" && $.nodeType(1, elem)) {
+
+                        $._data[id] = {};
+
+                    } else {
+
+                        if ($._data[id]) {
+                            delete $._data[id][key];
+                        } else {
+                            $._data[id] = null;
+                        }
+                    }
+
+                }
             }
         },
 
         data: function (elem, key, value) {
 
-            var id = $._data[$.getUID(elem)];
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem)) {
 
-            // Create and unique ID for this elem
+                var id = $._data[$.getUID(elem)];
 
-            if (!id && elem.nodeType) {
-                var pid = $.getUID(elem);
-                id = $._data[pid] = {};
-            }
+                // Create and unique ID for this elem
 
-            // Return all data on saved on the element
+                if (!id && elem.nodeType) {
+                    var pid = $.getUID(elem);
+                    id = $._data[pid] = {};
+                }
 
-            if (typeof key === 'undefined') {
+                // Return all data on saved on the element
 
-                return id;
-            }
+                if (typeof key === 'undefined') {
+
+                    return id;
+                }
 
 
-            if (typeof value === 'undefined') {
+                if (typeof value === 'undefined') {
 
-                return id[key];
+                    return id[key];
 
-            }
+                }
 
-            if (typeof value !== 'undefined') {
+                if (typeof value !== 'undefined') {
 
-                // Set and return the value
-                id[key] = value;
+                    // Set and return the value
+                    id[key] = value;
 
-                return id[key];
+                    return id[key];
+                }
             }
         }
     });
@@ -3645,25 +3649,57 @@
 
             if (typeof key === "undefined") {
 
-                var data = $.data(this[0]);
+                var data = $.data(this[0]),
+                    elem = this[0];
 
-                if (hAzzle.nodeType(1, this[0]) && !$.data( this[0], "parsedAttrs" ) ) {
+                if (hAzzle.nodeType(1, elem) && !$.data(elem, "parsedAttrs")) {
 
-                    var attr = this[0].attributes,
-                        name;
+                    var attr = elem.attributes,
+                        name,
+                        i = 0,
+                        l = attr.length;
 
-                    for (var i = 0, l = attr.length; i < l; i++) {
+                    for (; i < l; i++) {
+
                         name = attr[i].name;
 
                         if (name.indexOf("data-") === 0) {
+
                             name = $.camelCase(name.substring(5));
 
-                            return GetHTML5DataAttr(this[0], name, data[name]);
+                            data = data[name];
+
+                            // Try to fetch data from the HTML5 data- attribute
+
+                            if (data === undefined && hAzzle.nodeType(1, elem)) {
+
+                                var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
+
+                                data = elem.getAttribute(name);
+
+                                if (typeof data === "string") {
+                                    try {
+                                        data = data === "true" ? true :
+                                            data === "false" ? false :
+                                            data === "null" ? null : +data + "" === data ? +data :
+                                            /(?:\{[\s\S]*\}|\[[\s\S]*\])$/.test(data) ? $.parseJSON(data) : data;
+                                    } catch (e) {}
+
+                                    // Make sure we set the data so it isn't changed later
+
+                                    $.data(elem, key, data);
+
+                                } else {
+                                    data = undefined;
+                                }
+                            }
+                            return data;
                         }
                     }
-					$.data( this[0], "parsedAttrs", true );
+                    $.data(elem, "parsedAttrs", true);
                 }
 
+                // 'key' defined, but no 'data'.
 
             } else if (typeof value === "undefined") {
 
@@ -3673,8 +3709,12 @@
 
                 } else {
 
-                    return this.elems.map(function (value) {
-                        return $.data(value, key);
+                    // Sets multiple values
+
+                    return this.elems.map(function (el) {
+
+                        return $.data(el, key);
+
                     });
                 }
 
@@ -3685,37 +3725,6 @@
         }
 
     });
-
-
-
-
-    function GetHTML5DataAttr(elem, key, data) {
-
-        if (data === undefined && hAzzle.nodeType(1, elem)) {
-
-           var name = "data-" + key.replace( /([A-Z])/g, "-$1" ).toLowerCase();
-
-            data = elem.getAttribute(name);
-
-            if (typeof data === "string") {
-                try {
-                    data = data === "true" ? true :
-                        data === "false" ? false :
-                        data === "null" ? null : 
-						+data + "" === data ? +data :
-                        /(?:\{[\s\S]*\}|\[[\s\S]*\])$/.test(data) ? $.parseJSON(data) : data;
-                } catch (e) {}
-
-                // Make sure we set the data so it isn't changed later
-
-                $.data(elem, key, data);
-
-            } else {
-                data = undefined;
-            }
-        }
-        return data;
-    }
 
 })(hAzzle);
 
