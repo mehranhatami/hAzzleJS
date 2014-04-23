@@ -1022,6 +1022,19 @@
 
         noop: function () {
 
+        },
+        bind: function (context) {
+            var fn = this,
+                args = slice.call(arguments, 1);
+
+            if (args.length) {
+                return function () {
+                    return arguments.length ? fn.apply(context, args.concat(slice.call(arguments))) : fn.apply(context, args);
+                };
+            }
+            return function () {
+                return arguments.length ? fn.apply(context, arguments) : fn.apply(context);
+            };
         }
 
     });
@@ -1156,7 +1169,6 @@
             empty: function () {
                 var elem = this;
                 for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-
 
                     if (elem.nodeType < 6) {
                         return false;
@@ -2307,7 +2319,6 @@
                         } else {
 
 
-
                             this.textContent = value;
                         }
                     }
@@ -2377,7 +2388,6 @@
                     }
                 });
             }
-            return this.empty().append(value);
         },
 
         /**
@@ -2589,7 +2599,6 @@
                     var self = set.eq(index);
                     if (isFunction) {
                         args[0] = value.call(this, index, self.html());
-
                     }
                     self.manipulateDOM(args, callback);
                 });
@@ -2835,6 +2844,8 @@
  * hAzzle don't support multiple delegated selectors like:
  *
  *  $( "#dataTable tbody tr" )
+
+
  *
  * Todo!! Fix this maybe!!
  */
@@ -3554,7 +3565,7 @@
 
         removeData: function (elem, key) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem)) {
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
 
                 if (!elem instanceof $) {
                     elem = $(elem);
@@ -3583,7 +3594,7 @@
 
         data: function (elem, key, value) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem)) {
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
 
                 var id = $._data[$.getUID(elem)];
 
@@ -4273,6 +4284,7 @@
          * Replace a class in a element collection
          *
          * @param {String} clA
+
          * @param {String} clB
          */
 
@@ -5103,6 +5115,7 @@
 
                 // Subtract parent offsets and element margins
                 return {
+
                     top: offset.top - parentOffset.top - $.css(elem, "marginTop", true),
                     left: offset.left - parentOffset.left - $.css(elem, "marginLeft", true)
                 };
@@ -5345,6 +5358,7 @@
 
     $.each({
         'scrollTop': 'pageYOffset',
+
         'scrollLeft': 'pageXOffset'
     }, function (name, dir) {
         $.fn[name] = function (val) {
@@ -5474,7 +5488,6 @@
                 }
 
             })
-            return false;
         }
     });
 
@@ -5857,12 +5870,12 @@
 
             return this.map(function (elem) {
 
-                /* Get all handlers from the original elem before we do a clone job
+     /* Get all handlers from the original elem before we do a clone job
 	
 	   NOTE!! This has to be done BEFORE we clone the elem, else
 	          hAzzle will be confused and wonder wich of the two
 			  'identical' elems to get the handlers and data from
-	*/
+	  */
 
                 var handlers = $.Events.getHandler(elem, '', null, false),
                     l = handlers.length,

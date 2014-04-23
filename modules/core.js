@@ -623,8 +623,8 @@
         },
 
         isEmptyObject: function (obj) {
-          var name;
-            for ( name in obj) {
+            var name;
+            for (name in obj) {
                 return false;
             }
             return true;
@@ -1018,6 +1018,19 @@
 
         noop: function () {
 
+        },
+        bind: function (context) {
+            var fn = this,
+                args = slice.call(arguments, 1);
+
+            if (args.length) {
+                return function () {
+                    return arguments.length ? fn.apply(context, args.concat(slice.call(arguments))) : fn.apply(context, args);
+                };
+            }
+            return function () {
+                return arguments.length ? fn.apply(context, arguments) : fn.apply(context);
+            };
         }
 
     });

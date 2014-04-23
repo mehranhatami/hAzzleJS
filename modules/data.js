@@ -52,7 +52,7 @@
 
         removeData: function (elem, key) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem)) {
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !( +elem.nodeType )) {
 
                 if (!elem instanceof $) {
                     elem = $(elem);
@@ -81,7 +81,7 @@
 
         data: function (elem, key, value) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem)) {
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !( +elem.nodeType )) {
 
                 var id = $._data[$.getUID(elem)];
 
