@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.32c - Beta 4
+ * Version: 0.34
  * Released under the MIT License.
  *
- * Date: 2014-04-21
+ * Date: 2014-04-24
  *
  * TO DO! Just now we are using jQuery's DOM ready way to do things. We let it be up to the developer to use the DOM ready function or not.
  *        My idea is that we skip that, and run the DOM ready automaticly before the library can be used.
@@ -607,6 +607,17 @@
 
         },
 
+        isEmail: function (str) {
+
+            if (/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(str)) {
+
+                return true;
+            }
+
+            return false;
+
+        },
+
         isFunction: function (value) {
 
             return typeof value === 'function';
@@ -834,13 +845,19 @@
             };
         })(),
 
-        /**
-         *  Same as hAzzle.indexOf.
-         * Added for compability with Zepto and Jquery
-         */
+         inArray: function (elem, array ) {
+			
+			var i = 0,
+			    len = array.length;
 
-        inArray: function (arr, elem) {
-            return hAzzle.indexOf(arr, elem);
+            for (; i < len; i++ )
+
+			if ( array[ i ] === elem ) {
+			
+				return i;
+             }
+			 
+		     return -1;
         },
 
         /**
@@ -1045,7 +1062,7 @@
 
     hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
         nodeTypes[value] = function (elem) {
-            return elem.nodeType === value;
+            return elem && elem.nodeType === value;
         };
     });
 
@@ -1883,32 +1900,18 @@
  * Manipulation
  */
 
-;
-(function ($) {
+; (function ($) {
 
-    var
+    var // Short-hand functions we are using
 
-    concat = Array.prototype.concat,
+    isFunction = $.isFunction,
+        isUndefined = $.isUndefined,
+        isDefined = $.isDefined,
+        isString = $.isString,
 
-        // Get the properties right
-
-        propMap = {
-            'tabindex': 'tabIndex',
-            'readonly': 'readOnly',
-            'for': 'htmlFor',
-            'class': 'className',
-            'maxlength': 'maxLength',
-            'cellspacing': 'cellSpacing',
-            'cellpadding': 'cellPadding',
-            'rowspan': 'rowSpan',
-            'colspan': 'colSpan',
-            'usemap': 'useMap',
-            'frameborder': 'frameBorder',
-            'contenteditable': 'contentEditable'
-        },
+        doc = document,
 
         // Boolean attributes and elements
-
 
         boolean_attr = {
             'multiple': true,
@@ -1930,16 +1933,41 @@
             'details': true
         },
 
-        tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-        rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
+        // Cross-browser compatible variabels
+
+        optSelected,
+        optDisabled,
+        radioValue,
+        checkOn,
+
+        // RegEx we are using
+
         rtagName = /<([\w:]+)/,
-        rhtml = /<|&#?\w+;/,
-        rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
-        rscriptType = /^$|\/(?:java|ecma)script/i,
-        rscriptTypeMasked = /^true\/(.*)/,
-        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
 
         cached = [];
+
+    // Support check
+
+    (function () {
+
+        var input = doc.createElement("input"),
+            select = doc.createElement("select"),
+            opt = select.appendChild(doc.createElement("option"));
+
+        optSelected = opt.selected;
+
+        select.disabled = true;
+        optDisabled = !opt.disabled;
+
+        input.type = "checkbox";
+
+        checkOn = input.value !== "";
+
+        input.value = "t";
+        input.type = "radio";
+
+        radioValue = input.value === "t";
+    }());
 
     function getBooleanAttrName(element, name) {
         // check dom last since we will most likely fail on name
@@ -1956,33 +1984,874 @@
         return $.nodeType(1, elem) || $.nodeType(9, elem) || $.nodeType(11, elem) ? true : false;
     }
 
-
-    /**
-     * Disable "script" tags
-     **/
-
-
-    function disableScript(elem) {
-        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
-        return elem;
-    }
-
-    /**
-     * Restore "script" tags
-     **/
-
-
-    function restoreScript(elem) {
-        var m = rscriptTypeMasked.exec(elem.type);
-        m ? elem.type = m[1] : elem.removeAttribute("type");
-        return elem;
-    }
-
-
-
     // Global
 
     $.extend($, {
+
+        // Get the properties right
+
+        propMap: {
+
+            "for": "htmlFor",
+            "class": "className"
+        },
+
+        Hooks: {
+
+            'SELECT': function (elem) {
+
+                var option,
+                    options = elem.options,
+                    index = elem.selectedIndex,
+                    one = elem.type === "select-one" || index < 0,
+                    values = one ? null : [],
+                    value,
+                    max = one ? index + 1 : options.length,
+                    i = index < 0 ?
+                        max :
+                        one ? index : 0;
+
+                for (; i < max; i++) {
+
+                    option = options[i];
+
+                    if ((option.selected || i === index) && !option.disabled &&
+                        (optDisabled ? !option.disabled : option.getAttribute("disabled") === null) &&
+                        (!option.parentNode.disabled || !$.nodeName(option.parentNode, "optgroup"))) {
+
+                        // Get the specific value for the option
+                        value = $(option).val();
+
+                        // We don't need an array for one selects
+                        if (one) {
+                            return value;
+                        }
+
+                        // Multi-Selects return an array
+                        values.push(value);
+                    }
+                }
+                return values;
+            },
+
+            'OPTION': function (elem) {
+                var val = $(elem).filter(function (option) {
+                    return option.selected && !option.disabled;
+                }).pluck('value');
+
+                return val !== null ? val : $.trim($.getText(elem));
+            },
+            'TYPE': function (elem, value) {
+                if (!radioValue && value === "radio" &&
+                    $.nodeName(elem, "input")) {
+
+                    var val = elem.value;
+                    elem.setAttribute("type", value);
+                    if (val) {
+                        elem.value = val;
+                    }
+                    return value;
+                }
+            }
+        },
+
+        // Inspired by jQuery	
+
+        propHooks: {
+            tabIndex: {
+                get: function (elem) {
+                    return elem.hasAttribute("tabindex") || /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ?
+                        elem.tabIndex : -1;
+                }
+            }
+        },
+
+        /**
+         * Get text
+         */
+
+        getText: function (elem) {
+            var node, ret = "",
+                i = 0;
+
+            if (!elem.nodeType) {
+                // If no nodeType, this is expected to be an array
+                for (; node = elem[i++];) ret += $.getText(node);
+
+            } else if (NodeMatching(elem)) {
+
+                if (isString(elem.textContent)) return elem.textContent;
+                for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += $.getText(elem);
+
+            } else if ($.nodeType(3, elem) || $.nodeType(4, elem)) {
+                return elem.nodeValue;
+            }
+            return ret;
+        },
+
+        /**
+         * Get / set the value of a property for the first element in the set of matched elements
+         *
+         * @param {Object} elem
+         * @param {String} name
+         * @param {String/Null} value
+         *
+         */
+
+        prop: function (elem, name, value) {
+
+            var ret, hooks, notxml;
+
+            // don't get/set properties on text, comment and attribute nodes
+            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
+
+                notxml = !($.nodeType(1, elem)) || !$.isXML(elem);
+
+                if (notxml) {
+
+                    hooks = $.propHooks[$.propMap[name] || name];
+                }
+
+                if (isDefined(value)) {
+
+                    return hooks && "set" in hooks && isDefined((ret = hooks.set(elem, value, name))) ? ret : (elem[name] = value);
+
+                } else {
+
+                    return hooks && "get" in hooks && (ret = hooks.get(elem, name)) !== null ? ret : elem[name];
+                }
+            }
+        },
+
+        /**
+         * Get / set the value of an attribute for the first element in the set of matched elements
+         *
+         * @param {Object} elem
+         * @param {String} name
+         * @param {String/Null} value
+         *
+         */
+
+        attr: function (elem, name, value) {
+
+            if (!elem) {
+
+                return;
+            }
+
+            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
+
+                if (typeof elem.getAttribute === typeof undefined) {
+
+                    return $.prop(elem, name, value);
+                }
+
+                if (isUndefined(value)) {
+
+                    // Checks if a "hook" exist for this...:
+
+                    if ($.Hooks[elem.nodeName]) {
+
+                        return $.Hooks[elem.nodeName](elem);
+                    }
+
+                    // The extra argument "2" is to get the right thing for a.href in IE, see jQuery code
+                    // some elements (e.g. Document) don't have get attribute, so return undefined
+
+                    elem = elem.getAttribute(name, 2);
+
+                    return elem === null ? undefined : elem;
+                }
+
+                // Jquery support a value to be an function, but I don't see the point
+                // in supporting this now. If someone want to implement it, go for it !!
+
+                if (isFunction(value)) {
+                    console.log("Not supported!");
+                    return;
+                }
+
+                if (value === null) {
+
+                    $.removeAttr(elem, name);
+                }
+
+
+                // Value is set - no need for hooks on this one...
+
+                if (elem.nodeName === 'SELECT') {
+
+                    var optionSet, option,
+                        options = elem.options,
+                        values = $.makeArray(value),
+                        i = options.length;
+
+                    while (i--) {
+                        option = options[i];
+                        if ((option.selected = $.inArray(option.value, values) >= 0)) {
+                            optionSet = true;
+                        }
+                    }
+
+                    if (!optionSet) {
+                        elem.selectedIndex = -1;
+                    }
+                    return values;
+
+                } else {
+
+                    elem.setAttribute(name, value + "");
+                    return value;
+
+                }
+            }
+        }
+    });
+
+
+    // Core
+
+    $.extend($.fn, {
+
+        /**
+         * Get text for the first element in the collection
+         * Set text for every element in the collection
+         *
+         * $('div').text() => div text
+         *
+         * @param {String} value
+         * @param {String} dir
+         * @return {Object|String}
+         */
+
+        text: function (value) {
+
+            if (isDefined(value)) {
+
+                // Avoid memory leaks, do empty()
+
+                this.empty().each(function (_, elem) {
+
+                    if (NodeMatching(elem)) {
+
+                        // Firefox does not support insertAdjacentText 
+
+                        if (isString(value) && isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
+
+                            elem.insertAdjacentText('beforeEnd', value);
+
+                        } else {
+
+                            elem.textContent = value;
+                        }
+                    }
+                });
+
+            } else {
+
+                // Get the textvalue
+
+                return $.getText(this);
+            }
+        },
+
+        /**
+         * Get html from element.
+         * Set html to element.
+         *
+         * @param {String} value
+         * @param {String} keep
+         * @return {Object|String}
+         */
+
+        html: function (value, keep) {
+
+            var elem = this[0];
+
+            if (isUndefined(value) && $.nodeType(1, elem)) {
+
+                return elem.innerHTML;
+
+            }
+
+            // We could have used 'this' inside the loop, but faster if we don't
+
+            if (isString(value)) {
+
+                return this.each(function (_, elem) {
+
+                    /**
+                     * 'keep' if we want to keep the existing children of the node and add some more.
+                     */
+                    if (keep && isString(value) && $.nodeType(1, elem)) {
+
+                        elem.insertAdjacentHTML('beforeend', value || '');
+
+                    } else {
+
+                        if (isString(value) && $.nodeType(1, elem) && !/<(?:script|style|link)/i.test(value) && !$.htmlHooks[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+
+                            // Do some magic
+
+                            value = cached[value] ? cached[value] : cached[value] = value.replace(/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, "<$1></$2>");
+
+                            // Remove stored data on the object to avoid memory leaks
+
+                            $.removeData(elem);
+
+                            // Get rid of existing children
+
+                            elem.textContent = '';
+
+                            // Do innerHTML
+
+                            elem.innerHTML = value;
+                        }
+                    }
+                });
+            }
+
+            return this.empty().append(value);
+        },
+
+        /**
+         * Get value for input/select elements
+         * Set value for input/select elements
+         *
+         * @param {String} value
+         * @return {Object|String}
+         */
+
+        val: function (value) {
+
+            if (arguments.length) {
+
+                return this.each(function (index, elem) {
+
+                    var val;
+
+                    if (!$.nodeType(1, elem)) {
+                        return;
+                    }
+
+                    if (isFunction(value)) {
+                        val = value.call(elem, index, $(elem).val());
+
+                    } else {
+
+                        val = value;
+                    }
+
+                    if (val === null) {
+
+                        val = "";
+
+                    } else if (typeof val === "number") {
+
+                        val += "";
+
+                    } else if ($.isArray(val)) {
+
+                        val = $.map(val, function (value) {
+
+                            return value === null ? "" : value + "";
+                        });
+                    }
+
+                    if (elem.type === 'radio' || elem.type === 'checkbox') {
+
+                        return (elem.checked = $.inArray($(elem).val(), value) >= 0);
+                    }
+
+                    if (elem.type === "select") {
+
+
+                        var optionSet, option,
+                            options = elem.options,
+                            values = $.makeArray(value),
+                            i = options.length;
+
+                        while (i--) {
+                            option = options[i];
+                            if ((option.selected = $.inArray(option.value, values) >= 0)) {
+                                optionSet = true;
+                            }
+                        }
+
+                        // force browsers to behave consistently when non-matching value is set
+
+                        if (!optionSet) {
+
+                            elem.selectedIndex = -1;
+                        }
+
+                        return values;
+                    }
+
+                    elem.value = val;
+                });
+
+            } else {
+
+                var elem = this[0],
+                    ret;
+
+                if (!checkOn) {
+
+                    return elem.getAttribute("value") === null ? "on" : elem.value;
+                }
+
+                ret = $.Hooks[elem.tagName] ? $.Hooks[elem.tagName](elem) : elem.value;
+
+                return typeof ret === "string" ? ret.replace(/\r\n/g, "") : ret === null ? "" : ret;
+
+            }
+        },
+
+        /**
+         * Get attribute from element
+         * Set attribute to element collection
+         *
+         * @param {String} name
+         * @param {String|Object} value
+         *
+         * @return {Object|String}
+         */
+
+        attr: function (name, value) {
+            return $.isObject(name) ? this.each(function (index, element) {
+                $.each(name, function (key, value) {
+                    $.attr(element, key, value);
+                });
+            }) : $.isUndefined(value) ? $.attr(this[0], name) : this.length === 1 ? $.attr(this[0], name, value) : this.each(function () {
+                return $.attr(this, name, value);
+            });
+        },
+
+        /**
+         * Remove a given attribute from an element
+         *
+         * @param {String} value
+         *
+         * @return {Object}
+         */
+
+        removeAttr: function (value) {
+
+            var name, propName, i = 0,
+                attrNames = value && value.match(/\S+/g);
+
+            return this.each(function (_, elem) {
+
+                if (attrNames && $.nodeType(1, elem)) {
+
+                    while ((name = attrNames[i++])) {
+                        propName = $.propMap[name] || name;
+
+                        if (getBooleanAttrName(elem, name)) {
+
+                            elem[propName] = false;
+                        }
+
+                        elem.removeAttribute(name);
+                    }
+                }
+            });
+        },
+
+        /**
+         * Check if an element have an attribute
+         *
+         * @param{String} name
+         * @return {Boolean}
+         */
+
+        hasAttr: function (name) {
+            return name && isDefined(this.attr(name));
+        },
+
+        /**
+         * Sets an HTML5 data attribute
+         *
+         * @param{String} dataAttribute
+         * @param{String} dataValue
+         *
+         * @return {Object}
+         */
+
+        dataAttr: function (dataAttribute, dataValue) {
+
+            if (!dataAttribute || !isString(dataAttribute)) {
+                return false;
+            }
+
+            //if dataAttribute is an object, we will use it to set a data attribute for every key
+            if (typeof (dataAttribute) == "object") {
+                for (var key in dataAttribute) {
+                    this.attr('data-' + key, dataAttribute[key]);
+                }
+
+                return this;
+            }
+
+            //if a value was passed, we'll set that value for the specified dataAttribute
+            else if (dataValue) {
+                return this.attr('data-' + dataAttribute, dataValue);
+            }
+
+            // lastly, try to just return the requested dataAttribute's value from the element
+            else {
+                var value = this.attr('data-' + dataAttribute);
+
+                // specifically checking for undefined in case "value" ends up evaluating to false
+
+                if (isUndefined(value)) {
+                    return;
+                }
+
+                return value;
+            }
+        },
+
+        /**
+         * Read or set properties of DOM elements
+         *
+         * @param {String/Object}
+         * @param {String/Null}
+         *
+         * @return {Object}
+         */
+
+        prop: function (name, value) {
+            return $.isObject(name) ? this.each(function (value, element) {
+                $.each(name, function (key, value) {
+                    $.prop(element, key, value);
+                });
+            }) : isUndefined(value) ? this[0] && this[0][$.propMap[name] || name] : $.prop(this[0], name, value);
+        },
+
+        /**
+         * Toggle properties
+         */
+
+        toggleProperty: function (property) {
+            return this.each(function () {
+                return this.prop(property, !this.prop(property));
+            });
+
+        },
+
+        /*
+         * Remove properties from DOM elements
+         *
+         * @param {String}
+         *
+         * @return {Object}
+         */
+
+        removeProp: function (name) {
+            return this.each(function () {
+                delete this[$.propMap[name] || name];
+            });
+        },
+
+        /**
+         * Replace each element in the set of matched elements with the provided new content
+         *
+         * @param {String} html
+         * @return {Object}
+         */
+
+        replaceWith: function (html) {
+
+            // Use the faster 'insertAdjacentHTML' if we can
+
+            if (isString(html) && this[0].parentNode) {
+
+                return this.before(html).remove();
+            }
+
+            // If function
+
+            if (isFunction(html)) {
+                return this.each(function (index) {
+                    var self = $(this),
+                        old = self.html();
+                    self.replaceWith(html.call(this, index, old));
+                });
+            }
+
+            var arg = arguments[0];
+            this.manipulateDOM(arguments, function (elem) {
+
+                arg = this.parentNode;
+
+                if (arg) {
+                    arg.replaceChild(elem, this);
+                }
+            });
+
+            // Force removal if there was no new content (e.g., from empty arguments)
+            return arg && (arg.length || arg.nodeType) ? this : this.remove();
+        },
+
+        /**
+         * Append the current element to another
+         *
+         * @param {Object|String} sel
+         * @return {Object}
+         */
+
+        appendTo: function (sel) {
+            return this.each(function () {
+                $(sel).append(this);
+            });
+
+        },
+
+        /**
+         * Prepend the current element to another.
+         *
+         * @param {Object|String} sel
+         * @return {Object}
+         */
+
+        prependTo: function (sel) {
+            return this.each(function () {
+                $(sel).prepend(this);
+            });
+        }
+    });
+
+
+    /* 
+     * Prepend, Append, Befor and After
+     *
+     *  NOTE!!!
+     *
+     *  If 'html' are plain text, we use the insertAdjacentHTML to inject the content.
+     *	This method is faster, and now supported by all major browsers.
+     *
+     *	If not a pure string, we have to go the long way jQuery walked before us :)
+     *
+     *	K.F
+     */
+
+
+    $.each({
+
+        prepend: "afterbegin",
+        append: "beforeend"
+    }, function (name, second) {
+
+        $.fn[name] = function (html) {
+
+            // Take the easy and fastest way if it's a string
+
+            if (isString(html)) {
+                return this.each(function (_, elem) {
+                    if (NodeMatching(this)) {
+                        elem.insertAdjacentHTML(second, html);
+                    }
+                });
+            } else { // The long walk :(
+                return this.manipulateDOM(arguments, function (elem) {
+                    if (NodeMatching(this)) {
+
+                        var target = $.nodeName(this, "table") &&
+                            $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
+                            this.getElementsByTagName("tbody")[0] ||
+                            elem.appendChild(this.ownerDocument.createElement("tbody")) :
+                            this;
+
+                        // Choose correct method	
+
+                        name === 'prepend' ? target.insertBefore(elem, target.firstChild) : target.appendChild(elem);
+                    }
+                });
+            }
+        };
+    });
+
+    /**
+     * Before and After
+     */
+
+    $.each({
+        before: "beforebegin",
+        after: "afterend"
+    }, function (name, second) {
+
+        $.fn[name] = function (html) {
+            if (isString(html)) {
+                return this.each(function () {
+                    this.insertAdjacentHTML(second, html);
+                });
+            }
+            return this.manipulateDOM(arguments, function (elem) {
+                if (this.parentNode) {
+                    this.parentNode.insertBefore(elem, name === 'after' ? this.nextSibling : this);
+                }
+            });
+        };
+    });
+
+    // Support: IE9+
+    if (!optSelected) {
+        $.propHooks.selected = {
+            get: function (elem) {
+                var parent = elem.parentNode;
+                if (parent && parent.parentNode) {
+                    parent.parentNode.selectedIndex;
+                }
+                return null;
+            }
+        };
+    }
+
+    $.each([
+        "tabIndex",
+        "readOnly",
+        "maxLength",
+        "cellSpacing",
+        "cellPadding",
+        "rowSpan",
+        "colSpan",
+        "useMap",
+        "frameBorder",
+        "contentEditable"
+    ], function () {
+        $.propMap[this.toLowerCase()] = this;
+    });
+
+})(hAzzle);
+
+
+/*!
+ * Wrap
+ */
+
+;(function ($) {
+
+    $.extend($.fn, {
+
+        /**
+         * Wrap html string with a `div` or wrap special tags with their containers.
+         *
+         * @param {String} html
+         * @return {Object}
+         */
+
+        wrap: function (html) {
+
+            return this.each(function (i) {
+                $(this).wrapAll($.isFunction(html) ? html.call(this, i) : html);
+            });
+        },
+
+        /**
+         *  Wrap an HTML structure around the content of each element in the set of matched elements.
+         *
+         * @param {String} html
+         * @return {Object}
+         *
+         */
+
+        wrapAll: function (html) {
+
+            if (this[0]) {
+
+                $(this[0]).before(html = $(html, this[0].ownerDocument).eq(0).clone(true));
+
+                var children;
+                // drill down to the inmost element
+                while ((children = html.children()).length) html = children.first();
+
+                $(html).append(this);
+            }
+            return this;
+        },
+
+        wrapInner: function (html) {
+            if ($.isFunction(html)) {
+                return this.each(function (i) {
+                    $(this).wrapInner(html.call(this, i));
+                });
+            }
+
+            return this.each(function () {
+                var self = $(this),
+                    contents = self.contents();
+
+                if (contents.length) {
+                    contents.wrapAll(html);
+
+                } else {
+                    self.append(html);
+                }
+            });
+
+        },
+
+        /**
+         *  Wrap an HTML structure around the content of each element in the set of matched elements.
+         *
+         * @param {String} html
+         * @return {Object}
+         *
+         */
+
+        unwrap: function () {
+            this.parent().each(function () {
+                if (!$.nodeName(this, "body")) {
+                    $(this).replaceWith($(this).children()).remove();
+                }
+            });
+            return this;
+        }
+    });
+
+})(hAzzle);
+
+/*!
+ * HTML
+ */
+;
+(function ($) {
+
+    var concat = Array.prototype.concat,
+	
+		tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+		rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
+        rhtml = /<|&#?\w+;/,
+        rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
+        rscriptType = /^$|\/(?:java|ecma)script/i,
+        rscriptTypeMasked = /^true\/(.*)/,
+        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g
+
+        /**
+         * Disable "script" tags
+         **/
+
+
+        function disableScript(elem) {
+            elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+            return elem;
+        }
+
+        /**
+         * Restore "script" tags
+         **/
+
+
+        function restoreScript(elem) {
+            var m = rscriptTypeMasked.exec(elem.type);
+            m ? elem.type = m[1] : elem.removeAttribute("type");
+            return elem;
+        }
+
+    $.extend($, {
+
         /**
          * HTML Hook created for the future. If $ need to support HTML6 or other
          * HTML tags, it's easy enough to do it from plugins
@@ -2020,136 +2889,7 @@
             }
         },
 
-        Hooks: {
 
-            'SELECT': function (elem) {
-
-                var option,
-                    options = elem.options,
-                    index = elem.selectedIndex,
-                    one = elem.type === "select-one" || index < 0,
-                    values = one ? null : [],
-                    value,
-                    max = one ? index + 1 : options.length,
-                    i = index < 0 ?
-                        max :
-                        one ? index : 0;
-
-                for (; i < max; i++) {
-
-                    option = options[i];
-
-                    if ((option.selected || i === index) && !option.disabled &&
-                        (!option.parentNode.disabled || !$.nodeName(option.parentNode, "optgroup"))) {
-
-                        // Get the specific value for the option
-                        value = $(option).val();
-
-                        // We don't need an array for one selects
-                        if (one) {
-                            return value;
-                        }
-
-                        // Multi-Selects return an array
-                        values.push(value);
-                    }
-                }
-                return values;
-            },
-
-            'OPTION': function (elem) {
-                var val = $(elem).filter(function (option) {
-                    return option.selected && !option.disabled;
-                }).pluck('value');
-
-                return val !== null ? val : $.trim(getText(elem));
-
-            }
-        },
-
-        /**
-         * Get text
-         */
-
-        getText: function (elem) {
-            var node, ret = "",
-                i = 0;
-
-            if (!elem.nodeType) {
-                // If no nodeType, this is expected to be an array
-                for (; node = elem[i++];) ret += $.getText(node);
-
-            } else if (NodeMatching(elem)) {
-
-                if ($.isString(elem.textContent)) return elem.textContent;
-                for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += $.getText(elem);
-
-            } else if ($.nodeType(3, elem) || $.nodeType(4, elem)) {
-                return elem.nodeValue;
-            }
-            return ret;
-        },
-
-        prop: function (elem, name, value) {
-            // don't get/set properties on text, comment and attribute nodes
-            if (!($.nodeType(2, elem) || $.nodeType(3, elem) || $.nodeType(8, elem))) {
-                return name = propMap[name] || name, typeof value !== "undefined" ? elem[name] = value : elem[name];
-            }
-        },
-
-        /**
-         * FIX ME! Some browsers don't recognize input[type=email] etc.
-         *       We have to find a solution for that!!
-         */
-
-        attr: function (elem, name, value) {
-
-            if (!($.nodeType(2, elem) || $.nodeType(3, elem) || $.nodeType(8, elem))) {
-
-                if (typeof elem.getAttribute === "undefined") return $.prop(elem, name, value);
-
-                if (typeof value === "undefined") {
-
-                    if ($.Hooks[elem.nodeName]) {
-
-                        return $.Hooks[elem.nodeName](elem);
-                    }
-
-                    // The extra argument "2" is to get the right thing for a.href in IE, see jQuery code
-                    // some elements (e.g. Document) don't have get attribute, so return undefined
-
-                    elem = elem.getAttribute(name, 2);
-
-                    return elem === null ? undefined : elem;
-                }
-
-                if (elem.nodeName === 'SELECT') {
-
-                    var optionSet, option,
-                        options = elem.options,
-                        values = $.makeArray(value),
-                        i = options.length;
-
-                    while (i--) {
-                        option = options[i];
-                        if ((option.selected = $.inArray(option.value, values) >= 0)) {
-                            optionSet = true;
-                        }
-                    }
-
-                    // force browsers to behave consistently when non-matching value is set
-                    if (!optionSet) {
-                        elem.selectedIndex = -1;
-                    }
-                    return values;
-
-                } else {
-
-                    return elem.setAttribute(name, value + "");
-
-                }
-            }
-        },
 
         Evaluated: function (elems, refElements) {
             var i = 0,
@@ -2170,10 +2910,15 @@
                 keepScripts = context;
                 context = false;
             }
-            context = context || document;
+
+            //context = context || document;
 
             var parsed = rsingleTag.exec(data),
-                scripts = !keepScripts && [];
+                scripts = !keepScripts && [],
+
+            // Prevent XSS attack
+
+            context = context || ( $.isFunction( doc.implementation.createHTMLDocument ) ? doc.implementation.createHTMLDocument() : doc );
 
             // Single tag
 
@@ -2229,7 +2974,6 @@
 
                         wrap = $.htmlHooks[tag] || [0, "", ""];
 
-
                         tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
 
                         // Descend through wrappers to the right content
@@ -2252,6 +2996,7 @@
             fragment.textContent = "";
 
             i = 0;
+
             while ((elem = nodes[i++])) {
 
                 if (selection && $.indexOf.call(selection, elem) === -1) continue;
@@ -2280,304 +3025,9 @@
 
             return fragment;
         }
-
     });
 
-
-    // Core
-
     $.extend($.fn, {
-
-        /**
-         * Get text for the first element in the collection
-         * Set text for every element in the collection
-         *
-         * $('div').text() => div text
-         *
-         * @param {String} value
-         * @param {String} dir
-         * @return {Object|String}
-         */
-
-        text: function (value, dir) {
-
-            if (arguments.length) {
-
-                // Avoid memory leaks, do empty()
-
-                this.empty().each(function () {
-
-                    if (NodeMatching(this)) {
-
-                        // Firefox does not support insertAdjacentText 
-
-
-                        if (typeof HTMLElement !== 'undefined' && HTMLElement.prototype.insertAdjacentText) {
-
-                            this.insertAdjacentText('beforeEnd', value);
-
-                        } else {
-
-
-                            this.textContent = value;
-                        }
-                    }
-                });
-
-            } else {
-
-                // Get the textvalue
-
-                return $.getText(this);
-            }
-        },
-
-        /**
-         * Get html from element.
-         * Set html to element.
-         *
-         * @param {String} value
-         * @param {String} keep
-         * @return {Object|String}
-         */
-
-        html: function (value, keep) {
-
-            if (!arguments.length && $.nodeType(1, this[0])) {
-
-                return this[0].innerHTML;
-
-            } else {
-
-                // We could have used 'this' inside the loop, but faster if we don't
-
-                return this.each(function (_, elem) {
-
-                    /**
-                     * 'keep' if we want to keep the existing children of the node and add some more.
-                     */
-                    if (keep && $.nodeType(1, elem)) {
-
-                        // insertAdjacentHTML are supported by all major browsers
-
-                        elem.insertAdjacentHTML('beforeend', value || '');
-
-                    } else {
-
-                        if ($.nodeType(1, elem)) {
-
-                            if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !$.htmlHooks[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
-
-                                // Do some magic
-
-                                value = cached[value] ? cached[value] : cached[value] = value.replace(/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, "<$1></$2>");
-
-                                // Remove stored data on the object to avoid memory leaks
-
-                                $(elem).removeData();
-
-                                // Get rid of existing children
-
-                                elem.textContent = '';
-
-                                // Do innerHTML
-
-                                elem.innerHTML = value;
-                            }
-                        }
-                    }
-                });
-            }
-        },
-
-        /**
-         * Get value for input/select elements
-         * Set value for input/select elements
-         *
-         * @param {String} value
-         * @return {Object|String}
-         */
-
-        val: function (value) {
-
-            if (arguments.length) {
-
-                return this.each(function (index, elem) {
-
-                    var val;
-
-                    if (!$.nodeType(1, elem)) {
-                        return;
-                    }
-
-                    if ($.isFunction(value)) {
-                        val = value.call(elem, index, $(elem).val());
-
-                    } else {
-                        val = value;
-                    }
-
-                    if (val === null) {
-
-                        val = "";
-
-                    } else if (typeof val === "number") {
-
-                        val += "";
-                    }
-
-                    elem.value = val;
-                });
-
-            } else {
-
-                var elem = this[0];
-
-                return $.Hooks[elem.tagName] ? $.Hooks[elem.tagName](elem) : elem.value;
-
-            }
-
-        },
-
-        /**
-         * Get attribute from element
-         * Set attribute to element collection
-         *
-         * @param {String} name
-         * @param {String|Object} value
-         *
-         * @return {Object|String}
-         */
-
-        attr: function (name, value) {
-            return $.isObject(name) ? this.each(function (index, element) {
-                $.each(name, function (key, value) {
-                    $.attr(element, key, value);
-                });
-            }) : $.isUndefined(value) ? $.attr(this[0], name) : this.length === 1 ? $.attr(this[0], name, value) : this.each(function () {
-                return $.attr(this, name, value);
-            });
-        },
-
-        /**
-         * Remove a given attribute from an element
-         *
-         * @param {String} value
-         *
-         * @return {Object}
-         */
-
-        removeAttr: function (value) {
-
-            var name, propName, i = 0,
-                attrNames = value && value.match((/\S+/g));
-
-            return this.each(function (_, elem) {
-
-                if (attrNames && $.nodeType(1, elem)) {
-
-                    while ((name = attrNames[i++])) {
-                        propName = propMap[name] || name;
-
-                        if (getBooleanAttrName(elem, name)) {
-
-                            elem[propName] = false;
-                        }
-
-                        elem.removeAttribute(name);
-                    }
-                }
-            });
-        },
-
-        /**
-         * Read or set properties of DOM elements
-         *
-         * @param {String/Object}
-         * @param {String/Null}
-         *
-         * @return {Object}
-         */
-
-        prop: function (name, value) {
-            return $.isObject(name) ? this.each(function (value, element) {
-                $.each(name, function (key, value) {
-                    $.prop(element, key, value);
-                });
-            }) : typeof value === "undefined" ? this[0] && this[0][propMap[name] || name] : $.prop(this[0], key, value);
-        },
-
-        /**
-         * Remove properties from DOM elements
-         *
-         * @param {String}
-         *
-         * @return {Object}
-         */
-
-        removeProp: function (name) {
-            return this.each(function () {
-                delete this[propMap[name] || name];
-            });
-        },
-
-        /**
-         * Replace each element in the set of matched elements with the provided new content
-         *
-         * @param {String} html
-         * @return {Object}
-         */
-
-        replaceWith: function (html) {
-
-            // Use the faster 'insertAdjacentHTML' if we can
-
-            if (typeof html === "string") {
-
-                return this.before(html).remove();
-
-            } else {
-
-                var arg = arguments[0];
-                this.manipulateDOM(arguments, function (elem) {
-                    arg = this.parentNode;
-
-                    if (arg) {
-                        arg.replaceChild(elem, this);
-                    }
-                });
-
-                // Force removal if there was no new content (e.g., from empty arguments)
-                return arg && (arg.length || arg.nodeType) ? this : this.remove();
-            }
-        },
-
-        /**
-         * Append the current element to another
-         *
-         * @param {Object|String} sel
-         * @return {Object}
-         */
-
-        appendTo: function (sel) {
-            return this.each(function () {
-                $(sel).append(this);
-            });
-        },
-
-        /**
-         * Prepend the current element to another.
-         *
-         * @param {Object|String} sel
-         * @return {Object}
-         */
-
-        prependTo: function (sel) {
-            return this.each(function () {
-                $(sel).prepend(this);
-            });
-        },
-
 
         manipulateDOM: function (args, callback) {
 
@@ -2663,86 +3113,10 @@
             }
 
             return this;
-        },
-
-        /**
-         * Wrap html string with a `div` or wrap special tags with their containers.
-         *
-         * @param {String} html
-         * @return {Object}
-         */
-
-        wrap: function (html) {
-
-            var isFunction = $.isFunction(html);
-
-            return this.each(function (i) {
-                $(this).wrapAll($.isFunction(html) ? html.call(this, i) : html);
-            });
-        },
-
-        /**
-         *  Wrap an HTML structure around the content of each element in the set of matched elements.
-         *
-         * @param {String} html
-         * @return {Object}
-         *
-         */
-
-        wrapAll: function (html) {
-
-            if (this[0]) {
-
-                $(this[0]).before(html = $(html, this[0].ownerDocument).eq(0).clone(true));
-
-                var children;
-                // drill down to the inmost element
-                while ((children = html.children()).length) html = children.first();
-
-                $(html).append(this);
-            }
-            return this;
-        },
-
-        wrapInner: function (html) {
-            if ($.isFunction(html)) {
-                return this.each(function (i) {
-                    $(this).wrapInner(html.call(this, i));
-                });
-            }
-
-            return this.each(function () {
-                var self = $(this),
-                    contents = self.contents();
-
-                if (contents.length) {
-
-                    contents.wrapAll(html);
-
-                } else {
-                    self.append(html);
-                }
-            });
-
-        },
-
-        /**
-         *  Wrap an HTML structure around the content of each element in the set of matched elements.
-         *
-         * @param {String} html
-         * @return {Object}
-         *
-         */
-
-        unwrap: function () {
-            this.parent().each(function () {
-                if (!$.nodeName(this, "body")) {
-                    $(this).replaceWith($(this).children()).remove();
-                }
-            });
-            return this;
         }
+
     });
+
 
 
     /**
@@ -2755,74 +3129,8 @@
         };
     });
 
-    /* 
-     * Prepend, Append, Befor and After
-     *
-     *  NOTE!!!
-     *
-     *  If 'html' are plain text, we use the insertAdjacentHTML to inject the content.
-     *	   This method is faster, and now supported by all major browsers.
-     *
-     *	   If not a pure string, we have to go the long way jQuery walked before us :)
-     *
-     *	   K.F
-     */
-
-
-    $.each({
-        prepend: "afterbegin",
-        append: "beforeend"
-    }, function (name, second) {
-
-        $.fn[name] = function (html) {
-            // Take the easy and fastest way if it's a string
-            if (typeof html === 'string') {
-                return this.each(function (_, elem) {
-                    if (NodeMatching(this)) {
-                        elem.insertAdjacentHTML(second, html);
-                    }
-                });
-            } else { // The long walk :(
-                return this.manipulateDOM(arguments, function (elem) {
-                    if (NodeMatching(this)) {
-
-                        var target = $.nodeName(this, "table") &&
-                            $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
-                            this.getElementsByTagName("tbody")[0] ||
-                            elem.appendChild(this.ownerDocument.createElement("tbody")) :
-                            this;
-                        // Choose correct method	
-                        name === 'prepend' ? target.insertBefore(elem, target.firstChild) : target.appendChild(elem);
-                    }
-                });
-            }
-        };
-    });
-
-    /**
-     * Before and After
-     */
-
-    $.each({
-        before: "beforebegin",
-        after: "afterend"
-    }, function (name, second) {
-
-        $.fn[name] = function (html) {
-            if ($.isString(html)) {
-                return this.each(function () {
-                    this.insertAdjacentHTML(second, html);
-                });
-            }
-            return this.manipulateDOM(arguments, function (elem) {
-                if (this.parentNode) {
-                    this.parentNode.insertBefore(elem, name === 'after' ? this : this.nextSibling);
-                }
-            });
-        };
-    });
-
 })(hAzzle);
+
 
 /**
  * Events
@@ -3449,6 +3757,7 @@
 
         off: function (events, fn) {
             return this.each(function () {
+
                 $.Events.remove(this, events, fn);
             });
         },
@@ -4136,11 +4445,29 @@
 ;
 (function ($) {
 
-
     // Check if we can support classList
-    var csp = hAzzle.support.classList,
-        whitespace = (/\S+/g),
-        rclass = /[\t\r\n\f]/g;
+
+    var csp = $.support.classList,
+
+        indexOf = Array.prototype.indexOf,
+
+        sMa,
+        whitespace = /\S+/g,
+        _class = /[\t\r\n\f]/g,
+        isFunction = $.isFunction;
+
+    // Check if classList support multiple arguments
+
+    if (csp) {
+
+        (function () {
+
+            var div = document.createElement('div');
+            div.classList.add('a', 'b');
+            sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+        }());
+
+    }
 
     $.extend($.fn, {
 
@@ -4151,15 +4478,16 @@
          */
 
         addClass: function (value) {
-            if (typeof value === "function") {
-                return this.each(function (j) {
-                    hAzzle(this).addClass(value.call(this, j, this.className));
+
+            if (isFunction(value)) {
+                return this.each(function (index) {
+                    $(this).addClass(value.call(this, index, this.className));
                 });
             }
 
-            var cur,
+            var cls
+            cur,
                 j,
-                clazz,
                 finalValue,
                 classes = (value || "").match(whitespace) || [];
 
@@ -4167,31 +4495,39 @@
 
                 // classList
 
-                if (csp && hAzzle.nodeType(1, elem)) {
-                    return hAzzle.each(classes, function (_, cls) {
-                        return elem.classList.add(cls);
-                    });
-                }
+                if ($.nodeType(1, elem)) {
 
-                // The old way
+                    if (!csp && !sMa) {
 
-                cur = hAzzle.nodeType(1, elem) && (elem.className ?
+                        elem.classList.add.apply(elem.classList, classes);
 
-                    (" " + elem.className + " ").replace(rclass, " ") : " ");
+                    } else {
 
-                if (cur) {
-                    j = 0;
-                    while ((clazz = classes[j++])) {
-                        if (cur.indexOf(" " + clazz + " ") < 0) {
-                            cur += clazz + " ";
+                        if (!csp) {
+
+                            cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : " ");
+                        }
+
+                        j = 0;
+                        while ((cls = classes[j++])) {
+
+                            if (csp) {
+                                elem.classList.add(cls);
+                            } else {
+                                if (cur.indexOf(" " + cls + " ") < 0) {
+                                    cur += cls + " ";
+                                }
+                            }
+                        }
+                        if (!csp) {
+                            finalValue = cur.trim(cur);
+
+                            if (elem.className !== finalValue) {
+                                elem.className = finalValue;
+                            }
                         }
                     }
-
-                    // only assign if different to avoid unneeded rendering.
-                    finalValue = hAzzle.trim(cur);
-                    if (elem.className !== finalValue) {
-                        elem.className = finalValue;
-                    }
+                    return;
                 }
             });
         },
@@ -4204,11 +4540,11 @@
 
         removeClass: function (value) {
 
-            var classes, cur, clazz, j, finalValue;
+            var classes, cur, cls, j, finalValue;
 
-            if (hAzzle.isFunction(value)) {
+            if (isFunction(value)) {
                 return this.each(function (j) {
-                    hAzzle(this).removeClass(value.call(this, j, this.className));
+                    $(this).removeClass(value.call(this, j, this.className));
                 });
             }
 
@@ -4223,31 +4559,40 @@
 
                 // ClassList
 
-                if (csp && hAzzle.nodeType(1, elem)) {
-                    return hAzzle.each(classes, function (_, classes) {
+                if (csp && $.nodeType(1, elem) && elem.className) {
+                    if (!value) {
+                        elem.className = '';
+                    }
+                    if (sMa) {
+                        elem.classList.remove.apply(elem.classList, classes);
+                    } else {
+                        j = 0;
+                        while ((cls = classes[j++])) {
+                            elem.classList.remove(cls);
+                        }
+                    }
+
+                    return $.each(classes, function (_, classes) {
                         elem.classList.remove(classes);
                     });
                 }
 
                 // Old way of doing things
 
-                cur = hAzzle.nodeType(1, elem) && (elem.className ?
-                    (" " + elem.className + " ").replace(rclass, " ") :
-                    ""
-                );
+                cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : "");
 
                 if (cur) {
                     j = 0;
-                    while ((clazz = classes[j++])) {
+                    while ((cls = classes[j++])) {
                         // Remove *all* instances
-                        while (cur.indexOf(" " + clazz + " ") >= 0) {
-                            cur = cur.replace(" " + clazz + " ", " ");
+                        while (cur.indexOf(" " + cls + " ") >= 0) {
+                            cur = cur.replace(" " + cls + " ", " ");
                         }
                     }
 
                     // Only assign if different to avoid unneeded rendering.
 
-                    finalValue = value ? hAzzle.trim(cur) : "";
+                    finalValue = value ? $.trim(cur) : "";
                     if (elem.className !== finalValue) {
                         elem.className = finalValue;
                     }
@@ -4262,29 +4607,39 @@
          * @return {Boolean} true if the element contains all classes
          */
 
-        hasClass: function (selector) {
+        hasClass: function (value) {
 
+            var i = 0,
+                l = this.length;
 
-            for (var className = " " + selector + " ", i = 0, d = this.length; i < d; i++) {
+            while (i < l) {
 
-                // Use classList if browser supports it
+                if (!csp) {
 
-                if (csp && hAzzle.nodeType(1, this[i])) return this[i].classList.contains(selector);
+                    if ($.nodeType(1, this[i])) {
 
-                // Fallback to the "old way" if classList not supported
+                        if (this[i].classList.contains(value)) {
 
-                if (hAzzle.nodeType(1, this[i]) && 0 <= (" " + this[i].className + " ").replace(rclass, " ").indexOf(className)) return true;
+                            return true;
+                        }
+                    }
 
+                } else { // The old way
+
+                    var className = " " + value + " ";
+                    if (this[i].nodeType === 1 && (" " + this[i].className + " ").replace(_class, " ").indexOf(className) >= 0) {
+                        return true;
+                    }
+                }
+                i++;
             }
             return false;
         },
-
 
         /**
          * Replace a class in a element collection
          *
          * @param {String} clA
-
          * @param {String} clB
          */
 
@@ -4301,7 +4656,7 @@
                     }
                 }
                 if (!found) {
-                    return hAzzle(this).addClass(clB, this);
+                    return $(this).addClass(clB, this);
                 }
                 this.className = current.join(' ');
             });
@@ -4315,20 +4670,11 @@
 
         tempClass: function (clas, duration) {
             return this.each(function (_, elem) {
-                hAzzle(elem).addClass(clas);
+                $(elem).addClass(clas);
                 setTimeout((function () {
-                    hAzzle(elem).removeClass(clas);
+                    $(elem).removeClass(clas);
                 }), duration || /* default 100ms */ 100);
             });
-        },
-
-        /**
-         * Retrive all classes that belong to one element
-         */
-
-        allClass: function () {
-            if (csp) return this[0].classList;
-            else return this;
         },
 
         /**
@@ -4347,34 +4693,56 @@
                 return state ? this.addClass(value) : this.removeClass(value);
             }
 
-            if (hAzzle.isFunction(value)) {
+            if (isFunction(value)) {
                 return this.each(function (i) {
-                    hAzzle(this).toggleClass(value.call(this, i, this.className, state), state);
+                    $(this).toggleClass(value.call(this, i, this.className, state), state);
                 });
             }
 
+            var classNames = value.match(whitespace) || [],
+                cls,
+                i = 0,
+                self;
+
             return this.each(function (_, elem) {
 
-                // ClassList
-                if (csp) {
+                if (type === "string") {
 
-                    return this.classList.toggle(value);
-                }
-                // The "old way"	
+                    // ClassList
 
-                if (typeof value === "string") {
-                    // toggle individual class names
-                    var className,
-                        i = 0,
-                        self = hAzzle(this),
-                        classNames = value.match(whitespace) || [];
+                    self = $(elem);
 
-                    while ((className = classNames[i++])) {
+                    while ((cls = classNames[i++])) {
+
+                        if (csp) {
+
+                            if (typeof state === "boolean") {
+
+                                // IE10+ doesn't support the toggle boolean flag.
+
+                                if (state) {
+
+                                    return elem.classList.add(cls);
+
+
+                                } else {
+
+                                    return elem.classList.remove(cls);
+                                }
+                            }
+
+                            return elem.classList.toggle(cls);
+                        }
+
                         // check each className given, space separated list
-                        if (self.hasClass(className)) {
-                            self.removeClass(className);
+
+                        if (self.hasClass(cls)) {
+
+                            self.removeClass(cls);
+
                         } else {
-                            self.addClass(className);
+
+                            self.addClass(cls);
                         }
                     }
 
@@ -4382,10 +4750,10 @@
                 } else if (type === typeof undefined || type === "boolean") {
                     if (this.className) {
                         // store className if set
-                        hAzzle.data(this, "__className__", this.className);
+                        $.data(this, "__className__", this.className);
                     }
 
-                    this.className = this.className || value === false ? "" : hAzzle.data(this, "__className__") || "";
+                    this.className = this.className || value === false ? "" : $.data(this, "__className__") || "";
                 }
             });
         }
@@ -5065,6 +5433,7 @@
                 }
 
                 if (typeof elem.getBoundingClientRect !== typeof undefined) {
+
                     boundingRect = elem.getBoundingClientRect();
                 }
 
@@ -5870,7 +6239,7 @@
 
             return this.map(function (elem) {
 
-     /* Get all handlers from the original elem before we do a clone job
+                /* Get all handlers from the original elem before we do a clone job
 	
 	   NOTE!! This has to be done BEFORE we clone the elem, else
 	          hAzzle will be confused and wonder wich of the two

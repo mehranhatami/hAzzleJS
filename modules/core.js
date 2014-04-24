@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.32 - Beta 4
+ * Version: 0.34
  * Released under the MIT License.
  *
- * Date: 2014-04-21
+ * Date: 2014-04-24
  *
  * TO DO! Just now we are using jQuery's DOM ready way to do things. We let it be up to the developer to use the DOM ready function or not.
  *        My idea is that we skip that, and run the DOM ready automaticly before the library can be used.
@@ -604,6 +604,17 @@
 
         },
 
+        isEmail: function (str) {
+
+            if (/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(str)) {
+
+                return true;
+            }
+
+            return false;
+
+        },
+
         isFunction: function (value) {
 
             return typeof value === 'function';
@@ -720,6 +731,7 @@
 
             while (prefix = prefixes.shift()) {
                 if (result = obj[prefix + upcased]) {
+
                     break;
                 }
             }
@@ -831,13 +843,20 @@
             };
         })(),
 
-        /**
-         *  Same as hAzzle.indexOf.
-         * Added for compability with Zepto and Jquery
-         */
 
-        inArray: function (arr, elem) {
-            return hAzzle.indexOf(arr, elem);
+        inArray: function (elem, array ) {
+			
+			var i = 0,
+			    len = array.length;
+
+            for (; i < len; i++ )
+
+			if ( array[ i ] === elem ) {
+			
+				return i;
+             }
+			 
+		     return -1;
         },
 
         /**
@@ -1041,7 +1060,7 @@
 
     hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
         nodeTypes[value] = function (elem) {
-            return elem.nodeType === value;
+            return elem && elem.nodeType === value;
         };
     });
 
