@@ -845,19 +845,19 @@
             };
         })(),
 
-         inArray: function (elem, array ) {
-			
-			var i = 0,
-			    len = array.length;
+        inArray: function (elem, array) {
 
-            for (; i < len; i++ )
+            var i = 0,
+                len = array.length;
 
-			if ( array[ i ] === elem ) {
-			
-				return i;
-             }
-			 
-		     return -1;
+            for (; i < len; i++)
+
+                if (array[i] === elem) {
+
+                    return i;
+                }
+
+            return -1;
         },
 
         /**
@@ -1019,6 +1019,7 @@
             }
             return ret;
         },
+
 
         makeArray: function (array) {
             var ret = [];
@@ -1900,7 +1901,8 @@
  * Manipulation
  */
 
-; (function ($) {
+;
+(function ($) {
 
     var // Short-hand functions we are using
 
@@ -2731,7 +2733,8 @@
  * Wrap
  */
 
-;(function ($) {
+;
+(function ($) {
 
     $.extend($.fn, {
 
@@ -2820,9 +2823,9 @@
 (function ($) {
 
     var concat = Array.prototype.concat,
-	
-		tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-		rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
+
+        tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
         rhtml = /<|&#?\w+;/,
         rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
         rscriptType = /^$|\/(?:java|ecma)script/i,
@@ -2916,9 +2919,9 @@
             var parsed = rsingleTag.exec(data),
                 scripts = !keepScripts && [],
 
-            // Prevent XSS attack
+                // Prevent XSS attack
 
-            context = context || ( $.isFunction( doc.implementation.createHTMLDocument ) ? doc.implementation.createHTMLDocument() : doc );
+                context = context || ($.isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
 
             // Single tag
 
@@ -4070,10 +4073,6 @@
         uniqid = 0,
         lastValue,
 
-        getTime = (Date.now || function () {
-            return new Date().getTime();
-        }),
-
         defaultHeaders = {
             contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
             requestedWith: xmlHttpRequest,
@@ -4181,9 +4180,9 @@
     function handleJsonp(o, fn, url) {
 
         var reqId = uniqid++,
-            cbkey = o.jsonpCallback || 'callback'; // the 'callback' key
+            cbkey = o.jsonp || 'callback'; // the 'callback' key
 
-        o = o.jsonpCallbackName || 'hAzzel_' + getTime(); // the 'callback' value
+        o = o.jsonpCallback || 'hAzzel_' + $.now(); // the 'callback' value
 
         var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
             match = url.match(cbreg),
@@ -4237,6 +4236,24 @@
 
     $.extend({
 
+        ajaxSettings: {
+
+            // Default type of request
+            type: 'GET',
+            // Callback that is executed before request
+            beforeSend: $.noop(),
+            // Callback that is executed if the request succeeds
+            success: $.noop(),
+            // Callback that is executed the the server drops error
+            error: $.noop(),
+            // Callback that is executed on request complete (both: error and success)
+            complete: $.noop(),
+            // Default timeout
+            timeout: 0,
+            // async
+            async: true
+        },
+
         /**
          * Ajax method to create ajax request with XMLHTTPRequest
          *
@@ -4247,10 +4264,17 @@
 
         ajax: function (opt, fn) {
 
-            // Force options to be an object
+            opt = $.extend({}, opt || {});
 
-            opt = opt || {};
+            for (key in $.ajaxSettings) {
 
+                if (opt[key] === undefined) {
+
+                    opt[key] = $.ajaxSettings[key]
+
+                }
+
+            }
             fn = fn || function () {};
 
             var xhr,
@@ -4258,12 +4282,9 @@
 
                 error = 'error',
                 headers = opt.headers || {},
-                props = nativeKeys(headers),
-                index = -1,
-                length = props.length,
-                method = (opt.method || 'GET').toLowerCase(),
+                type = (opt.type || 'GET').toLowerCase(),
                 url = $.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
-            var type = (opt.type) ? opt.type.toLowerCase() : '',
+            var dataType = (opt.dataType) ? opt.dataType.toLowerCase() : '',
                 abortTimeout = null,
                 processData = opt.processData || true, // Set to true as default
                 data = (processData !== false && opt.data && !$.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
@@ -4275,20 +4296,22 @@
 
             // If jsonp or GET, append the query string to end of URL
 
-            if ((type === 'jsonp' || method.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
+            if ((dataType === 'jsonp' || type.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
 
             // If jsonp, we stop it here 
 
-            if (type === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
+            if (dataType === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
 
             if (opt.crossOrigin === true) {
                 var _xhr = win.XMLHttpRequest ? new XMLHttpRequest() : null;
                 if (_xhr && 'withCredentials' in _xhr) xhr = _xhr;
                 else if (win.xDomainRequest) xhr = new xDomainRequest();
                 else throw "Browser does not support cross-origin requests";
+            } else {
+                xhr = new XMLHttpRequest()
             }
 
-            xhr.open(method, url, opt.async === false ? false : true);
+            xhr.open(type, url, opt.async === false ? false : true);
 
             // Set headers
 
@@ -4296,14 +4319,14 @@
 
             if (!opt.crossOrigin && !headers.requestedWith) headers.requestedWith = defaultHeaders.requestedWith;
 
-            if (opt.contentType || opt.data && type.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
+            if (opt.contentType || opt.data && dataType.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
 
             // Set headers
 
-            while (++index < length) {
-                xhr.setRequestHeader($.trim(props[index]), headers[props[index]]);
-            }
+            for (h in headers) {
 
+                headers.hasOwnProperty(h) && 'setRequestHeader' in xhr && xhr.setRequestHeader(h, headers[h])
+            }
             // Set credentials
 
             if ($.isDefined(opt.withCredentials) && $.isDefined(xhr.withCredentials)) {
@@ -4317,10 +4340,12 @@
             }
 
             if (win[xDomainRequest] && xhr instanceof win.xDomainRequest) {
+
                 xhr.onload = fn;
                 xhr.onerror = err;
                 xhr.onprogress = function () {};
                 sendWait = true;
+
             } else {
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4) {
@@ -4333,11 +4358,11 @@
 
                                 // json
 
-                                if ((type === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
+                                if ((dataType === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
 
                                 // xml
 
-                                if (type === 'xml') {
+                                if (dataType === 'xml') {
 
                                     res = xhr.responseXML && xhr.responseXML.parseError && xhr.responseXML.parseError.errorCode && xhr.responseXML.parseError.reason ? null : xhr.responseXML;
 
@@ -4349,6 +4374,7 @@
                             if (!res && data) res = data;
                             if (opt.success) opt.success(res);
                         } else if (opt.error !== undefined) {
+
                             if (abortTimeout !== null) clearTimeout(abortTimeout);
                             opt.error(error, opt, xhr);
                         }
@@ -4368,73 +4394,30 @@
             } else xhr.send(data);
 
             return xhr;
-        },
-
-        /** Shorthand function to recive JSON data with ajax
-         *
-         * @param {String} url
-         * @param {Object} data
-         * @param {Function} callback
-         * @param {Function} callback
-         * @return {Object}
-         */
-
-        getJSON: function (url, data, callback, error) {
-
-
-            $.ajax({
-                url: url,
-                method: 'JSON',
-                contentType: 'application/json',
-                error: $.isFunction(error) ? error : function (err) {},
-                data: $.isObject(data) ? data : {},
-                success: $.isFunction ? callback : function (err) {}
-            });
-        },
-
-        /** Shorthand function to recive GET data with ajax
-         *
-         * @param {String} url
-         * @param {Object} data
-         * @param {Function} callback
-         * @param {Function} callback
-         * @return {Object}
-         */
-
-        get: function (url, data, callback, error) {
-
-            $.ajax({
-                url: url,
-                method: 'GET',
-                contentType: '',
-                error: $.isFunction(error) ? error : function (err) {},
-                data: $.isObject(data) ? data : {},
-                success: $.isFunction ? callback : function (err) {}
-            });
-        },
-
-        /** Shorthand function to recive POST data with ajax
-	
-		 *
-		 * @param {String} url
-		 * @param {Object} data
-		 * @param {Function} callback
-		 * @param {Function} callback
-		 * @return {Object}
-		 */
-
-        post: function (url, data, callback, error) {
-            $.ajax({
-                url: url,
-                method: 'POST',
-                contentType: '',
-                error: $.isFunction(error) ? error : function (err) {},
-                data: $.isObject(data) ? data : {},
-                success: $.isFunction ? callback : function (err) {}
-            });
         }
     });
 
+
+
+    $.each(["get", "post"], function (i, method) {
+
+        $[method] = function (url, data, callback, type) {
+            // shift arguments if data argument was omitted
+            if ($.isFunction(data)) {
+                type = type || callback;
+                callback = data;
+                data = undefined;
+            }
+
+            return $.ajax({
+                url: url,
+                type: method,
+                dataType: type,
+                data: data,
+                success: callback
+            });
+        };
+    });
 
 })(hAzzle);
 
