@@ -1,8 +1,8 @@
 /*!
  * Traversing.js
  */
-;
-(function ($) {
+
+;(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -50,24 +50,22 @@
 
         /** Get elements from a spesific position inside the "elems stack"
          *
-         * @param {arr} arr
-         * @param {return} Object
+         * @param {arr} array
+         * @return {Object}
          */
 
-        selectedIndex: function (arr) {
+        selectedIndex: function (array) {
 
-            if (!$.isArray(arr)) {
-
-                return;
-            }
+            if ($.isArray(array)) {
 
             var result = [],
-                i = 0;
+                i = array.length;
 
-            for (i = arr.length; i--;) {
-                result.push(this.get(arr[i]));
+            while(i--) {
+                result.push(this.get(array[i]));
             }
             return $(result);
+		}	
         },
 
         /**
@@ -77,9 +75,9 @@
          * @return {Object}
          */
         tags: function (tag) {
-            return this.map(function (elem) {
-                if (elem.tagName.toLowerCase() === tag && $.nodeType(1, elem)) {
-                    return elem;
+            return this.map(function (els) {
+                if (els.tagName.toLowerCase() === tag && $.nodeType(1, els)) {
+                    return els;
                 }
             });
         },
@@ -93,24 +91,20 @@
          */
 
         add: function (sel, ctx) {
-
-            var elements = sel;
-
-            if (typeof sel === 'string') {
-                elements = hAzzle(sel, ctx).elems;
-            }
-            return this.concat(elements);
+           return this.concat($(sel, ctx).elems);
         },
 
         /**
          * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
          */
         has: function (target) {
-            var targets = $(target, this),
+           
+		    var targets = $(target, this),
+			    i = 0,
                 l = targets.length;
 
             return this.filter(function () {
-                for (var i = 0; i < l; i++) {
+                for (; i < l; i++) {
                     if ($.contains(this, targets[i])) {
                         return true;
                     }
@@ -189,9 +183,9 @@
          */
 
         children: function (sel) {
-            return $(this.reduce(function (elements, elem) {
+            return $(this.reduce(function (els, elem) {
                 if ($.nodeType(1, elem)) {
-                    return elements.concat(slice.call(elem.children));
+                    return els.concat(slice.call(elem.children));
                 }
             }, []), sel);
         },
@@ -204,42 +198,6 @@
 
         next: function (selector) {
             return selector ? $(this.pluckNode('nextSibling').filter(selector)) : $(this.pluckNode('nextSibling'));
-        },
-
-        /**
-         * Find the next class after given element.
-         *
-         * @param {String} className
-         * @return {Object}
-         *
-         **/
-
-        nextOfClass: function (className) {
-            var nextEl,
-                el = this;
-
-            // Leading period will confuse hAzzle. 
-
-            if (className[0] === '.') className = className.slice(1);
-
-            while (el.next()) {
-
-                // If target element is found, stop
-                if (el.hasClass(className)) return el;
-
-                nextEl = el.next();
-                if (nextEl.length === 0) {
-                    // No more siblings. Go up in DOM and restart loop to check parent
-                    el = el.parent();
-                    continue;
-                }
-
-                el = nextEl;
-
-                // End of doc. Give up. 
-                if (el.parent().length === 0) return false;
-            }
-
         },
 
         nextUntil: function (until) {
@@ -281,7 +239,7 @@
          */
 
         first: function () {
-            return $(this.get(0));
+			return $(this.elems[0]);
         },
 
         /**
@@ -289,14 +247,10 @@
          */
 
         last: function () {
-            return $(this.get(-1));
+		   var elems = this.elems;
+           return $(elems[ elems.length -1]);
         },
 
-        /**
-         * FIX ME!! Seems to have problems finding elems inside an iFrame
-         *
-         * NOTE!! The iFrame problem happend because we don't have a selector engine.
-         */
         contents: function () {
             return this.map(function (elem) {
                 return elem.contentDocument || slice.call(elem.childNodes);

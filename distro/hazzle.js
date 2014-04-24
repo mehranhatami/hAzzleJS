@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.34
+ * Version: 0.34a
  * Released under the MIT License.
  *
  * Date: 2014-04-24
@@ -55,8 +55,6 @@
         splice = ArrayProto.splice,
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
-
-        hasOwn = ObjProto.hasOwnProperty,
 
         getTime = (Date.now || function () {
             return new Date().getTime();
@@ -215,6 +213,7 @@
          */
 
         find: function (sel) {
+			
             if (typeof sel === "string") {
                 var elements;
                 if (this.length === 1) {
@@ -251,18 +250,18 @@
          */
 
         filter: function (sel, inverse) {
-            if (typeof sel === 'function') {
+         
+		    if (typeof sel === 'function') {
                 var fn = sel;
-                return hAzzle.create(this.elems.filter(function (element, index) {
+                return hAzzle(this.elems.filter(function (element, index) {
                     return fn.call(element, element, index) !== (inverse || false);
-
                 }));
             }
             if (sel && sel[0] === '!') { // ! === not
                 sel = sel.substr(1);
                 inverse = true;
             }
-            return hAzzle.create(this.elems.filter(function (element) {
+            return hAzzle(this.elems.filter(function (element) {
                 return hAzzle.matches(element, sel) !== (inverse || false);
             }));
         },
@@ -323,7 +322,7 @@
          */
 
         get: function (index) {
-            return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice()
+            return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice();
         },
 
         /**
@@ -412,7 +411,6 @@
             }
             return -1;
         },
-
         /**
          * Make the 'elems stack'  unique
          */
@@ -593,12 +591,12 @@
 
         isUndefined: function (value) {
 
-            return typeof value === 'undefined';
+            return value === void 0;
         },
 
         isDefined: function (value) {
 
-            return typeof value !== 'undefined';
+            return value !== void 0;
         },
 
         isString: function (value) {
@@ -845,19 +843,20 @@
             };
         })(),
 
-        inArray: function (elem, array) {
 
-            var i = 0,
-                len = array.length;
+        inArray: function (elem, array ) {
+			
+			var i = 0,
+			    len = array.length;
 
-            for (; i < len; i++)
+            for (; i < len; i++ )
 
-                if (array[i] === elem) {
-
-                    return i;
-                }
-
-            return -1;
+			if ( array[ i ] === elem ) {
+			
+				return i;
+             }
+			 
+		     return -1;
         },
 
         /**
@@ -1020,18 +1019,16 @@
             return ret;
         },
 
+        makeArray: function (arr, results) {
 
-        makeArray: function (array) {
-            var ret = [];
+            var ret = results || [];
 
-            if (array != null) {
-                var i = array.length;
-                // The window, strings (and functions) also have 'length'
-                if (i == null || typeof array === "string" || hAzzle.isFunction(array) || array.setInterval)
-                    ret[0] = array;
-                else
-                    while (i)
-                        ret[--i] = array[i];
+            if (arr !== null) {
+                if (hAzzle.isArraylike(Object(arr))) {
+                    hAzzle.merge(ret, typeof arr === "string" ? [arr] : arr);
+                } else {
+                    push.call(ret, arr);
+                }
             }
 
             return ret;
@@ -1076,6 +1073,7 @@
             return toString.call(obj) == '[object ' + name + ']';
         };
     });
+
 
     if (typeof window['hAzzle'] === "undefined") {
 
@@ -1513,17 +1511,11 @@
 
 })(hAzzle);
 
-
-/**
- * Traversing
- */
-
 /*!
  * Traversing.js
  */
 
-;
-(function ($) {
+;(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -1571,24 +1563,22 @@
 
         /** Get elements from a spesific position inside the "elems stack"
          *
-         * @param {arr} arr
-         * @param {return} Object
+         * @param {arr} array
+         * @return {Object}
          */
 
-        selectedIndex: function (arr) {
+        selectedIndex: function (array) {
 
-            if (!$.isArray(arr)) {
-
-                return;
-            }
+            if ($.isArray(array)) {
 
             var result = [],
-                i = 0;
+                i = array.length;
 
-            for (i = arr.length; i--;) {
-                result.push(this.get(arr[i]));
+            while(i--) {
+                result.push(this.get(array[i]));
             }
             return $(result);
+		}	
         },
 
         /**
@@ -1598,9 +1588,9 @@
          * @return {Object}
          */
         tags: function (tag) {
-            return this.map(function (elem) {
-                if (elem.tagName.toLowerCase() === tag && $.nodeType(1, elem)) {
-                    return elem;
+            return this.map(function (els) {
+                if (els.tagName.toLowerCase() === tag && $.nodeType(1, els)) {
+                    return els;
                 }
             });
         },
@@ -1614,24 +1604,20 @@
          */
 
         add: function (sel, ctx) {
-
-            var elements = sel
-
-            if (typeof sel === 'string') {
-                elements = hAzzle(sel, ctx).elems
-            }
-            return this.concat(elements)
+           return this.concat($(sel, ctx).elems);
         },
 
         /**
          * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
          */
         has: function (target) {
-            var targets = $(target, this),
+           
+		    var targets = $(target, this),
+			    i = 0,
                 l = targets.length;
 
             return this.filter(function () {
-                for (var i = 0; i < l; i++) {
+                for (; i < l; i++) {
                     if ($.contains(this, targets[i])) {
                         return true;
                     }
@@ -1659,7 +1645,7 @@
          */
 
         is: function (sel) {
-            return this.length > 0 && this.filter(sel || []).length > 0;
+            return sel && this.filter(sel || []).length > 0;
         },
 
         /**
@@ -1710,9 +1696,9 @@
          */
 
         children: function (sel) {
-            return $(this.reduce(function (elements, elem) {
+            return $(this.reduce(function (els, elem) {
                 if ($.nodeType(1, elem)) {
-                    return elements.concat(slice.call(elem.children));
+                    return els.concat(slice.call(elem.children));
                 }
             }, []), sel);
         },
@@ -1724,43 +1710,7 @@
          */
 
         next: function (selector) {
-            return selector ? $(this.pluckNode('nextSibling').filter(selector)) : $(this.pluckNode('nextSibling'));
-        },
-
-        /**
-         * Find the next class after given element.
-         *
-         * @param {String} className
-         * @return {Object}
-         *
-         **/
-
-        nextOfClass: function (className) {
-            var nextEl,
-                el = this;
-
-            // Leading period will confuse hAzzle. 
-
-            if (className[0] === '.') className = className.slice(1);
-
-            while (el.next()) {
-
-                // If target element is found, stop
-                if (el.hasClass(className)) return el;
-
-                nextEl = el.next();
-                if (nextEl.length === 0) {
-                    // No more siblings. Go up in DOM and restart loop to check parent
-                    el = el.parent();
-                    continue;
-                }
-
-                el = nextEl;
-
-                // End of doc. Give up. 
-                if (el.parent().length === 0) return false;
-            }
-
+            return selector ? $(this.pluckNode('nextSibling').filter(selector || [])) : $(this.pluckNode('nextSibling'));
         },
 
         nextUntil: function (until) {
@@ -1772,7 +1722,7 @@
                 matches.push(this);
             });
 
-            return $(matches);
+            return $(matches)
         },
 
         /**
@@ -1794,7 +1744,7 @@
                 matches.push(this);
             });
 
-            return $(matches);
+            return $(matches)
         },
 
         /**
@@ -1802,7 +1752,7 @@
          */
 
         first: function () {
-            return $(this.get(0));
+			return $(this.elems[0]);
         },
 
         /**
@@ -1810,14 +1760,10 @@
          */
 
         last: function () {
-            return $(this.get(-1));
+		   var elems = this.elems;
+           return $(elems[ elems.length -1]);
         },
 
-        /**
-         * FIX ME!! Seems to have problems finding elems inside an iFrame
-         *
-         * NOTE!! The iFrame problem happend because we don't have a selector engine.
-         */
         contents: function () {
             return this.map(function (elem) {
                 return elem.contentDocument || slice.call(elem.childNodes);
@@ -2037,6 +1983,7 @@
             },
 
             'OPTION': function (elem) {
+
                 var val = $(elem).filter(function (option) {
                     return option.selected && !option.disabled;
                 }).pluck('value');
@@ -2078,19 +2025,11 @@
 
             if (!elem.nodeType) {
                 // If no nodeType, this is expected to be an array
-                for (; node = elem[i++];) {
-				
-				  ret += $.getText(node);
-				
-				}
+                for (; node = elem[i++];) ret += $.getText(node);
 
             } else if (NodeMatching(elem)) {
 
-                if (isString(elem.textContent)) {
-   
-   				    return elem.textContent;	
-	
-				}
+                if (isString(elem.textContent)) return elem.textContent;
                 for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += $.getText(elem);
 
             } else if ($.nodeType(3, elem) || $.nodeType(4, elem)) {
@@ -2186,6 +2125,7 @@
                     $.removeAttr(elem, name);
                 }
 
+
                 // Value is set - no need for hooks on this one...
 
                 if (elem.nodeName === 'SELECT') {
@@ -2235,13 +2175,7 @@
 
         text: function (value) {
 
-            if (isUndefined(value)) {
-			
-               // Get the textvalue
-
-                return $.getText(this);
-			
-			} else {
+            if (isDefined(value)) {
 
                 // Avoid memory leaks, do empty()
 
@@ -2262,7 +2196,12 @@
                     }
                 });
 
-            } 
+            } else {
+
+                // Get the textvalue
+
+                return $.getText(this);
+            }
         },
 
         /**
@@ -5779,24 +5718,25 @@
          * @return {Object}
          */
 
-        empty: function () {
+    
+    empty: function () {
+       
+	   // Remove all data to prevent memory leaks
+	   
+        return this.removeData().each(function (_, elem) {
 
-            // Remove all data to prevent memory leaks
-
-            return this.removeData().each(function (_, elem) {
-               
-			    if ($.nodeType(1, elem)) {
-
-                    // Remove event handlers on the element
-
-                        $.Events.remove(elem);
-
-                    // Remove any remaining nodes
-
-                    elem.textContent = "";
-                }
-            });
-        },
+         if ( $.nodeType(1, elem)) {
+			 
+		 // Remove all event handlers
+		
+			$.Events.remove(elem);
+			
+		 // Remove any remaining nodes
+        
+		 elem.textContent = "";
+		 }
+        });
+    },
 
         /**
          *  Remove an element from the DOM
@@ -6008,6 +5948,7 @@
         storageContains: function (key) {
             if (isString(key)) {
                 return $.indexOf(this.getStorageKeys(), key) !== -1;
+
             }
         },
 

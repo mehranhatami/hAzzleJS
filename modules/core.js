@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.34
+ * Version: 0.34a
  * Released under the MIT License.
  *
  * Date: 2014-04-24
@@ -213,6 +213,7 @@
          */
 
         find: function (sel) {
+			
             if (typeof sel === "string") {
                 var elements;
                 if (this.length === 1) {
@@ -249,18 +250,18 @@
          */
 
         filter: function (sel, inverse) {
-            if (typeof sel === 'function') {
+         
+		    if (typeof sel === 'function') {
                 var fn = sel;
-                return hAzzle.create(this.elems.filter(function (element, index) {
+                return hAzzle(this.elems.filter(function (element, index) {
                     return fn.call(element, element, index) !== (inverse || false);
-
                 }));
             }
             if (sel && sel[0] === '!') { // ! === not
                 sel = sel.substr(1);
                 inverse = true;
             }
-            return hAzzle.create(this.elems.filter(function (element) {
+            return hAzzle(this.elems.filter(function (element) {
                 return hAzzle.matches(element, sel) !== (inverse || false);
             }));
         },
@@ -590,12 +591,12 @@
 
         isUndefined: function (value) {
 
-            return typeof value === 'undefined';
+            return value === void 0;
         },
 
         isDefined: function (value) {
 
-            return typeof value !== 'undefined';
+            return value !== void 0;
         },
 
         isString: function (value) {
@@ -731,7 +732,6 @@
 
             while (prefix = prefixes.shift()) {
                 if (result = obj[prefix + upcased]) {
-
                     break;
                 }
             }
