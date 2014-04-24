@@ -1,35 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.34b
+ * Version: 0.35
  * Released under the MIT License.
  *
  * Date: 2014-04-25
- *
- * TO DO! Just now we are using jQuery's DOM ready way to do things. We let it be up to the developer to use the DOM ready function or not.
- *        My idea is that we skip that, and run the DOM ready automaticly before the library can be used.
- *        Followed by injection of all modules - modular loading.
- *
- *
- * IN THE FUTURE:
- * ===============
- *
- * Automaticly module loading. Load the Core.js upon pagelaod, and inject the rest of the modules after the document become ready.
- * Option to load modules from CDN or locale.
- *
- *
- * IMPORTANT!!
- * ===========
- *
- * I'm a Closure fan, but still hAzzle are written with Protoype chain. Two reasons for this. Closure read / write are terrible slow on large scale.
- * hAzzle need to be fast. Compare here: http://jsperf.com/prototype-vs-closures/34
- *
- * Second. People are familiar with jQuery, so I loosely try to follow the jQuery skeleton so it's easier for people out there to use hAzzle and
- * convert jQuery plugins to hAzzle.
- *
- * The Core have been optimized for speed and the average speed is 60 - 70% fater then Underscore.js, zepto, jQuery and Angular JS.
- *
  */
+
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -57,7 +34,7 @@
         toString = ObjProto.toString,
 
         /*
-         * ID used on elements for data, animation and events
+         * Unique ID
          */
 
         uid = {
@@ -131,7 +108,6 @@
 
                             this[i] = elems[i];
                         }
-
 
 
                         // Return the hAzzle Object
@@ -373,10 +349,6 @@
             return hAzzle(slice.call(this.elems, start, end));
         },
 
-        splice: function (start, end) {
-            return hAzzle(splice.call(this.elems, start, end));
-        },
-
         /**
          * Take an element and push it onto the "elems" stack
          */
@@ -392,22 +364,9 @@
          */
 
         indexOf: function (needle) {
-            return hAzzle.indexOf(this.elems, needle || '');
+            return needle && hAzzle.indexOf(this.elems, needle);
         },
-
-        lastIndexOf: function (array, itm, from) {
-
-            if (array === null) return -1;
-
-            var hasIndex = from !== null,
-                i = (hasIndex ? from : array.length);
-
-            while (i--) {
-
-                if (array[i] === itm) return i;
-            }
-            return -1;
-        },
+		
         /**
          * Make the 'elems stack'  unique
          */
@@ -551,8 +510,8 @@
             return obj;
         },
 
-        type: function (obj) {
-            return toString.call(obj);
+        type: function (val) {
+            return toString.call(val);
         },
 
         is: function (kind, obj) {
@@ -1021,30 +980,16 @@
                     push.call(ret, arr);
                 }
 
-
             }
 
             return ret;
         },
+
         // A function that performs no operations.
 
         noop: function () {
 
-        },
-        bind: function (context) {
-            var fn = this,
-                args = slice.call(arguments, 1);
-
-            if (args.length) {
-                return function () {
-                    return arguments.length ? fn.apply(context, args.concat(slice.call(arguments))) : fn.apply(context, args);
-                };
-            }
-            return function () {
-                return arguments.length ? fn.apply(context, arguments) : fn.apply(context);
-            };
         }
-
     });
 
     /**
