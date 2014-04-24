@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.34a
+ * Version: 0.34b
  * Released under the MIT License.
  *
- * Date: 2014-04-24
+ * Date: 2014-04-25
  *
  * TO DO! Just now we are using jQuery's DOM ready way to do things. We let it be up to the developer to use the DOM ready function or not.
  *        My idea is that we skip that, and run the DOM ready automaticly before the library can be used.
@@ -55,10 +55,6 @@
         splice = ArrayProto.splice,
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
-
-        getTime = (Date.now || function () {
-            return new Date().getTime();
-        }),
 
         /*
          * ID used on elements for data, animation and events
@@ -135,6 +131,8 @@
 
                             this[i] = elems[i];
                         }
+
+
 
                         // Return the hAzzle Object
 
@@ -213,7 +211,7 @@
          */
 
         find: function (sel) {
-			
+
             if (typeof sel === "string") {
                 var elements;
                 if (this.length === 1) {
@@ -241,7 +239,6 @@
                 return hAzzle.create(elements);
             }
 
-
             return this;
         },
 
@@ -250,8 +247,8 @@
          */
 
         filter: function (sel, inverse) {
-         
-		    if (typeof sel === 'function') {
+
+            if (typeof sel === 'function') {
                 var fn = sel;
                 return hAzzle(this.elems.filter(function (element, index) {
                     return fn.call(element, element, index) !== (inverse || false);
@@ -423,33 +420,27 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (iterator, memo) {
+        reduce: function (callback /*, initialValue*/ ) {
 
-            var arr = this.elems,
-                len = arr.length,
-                reduced,
-                i;
-
-            // If zero-length array, return memo, even if undefined
-            if (!len) return memo;
-
-            // If no memo, use first item of array (we know length !== 0 here)
-            // and adjust i to start at second item
-            if (arguments.length === 1) {
-                reduced = arr[0];
-                i = 1;
+            var t = Object(this),
+                len = t.length >>> 0,
+                k = 0,
+                value;
+            if (arguments.length >= 2) {
+                value = arguments[1];
             } else {
-                reduced = memo;
-                i = 0;
+                while (k < len && !k in t) k++;
+                if (k >= len) {
+                    return false;
+                }
+                value = t[k++];
             }
-
-            while (i < len) {
-                // Test for sparse array
-                if (i in arr) reduced = iterator(reduced, arr[i], i, arr);
-                ++i;
+            for (; k < len; k++) {
+                if (k in t) {
+                    value = callback(value, t[k], k, t);
+                }
             }
-
-            return reduced;
+            return value;
         },
 
         /**
@@ -810,7 +801,7 @@
          * Return current time
          */
 
-        now: getTime,
+        now: Date.now,
 
         /**
          * Check if an element are a specific NodeType
@@ -844,19 +835,19 @@
         })(),
 
 
-        inArray: function (elem, array ) {
-			
-			var i = 0,
-			    len = array.length;
+        inArray: function (elem, array) {
 
-            for (; i < len; i++ )
+            var i = 0,
+                len = array.length;
 
-			if ( array[ i ] === elem ) {
-			
-				return i;
-             }
-			 
-		     return -1;
+            for (; i < len; i++)
+
+                if (array[i] === elem) {
+
+                    return i;
+                }
+
+            return -1;
         },
 
         /**
@@ -1029,6 +1020,8 @@
                 } else {
                     push.call(ret, arr);
                 }
+
+
             }
 
             return ret;

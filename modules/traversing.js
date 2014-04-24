@@ -121,7 +121,10 @@
          */
 
         not: function (sel) {
-            return this.filter(sel || [], true);
+			return $(this.elems.filter(function (element) {
+                return $.matches(element, sel) !== true;
+            }));
+			
         },
 
         /**
@@ -132,7 +135,10 @@
          */
 
         is: function (sel) {
-            return this.length > 0 && this.filter(sel || []).length > 0;
+             return !!sel && (
+				/^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test( sel) ?
+					hAzzle( sel).index( this[0] ) >= 0 :
+				this.filter( sel ).length > 0 );			
         },
 
         /**
@@ -197,7 +203,7 @@
          */
 
         next: function (selector) {
-            return selector ? $(this.pluckNode('nextSibling').filter(selector)) : $(this.pluckNode('nextSibling'));
+            return selector ? $(this.pluckNode('nextSibling').filter(selector || [])) : $(this.pluckNode('nextSibling'));
         },
 
         nextUntil: function (until) {
