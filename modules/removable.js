@@ -17,17 +17,16 @@
 	   // Remove all data to prevent memory leaks
 	   
         return this.removeData().each(function (_, elem) {
-         if ( $.nodeType(1, this)) {
+
+         if ( $.nodeType(1, elem)) {
 			 
 		 // Remove all event handlers
 		
-		$.each(elem, function(_, el) {
-			$.Events.remove(el);
-		});
-			 
+			$.Events.remove(elem);
+			
 		 // Remove any remaining nodes
         
-		 this.textContent = "";
+		 elem.textContent = "";
 		 }
         });
     },
@@ -75,7 +74,7 @@
 
 		// Remove all children
 
-	     this.parentNode.removeChild(elem);
+	     elem.parentNode.removeChild(elem);
 		}
         
        })

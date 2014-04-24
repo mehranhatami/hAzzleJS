@@ -2078,11 +2078,19 @@
 
             if (!elem.nodeType) {
                 // If no nodeType, this is expected to be an array
-                for (; node = elem[i++];) ret += $.getText(node);
+                for (; node = elem[i++];) {
+				
+				  ret += $.getText(node);
+				
+				}
 
             } else if (NodeMatching(elem)) {
 
-                if (isString(elem.textContent)) return elem.textContent;
+                if (isString(elem.textContent)) {
+   
+   				    return elem.textContent;	
+	
+				}
                 for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += $.getText(elem);
 
             } else if ($.nodeType(3, elem) || $.nodeType(4, elem)) {
@@ -2178,7 +2186,6 @@
                     $.removeAttr(elem, name);
                 }
 
-
                 // Value is set - no need for hooks on this one...
 
                 if (elem.nodeName === 'SELECT') {
@@ -2228,7 +2235,13 @@
 
         text: function (value) {
 
-            if (isDefined(value)) {
+            if (isUndefined(value)) {
+			
+               // Get the textvalue
+
+                return $.getText(this);
+			
+			} else {
 
                 // Avoid memory leaks, do empty()
 
@@ -2249,12 +2262,7 @@
                     }
                 });
 
-            } else {
-
-                // Get the textvalue
-
-                return $.getText(this);
-            }
+            } 
         },
 
         /**
@@ -5776,17 +5784,16 @@
             // Remove all data to prevent memory leaks
 
             return this.removeData().each(function (_, elem) {
-                if ($.nodeType(1, this)) {
+               
+			    if ($.nodeType(1, elem)) {
 
-                    // Remove all event handlers
+                    // Remove event handlers on the element
 
-                    $.each(elem, function (_, el) {
-                        $.Events.remove(el);
-                    });
+                        $.Events.remove(elem);
 
                     // Remove any remaining nodes
 
-                    this.textContent = "";
+                    elem.textContent = "";
                 }
             });
         },
