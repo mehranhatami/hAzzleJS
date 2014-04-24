@@ -477,12 +477,12 @@
                         }
 
                         // force browsers to behave consistently when non-matching value is set
-						
+
                         if (!optionSet) {
-							
+
                             elem.selectedIndex = -1;
                         }
-						
+
                         return values;
                     }
 
@@ -591,22 +591,20 @@
 
                 return this;
             }
-			
+
             //if a value was passed, we'll set that value for the specified dataAttribute
-			
             else if (dataValue) {
                 return this.attr('data-' + dataAttribute, dataValue);
             }
-			
+
             // lastly, try to just return the requested dataAttribute's value from the element
-			
             else {
                 var value = this.attr('data-' + dataAttribute);
 
                 // specifically checking for undefined in case "value" ends up evaluating to false
-				
+
                 if (isUndefined(value)) {
-                   return;
+                    return;
                 }
 
                 return value;
@@ -634,7 +632,7 @@
          * Toggle properties
          */
 
-        toggleProperty: function (property) {
+        toggleProp: function (property) {
             return this.each(function () {
                 return this.prop(property, !this.prop(property));
             });
@@ -706,6 +704,7 @@
             return this.each(function () {
                 $(sel).append(this);
             });
+
         },
 
         /**
@@ -744,9 +743,9 @@
     }, function (name, second) {
 
         $.fn[name] = function (html) {
-			
+
             // Take the easy and fastest way if it's a string
-			
+
             if (isString(html)) {
                 return this.each(function (_, elem) {
                     if (NodeMatching(this)) {
@@ -762,9 +761,9 @@
                             this.getElementsByTagName("tbody")[0] ||
                             elem.appendChild(this.ownerDocument.createElement("tbody")) :
                             this;
-							
+
                         // Choose correct method	
-						
+
                         name === 'prepend' ? target.insertBefore(elem, target.firstChild) : target.appendChild(elem);
                     }
                 });

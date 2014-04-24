@@ -1,6 +1,7 @@
 ; (function ($) {
 
 // Ajax
+
 var win = window,
     doc = document,
     byTag = 'getElementsByTagName',
@@ -14,10 +15,6 @@ var win = window,
     isIE10 = $.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
     uniqid = 0,
     lastValue,
-
-    getTime = (Date.now || function () {
-        return new Date().getTime();
-    }),
 
     defaultHeaders = {
         contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
@@ -39,8 +36,6 @@ var win = window,
  *
  * @return {String}
  *
- * - Taken from jQuery and optimized it for speed
- *
  */
 
 function ctqs(o, trad) {
@@ -51,15 +46,23 @@ function ctqs(o, trad) {
         enc = encodeURIComponent,
         add = function (key, value) {
             // If value is a function, invoke it and return its value
-            value = ($.isFunction(value)) ? value() : (value === null ? '' : value);
-            s[s.length] = enc(key) + '=' + enc(value);
+            value = ($.isFunction(value)) ? value() : (value === null ? "" : value);
+            s[s.length] = enc(key) + "=" + enc(value);
         };
-    // If an array was passed in, assume that it is an array of form elements.
-    if ($.isArray(o))
-        for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
-    else
-        for (i = 0; prefix = nativeKeys(o)[i]; i += 1)
-            buildParams(prefix, o[prefix], traditional, add, o);
+		
+    if ($.isArray(o)) {
+	
+	    $.each(o, function() {
+			add(this.name, this.value);
+		});
+
+   } else {
+	   
+	  for (prefix in o) {
+        buildParams(prefix, o[prefix], traditional, add)
+      }   
+	}
+
     return s.join('&').replace(/%20/g, '+');
 }
 
@@ -67,24 +70,36 @@ function ctqs(o, trad) {
  * Build params
  */
 
-function buildParams(prefix, obj, traditional, add, o) {
+function buildParams(prefix, obj, traditional, add) {
     var name, i, v, rbracket = /\[\]$/;
 
     if ($.isArray(obj)) {
-        for (i = 0; obj && i < obj.length; i++) {
-            v = obj[i];
+		
+		$.each(obj, function(i, v) {
+
             if (traditional || rbracket.test(prefix)) {
+
                 // Treat each array item as a scalar.
                 add(prefix, v);
-            } else buildParams(prefix + '[' + ($.isObject(v) ? i : '') + ']', v, traditional, add);
-        }
-    } else if (obj && obj.toString() === '[object Object]') {
+
+            } else {
+
+			buildParams(prefix + '[' + ($.isObject(v) ? i : '') + ']', v, traditional, add);	
+
+			}
+		});
+		
+    } else if (!traditional && $.isObject(obj)) {
         // Serialize object item.
         for (name in obj) {
-            if (o[own](prefix)) buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
+            buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
         }
 
-    } else add(prefix, obj);
+    } else {
+	 
+	 add(prefix, obj);	
+	
+	}
 }
 
 /**
@@ -111,24 +126,23 @@ function appendQuery(url, query) {
 function generalCallback(data) {
     lastValue = data;
 }
-
-/**
-		* jsonP
-
-		*
-		* @param {Object} o
-		* @param {Function} fn
-		* @param {String} url
-		*
-		* @return {Object}
-		
-		**/
+  
+  /**
+   * jsonP
+   *
+   * @param {Object} o
+   * @param {Function} fn
+   * @param {String} url
+   *
+   * @return {Object}
+   */
+   
 function handleJsonp(o, fn, url) {
 
     var reqId = uniqid++,
         cbkey = o.jsonpCallback || 'callback'; // the 'callback' key
 
-    o = o.jsonpCallbackName || 'hAzzel_' + getTime(); // the 'callback' value
+    o = o.jsonpCallbackName || 'hAzzel_' + $.now(); // the 'callback' value
 
     var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
         match = url.match(cbreg),
@@ -141,7 +155,7 @@ function handleJsonp(o, fn, url) {
     } else url = appendQuery(url, cbkey + '=' + o); // no callback details, add 'em
 
 
-    win[o] = generalCallback;
+    window[o] = generalCallback;
 
     script.type = 'text/javascript';
     script.src = url;
@@ -156,8 +170,11 @@ function handleJsonp(o, fn, url) {
             return false;
         }
         script.onload = script.onreadystatechange = null;
+		
         if (script.onclick) script.onclick();
+		
         // Call the user callback with the last value stored and clean up values and scripts.
+		
         fn(lastValue);
         lastValue = undefined;
         head.removeChild(script);

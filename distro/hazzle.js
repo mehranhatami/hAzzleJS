@@ -2534,7 +2534,7 @@
          * Toggle properties
          */
 
-        toggleProperty: function (property) {
+        toggleProp: function (property) {
             return this.each(function () {
                 return this.prop(property, !this.prop(property));
             });
