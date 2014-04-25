@@ -4,7 +4,8 @@
 
 ; (function ($) {
 
-    var readyList = [],
+    var doc = document,
+	    readyList = [],
         readyFired = false,
         readyEventHandlersInstalled = false;
 
@@ -40,7 +41,7 @@
          
 		 // context are are optional, but document by default
 	     
-		 context = context || document;
+		 context = context || doc;
 	
 		if (readyFired) {
             setTimeout(function() { callback(context); }, 1);
@@ -52,7 +53,7 @@
             readyList.push({fn: callback, ctx: context});
         }
 		// if document already ready to go, schedule the ready function to run
-        if (document.readyState === "complete") {
+        if (doc.readyState === "complete") {
 			
             setTimeout(ready, 1);
 
@@ -60,7 +61,7 @@
 
             // otherwise if we don't have event handlers installed, install them
 
-                document.addEventListener("DOMContentLoaded", ready, false);
+                doc.addEventListener("DOMContentLoaded", ready, false);
                 // backup is window load event
                 window.addEventListener("load", ready, false);
 

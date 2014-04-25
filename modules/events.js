@@ -19,8 +19,6 @@
 
 ;(function ($) {
 
-
-
 var win = window,
     doc = document || {},
     root = doc.documentElement || {},
@@ -41,20 +39,11 @@ var win = window,
 
     treated = {},
 
-    /**
-     * Prototype references.
-     */
+    // Some prototype references we need
 
-    ArrayProto = Array.prototype,
-    ObjProto = Object.prototype,
-
-    /**
-     * Create reference for speeding up the access to the prototype.
-     */
-
-    slice = ArrayProto.slice,
-    concat = ArrayProto.concat,
-    toString = ObjProto.toString,
+    slice = Array.prototype.slice,
+    concat = Array.prototype.concat,
+    toString = Object.prototype.toString,
 
     threatment = {
 
@@ -130,358 +119,6 @@ function checkPointer(evt) {
     return evt;
 }
 
-// hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
-// http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
-
-function Event(evt, element) {
-
-    // Allow instantiation without the 'new' keyword
-    if (!(this instanceof Event)) {
-        return new Event(evt, element);
-    }
-
-    if (!arguments.length) return;
-
-    evt = evt || ((element.ownerDocument || element.document || element).parentWindow || win).evt;
-
-    this.originalEvent = evt;
-
-    if (!evt) return;
-
-    var type = evt.type,
-        target = evt.target,
-        i, p, props, fixHook;
-
-    this.target = target && $.nodeType(3, target) ? target.parentNode : target;
-
-    fixHook = treated[type];
-
-    if (!fixHook) {
-
-        // More or less the same way as jQuery does it, but
-        // I introduced "eventHooks", so it's possible to check
-        // against other events too from plugins.
-        //
-        // NOTE!! I used the same "props" as in jQuery. I hope that was the right thing to do :)
-
-        treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
-            rkeyEvent.test(type) ? $.eventHooks['keys'] :
-            function () {
-                return commonProps;
-        };
-    }
-
-    props = fixHook(evt, this, type);
-
-    for (i = props.length; i--;) {
-        if (!((p = props[i]) in this) && p in evt) this[p] = evt[p];
-    }
-}
-
-
-Event.prototype = {
-
-    preventDefault: function () {
-        if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
-        else this.originalEvent.returnValue = false;
-    },
-    stopPropagation: function () {
-        if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
-        else this.originalEvent.cancelBubble = true;
-    },
-    stop: function () {
-        this.preventDefault();
-        this.stopPropagation();
-        this.stopped = true;
-    },
-    stopImmediatePropagation: function () {
-        if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
-        this.isImmediatePropagationStopped = function () {
-            return true;
-        };
-    },
-    isImmediatePropagationStopped: function () {
-        return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
-    },
-    clone: function (currentTarget) {
-        var ne = Event(this, this.element);
-        ne.currentTarget = currentTarget;
-        return ne;
-    }
-};
-// Same as jQuery / Zepto
-
-$.Events = {
-
-    // Add event listener
-
-    add: function (el, events, selector, fn, one) {
-        var originalFn, type, types, i, args, entry, first;
-
-        // Dont' allow click on disabeled elements, or events on text and comment nodes
-
-        if (threatment['disabeled'](el, events) || threatment['nodeType'](el)) return false;
-
-        // Types can be a map of types/handlers
-        // TODO!! This is not working on delegated events, have to fix this ASAP !!
-
-        if (selector === undefined && typeof events === 'object')
-
-            for (type in events) {
-
-                if (events.hasOwnProperty(type)) {
-                    $.Events.add.call(this, el, type, events[type]);
-                }
-
-            } else {
-
-                // Delegated event
-
-                if (! isFunction(selector)) {
-                    originalFn = fn;
-                    args = slice.call(arguments, 4);
-                    fn = $.Events.delegate(selector, originalFn);
-
-                } else {
-                    args = slice.call(arguments, 3);
-                    fn = originalFn = selector;
-                }
-
-                // Handle multiple events separated by a space
-                // Compare to jQuery, hAzzle don't need a bunch of regEx tests
-                // That speed things up
-
-                types = events.split(specialsplit);
-
-                // One
-
-                if (one === 1) {
-
-                    // Make a unique handlet that get removed after first time it's triggered
-                    fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
-                }
-
-                for (i = types.length; i--;) {
-                    first = $.Events.putHandler(entry = $.Kernel(
-                        el, types[i].replace(names, '') // event type
-                        , fn, originalFn, types[i].replace(ns, '').split('.') // namespaces
-                        , args, false
-                    ));
-
-                    // Add root listener only if we're the first
-
-                    if (first) el.addEventListener(entry.eventType, $.Events.rootListener, false);
-                }
-                return el;
-            }
-    },
-
-    // Remove event listener
-
-    remove: function (el, typeSpec, fn) {
-		
-        var isTypeStr = isString(typeSpec),
-            type, namespaces, i;
-
-        if (isTypeStr && typeSpec.indexOf(' ') > 0) {
-
-            typeSpec = typeSpec.split(typeSpec);
-
-            for (i = typeSpec.length; i--;)
-                $.Events.remove(el, typeSpec[i], fn);
-            return el;
-        }
-
-        type = isTypeStr && typeSpec.replace(names, '');
-
-        if (type && special[type]) type = special[type].fix;
-
-        if (!typeSpec || isTypeStr) {
-
-            if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
-            $.Events.removeListener(el, type, fn, namespaces);
-        } else if (isFunction(typeSpec)) {
-            // off(el, fn);
-            $.Events.removeListener(el, null, typeSpec);
-        } else {
-
-            for (var k in typeSpec) {
-                if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
-            }
-        }
-
-        return el;
-    },
-
-    /**
-     * Set up a delegate helper using the given selector, wrap the handler function
-     */
-
-    delegate: function (selector, fn) {
-
-        function findTarget(target, root) {
-            var i, array = isString(selector) ? $.select(selector, root) : selector;
-            for (; target && target !== root; target = target.parentNode) {
-                if (array !== null) {
-                    for (i = array.length; i--;) {
-                        if (array[i] === target) return target;
-                    }
-                }
-            }
-        }
-
-        function handler(e) {
-            if (e.target.disabled !== true) {
-                var m = findTarget(e.target, this);
-                if (m) fn.apply(m, arguments);
-            }
-        }
-
-        handler.__handlers = {
-            ft: findTarget,
-            selector: selector
-        };
-        return handler;
-    },
-
-    removeListener: function (element, orgType, handler, namespaces) {
-
-        var type = orgType && orgType.replace(names, ''),
-            handlers = $.Events.getHandler(element, type, null, false),
-            removed = {}, i, l;
-
-        // Namespace
-
-        for (i = 0, l = handlers.length; i < l; i++) {
-            if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                $.Events.delHandler(handlers[i]);
-                if (!removed[handlers[i].eventType])
-                    removed[handlers[i].eventType] = {
-                        t: handlers[i].eventType,
-                        c: handlers[i].type
-                    };
-            }
-        }
-
-        for (i in removed) {
-            if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
-                // last listener of this type, remove the rootListener
-                element.removeEventListener(removed[i].t, $.Events.rootListener, false);
-            }
-        }
-    },
-
-    once: function (rm, element, type, fn, originalFn) {
-        return function () {
-            fn.apply(this, arguments);
-            rm(element, type, originalFn);
-        };
-    },
-
-    rootListener: function (evt, type) {
-        var listeners = $.Events.getHandler(this, type || evt.type, null, false),
-            l = listeners.length,
-            i = 0;
-
-        evt = Event(evt, this, true);
-        if (type) evt.type = type;
-
-        // iterate through all handlers registered for this type, calling them unless they have
-        // been removed by a previous handler or stopImmediatePropagation() has been called
-        for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
-            if (!listeners[i].removed) listeners[i].handler.call(this, evt);
-        }
-    },
-
-    wrappedHandler: function (element, fn, condition, args) {
-
-        function call(evt, eargs) {
-
-            return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
-        }
-
-        function findTarget(evt, eventElement) {
-
-            return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
-        }
-
-        var handler = condition ? function (evt) {
-
-                var target = findTarget(evt, this); // delegated event
-
-                if (condition.apply(target, arguments)) {
-                    if (evt) evt.currentTarget = target;
-                    return call(evt, arguments);
-                }
-            } : function (evt) {
-                if (fn.__handlers) evt = evt.clone(findTarget(evt));
-                return call(evt, arguments);
-            };
-
-        handler.__handlers = fn.__handlers;
-        return handler;
-    },
-
-    findIt: function (element, type, original, handler, root, fn) {
-
-        if (!type || type === '*') {
-
-            for (var t in container) {
-
-                if (t.charAt(0) === root ? 'r' : '#') {
-                    $.Events.findIt(element, t.substr(1), original, handler, root, fn);
-                }
-            }
-
-        } else {
-
-            var i = 0,
-                l,
-                list = container[root ? 'r' : '#' + type];
-
-            if (!list) {
-
-                return;
-            }
-
-            for (l = list.length; i < l; i++) {
-
-                if ((element === '*' || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
-            }
-        }
-    },
-
-    hasHandler: function (element, type, original, root) {
-        if (root = container[(root ? "r" : "#") + type])
-            for (type = root.length; type--;)
-                if (!root[type].root && root[type].matches(element, original, null)) return true;
-        return false;
-    },
-    getHandler: function (element, type, original, root) {
-
-        var entries = [];
-
-        $.Events.findIt(element, type, original, null, root, function (entry) {
-            entries.push(entry);
-        });
-        return entries;
-    },
-    putHandler: function (entry) {
-        var has = !entry.root && !this.hasHandler(entry.element, entry.type, null, false),
-            key = (entry.root ? 'r' : '#') + entry.type;
-        (container[key] || (container[key] = [])).push(entry);
-        return has;
-    },
-    // Find handlers for event delegation
-    delHandler: function (entry) {
-        $.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
-            list.splice(i, 1);
-            entry.removed = true;
-            if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
-            return false;
-        });
-    }
-};
 
 $.extend($, {
 
@@ -660,6 +297,360 @@ $.extend($.fn, {
         return el;
     }
 });
+
+
+
+
+
+// hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
+// http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
+
+function Event(evt, element) {
+
+    // Allow instantiation without the 'new' keyword
+    if (!(this instanceof Event)) {
+        return new Event(evt, element);
+    }
+
+    if (!arguments.length) return;
+
+    evt = evt || ((element.ownerDocument || element.document || element).parentWindow || win).evt;
+
+    this.originalEvent = evt;
+
+    if (!evt) return;
+
+    var type = evt.type,
+        target = evt.target,
+        i, p, props, fixHook;
+
+    this.target = target && $.nodeType(3, target) ? target.parentNode : target;
+
+    fixHook = treated[type];
+
+    if (!fixHook) {
+
+      /* Note! This is more or less the same way as jQuery does it, but
+         I introduced "eventHooks", so it's possible to check
+         against other events too from plugins. */
+
+        treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
+            rkeyEvent.test(type) ? $.eventHooks['keys'] :
+            function () {
+                return commonProps;
+        };
+    }
+
+    props = fixHook(evt, this, type);
+
+    for (i = props.length; i--;) {
+        if (!((p = props[i]) in this) && p in evt) this[p] = evt[p];
+    }
+}
+
+
+Event.prototype = {
+
+    preventDefault: function () {
+        if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
+        else this.originalEvent.returnValue = false;
+    },
+    stopPropagation: function () {
+        if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
+        else this.originalEvent.cancelBubble = true;
+    },
+    stop: function () {
+        this.preventDefault();
+        this.stopPropagation();
+        this.stopped = true;
+    },
+    stopImmediatePropagation: function () {
+        if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
+        this.isImmediatePropagationStopped = function () {
+            return true;
+        };
+    },
+    isImmediatePropagationStopped: function () {
+        return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
+    },
+    clone: function (currentTarget) {
+        var ne = Event(this, this.element);
+        ne.currentTarget = currentTarget;
+        return ne;
+    }
+};
+
+$.Events = {
+
+    // Add event listener
+
+    add: function (el, events, selector, fn, one) {
+        var originalFn, type, types, i, args, entry, first;
+
+        // Dont' allow click on disabeled elements, or events on text and comment nodes
+
+        if (threatment['disabeled'](el, events) || threatment['nodeType'](el)) return false;
+
+        // Types can be a map of types/handlers
+        // TODO!! This is not working on delegated events, have to fix this ASAP !!
+
+        if (selector === undefined && $isObject(events))
+
+            for (type in events) {
+
+                if (events.hasOwnProperty(type)) {
+                    $.Events.add.call(this, el, type, events[type]);
+                }
+
+            } else {
+
+                // Delegated event
+
+                if (! isFunction(selector)) {
+                    originalFn = fn;
+                    args = slice.call(arguments, 4);
+                    fn = $.Events.delegate(selector, originalFn);
+
+                } else {
+                    args = slice.call(arguments, 3);
+                    fn = originalFn = selector;
+                }
+
+                // Handle multiple events separated by a space
+                // Compare to jQuery, hAzzle don't need a bunch of regEx tests
+                // That speed things up
+
+                types = events.split(specialsplit);
+
+                // One
+
+                if (one === 1) {
+
+                    // Make a unique handlet that get removed after first time it's triggered
+                    fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
+                }
+
+                for (i = types.length; i--;) {
+                    first = $.Events.putHandler(entry = $.Kernel(
+                        el, types[i].replace(names, '') // event type
+                        , fn, originalFn, types[i].replace(ns, '').split('.') // namespaces
+                        , args, false
+                    ));
+
+                    // Add root listener only if we're the first
+
+                    if (first) el.addEventListener(entry.eventType, $.Events.rootListener, false);
+                }
+                return el;
+            }
+    },
+
+    // Remove event listener
+
+    remove: function (el, typeSpec, fn) {
+		
+        var isTypeStr = isString(typeSpec),
+            type, namespaces, i;
+
+        if (isTypeStr && typeSpec.indexOf(' ') > 0) {
+
+            typeSpec = typeSpec.split(typeSpec);
+
+            for (i = typeSpec.length; i--;)
+                $.Events.remove(el, typeSpec[i], fn);
+            return el;
+        }
+
+        type = isTypeStr && typeSpec.replace(names, '');
+
+        if (type && special[type]) type = special[type].fix;
+
+        if (!typeSpec || isTypeStr) {
+
+            if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
+            $.Events.removeListener(el, type, fn, namespaces);
+
+        } else if (isFunction(typeSpec)) {
+
+            $.Events.removeListener(el, null, typeSpec);
+
+        } else {
+
+            for (var k in typeSpec) {
+
+                if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+            }
+        }
+
+        return el;
+    },
+
+    /**
+     * Set up a delegate helper using the given selector, wrap the handler function
+     */
+
+    delegate: function (selector, fn) {
+
+        function findTarget(target, root) {
+            var i, array = isString(selector) ? $.select(selector, root) : selector;
+            for (; target && target !== root; target = target.parentNode) {
+                if (array !== null) {
+                    for (i = array.length; i--;) {
+                        if (array[i] === target) return target;
+                    }
+                }
+            }
+        }
+
+        function handler(e) {
+            if (e.target.disabled !== true) {
+                var m = findTarget(e.target, this);
+                if (m) fn.apply(m, arguments);
+            }
+        }
+
+        handler.__handlers = {
+            ft: findTarget,
+            selector: selector
+        };
+        return handler;
+    },
+
+    removeListener: function (element, orgType, handler, namespaces) {
+
+        var type = orgType && orgType.replace(names, ''),
+            handlers = $.Events.getHandler(element, type, null, false),
+            removed = {}, i, l;
+
+        for (i = 0, l = handlers.length; i < l; i++) {
+            if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
+                $.Events.delHandler(handlers[i]);
+                if (!removed[handlers[i].eventType])
+                    removed[handlers[i].eventType] = {
+                        t: handlers[i].eventType,
+                        c: handlers[i].type
+                    };
+            }
+        }
+
+        for (i in removed) {
+            if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
+                // last listener of this type, remove the rootListener
+                element.removeEventListener(removed[i].t, $.Events.rootListener, false);
+            }
+        }
+    },
+
+    once: function (rm, element, type, fn, originalFn) {
+        return function () {
+            fn.apply(this, arguments);
+            rm(element, type, originalFn);
+        };
+    },
+
+    rootListener: function (evt, type) {
+        var listeners = $.Events.getHandler(this, type || evt.type, null, false),
+            l = listeners.length,
+            i = 0;
+
+        evt = Event(evt, this, true);
+
+        for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
+
+            if (!listeners[i].removed) listeners[i].handler.call(this, evt);
+        }
+    },
+
+    wrappedHandler: function (element, fn, condition, args) {
+
+        function call(evt, eargs) {
+
+            return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
+        }
+
+        function findTarget(evt, eventElement) {
+
+            return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
+        }
+
+        var handler = condition ? function (evt) {
+
+                var target = findTarget(evt, this); // delegated event
+
+                if (condition.apply(target, arguments)) {
+                    if (evt) evt.currentTarget = target;
+                    return call(evt, arguments);
+                }
+            } : function (evt) {
+                if (fn.__handlers) evt = evt.clone(findTarget(evt));
+                return call(evt, arguments);
+            };
+
+        handler.__handlers = fn.__handlers;
+        return handler;
+    },
+
+    findIt: function (element, type, original, handler, root, fn) {
+
+        if (!type || type === '*') {
+
+            for (var t in container) {
+
+                if (t.charAt(0) === root ? 'r' : '#') {
+                    $.Events.findIt(element, t.substr(1), original, handler, root, fn);
+                }
+            }
+
+        } else {
+
+            var i = 0,
+                l,
+                list = container[root ? 'r' : '#' + type];
+
+            if (!list) {
+
+                return;
+            }
+
+            for (l = list.length; i < l; i++) {
+
+                if ((element === '*' || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
+            }
+        }
+    },
+
+    hasHandler: function (element, type, original, root) {
+        if (root = container[(root ? "r" : "#") + type])
+            for (type = root.length; type--;)
+                if (!root[type].root && root[type].matches(element, original, null)) return true;
+        return false;
+    },
+    getHandler: function (element, type, original, root) {
+
+        var entries = [];
+
+        $.Events.findIt(element, type, original, null, root, function (entry) {
+            entries.push(entry);
+        });
+        return entries;
+    },
+    putHandler: function (entry) {
+        var has = !entry.root && !this.hasHandler(entry.element, entry.type, null, false),
+            key = (entry.root ? 'r' : '#') + entry.type;
+        (container[key] || (container[key] = [])).push(entry);
+        return has;
+    },
+    // Find handlers for event delegation
+    delHandler: function (entry) {
+        $.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
+            list.splice(i, 1);
+            entry.removed = true;
+            if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
+            return false;
+        });
+    }
+};
+
 
 // Shortcut methods for 'on'
 

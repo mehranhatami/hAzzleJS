@@ -1,12 +1,11 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.35c
+ * Version: 0.35
  * Released under the MIT License.
  *
- * Date: 2014-04-25
+ * Date: 2014-04-26
  */
-
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -29,7 +28,6 @@
 
         push = ArrayProto.push,
         slice = ArrayProto.slice,
-        splice = ArrayProto.splice,
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
 
@@ -366,7 +364,7 @@
         indexOf: function (needle) {
             return needle && hAzzle.indexOf(this.elems, needle);
         },
-		
+
         /**
          * Make the 'elems stack'  unique
          */
@@ -432,6 +430,7 @@
          * Get the element at position specified by index from the current collection.
          *
          * +, -, / and * are all allowed to use for collecting elements.
+
          *
          * Example:
          *            .eq(1+2-1)  - Returnes element 2 in the collection
@@ -537,6 +536,7 @@
         },
 
         isUndefined: function (value) {
+
             return value === void 0;
         },
 
@@ -555,8 +555,19 @@
             return typeof value === 'function';
         },
 
-        isNumber: function (value) {
+        isDate: function (val) {
+            return !!(val && val.getTimezoneOffset && val.setUTCFullYear);
+        },
 
+        isRegExp: function (r) {
+            return !!(r && r.test && r.exec && (r.ignoreCase || r.ignoreCase === false));
+        },
+
+        isArguments: function (a) {
+            return !!(a && ObjProto.hasOwnProperty.call(a, 'callee'));
+        },
+
+        isNumber: function (value) {
             return typeof value === 'number';
         },
 
@@ -621,7 +632,7 @@
         },
 
         isBoolean: function (value) {
-            return typeof value === 'boolean';
+            return (value === true) || (value === false);
         },
 
         error: function (msg) {
@@ -934,17 +945,6 @@
             return elem && elem.nodeType === value;
         };
     });
-
-    /**
-     * Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp.
-     */
-
-    hAzzle.each(['Arguments', 'Function', 'Date', 'RegExp'], function (_, name) {
-        hAzzle['is' + name] = function (obj) {
-            return toString.call(obj) == '[object ' + name + ']';
-        };
-    });
-
 
     if (typeof window['hAzzle'] === "undefined") {
 
@@ -5579,92 +5579,64 @@
  * Removeable
  */
 
-;
-(function ($) {
+; (function ($) {
 
-    // Contains: Empty() and Remove()
+    /**
+     * Remove all child nodes of the set of matched elements from the DOM.
+     *
+     * @return {Object}
+     */
 
-    var timeout;
-
-    $.extend($.fn, {
-
-        /**
-         * Remove all child nodes of the set of matched elements from the DOM.
-         *
-         * @return {Object}
-         */
-
-    
-    empty: function () {
+ $.fn.empty = function () {
        
 	   // Remove all data to prevent memory leaks
 	   
         return this.removeData().each(function (_, elem) {
-
-         if ( $.nodeType(1, elem)) {
+			
+         if ( $.nodeType(1, this)) {
 			 
 		 // Remove all event handlers
-		
+
 			$.Events.remove(elem);
-			
+			 
 		 // Remove any remaining nodes
         
-		 elem.textContent = "";
+		 this.textContent = "";
 		 }
         });
     },
+	
+	 /**
+     *  Remove an element from the DOM
+     */
+ $.fn.remove = function () {
 
-        /**
-         *  Remove an element from the DOM
-         */
+		// Discard any data on the element
 
-        remove: function () {
+        return this.removeData().each(function (_, elem) {
+			
+		// Locate all nodes that belong to this element
+		// and add them to the "elems stack"
+			
+		  var elements = $(elem).find('*');
+		      elements  = elements.add(elem);
 
-            // Discard any data on the element
+	    // Remove all event handlers
+		
+			$.Events.remove(elem);
+        
+		 var parent = elem.parentNode;
+		 
+        if (parent) {
 
-            return this.removeData().each(function (_, elem) {
+		// Remove all children
 
-                // Locate all nodes that belong to this element
-                // and add them to the "elems stack"
-
-                var elements = $(elem).find('*');
-                elements = elements.add(elem);
-
-                // Remove all event handlers
-
-                $.each(elements, function () {
-                    $.Events.remove(elem);
-                });
-
-                var parent = elem.parentNode;
-
-                if (parent) {
-
-                    // Slowly fadeOut and remove all images		
-
-                    if (elem.tagName === 'IMG') {
-
-                        // Push to cache stack 
-
-                        cache.push(elem)
-
-                        // Set image to blank
-
-                        elem.src = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
-                        if (timeout) clearTimeout(timeout)
-                        timeout = setTimeout(function () {
-                            cache = []
-                        }, 60000)
-                    }
-
-                    // Remove all children
-
-                    this.parentNode.removeChild(elem);
-                }
-
-            })
-        }
-    });
+	     this.parentNode.removeChild(elem);
+		}
+        
+       })
+	   return false;
+    }
 
 })(hAzzle);
 

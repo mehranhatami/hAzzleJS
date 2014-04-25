@@ -4,9 +4,8 @@
  * Version: 0.35
  * Released under the MIT License.
  *
- * Date: 2014-04-25
+ * Date: 2014-04-26
  */
-
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -29,7 +28,6 @@
 
         push = ArrayProto.push,
         slice = ArrayProto.slice,
-        splice = ArrayProto.splice,
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
 
@@ -366,7 +364,7 @@
         indexOf: function (needle) {
             return needle && hAzzle.indexOf(this.elems, needle);
         },
-		
+
         /**
          * Make the 'elems stack'  unique
          */
@@ -432,6 +430,7 @@
          * Get the element at position specified by index from the current collection.
          *
          * +, -, / and * are all allowed to use for collecting elements.
+
          *
          * Example:
          *            .eq(1+2-1)  - Returnes element 2 in the collection
@@ -448,7 +447,6 @@
         },
 
         toArray: function () {
-
             return slice.call(this);
         }
 
@@ -530,12 +528,10 @@
          * Checks if elements is a NodeList or HTMLCollection.
          */
         isNodeList: function (obj) {
-
             return obj && this.is(['nodelist', 'htmlcollection', 'htmlformcontrolscollection'], obj);
         },
 
         IsNaN: function (val) {
-
             return hAzzle.isNumber(val) && val != +val;
         },
 
@@ -554,25 +550,24 @@
             return typeof value === 'string';
 
         },
-
-        isEmail: function (str) {
-
-            if (/^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/.test(str)) {
-
-                return true;
-            }
-
-            return false;
-
-        },
-
         isFunction: function (value) {
 
             return typeof value === 'function';
         },
 
-        isNumber: function (value) {
+        isDate: function (val) {
+            return !!(val && val.getTimezoneOffset && val.setUTCFullYear);
+        },
 
+        isRegExp: function (r) {
+            return !!(r && r.test && r.exec && (r.ignoreCase || r.ignoreCase === false));
+        },
+
+        isArguments: function (a) {
+            return !!(a && ObjProto.hasOwnProperty.call(a, 'callee'));
+        },
+
+        isNumber: function (value) {
             return typeof value === 'number';
         },
 
@@ -592,8 +587,7 @@
             return true;
         },
 
-
-        isArray: Array.isArray, //use native version here
+        isArray: Array.isArray,
 
         isArrayLike: function (obj) {
 
@@ -638,7 +632,7 @@
         },
 
         isBoolean: function (value) {
-            return typeof value === 'boolean';
+            return (value === true) || (value === false);
         },
 
         error: function (msg) {
@@ -685,10 +679,6 @@
                     break;
                 }
             }
-
-
-
-
             return result;
         },
 
@@ -740,7 +730,6 @@
                     }
                 }
                 return false;
-
             }
         },
 
@@ -853,51 +842,6 @@
             return first;
         },
 
-        /**
-         * Delays a function for the given number of milliseconds, and then calls it with the arguments supplied.
-         *
-         * @param {Function} func
-         * @return {String} wait
-         * @return {Function}
-         */
-
-        delay: function (func, wait) {
-            var args = slice.call(arguments, 2);
-            return setTimeout(function () {
-                return func.apply(null, args);
-            }, wait);
-        },
-
-        /**
-         * Defers a function, scheduling it to run after the current call stack has cleared
-         *
-         * @param {Function} func
-         * @return {Function}
-         */
-
-        defer: function (func) {
-            return hAzzle.delay.apply(hAzzle, [func, 1].concat(slice.call(arguments, 1)));
-        },
-
-        /**
-         * Returns a function that will be executed at most one time
-         *
-         * @param {Function} func
-         * @return {Function}
-         */
-
-        once: function (func) {
-            var ran = false,
-                memo;
-            return function () {
-                if (ran) return memo;
-                ran = true;
-                memo = func.apply(this, arguments);
-                func = null;
-                return memo;
-            };
-        },
-
         nodeName: function (elem, name) {
             return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
         },
@@ -1001,17 +945,6 @@
             return elem && elem.nodeType === value;
         };
     });
-
-    /**
-     * Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp.
-     */
-
-    hAzzle.each(['Arguments', 'Function', 'Date', 'RegExp'], function (_, name) {
-        hAzzle['is' + name] = function (obj) {
-            return toString.call(obj) == '[object ' + name + ']';
-        };
-    });
-
 
     if (typeof window['hAzzle'] === "undefined") {
 
