@@ -162,6 +162,8 @@
 	*/
 
         createHTML: function (elems, context, scripts, selection) {
+           
+		   if(!context) return;
 
             var elem, tmp, tag, wrap, contains, j,
                 fragment = context.createDocumentFragment(),
@@ -274,7 +276,13 @@
 
             if (l) {
                 fragment = $.createHTML(args, this[0].ownerDocument, false, this);
-                first = fragment.firstChild;
+				
+				if(!fragment) {
+				
+					return;
+				}
+                
+				first = fragment.firstChild;
 
                 if (fragment.childNodes.length === 1) {
                     fragment = first;

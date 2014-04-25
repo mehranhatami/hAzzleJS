@@ -1,8 +1,8 @@
 /*!
  * Traversing.js
  */
-
-;(function ($) {
+;
+(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -58,14 +58,14 @@
 
             if ($.isArray(array)) {
 
-            var result = [],
-                i = array.length;
+                var result = [],
+                    i = array.length;
 
-            while(i--) {
-                result.push(this.get(array[i]));
+                while (i--) {
+                    result.push(this.get(array[i]));
+                }
+                return $(result);
             }
-            return $(result);
-		}	
         },
 
         /**
@@ -91,16 +91,16 @@
          */
 
         add: function (sel, ctx) {
-           return this.concat($(sel, ctx).elems);
+            return this.concat($(sel, ctx).elems);
         },
 
         /**
          * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
          */
         has: function (target) {
-           
-		    var targets = $(target, this),
-			    i = 0,
+
+            var targets = $(target, this),
+                i = 0,
                 l = targets.length;
 
             return this.filter(function () {
@@ -121,10 +121,10 @@
          */
 
         not: function (sel) {
-			return $(this.elems.filter(function (element) {
+            return $(this.elems.filter(function (element) {
                 return $.matches(element, sel) !== true;
             }));
-			
+
         },
 
         /**
@@ -135,10 +135,11 @@
          */
 
         is: function (sel) {
-             return !!sel && (
-				/^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test( sel) ?
-					hAzzle( sel).index( this[0] ) >= 0 :
-				this.filter( sel ).length > 0 );			
+			return sel && this.filter(sel).length > 0;
+            return !!sel && (
+                /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
+                hAzzle(sel).index(this[0]) >= 0 :
+                this.filter(sel).length > 0);
         },
 
         /**
@@ -150,7 +151,7 @@
          */
 
         parent: function (sel) {
-            return $(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
+           return $.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
         },
 
         /**
@@ -245,7 +246,7 @@
          */
 
         first: function () {
-			return $(this.elems[0]);
+            return $(this.elems[0]);
         },
 
         /**
@@ -253,8 +254,8 @@
          */
 
         last: function () {
-		   var elems = this.elems;
-           return $(elems[ elems.length -1]);
+            var elems = this.elems;
+            return $(elems[elems.length - 1]);
         },
 
         contents: function () {
