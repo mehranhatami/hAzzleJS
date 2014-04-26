@@ -13,7 +13,6 @@
     if (window['hAzzle']) return;
 
     var doc = window.document,
-        html = window.document.documentElement,
 
         /**
          * Prototype references.
@@ -31,6 +30,7 @@
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
 
+
         /*
          * Unique ID
          */
@@ -38,7 +38,8 @@
         uid = {
             current: 0,
             next: function () {
-                return ++this.current;
+                var id = ++this.current + '';
+                return 'hAzzle_' + id;
             }
         },
 
@@ -76,46 +77,39 @@
 
     }());
 
+    // Overrun the native prototype.filter to gain better
+    // gain better performance ( 74 % faster then jQuery)
+
+    Array.prototype.filter = function (a, b, c, d, e) {
+        c = this; // cache the array
+        d = []; // array to hold the new values which match the expression
+        for (e in c) // for each value in the array, 
+        ~~ e + '' == e && e >= 0 && // coerce the array position and if valid,
+        a.call(b, c[e], +e, c) && // pass the current value into the expression and if truthy,
+        d.push(c[e]); // add it to the new array
+
+        return d; // give back the new array
+    };
+
     hAzzle.fn = hAzzle.prototype = {
 
         init: function (sel, ctx) {
-            var elems, i;
-            if (sel instanceof hAzzle) return sel;
+
             if (hAzzle.isString(sel)) {
-                if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    /**
-                     * The parsed HTML has to be set as an elem in the "elem stack", and not merged with the hAzzle Object
-                     */
+                if (cache[sel] && !ctx) {
 
-                    this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
+                    // Backup the "elems stack" before we loop through
 
-                } else {
+                    this.elems = cache[sel];
 
-                    if (cache[sel] && !ctx) {
-
-                        // Backup the "elems stack" before we loop through
-
-                        this.elems = elems = cache[sel];
-
-                        // Copy the stack over to the hAzzle object so we can access the Protoype
-
-                        i = this.length = elems.length;
-
-                        while (i--) {
-
-                            this[i] = elems[i];
-                        }
-
-
-                        // Return the hAzzle Object
-
-                        return this;
-                    }
-
-
-                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
+                    return this.set();
                 }
+
+                // Calling the modular CSS selector engine
+
+                this.elems = cache[sel] = hAzzle.select(sel, ctx);
+
             } else {
 
                 // Domready
@@ -154,13 +148,17 @@
                 }
             }
 
-            elems = this.elems,
-            i = this.length = elems.length;
+            return this.set();
+        },
+
+        set: function () {
+
+            var elems = this.elems,
+                i = this.length = elems.length;
 
             while (i--) {
 
                 this[i] = elems[i];
-
             }
             return this;
         },
@@ -307,7 +305,6 @@
          */
 
         map: function (callback) {
-
             var results = [],
                 elems = this.elems,
                 i = 0,
@@ -430,6 +427,7 @@
          * Get the element at position specified by index from the current collection.
          *
          * +, -, / and * are all allowed to use for collecting elements.
+
 
          *
          * Example:
@@ -593,6 +591,7 @@
 
             if (obj === null || hAzzle.isWindow(obj)) {
                 return false;
+
             }
 
             var length = obj.length;
@@ -710,27 +709,9 @@
         /**
          * Check if an element contains another element
          */
-        contains: function (obj, target) {
-
-            if (html['compareDocumentPosition']) {
-                var adown = nodeTypes[9](obj) ? obj.documentElement : obj,
-                    bup = target && target.parentNode;
-                return obj === bup || !! (bup && nodeTypes[1](bup) && (
-                    adown.contains ?
-                    adown.contains(bup) :
-                    obj.compareDocumentPosition && obj.compareDocumentPosition(bup) && 16
-                ));
-
-            } else {
-                if (target) {
-                    while ((target = target.parentNode)) {
-                        if (target === obj) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
+        contains: function (parent, child) {
+            while (child && (child = child.parentNode) != parent);
+            return !!child;
         },
 
         /**
@@ -739,8 +720,8 @@
          */
 
         indexOf: function (array, obj) {
-            for (var i = 0, len; len = array[i]; i += 1) {
-                if (obj === len) return i;
+            for (var i = 0, itm; itm = array[i]; i += 1) {
+                if (obj === itm) return i;
             }
             return !1;
         },
@@ -769,33 +750,48 @@
          *
          * @param{String} str
          * @return{String}
+         *
+         * String.prototype.trim() are only supported in IE9+ Standard mode,
+         * so we need a fallback solution for that
          */
 
         trim: (function () {
             if (!String.prototype.trim) {
                 return function (value) {
-                    return typeof value === "string" ? value.replace(/^\s\s*/, '').replace(/\s\s*$/, '') : value;
+                    return value.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
                 };
             }
             return function (value) {
-                return typeof value === "string" ? value.trim() : value;
+                return value.trim();
             };
         })(),
 
+        /**
+         * Check if an element exist in an array
+         *
+         * NOTE!!
+         *
+         * This one are ugly as hell, and a mad man's work.
+         * I did it like this because native indexOf are
+         * 'EXTREAMLY SLOW', and our hAzzle.indexOf() function does
+         * not fit for the purpose.
+         *
+         * We are 77% faster then jQuery anyways :)
+         */
 
-        inArray: function (elem, array) {
+        inArray: function (elem, arr, i) {
 
-            var i = 0,
-                len = array.length;
-
-            for (; i < len; i++)
-
-                if (array[i] === elem) {
-
-                    return i;
-                }
-
-            return -1;
+            var iOff = (function (find, i /*opt*/ ) {
+                if (typeof i === 'undefined') i = 0;
+                if (i < 0) i += this.length;
+                if (i < 0) i = 0;
+                for (var n = this.length; i < n; i++)
+                    if (i in this && this[i] === find) {
+                        return i;
+                    }
+                return -1;
+            });
+            return arr === null ? -1 : iOff.call(arr, elem, i);
         },
 
         /**
@@ -931,9 +927,7 @@
 
         // A function that performs no operations.
 
-        noop: function () {
-
-        }
+        noop: function () {}
     });
 
     /**
@@ -946,32 +940,23 @@
         };
     });
 
-    if (typeof window['hAzzle'] === "undefined") {
+    // Expose hAzzle to the global object
 
-        window['hAzzle'] = hAzzle;
-    }
+    window['hAzzle'] = hAzzle;
 
 })(window);
 
 
-/****/
-
 /**
  * hAzzle selector engine
- *
- * This is a separate module. It can can be replaced with the selector engine you want to use.
- * Just make sure the returned result are a "flattened" array before returning to hAzzle Core.
- *
- * It's using QuerySelectorAll (QSA) with a few pseudos
- *
  **/
 
 ;
 (function ($) {
 
 
-    var slice = Array.prototype.slice;
-    var doc = document,
+    var slice = Array.prototype.slice,
+        doc = document,
         byClass = 'getElementsByClassName',
         byTag = 'getElementsByTagName',
         byId = 'getElementById',
@@ -1056,7 +1041,6 @@
             empty: function () {
                 var elem = this;
                 for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-
                     if (elem.nodeType < 6) {
                         return false;
                     }
@@ -1137,22 +1121,37 @@
 
             ctx = normalizeCtx(ctx);
 
-            if (m = expresso['idClassTagNameExp'].exec(sel)) {
-                if ((sel = m[1])) {
-                    els = ((els = ctx[byId](sel))) ? [els] : [];
-                } else if ((sel = m[2])) {
-                    els = ctx[byClass](sel);
-                } else if ((sel = m[3])) {
-                    els = ctx[byTag](sel);
-                }
-            } else if (m = expresso['tagNameAndOrIdAndOrClassExp'].exec(sel)) {
-                var result = ctx[byTag](m[1]),
-                    id = m[2],
-                    className = m[3];
-                hAzzle.each(result, function (_, res) {
-                    if (res.id === id || containsClass(res, className)) els.push(res);
-                });
-            } else { // Pseudos
+
+            var mode, id, tag, _class;
+            if (/^#[\w\-]*$/.test(sel)) { // single #id
+                mode = "id";
+                id = sel.substring(1);
+            } else if (/^\.([\w\-]*)$/.test(sel)) { // class
+                mode = "class";
+                _class = sel.substring(1);
+            } else if (/^\s*<[\w\W]+>.*/.test(sel)) { // at least one html tag
+                mode = "html";
+            } else { // selector expr
+                mode = "expr";
+            }
+
+            // simple #id selector without context
+
+            if (mode === "id" && !ctx) {
+                els = ctx[byId](id);
+            }
+
+            if (mode === "class" && !ctx) {
+                els = ctx[byClass](_class);
+            }
+
+            if (mode === "html" && sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
+
+                els = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
+
+            } else {
+
+                // Pseudos
 
                 if (m = expresso['pseudos'].exec(sel)) {
 
@@ -1178,6 +1177,7 @@
                     els = this.qsa(sel, ctx);
                 }
             }
+
             return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
         },
 
@@ -1191,18 +1191,17 @@
          */
 
         getChildren: function (context, tag) {
+
+
             var ret = context.getElementsByTagName ? context.getElementsByTagName(tag || "*") :
                 context.querySelectorAll ? context.querySelectorAll(tag || "*") : [];
 
-            return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
-                hAzzle.merge([context], ret) :
+            return tag === undefined || tag && $.nodeName(context, tag) ?
+                $.merge([context], ret) :
                 ret;
         }
-
     });
 })(hAzzle);
-
-
 
 /**
  * Matches
@@ -1386,7 +1385,8 @@
  * Traversing.js
  */
 
-;(function ($) {
+;
+(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -1442,14 +1442,14 @@
 
             if ($.isArray(array)) {
 
-            var result = [],
-                i = array.length;
+                var result = [],
+                    i = array.length;
 
-            while(i--) {
-                result.push(this.get(array[i]));
+                while (i--) {
+                    result.push(this.get(array[i]));
+                }
+                return $(result);
             }
-            return $(result);
-		}	
         },
 
         /**
@@ -1475,16 +1475,16 @@
          */
 
         add: function (sel, ctx) {
-           return this.concat($(sel, ctx).elems);
+            return this.concat($(sel, ctx).elems);
         },
 
         /**
          * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
          */
         has: function (target) {
-           
-		    var targets = $(target, this),
-			    i = 0,
+
+            var targets = $(target, this),
+                i = 0,
                 l = targets.length;
 
             return this.filter(function () {
@@ -1505,10 +1505,10 @@
          */
 
         not: function (sel) {
-			return $(this.elems.filter(function (element) {
+            return $(this.elems.filter(function (element) {
                 return $.matches(element, sel) !== true;
             }));
-			
+
         },
 
         /**
@@ -1519,10 +1519,10 @@
          */
 
         is: function (sel) {
-             return !!sel && (
-				/^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test( sel) ?
-					hAzzle( sel).index( this[0] ) >= 0 :
-				this.filter( sel ).length > 0 );			
+            return !!sel && (
+                /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
+                hAzzle(sel).index(this[0]) >= 0 :
+                this.filter(sel).length > 0);
         },
 
         /**
@@ -1629,7 +1629,7 @@
          */
 
         first: function () {
-			return $(this.elems[0]);
+            return $(this.elems[0]);
         },
 
         /**
@@ -1637,8 +1637,8 @@
          */
 
         last: function () {
-		   var elems = this.elems;
-           return $(elems[ elems.length -1]);
+            var elems = this.elems;
+            return $(elems[elems.length - 1]);
         },
 
         contents: function () {
@@ -1723,6 +1723,7 @@
  * Manipulation
  */
 
+
 ;
 (function ($) {
 
@@ -1768,7 +1769,22 @@
 
         rtagName = /<([\w:]+)/,
 
-        cached = [];
+        cached = [],
+
+        wrapMap = {
+
+            'option': [1, '<select multiple="multiple">', '</select>'],
+
+            'thead': [1, '<table>', '</table>'],
+            'col': [2, '<table><colgroup>', '</colgroup></table>'],
+            'tr': [2, '<table><tbody>', '</tbody></table>'],
+            'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+            '_default': [0, "", ""]
+        };
+
+    wrapMap.optgroup = wrapMap.option;
+    wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
+    wrapMap.th = wrapMap.td;
 
     // Support check
 
@@ -1792,6 +1808,14 @@
 
         radioValue = input.value === "t";
     }());
+
+    // insertAdjacentHTML
+
+    function iAh(elem, direction, html) {
+        if (elem && NodeMatching(elem)) {
+            elem.insertAdjacentHTML(direction, $.trim(html));
+        }
+    }
 
     function getBooleanAttrName(element, name) {
         // check dom last since we will most likely fail on name
@@ -1859,7 +1883,6 @@
             },
 
             'OPTION': function (elem) {
-
                 var val = $(elem).filter(function (option) {
                     return option.selected && !option.disabled;
                 }).pluck('value');
@@ -2055,7 +2078,7 @@
 
                 // Avoid memory leaks, do empty()
 
-                this.empty().each(function (_, elem) {
+                return this.empty().each(function (_, elem) {
 
                     if (NodeMatching(elem)) {
 
@@ -2110,11 +2133,13 @@
                      */
                     if (keep && isString(value) && $.nodeType(1, elem)) {
 
-                        elem.insertAdjacentHTML('beforeend', value || '');
+                        iAh(elem, 'beforeend', value || '');
 
                     } else {
 
-                        if (isString(value) && $.nodeType(1, elem) && !/<(?:script|style|link)/i.test(value) && !$.htmlHooks[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+
+                        // See if we can take a shortcut and just use innerHTML
+                        if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !wrapMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
 
                             // Do some magic
 
@@ -2261,6 +2286,7 @@
          * @return {Object}
          */
 
+
         removeAttr: function (value) {
 
             var name, propName, i = 0,
@@ -2391,7 +2417,7 @@
 
             // Use the faster 'insertAdjacentHTML' if we can
 
-            if (isString(html) && this[0].parentNode) {
+            if (isString(html) && this[0].parentNode && !$.isXML(this[0])) {
 
                 return this.before(html).remove();
             }
@@ -2448,7 +2474,6 @@
         }
     });
 
-
     /* 
      * Prepend, Append, Befor and After
      *
@@ -2462,7 +2487,6 @@
      *	K.F
      */
 
-
     $.each({
 
         prepend: "afterbegin",
@@ -2470,28 +2494,29 @@
     }, function (name, second) {
 
         $.fn[name] = function (html) {
-
-            // Take the easy and fastest way if it's a string
-
-            if (isString(html)) {
-                return this.each(function (_, elem) {
-                    if (NodeMatching(this)) {
-                        elem.insertAdjacentHTML(second, html);
-                    }
+            if (isString(html) && !$.isXML(this[0])) {
+                return this.each(function () {
+                    iAh(this, second, html);
                 });
             } else { // The long walk :(
                 return this.manipulateDOM(arguments, function (elem) {
-                    if (NodeMatching(this)) {
 
-                        var target = $.nodeName(this, "table") &&
-                            $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
-                            this.getElementsByTagName("tbody")[0] ||
-                            elem.appendChild(this.ownerDocument.createElement("tbody")) :
-                            this;
+                    if (NodeMatching(this)) {
+                        var target = $.nodeName(this, "table") && $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
+                            this['getElementsByTagName']("tbody")[0] ||
+                            elem.appendChild(this.ownerDocument.createElement("tbody")) : this;
 
                         // Choose correct method	
 
-                        name === 'prepend' ? target.insertBefore(elem, target.firstChild) : target.appendChild(elem);
+                        if (name === 'prepend') {
+
+                            target.insertBefore(elem, target.firstChild);
+
+                        } else {
+
+                            target.appendChild(elem);
+
+                        }
                     }
                 });
             }
@@ -2508,18 +2533,17 @@
     }, function (name, second) {
 
         $.fn[name] = function (html) {
-            if (isString(html)) {
+            if (isString(html) && !$.isXML(this[0])) {
                 return this.each(function () {
-                    this.insertAdjacentHTML(second, html);
+                    iAh(this, second, html);
                 });
             }
             return this.manipulateDOM(arguments, function (elem) {
-                if (this.parentNode) {
-                    this.parentNode.insertBefore(elem, name === 'after' ? this.nextSibling : this);
-                }
+                this.parentNode && this.parentNode.insertBefore(elem, name === 'after' ? this.nextSibling : this);
             });
         };
     });
+
 
     // Support: IE9+
     if (!optSelected) {
@@ -2549,8 +2573,8 @@
         $.propMap[this.toLowerCase()] = this;
     });
 
-})(hAzzle);
 
+})(hAzzle);
 
 /*!
  * Wrap
@@ -4291,8 +4315,8 @@
                 });
             }
 
-            var cls
-            cur,
+            var cls,
+                cur,
                 j,
                 finalValue,
                 classes = (value || "").match(whitespace) || [];
@@ -4529,7 +4553,6 @@
                                 if (state) {
 
                                     return elem.classList.add(cls);
-
 
                                 } else {
 
@@ -5579,7 +5602,8 @@
  * Removeable
  */
 
-; (function ($) {
+;
+(function ($) {
 
     /**
      * Remove all child nodes of the set of matched elements from the DOM.
@@ -5587,55 +5611,54 @@
      * @return {Object}
      */
 
- $.fn.empty = function () {
-       
-	   // Remove all data to prevent memory leaks
-	   
-        return this.removeData().each(function (_, elem) {
-			
-         if ( $.nodeType(1, this)) {
-			 
-		 // Remove all event handlers
+    $.fn.empty = function () {
 
-			$.Events.remove(elem);
-			 
-		 // Remove any remaining nodes
-        
-		 this.textContent = "";
-		 }
+        // Remove all data to prevent memory leaks
+
+        return this.removeData().each(function (_, elem) {
+
+            if ($.nodeType(1, this)) {
+
+                // Remove all event handlers
+
+                $.Events.remove(elem);
+
+                // Remove any remaining nodes
+
+                this.textContent = "";
+            }
         });
     },
-	
-	 /**
+
+    /**
      *  Remove an element from the DOM
      */
- $.fn.remove = function () {
+    $.fn.remove = function () {
 
-		// Discard any data on the element
+        // Discard any data on the element
 
         return this.removeData().each(function (_, elem) {
-			
-		// Locate all nodes that belong to this element
-		// and add them to the "elems stack"
-			
-		  var elements = $(elem).find('*');
-		      elements  = elements.add(elem);
 
-	    // Remove all event handlers
-		
-			$.Events.remove(elem);
-        
-		 var parent = elem.parentNode;
-		 
-        if (parent) {
+            // Locate all nodes that belong to this element
+            // and add them to the "elems stack"
 
-		// Remove all children
+            var elements = $(elem).find('*');
+            elements = elements.add(elem);
 
-	     this.parentNode.removeChild(elem);
-		}
-        
-       })
-	   return false;
+            // Remove all event handlers
+
+            $.Events.remove(elem);
+
+            var parent = elem.parentNode;
+
+            if (parent) {
+
+                // Remove all children
+
+                this.parentNode.removeChild(elem);
+            }
+
+        })
     }
 
 })(hAzzle);

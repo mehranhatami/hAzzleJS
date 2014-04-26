@@ -13,7 +13,6 @@
     if (window['hAzzle']) return;
 
     var doc = window.document,
-        html = window.document.documentElement,
 
         /**
          * Prototype references.
@@ -31,6 +30,7 @@
         concat = ArrayProto.concat,
         toString = ObjProto.toString,
 
+
         /*
          * Unique ID
          */
@@ -38,7 +38,8 @@
         uid = {
             current: 0,
             next: function () {
-                return ++this.current;
+                var id = ++this.current + '';
+                return 'hAzzle_' + id;
             }
         },
 
@@ -76,46 +77,39 @@
 
     }());
 
+    // Overrun the native prototype.filter to gain better
+    // gain better performance ( 74 % faster then jQuery)
+
+    Array.prototype.filter = function (a, b, c, d, e) {
+        c = this; // cache the array
+        d = []; // array to hold the new values which match the expression
+        for (e in c) // for each value in the array, 
+        ~~ e + '' == e && e >= 0 && // coerce the array position and if valid,
+        a.call(b, c[e], +e, c) && // pass the current value into the expression and if truthy,
+        d.push(c[e]); // add it to the new array
+
+        return d; // give back the new array
+    };
+
     hAzzle.fn = hAzzle.prototype = {
 
         init: function (sel, ctx) {
-            var elems, i;
-            if (sel instanceof hAzzle) return sel;
+
             if (hAzzle.isString(sel)) {
-                if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    /**
-                     * The parsed HTML has to be set as an elem in the "elem stack", and not merged with the hAzzle Object
-                     */
+                if (cache[sel] && !ctx) {
 
-                    this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
+                    // Backup the "elems stack" before we loop through
 
-                } else {
+                    this.elems = cache[sel];
 
-                    if (cache[sel] && !ctx) {
-
-                        // Backup the "elems stack" before we loop through
-
-                        this.elems = elems = cache[sel];
-
-                        // Copy the stack over to the hAzzle object so we can access the Protoype
-
-                        i = this.length = elems.length;
-
-                        while (i--) {
-
-                            this[i] = elems[i];
-                        }
-
-
-                        // Return the hAzzle Object
-
-                        return this;
-                    }
-
-
-                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
+                    return this.set();
                 }
+
+                // Calling the modular CSS selector engine
+
+                this.elems = cache[sel] = hAzzle.select(sel, ctx);
+
             } else {
 
                 // Domready
@@ -154,13 +148,17 @@
                 }
             }
 
-            elems = this.elems,
-            i = this.length = elems.length;
+            return this.set();
+        },
+
+        set: function () {
+
+            var elems = this.elems,
+                i = this.length = elems.length;
 
             while (i--) {
 
                 this[i] = elems[i];
-
             }
             return this;
         },
@@ -307,7 +305,6 @@
          */
 
         map: function (callback) {
-
             var results = [],
                 elems = this.elems,
                 i = 0,
@@ -430,6 +427,7 @@
          * Get the element at position specified by index from the current collection.
          *
          * +, -, / and * are all allowed to use for collecting elements.
+
 
          *
          * Example:
@@ -593,6 +591,7 @@
 
             if (obj === null || hAzzle.isWindow(obj)) {
                 return false;
+
             }
 
             var length = obj.length;
@@ -710,27 +709,9 @@
         /**
          * Check if an element contains another element
          */
-        contains: function (obj, target) {
-
-            if (html['compareDocumentPosition']) {
-                var adown = nodeTypes[9](obj) ? obj.documentElement : obj,
-                    bup = target && target.parentNode;
-                return obj === bup || !! (bup && nodeTypes[1](bup) && (
-                    adown.contains ?
-                    adown.contains(bup) :
-                    obj.compareDocumentPosition && obj.compareDocumentPosition(bup) && 16
-                ));
-
-            } else {
-                if (target) {
-                    while ((target = target.parentNode)) {
-                        if (target === obj) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
+        contains: function (parent, child) {
+            while (child && (child = child.parentNode) != parent);
+            return !!child;
         },
 
         /**
@@ -739,8 +720,8 @@
          */
 
         indexOf: function (array, obj) {
-            for (var i = 0, len; len = array[i]; i += 1) {
-                if (obj === len) return i;
+            for (var i = 0, itm; itm = array[i]; i += 1) {
+                if (obj === itm) return i;
             }
             return !1;
         },
@@ -769,33 +750,48 @@
          *
          * @param{String} str
          * @return{String}
+         *
+         * String.prototype.trim() are only supported in IE9+ Standard mode,
+         * so we need a fallback solution for that
          */
 
         trim: (function () {
             if (!String.prototype.trim) {
                 return function (value) {
-                    return typeof value === "string" ? value.replace(/^\s\s*/, '').replace(/\s\s*$/, '') : value;
+                    return value.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
                 };
             }
             return function (value) {
-                return typeof value === "string" ? value.trim() : value;
+                return value.trim();
             };
         })(),
 
+        /**
+         * Check if an element exist in an array
+         *
+         * NOTE!!
+         *
+         * This one are ugly as hell, and a mad man's work.
+         * I did it like this because native indexOf are
+         * 'EXTREAMLY SLOW', and our hAzzle.indexOf() function does
+         * not fit for the purpose.
+         *
+         * We are 77% faster then jQuery anyways :)
+         */
 
-        inArray: function (elem, array) {
+        inArray: function (elem, arr, i) {
 
-            var i = 0,
-                len = array.length;
-
-            for (; i < len; i++)
-
-                if (array[i] === elem) {
-
-                    return i;
-                }
-
-            return -1;
+            var iOff = (function (find, i /*opt*/ ) {
+                if (typeof i === 'undefined') i = 0;
+                if (i < 0) i += this.length;
+                if (i < 0) i = 0;
+                for (var n = this.length; i < n; i++)
+                    if (i in this && this[i] === find) {
+                        return i;
+                    }
+                return -1;
+            });
+            return arr === null ? -1 : iOff.call(arr, elem, i);
         },
 
         /**
@@ -931,9 +927,7 @@
 
         // A function that performs no operations.
 
-        noop: function () {
-
-        }
+        noop: function () {}
     });
 
     /**
@@ -946,9 +940,8 @@
         };
     });
 
-    if (typeof window['hAzzle'] === "undefined") {
+    // Expose hAzzle to the global object
 
-        window['hAzzle'] = hAzzle;
-    }
+    window['hAzzle'] = hAzzle;
 
 })(window);

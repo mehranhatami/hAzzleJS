@@ -1,4 +1,5 @@
-; (function ($) {
+;
+(function ($) {
 
     var // Short-hand functions we are using
 
@@ -42,7 +43,22 @@
 
         rtagName = /<([\w:]+)/,
 
-        cached = [];
+        cached = [],
+
+        wrapMap = {
+        
+		'option': [1, '<select multiple="multiple">', '</select>'],
+
+        'thead': [1, '<table>', '</table>'],
+        'col': [2, '<table><colgroup>', '</colgroup></table>'],
+        'tr': [2, '<table><tbody>', '</tbody></table>'],
+        'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+        '_default': [0, "", ""]
+    };
+
+    wrapMap.optgroup = wrapMap.option;
+    wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
+    wrapMap.th = wrapMap.td;
 
     // Support check
 
@@ -66,6 +82,14 @@
 
         radioValue = input.value === "t";
     }());
+
+    // insertAdjacentHTML
+
+    function iAh(elem, direction, html) {
+        if (elem && NodeMatching(elem)) {
+            elem.insertAdjacentHTML(direction, $.trim(html));
+        }
+    }
 
     function getBooleanAttrName(element, name) {
         // check dom last since we will most likely fail on name
@@ -328,7 +352,7 @@
 
                 // Avoid memory leaks, do empty()
 
-                this.empty().each(function (_, elem) {
+                return this.empty().each(function (_, elem) {
 
                     if (NodeMatching(elem)) {
 
@@ -383,11 +407,13 @@
                      */
                     if (keep && isString(value) && $.nodeType(1, elem)) {
 
-                        elem.insertAdjacentHTML('beforeend', value || '');
+                           iAh(elem, 'beforeend',  value || '');
 
                     } else {
 
-                        if (isString(value) && $.nodeType(1, elem) && !/<(?:script|style|link)/i.test(value) && !$.htmlHooks[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+
+                        // See if we can take a shortcut and just use innerHTML
+                        if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !wrapMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
 
                             // Do some magic
 
@@ -664,7 +690,7 @@
 
             // Use the faster 'insertAdjacentHTML' if we can
 
-            if (isString(html) && this[0].parentNode) {
+            if (isString(html) && this[0].parentNode && !$.isXML(this[0])) {
 
                 return this.before(html).remove();
             }
@@ -721,7 +747,6 @@
         }
     });
 
-
     /* 
      * Prepend, Append, Befor and After
      *
@@ -735,7 +760,6 @@
      *	K.F
      */
 
-
     $.each({
 
         prepend: "afterbegin",
@@ -743,28 +767,29 @@
     }, function (name, second) {
 
         $.fn[name] = function (html) {
-
-            // Take the easy and fastest way if it's a string
-
-            if (isString(html)) {
-                return this.each(function (_, elem) {
-                    if (NodeMatching(this)) {
-                        elem.insertAdjacentHTML(second, html);
-                    }
+            if (isString(html) && !$.isXML(this[0])) {
+                return this.each(function () {
+                    iAh(this, second, html);
                 });
             } else { // The long walk :(
                 return this.manipulateDOM(arguments, function (elem) {
-                    if (NodeMatching(this)) {
 
-                        var target = $.nodeName(this, "table") &&
-                            $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
-                            this.getElementsByTagName("tbody")[0] ||
-                            elem.appendChild(this.ownerDocument.createElement("tbody")) :
-                            this;
+                    if (NodeMatching(this)) {
+                        var target = $.nodeName(this, "table") && $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
+                            this['getElementsByTagName']("tbody")[0] ||
+                            elem.appendChild(this.ownerDocument.createElement("tbody")) : this;
 
                         // Choose correct method	
 
-                        name === 'prepend' ? target.insertBefore(elem, target.firstChild) : target.appendChild(elem);
+                        if (name === 'prepend') {
+
+                            target.insertBefore(elem, target.firstChild)
+
+                        } else {
+
+                            target.appendChild(elem)
+
+                        }
                     }
                 });
             }
@@ -781,18 +806,17 @@
     }, function (name, second) {
 
         $.fn[name] = function (html) {
-            if (isString(html)) {
+            if (isString(html) && !$.isXML(this[0])) {
                 return this.each(function () {
-                    this.insertAdjacentHTML(second, html);
+                    iAh(this, second, html);
                 });
             }
             return this.manipulateDOM(arguments, function (elem) {
-                if (this.parentNode) {
-                    this.parentNode.insertBefore(elem, name === 'after' ? this.nextSibling : this);
-                }
+                this.parentNode && this.parentNode.insertBefore(elem, name === 'after' ? this.nextSibling : this);
             });
         };
     });
+
 
     // Support: IE9+
     if (!optSelected) {
@@ -821,5 +845,6 @@
     ], function () {
         $.propMap[this.toLowerCase()] = this;
     });
+
 
 })(hAzzle);

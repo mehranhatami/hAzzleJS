@@ -37,6 +37,17 @@
 })();
 
 
+var wrapMap = {
+  'option': [1, '<select multiple="multiple">', '</select>'],
+
+  'thead': [1, '<table>', '</table>'],
+  'col': [2, '<table><colgroup>', '</colgroup></table>'],
+  'tr': [2, '<table><tbody>', '</tbody></table>'],
+  'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+  '_default': [0, "", ""]
+};
+
+
         /**
          * Disable "script" tags
          **/
@@ -161,7 +172,7 @@
 	   *
 	*/
 
-        createHTML: function (elems, context, scripts, selection) {
+        createHTML: function (elem, context, scripts, selection) {
            
 		   if(!context) return;
 
@@ -185,30 +196,29 @@
 
                         nodes.push(context.createTextNode(elem));
 
-                    } else { // Suport for HTML 6
+                    } else { 
+					
+	 // Convert html into DOM nodes
 
-                        tmp = tmp || fragment.appendChild(context.createElement("div"));
+    tag = (/<([\w:]+)/.exec(html) || ["", ""])[1].toLowerCase();
+    wrap = wrapMap[tag] || wrapMap._default;
+    tmp.innerHTML = wrap[1] + html.replace(tagExpander, "<$1></$2>") + wrap[2];
+					
+    tmp = tmp || fragment.appendChild(context.createElement("div"));
 
-                        // RegEx used here is to recognize HTML5 tags, but can be extended through the 'hook'
+   // Descend through wrappers to the right content
+   
+    j = wrap[0];
+   
+    while (j--) {
+      tmp = tmp.lastChild;
+    }
 
-                        tag = ($.htmlHooks['regex'].exec(elem) || ["", ""])[1].toLowerCase();
+    nodes = concat(nodes, tmp.childNodes);
 
-                        wrap = $.htmlHooks[tag] || [0, "", ""];
+    tmp = fragment.firstChild;
+    tmp.textContent = "";
 
-                        tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
-
-                        // Descend through wrappers to the right content
-                        j = wrap[0];
-
-                        while (j--) {
-                            tmp = tmp.lastChild;
-                        }
-
-                        $.merge(nodes, tmp.childNodes);
-
-                        tmp = fragment.firstChild;
-
-                        tmp.textContent = "";
                     }
                 }
             });
