@@ -37,17 +37,6 @@
 })();
 
 
-var wrapMap = {
-  'option': [1, '<select multiple="multiple">', '</select>'],
-
-  'thead': [1, '<table>', '</table>'],
-  'col': [2, '<table><colgroup>', '</colgroup></table>'],
-  'tr': [2, '<table><tbody>', '</tbody></table>'],
-  'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
-  '_default': [0, "", ""]
-};
-
-
         /**
          * Disable "script" tags
          **/
@@ -172,7 +161,7 @@ var wrapMap = {
 	   *
 	*/
 
-        createHTML: function (elem, context, scripts, selection) {
+        createHTML: function (elems, context, scripts, selection) {
            
 		   if(!context) return;
 
@@ -196,29 +185,30 @@ var wrapMap = {
 
                         nodes.push(context.createTextNode(elem));
 
-                    } else { 
-					
-	 // Convert html into DOM nodes
+                    } else { // Suport for HTML 6
 
-    tag = (/<([\w:]+)/.exec(html) || ["", ""])[1].toLowerCase();
-    wrap = wrapMap[tag] || wrapMap._default;
-    tmp.innerHTML = wrap[1] + html.replace(tagExpander, "<$1></$2>") + wrap[2];
-					
-    tmp = tmp || fragment.appendChild(context.createElement("div"));
+                        tmp = tmp || fragment.appendChild(context.createElement("div"));
 
-   // Descend through wrappers to the right content
-   
-    j = wrap[0];
-   
-    while (j--) {
-      tmp = tmp.lastChild;
-    }
+                        // RegEx used here is to recognize HTML5 tags, but can be extended through the 'hook'
 
-    nodes = concat(nodes, tmp.childNodes);
+                        tag = ($.htmlHooks['regex'].exec(elem) || ["", ""])[1].toLowerCase();
 
-    tmp = fragment.firstChild;
-    tmp.textContent = "";
+                        wrap = $.htmlHooks[tag] || [0, "", ""];
 
+                        tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
+
+                        // Descend through wrappers to the right content
+                        j = wrap[0];
+
+                        while (j--) {
+                            tmp = tmp.lastChild;
+                        }
+
+                        $.merge(nodes, tmp.childNodes);
+
+                        tmp = fragment.firstChild;
+
+                        tmp.textContent = "";
                     }
                 }
             });
@@ -259,10 +249,13 @@ var wrapMap = {
     });
 
     $.extend($.fn, {
-
+        
+		// Inspiration from jQuery
+		
         manipulateDOM: function (args, callback) {
 
             // Flatten any nested arrays
+			
             args = concat.apply([], args);
 
             var fragment, first, scripts, hasScripts, node, doc,
@@ -272,6 +265,8 @@ var wrapMap = {
                 iNoClone = l - 1,
                 value = args[0],
                 isFunction = $.isFunction(value);
+
+
 
             if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
 				
@@ -285,13 +280,9 @@ var wrapMap = {
             }
 
             if (l) {
+				
                 fragment = $.createHTML(args, this[0].ownerDocument, false, this);
 				
-				if(!fragment) {
-				
-					return;
-				}
-                
 				first = fragment.firstChild;
 
                 if (fragment.childNodes.length === 1) {
@@ -301,25 +292,21 @@ var wrapMap = {
                 if (first) {
                     scripts = $.map($.getChildren(fragment, "script"), disableScript);
                     hasScripts = scripts.length;
+                  
+				  while(i < l) {
 
-                    // Use the original fragment for the last item instead of the first because it can end up
-                    // being emptied incorrectly in certain situations (#8070).
-                    for (; i < l; i++) {
-                        node = fragment;
+                        if (i !== iNoClone && !$.nodeType(3, fragment)) {
 
-                        if (i !== iNoClone && !$.nodeType(3, node)) {
+                            fragment = $.clone(fragment, true, true);
 
-                            node = $.clone(node, true, true);
-
-                            // Keep references to cloned scripts for later restoration
                             if (hasScripts) {
-                                // Support: QtWebKit
-                                // $.merge because push.apply(_, arraylike) throws
-                                $.merge(scripts, $.getChildren(node, "script"));
+                                $.merge(scripts, $.getChildren(fragment, "script"));
                             }
                         }
 
-                        callback.call(this[i], node, i);
+                        callback.call(this[i], fragment, i);
+
+						 i++;
                     }
 
                     if (hasScripts) {
@@ -364,5 +351,125 @@ var wrapMap = {
             return $.htmlHooks['thead'];
         };
     });
+
+})(hAzzle);
+
+
+
+
+
+
+
+
+
+/*!
+ * HTML
+ */
+ 
+;
+(function ($) {
+
+
+var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
+        exprRegex = {
+            ID: /#((?:[\w\u00c0-\uFFFF_-]|\\.)+)/,
+            CLASS: /\.((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?![^[\]]+])/g,
+            NAME: /\[name=['"]*((?:[\w\u00c0-\uFFFF_-]|\\.)+)['"]*\]/,
+            ATTR: /\[\s*((?:[\w\u00c0-\uFFFF_-]|\\.)+)\s*(?:(\S?=)\s*(['"]*)(.*?)\3|)\s*\]/g,
+            TAG: /^((?:[\w\u00c0-\uFFFF\*_-]|\\.)+)/,
+            CLONE: /\:(\d+)(?=$|[:[])/,
+            COMBINATOR: /^[>~+]$/
+        },
+        doc = document,
+        cache = {},
+        attrMap = {
+            'for': 'htmlFor',
+            'class': 'className',
+            'html': 'innerHTML'
+        },
+        callbackTypes = ['ID','CLASS','NAME','ATTR'],
+        exprCallback = {
+            ID: function(match, node) {
+                node.id = match[1];
+            },
+            CLASS: function(match, node) {
+                var cls = node.className.replace(/^\s+$/,'');
+                node.className = cls ? cls + ' ' + match[1] : match[1];
+            },
+            NAME: function(match, node) {
+                node.name = match[1];
+            },
+            ATTR: function(match, node) {
+
+                var attr = match[1],
+                    val = match[4] || true;
+
+                if ( val === true || attr === 'innerHTML' || attrMap.hasOwnProperty(attr) ) {
+                    node[attrMap[attr] || attr] = val;
+                } else {
+                    node.setAttribute( attr, val );
+                }
+
+            }
+        };
+
+    function create(part, n) {
+
+        var tag = exprRegex.TAG.exec(part),
+            node = doc.createElement( tag && tag[1] !== '*' ? tag[1] : 'div' ),
+            fragment = doc.createDocumentFragment(),
+            c = callbackTypes.length,
+            match, regex, callback;
+
+        while (c--) {
+
+            regex = exprRegex[callbackTypes[c]];
+            callback = exprCallback[callbackTypes[c]];
+
+            if (regex.global) {
+
+                while ( (match = regex.exec(part)) !== null ) {
+                    callback( match, node );
+                }
+
+                continue;
+
+            }
+
+            if (match = regex.exec(part)) {
+                callback( match, node );
+            }
+
+        }
+
+        while (n--) {
+            fragment.appendChild( node.cloneNode(true) );
+        }
+
+        return fragment;
+
+    }
+
+    function multiAppend(parents, children) {
+
+        parents = parents.childNodes;
+
+        var i = parents.length,
+            parent;
+
+        while ( i-- ) {
+
+            parent = parents[i];
+
+            if (parent.nodeName.toLowerCase() === 'table') {
+                /* IE requires table to have tbody */
+                parent.appendChild(parent = doc.createElement('tbody'));
+            }
+
+            parent.appendChild(children.cloneNode(true));
+
+        }
+
+    }
 
 })(hAzzle);

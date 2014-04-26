@@ -66,6 +66,7 @@
     var support = hAzzle.support = {};
 
     (function () {
+
         /**
          * Detect classList support.
          */
@@ -78,7 +79,7 @@
     }());
 
     // Overrun the native prototype.filter to gain better
-    // gain better performance ( 74 % faster then jQuery)
+    // performance ( 74 % faster then jQuery)
 
     Array.prototype.filter = function (a, b, c, d, e) {
         c = this; // cache the array
@@ -105,8 +106,7 @@
 
                     return this.set();
                 }
-
-                // Calling the modular CSS selector engine
+                 // Calling the modular CSS selector engine
 
                 this.elems = cache[sel] = hAzzle.select(sel, ctx);
 
@@ -427,8 +427,6 @@
          * Get the element at position specified by index from the current collection.
          *
          * +, -, / and * are all allowed to use for collecting elements.
-
-
          *
          * Example:
          *            .eq(1+2-1)  - Returnes element 2 in the collection
@@ -720,8 +718,8 @@
          */
 
         indexOf: function (array, obj) {
-            for (var i = 0, itm; itm = array[i]; i += 1) {
-                if (obj === itm) return i;
+          for (var i = 0, len; len = array[i]; i += 1) {
+                if (obj === len) return i;
             }
             return !1;
         },

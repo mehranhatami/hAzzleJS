@@ -78,7 +78,7 @@
     }());
 
     // Overrun the native prototype.filter to gain better
-    // gain better performance ( 74 % faster then jQuery)
+    // performance ( 74 % faster then jQuery)
 
     Array.prototype.filter = function (a, b, c, d, e) {
         c = this; // cache the array
