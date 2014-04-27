@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.35
+ * Version: 0.36
  * Released under the MIT License.
  *
- * Date: 2014-04-26
+ * Date: 2014-04-27
  */
 (function (window, undefined) {
 
@@ -66,6 +66,7 @@
     var support = hAzzle.support = {};
 
     (function () {
+
         /**
          * Detect classList support.
          */
@@ -94,22 +95,33 @@
     hAzzle.fn = hAzzle.prototype = {
 
         init: function (sel, ctx) {
-
+            var elems, i;
+            if (sel instanceof hAzzle) return sel;
             if (hAzzle.isString(sel)) {
 
                 if (cache[sel] && !ctx) {
 
                     // Backup the "elems stack" before we loop through
 
-                    this.elems = cache[sel];
+                    this.elems = elems = cache[sel];
 
-                    return this.set();
+                    // Copy the stack over to the hAzzle object so we can access the Protoype
+
+                    i = this.length = elems.length;
+
+                    while (i--) {
+
+                        this[i] = elems[i];
+                    }
+
+
+                    // Return the hAzzle Object
+
+                    return this;
                 }
 
-                // Calling the modular CSS selector engine
 
                 this.elems = cache[sel] = hAzzle.select(sel, ctx);
-
             } else {
 
                 // Domready
@@ -148,21 +160,16 @@
                 }
             }
 
-            return this.set();
-        },
-
-        set: function () {
-
-            var elems = this.elems,
-                i = this.length = elems.length;
+            elems = this.elems,
+            i = this.length = elems.length;
 
             while (i--) {
 
                 this[i] = elems[i];
+
             }
             return this;
         },
-
         /**
          * Run callback for each element in the collection
          *
@@ -184,8 +191,20 @@
 
         find: function (sel) {
 
+            var elements;
+
+            if (typeof sel !== "string") {
+                var _ = this;
+                elements = hAzzle(sel).filter(function () {
+                    var node = this;
+                    return _.elems.some.call(_, function (parent) {
+                        return hAzzle.contains(parent, node);
+                    });
+                });
+                return hAzzle(elements);
+            }
+
             if (typeof sel === "string") {
-                var elements;
                 if (this.length === 1) {
                     if (typeof sel !== "string") {
                         elements = sel[0];
@@ -200,16 +219,6 @@
                 return hAzzle.create(elements);
             }
 
-            if (typeof sel === 'object') {
-                var _ = this;
-                elements = hAzzle(sel).filter(function () {
-                    var node = this;
-                    return _.elems.some.call(_, function (parent) {
-                        return hAzzle.contains(parent, node);
-                    });
-                });
-                return hAzzle.create(elements);
-            }
 
             return this;
         },
@@ -427,8 +436,6 @@
          * Get the element at position specified by index from the current collection.
          *
          * +, -, / and * are all allowed to use for collecting elements.
-
-
          *
          * Example:
          *            .eq(1+2-1)  - Returnes element 2 in the collection
@@ -519,7 +526,7 @@
          */
 
         isElement: function (elem) {
-            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem) || !(+elem.nodeType));
+            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem));
         },
 
         /**
@@ -588,7 +595,6 @@
         isArray: Array.isArray,
 
         isArrayLike: function (obj) {
-
             if (obj === null || hAzzle.isWindow(obj)) {
                 return false;
 
@@ -602,7 +608,6 @@
 
             return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
-
         },
 
         likeArray: function (obj) {
@@ -710,8 +715,9 @@
          * Check if an element contains another element
          */
         contains: function (parent, child) {
-            while (child && (child = child.parentNode) != parent);
-            return !!child;
+            var adown = parent.nodeType === 9 ? parent.documentElement : parent,
+                bup = child && child.parentNode;
+            return parent === bup || !! (bup && bup.nodeType === 1 && adown.contains(bup));
         },
 
         /**
@@ -886,8 +892,7 @@
         },
 
         isXML: function (elem) {
-            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-            return documentElement ? documentElement.nodeName !== "HTML" : false;
+            return (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
         },
 
         /*
@@ -925,9 +930,19 @@
             return ret;
         },
 
+        arrayify: function (ar) {
+            var i = 0,
+                l = ar.length,
+                r = []
+            for (; i < l; i++) r[i] = ar[i]
+            return r
+        },
+
         // A function that performs no operations.
 
-        noop: function () {}
+        noop: function () {
+
+        }
     });
 
     /**
@@ -945,7 +960,6 @@
     window['hAzzle'] = hAzzle;
 
 })(window);
-
 
 /**
  * hAzzle selector engine
@@ -995,7 +1009,7 @@
      * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
      *
      * @param {Object} el
-     * @param {String} klass
+     * @param {String} klass
      *
      * @return {Array}
      */
@@ -1108,7 +1122,7 @@
         /**
          * Find elements by selectors.
          *
-         * @param {String} sel
+         * @param {String} sel
          * @param {Object} ctx
          * @return {Object}
          */
@@ -1207,16 +1221,14 @@
  * Matches
  */
 
+// hAzzle matches
 
 ;
 (function ($) {
 
-
-    // hAzzle matches
     var doc = document,
         cached = [],
         ghost = doc.createElement('div');
-
 
     $.extend($, {
 
@@ -1226,31 +1238,25 @@
 
         matches: function (element, sel) {
 
-            // Make sure that attribute selectors are quoted
+            // Fall back to performing a selector if the matchesSelector are not supported
 
-            //        sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
+            fallback = (function (sel, element) {
 
-            var matchesSelector, match,
+                if (!element.parentNode) {
 
-                // Fall back to performing a selector if the matchesSelector are not supported
+                    ghost.appendChild(element);
+                }
 
-                fallback = (function (sel, element) {
+                match = $.indexOf($.select(sel, element.parentNode), element) >= 0;
 
-                    if (!element.parentNode) {
+                if (element.parentNode === ghost) {
+                    ghost.removeChild(element);
+                }
+                return match;
 
-                        ghost.appendChild(element);
-                    }
+            });
 
-                    match = hAzzle.indexOf(hAzzle.select(sel, element.parentNode), element) >= 0;
-
-                    if (element.parentNode === ghost) {
-                        ghost.removeChild(element);
-                    }
-                    return match;
-
-                });
-
-            if (!element || !hAzzle.isElement(element) || !sel) {
+            if (!element || !$.isElement(element) || !sel) {
                 return false;
             }
 
@@ -1258,9 +1264,9 @@
                 return element === sel;
             }
 
-            if (sel instanceof hAzzle) {
+            if (sel instanceof $) {
                 return sel.elems.some(function (sel) {
-                    return hAzzle.matches(element, sel);
+                    return $.matches(element, sel);
                 });
             }
 
@@ -1268,7 +1274,7 @@
                 return false;
             }
 
-            matchesSelector = hAzzle.prefix('matchesSelector', ghost);
+            matchesSelector = $.prefix('matchesSelector', ghost);
 
             if (matchesSelector) {
                 // IE9 supports matchesSelector, but doesn't work on orphaned elems / disconnected nodes
@@ -1279,12 +1285,12 @@
 
                     // Avoid document fragment
 
-                    if (!hAzzle.nodeType(11, element)) {
+                    if (!$.nodeType(11, element)) {
 
                         return matchesSelector.call(element, sel);
                     }
 
-                } else { // For IE9 only or other browsers who fail on orphaned elems, we walk the hard way !! :)
+                } else { // For IE9 or other browsers who fail on orphaned elems, we walk the hard way !! :)
 
                     return fallback(sel, element);
                 }
@@ -1292,10 +1298,9 @@
 
             return fallback(sel, element);
         }
-    });
+    })
 
 })(hAzzle);
-
 
 /**
  * DOM Ready
@@ -2666,10 +2671,18 @@
 /*!
  * HTML
  */
+/*!
+ * HTML
+ */
+
 ;
 (function ($) {
 
     var concat = Array.prototype.concat,
+
+        doc = document,
+
+        isFunction = $.isFunction,
 
         tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
         rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
@@ -2677,28 +2690,46 @@
         rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
         rscriptType = /^$|\/(?:java|ecma)script/i,
         rscriptTypeMasked = /^true\/(.*)/,
-        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g
+        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
 
-        /**
-         * Disable "script" tags
-         **/
+    (function () {
+        var fragment = doc.createDocumentFragment(),
+            div = fragment.appendChild(doc.createElement("div")),
+            input = doc.createElement("input");
+
+        input.setAttribute("type", "radio");
+        input.setAttribute("checked", "checked");
+        input.setAttribute("name", "t");
+
+        div.appendChild(input);
+
+        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+
+        div.innerHTML = "<textarea>x</textarea>";
+        $.support.noCloneChecked = !! div.cloneNode(true).lastChild.defaultValue;
+    })();
 
 
-        function disableScript(elem) {
-            elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
-            return elem;
-        }
-
-        /**
-         * Restore "script" tags
-         **/
+    /**
+     * Disable "script" tags
+     **/
 
 
-        function restoreScript(elem) {
-            var m = rscriptTypeMasked.exec(elem.type);
-            m ? elem.type = m[1] : elem.removeAttribute("type");
-            return elem;
-        }
+    function disableScript(elem) {
+        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+        return elem;
+    }
+
+    /**
+     * Restore "script" tags
+     **/
+
+
+    function restoreScript(elem) {
+        var m = rscriptTypeMasked.exec(elem.type);
+        m ? elem.type = m[1] : elem.removeAttribute("type");
+        return elem;
+    }
 
     $.extend($, {
 
@@ -2750,6 +2781,17 @@
             }
         },
 
+        _evalUrl: function (url) {
+            return $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "script",
+                async: false,
+                global: false,
+                "throws": true
+            });
+        },
+
         parseHTML: function (data, context, keepScripts) {
 
             if (!data || typeof data !== "string") {
@@ -2768,7 +2810,7 @@
 
                 // Prevent XSS attack
 
-                context = context || ($.isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
+                context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
 
             // Single tag
 
@@ -2793,6 +2835,9 @@
 	*/
 
         createHTML: function (elems, context, scripts, selection) {
+
+
+            if (!context) return;
 
             var elem, tmp, tag, wrap, contains, j,
                 fragment = context.createDocumentFragment(),
@@ -2879,9 +2924,12 @@
 
     $.extend($.fn, {
 
+        // Inspiration from jQuery
+
         manipulateDOM: function (args, callback) {
 
             // Flatten any nested arrays
+
             args = concat.apply([], args);
 
             var fragment, first, scripts, hasScripts, node, doc,
@@ -2892,9 +2940,10 @@
                 value = args[0],
                 isFunction = $.isFunction(value);
 
-            // We can't cloneNode fragments that contain checked, in WebKit
-            if (isFunction ||
-                (l > 1 && typeof value === "string" && !support.checkClone && rchecked.test(value))) {
+
+
+            if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
+
                 return this.each(function (index) {
                     var self = set.eq(index);
                     if (isFunction) {
@@ -2905,7 +2954,9 @@
             }
 
             if (l) {
+
                 fragment = $.createHTML(args, this[0].ownerDocument, false, this);
+
                 first = fragment.firstChild;
 
                 if (fragment.childNodes.length === 1) {
@@ -2916,24 +2967,20 @@
                     scripts = $.map($.getChildren(fragment, "script"), disableScript);
                     hasScripts = scripts.length;
 
-                    // Use the original fragment for the last item instead of the first because it can end up
-                    // being emptied incorrectly in certain situations (#8070).
-                    for (; i < l; i++) {
-                        node = fragment;
+                    while (i < l) {
 
-                        if (i !== iNoClone) {
+                        if (i !== iNoClone && !$.nodeType(3, fragment)) {
 
-                            node = $.clone(node, true, true);
+                            fragment = $.clone(fragment, true, true);
 
-                            // Keep references to cloned scripts for later restoration
                             if (hasScripts) {
-                                // Support: QtWebKit
-                                // $.merge because push.apply(_, arraylike) throws
-                                $.merge(scripts, $.getChildren(node, "script"));
+                                $.merge(scripts, $.getChildren(fragment, "script"));
                             }
                         }
 
-                        callback.call(this[i], node, i);
+                        callback.call(this[i], fragment, i);
+
+                        i++;
                     }
 
                     if (hasScripts) {
@@ -2967,8 +3014,6 @@
 
     });
 
-
-
     /**
      * Extend the HTMLHook
      */
@@ -2980,7 +3025,6 @@
     });
 
 })(hAzzle);
-
 
 /**
  * Events
@@ -5877,6 +5921,7 @@
          */
 
         removeStorage: function (key) {
+
 
             if (isString(key)) {
 

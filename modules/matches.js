@@ -1,12 +1,10 @@
+// hAzzle matches
 
 ;(function ($) {
 
-
-// hAzzle matches
 var doc = document,
      cached = [],
     ghost = doc.createElement('div');
-
 
 $.extend($, {
 
@@ -18,9 +16,7 @@ $.extend($, {
 
         // Make sure that attribute selectors are quoted
 
-//        sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
-
-        var matchesSelector, match,
+      //sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
 
             // Fall back to performing a selector if the matchesSelector are not supported
 
@@ -31,7 +27,7 @@ $.extend($, {
                     ghost.appendChild(element);
                 }
 
-                match = hAzzle.indexOf(hAzzle.select(sel, element.parentNode), element) >= 0;
+                match = $.indexOf($.select(sel, element.parentNode), element) >= 0;
 
                 if (element.parentNode === ghost) {
                     ghost.removeChild(element);
@@ -40,7 +36,7 @@ $.extend($, {
 
             });
 
-        if (!element || !hAzzle.isElement(element) || !sel) {
+        if (!element || !$.isElement(element) || !sel) {
             return false;
         }
 
@@ -48,9 +44,9 @@ $.extend($, {
             return element === sel;
         }
 
-        if (sel instanceof hAzzle) {
+        if (sel instanceof $) {
             return sel.elems.some(function (sel) {
-                return hAzzle.matches(element, sel);
+                return $.matches(element, sel);
             });
         }
 
@@ -58,7 +54,7 @@ $.extend($, {
             return false;
         }
 
-        matchesSelector = hAzzle.prefix('matchesSelector', ghost);
+        matchesSelector = $.prefix('matchesSelector', ghost);
 
         if (matchesSelector) {
             // IE9 supports matchesSelector, but doesn't work on orphaned elems / disconnected nodes
@@ -69,12 +65,12 @@ $.extend($, {
 
                 // Avoid document fragment
 
-                if (!hAzzle.nodeType(11, element)) {
+                if (!$.nodeType(11, element)) {
 
                     return matchesSelector.call(element, sel);
                 }
 
-            } else { // For IE9 only or other browsers who fail on orphaned elems, we walk the hard way !! :)
+            } else { // For IE9 or other browsers who fail on orphaned elems, we walk the hard way !! :)
 
                 return fallback(sel, element);
             }

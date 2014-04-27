@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.35
+ * Version: 0.36
  * Released under the MIT License.
  *
- * Date: 2014-04-26
+ * Date: 2014-04-27
  */
 (function (window, undefined) {
 
@@ -95,21 +95,33 @@
     hAzzle.fn = hAzzle.prototype = {
 
         init: function (sel, ctx) {
-
+            var elems, i;
+            if (sel instanceof hAzzle) return sel;
             if (hAzzle.isString(sel)) {
 
-                if (cache[sel] && !ctx) {
+                    if (cache[sel] && !ctx) {
 
-                    // Backup the "elems stack" before we loop through
+                        // Backup the "elems stack" before we loop through
 
-                    this.elems = cache[sel];
+                        this.elems = elems = cache[sel];
 
-                    return this.set();
-                }
-                 // Calling the modular CSS selector engine
+                        // Copy the stack over to the hAzzle object so we can access the Protoype
 
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
+                        i = this.length = elems.length;
 
+                        while (i--) {
+
+                            this[i] = elems[i];
+                        }
+
+
+                        // Return the hAzzle Object
+
+                        return this;
+                    }
+
+
+                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
             } else {
 
                 // Domready
@@ -148,22 +160,17 @@
                 }
             }
 
-            return this.set();
-        },
-
-        set: function () {
-
-            var elems = this.elems,
-                i = this.length = elems.length;
+            elems = this.elems,
+            i = this.length = elems.length;
 
             while (i--) {
 
                 this[i] = elems[i];
+
             }
             return this;
         },
-
-        /**
+    /**
          * Run callback for each element in the collection
          *
          * @param {Function} callback
@@ -184,8 +191,20 @@
 
         find: function (sel) {
 
+              var elements;
+
+       if (typeof sel !== "string") {
+                var _ = this;
+                elements = hAzzle(sel).filter(function () {
+                    var node = this;
+                    return _.elems.some.call(_, function (parent) {
+                        return hAzzle.contains(parent, node);
+                    });
+                });
+                return hAzzle(elements);
+            }
+
             if (typeof sel === "string") {
-                var elements;
                 if (this.length === 1) {
                     if (typeof sel !== "string") {
                         elements = sel[0];
@@ -200,17 +219,7 @@
                 return hAzzle.create(elements);
             }
 
-            if (typeof sel === 'object') {
-                var _ = this;
-                elements = hAzzle(sel).filter(function () {
-                    var node = this;
-                    return _.elems.some.call(_, function (parent) {
-                        return hAzzle.contains(parent, node);
-                    });
-                });
-                return hAzzle.create(elements);
-            }
-
+          
             return this;
         },
 
@@ -517,7 +526,7 @@
          */
 
         isElement: function (elem) {
-            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem) || !(+elem.nodeType));
+            return elem && (nodeTypes[1](elem) || nodeTypes[9](elem));
         },
 
         /**
@@ -586,7 +595,6 @@
         isArray: Array.isArray,
 
         isArrayLike: function (obj) {
-
             if (obj === null || hAzzle.isWindow(obj)) {
                 return false;
 
@@ -600,7 +608,6 @@
 
             return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
-
         },
 
         likeArray: function (obj) {
@@ -708,8 +715,9 @@
          * Check if an element contains another element
          */
         contains: function (parent, child) {
-            while (child && (child = child.parentNode) != parent);
-            return !!child;
+		var adown = parent.nodeType === 9 ? parent.documentElement : parent,
+			bup = child && child.parentNode;
+		return parent === bup || !!( bup && bup.nodeType === 1 && adown.contains(bup) );
         },
 
         /**
@@ -718,8 +726,8 @@
          */
 
         indexOf: function (array, obj) {
-          for (var i = 0, len; len = array[i]; i += 1) {
-                if (obj === len) return i;
+            for (var i = 0, itm; itm = array[i]; i += 1) {
+                if (obj === itm) return i;
             }
             return !1;
         },
@@ -884,8 +892,7 @@
         },
 
         isXML: function (elem) {
-            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-            return documentElement ? documentElement.nodeName !== "HTML" : false;
+           return (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
         },
 
         /*
@@ -923,9 +930,19 @@
             return ret;
         },
 
+        arrayify: function (ar) {
+            var i = 0,
+                l = ar.length,
+                r = []
+            for (; i < l; i++) r[i] = ar[i]
+            return r
+        },
+
         // A function that performs no operations.
 
-        noop: function () {}
+        noop: function () {
+
+        }
     });
 
     /**
