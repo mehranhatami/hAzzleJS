@@ -6,6 +6,28 @@ var doc = document,
      cached = [],
     ghost = doc.createElement('div');
 
+
+            // Fall back to performing a selector if the matchesSelector are not supported
+
+ function fallback(sel, element) {
+
+          var match;
+		  
+		        if (!element.parentNode) {
+
+                    ghost.appendChild(element);
+                }
+
+                match = $.indexOf($.select(sel, element.parentNode), element) >= 0;
+
+                if (element.parentNode === ghost) {
+                    ghost.removeChild(element);
+                }
+                return match;
+           }
+
+
+
 $.extend($, {
 
     /** 
@@ -18,23 +40,6 @@ $.extend($, {
 
       //sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
 
-            // Fall back to performing a selector if the matchesSelector are not supported
-
-            fallback = (function (sel, element) {
-
-                if (!element.parentNode) {
-
-                    ghost.appendChild(element);
-                }
-
-                match = $.indexOf($.select(sel, element.parentNode), element) >= 0;
-
-                if (element.parentNode === ghost) {
-                    ghost.removeChild(element);
-                }
-                return match;
-
-            });
 
         if (!element || !$.isElement(element) || !sel) {
             return false;
@@ -54,7 +59,7 @@ $.extend($, {
             return false;
         }
 
-        matchesSelector = $.prefix('matchesSelector', ghost);
+       var matchesSelector = $.prefix('matchesSelector', ghost);
 
         if (matchesSelector) {
             // IE9 supports matchesSelector, but doesn't work on orphaned elems / disconnected nodes
@@ -78,6 +83,6 @@ $.extend($, {
 
         return fallback(sel, element);
     }
-})
+});
 
 })(hAzzle);

@@ -1,8 +1,7 @@
 /*!
  * Traversing.js
  */
-;
-(function ($) {
+; (function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -31,7 +30,7 @@
 
         closest: function (sel, context) {
             return this.map(function (elem) {
-                if ($.nodeType(1, elem) && elem !== context && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
+             if ($.nodeType(1, elem) && elem !== context && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
                     return elem;
                 }
                 return $.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
@@ -135,7 +134,6 @@
          */
 
         is: function (sel) {
-			return sel && this.filter(sel).length > 0;
             return !!sel && (
                 /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
                 hAzzle(sel).index(this[0]) >= 0 :
@@ -216,7 +214,7 @@
                 matches.push(this);
             });
 
-            return $(matches)
+            return $(matches);
         },
 
         /**
@@ -238,7 +236,7 @@
                 matches.push(this);
             });
 
-            return $(matches)
+            return $(matches);
         },
 
         /**

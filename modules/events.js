@@ -394,7 +394,7 @@ $.Events = {
         // Types can be a map of types/handlers
         // TODO!! This is not working on delegated events, have to fix this ASAP !!
 
-        if (selector === undefined && $isObject(events))
+        if (selector === undefined && $.isObject(events))
 
             for (type in events) {
 
@@ -654,7 +654,7 @@ $.Events = {
 
 // Shortcut methods for 'on'
 
-$.each(("blur focus focusin focusout load resize scroll unload click dblclick " +
+$.each(("hover blur focus focusin focusout load resize scroll unload click dblclick " +
     "mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
     "change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
 
@@ -667,8 +667,5 @@ $.each(("blur focus focusin focusout load resize scroll unload click dblclick " 
             this.trigger(name);
     };
 });
-
-
-
 
 })(hAzzle);

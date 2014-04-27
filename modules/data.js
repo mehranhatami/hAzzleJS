@@ -1,32 +1,27 @@
 /** 
  * Data
- *
- * Save data on elements
- *
- * I tried to make this module so simple and fast as possible. And I don't like to publish data to the rest of the world. THEREFOR
- * hAzzle *only* store data on elements, and not with the HTML5 attribute. However. hAzzle collects data from the HTML5 data- attribute
- * as a fallback if no key present.
- *
- * Shoot me if I'm wrong, but I did this because the developer who use hAzzle lib, can set data on the HTML 5 data- attribute. If so,
- * we get it, save it internally and return it's value. When we save data on that object again, we save the normal way.
- * This should be the fastest, and most safest method I guess.
- *
  */
-;
-(function ($) {
+
+; (function ($) {
+
+   var isUndefined = $.isUndefined,
+       html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
 
     // Extend the hAzzle object
 
     $.extend({
+		
         _data: {},
-        /**
+
+		/**
          * Check if an element contains data
          *
          * @param{String/Object} elem
          * @param{String} key
          * @return {Object}
          */
-        hasData: function (elem) {
+		 
+		hasData: function (elem) {
 
             if (elem.nodeType) {
                 if ($._data[$.getUID(elem)]) {
@@ -36,9 +31,7 @@
                 } else {
 
                     return false;
-
                 }
-
             }
         },
 
@@ -62,7 +55,7 @@
 
                 if (id) {
 
-                    if (typeof key === "undefined" && $.nodeType(1, elem)) {
+                    if (isUndefined(key) && $.nodeType(1, elem)) {
 
                         $._data[id] = {};
 
@@ -94,19 +87,19 @@
 
                 // Return all data on saved on the element
 
-                if (typeof key === 'undefined') {
+                if (isUndefined(key)) {
 
                     return id;
                 }
 
 
-                if (typeof value === 'undefined') {
+                if (isUndefined(value)) {
 
                     return id[key];
 
                 }
 
-                if (typeof value !== 'undefined') {
+                if ( ! isUndefined(value)) {
 
                     // Set and return the value
                     id[key] = value;
@@ -145,7 +138,7 @@
 
         data: function (key, value) {
 
-            if (typeof key === "undefined") {
+            if (isUndefined(key)) {
 
                 var data = $.data(this[0]),
                     elem = this[0];
@@ -180,7 +173,7 @@
                                         data = data === "true" ? true :
                                             data === "false" ? false :
                                             data === "null" ? null : +data + "" === data ? +data :
-                                            /(?:\{[\s\S]*\}|\[[\s\S]*\])$/.test(data) ? $.parseJSON(data) : data;
+                                            html5Json.test(data) ? JSON.parse(data + "") : data;
                                     } catch (e) {}
 
                                     // Make sure we set the data so it isn't changed later
@@ -199,7 +192,7 @@
 
                 // 'key' defined, but no 'data'.
 
-            } else if (typeof value === "undefined") {
+            } else if (isUndefined(value)) {
 
                 if (this.length === 1) {
 

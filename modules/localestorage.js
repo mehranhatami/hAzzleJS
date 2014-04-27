@@ -1,9 +1,8 @@
-;
-(function ($) {
-
+; (function ($) {
 
     var isObject = $.isObject,
         isString = $.isString,
+		win = window,
         doc = document,
 
         // Common 5MB localStorage
@@ -33,7 +32,7 @@
          */
 
         if (!supported) {
-            window.localStorage = {
+            win.localStorage = {
                 getItem: function (sKey) {
                     if (!sKey || !this.hasOwnProperty(sKey)) {
                         return null;
@@ -63,13 +62,15 @@
                     doc.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
                     this.length--;
                 },
-
-                hasOwnProperty: function (sKey) {
+                
+				// Really bad name, but not my idea :)
+                
+				hasOwnProperty: function (sKey) {
                     return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(doc.cookie);
                 }
             };
 
-            window.localStorage.length = (doc.cookie.match(/\=/g) || window.localStorage).length;
+            win.localStorage.length = (doc.cookie.match(/\=/g) || win.localStorage).length;
         }
     })();
 
@@ -167,9 +168,11 @@
 
                 localStorage.removeItem(key);
 
-            } else if (key instanceof Array) {
+            } else if ($.isArray(key)) {
 
-                for (var i = key.length; i--;) {
+               var i = key.length;
+			   
+               while (i--) {
 
                     if (isString(key[i])) {
 
@@ -190,11 +193,13 @@
                     number = parseFloat(value); // to allow for number checking
 
                 if (value === null) {
+					
                     // Returns default value if key is not set, otherwise returns null
                     return arguments.length === 2 ? defaultValue : null;
                 }
 
                 if (!$.IsNaN(number)) {
+					
                     return number; // value was of type number
                 }
 
@@ -203,7 +208,7 @@
                 }
 
                 try {
-                    value = $.parseJSON(value);
+                    value = JSON.parse(value + "");
                     return value;
                 } catch (e) {
                     return value;
@@ -230,7 +235,6 @@
                 }
 
                 localStorage.setItem(key, value);
-
             }
         },
 
@@ -257,10 +261,9 @@
 
             var o = {},
                 keys = this.getStorageKeys(),
-                i = 0,
-                len = keys.length;
+                i = keys.length;
 
-            for (i = len; i--;) {
+            while (i--) {
                 o[keys[i]] = this.getStorage(keys[i]);
             }
 

@@ -1,8 +1,7 @@
 /*!
  * Wrap
  */
-;
-(function ($) {
+; (function ($) {
 
     $.extend($.fn, {
 
@@ -31,13 +30,13 @@
         wrapAll: function (html) {
 
             if (this[0]) {
-                $(this[0]).before(html = $(html))
-                var children
+                $(this[0]).before(html = $(html));
+                var children;
                 // drill down to the inmost element
-                while ((children = html.children()).length) html = children.first()
-                $(html).append(this)
+                while ((children = html.children()).length) html = children.first();
+                $(html).append(this);
             }
-            return this
+            return this;
         },
 
         wrapInner: function (html) {
@@ -72,10 +71,10 @@
         unwrap: function () {
             this.parent().each(function () {
                 if (!$.nodeName(this, "body")) {
-                    hAzzle(this).replaceWith(hAzzle(this).children())
+                    hAzzle(this).replaceWith(hAzzle(this).children());
                 }
-            })
-            return this
+            });
+            return this;
         }
     });
 
