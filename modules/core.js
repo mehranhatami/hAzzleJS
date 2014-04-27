@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.36
+ * Version: 0.37
  * Released under the MIT License.
  *
  * Date: 2014-04-27
@@ -92,6 +92,26 @@
         return d; // give back the new array
     };
 
+   /* Faster alternative till native prototype.some
+    *
+	* For 'internal' usage only!
+    */
+   
+    Array.prototype.some = function (fun /*, thisArg */ ) {
+        var t = Object(this),
+            len = t.length >>> 0,
+            thisArg = arguments.length >= 2 ? arguments[1] : void 0,
+            i = 0;
+
+        for (; i < len; i++) {
+            if (i in t && fun.call(thisArg, t[i], i, t))
+                return true;
+        }
+
+        return false;
+    };
+
+
     hAzzle.fn = hAzzle.prototype = {
 
         init: function (sel, ctx) {
@@ -99,29 +119,29 @@
             if (sel instanceof hAzzle) return sel;
             if (hAzzle.isString(sel)) {
 
-                    if (cache[sel] && !ctx) {
+                if (cache[sel] && !ctx) {
 
-                        // Backup the "elems stack" before we loop through
+                    // Backup the "elems stack" before we loop through
 
-                        this.elems = elems = cache[sel];
+                    this.elems = elems = cache[sel];
 
-                        // Copy the stack over to the hAzzle object so we can access the Protoype
+                    // Copy the stack over to the hAzzle object so we can access the Protoype
 
-                        i = this.length = elems.length;
+                    i = this.length = elems.length;
 
-                        while (i--) {
+                    while (i--) {
 
-                            this[i] = elems[i];
-                        }
-
-
-                        // Return the hAzzle Object
-
-                        return this;
+                        this[i] = elems[i];
                     }
 
 
-                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
+                    // Return the hAzzle Object
+
+                    return this;
+                }
+
+
+                this.elems = cache[sel] = hAzzle.select(sel, ctx);
             } else {
 
                 // Domready
@@ -170,7 +190,7 @@
             }
             return this;
         },
-    /**
+        /**
          * Run callback for each element in the collection
          *
          * @param {Function} callback
@@ -191,9 +211,9 @@
 
         find: function (sel) {
 
-              var elements;
+            var elements;
 
-       if (typeof sel !== "string") {
+            if (typeof sel !== "string") {
                 var _ = this;
                 elements = hAzzle(sel).filter(function () {
                     var node = this;
@@ -219,7 +239,7 @@
                 return hAzzle.create(elements);
             }
 
-          
+
             return this;
         },
 
@@ -252,10 +272,8 @@
          * @return {Boolean}
          */
         contains: function (sel) {
-            var matches;
             return hAzzle.create(this.elems.reduce(function (elements, element) {
-                matches = hAzzle.select(sel, element);
-                return elements.concat(matches.length ? element : null);
+                return elements.concat(hAzzle.select(sel, element).length ? element : null);
             }, []));
         },
 
@@ -338,11 +356,9 @@
          *  Concatenates an array to the 'elems stack'
          */
         concat: function () {
-            var args = slice.call(arguments).map(function (arr) {
+            return hAzzle(concat.apply(this.elems, slice.call(arguments).map(function (arr) {
                 return arr instanceof hAzzle ? arr.elements : arr;
-            });
-
-            return hAzzle(concat.apply(this.elems, args));
+            })));
         },
 
         /**
@@ -669,7 +685,6 @@
 
             var result, upcased = key[0].toUpperCase() + key.slice(1),
                 prefix,
-
                 prefixes = ['moz', 'webkit', 'ms', 'o'];
 
             obj = obj || window;
@@ -715,9 +730,9 @@
          * Check if an element contains another element
          */
         contains: function (parent, child) {
-		var adown = parent.nodeType === 9 ? parent.documentElement : parent,
-			bup = child && child.parentNode;
-		return parent === bup || !!( bup && bup.nodeType === 1 && adown.contains(bup) );
+            var adown = nodeTypes[9](parent) ? parent.documentElement : parent,
+                bup = child && child.parentNode;
+            return parent === bup || !! (bup && nodeTypes[1](bup) && adown.contains(bup));
         },
 
         /**
@@ -726,6 +741,7 @@
          */
 
         indexOf: function (array, obj) {
+
             for (var i = 0, itm; itm = array[i]; i += 1) {
                 if (obj === itm) return i;
             }
@@ -863,36 +879,35 @@
             return cached[str];
         },
 
-        map: function (elements, callback) {
-            var value, values = [],
-                i,
-                key;
+        map: function (elems, fn, arg) {
+            var value,
+                i = 0,
+                length = elems.length,
+                ret = [];
 
-            // Go through the array, translating each of the items to their new values
-
-            if (hAzzle.likeArray(elements))
-                for (i = elements.length; i--;) {
-
-                    value = callback(elements[i], i);
+            if (hAzzle.isArrayLike(elems)) {
+                for (; i < length; i++) {
+                    value = fn(elems[i], i, arg);
+                    if (value !== null) {
+                        ret.push(value);
+                    }
+                }
+            } else {
+                for (i in elems) {
+                    value = fn(elems[i], i, arg);
 
                     if (value !== null) {
-
-                        values.push(value);
+                        ret.push(value);
                     }
-                } else
-                    for (key in elements) {
-                        value = callback(elements[key], key);
+                }
+            }
 
-                        if (value !== null) {
-
-                            values.push(value);
-                        }
-                    }
-            return values;
+            // Flatten any nested arrays
+            return concat.apply([], ret);
         },
 
         isXML: function (elem) {
-           return (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
+            return (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
         },
 
         /*
@@ -901,9 +916,11 @@
 
         grep: function (elems, callback, inv, args) {
             var ret = [],
-                retVal;
+                retVal,
+                i = 0,
+                length = elems.length;
             inv = !! inv;
-            for (var i = 0, length = elems.length; i < length; i++) {
+            for (; i < length; i++) {
                 if (i in elems) { // check existance
                     retVal = !! callback.call(args, elems[i], i); // set callback this
                     if (inv !== retVal) {
@@ -924,18 +941,9 @@
                 } else {
                     push.call(ret, arr);
                 }
-
             }
 
             return ret;
-        },
-
-        arrayify: function (ar) {
-            var i = 0,
-                l = ar.length,
-                r = []
-            for (; i < l; i++) r[i] = ar[i]
-            return r
         },
 
         // A function that performs no operations.
