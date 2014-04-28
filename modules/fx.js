@@ -16,6 +16,7 @@
 
     var win = window,
         doc = win.document,
+
         cache = {},
 
         /**
@@ -35,7 +36,7 @@
         nativeCancelAnimationFrame;
 
     // Grab the native request and cancel functions.
-    
+
     (function () {
 
         var top;
@@ -60,8 +61,8 @@
 
         nativeRequestAnimationFrame && nativeRequestAnimationFrame(function () {
 
-            FX.hasNative = true;
-        });								
+            $.FX.hasNative = true;
+        });
     }());
 
     /**
@@ -73,251 +74,67 @@
      * @param {Function} callback The function to be executed after the animation is complete (optional)
      */
 
-    function FX(el, attributes, duration, transition, callback) {
-        this.el = el;
-        this.attributes = attributes;
-        this.duration = duration || 0.7;
-        this.transition = FX.transitions[transition || 'easeInOut'];
-        this.callback = callback || $.noop();
-        this.animating = false;
+    $.FX = function (el, options) {
+
+        var fx = this;
+
+        fx.el = el;
+        fx.attributes = options;
+        fx.callback = function () {};
+        fx.duration = 0.7;
+        fx.transition = $.transitions[options.transition || 'easeInOut'];
+
+        /**
+         * TODO!! Fix this mess !! :)
+         */
+
+        for (var k in options) {
+
+            if (k === 'callback') {
+                fx.callback = options.callback;
+                delete k['callback']
+            }
+            if (k === 'duration') {
+
+                fx.duration = options.duration;
+                delete k['duration']
+            }
+
+            if (k === 'transition') {
+                fx.transition = $.transitions[options.transition];
+                delete k['transition']
+            }
+
+        }
+
+        fx.animating = false;
 
         /**
          * The object that holds the CSS unit for each attribute
          * @type Object
          */
-        this.units = {};
+        fx.units = {};
 
         /**
          * The object to carry the current values for each frame
          * @type Object
          */
-        this.frame = {};
+        fx.frame = {};
 
         /**
          * The object containing all the ending values for each attribute
          * @type Object
          */
-        this.endAttr = {};
+        fx.endAttr = {};
 
         /**
          * The object containing all the starting values for each attribute
          * @type Object
          */
-        this.startAttr = {};
+        fx.startAttr = {};
     }
 
-    /**
-     * Object containing all the transitional easing methods.
-     * Is available to the global context to facilitate adding additionial transitions as desired
-     */
-    FX.transitions = {
-
-        linear: function (t, b, c, d) {
-            return c * t / d + b;
-        },
-
-        easeIn: function (t, b, c, d) {
-            return -c * Math.cos(t / d * (Math.PI / 2)) + c + b;
-        },
-
-        easeOut: function (t, b, c, d) {
-            return c * Math.sin(t / d * (Math.PI / 2)) + b;
-        },
-
-        easeInOut: function (t, b, c, d) {
-            return -c / 2 * (Math.cos(Math.PI * t / d) - 1) + b;
-        },
-
-
-        quadIn: function (t, b, c, d) {
-            return c * (t /= d) * t + b;
-        },
-
-        quadOut: function (t, b, c, d) {
-            return -c * (t /= d) * (t - 2) + b;
-        },
-
-        quadInOut: function (t, b, c, d) {
-            if ((t /= d / 2) < 1) return c / 2 * t * t + b;
-            return -c / 2 * ((--t) * (t - 2) - 1) + b;
-        },
-
-        cubicIn: function (t, b, c, d) {
-            return c * (t /= d) * t * t + b;
-        },
-
-        cubicOut: function (t, b, c, d) {
-            return c * ((t = t / d - 1) * t * t + 1) + b;
-        },
-
-        cubicInOut: function (t, b, c, d) {
-            if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
-            return c / 2 * ((t -= 2) * t * t + 2) + b;
-        },
-
-        quartIn: function (t, b, c, d) {
-            return c * (t /= d) * t * t * t + b;
-        },
-
-        quartOut: function (t, b, c, d) {
-            return -c * ((t = t / d - 1) * t * t * t - 1) + b;
-        },
-
-        quartInOut: function (t, b, c, d) {
-            if ((t /= d / 2) < 1) return c / 2 * t * t * t * t + b;
-            return -c / 2 * ((t -= 2) * t * t * t - 2) + b;
-        },
-
-        quintIn: function (t, b, c, d) {
-            return c * (t /= d) * t * t * t * t + b;
-        },
-
-        quintOut: function (t, b, c, d) {
-            return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
-        },
-
-        quintInOut: function (t, b, c, d) {
-            if ((t /= d / 2) < 1) return c / 2 * t * t * t * t * t + b;
-            return c / 2 * ((t -= 2) * t * t * t * t + 2) + b;
-        },
-
-        expoIn: function (t, b, c, d) {
-            return (t === 0) ? b : c * Math.pow(2, 10 * (t / d - 1)) + b - c * 0.001;
-        },
-
-        expoOut: function (t, b, c, d) {
-            return (t === d) ? b + c : c * 1.001 * (-Math.pow(2, -10 * t / d) + 1) + b;
-        },
-
-        expoInOut: function (t, b, c, d) {
-            if (t === 0) return b;
-            if (t === d) return b + c;
-            if ((t /= d / 2) < 1) return c / 2 * Math.pow(2, 10 * (t - 1)) + b - c * 0.0005;
-            return c / 2 * 1.0005 * (-Math.pow(2, -10 * --t) + 2) + b;
-        },
-
-        circIn: function (t, b, c, d) {
-            return -c * (Math.sqrt(1 - (t /= d) * t) - 1) + b;
-        },
-
-        circOut: function (t, b, c, d) {
-            return c * Math.sqrt(1 - (t = t / d - 1) * t) + b;
-        },
-
-        circInOut: function (t, b, c, d) {
-            if ((t /= d / 2) < 1) return -c / 2 * (Math.sqrt(1 - t * t) - 1) + b;
-            return c / 2 * (Math.sqrt(1 - (t -= 2) * t) + 1) + b;
-        },
-
-        backIn: function (t, b, c, d, s) {
-            s = s || 1.70158;
-            return c * (t /= d) * t * ((s + 1) * t - s) + b;
-        },
-
-        backOut: function (t, b, c, d, s) {
-            s = s || 1.70158;
-            return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
-        },
-
-        backBoth: function (t, b, c, d, s) {
-            s = s || 1.70158;
-            if ((t /= d / 2) < 1) {
-                return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
-            }
-            return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
-        },
-
-        elasticIn: function (t, b, c, d, a, p) {
-			var s;
-            if (t === 0) {
-                return b;
-            }
-            if ((t /= d) == 1) {
-                return b + c;
-            }
-            if (!p) {
-                p = d * .3;
-            }
-            if (!a || a < Math.abs(c)) {
-                a = c;
-                s = p / 4;
-            } else {
-                 s = p / (2 * Math.PI) * Math.asin(c / a);
-            }
-            return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
-        },
-
-        elasticOut: function (t, b, c, d, a, p) {
-			
-			var s;
-			
-            if (t === 0) {
-                return b;
-            }
-            if ((t /= d) == 1) {
-                return b + c;
-            }
-            if (!p) {
-                p = d * .3;
-            }
-            if (!a || a < Math.abs(c)) {
-                a = c;
-                s = p / 4;
-            } else {
-                s = p / (2 * Math.PI) * Math.asin(c / a);
-            }
-            return a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
-        },
-
-        elasticBoth: function (t, b, c, d, a, p) {
-			var s;
-            if (t === 0) {
-                return b;
-            }
-            if ((t /= d / 2) == 2) {
-                return b + c;
-            }
-            if (!p) {
-                p = d * (.3 * 1.5);
-            }
-            if (!a || a < Math.abs(c)) {
-                a = c;
-                s = p / 4;
-            } else {
-                s = p / (2 * Math.PI) * Math.asin(c / a);
-            }
-            if (t < 1) {
-                return -.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
-            }
-            return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p) * .5 + c + b;
-        },
-
-        bounceIn: function (t, b, c, d) {
-            return c - FX.transitions.bounceOut(d - t, 0, c, d) + b;
-        },
-
-        bounceOut: function (t, b, c, d) {
-            if ((t /= d) < (1 / 2.75)) {
-                return c * (7.5625 * t * t) + b;
-            } else if (t < (2 / 2.75)) {
-                return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
-            } else if (t < (2.5 / 2.75)) {
-                return c * (7.5625 * (t -= (2.25 / 2.75)) * t + .9375) + b;
-            }
-            return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
-        },
-
-        bounceBoth: function (t, b, c, d) {
-            if (t < d / 2) {
-                return FX.transitions.bounceIn(t * 2, 0, c, d) * .5 + b;
-            }
-            return FX.transitions.bounceOut(t * 2 - d, 0, c, d) * .5 + c * .5 + b;
-        }
-
-
-    };
-
-    FX.prototype = {
+    $.FX.prototype = {
 
         /**
          * start the animation
@@ -343,7 +160,7 @@
                 fx.setAttributes();
             };
 
-            if (FX.hasNative) {
+            if ($.FX.hasNative) {
                 return nativeRequestAnimationFrame(run);
             }
             run();
@@ -417,14 +234,14 @@
          * Get all starting and ending values for each attribute
          */
         getAttributes: function () {
-            var attr, 
-			    attributes = this.attributes, 
-				el = this.el;
+            var attr,
+                attributes = this.attributes,
+                el = this.el;
 
             for (attr in attributes) {
 
                 var v = getStyle(el, attr),
-                  	 tmp = attributes[attr];
+                    tmp = attributes[attr];
                 attr = toCamelCase(attr);
                 if (typeof tmp == 'string' &&
                     rgbOhex.test(tmp) &&
@@ -475,7 +292,7 @@
      * @return {Number} The value of the property
      */
 
-    function getStyle (el, property) {
+    function getStyle(el, property) {
         property = toCamelCase(property);
         var value = null,
             computed = doc.defaultView.getComputedStyle(el, '');
@@ -483,13 +300,13 @@
         return el.style[property] || value;
     }
 
-    FX.hasNative = false;
+    $.FX.hasNative = false;
 
     /**
      * Add the getStyle method to the FX namespace to allow for external use,
      * primarily the Node plugin
      */
-    FX.getStyle = getStyle;
+    $.FX.getStyle = getStyle;
 
     /**
      * Convert a CSS property to camel case (font-size to fontSize)
@@ -526,69 +343,66 @@
         }
     }
 
-    FX.hasNative = false;
-
-
-
+    $.FX.hasNative = false;
 
     $.extend($.fn, {
 
-        fadeOut: function (config) {
+        fadeOut: function (options, callback) {
 
-            config = config || {};
+            if (typeof options === 'number') {
+
+                options = {
+
+                    'duration': options,
+                    'opacity': 0
+                }
+            }
+
+            options = options || {};
+            options['opacity'] = 0;
+            options.callback = callback || function () {};
+
 
             this.each(function () {
 
-                new FX(
-                    this, {
-                        'opacity': 0
-                    },
-                    config.duration || 0.3,
-                    config.transition || 'easeInOut',
-                    config.callback || function () {
-                        console.log("callback!!");
-                    }
+                new $.FX(
+                    this, options
                 ).start();
 
             });
         },
 
-        fadeIn: function (config) {
+        fadeIn: function (options, callback) {
 
-            config = config || {};
+            if (typeof options === 'number') {
+
+                options = {
+
+                    'duration': options,
+                    'opacity': 1
+                }
+            }
+
+            options = options || {};
+            options['opacity'] = 1;
+            options.callback = callback || function () {};
+
 
             this.each(function () {
 
-                new FX(
-                    this, {
-                        'opacity': 1
-                    },
-                    config.duration || 0.3,
-                    config.transition || 'easeInOut',
-                    config.callback || function () {
-                        console.log("bilat");
-                    }
+                new $.FX(
+                    this, options
                 ).start();
 
             });
         },
 
-        animate: function (to, config) {
+        animate: function (options) {
 
-            config = config || {};
+            options = options || {};
 
             return this.each(function () {
-
-                new FX(
-                    this,
-                    to,
-                    config.duration || .8,
-                    config.transition || 'easeInOut',
-                    config.callback || function () {
-                        console.log("bilat");
-                    }
-                ).start();
-
+                new $.FX(this, options).start();
             });
         }
     });
