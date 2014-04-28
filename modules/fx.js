@@ -56,7 +56,7 @@
          * @param {Function} callback The function to be executed after the animation is complete (optional)
          */
 
-        FX = win.FX = function (el, attributes, duration, transition, callback) {
+        FX = function (el, attributes, duration, transition, callback) {
             this.el = el;
             this.attributes = attributes;
             this.duration = duration || 0.7;
@@ -124,11 +124,11 @@
                 run;
             fx.getAttributes();
             fx.duration = fx.duration * 1000;
-            fx.time = now();
+            fx.time = $.now();
             fx.animating = true;
 
             fx.timer = run = function () {
-                var time = now();
+                var time = $.now();
                 if (time < (fx.time + fx.duration)) {
                     fx.elapsed = time - fx.time;
                     fx.setCurrentFrame();
@@ -176,10 +176,10 @@
          * Complete the animation by clearing the interval and nulling out the timer,
          * set the animating property to false, and execute the callback
          */
+
         complete: function () {
 
             nativeCancelAnimationFrame(this.timer);
-            //            clearInterval(this.timer);
             this.timer = null;
             this.animating = false;
             this.callback.call(this);
@@ -212,11 +212,7 @@
         getAttributes: function () {
             var attr, attributes, el = this.el;
 
-
-
             for (attr in this.attributes) {
-
-
 
                 var v = getStyle(el, attr),
                     unit, tmp = this.attributes[attr];
@@ -257,19 +253,6 @@
         }
     };
 
-
-    function _rgb(r, g, b) {
-        return '#' + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)
-    }
-
-
-    // convert rgb and short hex to long hex
-    function toHex(c) {
-        var m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
-        return (m ? _rgb(m[1], m[2], m[3]) : c)
-            .replace(/#(\w)(\w)(\w)$/, '#$1$1$2$2$3$3') // short skirt to long jacket
-    }
-
     function by(val, start, m, r, i) {
         return (m = relVal.exec(val)) ?
             (i = parseFloat(m[2])) && (start + (m[1] == '+' ? 1 : -1) * i) :
@@ -308,9 +291,6 @@
         computed && (value = computed[property])
         return el.style[property] || value
 
-
-        //			prop = toCamelCase(prop);
-        //			return view.getComputedStyle(el, "")[prop] || null;
     };
 
     FX.hasNative = false;
@@ -374,24 +354,6 @@
         }
     }
 
-    /**
-     * Is the object an array
-     * @param {Unknown} o The object to be tested against
-     * @return {Boolean} True if the object is an array false if it is not
-     */
-    var isArray = Array.isArray || function (o) {
-            return toString.call(o) === '[object Array]';
-        },
-
-        /**
-         * Get the current time
-         * @return {Number} Number representation of the current time in milliseconds
-         */
-        now = Date.now || function () {
-            return new Date().getTime();
-        };
-
-
     $.extend($.fn, {
 
         fadeOut: function (config) {
@@ -408,7 +370,7 @@
                     config.duration || 0.3,
                     config.transition || 'easeInOut',
                     config.callback || function () {
-                        console.log("bilat");
+                        console.log("callback!!");
                     },
                     config.scope || win
                 ).start();
