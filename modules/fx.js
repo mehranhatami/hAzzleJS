@@ -1,37 +1,22 @@
+/**
+ *
+ * Animation engine for hAzzle
+ *
+ * IMPORTANT TODO!!!
+ * ==================
+ *
+ * - Add 'window.performance'
+ * - clean up the animation frame code
+ * - Make sure the iOS6 bug are solved
+ * - Add animation queue
+ *
+ ****/
 ;
 (function ($) {
 
-
-    var dictionary = [],
-        blacklisted = /iP(ad|hone|od).*OS 6/.test(window.navigator.userAgent),
-        compute = window.getComputedStyle,
-        lastTime = 0,
-        nativeRequestAnimationFrame = function () {
-            var legacy = (function fallback(callback) {
-                var currTime = $.now(),
-                    timeToCall = Math.max(0, 16 - (currTime - lastTime));
-                lastTime = currTime + timeToCall;
-                return window.setTimeout(function () {
-                    callback(currTime + timeToCall);
-                }, timeToCall);
-            });
-            return !blacklisted ? (hAzzle.prefix('RequestAnimationFrame') || legacy) : legacy;
-        }(),
-        nativeCancelAnimationFrame = function () {
-            var legacy = (function (fn) {
-                clearTimeout(fn);
-            });
-            return !blacklisted ? (hAzzle.prefix('CancelAnimationFrame') || legacy) : legacy;
-        }();
-
-
     var win = window,
         doc = win.document,
-        view = doc.defaultView,
-        toString = Object.prototype.toString,
         cache = {},
-        empty = function () {},
-        getStyle,
 
         /**
          * Regular expressions used to parse a CSS color declaration and extract the rgb values
@@ -44,52 +29,82 @@
 
         relVal = /^([+\-])=([\d\.]+)/,
 
-        colorShema = ["backgroundColor", "borderBottomColor", "borderLeftColor", "borderRightColor", "borderTopColor", "color", "columnRuleColor", "outlineColor", "textDecorationColor", "textEmphasisColor"],
+        // RAF
 
+        nativeRequestAnimationFrame,
+        nativeCancelAnimationFrame;
+
+    // Grab the native request and cancel functions.
+    
+    (function () {
+
+        var top;
+
+        // Test if we are within a foreign domain. Use raf from the top if possible.
+        try {
+            // Accessing .name will throw SecurityError within a foreign domain.
+            window.top.name;
+            top = window.top;
+        } catch (e) {
+            top = window;
+        }
+
+        nativeRequestAnimationFrame = top.requestAnimationFrame;
+        nativeCancelAnimationFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+
+        // Grab the native implementation.
+        if (!nativeRequestAnimationFrame) {
+            nativeRequestAnimationFrame = hAzzle.support.nativeRequestAnimationFrame = $.prefix('RequestAnimationFrame');
+            nativeCancelAnimationFrame = hAzzle.support.nativeCancelAnimationFrame = $.prefix('CancelAnimationFrame') || $.prefix('CancelRequestAnimationFrame');
+        }
+
+        nativeRequestAnimationFrame && nativeRequestAnimationFrame(function () {
+
+            FX.hasNative = true;
+        });								
+    }());
+
+    /**
+     * Constructor - initiate with the new operator
+     * @param {Element/String} el The element or the id of the element to which the animation(s) will be performed against
+     * @param {Object} attributes Object containing all the attributes to be animated and the values
+     * @param {Number} duration How long should the animation take in seconds (optional)
+     * @param {String} transition Name of the method in charge of the transitional easing of the element (optional)
+     * @param {Function} callback The function to be executed after the animation is complete (optional)
+     */
+
+    function FX(el, attributes, duration, transition, callback) {
+        this.el = el;
+        this.attributes = attributes;
+        this.duration = duration || 0.7;
+        this.transition = FX.transitions[transition || 'easeInOut'];
+        this.callback = callback || $.noop();
+        this.animating = false;
 
         /**
-         * Constructor - initiate with the new operator
-         * @param {Element/String} el The element or the id of the element to which the animation(s) will be performed against
-         * @param {Object} attributes Object containing all the attributes to be animated and the values
-         * @param {Number} duration How long should the animation take in seconds (optional)
-         * @param {String} transition Name of the method in charge of the transitional easing of the element (optional)
-         * @param {Function} callback The function to be executed after the animation is complete (optional)
+         * The object that holds the CSS unit for each attribute
+         * @type Object
          */
+        this.units = {};
 
-        FX = function (el, attributes, duration, transition, callback) {
-            this.el = el;
-            this.attributes = attributes;
-            this.duration = duration || 0.7;
-            this.transition = FX.transitions[transition || 'easeInOut'];
-            this.callback = callback || empty;
-            this.animating = false;
-            this._lastTickTime = 0
-            this._tickCounter = 0
+        /**
+         * The object to carry the current values for each frame
+         * @type Object
+         */
+        this.frame = {};
 
-            /**
-             * The object that holds the CSS unit for each attribute
-             * @type Object
-             */
-            this.units = {};
+        /**
+         * The object containing all the ending values for each attribute
+         * @type Object
+         */
+        this.endAttr = {};
 
-            /**
-             * The object to carry the current values for each frame
-             * @type Object
-             */
-            this.frame = {};
-
-            /**
-             * The object containing all the ending values for each attribute
-             * @type Object
-             */
-            this.endAttr = {};
-
-            /**
-             * The object containing all the starting values for each attribute
-             * @type Object
-             */
-            this.startAttr = {};
-        };
+        /**
+         * The object containing all the starting values for each attribute
+         * @type Object
+         */
+        this.startAttr = {};
+    }
 
     /**
      * Object containing all the transitional easing methods.
@@ -111,7 +126,195 @@
 
         easeInOut: function (t, b, c, d) {
             return -c / 2 * (Math.cos(Math.PI * t / d) - 1) + b;
+        },
+
+
+        quadIn: function (t, b, c, d) {
+            return c * (t /= d) * t + b;
+        },
+
+        quadOut: function (t, b, c, d) {
+            return -c * (t /= d) * (t - 2) + b;
+        },
+
+        quadInOut: function (t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t + b;
+            return -c / 2 * ((--t) * (t - 2) - 1) + b;
+        },
+
+        cubicIn: function (t, b, c, d) {
+            return c * (t /= d) * t * t + b;
+        },
+
+        cubicOut: function (t, b, c, d) {
+            return c * ((t = t / d - 1) * t * t + 1) + b;
+        },
+
+        cubicInOut: function (t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
+            return c / 2 * ((t -= 2) * t * t + 2) + b;
+        },
+
+        quartIn: function (t, b, c, d) {
+            return c * (t /= d) * t * t * t + b;
+        },
+
+        quartOut: function (t, b, c, d) {
+            return -c * ((t = t / d - 1) * t * t * t - 1) + b;
+        },
+
+        quartInOut: function (t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t * t * t + b;
+            return -c / 2 * ((t -= 2) * t * t * t - 2) + b;
+        },
+
+        quintIn: function (t, b, c, d) {
+            return c * (t /= d) * t * t * t * t + b;
+        },
+
+        quintOut: function (t, b, c, d) {
+            return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
+        },
+
+        quintInOut: function (t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t * t * t * t + b;
+            return c / 2 * ((t -= 2) * t * t * t * t + 2) + b;
+        },
+
+        expoIn: function (t, b, c, d) {
+            return (t === 0) ? b : c * Math.pow(2, 10 * (t / d - 1)) + b - c * 0.001;
+        },
+
+        expoOut: function (t, b, c, d) {
+            return (t === d) ? b + c : c * 1.001 * (-Math.pow(2, -10 * t / d) + 1) + b;
+        },
+
+        expoInOut: function (t, b, c, d) {
+            if (t === 0) return b;
+            if (t === d) return b + c;
+            if ((t /= d / 2) < 1) return c / 2 * Math.pow(2, 10 * (t - 1)) + b - c * 0.0005;
+            return c / 2 * 1.0005 * (-Math.pow(2, -10 * --t) + 2) + b;
+        },
+
+        circIn: function (t, b, c, d) {
+            return -c * (Math.sqrt(1 - (t /= d) * t) - 1) + b;
+        },
+
+        circOut: function (t, b, c, d) {
+            return c * Math.sqrt(1 - (t = t / d - 1) * t) + b;
+        },
+
+        circInOut: function (t, b, c, d) {
+            if ((t /= d / 2) < 1) return -c / 2 * (Math.sqrt(1 - t * t) - 1) + b;
+            return c / 2 * (Math.sqrt(1 - (t -= 2) * t) + 1) + b;
+        },
+
+        backIn: function (t, b, c, d, s) {
+            s = s || 1.70158;
+            return c * (t /= d) * t * ((s + 1) * t - s) + b;
+        },
+
+        backOut: function (t, b, c, d, s) {
+            s = s || 1.70158;
+            return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
+        },
+
+        backBoth: function (t, b, c, d, s) {
+            s = s || 1.70158;
+            if ((t /= d / 2) < 1) {
+                return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
+            }
+            return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
+        },
+
+        elasticIn: function (t, b, c, d, a, p) {
+			var s;
+            if (t === 0) {
+                return b;
+            }
+            if ((t /= d) == 1) {
+                return b + c;
+            }
+            if (!p) {
+                p = d * .3;
+            }
+            if (!a || a < Math.abs(c)) {
+                a = c;
+                s = p / 4;
+            } else {
+                 s = p / (2 * Math.PI) * Math.asin(c / a);
+            }
+            return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
+        },
+
+        elasticOut: function (t, b, c, d, a, p) {
+			
+			var s;
+			
+            if (t === 0) {
+                return b;
+            }
+            if ((t /= d) == 1) {
+                return b + c;
+            }
+            if (!p) {
+                p = d * .3;
+            }
+            if (!a || a < Math.abs(c)) {
+                a = c;
+                s = p / 4;
+            } else {
+                s = p / (2 * Math.PI) * Math.asin(c / a);
+            }
+            return a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
+        },
+
+        elasticBoth: function (t, b, c, d, a, p) {
+			var s;
+            if (t === 0) {
+                return b;
+            }
+            if ((t /= d / 2) == 2) {
+                return b + c;
+            }
+            if (!p) {
+                p = d * (.3 * 1.5);
+            }
+            if (!a || a < Math.abs(c)) {
+                a = c;
+                s = p / 4;
+            } else {
+                s = p / (2 * Math.PI) * Math.asin(c / a);
+            }
+            if (t < 1) {
+                return -.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
+            }
+            return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p) * .5 + c + b;
+        },
+
+        bounceIn: function (t, b, c, d) {
+            return c - FX.transitions.bounceOut(d - t, 0, c, d) + b;
+        },
+
+        bounceOut: function (t, b, c, d) {
+            if ((t /= d) < (1 / 2.75)) {
+                return c * (7.5625 * t * t) + b;
+            } else if (t < (2 / 2.75)) {
+                return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
+            } else if (t < (2.5 / 2.75)) {
+                return c * (7.5625 * (t -= (2.25 / 2.75)) * t + .9375) + b;
+            }
+            return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
+        },
+
+        bounceBoth: function (t, b, c, d) {
+            if (t < d / 2) {
+                return FX.transitions.bounceIn(t * 2, 0, c, d) * .5 + b;
+            }
+            return FX.transitions.bounceOut(t * 2 - d, 0, c, d) * .5 + c * .5 + b;
         }
+
+
     };
 
     FX.prototype = {
@@ -140,7 +343,11 @@
                 fx.setAttributes();
             };
 
+            if (FX.hasNative) {
+                return nativeRequestAnimationFrame(run);
+            }
             run();
+
         },
 
         /**
@@ -210,17 +417,19 @@
          * Get all starting and ending values for each attribute
          */
         getAttributes: function () {
-            var attr, attributes, el = this.el;
+            var attr, 
+			    attributes = this.attributes, 
+				el = this.el;
 
-            for (attr in this.attributes) {
+            for (attr in attributes) {
 
                 var v = getStyle(el, attr),
-                    unit, tmp = this.attributes[attr];
+                  	 tmp = attributes[attr];
                 attr = toCamelCase(attr);
                 if (typeof tmp == 'string' &&
                     rgbOhex.test(tmp) &&
                     !rgbOhex.test(v)) {
-                    delete this.attributes[attr]; // remove key :(
+                    delete attributes[attr]; // remove key :(
                     continue; // cannot animate colors like 'orange' or 'transparent'
                     // only #xxx, #xxxxxx, rgb(n,n,n)
                 }
@@ -241,7 +450,7 @@
          */
 
         setAttributes: function () {
-            var attr, frame, units, el = this.el;
+            var attr, frame, el = this.el;
 
             for (attr in this.frame) {
                 frame = this.frame[attr];
@@ -256,24 +465,7 @@
     function by(val, start, m, r, i) {
         return (m = relVal.exec(val)) ?
             (i = parseFloat(m[2])) && (start + (m[1] == '+' ? 1 : -1) * i) :
-            parseFloat(val)
-    }
-
-
-    /**
-     * Set a style for an element
-     * @param {Element} el The element the new value will be applied to
-     * @param {String} prop The property or style that will be set
-     * @param {String} value The value of the property to be set
-     */
-    function setStyle(el, prop, value) {
-        if (prop == 'opacity') {
-            el.style.filter = "alpha(opacity=" + value * 100 + ")";
-            el.style.opacity = value;
-        } else {
-            prop = toCamelCase(prop);
-            el.style[prop] = value;
-        }
+            parseFloat(val);
     }
 
     /**
@@ -283,15 +475,13 @@
      * @return {Number} The value of the property
      */
 
-    getStyle = function (el, property) {
-        property = property == 'transform' ? transform : property
-        property = toCamelCase(property)
+    function getStyle (el, property) {
+        property = toCamelCase(property);
         var value = null,
-            computed = doc.defaultView.getComputedStyle(el, '')
-        computed && (value = computed[property])
-        return el.style[property] || value
-
-    };
+            computed = doc.defaultView.getComputedStyle(el, '');
+        computed && (value = computed[property]);
+        return el.style[property] || value;
+    }
 
     FX.hasNative = false;
 
@@ -302,24 +492,6 @@
     FX.getStyle = getStyle;
 
     /**
-     * Determine the start point for the element
-     * @param {Element} el The element in question
-     * @param {String} attr The property we must find the relative start position of
-     * @param {String} end The value of the property at the end of the animation
-     * @param {String} units The units we are using (px, em, pt, etc.)
-     * @return {Number} The start value
-     */
-    function getStartValue(el, attr, end, units) {
-        var start = parseFloat(getStyle(el, attr)) || 0;
-        if (units != "px" && view) {
-            setStyle(el, attr, (end || 1) + units);
-            start = ((end || 1) / parseFloat(getStyle(el, attr))) * start;
-            setStyle(el, attr, start + units);
-        }
-        return start;
-    }
-
-    /**
      * Convert a CSS property to camel case (font-size to fontSize)
      * @param {String} str The property that requires conversion to camel case
      * @return {String} The camel cased property string
@@ -327,8 +499,8 @@
     function toCamelCase(s) {
 
         return s.replace(/-(.)/g, function (m, m1) {
-            return m1.toUpperCase()
-        })
+            return m1.toUpperCase();
+        });
     }
 
     /**
@@ -354,25 +526,28 @@
         }
     }
 
+    FX.hasNative = false;
+
+
+
+
     $.extend($.fn, {
 
         fadeOut: function (config) {
 
-            config = config || {}
+            config = config || {};
 
-            this.each(function (elem) {
+            this.each(function () {
 
                 new FX(
-                    this,
-                    {
+                    this, {
                         'opacity': 0
                     },
                     config.duration || 0.3,
                     config.transition || 'easeInOut',
                     config.callback || function () {
                         console.log("callback!!");
-                    },
-                    config.scope || win
+                    }
                 ).start();
 
             });
@@ -380,21 +555,19 @@
 
         fadeIn: function (config) {
 
-            config = config || {}
+            config = config || {};
 
-            this.each(function (elem) {
+            this.each(function () {
 
                 new FX(
-                    this,
-                    {
+                    this, {
                         'opacity': 1
                     },
                     config.duration || 0.3,
                     config.transition || 'easeInOut',
                     config.callback || function () {
                         console.log("bilat");
-                    },
-                    config.scope || win
+                    }
                 ).start();
 
             });
@@ -402,9 +575,9 @@
 
         animate: function (to, config) {
 
-            config = config || {}
+            config = config || {};
 
-            return this.each(function (elem) {
+            return this.each(function () {
 
                 new FX(
                     this,
@@ -413,8 +586,7 @@
                     config.transition || 'easeInOut',
                     config.callback || function () {
                         console.log("bilat");
-                    },
-                    config.scope || win
+                    }
                 ).start();
 
             });
