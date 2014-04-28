@@ -7,7 +7,7 @@
      */
     $.extend($, {
 
-        transitions: {
+        easing: {
 
             linear: function (t, b, c, d) {
                 return c * t / d + b;
@@ -189,7 +189,7 @@
             },
 
             bounceIn: function (t, b, c, d) {
-                return c - $.transitions.bounceOut(d - t, 0, c, d) + b;
+                return c - $.easing.bounceOut(d - t, 0, c, d) + b;
             },
 
             bounceOut: function (t, b, c, d) {
@@ -205,9 +205,9 @@
 
             bounceBoth: function (t, b, c, d) {
                 if (t < d / 2) {
-                    return $.transitions.bounceIn(t * 2, 0, c, d) * .5 + b;
+                    return $.easing.bounceIn(t * 2, 0, c, d) * .5 + b;
                 }
-                return $.transitions.bounceOut(t * 2 - d, 0, c, d) * .5 + c * .5 + b;
+                return $.easing.bounceOut(t * 2 - d, 0, c, d) * .5 + c * .5 + b;
             }
         }
     });

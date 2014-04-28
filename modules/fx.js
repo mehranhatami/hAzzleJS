@@ -82,7 +82,7 @@
         fx.attributes = options;
         fx.callback = function () {};
         fx.duration = 0.7;
-        fx.transition = $.transitions[options.transition || 'easeInOut'];
+        fx.easing = $.easing[options.easing || 'easeInOut'];
 
         /**
          * TODO!! Fix this mess !! :)
@@ -100,9 +100,9 @@
                 delete k['duration']
             }
 
-            if (k === 'transition') {
-                fx.transition = $.transitions[options.transition];
-                delete k['transition']
+            if (k === 'easing') {
+                fx.easing = $.easing[options.easing];
+                delete k['easing']
             }
 
         }
@@ -180,7 +180,7 @@
 
         /**
          * Is this instance currently animating
-         * @return {Boolean} True if the element is in transition false if it is not
+         * @return {Boolean} True if the element is in easing false if it is not
          */
         isAnimating: function () {
             return this.animating;
@@ -193,7 +193,7 @@
          * @return {Number} Calculated percentage for the frame of the attribute
          */
         ease: function (start, end) {
-            return this.transition(this.elapsed, start, end - start, this.duration);
+            return this.easing(this.elapsed, start, end - start, this.duration);
         },
 
         /**
@@ -347,56 +347,6 @@
 
     $.extend($.fn, {
 
-        fadeOut: function (options, callback) {
-
-            if (typeof options === 'number') {
-
-                options = {
-
-                    'duration': options,
-                    'opacity': 0
-                }
-            }
-
-            options = options || {};
-            options['opacity'] = 0;
-            options.callback = callback || function () {};
-
-
-            this.each(function () {
-
-                new $.FX(
-                    this, options
-                ).start();
-
-            });
-        },
-
-        fadeIn: function (options, callback) {
-
-            if (typeof options === 'number') {
-
-                options = {
-
-                    'duration': options,
-                    'opacity': 1
-                }
-            }
-
-            options = options || {};
-            options['opacity'] = 1;
-            options.callback = callback || function () {};
-
-
-            this.each(function () {
-
-                new $.FX(
-                    this, options
-                ).start();
-
-            });
-        },
-
         animate: function (options) {
 
             options = options || {};
@@ -405,6 +355,39 @@
                 new $.FX(this, options).start();
             });
         }
+    });
+
+    // fadeIn / fadeOut
+
+    $.each({
+        'fadeIn': 1,
+        'fadeOut': 0
+    }, function (name, alpha) {
+
+        $.fn[name] = function (options, callback) {
+
+            if (typeof options === 'number') {
+
+                options = {
+
+                    'duration': options,
+                    'opacity': alpha
+                }
+            }
+
+            options = options || {};
+            options['opacity'] = alpha;
+            options.callback = callback || function () {};
+
+
+            this.each(function () {
+
+                new $.FX(
+                    this, options
+                ).start();
+
+            });
+        };
     });
 
 })(hAzzle);
