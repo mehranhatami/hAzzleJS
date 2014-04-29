@@ -20,29 +20,29 @@
 
         items = [],
 
-   /**
-    *
-	* IMPORTANT TODO!!
-	*
-	* Items contains all animation queued in the animation queued. My idea is to make this as a part of the
-	* prototype FX. And make a reverse method as well.
-	*
-	* My idea is like this:
-	*
-	* - In the moment animation are running, and the dequeue() function removes elems from this 'item' with shift(), we
-	*   make it so in the same moment the animation are removed from 'item' are moved into another array. This array
-	*   contains the finished animation.
-	*
-	*  Say we call this array for reverseAnim = [], then we have to do it like this: reverseAnim.reverse() after anim
-	*  are finished so we can get animation in reverse.
-	*
-	*
-	* THEN in the animation: function we put an extra param - reverse. So if 'reverse' are true, we are running the 
-	* animation again but this time from the new array. IF NOT reverse are true, we empty the reverse array.
-	*
-	* This again need a few modifications in the animation queueue.
-	*
-	***/
+        /**
+         *
+         * IMPORTANT TODO!!
+         *
+         * Items contains all animation queued in the animation queued. My idea is to make this as a part of the
+         * prototype FX. And make a reverse method as well.
+         *
+         * My idea is like this:
+         *
+         * - In the moment animation are running, and the dequeue() function removes elems from this 'item' with shift(), we
+         *   make it so in the same moment the animation are removed from 'item' are moved into another array. This array
+         *   contains the finished animation.
+         *
+         *  Say we call this array for reverseAnim = [], then we have to do it like this: reverseAnim.reverse() after anim
+         *  are finished so we can get animation in reverse.
+         *
+         *
+         * THEN in the animation: function we put an extra param - reverse. So if 'reverse' are true, we are running the
+         * animation again but this time from the new array. IF NOT reverse are true, we empty the reverse array.
+         *
+         * This again need a few modifications in the animation queueue.
+         *
+         ***/
 
         cache = {},
 
@@ -108,11 +108,11 @@
 
     /**
      * Constructor - initiate with the new operator
-     * @param {Element/String} el 
-     * @param {Object} attributes 
+     * @param {Element/String} el
+     * @param {Object} attributes
      * @param {Number} duration
-     * @param {String} transition 
-     * @param {Function} callback 
+     * @param {String} transition
+     * @param {Function} callback
      */
 
     $.FX = function (el, options) {
@@ -232,7 +232,7 @@
 
         /**
          * Is this instance currently animating
-         * @return {Boolean} 
+         * @return {Boolean}
          */
         isAnimating: function () {
             return this.animating;
@@ -240,9 +240,9 @@
 
         /**
          * Perform a transitional ease to keep the animation smooth
-         * @param {Number} start 
-         * @param {Number} end 
-         * @return {Number} 
+         * @param {Number} start
+         * @param {Number} end
+         * @return {Number}
          */
         ease: function (start, end) {
             return this.easing(this.elapsed, start, end - start, this.duration);
@@ -337,7 +337,7 @@
 
     /**
      * Get a style of an element
-     * @param {Element} el 
+     * @param {Element} el
      * @param {String} property
      * @return {Number} The value of the property
      */
@@ -360,8 +360,8 @@
 
     /**
      * Convert a CSS property to camel case (font-size to fontSize)
-     * @param {String} 
-     * @return {String} 
+     * @param {String}
+     * @return {String}
      */
     function toCamelCase(s) {
 
@@ -373,7 +373,7 @@
     /**
      * convert options to valid values based on speed and callback. This are only used
      * on special effects such as fadeIn() and fadeOut()
-     * @param {Object/Null} 
+     * @param {Object/Null}
      * @return {Object}
      */
 
@@ -395,8 +395,8 @@
 
     /**
      * parse a color to be handled by the animation, supports hex and rgb (#FFFFFF, #FFF, rgb(255, 0, 0))
-     * @param {String} 
-     * @return {Array} 
+     * @param {String}
+     * @return {Array}
      */
     function parseColor(str) {
         if (str in cache) {
@@ -422,12 +422,12 @@
     $.extend($.fn, {
 
 
-		/**
-		 * Generic method to queue custom animations 
-		 *
-		 * @param {Object} config
-		 * @return {Object}
-		 */
+        /**
+         * Generic method to queue custom animations
+         *
+         * @param {Object} config
+         * @return {Object}
+         */
 
         animate: function (options) {
 
@@ -471,38 +471,39 @@
                 }
             });
         },
-		
-		/**
-		 * Pause before starting the next animation in the queue (best used in animation chaining)
-		 * @param {Number} seconds
-		 * @return {Object}
-		 *
-		 *
-		 * THIS IS NOT WORKING!!!!!
-		 *
-		 */
 
-		pause: function(seconds){
-	this.each(function() {
-			var fx = this, seconds = seconds || 1;
-			return $(this).queueFx({}, function(){
-				var timer = setTimeout(function(){
-					$(fx).nextFx();
-					clearTimeout(timer);
-					timer = null;
-				}, seconds * 1000);							 
-				return null;
-			});
-      });
-		},
-		
+        /**
+         * Pause before starting the next animation in the queue (best used in animation chaining)
+         * @param {Number} seconds
+         * @return {Object}
+         *
+         *
+         * THIS IS NOT WORKING!!!!!
+         *
+         */
+
+        pause: function (seconds) {
+            this.each(function () {
+                var fx = this,
+                    seconds = seconds || 1;
+                return $(this).queueFx({}, function () {
+                    var timer = setTimeout(function () {
+                        $(fx).nextFx();
+                        clearTimeout(timer);
+                        timer = null;
+                    }, seconds * 1000);
+                    return null;
+                });
+            });
+        },
+
 
 
 
         /**
          * Scale the element's width and height
-		 *
-         * @param {Number} width 
+         *
+         * @param {Number} width
          * @param {Number} height
          * @param {Object} config
          * @return {Object}
@@ -516,15 +517,16 @@
 
         /**
          * Queue an animation
-		 *
-         * @param {Function} fn 
+         *
+         * @param {Function} fn
          * @return {Object}
          */
-		 
+
         queueFx: function (fn) {
             return this.each(function () {
 
-                if (!this.activeFx) {
+                if (!$.data(this, 'activeFx')) {
+                    //    if (!this.activeFx) {
                     $(this).callFx(fn);
                     return this;
                 }
@@ -537,23 +539,28 @@
         /**
          * Calls an animation
          * @param {Function} fn
-         * @param {Boolean} queue 
+         * @param {Boolean} queue
          */
-		 
+
         callFx: function (fn) {
             this.each(function () {
                 var activeFx = fn.call(this);
+
+                // If any animation
+
                 if (activeFx) {
-                    this.activeFx = activeFx;
+
+                    $.data(this, 'activeFx', activeFx)
+
                     var fx = this,
-                        queue = queue || true;
-                    if (queue === true) {
-                        var callback = activeFx.callback;
-                        activeFx.callback = function () {
-                            callback.call(window);
-                            $(fx).nextFx();
-                        };
-                    }
+                        callback = activeFx.callback;
+
+                    activeFx.callback = function () {
+
+                        callback.call(window);
+
+                        $(fx).nextFx();
+                    };
                     activeFx.start();
                 }
             });
@@ -563,12 +570,20 @@
          * Calls the next animation in the queue (private)
          */
         nextFx: function () {
+
             this.each(function () {
-                if (this.activeFx) {
-                    delete this.activeFx;
+
+                if ($.data(this, 'activeFx')) {
+
+                    $.removeData(this, 'activeFx')
+
                 }
                 var fn = $.dequeue();
+
+                // If any animation in the queue, fire it!
+
                 if (fn) {
+
                     $(this).callFx(fn);
                 }
             });
@@ -592,15 +607,16 @@
 
         /**
          * Enter a new item into the queue
-         * @param {Object} item The object to enter into the queue
+         * @param {Object}
          */
         enqueue: function (item) {
+
             items.push(item);
         },
 
         /**
          * Remove the next item in the queue and return it
-         * @return {Object/Null} Returns the next item in the queue or null if none is found
+         * @return {Object/Null}
          */
         dequeue: function () {
             var item = items.shift();
