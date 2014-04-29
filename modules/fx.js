@@ -84,11 +84,11 @@
 
     /**
      * Constructor - initiate with the new operator
-     * @param {Element/String} el The element or the id of the element to which the animation(s) will be performed against
-     * @param {Object} attributes Object containing all the attributes to be animated and the values
-     * @param {Number} duration How long should the animation take in seconds (optional)
-     * @param {String} transition Name of the method in charge of the transitional easing of the element (optional)
-     * @param {Function} callback The function to be executed after the animation is complete (optional)
+     * @param {Element/String} el 
+     * @param {Object} attributes 
+     * @param {Number} duration
+     * @param {String} transition 
+     * @param {Function} callback 
      */
 
     $.FX = function (el, options) {
@@ -208,7 +208,7 @@
 
         /**
          * Is this instance currently animating
-         * @return {Boolean} True if the element is in easing false if it is not
+         * @return {Boolean} 
          */
         isAnimating: function () {
             return this.animating;
@@ -216,9 +216,9 @@
 
         /**
          * Perform a transitional ease to keep the animation smooth
-         * @param {Number} start The starting value for the attribute
-         * @param {Number} end The ending value for the attribute
-         * @return {Number} Calculated percentage for the frame of the attribute
+         * @param {Number} start 
+         * @param {Number} end 
+         * @return {Number} 
          */
         ease: function (start, end) {
             return this.easing(this.elapsed, start, end - start, this.duration);
@@ -313,8 +313,8 @@
 
     /**
      * Get a style of an element
-     * @param {Element} el The element for the style to be retrieved from
-     * @param {String} prop The property or style that is to be found
+     * @param {Element} el 
+     * @param {String} property
      * @return {Number} The value of the property
      */
 
@@ -336,8 +336,8 @@
 
     /**
      * Convert a CSS property to camel case (font-size to fontSize)
-     * @param {String} str The property that requires conversion to camel case
-     * @return {String} The camel cased property string
+     * @param {String} 
+     * @return {String} 
      */
     function toCamelCase(s) {
 
@@ -349,7 +349,7 @@
     /**
      * convert options to valid values based on speed and callback. This are only used
      * on special effects such as fadeIn() and fadeOut()
-     * @param {Object/Null} opt  Options for the animation
+     * @param {Object/Null} 
      * @return {Object}
      */
 
@@ -371,8 +371,8 @@
 
     /**
      * parse a color to be handled by the animation, supports hex and rgb (#FFFFFF, #FFF, rgb(255, 0, 0))
-     * @param {String} str The string value of an elements color
-     * @return {Array} The rgb values of the color contained in an array
+     * @param {String} 
+     * @return {Array} 
      */
     function parseColor(str) {
         if (str in cache) {
@@ -396,6 +396,14 @@
 
 
     $.extend($.fn, {
+
+
+		/**
+		 * Generic method to queue custom animations 
+		 *
+		 * @param {Object} config
+		 * @return {Object}
+		 */
 
         animate: function (options) {
 
@@ -444,10 +452,11 @@
 
         /**
          * Scale the element's width and height
-         * @param {Number} width The new width the element will animate to
-         * @param {Number} height The new height the element will animate to
-         * @param {Object} config (optional) Configuration for the animation, see above for the complete list of options
-         * @return {FX.Node Object} Returns the instance to facilitate method chaining
+		 *
+         * @param {Number} width 
+         * @param {Number} height
+         * @param {Object} config
+         * @return {Object}
          */
         scale: function (width, height, options) {
             options = options || {};
@@ -457,11 +466,12 @@
         },
 
         /**
-         * Queue an animation (private)
-         * @param {Object} config Configuration for the queue (only queue and priority propertiers apply here)
-         * @param {Function} fn The function that encapsulates the animation call
-         * @return {FX.Node Object} Returns the instance to facilitate method chaining
+         * Queue an animation
+		 *
+         * @param {Function} fn 
+         * @return {Object}
          */
+		 
         queueFx: function (fn) {
             return this.each(function () {
 
@@ -476,10 +486,11 @@
         },
 
         /**
-         * Calls an animation (private)
-         * @param {Function} fn The function that encapsulates the animation call
-         * @param {Boolean} queue True if the animation should be queued, false otherwise
+         * Calls an animation
+         * @param {Function} fn
+         * @param {Boolean} queue 
          */
+		 
         callFx: function (fn) {
             this.each(function () {
                 var activeFx = fn.call(this);
@@ -563,9 +574,6 @@
         }
 
     });
-
-
-
 
     // fadeIn / fadeOut
 
