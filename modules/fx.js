@@ -12,13 +12,37 @@
  * NOTE!! For the iOS6 bug, we now only blacklist that OS, and force back to normal
  * window timer solution. There are better solutions for this online. FIX IT!!
  *
- ****/
+ */
 (function ($) {
 
     var win = window,
         doc = win.document,
 
-        items = [],
+        animation_array = [],
+        reverse_array = [],
+        /**
+         *
+         * IMPORTANT TODO!!
+         *
+         * animation_array contains all animation queued in the animation queued. My idea is to make this as a part of the
+         * prototype FX. And make a reverse method as well.
+         *
+         * My idea is like this:
+         *
+         * - In the moment animation are running, and the dequeue() function removes elems from this 'item' with shift(), we
+         *   make it so in the same moment the animation are removed from 'item' are moved into another array. This array
+         *   contains the finished animation.
+         *
+         *  Say we call this array for reverseAnim = [], then we have to do it like this: reverseAnim.reverse() after anim
+         *  are finished so we can get animation in reverse.
+         *
+         *
+         * THEN in the animation: function we put an extra param - reverse. So if 'reverse' are true, we are running the
+         * animation again but this time from the new array. IF NOT reverse are true, we empty the reverse array.
+         *
+         * This again need a few modifications in the animation queueue.
+         *
+         ***/
 
         cache = {},
 
@@ -84,11 +108,11 @@
 
     /**
      * Constructor - initiate with the new operator
-     * @param {Element/String} el 
-     * @param {Object} attributes 
+     * @param {Element/String} el
+     * @param {Object} attributes
      * @param {Number} duration
-     * @param {String} transition 
-     * @param {Function} callback 
+     * @param {String} transition
+     * @param {Function} callback
      */
 
     $.FX = function (el, options) {
@@ -199,16 +223,17 @@
          * stop the animation
          */
         stop: function (finish) {
+			var fx = this;
             if (finish) {
-                this.frame = this.endAttr;
-                this.setAttributes();
+                fx.frame = fx.endAttr;
+                fx.setAttributes();
             }
-            this.complete();
+            fx.complete();
         },
 
         /**
          * Is this instance currently animating
-         * @return {Boolean} 
+         * @return {Boolean}
          */
         isAnimating: function () {
             return this.animating;
@@ -216,10 +241,11 @@
 
         /**
          * Perform a transitional ease to keep the animation smooth
-         * @param {Number} start 
-         * @param {Number} end 
-         * @return {Number} 
+         * @param {Number} start
+         * @param {Number} end
+         * @return {Number}
          */
+		 
         ease: function (start, end) {
             return this.easing(this.elapsed, start, end - start, this.duration);
         },
@@ -227,14 +253,17 @@
         /**
          * Complete the animation by clearing the interval and nulling out the timer,
          * set the animating property to false, and execute the callback
+		 *
+		 * THE COMPLETE FUNCTION NEED TO BE FIXED!!
          */
 
         complete: function () {
-
-            cancelAnimationFrame(this.timer);
-            this.timer = null;
-            this.animating = false;
-            this.callback.call(this);
+          var fx = this;
+            
+			cancelAnimationFrame(this.timer);
+            fx.timer = null;
+            fx.animating = false;
+            fx.callback.call(this);
         },
 
         /**
@@ -313,7 +342,7 @@
 
     /**
      * Get a style of an element
-     * @param {Element} el 
+     * @param {Element} el
      * @param {String} property
      * @return {Number} The value of the property
      */
@@ -336,8 +365,8 @@
 
     /**
      * Convert a CSS property to camel case (font-size to fontSize)
-     * @param {String} 
-     * @return {String} 
+     * @param {String}
+     * @return {String}
      */
     function toCamelCase(s) {
 
@@ -349,7 +378,7 @@
     /**
      * convert options to valid values based on speed and callback. This are only used
      * on special effects such as fadeIn() and fadeOut()
-     * @param {Object/Null} 
+     * @param {Object/Null}
      * @return {Object}
      */
 
@@ -358,7 +387,7 @@
         if ($.isNumber(opt) || $.isString(opt)) {
 
             opt = {
-                'duration': speeds[opt] || opt,
+                'duration': speeds[opt] || opt
             };
         }
 
@@ -371,8 +400,8 @@
 
     /**
      * parse a color to be handled by the animation, supports hex and rgb (#FFFFFF, #FFF, rgb(255, 0, 0))
-     * @param {String} 
-     * @return {Array} 
+     * @param {String}
+     * @return {Array}
      */
     function parseColor(str) {
         if (str in cache) {
@@ -398,12 +427,12 @@
     $.extend($.fn, {
 
 
-		/**
-		 * Generic method to queue custom animations 
-		 *
-		 * @param {Object} config
-		 * @return {Object}
-		 */
+        /**
+         * Generic method to queue custom animations
+         *
+         * @param {Object} config
+         * @return {Object}
+         */
 
         animate: function (options) {
 
@@ -442,18 +471,42 @@
         stop: function (finish) {
             $.clear();
             this.each(function () {
-                if (this.activeFx) {
-                    this.activeFx.stop(finish);
-                }
+               this.activeFx && this.activeFx.stop(finish);
+            });
+        },
+
+        /**
+         * Pause before starting the next animation in the queue (best used in animation chaining)
+         * @param {Number} seconds
+         * @return {Object}
+         *
+         *
+         * THIS IS NOT WORKING!!!!!
+         *
+         */
+
+        pause: function (seconds) {
+            this.each(function () {
+                var fx = this,
+                    seconds = seconds || 1;
+                return $(this).queueFx({}, function () {
+                    var timer = setTimeout(function () {
+                        $(fx).nextFx();
+                        clearTimeout(timer);
+                        timer = null;
+                    }, seconds * 1000);
+                    return null;
+                });
             });
         },
 
 
 
+
         /**
          * Scale the element's width and height
-		 *
-         * @param {Number} width 
+         *
+         * @param {Number} width
          * @param {Number} height
          * @param {Object} config
          * @return {Object}
@@ -467,44 +520,66 @@
 
         /**
          * Queue an animation
-		 *
-         * @param {Function} fn 
+         *
+         * @param {Function} fn
          * @return {Object}
          */
-		 
+
         queueFx: function (fn) {
             return this.each(function () {
 
-                if (!this.activeFx) {
+                if (!$.data(this, 'activeFx')) {
                     $(this).callFx(fn);
                     return this;
                 }
+
+				/* Save it in the animation_array
+				
+				NOTE!! Just a thought. jQuery store this on the elem itself, 
+				       but that is slower. I think this is faster, but
+					   what about this:
+					   
+					   use the LocaleStorage.js module and store queue there.
+					   
+					   - HTML5 LocaleStorage
+					   
+					   Idea is then IF the user refresh the page, the 
+					   animation will still be in the queue and continue to 
+					   run until finished, or stopped or paused.
+					   
+					   Think about it !!
+				*/
+				
+
                 $.enqueue(fn);
-
-
             });
         },
 
         /**
          * Calls an animation
          * @param {Function} fn
-         * @param {Boolean} queue 
+         * @param {Boolean} queue
          */
-		 
+
         callFx: function (fn) {
             this.each(function () {
                 var activeFx = fn.call(this);
+
+                // If any animation
+
                 if (activeFx) {
-                    this.activeFx = activeFx;
+
+                    $.data(this, 'activeFx', activeFx)
+
                     var fx = this,
-                        queue = queue || true;
-                    if (queue === true) {
-                        var callback = activeFx.callback;
-                        activeFx.callback = function () {
-                            callback.call(window);
-                            $(fx).nextFx();
-                        };
-                    }
+                        callback = activeFx.callback;
+
+                    activeFx.callback = function () {
+
+                        callback.call(window);
+
+                        $(fx).nextFx();
+                    };
                     activeFx.start();
                 }
             });
@@ -515,17 +590,21 @@
          */
         nextFx: function () {
             this.each(function () {
-                if (this.activeFx) {
-                    delete this.activeFx;
+                if ($.data(this, 'activeFx')) {
+                    $.removeData(this, 'activeFx')
                 }
+
                 var fn = $.dequeue();
+
+                // If any animation in the queue, fire it!
+
                 if (fn) {
+
                     $(this).callFx(fn);
                 }
             });
         }
     });
-
 
     /**
      * Animation queue
@@ -543,18 +622,33 @@
 
         /**
          * Enter a new item into the queue
-         * @param {Object} item The object to enter into the queue
+         * @param {Object}
          */
         enqueue: function (item) {
-            items.push(item);
+          
+		  if(item){
+        
+		   animation_array.push(item);
+		   
+		   // Push it into the reverse_array if we
+		   // want to do the animation in reverse
+		   
+		  // NOTE!! Commented out just now - experimental !!
+		  
+		  //   reverse_array.push(item);
+		  }
         },
 
         /**
          * Remove the next item in the queue and return it
-         * @return {Object/Null} Returns the next item in the queue or null if none is found
+         * @return {Object/Null}
          */
         dequeue: function () {
-            var item = items.shift();
+        
+		// Only remove the animation from the animation_array
+        // We remove it later from reverse_array if no reverse
+		
+            var item = animation_array.shift();
             return item ? item : null;
         },
 
@@ -563,14 +657,14 @@
          * @return {Boolean} True if there are currently no items left in the queue, false otherwise
          */
         isEmpty: function () {
-            return items.length === 0;
+            return animation_array.length === 0;
         },
 
         /**
          * Clear the queue
          */
         clear: function () {
-            items = [];
+            animation_array = [];
         }
 
     });

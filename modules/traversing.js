@@ -28,9 +28,9 @@
          * @return {Object}
          */
 
-        closest: function (sel, context) {
+        closest: function (sel, ctx) {
             return this.map(function (elem) {
-             if ($.nodeType(1, elem) && elem !== context && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
+             if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
                     return elem;
                 }
                 return $.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
@@ -55,7 +55,7 @@
 
         selectedIndex: function (array) {
 
-            if ($.isArray(array)) {
+            if (array && $.isArray(array)) {
 
                 var result = [],
                     i = array.length;
@@ -286,7 +286,6 @@
         }
 
     });
-
 
     $.extend($, {
 

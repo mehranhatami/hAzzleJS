@@ -1,20 +1,22 @@
-; (function ($) {
+;
+(function ($) {
 
     var isObject = $.isObject,
         isString = $.isString,
-		win = window,
+        win = window,
         doc = document,
 
         // Common 5MB localStorage
 
         defaultSize = 5242880;
 
-
     // Inital check to see if localStorage is supported in the browser
+
     (function () {
         var supported = false;
 
         // Derived from Modernizer (http://github.com/Modernizr/Modernizr)
+
         try {
             localStorage.setItem('hAzzle', 'hAzzle');
             localStorage.removeItem('hAzzle');
@@ -62,10 +64,10 @@
                     doc.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
                     this.length--;
                 },
-                
-				// Really bad name, but not my idea :)
-                
-				hasOwnProperty: function (sKey) {
+
+                // Really bad name, but not my idea :)
+
+                hasOwnProperty: function (sKey) {
                     return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(doc.cookie);
                 }
             };
@@ -74,9 +76,6 @@
         }
     })();
 
-
-    // Extend the hAzzle object
-
     $.extend({
 
         /**
@@ -84,9 +83,13 @@
          */
 
         bytesToSize: function (bytes) {
-            var k = 1000;
-            var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            if (bytes === 0) return '0 Bytes';
+            var k = 1000,
+                sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+
+            if (bytes === 0) {
+
+                return '0 Bytes';
+            }
             var i = parseInt(Math.floor(Math.log(bytes) / Math.log(k)), 10);
             return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i];
         },
@@ -95,7 +98,7 @@
          * Removes all key / value pairs from localStorage
          */
 
-        clearStorage: function clear() {
+        clearStorage: function () {
             localStorage.clear();
         },
 
@@ -104,7 +107,8 @@
          */
 
         storageContains: function (key) {
-            if (isString(key)) {
+
+            if (key && isString(key)) {
                 return $.indexOf(this.getStorageKeys(), key) !== -1;
             }
         },
@@ -164,15 +168,20 @@
 
         removeStorage: function (key) {
 
+            if (!key) {
+
+                return;
+            }
+
             if (isString(key)) {
 
                 localStorage.removeItem(key);
 
             } else if ($.isArray(key)) {
 
-               var i = key.length;
-			   
-               while (i--) {
+                var i = key.length;
+
+                while (i--) {
 
                     if (isString(key[i])) {
 
@@ -187,19 +196,19 @@
          */
         getStorage: function (key, defaultValue) {
 
-            if (isString(key)) {
+            if (key && isString(key)) {
 
                 var value = localStorage.getItem(key).toLowerCase(), // retrieve value
                     number = parseFloat(value); // to allow for number checking
 
                 if (value === null) {
-					
+
                     // Returns default value if key is not set, otherwise returns null
                     return arguments.length === 2 ? defaultValue : null;
                 }
 
                 if (!$.IsNaN(number)) {
-					
+
                     return number; // value was of type number
                 }
 
@@ -210,7 +219,9 @@
                 try {
                     value = JSON.parse(value + "");
                     return value;
+
                 } catch (e) {
+
                     return value;
                 }
             }
@@ -227,7 +238,7 @@
 
                 this.store(key);
 
-            } else if (isString(key)) {
+            } else if (key && isString(key)) {
 
                 if (isObject(value)) {
 
@@ -245,7 +256,7 @@
         saveStorage: function (value) {
             var property;
 
-            if (isObject(value) && !(value instanceof Array)) {
+            if (value && isObject(value) && !(value instanceof Array)) {
                 for (property in value) {
                     localStorage.setItem(property, value[property]);
                 }
