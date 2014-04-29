@@ -5,10 +5,12 @@
  * IMPORTANT TODO!!!
  * ==================
  *
- * - Add 'window.performance'
  * - clean up the animation frame code
- * - Make sure the iOS6 bug are solved
  * - Add animation queue
+ *
+ *
+ * NOTE!! For the iOS6 bug, we now only blacklist that OS, and force back to normal
+ * window timer solution. There are better solutions for this online. FIX IT!!
  *
  ****/
 ;
@@ -26,44 +28,46 @@
         hex3 = (/^#(\w{1})(\w{1})(\w{1})$/),
         rgb = (/^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/),
 
+        blacklisted = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
+
         rgbOhex = /^rgb\(|#/,
 
         relVal = /^([+\-])=([\d\.]+)/,
 
-        // RAF
+        perf = win.performance || {},
+        perfNow = (function () {
+            return performance.now ||
+                performance.mozNow ||
+                performance.msNow ||
+                performance.oNow ||
+                performance.webkitNow
+        })()
 
-        nativeRequestAnimationFrame,
-        nativeCancelAnimationFrame;
+    , now = perfNow ? function () {
+        return perfNow.call(perf)
+    } : function () {
+        return $.now()
+    }, fixTs = false, // feature detected below
 
-    // Grab the native request and cancel functions.
+    // RAF
 
-    (function () {
-
-        var top;
-
-        // Test if we are within a foreign domain. Use raf from the top if possible.
-        try {
-            // Accessing .name will throw SecurityError within a foreign domain.
-            window.top.name;
-            top = window.top;
-        } catch (e) {
-            top = window;
-        }
-
-        nativeRequestAnimationFrame = top.requestAnimationFrame;
-        nativeCancelAnimationFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
-
-        // Grab the native implementation.
-        if (!nativeRequestAnimationFrame) {
-            nativeRequestAnimationFrame = hAzzle.support.nativeRequestAnimationFrame = $.prefix('RequestAnimationFrame');
-            nativeCancelAnimationFrame = hAzzle.support.nativeCancelAnimationFrame = $.prefix('CancelAnimationFrame') || $.prefix('CancelRequestAnimationFrame');
-        }
-
-        nativeRequestAnimationFrame && nativeRequestAnimationFrame(function () {
-
-            $.FX.hasNative = true;
+    requestAnimationFrame = function () {
+        var legacy = (function fallback(callback) {
+            var currTime = $.now(),
+                timeToCall = Math.max(0, 17 - (currTime - lastTime));
+            lastTime = currTime + timeToCall;
+            return window.setTimeout(function () {
+                callback(currTime + timeToCall);
+            }, timeToCall);
         });
-    }());
+        return !blacklisted ? (hAzzle.prefix('RequestAnimationFrame') || legacy) : legacy;
+    }(),
+    cancelAnimationFrame = function () {
+        var legacy = (function (fn) {
+            clearTimeout(fn);
+        });
+        return !blacklisted ? (hAzzle.prefix('CancelAnimationFrame') || $.prefix('CancelRequestAnimationFrame') || legacy) : legacy;
+    }();
 
     /**
      * Constructor - initiate with the new operator
@@ -84,29 +88,33 @@
         fx.duration = 0.7;
         fx.easing = $.easing[options.easing || 'easeInOut'];
 
-        /**
-         * TODO!! Fix this mess !! :)
-         */
 
-        for (var k in options) {
+        // check for options
+        if (options) {
 
-            if (k === 'callback') {
-                fx.callback = options.callback;
-                delete k['callback']
+            for (var k in options) {
+
+                if (k === 'callback') {
+                    fx.callback = options.callback;
+                    delete k['callback']
+                }
+                if (k === 'duration') {
+
+                    fx.duration = options.duration;
+                    delete k['duration']
+                }
+
+                if (k === 'easing') {
+                    fx.easing = $.easing[options.easing];
+                    delete k['easing']
+                }
+
             }
-            if (k === 'duration') {
-
-                fx.duration = options.duration;
-                delete k['duration']
-            }
-
-            if (k === 'easing') {
-                fx.easing = $.easing[options.easing];
-                delete k['easing']
-            }
-
         }
-
+        this._timeoutId = null
+        this._callbacks = {}
+        this._lastTickTime = 0
+        this._tickCounter = 0
         fx.animating = false;
 
         /**
@@ -144,15 +152,21 @@
                 run;
             fx.getAttributes();
             fx.duration = fx.duration * 1000;
-            fx.time = $.now();
+            fx.time = now();
             fx.animating = true;
-
             fx.timer = run = function () {
-                var time = $.now();
+
+                var time = now();
+
                 if (time < (fx.time + fx.duration)) {
+
                     fx.elapsed = time - fx.time;
+
+                    if (fx.elapsed < 0) return;
+
                     fx.setCurrentFrame();
-                    nativeRequestAnimationFrame(run);
+                    requestAnimationFrame(run);
+
                 } else {
                     fx.frame = fx.endAttr;
                     fx.complete();
@@ -161,10 +175,9 @@
             };
 
             if ($.FX.hasNative) {
-                return nativeRequestAnimationFrame(run);
+                return requestAnimationFrame(run);
             }
             run();
-
         },
 
         /**
@@ -203,7 +216,7 @@
 
         complete: function () {
 
-            nativeCancelAnimationFrame(this.timer);
+            cancelAnimationFrame(this.timer);
             this.timer = null;
             this.animating = false;
             this.callback.call(this);
