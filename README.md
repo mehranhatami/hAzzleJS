@@ -1,4 +1,4 @@
-hAzzleJS v. 0.31 BETA
+hAzzleJS v. 0.37a BETA
 =====================
 
 **hAzzle** is a javascript library that tries it best to be the fastest one, and still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
