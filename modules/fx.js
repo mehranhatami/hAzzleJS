@@ -18,13 +18,13 @@
     var win = window,
         doc = win.document,
 
-        animation_array = [],
-        reverse_array = [],
+        items = [],
+
         /**
          *
          * IMPORTANT TODO!!
          *
-         * animation_array contains all animation queued in the animation queued. My idea is to make this as a part of the
+         * Items contains all animation queued in the animation queued. My idea is to make this as a part of the
          * prototype FX. And make a reverse method as well.
          *
          * My idea is like this:
@@ -223,12 +223,11 @@
          * stop the animation
          */
         stop: function (finish) {
-			var fx = this;
             if (finish) {
-                fx.frame = fx.endAttr;
-                fx.setAttributes();
+                this.frame = this.endAttr;
+                this.setAttributes();
             }
-            fx.complete();
+            this.complete();
         },
 
         /**
@@ -245,7 +244,6 @@
          * @param {Number} end
          * @return {Number}
          */
-		 
         ease: function (start, end) {
             return this.easing(this.elapsed, start, end - start, this.duration);
         },
@@ -253,17 +251,14 @@
         /**
          * Complete the animation by clearing the interval and nulling out the timer,
          * set the animating property to false, and execute the callback
-		 *
-		 * THE COMPLETE FUNCTION NEED TO BE FIXED!!
          */
 
         complete: function () {
-          var fx = this;
-            
-			cancelAnimationFrame(this.timer);
-            fx.timer = null;
-            fx.animating = false;
-            fx.callback.call(this);
+
+            cancelAnimationFrame(this.timer);
+            this.timer = null;
+            this.animating = false;
+            this.callback.call(this);
         },
 
         /**
@@ -471,7 +466,9 @@
         stop: function (finish) {
             $.clear();
             this.each(function () {
-               this.activeFx && this.activeFx.stop(finish);
+                if (this.activeFx) {
+                    this.activeFx.stop(finish);
+                }
             });
         },
 
@@ -533,23 +530,22 @@
                     return this;
                 }
 
-				/* Save it in the animation_array
-				
-				NOTE!! Just a thought. jQuery store this on the elem itself, 
-				       but that is slower. I think this is faster, but
-					   what about this:
-					   
-					   use the LocaleStorage.js module and store queue there.
-					   
-					   - HTML5 LocaleStorage
-					   
-					   Idea is then IF the user refresh the page, the 
-					   animation will still be in the queue and continue to 
-					   run until finished, or stopped or paused.
-					   
-					   Think about it !!
-				*/
-				
+                /* Save it in the animation_array
+ 				
+ 				NOTE!! Just a thought. jQuery store this on the elem itself, 
+ 				       but that is slower. I think this is faster, but
+ 					   what about this:
+ 					   
+ 					   use the LocaleStorage.js module and store queue there.
+ 					   
+ 					   - HTML5 LocaleStorage
+ 					   
+ 					   Idea is then IF the user refresh the page, the 
+ 					   animation will still be in the queue and continue to 
+ 					   run until finished, or stopped or paused.
+ 					   
+ 					   Think about it !!
+ 				*/
 
                 $.enqueue(fn);
             });
@@ -589,11 +585,14 @@
          * Calls the next animation in the queue (private)
          */
         nextFx: function () {
-            this.each(function () {
-                if ($.data(this, 'activeFx')) {
-                    $.removeData(this, 'activeFx')
-                }
 
+            this.each(function () {
+
+                if ($.data(this, 'activeFx')) {
+
+                    $.removeData(this, 'activeFx')
+
+                }
                 var fn = $.dequeue();
 
                 // If any animation in the queue, fire it!
@@ -605,6 +604,7 @@
             });
         }
     });
+
 
     /**
      * Animation queue
@@ -625,18 +625,8 @@
          * @param {Object}
          */
         enqueue: function (item) {
-          
-		  if(item){
-        
-		   animation_array.push(item);
-		   
-		   // Push it into the reverse_array if we
-		   // want to do the animation in reverse
-		   
-		  // NOTE!! Commented out just now - experimental !!
-		  
-		  //   reverse_array.push(item);
-		  }
+
+            items.push(item);
         },
 
         /**
@@ -644,11 +634,7 @@
          * @return {Object/Null}
          */
         dequeue: function () {
-        
-		// Only remove the animation from the animation_array
-        // We remove it later from reverse_array if no reverse
-		
-            var item = animation_array.shift();
+            var item = items.shift();
             return item ? item : null;
         },
 
@@ -657,14 +643,14 @@
          * @return {Boolean} True if there are currently no items left in the queue, false otherwise
          */
         isEmpty: function () {
-            return animation_array.length === 0;
+            return items.length === 0;
         },
 
         /**
          * Clear the queue
          */
         clear: function () {
-            animation_array = [];
+            items = [];
         }
 
     });
