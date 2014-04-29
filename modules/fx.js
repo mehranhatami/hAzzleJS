@@ -6,18 +6,19 @@
  * ==================
  *
  * - clean up the animation frame code
- * - Add animation queue
- *
+ * - fix the color mess
+ * - add transform
  *
  * NOTE!! For the iOS6 bug, we now only blacklist that OS, and force back to normal
  * window timer solution. There are better solutions for this online. FIX IT!!
  *
  ****/
-;
 (function ($) {
 
     var win = window,
         doc = win.document,
+
+        items = [],
 
         cache = {},
 
@@ -42,17 +43,17 @@
 
         perf = win.performance || {},
         perfNow = (function () {
-            return performance.now ||
-                performance.mozNow ||
-                performance.msNow ||
-                performance.oNow ||
-                performance.webkitNow
+            return perf.now ||
+                perf.mozNow ||
+                perf.msNow ||
+                perf.oNow ||
+                perf.webkitNow;
         })()
 
     , now = perfNow ? function () {
-        return perfNow.call(perf)
+        return perfNow.call(perf);
     } : function () {
-        return $.now()
+        return $.now();
     }, fixTs = false, // feature detected below
 
     // RAF
@@ -60,8 +61,8 @@
     requestAnimationFrame = function () {
         var legacy = (function fallback(callback) {
             var currTime = $.now(),
+                lastTime = currTime + timeToCall,
                 timeToCall = Math.max(0, 17 - (currTime - lastTime));
-            lastTime = currTime + timeToCall;
             return window.setTimeout(function () {
                 callback(currTime + timeToCall);
             }, timeToCall);
@@ -74,6 +75,12 @@
         });
         return !blacklisted ? (hAzzle.prefix('CancelAnimationFrame') || $.prefix('CancelRequestAnimationFrame') || legacy) : legacy;
     }();
+
+    requestAnimationFrame(function (timestamp) {
+        // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+        // if not, we have to do a timestamp fix on each frame
+        fixTs = timestamp > 1e12 != now() > 1e12;
+    });
 
     /**
      * Constructor - initiate with the new operator
@@ -94,33 +101,33 @@
         fx.duration = 0.7;
         fx.easing = $.easing[options.easing || 'easeInOut'];
 
-
         // check for options
+
         if (options) {
 
             for (var k in options) {
 
                 if (k === 'callback') {
                     fx.callback = options.callback;
-                    delete k['callback']
+                    delete options['callback'];
                 }
                 if (k === 'duration') {
 
                     fx.duration = options.duration;
-                    delete k['duration']
+                    delete options['duration'];
                 }
 
                 if (k === 'easing') {
                     fx.easing = $.easing[options.easing];
-                    delete k['easing']
+                    delete options['easing'];
                 }
             }
         }
 
-        this._timeoutId = null
-        this._callbacks = {}
-        this._lastTickTime = 0
-        this._tickCounter = 0
+        this._timeoutId = null;
+        this._callbacks = {};
+        this._lastTickTime = 0;
+        this._tickCounter = 0;
         fx.animating = false;
 
         /**
@@ -147,7 +154,7 @@
          * @type Object
          */
         fx.startAttr = {};
-    }
+    };
 
     $.FX.prototype = {
 
@@ -161,6 +168,7 @@
             fx.duration = fx.duration * 1000;
             fx.time = now();
             fx.animating = true;
+
             fx.timer = run = function () {
 
                 var time = now();
@@ -291,8 +299,6 @@
 
             for (attr in this.frame) {
                 frame = this.frame[attr];
-
-
                 $.style(el, attr, frame);
                 $.style(el, attr, 'rgb(' + Math.floor(frame[0]) + ',' + Math.floor(frame[1]) + ',' + Math.floor(frame[2]) + ')');
             }
@@ -353,11 +359,11 @@
 
             opt = {
                 'duration': speeds[opt] || opt,
-            }
+            };
         }
 
-        opt = opt || {}
-        opt.callback = callback || function () {}
+        opt = opt || {};
+        opt.callback = callback || function () {};
 
         return opt;
     }
@@ -388,13 +394,14 @@
 
     $.FX.hasNative = false;
 
+
     $.extend($.fn, {
 
         animate: function (options) {
 
             options = options || {};
 
-            return this.each(function () {
+            return this.queueFx(function () {
 
                 if ($.nodeType(1, this) && ("height" in options || "width" in options)) {
 
@@ -406,21 +413,159 @@
 
                     // Store display property
 
-                    options.display = $.css(this, "display");
+                    // options.display = $.css(this, "display");
                 }
 
                 if (options.overflow) {
 
                     this.style.overflow = "hidden";
                 }
-                
-				// Start the animation
-				
-                new $.FX(this, options).start();
-				
+
+                // Start the animation
+
+                return new $.FX(this, options);
+
+            });
+        },
+
+        /**
+         * stop the animation
+         */
+        stop: function (finish) {
+            $.clear();
+            this.each(function () {
+                if (this.activeFx) {
+                    this.activeFx.stop(finish);
+                }
+            });
+        },
+
+
+
+        /**
+         * Scale the element's width and height
+         * @param {Number} width The new width the element will animate to
+         * @param {Number} height The new height the element will animate to
+         * @param {Object} config (optional) Configuration for the animation, see above for the complete list of options
+         * @return {FX.Node Object} Returns the instance to facilitate method chaining
+         */
+        scale: function (width, height, options) {
+            options = options || {};
+            options.width = width;
+            options.height = height;
+            return this.animate(options);
+        },
+
+        /**
+         * Queue an animation (private)
+         * @param {Object} config Configuration for the queue (only queue and priority propertiers apply here)
+         * @param {Function} fn The function that encapsulates the animation call
+         * @return {FX.Node Object} Returns the instance to facilitate method chaining
+         */
+        queueFx: function (fn) {
+            return this.each(function () {
+
+                if (!this.activeFx) {
+                    $(this).callFx(fn);
+                    return this;
+                }
+                $.enqueue(fn);
+
+
+            });
+        },
+
+        /**
+         * Calls an animation (private)
+         * @param {Function} fn The function that encapsulates the animation call
+         * @param {Boolean} queue True if the animation should be queued, false otherwise
+         */
+        callFx: function (fn) {
+            this.each(function () {
+                var activeFx = fn.call(this);
+                if (activeFx) {
+                    this.activeFx = activeFx;
+                    var fx = this,
+                        queue = queue || true;
+                    if (queue === true) {
+                        var callback = activeFx.callback;
+                        activeFx.callback = function () {
+                            callback.call(window);
+                            $(fx).nextFx();
+                        };
+                    }
+                    activeFx.start();
+                }
+            });
+        },
+
+        /**
+         * Calls the next animation in the queue (private)
+         */
+        nextFx: function () {
+            this.each(function () {
+                if (this.activeFx) {
+                    delete this.activeFx;
+                }
+                var fn = $.dequeue();
+                if (fn) {
+                    $(this).callFx(fn);
+                }
             });
         }
     });
+
+
+    /**
+     * Animation queue
+     *
+     * TODO!
+     *
+     * - A lot of cleanups, and make this much better
+     * - Add pause / resume
+     * - Add delay function
+     * - Add reverse function
+     *
+     */
+
+    $.extend($, {
+
+        /**
+         * Enter a new item into the queue
+         * @param {Object} item The object to enter into the queue
+         */
+        enqueue: function (item) {
+            items.push(item);
+        },
+
+        /**
+         * Remove the next item in the queue and return it
+         * @return {Object/Null} Returns the next item in the queue or null if none is found
+         */
+        dequeue: function () {
+            var item = items.shift();
+            return item ? item : null;
+        },
+
+        /**
+         * Is the queue empty?
+         * @return {Boolean} True if there are currently no items left in the queue, false otherwise
+         */
+        isEmpty: function () {
+            return items.length === 0;
+        },
+
+        /**
+         * Clear the queue
+         */
+        clear: function () {
+            items = [];
+        }
+
+    });
+
+
+
 
     // fadeIn / fadeOut
 
@@ -435,5 +580,4 @@
             return this.animate(options);
         };
     });
-
 })(hAzzle);
