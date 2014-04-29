@@ -101,9 +101,10 @@
 
                 if ( ! isUndefined(value)) {
 
+
                     // Set and return the value
                     id[key] = value;
-
+                   
                     return id[key];
                 }
             }
