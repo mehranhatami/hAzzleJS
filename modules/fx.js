@@ -21,6 +21,12 @@
 
         cache = {},
 
+        speeds = {
+            slow: 1.5,
+            fast: 0.6,
+            quick: 0.2
+        },
+
         /**
          * Regular expressions used to parse a CSS color declaration and extract the rgb values
          */
@@ -108,9 +114,9 @@
                     fx.easing = $.easing[options.easing];
                     delete k['easing']
                 }
-
             }
         }
+
         this._timeoutId = null
         this._callbacks = {}
         this._lastTickTime = 0
@@ -125,6 +131,7 @@
 
         /**
          * The object to carry the current values for each frame
+
          * @type Object
          */
         fx.frame = {};
@@ -334,6 +341,29 @@
     }
 
     /**
+     * convert options to valid values based on speed and callback. This are only used
+     * on special effects such as fadeIn() and fadeOut()
+     * @param {Object/Null} opt  Options for the animation
+     * @return {Object}
+     */
+
+    function doOptions(opt, callback) {
+
+        if ($.isNumber(opt) || $.isString(opt)) {
+
+            opt = {
+                'duration': speeds[opt] || opt,
+            }
+        }
+
+        opt = opt || {}
+        opt.callback = callback || function () {}
+
+        return opt;
+    }
+
+
+    /**
      * parse a color to be handled by the animation, supports hex and rgb (#FFFFFF, #FFF, rgb(255, 0, 0))
      * @param {String} str The string value of an elements color
      * @return {Array} The rgb values of the color contained in an array
@@ -365,7 +395,29 @@
             options = options || {};
 
             return this.each(function () {
+
+                if ($.nodeType(1, this) && ("height" in options || "width" in options)) {
+
+                    // Make sure that nothing sneaks out
+
+                    options.overflow = this.style.overflow;
+                    options.overflowX = this.style.overflowX;
+                    options.overflowY = this.style.overflowY;
+
+                    // Store display property
+
+                    options.display = $.css(this, "display");
+                }
+
+                if (options.overflow) {
+
+                    this.style.overflow = "hidden";
+                }
+                
+				// Start the animation
+				
                 new $.FX(this, options).start();
+				
             });
         }
     });
@@ -378,28 +430,9 @@
     }, function (name, alpha) {
 
         $.fn[name] = function (options, callback) {
-
-            if (typeof options === 'number') {
-
-                options = {
-
-                    'duration': options,
-                    'opacity': alpha
-                }
-            }
-
-            options = options || {};
+            options = doOptions(options, callback);
             options['opacity'] = alpha;
-            options.callback = callback || function () {};
-
-
-            this.each(function () {
-
-                new $.FX(
-                    this, options
-                ).start();
-
-            });
+            return this.animate(options);
         };
     });
 
