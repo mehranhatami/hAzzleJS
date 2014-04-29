@@ -12,13 +12,37 @@
  * NOTE!! For the iOS6 bug, we now only blacklist that OS, and force back to normal
  * window timer solution. There are better solutions for this online. FIX IT!!
  *
- ****/
+ */
 (function ($) {
 
     var win = window,
         doc = win.document,
 
         items = [],
+
+   /**
+    *
+	* IMPORTANT TODO!!
+	*
+	* Items contains all animation queued in the animation queued. My idea is to make this as a part of the
+	* prototype FX. And make a reverse method as well.
+	*
+	* My idea is like this:
+	*
+	* - In the moment animation are running, and the dequeue() function removes elems from this 'item' with shift(), we
+	*   make it so in the same moment the animation are removed from 'item' are moved into another array. This array
+	*   contains the finished animation.
+	*
+	*  Say we call this array for reverseAnim = [], then we have to do it like this: reverseAnim.reverse() after anim
+	*  are finished so we can get animation in reverse.
+	*
+	*
+	* THEN in the animation: function we put an extra param - reverse. So if 'reverse' are true, we are running the 
+	* animation again but this time from the new array. IF NOT reverse are true, we empty the reverse array.
+	*
+	* This again need a few modifications in the animation queueue.
+	*
+	***/
 
         cache = {},
 
@@ -447,6 +471,31 @@
                 }
             });
         },
+		
+		/**
+		 * Pause before starting the next animation in the queue (best used in animation chaining)
+		 * @param {Number} seconds
+		 * @return {Object}
+		 *
+		 *
+		 * THIS IS NOT WORKING!!!!!
+		 *
+		 */
+
+		pause: function(seconds){
+	this.each(function() {
+			var fx = this, seconds = seconds || 1;
+			return $(this).queueFx({}, function(){
+				var timer = setTimeout(function(){
+					$(fx).nextFx();
+					clearTimeout(timer);
+					timer = null;
+				}, seconds * 1000);							 
+				return null;
+			});
+      });
+		},
+		
 
 
 
