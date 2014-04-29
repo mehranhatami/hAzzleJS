@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.37
+ * Version: 0.37a
  * Released under the MIT License.
  *
- * Date: 2014-04-27
+ * Date: 2014-04-29
  */
 (function (window, undefined) {
 
@@ -70,7 +70,7 @@
         /**
          * Detect classList support.
          */
-        support.classList = !! doc.createElement('p').classList;
+        support.classList = !!doc.createElement('p').classList;
 
         ghost.style.backgroundClip = "content-box";
         ghost.cloneNode(true).style.backgroundClip = "";
@@ -86,8 +86,8 @@
         d = []; // array to hold the new values which match the expression
         for (e in c) // for each value in the array, 
         ~~ e + '' == e && e >= 0 && // coerce the array position and if valid,
-        a.call(b, c[e], +e, c) && // pass the current value into the expression and if truthy,
-        d.push(c[e]); // add it to the new array
+            a.call(b, c[e], +e, c) && // pass the current value into the expression and if truthy,
+            d.push(c[e]); // add it to the new array
 
         return d; // give back the new array
     };
@@ -732,7 +732,7 @@
         contains: function (parent, child) {
             var adown = nodeTypes[9](parent) ? parent.documentElement : parent,
                 bup = child && child.parentNode;
-            return parent === bup || !! (bup && nodeTypes[1](bup) && adown.contains(bup));
+            return parent === bup || !!(bup && nodeTypes[1](bup) && adown.contains(bup));
         },
 
         /**
@@ -919,10 +919,10 @@
                 retVal,
                 i = 0,
                 length = elems.length;
-            inv = !! inv;
+            inv = !!inv;
             for (; i < length; i++) {
                 if (i in elems) { // check existance
-                    retVal = !! callback.call(args, elems[i], i); // set callback this
+                    retVal = !!callback.call(args, elems[i], i); // set callback this
                     if (inv !== retVal) {
                         ret.push(elems[i]);
                     }
@@ -931,19 +931,22 @@
             return ret;
         },
 
-        makeArray: function (arr, results) {
+        makeArray: function (array) {
 
-            var ret = results || [];
+            var ret = [];
 
-            if (arr !== null) {
-                if (hAzzle.isArraylike(Object(arr))) {
-                    hAzzle.merge(ret, typeof arr === "string" ? [arr] : arr);
-                } else {
-                    push.call(ret, arr);
-                }
+            if (array != null) {
+                var i = array.length;
+                // The window, strings (and functions) also have 'length'
+                if (i == null || typeof array === "string" || hAzzle.isFunction(array) || array.setInterval)
+                    ret[0] = array;
+                else
+                    while (i)
+                        ret[--i] = array[i];
             }
 
             return ret;
+
         },
 
         // A function that performs no operations.
