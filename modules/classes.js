@@ -4,7 +4,7 @@
 
     // Check if we can support classList
 
-    var csp = $.support.classList,
+    var csp =  !!document.createElement('p').classList,
 
         indexOf = Array.prototype.indexOf,
 
@@ -23,7 +23,6 @@
             div.classList.add('a', 'b');
             sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
         }());
-
     }
 
     $.extend($.fn, {
@@ -42,12 +41,13 @@
                 });
             }
 
-            var cls
-            cur,
+            var cls,
+                cur,
                 j,
                 finalValue,
                 classes = (value || "").match(whitespace) || [];
 
+       // I think this could give memory leak, so we need to find a solution here.
             return this.each(function (_, elem) {
 
                 // classList
@@ -117,12 +117,17 @@
                 // ClassList
 
                 if (csp && $.nodeType(1, elem) && elem.className) {
-                    if (!value) {
+                  
+				    if (!value) {
                         elem.className = '';
                     }
+					
                     if (sMa) {
+						
                         elem.classList.remove.apply(elem.classList, classes);
+						
                     } else {
+						
                         j = 0;
                         while ((cls = classes[j++])) {
                             elem.classList.remove(cls);
@@ -201,12 +206,12 @@
          */
 
         replaceClass: function (clA, clB) {
-            var current, found;
+            var current, found, i;
             return this.each(function () {
                 current = this.className.split(' '),
                 found = false;
 
-                for (var i = current.length; i--;) {
+                for (i = current.length; i--;) {
                     if (current[i] == clA) {
                         found = true;
                         current[i] = clB;

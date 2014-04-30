@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.37b
+ * Version: 0.37c
  * Released under the MIT License.
  *
  * Date: 2014-04-30
@@ -12,14 +12,13 @@
 
     if (window['hAzzle']) return;
 
-    var doc = window.document,
+    var
 
-        /**
-         * Prototype references.
-         */
+    /**
+     * Prototype references.
+     */
 
         ArrayProto = Array.prototype,
-        ObjProto = Object.prototype,
 
         /**
          * Create a reference to some core methods
@@ -28,8 +27,7 @@
         push = ArrayProto.push,
         slice = ArrayProto.slice,
         concat = ArrayProto.concat,
-        toString = ObjProto.toString,
-
+        toString = Object.prototype.toString,
 
         /*
          * Unique ID
@@ -49,13 +47,11 @@
         cache = [],
 
         // Different nodeTypes we are checking against for faster speed
+
         nodeTypes = {},
 
-        // Dummy div we are using in different functions
-
-        ghost = doc.createElement('div'),
-
         // Main function
+
         hAzzle = function (sel, ctx) {
             return new hAzzle.fn.init(sel, ctx);
         };
@@ -63,20 +59,8 @@
     /**
      * An object used to flag environments/features.
      */
-    var support = hAzzle.support = {};
 
-    (function () {
-
-        /**
-         * Detect classList support.
-         */
-        support.classList = !!doc.createElement('p').classList;
-
-        ghost.style.backgroundClip = "content-box";
-        ghost.cloneNode(true).style.backgroundClip = "";
-        support.clearCloneStyle = ghost.style.backgroundClip === "content-box";
-
-    }());
+    hAzzle.support = {};
 
     // Overrun the native prototype.filter to gain better
     // performance ( 74 % faster then jQuery)
@@ -94,7 +78,6 @@
 
     /* Faster alternative till native prototype.some
      *
-     * For 'internal' usage only!
      */
 
     Array.prototype.some = function (fun /*, thisArg */ ) {
@@ -133,7 +116,6 @@
 
                         this[i] = elems[i];
                     }
-
 
                     // Return the hAzzle Object
 
@@ -176,6 +158,8 @@
 
                     // Nodelist
 
+
+
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
                 }
             }
@@ -190,6 +174,7 @@
             }
             return this;
         },
+
         /**
          * Run callback for each element in the collection
          *
@@ -238,7 +223,6 @@
                 }
                 return hAzzle.create(elements);
             }
-
 
             return this;
         },
@@ -585,7 +569,7 @@
         },
 
         isArguments: function (a) {
-            return !!(a && ObjProto.hasOwnProperty.call(a, 'callee'));
+            return !!(a && Object.prototype.hasOwnProperty.call(a, 'callee'));
         },
 
         isNumber: function (value) {
@@ -935,10 +919,10 @@
 
             var ret = [];
 
-            if (array != null) {
+            if (array !== null) {
                 var i = array.length;
                 // The window, strings (and functions) also have 'length'
-                if (i == null || typeof array === "string" || hAzzle.isFunction(array) || array.setInterval)
+                if (i === null || $.isString(array) || hAzzle.isFunction(array) || array.setInterval)
                     ret[0] = array;
                 else
                     while (i)
@@ -1392,6 +1376,7 @@
 
 // data
 
+;
 (function ($) {
 
     var isUndefined = $.isUndefined,
@@ -1482,14 +1467,13 @@
                     return id;
                 }
 
-
                 if (isUndefined(value)) {
 
                     return id[key];
-
                 }
 
                 if (!isUndefined(value)) {
+
 
                     // Set and return the value
                     id[key] = value;
@@ -1546,13 +1530,13 @@
 
                         if (name.indexOf("data-") === 0) {
 
-                            name = $.camelCase(name.substring(5));
+                            name = $.camelCase(name.substr(5));
 
                             data = data[name];
 
                             // Try to fetch data from the HTML5 data- attribute
 
-                            if (data === undefined && hAzzle.nodeType(1, elem)) {
+                            if ($.isUndefined(data) && $.nodeType(1, elem)) {
 
                                 var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
 
@@ -2538,25 +2522,6 @@
 
 // Events
 
-/* Event handler
- *
- * NOTE!! This event system are different from jQuery, and more powerfull. The basic funcions are the same,
- * but hAzzle supports different types of namespaces, multiple handlers etc. etc.
- *
- * Example on a multiple handler:
- *
- *     hAzzle('p').on({
- *        click: function (e) { alert('click') },
- *        mouseover: function (e) { alert('mouse')  }
- *     });
- *
- * hAzzle don't support multiple delegated selectors like:
- *
- *  $( "#dataTable tbody tr" )
- *
- * Todo!! Fix this maybe!!
- */
-
 ;
 (function ($) {
 
@@ -2705,11 +2670,15 @@
                 return new $.Kernel(element, type, handler, original, namespaces, args);
             }
 
-            var _special = special[type];
+            var _special = special[type],
+                evt = this;
 
             // Only load the event once upon unload
 
-            if (type === 'unload') handler = $.Events.once($.Events.removeListener, element, type, handler, original);
+            if (type === 'unload') {
+
+                handler = $.Events.once($.Events.removeListener, element, type, handler, original);
+            }
 
             if (_special) {
                 if (_special.condition) {
@@ -2719,13 +2688,13 @@
                 type = _special.fix || type;
             }
 
-            this.element = element;
-            this.type = type;
-            this.original = original;
-            this.namespaces = namespaces;
-            this.eventType = type;
-            this.target = element;
-            this.handler = $.Events.wrappedHandler(element, handler, null, args);
+            evt.element = element;
+            evt.type = type;
+            evt.original = original;
+            evt.namespaces = namespaces;
+            evt.eventType = type;
+            evt.target = element;
+            evt.handler = $.Events.wrappedHandler(element, handler, null, args);
         }
     });
 
@@ -2734,8 +2703,16 @@
 
         var i, j, c = 0;
 
-        if (!checkNamespaces) return true;
-        if (!this.namespaces) return false;
+        if (!checkNamespaces) {
+
+            return true;
+        }
+
+        if (!this.namespaces) {
+
+            return false;
+        }
+
         for (i = checkNamespaces.length; i--;) {
             for (j = this.namespaces.length; j--;) {
                 if (checkNamespaces[i] == this.namespaces[j]) c++;
@@ -2787,6 +2764,7 @@
          *
          * @param {String} events
          * @param {Function} fn
+
          * @return {Object}
          */
 
@@ -2957,8 +2935,6 @@
                 }
 
                 // Handle multiple events separated by a space
-                // Compare to jQuery, hAzzle don't need a bunch of regEx tests
-                // That speed things up
 
                 types = events.split(specialsplit);
 
@@ -3194,23 +3170,27 @@
 
 
     // Shortcut methods for 'on'
+    // Using split() here, slow down pageload with 4%
 
-    $.each(("hover blur focus focusin focusout load resize scroll unload click dblclick " +
-        "mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
-        "change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
+    $.each(["hover", "blur", " focus", "focusin", "focusout", "load", "resize", "scroll", "unload", "click", "dblclick", "mousedown", "mouseup", "mousemove", "mouseover", "mouseout", "mouseenter", "mouseleave", "change", "select", "submit", "keydown", "keypress", "keyup", "error", "contextmenu"], function () {
+
+        var name = this;
 
         // Handle event binding
 
         $.fn[name] = function (data, fn) {
+
             //events, fn, delfn, one
-            return arguments.length > 0 ?
-                this.on(name, data, fn) :
-                this.trigger(name);
+
+            if (arguments.length > 0) {
+
+                this.on(name, data, fn)
+
+            }
         };
     });
 
 })(hAzzle);
-
 
 // Localestorage
 
@@ -3586,11 +3566,8 @@
         }
     });
 
-})(hAzzle);
 
-// CSS
-;
-(function ($) {
+    // CSS
 
     var html = window.document.documentElement,
         doc = document,
@@ -3621,24 +3598,6 @@
             .toLowerCase();
     }
 
-    function curCSS(elem, name, computed) {
-
-        var ret,
-            style = elem.style;
-
-        computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-
-        if (computed) {
-
-            var ret = computed.getPropertyValue(name) || computed[name];
-
-            if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
-                ret = $.style(elem, name);
-            }
-        }
-        return $.isUndefined(ret) ? ret + "" : ret;
-    }
-
     // Extend the $ object
 
     $.extend({
@@ -3660,7 +3619,7 @@
                 get: function (elem, computed) {
                     if (computed) {
                         // We should always get a number back from opacity
-                        var ret = curCSS(elem, "opacity");
+                        var ret = $.curCSS(elem, "opacity");
                         return ret === "" ? "1" : ret;
                     }
                 }
@@ -3724,6 +3683,25 @@
             return unit ? px / unit : px;
         },
 
+        curCSS: function (elem, name, computed) {
+
+            var ret,
+                style = elem.style;
+
+            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+
+            if (computed) {
+
+
+                var ret = computed.getPropertyValue(name) || computed[name];
+
+                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
+                    ret = $.style(elem, name);
+                }
+            }
+            return $.isUndefined(ret) ? ret + "" : ret;
+        },
+
         // Globalize CSS
 
         css: function (elem, name, extra, styles, normalized) {
@@ -3763,7 +3741,7 @@
 
             if (val === undefined) {
 
-                val = curCSS(elem, name, styles, style);
+                val = $.curCSS(elem, name, styles, style);
             }
 
             // Convert "normal" to computed value
@@ -4254,8 +4232,9 @@
             isBorderBox = $.support.boxSizing && $.css(elem, "boxSizing") === "border-box";
 
         if (val <= 0) {
+
             // Fall back to computed then uncomputed css if necessary
-            val = curCSS(elem, name);
+            val = $.curCSS(elem, name);
             if (val < 0 || val === null) {
                 val = elem.style[name];
             }
@@ -4297,19 +4276,19 @@
             if (isBorderBox) {
                 // border-box includes padding, so remove it if we want content
                 if (extra === "content") {
-                    val -= parseFloat(curCSS(elem, "padding" + cssDirection[i])) || 0;
+                    val -= parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
                 }
 
                 if (extra !== "margin") {
-                    val -= parseFloat(curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
+                    val -= parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
                 }
             } else {
                 // at this point, extra isnt content, so add padding
-                val += parseFloat(curCSS(elem, "padding" + cssDirection[i])) || 0;
+                val += parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
 
                 // at this point, extra isnt content nor padding, so add border
                 if (extra !== "padding") {
-                    val += parseFloat(curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
+                    val += parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
                 }
             }
         }
@@ -4361,15 +4340,8 @@
         };
     });
 
-})(hAzzle);
+    // HTML
 
-
-
-
-// HTML
-
-;
-(function ($) {
 
     var concat = Array.prototype.concat,
 
@@ -5389,7 +5361,7 @@
 
         },
 
-        /*
+        /**
          * Remove properties from DOM elements
          *
          * @param {String}
@@ -6272,13 +6244,6 @@
         }
     });
 
-})(hAzzle);
-
-(function ($) {
-
-
-
-
     var props = "backgroundColor borderBottomColor borderLeftColor borderRightColor borderTopColor borderColor boxShadowColor color textShadowColor columnRuleColor outlineColor textDecorationColor textEmphasisColor".split(' ');
 
     $.extend($, {
@@ -6595,6 +6560,7 @@
                 b: 140
             },
             lavender: {
+
                 r: 230,
                 g: 230,
                 b: 250
@@ -7205,14 +7171,6 @@
     };
 
 
-})(hAzzle);
-
-
-
-
-;
-(function ($) {
-
     /**
      * Show | hide | toggle
      *
@@ -7220,19 +7178,21 @@
      *
      */
 
-    var elemdisplay = {};
-
+    var elemdisplay = {},
+        docbody = document.body,
+        doc = document;
 
     function actualDisplay(name, doc) {
 
         var style,
+            win = window,
             elem = doc.createElement(name);
 
         // Vanila solution is the best choise here
 
         docbody.appendChild(elem);
 
-        display = window.getDefaultComputedStyle && (style = window.getDefaultComputedStyle(elem[0])) ? style.display : $.css(elem[0], "display");
+        display = win.getDefaultComputedStyle && (style = win.getDefaultComputedStyle(elem[0])) ? style.display : $.css(elem[0], "display");
         docbody.removeChild(elem);
         return display;
     }
@@ -7269,15 +7229,12 @@
         }
 
         return display;
-
     }
 
-
     /**
- * Check if an element is hidden
- *  @return {Boolean}
-
- */
+     * Check if an element is hidden
+     *  @return {Boolean}
+     */
 
     function isHidden(elem, el) {
         elem = el || elem;
@@ -7305,7 +7262,7 @@
 
         }
 
-        if ((style.display === "" && curCSS(elem, "display") === "none") || !$.contains(elem.ownerDocument.documentElement, elem)) {
+        if ((style.display === "" && $.curCSS(elem, "display") === "none") || !$.contains(elem.ownerDocument.documentElement, elem)) {
             $.data(elem, 'display', defaultDisplay(elem.nodeName));
         }
     }
@@ -7364,19 +7321,21 @@
 
         toggle: function (state) {
 
+            var elem;
+
             if (typeof state === "boolean") {
                 return state ? this.show() : this.hide();
             }
 
             return this.each(function () {
+                elem = this;
+                if (isHidden(elem)) {
 
-                if (isHidden(this)) {
-
-                    show(this);
+                    show(elem);
 
                 } else {
 
-                    hide(this);
+                    hide(elem);
 
                 }
             });

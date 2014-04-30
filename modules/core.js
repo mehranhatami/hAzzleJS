@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.37b
+ * Version: 0.37c
  * Released under the MIT License.
  *
  * Date: 2014-04-30
@@ -12,14 +12,13 @@
 
     if (window['hAzzle']) return;
 
-    var doc = window.document,
+    var
 
-        /**
-         * Prototype references.
-         */
+    /**
+     * Prototype references.
+     */
 
         ArrayProto = Array.prototype,
-        ObjProto = Object.prototype,
 
         /**
          * Create a reference to some core methods
@@ -28,8 +27,7 @@
         push = ArrayProto.push,
         slice = ArrayProto.slice,
         concat = ArrayProto.concat,
-        toString = ObjProto.toString,
-
+        toString = Object.prototype.toString,
 
         /*
          * Unique ID
@@ -49,13 +47,11 @@
         cache = [],
 
         // Different nodeTypes we are checking against for faster speed
+
         nodeTypes = {},
 
-        // Dummy div we are using in different functions
-
-        ghost = doc.createElement('div'),
-
         // Main function
+
         hAzzle = function (sel, ctx) {
             return new hAzzle.fn.init(sel, ctx);
         };
@@ -63,20 +59,8 @@
     /**
      * An object used to flag environments/features.
      */
-    var support = hAzzle.support = {};
 
-    (function () {
-
-        /**
-         * Detect classList support.
-         */
-        support.classList = !!doc.createElement('p').classList;
-
-        ghost.style.backgroundClip = "content-box";
-        ghost.cloneNode(true).style.backgroundClip = "";
-        support.clearCloneStyle = ghost.style.backgroundClip === "content-box";
-
-    }());
+    hAzzle.support = {};
 
     // Overrun the native prototype.filter to gain better
     // performance ( 74 % faster then jQuery)
@@ -94,7 +78,6 @@
 
     /* Faster alternative till native prototype.some
      *
-     * For 'internal' usage only!
      */
 
     Array.prototype.some = function (fun /*, thisArg */ ) {
@@ -133,7 +116,6 @@
 
                         this[i] = elems[i];
                     }
-
 
                     // Return the hAzzle Object
 
@@ -176,6 +158,7 @@
 
                     // Nodelist
 
+
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
                 }
             }
@@ -190,6 +173,7 @@
             }
             return this;
         },
+
         /**
          * Run callback for each element in the collection
          *
@@ -238,7 +222,6 @@
                 }
                 return hAzzle.create(elements);
             }
-
 
             return this;
         },
@@ -585,7 +568,7 @@
         },
 
         isArguments: function (a) {
-            return !!(a && ObjProto.hasOwnProperty.call(a, 'callee'));
+            return !!(a && Object.prototype.hasOwnProperty.call(a, 'callee'));
         },
 
         isNumber: function (value) {
@@ -907,7 +890,7 @@
         },
 
         isXML: function (elem) {
-            return (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
+            return elem && (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
         },
 
         /*
@@ -935,10 +918,10 @@
 
             var ret = [];
 
-            if (array != null) {
+            if (array !== null) {
                 var i = array.length;
                 // The window, strings (and functions) also have 'length'
-                if (i == null || typeof array === "string" || hAzzle.isFunction(array) || array.setInterval)
+                if (i === null || $.isString(array) || hAzzle.isFunction(array) || array.setInterval)
                     ret[0] = array;
                 else
                     while (i)
