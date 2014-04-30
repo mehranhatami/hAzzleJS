@@ -92,11 +92,9 @@
                     return id;
                 }
 
-
                 if (isUndefined(value)) {
 
                     return id[key];
-
                 }
 
                 if ( ! isUndefined(value)) {
@@ -157,13 +155,13 @@
 
                         if (name.indexOf("data-") === 0) {
 
-                            name = $.camelCase(name.substring(5));
+                            name = $.camelCase(name.substr(5));
 
                             data = data[name];
 
                             // Try to fetch data from the HTML5 data- attribute
 
-                            if (data === undefined && hAzzle.nodeType(1, elem)) {
+                            if ($.isUndefined(data) && $.nodeType(1, elem)) {
 
                                 var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
 

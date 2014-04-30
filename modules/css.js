@@ -31,24 +31,6 @@
             .toLowerCase();
     }
 
-    function curCSS(elem, name, computed) {
-
-        var ret,
-            style = elem.style;
-
-        computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-
-        if (computed) {
-
-            var ret = computed.getPropertyValue(name) || computed[name];
-
-            if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
-                ret = $.style(elem, name);
-            }
-        }
-        return $.isUndefined(ret) ? ret + "" : ret;
-    }
-
     // Extend the $ object
 
     $.extend({
@@ -70,7 +52,7 @@
                 get: function (elem, computed) {
                     if (computed) {
                         // We should always get a number back from opacity
-                        var ret = curCSS(elem, "opacity");
+                        var ret = $.curCSS(elem, "opacity");
                         return ret === "" ? "1" : ret;
                     }
                 }
@@ -134,6 +116,24 @@
             return unit ? px / unit : px;
         },
 
+	    curCSS: function(elem, name, computed) {
+
+        var ret,
+            style = elem.style;
+
+        computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+
+        if (computed) {
+
+            var ret = computed.getPropertyValue(name) || computed[name];
+
+            if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
+                ret = $.style(elem, name);
+            }
+        }
+        return $.isUndefined(ret) ? ret + "" : ret;
+    },
+
         // Globalize CSS
 
         css: function (elem, name, extra, styles, normalized) {
@@ -173,7 +173,7 @@
 
             if (val === undefined) {
 
-                val = curCSS(elem, name, styles, style);
+                val = $.curCSS(elem, name, styles, style);
             }
 
             // Convert "normal" to computed value
@@ -665,7 +665,7 @@
 
         if (val <= 0) {
             // Fall back to computed then uncomputed css if necessary
-            val = curCSS(elem, name);
+            val = $.curCSS(elem, name);
             if (val < 0 || val === null) {
                 val = elem.style[name];
             }
@@ -707,19 +707,19 @@
             if (isBorderBox) {
                 // border-box includes padding, so remove it if we want content
                 if (extra === "content") {
-                    val -= parseFloat(curCSS(elem, "padding" + cssDirection[i])) || 0;
+                    val -= parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
                 }
 
                 if (extra !== "margin") {
-                    val -= parseFloat(curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
+                    val -= parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
                 }
             } else {
                 // at this point, extra isnt content, so add padding
-                val += parseFloat(curCSS(elem, "padding" + cssDirection[i])) || 0;
+                val += parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
 
                 // at this point, extra isnt content nor padding, so add border
                 if (extra !== "padding") {
-                    val += parseFloat(curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
+                    val += parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
                 }
             }
         }

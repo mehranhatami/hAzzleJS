@@ -11,6 +11,10 @@
  *
  * We then first need to find current browser. All this will make sure each browser have the same performance
  *
+ * 
+ * NOTE!!  Mainly CSS related functions have huge differences between browsers. Will update this soon.
+ *
+ *
  */
  
  var Compatibility = {

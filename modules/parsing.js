@@ -1,7 +1,7 @@
-;
-(function ($) {
-
 // Parsing
+
+; (function ($) {
+
  $.extend($, {
 
     /**
@@ -11,14 +11,13 @@
      */
 
     parseJSON: function (data) {
-		 return hAzzle.isString(data)
-      ? JSON.parse(data + "")
-      : data;
+		 return typeof data === "string" ? JSON.parse(data + "") : data;
     },
 
     parseXML: function (data) {
         var xml, tmp;
-        if (!data || typeof data !== "string") {
+        if (!data || !$.isString(data)) {
+
             return null;
         }
 
