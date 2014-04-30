@@ -907,7 +907,7 @@
         },
 
         isXML: function (elem) {
-            return (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
+            return elem && (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
         },
 
         /*
@@ -974,7 +974,8 @@
 
 // Selector
 
-; (function ($) {
+;
+(function ($) {
 
 
     var slice = Array.prototype.slice,
@@ -1049,7 +1050,7 @@
             },
             checked: function () {
                 var nodeName = this.nodeName.toLowerCase();
-                return (nodeName === "input" && !! this.checked) || (nodeName === "option" && !! this.selected);
+                return (nodeName === "input" && !!this.checked) || (nodeName === "option" && !!this.selected);
             },
             parent: function () {
                 return this.parentNode;
@@ -1109,7 +1110,7 @@
                 return (/input|select|textarea|button/i).test(this.nodeName);
             },
             focus: function () {
-                return this === document.activeElement && (!document.hasFocus || document.hasFocus()) && !! (this.type || this.href || ~this.tabIndex);
+                return this === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(this.type || this.href || ~this.tabIndex);
             }
         },
 
@@ -1228,18 +1229,19 @@
 
 // DOM Ready
 
-; (function ($) {
+;
+(function ($) {
 
     var doc = document,
-	    readyList = [],
+        readyList = [],
         readyFired = false,
         readyEventHandlersInstalled = false;
 
     // call this when the document is ready
     // this function protects itself against being called more than once
-   
+
     function ready() {
-   
+
         if (!readyFired) {
             // this must be set to true before we start calling callbacks
             readyFired = true;
@@ -1250,7 +1252,7 @@
                 // this event loop finishes so all handlers will still execute
                 // in order and no new ones will be added to the readyList
                 // while we are processing the list
-				
+
                 readyList[i].fn.call(window, readyList[i].ctx);
             }
             // allow any closures held by these functions to free
@@ -1262,39 +1264,44 @@
 
     $.extend({
 
-    
-	ready: function (callback, context) {
-         
-		 // context are are optional, but document by default
-	     
-		 context = context || doc;
-	
-		if (readyFired) {
-            setTimeout(function() { callback(context); }, 1);
-            return;
-        } else {
 
-            // add the function and context to the list
+        ready: function (callback, context) {
 
-            readyList.push({fn: callback, ctx: context});
-        }
-		// if document already ready to go, schedule the ready function to run
-        if (doc.readyState === "complete") {
-			
-            setTimeout(ready, 1);
+            // context are are optional, but document by default
 
-		} else if (!readyEventHandlersInstalled) {
+            context = context || doc;
 
-            // otherwise if we don't have event handlers installed, install them
+            if (readyFired) {
+                setTimeout(function () {
+                    callback(context);
+                }, 1);
+                return;
+            } else {
+
+                // add the function and context to the list
+
+                readyList.push({
+                    fn: callback,
+                    ctx: context
+                });
+            }
+            // if document already ready to go, schedule the ready function to run
+            if (doc.readyState === "complete") {
+
+                setTimeout(ready, 1);
+
+            } else if (!readyEventHandlersInstalled) {
+
+                // otherwise if we don't have event handlers installed, install them
 
                 doc.addEventListener("DOMContentLoaded", ready, false);
                 // backup is window load event
                 window.addEventListener("load", ready, false);
 
-            readyEventHandlersInstalled = true;
+                readyEventHandlersInstalled = true;
+            }
         }
-    }
-});
+    });
 
 })(hAzzle);
 
@@ -1606,7 +1613,8 @@
  * Traversing.js
  */
 
-; (function ($) {
+;
+(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -1635,7 +1643,7 @@
 
         closest: function (sel, ctx) {
             return this.map(function (elem) {
-             if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
+                if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
                     return elem;
                 }
                 return $.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
@@ -1754,7 +1762,7 @@
          */
 
         parent: function (sel) {
-           return $.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
+            return $.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
         },
 
         /**
@@ -2367,9 +2375,9 @@
          */
 
         ajax: function (opt, fn) {
-          
-		  var key, h, err;
-		  
+
+            var key, h, err;
+
             opt = $.extend({}, opt || {});
 
             for (key in $.ajaxSettings) {
@@ -2389,7 +2397,7 @@
                 headers = opt.headers || {},
                 type = (opt.type || 'GET').toLowerCase(),
                 url = $.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
-				
+
             var dataType = (opt.dataType) ? opt.dataType.toLowerCase() : '',
                 abortTimeout = null,
                 processData = opt.processData || true, // Set to true as default
@@ -2437,7 +2445,7 @@
             // Set credentials
 
             if ($.isDefined(opt.withCredentials) && $.isDefined(xhr.withCredentials)) {
-                xhr.withCredentials = !! opt.withCredentials;
+                xhr.withCredentials = !!opt.withCredentials;
             }
 
             if (opt.timeout > 0) {
@@ -2549,386 +2557,386 @@
  * Todo!! Fix this maybe!!
  */
 
-;(function ($) {
+;
+(function ($) {
 
-var win = window,
-    doc = document || {},
-    root = doc.documentElement || {},
-    isString = $.isString,
-    isFunction = $.isFunction,
+    var win = window,
+        doc = document || {},
+        root = doc.documentElement || {},
+        isString = $.isString,
+        isFunction = $.isFunction,
 
-    // Cached handlers
+        // Cached handlers
 
-    container = {},
+        container = {},
 
-    specialsplit = /\s*,\s*|\s+/,
-    rkeyEvent = /^key/, // key
-    rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, // mouse
-    ns = /[^\.]*(?=\..*)\.|.*/, // Namespace regEx
-    names = /\..*/,
+        specialsplit = /\s*,\s*|\s+/,
+        rkeyEvent = /^key/, // key
+        rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, // mouse
+        ns = /[^\.]*(?=\..*)\.|.*/, // Namespace regEx
+        names = /\..*/,
 
-    // Event and handlers we have fixed
+        // Event and handlers we have fixed
 
-    treated = {},
+        treated = {},
 
-    // Some prototype references we need
+        // Some prototype references we need
 
-    slice = Array.prototype.slice,
-    concat = Array.prototype.concat,
-    toString = Object.prototype.toString,
+        slice = Array.prototype.slice,
+        concat = Array.prototype.concat,
+        toString = Object.prototype.toString,
 
-    threatment = {
+        threatment = {
 
-        // Don't do events on disabeled nodes
+            // Don't do events on disabeled nodes
 
-        disabeled: function (el, type) {
-            if (el.disabeled && type === "click") return true;
+            disabeled: function (el, type) {
+                if (el.disabeled && type === "click") return true;
+            },
+
+            // Don't do events on text and comment nodes 
+
+            nodeType: function (el) {
+                if ($.nodeType(3, el) || $.nodeType(8, el)) return true;
+            }
         },
 
-        // Don't do events on text and comment nodes 
+        special = {
+            pointerenter: {
+                fix: "pointerover",
+                condition: checkPointer
+            },
 
-        nodeType: function (el) {
-            if ($.nodeType(3, el) || $.nodeType(8, el)) return true;
-        }
-    },
-
-    special = {
-        pointerenter: {
-            fix: "pointerover",
-            condition: checkPointer
+            pointerleave: {
+                fix: "pointerout",
+                condition: checkPointer
+            },
+            mouseenter: {
+                fix: 'mouseover',
+                condition: checkMouse
+            },
+            mouseleave: {
+                fix: 'mouseout',
+                condition: checkMouse
+            },
+            mousewheel: {
+                fix: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
+            }
         },
 
-        pointerleave: {
-            fix: "pointerout",
-            condition: checkPointer
-        },
-        mouseenter: {
-            fix: 'mouseover',
-            condition: checkMouse
-        },
-        mouseleave: {
-            fix: 'mouseout',
-            condition: checkMouse
-        },
-        mousewheel: {
-            fix: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
-        }
-    },
+        // Includes some event props shared by different events
 
-    // Includes some event props shared by different events
+        commonProps = "altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" ");
 
-    commonProps = "altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" ");
+    // Check mouse
 
-// Check mouse
-
-function checkMouse(evt) {
-    if (evt = evt.relatedTarget) {
-        var ac;
-        if (ac = evt !== this)
-            if (ac = "xul" !== evt.prefix)
-                if (ac = !/document/.test(this.toString())) {
-                    a: {
-                        for (; evt = evt.parentNode;)
-                            if (evt === this) {
-                                evt = 1;
-                                break a;
-                            }
-                        evt = 0;
+    function checkMouse(evt) {
+        if (evt = evt.relatedTarget) {
+            var ac;
+            if (ac = evt !== this)
+                if (ac = "xul" !== evt.prefix)
+                    if (ac = !/document/.test(this.toString())) {
+                        a: {
+                            for (; evt = evt.parentNode;)
+                                if (evt === this) {
+                                    evt = 1;
+                                    break a;
+                                }
+                            evt = 0;
+                        }
+                        ac = !evt;
                     }
-                    ac = !evt;
-                }
-        evt = ac;
-    } else evt = null === evt;
-    return evt;
-}
+            evt = ac;
+        } else evt = null === evt;
+        return evt;
+    }
 
-/**
+    /**
   * FIX ME!!  I don't have a pointer device so can't fix this. Maybe in the future.
               But need to run a check about this condition here.
   */
 
-function checkPointer(evt) {
-    return evt;
-}
+    function checkPointer(evt) {
+        return evt;
+    }
 
 
-$.extend($, {
+    $.extend($, {
 
-    // Event hooks
+        // Event hooks
 
-    eventHooks: {
+        eventHooks: {
 
-        // Mouse and key props are borrowed from jQuery
+            // Mouse and key props are borrowed from jQuery
 
-        keys: function (evt, original) {
-            original.keyCode = evt.keyCode || evt.which;
-            return commonProps.concat(["char", "charCode", "key", "keyCode"]);
+            keys: function (evt, original) {
+                original.keyCode = evt.keyCode || evt.which;
+                return commonProps.concat(["char", "charCode", "key", "keyCode"]);
 
+            },
+            mouse: function (evt, original) {
+
+                original.rightClick = evt.which === 3 || evt.button === 2;
+
+                original.pos = {
+                    x: 0,
+                    y: 0
+                };
+
+                // Calculate pageX/Y if missing and clientX/Y available
+
+                if (evt.pageX || evt.pageY) {
+                    original.clientX = evt.pageX;
+                    original.clientY = evt.pageY;
+                } else if (evt.clientX || evt.clientY) {
+                    original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
+                    original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
+                }
+
+                return commonProps.concat("button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "));
+            }
         },
-        mouse: function (evt, original) {
 
-            original.rightClick = evt.which === 3 || evt.button === 2;
+        Kernel: function (element, type, handler, original, namespaces, args) {
 
-            original.pos = {
-                x: 0,
-                y: 0
-            };
+            // Allow instantiation without the 'new' keyword
 
-            // Calculate pageX/Y if missing and clientX/Y available
-
-            if (evt.pageX || evt.pageY) {
-                original.clientX = evt.pageX;
-                original.clientY = evt.pageY;
-            } else if (evt.clientX || evt.clientY) {
-                original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
-                original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
+            if (!(this instanceof $.Kernel)) {
+                return new $.Kernel(element, type, handler, original, namespaces, args);
             }
 
-            return commonProps.concat("button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "));
-        }
-    },
+            var _special = special[type];
 
-    Kernel: function (element, type, handler, original, namespaces, args) {
+            // Only load the event once upon unload
 
-        // Allow instantiation without the 'new' keyword
+            if (type === 'unload') handler = $.Events.once($.Events.removeListener, element, type, handler, original);
 
-        if (!(this instanceof $.Kernel)) {
-            return new $.Kernel(element, type, handler, original, namespaces, args);
-        }
+            if (_special) {
+                if (_special.condition) {
+                    handler = $.Events.wrappedHandler(element, handler, _special.condition, args);
+                }
 
-        var _special = special[type];
-
-        // Only load the event once upon unload
-
-        if (type === 'unload') handler = $.Events.once($.Events.removeListener, element, type, handler, original);
-
-        if (_special) {
-            if (_special.condition) {
-                handler = $.Events.wrappedHandler(element, handler, _special.condition, args);
+                type = _special.fix || type;
             }
 
-            type = _special.fix || type;
+            this.element = element;
+            this.type = type;
+            this.original = original;
+            this.namespaces = namespaces;
+            this.eventType = type;
+            this.target = element;
+            this.handler = $.Events.wrappedHandler(element, handler, null, args);
         }
-
-        this.element = element;
-        this.type = type;
-        this.original = original;
-        this.namespaces = namespaces;
-        this.eventType = type;
-        this.target = element;
-        this.handler = $.Events.wrappedHandler(element, handler, null, args);
-    }
-});
+    });
 
 
-$.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
+    $.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
 
-    var i, j, c = 0;
+        var i, j, c = 0;
 
-    if (!checkNamespaces) return true;
-    if (!this.namespaces) return false;
-    for (i = checkNamespaces.length; i--;) {
-        for (j = this.namespaces.length; j--;) {
-            if (checkNamespaces[i] == this.namespaces[j]) c++;
+        if (!checkNamespaces) return true;
+        if (!this.namespaces) return false;
+        for (i = checkNamespaces.length; i--;) {
+            for (j = this.namespaces.length; j--;) {
+                if (checkNamespaces[i] == this.namespaces[j]) c++;
+            }
         }
-    }
-    return checkNamespaces.length === c;
-};
+        return checkNamespaces.length === c;
+    };
 
-$.Kernel.prototype['matches'] = function (checkElement, checkOriginal, checkHandler) {
-    return this.element === checkElement &&
-        (!checkOriginal || this.original === checkOriginal) &&
-        (!checkHandler || this.handler === checkHandler);
-};
+    $.Kernel.prototype['matches'] = function (checkElement, checkOriginal, checkHandler) {
+        return this.element === checkElement &&
+            (!checkOriginal || this.original === checkOriginal) &&
+            (!checkHandler || this.handler === checkHandler);
+    };
 
 
-$.extend($.fn, {
+    $.extend($.fn, {
 
-    /**
-     * Bind a DOM event to element
-     *
-     * @param {String} events
-     * @param {String} selector
-     * @param {Function} fn
-     * @param {Boolean} one
-     * @return {Object}
-     */
+        /**
+         * Bind a DOM event to element
+         *
+         * @param {String} events
+         * @param {String} selector
+         * @param {Function} fn
+         * @param {Boolean} one
+         * @return {Object}
+         */
 
-    on: function (events, selector, fn, one) {
-        return this.each(function () {
-            $.Events.add(this, events, selector, fn, one);
-        });
-    },
+        on: function (events, selector, fn, one) {
+            return this.each(function () {
+                $.Events.add(this, events, selector, fn, one);
+            });
+        },
 
-    /**
-     * Bind a DOM event but trigger it once before removing it
-     *
-     * @param {String} events
-     * @param {String} selector
-     * @param {Function} fn
-     * @return {Object}
-     **/
+        /**
+         * Bind a DOM event but trigger it once before removing it
+         *
+         * @param {String} events
+         * @param {String} selector
+         * @param {Function} fn
+         * @return {Object}
+         **/
 
-    one: function (types, selector, fn) {
-        return this.on(types, selector, fn, 1);
-    },
+        one: function (types, selector, fn) {
+            return this.on(types, selector, fn, 1);
+        },
 
-    /**
-     * Unbind an event from the element
-     *
-     * @param {String} events
-     * @param {Function} fn
-     * @return {Object}
-     */
+        /**
+         * Unbind an event from the element
+         *
+         * @param {String} events
+         * @param {Function} fn
+         * @return {Object}
+         */
 
-    off: function (events, fn) {
-        return this.each(function () {
-            $.Events.remove(this, events, fn);
-        });
-    },
+        off: function (events, fn) {
+            return this.each(function () {
+                $.Events.remove(this, events, fn);
+            });
+        },
 
-    /**
-     * Triggers an event of specific type with optional extra arguments
-     *
-     * @param {Object|String} type
-     * @param {Object|String} args
-     * @return {Object}
-     */
+        /**
+         * Triggers an event of specific type with optional extra arguments
+         *
+         * @param {Object|String} type
+         * @param {Object|String} args
+         * @return {Object}
+         */
 
-    trigger: function (type, args) {
+        trigger: function (type, args) {
 
-        var el = this[0];
+            var el = this[0];
 
-        var types = type.split(specialsplit),
-            i, j, l, call, evt, names, handlers;
+            var types = type.split(specialsplit),
+                i, j, l, call, evt, names, handlers;
 
-        if (threatment['disabeled'](el, type) || threatment['nodeType'](el)) return false;
+            if (threatment['disabeled'](el, type) || threatment['nodeType'](el)) return false;
 
-        for (i = types.length; i--;) {
-            type = types[i].replace(names, '');
-            if (names = types[i].replace(ns, '')) names = names.split('.');
-            if (!names && !args) {
-                var HTMLEvt = doc.createEvent('HTMLEvents');
-                HTMLEvt['initEvent'](type, true, true, win, 1);
-                el.dispatchEvent(HTMLEvt);
+            for (i = types.length; i--;) {
+                type = types[i].replace(names, '');
+                if (names = types[i].replace(ns, '')) names = names.split('.');
+                if (!names && !args) {
+                    var HTMLEvt = doc.createEvent('HTMLEvents');
+                    HTMLEvt['initEvent'](type, true, true, win, 1);
+                    el.dispatchEvent(HTMLEvt);
 
-            } else {
+                } else {
 
-                handlers = $.Events.getHandler(el, type, null, false);
-                evt = Event(null, el);
-                evt.type = type;
-                call = args ? 'apply' : 'call';
-                args = args ? [evt].concat(args) : evt;
-                for (j = 0, l = handlers.length; j < l; j++) {
-                    if (handlers[j].inNamespaces(names)) {
-                        handlers[j].handler[call](el, args);
+                    handlers = $.Events.getHandler(el, type, null, false);
+                    evt = Event(null, el);
+                    evt.type = type;
+                    call = args ? 'apply' : 'call';
+                    args = args ? [evt].concat(args) : evt;
+                    for (j = 0, l = handlers.length; j < l; j++) {
+                        if (handlers[j].inNamespaces(names)) {
+                            handlers[j].handler[call](el, args);
+                        }
                     }
                 }
             }
+            return el;
         }
-        return el;
-    }
-});
+    });
 
 
 
 
+    // hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
+    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
 
-// hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
-// http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
+    function Event(evt, element) {
 
-function Event(evt, element) {
+        // Allow instantiation without the 'new' keyword
+        if (!(this instanceof Event)) {
+            return new Event(evt, element);
+        }
 
-    // Allow instantiation without the 'new' keyword
-    if (!(this instanceof Event)) {
-        return new Event(evt, element);
-    }
+        if (!arguments.length) return;
 
-    if (!arguments.length) return;
+        evt = evt || ((element.ownerDocument || element.document || element).parentWindow || win).evt;
 
-    evt = evt || ((element.ownerDocument || element.document || element).parentWindow || win).evt;
+        this.originalEvent = evt;
 
-    this.originalEvent = evt;
+        if (!evt) return;
 
-    if (!evt) return;
+        var type = evt.type,
+            target = evt.target,
+            i, p, props, fixHook;
 
-    var type = evt.type,
-        target = evt.target,
-        i, p, props, fixHook;
+        this.target = target && $.nodeType(3, target) ? target.parentNode : target;
 
-    this.target = target && $.nodeType(3, target) ? target.parentNode : target;
+        fixHook = treated[type];
 
-    fixHook = treated[type];
+        if (!fixHook) {
 
-    if (!fixHook) {
-
-      /* Note! This is more or less the same way as jQuery does it, but
+            /* Note! This is more or less the same way as jQuery does it, but
          I introduced "eventHooks", so it's possible to check
          against other events too from plugins. */
 
-        treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
-            rkeyEvent.test(type) ? $.eventHooks['keys'] :
-            function () {
-                return commonProps;
-        };
+            treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
+                rkeyEvent.test(type) ? $.eventHooks['keys'] :
+                function () {
+                    return commonProps;
+            };
+        }
+
+        props = fixHook(evt, this, type);
+
+        for (i = props.length; i--;) {
+            if (!((p = props[i]) in this) && p in evt) this[p] = evt[p];
+        }
     }
 
-    props = fixHook(evt, this, type);
 
-    for (i = props.length; i--;) {
-        if (!((p = props[i]) in this) && p in evt) this[p] = evt[p];
-    }
-}
+    Event.prototype = {
 
+        preventDefault: function () {
+            if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
+            else this.originalEvent.returnValue = false;
+        },
+        stopPropagation: function () {
+            if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
+            else this.originalEvent.cancelBubble = true;
+        },
+        stop: function () {
+            this.preventDefault();
+            this.stopPropagation();
+            this.stopped = true;
+        },
+        stopImmediatePropagation: function () {
+            if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
+            this.isImmediatePropagationStopped = function () {
+                return true;
+            };
+        },
+        isImmediatePropagationStopped: function () {
+            return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
+        },
+        clone: function (currentTarget) {
+            var ne = Event(this, this.element);
+            ne.currentTarget = currentTarget;
+            return ne;
+        }
+    };
 
-Event.prototype = {
+    $.Events = {
 
-    preventDefault: function () {
-        if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
-        else this.originalEvent.returnValue = false;
-    },
-    stopPropagation: function () {
-        if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
-        else this.originalEvent.cancelBubble = true;
-    },
-    stop: function () {
-        this.preventDefault();
-        this.stopPropagation();
-        this.stopped = true;
-    },
-    stopImmediatePropagation: function () {
-        if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
-        this.isImmediatePropagationStopped = function () {
-            return true;
-        };
-    },
-    isImmediatePropagationStopped: function () {
-        return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
-    },
-    clone: function (currentTarget) {
-        var ne = Event(this, this.element);
-        ne.currentTarget = currentTarget;
-        return ne;
-    }
-};
+        // Add event listener
 
-$.Events = {
+        add: function (el, events, selector, fn, one) {
+            var originalFn, type, types, i, args, entry, first;
 
-    // Add event listener
+            // Dont' allow click on disabeled elements, or events on text and comment nodes
 
-    add: function (el, events, selector, fn, one) {
-        var originalFn, type, types, i, args, entry, first;
+            if (threatment['disabeled'](el, events) || threatment['nodeType'](el)) return false;
 
-        // Dont' allow click on disabeled elements, or events on text and comment nodes
+            // Types can be a map of types/handlers
+            // TODO!! This is not working on delegated events, have to fix this ASAP !!
 
-        if (threatment['disabeled'](el, events) || threatment['nodeType'](el)) return false;
+            if (selector === undefined && $.isObject(events))
 
-        // Types can be a map of types/handlers
-        // TODO!! This is not working on delegated events, have to fix this ASAP !!
-
-        if (selector === undefined && $.isObject(events))
-
-            for (type in events) {
+                for (type in events) {
 
                 if (events.hasOwnProperty(type)) {
                     $.Events.add.call(this, el, type, events[type]);
@@ -2938,7 +2946,7 @@ $.Events = {
 
                 // Delegated event
 
-                if (! isFunction(selector)) {
+                if (!isFunction(selector)) {
                     originalFn = fn;
                     args = slice.call(arguments, 4);
                     fn = $.Events.delegate(selector, originalFn);
@@ -2975,137 +2983,138 @@ $.Events = {
                 }
                 return el;
             }
-    },
+        },
 
-    // Remove event listener
+        // Remove event listener
 
-    remove: function (el, typeSpec, fn) {
-		
-        var isTypeStr = isString(typeSpec),
-            type, namespaces, i;
+        remove: function (el, typeSpec, fn) {
 
-        if (isTypeStr && typeSpec.indexOf(' ') > 0) {
+            var isTypeStr = isString(typeSpec),
+                type, namespaces, i;
 
-            typeSpec = typeSpec.split(typeSpec);
+            if (isTypeStr && typeSpec.indexOf(' ') > 0) {
 
-            for (i = typeSpec.length; i--;)
-                $.Events.remove(el, typeSpec[i], fn);
-            return el;
-        }
+                typeSpec = typeSpec.split(typeSpec);
 
-        type = isTypeStr && typeSpec.replace(names, '');
-
-        if (type && special[type]) type = special[type].fix;
-
-        if (!typeSpec || isTypeStr) {
-
-            if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
-            $.Events.removeListener(el, type, fn, namespaces);
-
-        } else if (isFunction(typeSpec)) {
-
-            $.Events.removeListener(el, null, typeSpec);
-
-        } else {
-
-            for (var k in typeSpec) {
-
-                if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+                for (i = typeSpec.length; i--;)
+                    $.Events.remove(el, typeSpec[i], fn);
+                return el;
             }
-        }
 
-        return el;
-    },
+            type = isTypeStr && typeSpec.replace(names, '');
 
-    /**
-     * Set up a delegate helper using the given selector, wrap the handler function
-     */
+            if (type && special[type]) type = special[type].fix;
 
-    delegate: function (selector, fn) {
+            if (!typeSpec || isTypeStr) {
 
-        function findTarget(target, root) {
-            var i, array = isString(selector) ? $.select(selector, root) : selector;
-            for (; target && target !== root; target = target.parentNode) {
-                if (array !== null) {
-                    for (i = array.length; i--;) {
-                        if (array[i] === target) return target;
+                if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
+                $.Events.removeListener(el, type, fn, namespaces);
+
+            } else if (isFunction(typeSpec)) {
+
+                $.Events.removeListener(el, null, typeSpec);
+
+            } else {
+
+                for (var k in typeSpec) {
+
+                    if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+                }
+            }
+
+            return el;
+        },
+
+        /**
+         * Set up a delegate helper using the given selector, wrap the handler function
+         */
+
+        delegate: function (selector, fn) {
+
+            function findTarget(target, root) {
+                var i, array = isString(selector) ? $.select(selector, root) : selector;
+                for (; target && target !== root; target = target.parentNode) {
+                    if (array !== null) {
+                        for (i = array.length; i--;) {
+                            if (array[i] === target) return target;
+                        }
                     }
                 }
             }
-        }
 
-        function handler(e) {
-            if (e.target.disabled !== true) {
-                var m = findTarget(e.target, this);
-                if (m) fn.apply(m, arguments);
+            function handler(e) {
+                if (e.target.disabled !== true) {
+                    var m = findTarget(e.target, this);
+                    if (m) fn.apply(m, arguments);
+                }
             }
-        }
 
-        handler.__handlers = {
-            ft: findTarget,
-            selector: selector
-        };
-        return handler;
-    },
+            handler.__handlers = {
+                ft: findTarget,
+                selector: selector
+            };
+            return handler;
+        },
 
-    removeListener: function (element, orgType, handler, namespaces) {
+        removeListener: function (element, orgType, handler, namespaces) {
 
-        var type = orgType && orgType.replace(names, ''),
-            handlers = $.Events.getHandler(element, type, null, false),
-            removed = {}, i, l;
+            var type = orgType && orgType.replace(names, ''),
+                handlers = $.Events.getHandler(element, type, null, false),
+                removed = {},
+                i, l;
 
-        for (i = 0, l = handlers.length; i < l; i++) {
-            if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                $.Events.delHandler(handlers[i]);
-                if (!removed[handlers[i].eventType])
-                    removed[handlers[i].eventType] = {
-                        t: handlers[i].eventType,
-                        c: handlers[i].type
-                    };
+            for (i = 0, l = handlers.length; i < l; i++) {
+                if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
+                    $.Events.delHandler(handlers[i]);
+                    if (!removed[handlers[i].eventType])
+                        removed[handlers[i].eventType] = {
+                            t: handlers[i].eventType,
+                            c: handlers[i].type
+                        };
+                }
             }
-        }
 
-        for (i in removed) {
-            if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
-                // last listener of this type, remove the rootListener
-                element.removeEventListener(removed[i].t, $.Events.rootListener, false);
+            for (i in removed) {
+                if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
+                    // last listener of this type, remove the rootListener
+                    element.removeEventListener(removed[i].t, $.Events.rootListener, false);
+                }
             }
-        }
-    },
+        },
 
-    once: function (rm, element, type, fn, originalFn) {
-        return function () {
-            fn.apply(this, arguments);
-            rm(element, type, originalFn);
-        };
-    },
+        once: function (rm, element, type, fn, originalFn) {
+            return function () {
+                fn.apply(this, arguments);
+                rm(element, type, originalFn);
+            };
+        },
 
-    rootListener: function (evt, type) {
-        var listeners = $.Events.getHandler(this, type || evt.type, null, false),
-            l = listeners.length,
-            i = 0;
+        rootListener: function (evt, type) {
+            var listeners = $.Events.getHandler(this, type || evt.type, null, false),
+                l = listeners.length,
+                i = 0;
 
-        evt = Event(evt, this, true);
+            evt = Event(evt, this, true);
 
-        for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
+            for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
 
-            if (!listeners[i].removed) listeners[i].handler.call(this, evt);
-        }
-    },
+                if (!listeners[i].removed) listeners[i].handler.call(this, evt);
+            }
+        },
 
-    wrappedHandler: function (element, fn, condition, args) {
+        wrappedHandler: function (element, fn, condition, args) {
 
-        function call(evt, eargs) {
+            function call(evt, eargs) {
 
-            return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
-        }
+                return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
+            }
 
-        function findTarget(evt, eventElement) {
+            function findTarget(evt, eventElement) {
 
-            return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
-        }
+                return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
+            }
 
-        var handler = condition ? function (evt) {
+            var handler = condition ? function (evt) {
 
                 var target = findTarget(evt, this); // delegated event
 
@@ -3118,87 +3127,87 @@ $.Events = {
                 return call(evt, arguments);
             };
 
-        handler.__handlers = fn.__handlers;
-        return handler;
-    },
+            handler.__handlers = fn.__handlers;
+            return handler;
+        },
 
-    findIt: function (element, type, original, handler, root, fn) {
+        findIt: function (element, type, original, handler, root, fn) {
 
-        if (!type || type === '*') {
+            if (!type || type === '*') {
 
-            for (var t in container) {
+                for (var t in container) {
 
-                if (t.charAt(0) === root ? 'r' : '#') {
-                    $.Events.findIt(element, t.substr(1), original, handler, root, fn);
+                    if (t.charAt(0) === root ? 'r' : '#') {
+                        $.Events.findIt(element, t.substr(1), original, handler, root, fn);
+                    }
+                }
+
+            } else {
+
+                var i = 0,
+                    l,
+                    list = container[root ? 'r' : '#' + type];
+
+                if (!list) {
+
+                    return;
+                }
+
+                for (l = list.length; i < l; i++) {
+
+                    if ((element === '*' || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
                 }
             }
+        },
 
-        } else {
-
-            var i = 0,
-                l,
-                list = container[root ? 'r' : '#' + type];
-
-            if (!list) {
-
-                return;
-            }
-
-            for (l = list.length; i < l; i++) {
-
-                if ((element === '*' || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
-            }
-        }
-    },
-
-    hasHandler: function (element, type, original, root) {
-        if (root = container[(root ? "r" : "#") + type])
-            for (type = root.length; type--;)
-                if (!root[type].root && root[type].matches(element, original, null)) return true;
-        return false;
-    },
-    getHandler: function (element, type, original, root) {
-
-        var entries = [];
-
-        $.Events.findIt(element, type, original, null, root, function (entry) {
-            entries.push(entry);
-        });
-        return entries;
-    },
-    putHandler: function (entry) {
-        var has = !entry.root && !this.hasHandler(entry.element, entry.type, null, false),
-            key = (entry.root ? 'r' : '#') + entry.type;
-        (container[key] || (container[key] = [])).push(entry);
-        return has;
-    },
-    // Find handlers for event delegation
-    delHandler: function (entry) {
-        $.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
-            list.splice(i, 1);
-            entry.removed = true;
-            if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
+        hasHandler: function (element, type, original, root) {
+            if (root = container[(root ? "r" : "#") + type])
+                for (type = root.length; type--;)
+                    if (!root[type].root && root[type].matches(element, original, null)) return true;
             return false;
-        });
-    }
-};
+        },
+        getHandler: function (element, type, original, root) {
 
+            var entries = [];
 
-// Shortcut methods for 'on'
-
-$.each(("hover blur focus focusin focusout load resize scroll unload click dblclick " +
-    "mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
-    "change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
-
-    // Handle event binding
-
-    $.fn[name] = function (data, fn) {
-        //events, fn, delfn, one
-        return arguments.length > 0 ?
-            this.on(name, data, fn) :
-            this.trigger(name);
+            $.Events.findIt(element, type, original, null, root, function (entry) {
+                entries.push(entry);
+            });
+            return entries;
+        },
+        putHandler: function (entry) {
+            var has = !entry.root && !this.hasHandler(entry.element, entry.type, null, false),
+                key = (entry.root ? 'r' : '#') + entry.type;
+            (container[key] || (container[key] = [])).push(entry);
+            return has;
+        },
+        // Find handlers for event delegation
+        delHandler: function (entry) {
+            $.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
+                list.splice(i, 1);
+                entry.removed = true;
+                if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
+                return false;
+            });
+        }
     };
-});
+
+
+    // Shortcut methods for 'on'
+
+    $.each(("hover blur focus focusin focusout load resize scroll unload click dblclick " +
+        "mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
+        "change select submit keydown keypress keyup error contextmenu").split(" "), function (_, name) {
+
+        // Handle event binding
+
+        $.fn[name] = function (data, fn) {
+            //events, fn, delfn, one
+            return arguments.length > 0 ?
+                this.on(name, data, fn) :
+                this.trigger(name);
+        };
+    });
 
 })(hAzzle);
 
@@ -3499,7 +3508,8 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 /*!
  * Wrap
  */
-; (function ($) {
+;
+(function ($) {
 
     $.extend($.fn, {
 
@@ -4220,7 +4230,7 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
             },
 
             set: function (elem, value, extra) {
-                
+
                 var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
                 return this.setPositiveNumber(value, extra ?
                     augmentWidthOrHeight(
@@ -4352,66 +4362,67 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
     });
 
 })(hAzzle);
- 
+
 
 
 
 // HTML
 
-; (function ($) {
+;
+(function ($) {
 
     var concat = Array.prototype.concat,
-	
-	    doc = document,
-        
-		isFunction = $.isFunction,
-        
-		tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+
+        doc = document,
+
+        isFunction = $.isFunction,
+
+        tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
         rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
         rhtml = /<|&#?\w+;/,
         rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
         rscriptType = /^$|\/(?:java|ecma)script/i,
         rscriptTypeMasked = /^true\/(.*)/,
         rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
-  
-(function() {
-	var fragment = doc.createDocumentFragment(),
-		div = fragment.appendChild( doc.createElement( "div" ) ),
-		input = doc.createElement( "input" );
 
-	input.setAttribute( "type", "radio" );
-	input.setAttribute( "checked", "checked" );
-	input.setAttribute( "name", "t" );
+    (function () {
+        var fragment = doc.createDocumentFragment(),
+            div = fragment.appendChild(doc.createElement("div")),
+            input = doc.createElement("input");
 
-	div.appendChild( input );
+        input.setAttribute("type", "radio");
+        input.setAttribute("checked", "checked");
+        input.setAttribute("name", "t");
 
-	$.support.checkClone = div.cloneNode( true ).cloneNode( true ).lastChild.checked;
+        div.appendChild(input);
 
-	div.innerHTML = "<textarea>x</textarea>";
-	$.support.noCloneChecked = !!div.cloneNode( true ).lastChild.defaultValue;
-})();
+        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
 
-
-        /**
-         * Disable "script" tags
-         **/
+        div.innerHTML = "<textarea>x</textarea>";
+        $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+    })();
 
 
-        function disableScript(elem) {
-            elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
-            return elem;
-        }
-
-        /**
-         * Restore "script" tags
-         **/
+    /**
+     * Disable "script" tags
+     **/
 
 
-        function restoreScript(elem) {
-            var m = rscriptTypeMasked.exec(elem.type);
-            m ? elem.type = m[1] : elem.removeAttribute("type");
-            return elem;
-        }
+    function disableScript(elem) {
+        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+        return elem;
+    }
+
+    /**
+     * Restore "script" tags
+     **/
+
+
+    function restoreScript(elem) {
+        var m = rscriptTypeMasked.exec(elem.type);
+        m ? elem.type = m[1] : elem.removeAttribute("type");
+        return elem;
+    }
 
     $.extend($, {
 
@@ -4462,17 +4473,17 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
                 $.data(elems[i], "evaluated", !refElements || $.data(refElements[i], "evaluated"));
             }
         },
-		
-		_evalUrl: function( url ) {
-	return $.ajax({
-		url: url,
-		type: "GET",
-		dataType: "script",
-		async: false,
-		global: false,
-		"throws": true
-	});
-},
+
+        _evalUrl: function (url) {
+            return $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "script",
+                async: false,
+                global: false,
+                "throws": true
+            });
+        },
 
         parseHTML: function (data, context, keepScripts) {
 
@@ -4490,10 +4501,10 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
             var parsed = rsingleTag.exec(data),
                 scripts = !keepScripts && [],
 
-           // Prevent XSS attack
+                // Prevent XSS attack
 
-	        context = context || ( isFunction( doc.implementation.createHTMLDocument ) ? doc.implementation.createHTMLDocument() : doc );
-				
+                context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
+
             // Single tag
 
             if (parsed) {
@@ -4517,8 +4528,8 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 	*/
 
         createHTML: function (elems, context, scripts, selection) {
-           
-		   if(!context) return;
+
+            if (!context) return;
 
             var elem, tmp, tag, wrap, contains, j,
                 fragment = context.createDocumentFragment(),
@@ -4604,13 +4615,13 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
     });
 
     $.extend($.fn, {
-        
-		// Inspiration from jQuery
-		
+
+        // Inspiration from jQuery
+
         manipulateDOM: function (args, callback) {
 
             // Flatten any nested arrays
-			
+
             args = concat.apply([], args);
 
             var fragment, first, scripts, hasScripts, node, doc,
@@ -4624,7 +4635,7 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 
 
             if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
-				
+
                 return this.each(function (index) {
                     var self = set.eq(index);
                     if (isFunction) {
@@ -4635,10 +4646,10 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
             }
 
             if (l) {
-				
+
                 fragment = $.createHTML(args, this[0].ownerDocument, false, this);
-				
-				first = fragment.firstChild;
+
+                first = fragment.firstChild;
 
                 if (fragment.childNodes.length === 1) {
                     fragment = first;
@@ -4647,8 +4658,8 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
                 if (first) {
                     scripts = $.map($.getChildren(fragment, "script"), disableScript);
                     hasScripts = scripts.length;
-                  
-				  while(i < l) {
+
+                    while (i < l) {
 
                         if (i !== iNoClone && !$.nodeType(3, fragment)) {
 
@@ -4661,7 +4672,7 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 
                         callback.call(this[i], fragment, i);
 
-						 i++;
+                        i++;
                     }
 
                     if (hasScripts) {
@@ -4711,11 +4722,12 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 
 // Manipulation
 
-; (function ($) {
+;
+(function ($) {
 
     var // Short-hand functions we are using
 
-    isFunction = $.isFunction,
+        isFunction = $.isFunction,
         isUndefined = $.isUndefined,
         isDefined = $.isDefined,
         isString = $.isString,
@@ -4758,15 +4770,15 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
         cached = [],
 
         wrapMap = {
-        
-		'option': [1, '<select multiple="multiple">', '</select>'],
 
-        'thead': [1, '<table>', '</table>'],
-        'col': [2, '<table><colgroup>', '</colgroup></table>'],
-        'tr': [2, '<table><tbody>', '</tbody></table>'],
-        'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
-        '_default': [0, "", ""]
-    };
+            'option': [1, '<select multiple="multiple">', '</select>'],
+
+            'thead': [1, '<table>', '</table>'],
+            'col': [2, '<table><colgroup>', '</colgroup></table>'],
+            'tr': [2, '<table><tbody>', '</tbody></table>'],
+            'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+            '_default': [0, "", ""]
+        };
 
     wrapMap.optgroup = wrapMap.option;
     wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
@@ -4842,8 +4854,8 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
                     value,
                     max = one ? index + 1 : options.length,
                     i = index < 0 ?
-                        max :
-                        one ? index : 0;
+                    max :
+                    one ? index : 0;
 
                 for (; i < max; i++) {
 
@@ -5052,9 +5064,6 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
          * Set text for every element in the collection
          *
          * $('div').text() => div text
-
-
-
          *
          * @param {String} value
          * @param {String} dir
@@ -5122,7 +5131,7 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
                      */
                     if (keep && isString(value) && $.nodeType(1, elem)) {
 
-                           iAh(elem, 'beforeend',  value || '');
+                        iAh(elem, 'beforeend', value || '');
 
                     } else {
 
@@ -5380,7 +5389,7 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 
         },
 
-        /**
+        /*
          * Remove properties from DOM elements
          *
          * @param {String}
@@ -5563,10 +5572,10 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 
 })(hAzzle);
 
-
 // Removeable
 
-; (function ($) {
+;
+(function ($) {
 
     /**
      * Remove all child nodes of the set of matched elements from the DOM.
@@ -5574,51 +5583,51 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
      * @return {Object}
      */
 
- $.fn.empty = function () {
-       
-	   // Remove all data to prevent memory leaks
-	   
-        return this.removeData().each(function (_, elem) {
-			
-         if ( $.nodeType(1, this)) {
+    $.fn.empty = function () {
 
-			$.Events.remove(elem);
-			 
-		 // Remove any remaining nodes
-        
-		 this.textContent = "";
-		 }
+        // Remove all data to prevent memory leaks
+
+        return this.removeData().each(function (_, elem) {
+
+            if ($.nodeType(1, this)) {
+
+                $.Events.remove(elem);
+
+                // Remove any remaining nodes
+
+                this.textContent = "";
+            }
         });
     },
-	
-	 /**
+
+    /**
      *  Remove an element from the DOM
      */
- $.fn.remove = function () {
+    $.fn.remove = function () {
 
-		// Discard any data on the element
+        // Discard any data on the element
 
         return this.removeData().each(function (_, elem) {
-			
-		// Locate all nodes that belong to this element
-		// and add them to the "elems stack"
-			
-		  var elements = $(elem).find('*');
-		      elements  = elements.add(elem);
-		
-			$.Events.remove(elem);
-        
-		 var parent = elem.parentNode;
-		 
-        if (parent) {
 
-		// Remove all children
+            // Locate all nodes that belong to this element
+            // and add them to the "elems stack"
 
-	     this.parentNode.removeChild(elem);
-		}
-        
-       })
-	   return false;
+            var elements = $(elem).find('*');
+            elements = elements.add(elem);
+
+            $.Events.remove(elem);
+
+            var parent = elem.parentNode;
+
+            if (parent) {
+
+                // Remove all children
+
+                this.parentNode.removeChild(elem);
+            }
+
+        })
+        return false;
     }
 
 })(hAzzle);
@@ -5946,10 +5955,6 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 
 
 
-
-
-
-
 // Classes
 ;
 (function ($) {
@@ -6269,22 +6274,20 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
 
 })(hAzzle);
 
- (function ($) {
-	 
-	 
-	 
-	 
-	 
-	 
+(function ($) {
+
+
+
+
     var props = "backgroundColor borderBottomColor borderLeftColor borderRightColor borderTopColor borderColor boxShadowColor color textShadowColor columnRuleColor outlineColor textDecorationColor textEmphasisColor".split(' ');
 
     $.extend($, {
-		
-		/**
-		 * hAzzle color names
-		 *
-		 */ 
-		
+
+        /**
+         * hAzzle color names
+         *
+         */
+
         colornames: {
             aliceblue: {
                 r: 240,
@@ -7142,20 +7145,20 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
                     alpha: a
                 };
             },
-			
-        // hsla conversions adapted from:
-        // https://code.google.com/p/maashaack/source/browse/packages/graphics/trunk/src/graphics/colors/HUE2RGB.as?r=5021			
+
+            // hsla conversions adapted from:
+            // https://code.google.com/p/maashaack/source/browse/packages/graphics/trunk/src/graphics/colors/HUE2RGB.as?r=5021			
 
             hue2rgb: function (p, q, h) {
-                
-				if (h < 0) {
-					
+
+                if (h < 0) {
+
                     h++;
                 }
-                
-				if (h > 1) {
-                
-				    h--;
+
+                if (h > 1) {
+
+                    h--;
                 }
 
                 if ((h * 6) < 1) {
@@ -7171,8 +7174,8 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
         }
     });
 
-	 
-	$.each(props, function (i, hook) {
+
+    $.each(props, function (i, hook) {
 
         $.cssHooks[hook] = {
             set: function (elem, value) {
@@ -7186,9 +7189,9 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
                 elem.style[hook] = 'rgba(' + value.r + ',' + value.g + ',' + value.b + ',' + value.alpha + ')';
             }
         };
-    }); 
-	 
-	 
+    });
+
+
 
     $.cssHooks.borderColor = {
         expand: function (value) {
@@ -7201,5 +7204,184 @@ $.each(("hover blur focus focusin focusout load resize scroll unload click dblcl
         }
     };
 
+
+})(hAzzle);
+
+
+
+
+;
+(function ($) {
+
+    /**
+     * Show | hide | toggle
+     *
+     * Need to be moved over to the animation engine when it's finished, and used there
+     *
+     */
+
+    var elemdisplay = {};
+
+
+    function actualDisplay(name, doc) {
+
+        var style,
+            elem = doc.createElement(name);
+
+        // Vanila solution is the best choise here
+
+        docbody.appendChild(elem);
+
+        display = window.getDefaultComputedStyle && (style = window.getDefaultComputedStyle(elem[0])) ? style.display : $.css(elem[0], "display");
+        docbody.removeChild(elem);
+        return display;
+    }
+
+
+    // Try to determine the default display value of an element
+    function defaultDisplay(nodeName) {
+        var display = elemdisplay[nodeName];
+
+        if (!display) {
+            display = actualDisplay(nodeName, doc);
+
+            // If the simple way fails, read from inside an iframe
+            if (display === "none" || !display) {
+
+                // Use the already-created iframe if possible
+
+                var iframe = iframe || doc.documentElement.appendChild("<iframe frameborder='0' width='0' height='0'/>");
+
+                // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
+                doc = iframe[0].contentDocument;
+
+                // Support: IE
+                doc.write();
+                doc.close();
+
+                display = actualDisplay(nodeName, doc);
+
+                doc.documentElement.removeChild(iframe);
+            }
+
+            // Store the correct default display
+            elemdisplay[nodeName] = display;
+        }
+
+        return display;
+
+    }
+
+
+    /**
+ * Check if an element is hidden
+ *  @return {Boolean}
+
+ */
+
+    function isHidden(elem, el) {
+        elem = el || elem;
+        return elem.style.display === "none";
+    }
+
+    /**
+     * Show an element
+     *
+     * @param {Object} elem
+     * @return Object}
+     *
+     *
+     * FIXME!! Need a lot of tests and fixes to work correctly everywhere
+     *
+     */
+
+    function show(elem) {
+
+        var style = elem.style;
+
+        if (style.display === "none") {
+
+            style.display = "";
+
+        }
+
+        if ((style.display === "" && curCSS(elem, "display") === "none") || !$.contains(elem.ownerDocument.documentElement, elem)) {
+            $.data(elem, 'display', defaultDisplay(elem.nodeName));
+        }
+    }
+
+    /**
+     * Hide an element
+     *
+     * @param {Object} elem
+     * @return Object}
+     */
+
+    function hide(elem) {
+        if (!isHidden(elem)) {
+            var display = $.css(elem, 'display');
+            if (display !== 'none') {
+                $.data(elem, 'display', display);
+            }
+
+            // Hide the element
+            $.style(elem, 'display', 'none');
+        }
+    }
+
+
+    $.extend($.fn, {
+
+        /**
+         * Show elements in collection
+         *
+         * @return {Object}
+         */
+
+        show: function () {
+            return this.each(function () {
+                show(this);
+            });
+        },
+
+        /**
+
+     * Hide elements in collection
+     *
+     * @return {Object}
+     */
+
+        hide: function () {
+            return this.each(function () {
+                hide(this);
+            });
+        },
+
+        /**
+         * Toggle show/hide.
+         * @return {Object}
+         */
+
+        toggle: function (state) {
+
+            if (typeof state === "boolean") {
+                return state ? this.show() : this.hide();
+            }
+
+            return this.each(function () {
+
+                if (isHidden(this)) {
+
+                    show(this);
+
+                } else {
+
+                    hide(this);
+
+                }
+            });
+        }
+
+    });
 
 })(hAzzle);
