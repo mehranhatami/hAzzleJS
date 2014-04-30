@@ -52,7 +52,7 @@
   
   $.extend($.fn, {
 
-   lifecycle: function(options) {
+   Observe: function(options) {
     var element = $(this).get(0);
 
     element.whenInsert = element.whenInsert || [];
@@ -67,7 +67,8 @@
     $(this).attr('lifecycle', '');
   },
 
-  unlifecycle: function() {
+  unObserve: function() {
+
     var element = $(this).get(0);
 
     $.each(element.whenChange, function(index, attributeObserver) {
