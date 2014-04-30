@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.37a
+ * Version: 0.37b
  * Released under the MIT License.
  *
- * Date: 2014-04-29
+ * Date: 2014-04-30
  */
 (function (window, undefined) {
 
