@@ -7,8 +7,7 @@
  *  - Promises
  *  - Longpolling
  */
-;
-(function ($) {
+; (function ($) {
 
     // Ajax
     var win = window,

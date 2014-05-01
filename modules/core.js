@@ -1,229 +1,222 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.37c
+ * Version: 0.38
  * Released under the MIT License.
  *
- * Date: 2014-04-30
+ * Date: 2014-05-01
  */
 (function (window, undefined) {
 
-    // hAzzle already defined, leave now
+        // hAzzle already defined, leave now
 
-    if (window['hAzzle']) return;
+        if (window['hAzzle']) return;
 
-    var
-
-    /**
-     * Prototype references.
-     */
-
-        ArrayProto = Array.prototype,
+        var
 
         /**
-         * Create a reference to some core methods
+         * Prototype references.
          */
 
-        push = ArrayProto.push,
-        slice = ArrayProto.slice,
-        concat = ArrayProto.concat,
-        toString = Object.prototype.toString,
+            ArrayProto = Array.prototype,
 
-        /*
-         * Unique ID
+            /**
+             * Create a reference to some core methods
+             */
+
+            push = ArrayProto.push,
+            slice = ArrayProto.slice,
+            concat = ArrayProto.concat,
+            toString = Object.prototype.toString,
+
+            /*
+             * Unique ID
+             */
+
+            uid = {
+                current: 0,
+                next: function () {
+                    var id = ++this.current + '';
+                    return 'hAzzle_' + id;
+                }
+            },
+
+            cached = [],
+
+            // Selector caching
+            cache = [],
+
+            // Different nodeTypes we are checking against for faster speed
+
+            nodeTypes = {},
+
+            // Main function
+
+            hAzzle = function (sel, ctx) {
+                return new hAzzle.fn.init(sel, ctx);
+            };
+
+        /**
+         * An object used to flag environments/features.
          */
 
-        uid = {
-            current: 0,
-            next: function () {
-                var id = ++this.current + '';
-                return 'hAzzle_' + id;
-            }
-        },
+        hAzzle.support = {};
 
-        cached = [],
+        // Overrun the native prototype.filter to gain better
+        // performance ( 74 % faster then jQuery)
 
-        // Selector caching
-        cache = [],
+        Array.prototype.filter = function (a, b, c, d, e) {
+            c = this; // cache the array
+            d = []; // array to hold the new values which match the expression
+            for (e in c) // for each value in the array, 
+            ~~ e + '' == e && e >= 0 && // coerce the array position and if valid,
+                a.call(b, c[e], +e, c) && // pass the current value into the expression and if truthy,
+                d.push(c[e]); // add it to the new array
 
-        // Different nodeTypes we are checking against for faster speed
-
-        nodeTypes = {},
-
-        // Main function
-
-        hAzzle = function (sel, ctx) {
-            return new hAzzle.fn.init(sel, ctx);
+            return d; // give back the new array
         };
 
-    /**
-     * An object used to flag environments/features.
-     */
+        /* Faster alternative till native prototype.some
+         *
+         */
 
-    hAzzle.support = {};
+        Array.prototype.some = function (fun /*, thisArg */ ) {
+            var t = Object(this),
+                len = t.length >>> 0,
+                thisArg = arguments.length >= 2 ? arguments[1] : void 0,
+                i = 0;
 
-    // Overrun the native prototype.filter to gain better
-    // performance ( 74 % faster then jQuery)
+            for (; i < len; i++) {
+                if (i in t && fun.call(thisArg, t[i], i, t))
+                    return true;
+            }
 
-    Array.prototype.filter = function (a, b, c, d, e) {
-        c = this; // cache the array
-        d = []; // array to hold the new values which match the expression
-        for (e in c) // for each value in the array, 
-        ~~ e + '' == e && e >= 0 && // coerce the array position and if valid,
-            a.call(b, c[e], +e, c) && // pass the current value into the expression and if truthy,
-            d.push(c[e]); // add it to the new array
-
-        return d; // give back the new array
-    };
-
-    /* Faster alternative till native prototype.some
-     *
-     */
-
-    Array.prototype.some = function (fun /*, thisArg */ ) {
-        var t = Object(this),
-            len = t.length >>> 0,
-            thisArg = arguments.length >= 2 ? arguments[1] : void 0,
-            i = 0;
-
-        for (; i < len; i++) {
-            if (i in t && fun.call(thisArg, t[i], i, t))
-                return true;
-        }
-
-        return false;
-    };
+            return false;
+        };
 
 
-    hAzzle.fn = hAzzle.prototype = {
+        hAzzle.fn = hAzzle.prototype = {
 
-        init: function (sel, ctx) {
-            var elems, i;
-            if (sel instanceof hAzzle) return sel;
-            if (hAzzle.isString(sel)) {
+            init: function (sel, ctx) {
+                var elems, i;
+                if (sel instanceof hAzzle) return sel;
+                if (hAzzle.isString(sel)) {
 
-                if (cache[sel] && !ctx) {
+                    if (cache[sel] && !ctx) {
 
-                    // Backup the "elems stack" before we loop through
+                        // Backup the "elems stack" before we loop through
 
-                    this.elems = elems = cache[sel];
+                        this.elems = elems = cache[sel];
 
-                    // Copy the stack over to the hAzzle object so we can access the Protoype
+                        // Copy the stack over to the hAzzle object so we can access the Protoype
 
-                    i = this.length = elems.length;
+                        i = this.length = elems.length;
 
-                    while (i--) {
+                        while (i--) {
 
-                        this[i] = elems[i];
+                            this[i] = elems[i];
+                        }
+
+                        // Return the hAzzle Object
+
+                        return this;
                     }
 
-                    // Return the hAzzle Object
 
-                    return this;
-                }
-
-
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
-            } else {
-
-                // Domready
-
-                if (hAzzle.isFunction(sel)) {
-
-                    // Only run if this module are included
-
-                    if (hAzzle['ready']) {
-
-                        return hAzzle.ready(sel);
-
-                    } else {
-                        // To avoid some serious bugs, we inform about what happend
-                        console.log("The DOM Ready module are not installed!!");
-                        return [];
-                    }
-                }
-
-                //Array
-
-                if (sel instanceof Array) {
-
-                    this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
+                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
 
                 } else {
-                    // Object
 
-                    if (hAzzle.isObject(sel)) {
-                        return this.elems = [sel], this.length = 1, this[0] = sel, this;
+                    // Domready
+
+                    if (hAzzle.isFunction(sel)) {
+
+                        // Only run if this module are included
+
+                        if (hAzzle['ready']) {
+
+                            return hAzzle.ready(sel);
+
+                        } else {
+                            // To avoid some serious bugs, we inform about what happend
+                            console.log("The DOM Ready module are not installed!!");
+                            return [];
+                        }
                     }
 
-                    // Nodelist
+                    //Array
+
+                    if (sel instanceof Array) {
+
+                        this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
+
+                    } else {
+                        // Object
+
+                        if (hAzzle.isObject(sel)) {
+                            return this.elems = [sel], this.length = 1, this[0] = sel, this;
+                        }
+
+                        // Nodelist
 
 
-                    hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
+
+                        hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
+                    }
                 }
-            }
 
-            elems = this.elems,
-            i = this.length = elems.length;
+                elems = this.elems,
+                i = this.length = elems.length;
 
-            while (i--) {
+                while (i--) {
 
-                this[i] = elems[i];
+                    this[i] = elems[i];
 
-            }
-            return this;
-        },
+                }
+                return this;
+            },
 
-        /**
-         * Run callback for each element in the collection
-         *
-         * @param {Function} callback
-         * @return {Object}
-         */
+            /**
+             * Run callback for each element in the collection
+             *
+             * @param {Function} callback
+             * @return {Object}
+             */
 
-        each: function (callback, args) {
-            return hAzzle.each(this, callback, args);
-        },
+            each: function (callback, args) {
+                return hAzzle.each(this, callback, args);
+            },
 
-        /**
-         * Filter element collection
-         *
-         * @param {String|Function} sel
-         * @return {Object}
-         *
-         */
+            /**
+             * Filter element collection
+             *
+             * @param {String|Function} sel
+             * @return {Object}
+             *
+             */
 
-        find: function (sel) {
+            find: function (selector) {
 
-            var elements;
-
-            if (typeof sel !== "string") {
+                var elements;
+                if(hAzzle.isString(selector)) {
+                if (this.length === 1) {
+                    elements = hAzzle.select(selector, this.elems)
+                } else {
+                    elements = this.elems.reduce(function (elements, element) {
+                        return elements.concat(hAzzle.select(selector, element))
+                    }, [])
+                }
+            } else {
                 var _ = this;
-                elements = hAzzle(sel).filter(function () {
+                elements = hAzzle(selector).filter(function () {
                     var node = this;
                     return _.elems.some.call(_, function (parent) {
                         return hAzzle.contains(parent, node);
                     });
                 });
-                return hAzzle(elements);
             }
+            return hAzzle(elements)
 
-            if (typeof sel === "string") {
-                if (this.length === 1) {
-                    if (typeof sel !== "string") {
-                        elements = sel[0];
-                    } else {
-                        elements = hAzzle(sel, this.elems);
-                    }
-                } else {
-                    elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(sel, element));
-                    }, []);
-                }
-                return hAzzle.create(elements);
-            }
-
-            return this;
         },
 
         /**
@@ -382,7 +375,7 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (callback /*, initialValue*/ ) {
+        reduce: function (callback) {
 
             var t = Object(this),
                 len = t.length >>> 0,
@@ -822,13 +815,14 @@
          */
 
         put: function (array, prop, value, nt) {
-            return hAzzle.each(array, function (index) {
+            hAzzle.each(array, function (index) {
                 if (hAzzle.isDefined(nt) && (array !== null && !hAzzle.nodeType(nt, array))) {
                     array[index][prop] = value;
                 } else {
                     array[index][prop] = value;
                 }
             });
+            return this;
         },
 
         /**

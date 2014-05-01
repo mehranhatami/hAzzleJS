@@ -1,6 +1,5 @@
 // Colors
-;
-(function ($) {
+; (function ($) {
 
     var props = "backgroundColor borderBottomColor borderLeftColor borderRightColor borderTopColor borderColor boxShadowColor color textShadowColor columnRuleColor outlineColor textDecorationColor textEmphasisColor".split(' ');
 

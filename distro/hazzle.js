@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.37d
+ * Version: 0.38
  * Released under the MIT License.
  *
- * Date: 2014-04-31
+ * Date: 2014-05-01
  */
 (function (window, undefined) {
 
@@ -124,6 +124,7 @@
 
 
                 this.elems = cache[sel] = hAzzle.select(sel, ctx);
+
             } else {
 
                 // Domready
@@ -194,37 +195,28 @@
          *
          */
 
-        find: function (sel) {
+        find: function (selector) {
 
             var elements;
-
-            if (typeof sel !== "string") {
+            if (hAzzle.isString(selector)) {
+                if (this.length === 1) {
+                    elements = hAzzle.select(selector, this.elems)
+                } else {
+                    elements = this.elems.reduce(function (elements, element) {
+                        return elements.concat(hAzzle.select(selector, element))
+                    }, [])
+                }
+            } else {
                 var _ = this;
-                elements = hAzzle(sel).filter(function () {
+                elements = hAzzle(selector).filter(function () {
                     var node = this;
                     return _.elems.some.call(_, function (parent) {
                         return hAzzle.contains(parent, node);
                     });
                 });
-                return hAzzle(elements);
             }
+            return hAzzle(elements)
 
-            if (typeof sel === "string") {
-                if (this.length === 1) {
-                    if (typeof sel !== "string") {
-                        elements = sel[0];
-                    } else {
-                        elements = hAzzle(sel, this.elems);
-                    }
-                } else {
-                    elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(sel, element));
-                    }, []);
-                }
-                return hAzzle.create(elements);
-            }
-
-            return this;
         },
 
         /**
@@ -383,7 +375,7 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (callback /*, initialValue*/ ) {
+        reduce: function (callback) {
 
             var t = Object(this),
                 len = t.length >>> 0,
@@ -823,13 +815,14 @@
          */
 
         put: function (array, prop, value, nt) {
-            return hAzzle.each(array, function (index) {
+            hAzzle.each(array, function (index) {
                 if (hAzzle.isDefined(nt) && (array !== null && !hAzzle.nodeType(nt, array))) {
                     array[index][prop] = value;
                 } else {
                     array[index][prop] = value;
                 }
             });
+            return this;
         },
 
         /**
@@ -956,7 +949,178 @@
 
 })(window);
 
-// Selector
+
+// DOM Ready
+
+
+;
+(function ($) {
+
+    var doc = document,
+        readyList = [],
+        readyFired = false,
+        readyEventHandlersInstalled = false;
+
+    // call this when the document is ready
+    // this function protects itself against being called more than once
+
+    function ready() {
+
+        if (!readyFired) {
+            // this must be set to true before we start calling callbacks
+            readyFired = true;
+            for (var i = 0; i < readyList.length; i++) {
+                // if a callback here happens to add new ready handlers,
+                // the docReady() function will see that it already fired
+                // and will schedule the callback to run right after
+                // this event loop finishes so all handlers will still execute
+                // in order and no new ones will be added to the readyList
+                // while we are processing the list
+
+                readyList[i].fn.call(window, readyList[i].ctx);
+            }
+            // allow any closures held by these functions to free
+            readyList = [];
+        }
+    }
+
+    // Extend the hAzzle object
+
+    $.extend({
+
+
+        ready: function (callback, context) {
+
+            // context are are optional, but document by default
+
+            context = context || doc;
+
+            if (readyFired) {
+                setTimeout(function () {
+                    callback(context);
+                }, 1);
+                return;
+            } else {
+
+                // add the function and context to the list
+
+                readyList.push({
+                    fn: callback,
+                    ctx: context
+                });
+            }
+            // if document already ready to go, schedule the ready function to run
+            if (doc.readyState === "complete") {
+
+                setTimeout(ready, 1);
+
+            } else if (!readyEventHandlersInstalled) {
+
+                // otherwise if we don't have event handlers installed, install them
+
+                doc.addEventListener("DOMContentLoaded", ready, false);
+                // backup is window load event
+                window.addEventListener("load", ready, false);
+
+                readyEventHandlersInstalled = true;
+            }
+        }
+    });
+
+})(hAzzle);
+
+
+// Matches
+
+;
+(function ($) {
+
+    var doc = document,
+        cached = [],
+        ghost = doc.createElement('div');
+
+
+    // Fall back to performing a selector if the matchesSelector are not supported
+
+    function fallback(sel, element) {
+
+        var match;
+
+        if (!element.parentNode) {
+
+            ghost.appendChild(element);
+        }
+
+        match = $.indexOf($.select(sel, element.parentNode), element) >= 0;
+
+        if (element.parentNode === ghost) {
+            ghost.removeChild(element);
+        }
+        return match;
+    }
+
+
+
+    $.extend($, {
+
+        /** 
+         * Returns a predicate for checking whether an object has a given set of `key:value` pairs.
+         */
+
+        matches: function (element, sel) {
+
+            // Make sure that attribute selectors are quoted
+
+            //sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
+
+
+            if (!element || !$.isElement(element) || !sel) {
+                return false;
+            }
+
+            if (sel['nodeType']) {
+                return element === sel;
+            }
+
+            if (sel instanceof $) {
+                return sel.elems.some(function (sel) {
+                    return $.matches(element, sel);
+                });
+            }
+
+            if (element === doc) {
+                return false;
+            }
+
+            var matchesSelector = $.prefix('matchesSelector', ghost);
+
+            if (matchesSelector) {
+                // IE9 supports matchesSelector, but doesn't work on orphaned elems / disconnected nodes
+
+                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
+
+                if (supportsOrphans) {
+
+                    // Avoid document fragment
+
+                    if (!$.nodeType(11, element)) {
+
+                        return matchesSelector.call(element, sel);
+                    }
+
+                } else { // For IE9 or other browsers who fail on orphaned elems, we walk the hard way !! :)
+
+                    return fallback(sel, element);
+                }
+            }
+
+            return fallback(sel, element);
+        }
+    });
+
+})(hAzzle);
+
+// Selector engine
 
 ;
 (function ($) {
@@ -1002,7 +1166,7 @@
      * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
      *
      * @param {Object} el
-     * @param {String} klass
+     * @param {String} klass
      *
      * @return {Array}
      */
@@ -1115,7 +1279,7 @@
         /**
          * Find elements by selectors.
          *
-         * @param {String} sel
+         * @param {String} sel
          * @param {Object} ctx
          * @return {Object}
          */
@@ -1211,170 +1375,8 @@
     });
 })(hAzzle);
 
-// DOM Ready
 
-;
-(function ($) {
-
-    var doc = document,
-        readyList = [],
-        readyFired = false,
-        readyEventHandlersInstalled = false;
-
-    // call this when the document is ready
-    // this function protects itself against being called more than once
-
-    function ready() {
-
-        if (!readyFired) {
-            // this must be set to true before we start calling callbacks
-            readyFired = true;
-            for (var i = 0; i < readyList.length; i++) {
-                // if a callback here happens to add new ready handlers,
-                // the docReady() function will see that it already fired
-                // and will schedule the callback to run right after
-                // this event loop finishes so all handlers will still execute
-                // in order and no new ones will be added to the readyList
-                // while we are processing the list
-
-                readyList[i].fn.call(window, readyList[i].ctx);
-            }
-            // allow any closures held by these functions to free
-            readyList = [];
-        }
-    }
-
-    // Extend the hAzzle object
-
-    $.extend({
-
-
-        ready: function (callback, context) {
-
-            // context are are optional, but document by default
-
-            context = context || doc;
-
-            if (readyFired) {
-                setTimeout(function () {
-                    callback(context);
-                }, 1);
-                return;
-            } else {
-
-                // add the function and context to the list
-
-                readyList.push({
-                    fn: callback,
-                    ctx: context
-                });
-            }
-            // if document already ready to go, schedule the ready function to run
-            if (doc.readyState === "complete") {
-
-                setTimeout(ready, 1);
-
-            } else if (!readyEventHandlersInstalled) {
-
-                // otherwise if we don't have event handlers installed, install them
-
-                doc.addEventListener("DOMContentLoaded", ready, false);
-                // backup is window load event
-                window.addEventListener("load", ready, false);
-
-                readyEventHandlersInstalled = true;
-            }
-        }
-    });
-
-})(hAzzle);
-
-// Matches
-
-;
-(function ($) {
-
-    var doc = document,
-        cached = [],
-        ghost = doc.createElement('div');
-
-    $.extend($, {
-
-        /** 
-         * Returns a predicate for checking whether an object has a given set of `key:value` pairs.
-         */
-
-        matches: function (element, sel) {
-
-            // Make sure that attribute selectors are quoted
-
-            //sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
-
-            // Fall back to performing a selector if the matchesSelector are not supported
-
-            fallback = (function (sel, element) {
-
-                if (!element.parentNode) {
-
-                    ghost.appendChild(element);
-                }
-
-                match = $.indexOf($.select(sel, element.parentNode), element) >= 0;
-
-                if (element.parentNode === ghost) {
-                    ghost.removeChild(element);
-                }
-                return match;
-
-            });
-
-            if (!element || !$.isElement(element) || !sel) {
-                return false;
-            }
-
-            if (sel['nodeType']) {
-                return element === sel;
-            }
-
-            if (sel instanceof $) {
-                return sel.elems.some(function (sel) {
-                    return $.matches(element, sel);
-                });
-            }
-
-            if (element === doc) {
-                return false;
-            }
-
-            matchesSelector = $.prefix('matchesSelector', ghost);
-
-            if (matchesSelector) {
-                // IE9 supports matchesSelector, but doesn't work on orphaned elems / disconnected nodes
-
-                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
-
-                if (supportsOrphans) {
-
-                    // Avoid document fragment
-
-                    if (!$.nodeType(11, element)) {
-
-                        return matchesSelector.call(element, sel);
-                    }
-
-                } else { // For IE9 or other browsers who fail on orphaned elems, we walk the hard way !! :)
-
-                    return fallback(sel, element);
-                }
-            }
-
-            return fallback(sel, element);
-        }
-    });
-
-})(hAzzle);
-
-// data
+// Data
 
 ;
 (function ($) {
@@ -1593,9 +1595,3263 @@
 
 })(hAzzle);
 
-/*!
- * Traversing.js
- */
+// Browser
+
+;
+(function ($) {
+
+    var nav = navigator,
+        ua = nav.userAgent,
+        t = true,
+        iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase(),
+        likeAndroid = /like android/i.test(ua),
+        android = !likeAndroid && /android/i.test(ua),
+        versionIdentifier = getFirstMatch(/version\/(\d+(\.\d+)?)/i),
+        tablet = /tablet/i.test(ua),
+        mobile = !tablet && /[^-]mobi/i.test(ua),
+        result,
+
+        // Browser regEx	
+
+        pShort = /phantom/i,
+        blackbShort = /blackberry|\bbb\d+/i,
+        operaShort = /opera|opr/i,
+        chromeShort = /chrome|crios|crmo/i,
+        ieShort = /msie|trident/i,
+        sailfishShort = /sailfish/i,
+        seamonkeyShort = /seamonkey\//i,
+        ffShort = /firefox|iceweasel/i,
+        webOsShort = /(web|hpw)os/i,
+        silkShort = /silk/i,
+        safariShort = /safari/i,
+        seamokeyShort = /seamonkey\//i,
+        badaShort = /bada/i,
+        tizenShort = /tizen/i,
+        geckoShort = /gecko\//i,
+        ffMobTab = /\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i,
+        opera = /(?:opera|opr)[\s\/](\d+(\.\d+)?)/i,
+        chrome = /(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i,
+        Firefox = /(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i,
+        msie = /(?:msie |rv:)(\d+(\.\d+)?)/i,
+        iemobile = /iemobile\/(\d+(\.\d+)?)/i,
+        winPhone = /windows phone/i,
+        sailfish = /sailfish\s?browser\/(\d+(\.\d+)?)/i,
+        seamonkey = /seamonkey\/(\d+(\.\d+)?)/i,
+        phantom = /phantomjs\/(\d+(\.\d+)?)/i,
+        BlackBerry = /blackberry[\d]+\/(\d+(\.\d+)?)/i,
+        osBrowser = /w(?:eb)?osbrowser\/(\d+(\.\d+)?)/i,
+        bada = /dolfin\/(\d+(\.\d+)?)/i,
+        tizen = /(?:tizen\s?)?browser\/(\d+(\.\d+)?)/i,
+        appleWebkit = /(apple)?webkit/i,
+        gecko = /gecko\/(\d+(\.\d+)?)/i,
+        touchPad = /touchpad\//i,
+        silk = /silk\/(\d+(\.\d+)?)/i;
+
+    function getFirstMatch(regex) {
+        var match = ua.match(regex);
+        return (match && match.length > 1 && match[1]) || '';
+    }
+
+
+    hAzzle.extend({
+        browser: function () {
+            operaShort.test(ua) ? result = {
+                name: "Opera",
+                opera: t,
+                version: versionIdentifier || getFirstMatch(opera)
+            } : winPhone.test(ua) ? result = {
+                name: "Windows Phone",
+                windowsphone: t,
+                msie: t,
+                version: getFirstMatch(iemobile)
+            } : ieShort.test(ua) ? result = {
+                name: "Internet Explorer",
+                msie: t,
+                version: getFirstMatch(msie)
+            } : chromeShort.test(ua) ? result = {
+                name: "Chrome",
+                chrome: t,
+                version: getFirstMatch(chrome)
+            } : iosdevice ? (result = {
+                name: "iphone" == iosdevice ? "iPhone" : "ipad" == iosdevice ? "iPad" : "iPod"
+            }, versionIdentifier && (result.version = versionIdentifier)) : sailfishShort.test(ua) ? result = {
+                name: "Sailfish",
+                sailfish: t,
+                version: getFirstMatch(sailfish)
+            } : seamokeyShort.test(ua) ? result = {
+                name: "SeaMonkey",
+                seamonkey: t,
+                version: getFirstMatch(seamonkey)
+            } : ffShort.test(ua) ? (result = {
+                name: "Firefox",
+                firefox: t,
+                version: getFirstMatch(Firefox)
+            }, ffMobTab.test(ua) && (result.firefoxos = t)) : silkShort.test(ua) ? result = {
+                name: "Amazon Silk",
+                silk: t,
+                version: getFirstMatch(silk)
+            } : android ? result = {
+                name: "Android",
+                version: versionIdentifier
+            } : pShort.test(ua) ? result = {
+                name: "PhantomJS",
+                phantom: t,
+                version: getFirstMatch(phantom)
+            } : blackbShort.test(ua) || /rim\stablet/i.test(ua) ? result = {
+                name: "BlackBerry",
+                blackberry: t,
+                version: versionIdentifier || getFirstMatch(BlackBerry)
+            } : webOsShort.test(ua) ? (result = {
+                    name: "WebOS",
+                    webos: t,
+                    version: versionIdentifier || getFirstMatch(osBrowser)
+                }, touchPad.test(ua) &&
+                (result.touchpad = t)) : result = badaShort.test(ua) ? {
+                name: "Bada",
+                bada: t,
+                version: getFirstMatch(bada)
+            } : tizenShort.test(ua) ? {
+                name: "Tizen",
+                tizen: t,
+                version: getFirstMatch(tizen) || versionIdentifier
+            } : safariShort.test(ua) ? {
+                name: "Safari",
+                safari: t,
+                version: versionIdentifier
+            } : {};
+
+            // set webkit or gecko flag for browsers based on these engines
+            if (appleWebkit.test(ua)) {
+                result.name = result.name || "Webkit";
+                result.webkit = t;
+                if (!result.version && versionIdentifier) {
+                    result.version = versionIdentifier;
+                }
+            } else if (!result.opera && geckoShort.test(ua)) {
+                result.name = result.name || "Gecko";
+                result.gecko = t;
+                result.version = result.version || getFirstMatch(gecko);
+            }
+
+            // set OS flags for platforms that have multiple browsers
+            if (android || result.silk) {
+                result.android = t;
+            } else if (iosdevice) {
+                result[iosdevice] = t;
+                result.ios = t;
+            }
+
+            // OS version extraction
+            var osVersion = '';
+            if (iosdevice) {
+                osVersion = getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i);
+                osVersion = osVersion.replace(/[_\s]/g, '.');
+            } else if (android) {
+                osVersion = getFirstMatch(/android[ \/-](\d+(\.\d+)*)/i);
+            } else if (result.windowsphone) {
+                osVersion = getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i);
+            } else if (result.webos) {
+                osVersion = getFirstMatch(/(?:web|hpw)os\/(\d+(\.\d+)*)/i);
+            } else if (result.blackberry) {
+                osVersion = getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i);
+            } else if (result.bada) {
+                osVersion = getFirstMatch(/bada\/(\d+(\.\d+)*)/i);
+            } else if (result.tizen) {
+                osVersion = getFirstMatch(/tizen[\/\s](\d+(\.\d+)*)/i);
+            }
+            if (osVersion) {
+                result.osversion = osVersion;
+            }
+
+            // device type extraction
+            var osMajorVersion = osVersion.split('.')[0];
+            if (tablet || iosdevice == 'ipad' || (android && (osMajorVersion == 3 || (osMajorVersion == 4 && !mobile))) || result.silk) {
+                result.tablet = t;
+            } else if (mobile || iosdevice == 'iphone' || iosdevice == 'ipod' || android || result.blackberry || result.webos || result.bada) {
+                result.mobile = t;
+            }
+
+            // Graded Browser Support
+            // http://developer.yahoo.com/yui/articles/gbs
+            if ((result.msie && result.version >= 9) ||
+                (result.chrome && result.version >= 20) ||
+                (result.firefox && result.version >= 10.0) ||
+                (result.safari && result.version >= 5) ||
+                (result.opera && result.version >= 10.0) ||
+                (result.ios && result.osversion && result.osversion.split(".")[0] >= 6)
+            ) {
+                result.a = t;
+            } else if ((result.msie && result.version < 9) ||
+                (result.chrome && result.version < 20) ||
+                (result.firefox && result.version < 10.0) ||
+                (result.safari && result.version < 5) ||
+                (result.opera && result.version < 10.0) ||
+                (result.ios && result.osversion && result.osversion.split(".")[0] < 6)
+            ) {
+                result.c = t;
+            } else result.x = t;
+
+            return result;
+        }
+    })
+
+})(hAzzle);
+
+// Classes
+
+;
+(function ($) {
+
+    // Check if we can support classList
+
+    var csp = !!document.createElement('p').classList,
+
+        indexOf = Array.prototype.indexOf,
+
+        sMa,
+        whitespace = /\S+/g,
+        _class = /[\t\r\n\f]/g,
+        isFunction = $.isFunction;
+
+    // Check if classList support multiple arguments
+
+    if (csp) {
+
+        (function () {
+
+            var div = document.createElement('div');
+            div.classList.add('a', 'b');
+            sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+        }());
+    }
+
+    $.extend($.fn, {
+
+        /**
+         * Add class(es) to element collection
+         *
+         * @param {String} value
+         */
+
+        addClass: function (value) {
+
+            if (isFunction(value)) {
+                return this.each(function (index) {
+                    $(this).addClass(value.call(this, index, this.className));
+                });
+            }
+
+            var cls,
+                cur,
+                j,
+                finalValue,
+                classes = (value || "").match(whitespace) || [];
+
+            // I think this could give memory leak, so we need to find a solution here.
+            return this.each(function (_, elem) {
+
+                // classList
+
+                if ($.nodeType(1, elem)) {
+
+                    if (!csp && !sMa) {
+
+                        elem.classList.add.apply(elem.classList, classes);
+
+                    } else {
+
+                        if (!csp) {
+
+                            cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : " ");
+                        }
+
+                        j = 0;
+                        while ((cls = classes[j++])) {
+
+                            if (csp) {
+                                elem.classList.add(cls);
+                            } else {
+                                if (cur.indexOf(" " + cls + " ") < 0) {
+                                    cur += cls + " ";
+                                }
+                            }
+                        }
+                        if (!csp) {
+                            finalValue = cur.trim(cur);
+
+                            if (elem.className !== finalValue) {
+                                elem.className = finalValue;
+                            }
+                        }
+                    }
+                    return;
+                }
+            });
+        },
+
+        /**
+         * Remove class(es) from element
+         *
+         * @param {String} value
+         */
+
+        removeClass: function (value) {
+
+            var classes, cur, cls, j, finalValue;
+
+            if (isFunction(value)) {
+                return this.each(function (j) {
+                    $(this).removeClass(value.call(this, j, this.className));
+                });
+            }
+
+            classes = (value || "").match(whitespace) || [];
+
+            return this.each(function (_, elem) {
+
+                if (!value) {
+
+                    return elem.className = "";
+                }
+
+                // ClassList
+
+                if (csp && $.nodeType(1, elem) && elem.className) {
+
+                    if (!value) {
+                        elem.className = '';
+                    }
+
+                    if (sMa) {
+
+                        elem.classList.remove.apply(elem.classList, classes);
+
+                    } else {
+
+                        j = 0;
+                        while ((cls = classes[j++])) {
+                            elem.classList.remove(cls);
+                        }
+                    }
+
+                    return $.each(classes, function (_, classes) {
+                        elem.classList.remove(classes);
+                    });
+                }
+
+                // Old way of doing things
+
+                cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : "");
+
+                if (cur) {
+                    j = 0;
+                    while ((cls = classes[j++])) {
+                        // Remove *all* instances
+                        while (cur.indexOf(" " + cls + " ") >= 0) {
+                            cur = cur.replace(" " + cls + " ", " ");
+                        }
+                    }
+
+                    // Only assign if different to avoid unneeded rendering.
+
+                    finalValue = value ? $.trim(cur) : "";
+                    if (elem.className !== finalValue) {
+                        elem.className = finalValue;
+                    }
+                }
+            });
+        },
+
+        /**
+         * Checks if an element has the given class
+         *
+         * @param {String} selector(s)
+         * @return {Boolean} true if the element contains all classes
+         */
+
+        hasClass: function (value) {
+
+            var i = 0,
+                l = this.length;
+
+            while (i < l) {
+
+                if (!csp) {
+
+                    if ($.nodeType(1, this[i])) {
+
+                        if (this[i].classList.contains(value)) {
+
+                            return true;
+                        }
+                    }
+
+                } else { // The old way
+
+                    var className = " " + value + " ";
+                    if (this[i].nodeType === 1 && (" " + this[i].className + " ").replace(_class, " ").indexOf(className) >= 0) {
+                        return true;
+                    }
+                }
+                i++;
+            }
+            return false;
+        },
+
+        /**
+         * Replace a class in a element collection
+         *
+         * @param {String} clA
+         * @param {String} clB
+         */
+
+        replaceClass: function (clA, clB) {
+            var current, found, i;
+            return this.each(function () {
+                current = this.className.split(' '),
+                found = false;
+
+                for (i = current.length; i--;) {
+                    if (current[i] == clA) {
+                        found = true;
+                        current[i] = clB;
+                    }
+                }
+                if (!found) {
+                    return $(this).addClass(clB, this);
+                }
+                this.className = current.join(' ');
+            });
+        },
+
+        /**
+         * Add class(es) to element, and remove after 'duration' milliseconds
+         * @param {String} clas
+         * @param {Number} duration
+         */
+
+        tempClass: function (clas, duration) {
+            return this.each(function (_, elem) {
+                $(elem).addClass(clas);
+                setTimeout((function () {
+                    $(elem).removeClass(clas);
+                }), duration || /* default 100ms */ 100);
+            });
+        },
+
+        /**
+         * Toggle class(es) on element
+         *
+         * @param {String} value
+         * @param {Boolean} state
+         * @return {Boolean}
+         */
+
+        toggleClass: function (value, state) {
+
+            var type = typeof value;
+
+            if (typeof state === "boolean" && type === "string") {
+                return state ? this.addClass(value) : this.removeClass(value);
+            }
+
+            if (isFunction(value)) {
+                return this.each(function (i) {
+                    $(this).toggleClass(value.call(this, i, this.className, state), state);
+                });
+            }
+
+            var classNames = value.match(whitespace) || [],
+                cls,
+                i = 0,
+                self;
+
+            return this.each(function (_, elem) {
+
+                if (type === "string") {
+
+                    // ClassList
+
+                    self = $(elem);
+
+                    while ((cls = classNames[i++])) {
+
+                        if (csp) {
+
+                            if (typeof state === "boolean") {
+
+                                // IE10+ doesn't support the toggle boolean flag.
+
+                                if (state) {
+
+                                    return elem.classList.add(cls);
+
+                                } else {
+
+                                    return elem.classList.remove(cls);
+                                }
+                            }
+
+                            return elem.classList.toggle(cls);
+                        }
+
+                        // check each className given, space separated list
+
+                        if (self.hasClass(cls)) {
+
+                            self.removeClass(cls);
+
+                        } else {
+
+                            self.addClass(cls);
+                        }
+                    }
+
+                    // Toggle whole class name
+                } else if (type === typeof undefined || type === "boolean") {
+                    if (this.className) {
+                        // store className if set
+                        $.data(this, "__className__", this.className);
+                    }
+
+                    this.className = this.className || value === false ? "" : $.data(this, "__className__") || "";
+                }
+            });
+        }
+    });
+
+})(hAzzle);
+
+// CSS
+
+;
+(function ($) {
+
+    var html = window.document.documentElement,
+        doc = document,
+        docbody = doc.body,
+        important = /\s+(!important)/g,
+        background = /background/i,
+        rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i,
+        relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+        cssDirection = ["Top", "Right", "Bottom", "Left"],
+
+        isFunction = $.isFunction,
+        isUndefined = $.isUndefined;
+
+    /**
+     * Dasherize the name
+     *
+     * NOTE!! This is 'ONLY' used when we are using the
+     * the slower cssText because of the '!Important' property
+     *
+     */
+
+    function dasherize(str) {
+        return str.replace(/::/g, '/')
+            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+            .replace(/([a-z\d])([A-Z])/g, '$1_$2')
+            .replace(/_/g, '-')
+            .toLowerCase();
+    }
+
+    // Extend the $ object
+
+    $.extend({
+
+
+        cssNumber: {
+            'column-count': 1,
+            'columns': 1,
+            'font-weight': 1,
+            'line-height': 1,
+            'opacity': 1,
+            'z-index': 1,
+            'zoom': 1
+        },
+
+        cssHooks: {
+
+            opacity: {
+                get: function (elem, computed) {
+                    if (computed) {
+                        // We should always get a number back from opacity
+                        var ret = $.curCSS(elem, "opacity");
+                        return ret === "" ? "1" : ret;
+                    }
+                }
+            }
+
+        },
+
+        cssNormalTransform: {
+            letterSpacing: "0",
+            fontWeight: "400"
+        },
+
+        cssProps: {
+
+            "float": "cssFloat"
+        },
+
+        // Convert some pixels into another CSS unity.
+        // It's used in $.style() for the += or -=.
+        // * px   : Number.
+        // * unit : String, like "%", "em", "px", ...
+        // * elem : Node, the current element.
+        // * prop : String, the CSS property.
+        pixelsToUnity: function (px, unit, elem, prop) {
+
+            if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
+            else if (unit === "em") return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
+            else if (unit === "%") {
+
+                if (/^(left$|right$|margin|padding)/.test(prop)) {
+                    prop = "width";
+                } else if (/^(top|bottom)$/.test(prop)) {
+                    prop = "height";
+                }
+                elem = /^(relative|absolute|fixed)$/.test($.css(elem, "position")) ?
+                    elem.offsetParent : elem.parentNode;
+                if (elem) {
+                    prop = $.css(elem, prop, true);
+                    if (prop !== 0) {
+                        return px / prop * 100;
+                    }
+                }
+                return 0;
+            }
+
+            if (isUndefined($.pixelsToUnity.units)) {
+                var units = $.pixelsToUnity.units = {},
+                    div = doc.createElement("div");
+                div.style.width = "100cm";
+                docbody.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+                units.mm = div.offsetWidth / 1000;
+                docbody.removeChild(div);
+                units.cm = units.mm * 10;
+                units.inn = units.cm * 2.54;
+                units.pt = units.inn * 1 / 72;
+                units.pc = units.pt * 12;
+            }
+            // If the unity specified is not recognized we return the value.
+            unit = $.pixelsToUnity.units[unit];
+            return unit ? px / unit : px;
+        },
+
+        curCSS: function (elem, name, computed) {
+
+            var ret;
+
+            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+
+            if (computed) {
+
+                ret = computed.getPropertyValue(name) || computed[name];
+
+                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
+                    ret = $.style(elem, name);
+                }
+            }
+            return isUndefined(ret) ? ret + "" : ret;
+        },
+
+        // Globalize CSS
+
+        css: function (elem, name, extra, styles, normalized) {
+
+            var val,
+                num,
+                style = elem.style;
+            /**
+             * If this function are called from within hAzzle.style(), we don't
+             * need to normalize the name again.
+             */
+
+            if (!normalized) {
+
+                // Normalize the name
+
+                name = $.camelCase(name);
+
+                // Transform to normal properties - vendor or not
+
+                name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)));
+
+            }
+
+            // Do we have any cssHooks available?
+
+            var hooks = $.cssHooks[name];
+
+            // If a hook was provided get the computed value from there
+
+            if (hooks) {
+
+                val = hooks['get'](elem, true, extra);
+            }
+
+            // Otherwise, if a way to get the computed value exists, use that
+
+            if (val === undefined) {
+
+                val = $.curCSS(elem, name, styles, style);
+            }
+
+            // Convert "normal" to computed value
+
+            if (val === "normal" && name in $.cssNormalTransform) {
+                val = $.cssNormalTransform[name];
+            }
+
+            // Return, converting to number if forced or a qualifier was provided and val looks numeric
+
+            if (extra === "" || extra) {
+                num = parseFloat(val);
+                return extra === true || $.isNumeric(num) ? num || 0 : val;
+            }
+
+            return val;
+        },
+
+        /**
+         * CSS properties accessor for an element
+         */
+
+        style: function (elem, name, value, extra, hook) {
+
+            // Don't set styles on text and comment nodes
+
+            if (!elem || $.nodeType(3, elem) || $.nodeType(8, elem)) {
+
+                return;
+            }
+
+            var style = elem.style,
+                hooks = '',
+                ret,
+                digit = false;
+
+            if (!style) {
+
+                return;
+            }
+
+            name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)) || name);
+
+            if (extra) {
+
+                name = dasherize(name);
+
+            } else { // Normalize the name
+
+                name = $.camelCase(name);
+            }
+
+            // Do we have any cssHooks available?
+
+            hooks = hook || $.cssHooks[name];
+
+            /**
+             * Convert relative numbers to strings.
+             * It can handle +=, -=, em or %
+             */
+
+            if (typeof value === "string" && (ret = relNum.exec(value))) {
+                value = $.css(elem, name, "", "", name);
+                value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+
+                // We are dealing with relative numbers, set till true
+
+                digit = true;
+            }
+
+            // Make sure that null and NaN values aren't set.
+
+            if (value === null || value !== value) {
+                return;
+            }
+
+            // If a number was passed in, add 'px' to the (except for certain CSS properties)
+
+            if (digit && !$.cssNumber[name]) {
+
+                value += ret && ret[3] ? ret[3] : "px";
+            }
+
+            // Check for background
+
+            if (value === "" && background.test(name)) {
+
+                if (extra) {
+
+                    return name + ":" + "inherit";
+                }
+
+                style[name] = "inherit";
+            }
+
+            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
+
+                if (extra) {
+
+                    return name + ":" + value;
+                }
+
+                style[name] = value;
+            }
+
+            if (extra) {
+
+                return name + ":" + value;
+            }
+
+            style[name] = value;
+
+        },
+
+        setOffset: function (elem, coordinates, i) {
+            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+                position = $.css(elem, "position"),
+                curElem = $(elem),
+                props = {};
+
+            // Set position first, in-case top/left are set even on static elem
+
+            if (position === "static") {
+                elem.style.position = "relative";
+            }
+
+            curOffset = curElem.offset();
+            curCSSTop = $.css(elem, "top");
+            curCSSLeft = $.css(elem, "left");
+            calculatePosition = (position === "absolute" || position === "fixed") &&
+                (curCSSTop + curCSSLeft).indexOf("auto") > -1;
+
+            // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+            if (calculatePosition) {
+                curPosition = curElem.position();
+                curTop = curPosition.top;
+                curLeft = curPosition.left;
+
+            } else {
+
+                curTop = parseFloat(curCSSTop) || 0;
+                curLeft = parseFloat(curCSSLeft) || 0;
+            }
+
+            if (isFunction(coordinates)) {
+
+                coordinates = coordinates.call(elem, i, curOffset);
+            }
+
+            if (!$.isNull(coordinates.top)) {
+
+                props.top = (coordinates.top - curOffset.top) + curTop;
+            }
+            if (!$.isNull(coordinates.left)) {
+
+                props.left = (coordinates.left - curOffset.left) + curLeft;
+            }
+
+            if ("using" in coordinates) {
+
+                coordinates.using.call(elem, props);
+
+            } else {
+
+                curElem.css(props);
+            }
+        }
+    });
+
+
+    $.extend($.fn, {
+
+        css: function (property, value) {
+
+            if (arguments.length === 1) {
+
+                if ($.isString(property)) {
+
+                    return this[0] && $.css(this[0], property);
+                }
+
+                for (var key in property) {
+
+                    this.each(function () {
+
+                        // !Important property check
+
+                        if (important.test(property[key])) {
+
+                            this.style.cssText += $.style(this, key, property[key], true);
+
+                        } else {
+
+                            $.style(this, key, property[key]);
+                        }
+                    });
+                }
+
+            } else {
+
+                return this.each(function () {
+
+                    // !Important property check
+
+                    if (important.test(value)) {
+
+                        this.style.cssText += $.style(this, property, value, true);
+
+                    } else {
+
+                        $.style(this, property, value);
+                    }
+                });
+            }
+        },
+
+        /**
+         * Calculates offset of the current element
+         * @param{coordinates}
+         * @return object with left, top, bottom, right, width and height properties
+         */
+
+        offset: function (coordinates) {
+
+            if (arguments.length) {
+                return coordinates === undefined ?
+                    this :
+                    this.each(function (i) {
+                        $.setOffset(this, coordinates, i);
+                    });
+            }
+
+            var elem = this[0],
+                _win,
+                clientTop = html.clientTop,
+                clientLeft = html.clientLeft,
+                doc = elem && elem.ownerDocument;
+
+            if (!doc) {
+
+                return;
+            }
+
+            _win = $.isWindow(doc) ? doc : $.nodeType(9, doc) && doc.defaultView;
+
+            var scrollTop = _win.pageYOffset || html.scrollTop,
+                scrollLeft = _win.pageXOffset || html.scrollLeft,
+                boundingRect = {
+                    top: 0,
+                    left: 0
+                };
+
+            if (elem && elem.ownerDocument) {
+
+                // Make sure it's not a disconnected DOM node
+
+                if (!$.contains(html, elem)) {
+                    return boundingRect;
+                }
+
+                if (typeof elem.getBoundingClientRect !== typeof undefined) {
+                    boundingRect = elem.getBoundingClientRect();
+                }
+
+                return {
+                    top: boundingRect.top + scrollTop - clientTop,
+                    left: boundingRect.left + scrollLeft - clientLeft,
+                    right: boundingRect.right + scrollLeft - clientLeft,
+                    bottom: boundingRect.bottom + scrollTop - clientTop,
+                    width: boundingRect.right - boundingRect.left,
+                    height: boundingRect.bottom - boundingRect.top
+                };
+            }
+        },
+
+        position: function () {
+
+            if (!this[0]) return null;
+
+            var offsetParent, offset,
+                elem = this[0],
+                parentOffset = {
+                    top: 0,
+                    left: 0
+                };
+
+            if ($.css(elem, "position") === "fixed") {
+
+                offset = elem.getBoundingClientRect();
+
+            } else {
+
+                // Get *real* offsetParent
+
+                offsetParent = this.offsetParent();
+
+                // Get correct offsets
+                offset = this.offset();
+
+                if (!$.nodeName(offsetParent[0], "html")) {
+                    parentOffset = offsetParent.offset();
+                }
+
+                // Subtract element margins
+
+                parentOffset.top += $.css(offsetParent[0], "borderTopWidth", true);
+                parentOffset.left += $.css(offsetParent[0], "borderLeftWidth", true);
+            }
+
+            // Subtract parent offsets and element margins
+            return {
+                top: offset.top - parentOffset.top - $.css(elem, "marginTop", true),
+                left: offset.left - parentOffset.left - $.css(elem, "marginLeft", true)
+            };
+        },
+
+        /**  
+         * Get the closest ancestor element that is positioned.
+         */
+
+        offsetParent: function () {
+            return this.map(function (elem) {
+                var op = elem.offsetParent || doc.documentElement;
+                while (op && (!$.nodeName(op, "html") && $.css(op, "position") === "static")) {
+                    op = op.offsetParent || doc.documentElement;
+                }
+                return op;
+            });
+        }
+    });
+
+    $.each(["Height", "Width"], function (i, name) {
+        var type = name.toLowerCase();
+        $.fn["inner" + name] = function () {
+            var el = this[0];
+            return el && el.style ? parseFloat($.css(el, type, "padding")) : null;
+        };
+        $.fn["outer" + name] = function (margin) {
+            var el = this[0];
+            return el && el.style ? parseFloat($.css(el, type, margin ? "margin" : "border")) : null;
+        };
+        $.fn[type] = function (size) {
+            var el = this[0];
+            if (!el) return size === null ? null : this;
+            if (isFunction(size))
+                return this.each(function (i) {
+                    var self = $(this);
+                    self[type](size.call(this, i, self[type]()));
+                });
+            if ($.isWindow(el)) {
+                return el.document.documentElement["client" + name];
+            } else if ($.nodeType(9, el)) {
+                return Math.max(
+                    el.documentElement["client" + name],
+                    el.body["scroll" + name], el.documentElement["scroll" + name],
+                    el.body["offset" + name], el.documentElement["offset" + name]);
+            } else if (isUndefined(size)) {
+                var orig = $.css(el, type),
+                    ret = parseFloat(orig);
+                return $.IsNaN(ret) ? orig : ret;
+            } else return this.css(type, $.isString(size) ? size : size + "px");
+        };
+    });
+
+    $.each(["height", "width"], function (i, name) {
+
+        $.cssHooks[name] = {
+
+            displaySwap: /^(none|table(?!-c[ea]).+)/,
+            numsplit: /^([\-+]?(?:\d*\.)?\d+)(.*)$/i,
+
+            cssShow: {
+                position: "absolute",
+                visibility: "hidden",
+                display: "block"
+            },
+
+            get: function (elem, computed, extra) {
+
+                if (computed) {
+                    if (elem.offsetWidth === 0 && this.displaySwap.test(hAzzle.css(elem, "display"))) {
+
+                        var ret, name,
+                            old = {};
+
+                        // Remember the old values, and insert the new ones
+                        for (name in this.cssShow) {
+                            old[name] = elem.style[name];
+                            elem.style[name] = this.cssShow[name];
+                        }
+
+                        ret = getWH(elem);
+
+                        // Revert the old values
+                        for (name in this.cssShow) {
+                            elem.style[name] = old[name];
+                        }
+
+                        return ret;
+
+                    } else {
+
+                        getWH(elem, name, extra);
+                    }
+
+                }
+            },
+
+            setPositiveNumber: function (value, subs) {
+                var matches = this.numsplit.exec(value);
+                return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value;
+            },
+
+            set: function (elem, value, extra) {
+
+                var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+                return this.setPositiveNumber(value, extra ?
+                    augmentWidthOrHeight(
+                        elem,
+                        name,
+                        extra,
+                        hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
+                        styles
+                    ) : 0
+                );
+            }
+        };
+    });
+
+
+    function getWH(elem, name, extra) {
+
+        var val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
+            valueIsBorderBox = true,
+            isBorderBox = $.support.boxSizing && $.css(elem, "boxSizing") === "border-box";
+
+        if (val <= 0) {
+            // Fall back to computed then uncomputed css if necessary
+            val = $.curCSS(elem, name);
+            if (val < 0 || val === null) {
+                val = elem.style[name];
+            }
+
+            // Computed unit is not pixels. Stop here and return.
+            if (rnumnonpx.test(val)) {
+                return val;
+            }
+
+            // we need the check for style in case a browser which returns unreliable values
+            // for getComputedStyle silently falls back to the reliable elem.style
+            valueIsBorderBox = isBorderBox && ($.support.boxSizingReliable || val === elem.style[name]);
+
+            // Normalize "", auto, and prepare for extra
+            val = parseFloat(val) || 0;
+        }
+
+        // use the active box-sizing model to add/subtract irrelevant styles
+        return (val +
+            augmentWidthOrHeight(
+                elem,
+                name,
+                extra || (isBorderBox ? "border" : "content"),
+                valueIsBorderBox
+            )
+        ) + "px";
+    }
+
+    function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
+
+        var i = extra === (isBorderBox ? "border" : "content") ? 4 : name === "width" ? 1 : 0,
+            val = 0;
+
+        for (; i < 4; i += 2) {
+
+            if (extra === "margin") {
+                val += $.css(elem, extra + cssDirection[i], true);
+            }
+            if (isBorderBox) {
+                // border-box includes padding, so remove it if we want content
+                if (extra === "content") {
+                    val -= parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
+                }
+
+                if (extra !== "margin") {
+                    val -= parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
+                }
+            } else {
+                // at this point, extra isnt content, so add padding
+                val += parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
+
+                // at this point, extra isnt content nor padding, so add border
+                if (extra !== "padding") {
+                    val += parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
+                }
+            }
+        }
+
+        return val;
+    }
+
+    /**
+     * Process scrollTop and scrollLeft
+     */
+    $.each({
+        'scrollTop': 'pageYOffset',
+        'scrollLeft': 'pageXOffset'
+    }, function (name, dir) {
+        $.fn[name] = function (val) {
+            var elem = this[0],
+                win = $.isWindow(elem) ? elem : $.nodeType(9, elem) && elem.defaultView;
+
+            if (isUndefined(val)) return val ? val[dir] : elem[name];
+            win ? win.scrollTo(window[name]) : elem[name] = val;
+        };
+    });
+
+
+    /**
+     * CSS hooks - margin and padding
+     */
+
+    $.each(["margin", "padding"], function (i, hook) {
+        $.cssHooks[hook] = {
+            get: function (elem, computed, extra) {
+                return $.map(cssDirection, function (dir) {
+                    return $.css(elem, hook + dir);
+                }).join(" ");
+            },
+            set: function (elem, value) {
+                var parts = value.split(/\s/),
+                    values = {
+                        "Top": parts[0],
+                        "Right": parts[1] || parts[0],
+                        "Bottom": parts[2] || parts[0],
+                        "Left": parts[3] || parts[1] || parts[0]
+                    };
+                $.each(cssDirection, function (i, dir) {
+                    elem.style[hook + dir] = values[dir];
+                });
+            }
+        };
+    });
+
+})(hAzzle);
+
+// Events
+
+;
+(function ($) {
+
+    var win = window,
+        doc = document || {},
+        root = doc.documentElement || {},
+        isString = $.isString,
+        isFunction = $.isFunction,
+
+        // Cached handlers
+
+        container = {},
+
+        specialsplit = /\s*,\s*|\s+/,
+        rkeyEvent = /^key/, // key
+        rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, // mouse
+        ns = /[^\.]*(?=\..*)\.|.*/, // Namespace regEx
+        names = /\..*/,
+
+        // Event and handlers we have fixed
+
+        treated = {},
+
+        // Some prototype references we need
+
+
+        substr = String.prototype.substr,
+        slice = Array.prototype.slice,
+        concat = Array.prototype.concat,
+        toString = Object.prototype.toString,
+
+        threatment = {
+
+            // Don't do events on disabeled nodes
+
+            disabeled: function (el, type) {
+                if (el.disabeled && type === "click") return true;
+            },
+
+            // Don't do events on text and comment nodes 
+
+            nodeType: function (el) {
+                if ($.nodeType(3, el) || $.nodeType(8, el)) return true;
+            }
+        },
+
+        special = {
+            pointerenter: {
+                fix: "pointerover",
+                condition: checkPointer
+            },
+
+            pointerleave: {
+                fix: "pointerout",
+                condition: checkPointer
+            },
+            mouseenter: {
+                fix: 'mouseover',
+                condition: checkMouse
+            },
+            mouseleave: {
+                fix: 'mouseout',
+                condition: checkMouse
+            },
+            mousewheel: {
+                fix: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
+            }
+        },
+
+        // Includes some event props shared by different events
+
+        commonProps = "altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" ");
+
+    // Check mouse
+
+    function checkMouse(evt) {
+        if (evt = evt.relatedTarget) {
+            var ac;
+            if (ac = evt !== this)
+                if (ac = "xul" !== evt.prefix)
+                    if (ac = !/document/.test(this.toString())) {
+                        a: {
+                            for (; evt = evt.parentNode;)
+                                if (evt === this) {
+                                    evt = 1;
+                                    break a;
+                                }
+                            evt = 0;
+                        }
+                        ac = !evt;
+                    }
+            evt = ac;
+        } else evt = null === evt;
+        return evt;
+    }
+
+    /**
+  * FIX ME!!  I don't have a pointer device so can't fix this. Maybe in the future.
+              But need to run a check about this condition here.
+  */
+
+    function checkPointer(evt) {
+        return evt;
+    }
+
+
+    $.extend($, {
+
+        // Event hooks
+
+        eventHooks: {
+
+            // Mouse and key props are borrowed from jQuery
+
+            keys: function (evt, original) {
+                original.keyCode = evt.keyCode || evt.which;
+                return commonProps.concat(["char", "charCode", "key", "keyCode"]);
+
+            },
+            mouse: function (evt, original) {
+
+                original.rightClick = evt.which === 3 || evt.button === 2;
+
+                original.pos = {
+                    x: 0,
+                    y: 0
+                };
+
+                // Calculate pageX/Y if missing and clientX/Y available
+
+                if (evt.pageX || evt.pageY) {
+                    original.clientX = evt.pageX;
+                    original.clientY = evt.pageY;
+                } else if (evt.clientX || evt.clientY) {
+                    original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
+                    original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
+                }
+
+                return commonProps.concat("button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "));
+            }
+        },
+
+        Kernel: function (element, type, handler, original, namespaces, args) {
+
+            // Allow instantiation without the 'new' keyword
+
+            if (!(this instanceof $.Kernel)) {
+                return new $.Kernel(element, type, handler, original, namespaces, args);
+            }
+
+            var _special = special[type],
+                evt = this;
+
+            // Only load the event once upon unload
+
+            if (type === 'unload') {
+
+                handler = $.Events.once($.Events.removeListener, element, type, handler, original);
+            }
+
+            if (_special) {
+                if (_special.condition) {
+                    handler = $.Events.wrappedHandler(element, handler, _special.condition, args);
+                }
+
+                type = _special.fix || type;
+            }
+
+            evt.element = element;
+            evt.type = type;
+            evt.original = original;
+            evt.namespaces = namespaces;
+            evt.eventType = type;
+            evt.target = element;
+            evt.handler = $.Events.wrappedHandler(element, handler, null, args);
+        }
+    });
+
+
+    $.Kernel.prototype = {
+
+        inNamespaces: function (checkNamespaces) {
+
+            var i, j, c = 0;
+
+            if (!checkNamespaces) {
+
+                return true;
+            }
+
+            if (!this.namespaces) {
+
+                return false;
+            }
+
+            for (i = checkNamespaces.length; i--;) {
+                for (j = this.namespaces.length; j--;) {
+                    if (checkNamespaces[i] == this.namespaces[j]) c++;
+                }
+            }
+            return checkNamespaces.length === c;
+        },
+
+        matches: function (checkElement, checkOriginal, checkHandler) {
+            return this.element === checkElement &&
+                (!checkOriginal || this.original === checkOriginal) &&
+                (!checkHandler || this.handler === checkHandler);
+        }
+    };
+
+    $.extend($.fn, {
+
+        /**
+         * Bind a DOM event to element
+         *
+         * @param {String} events
+         * @param {String} selector
+         * @param {Function} fn
+         * @param {Boolean} one
+         * @return {Object}
+         */
+
+        on: function (events, selector, fn, one) {
+            return this.length === 1 ? $.Events.add(this[0], events, selector, fn, one) :
+                this.each(function () {
+                    $.Events.add(this, events, selector, fn, one);
+                });
+        },
+
+        /**
+         * Bind a DOM event but trigger it once before removing it
+         *
+         * @param {String} events
+         * @param {String} selector
+         * @param {Function} fn
+         * @return {Object}
+         **/
+
+        one: function (types, selector, fn) {
+            return this.on(types, selector, fn, 1);
+        },
+
+        /**
+         * Unbind an event from the element
+         *
+         * @param {String} events
+         * @param {Function} fn
+         * @return {Object}
+         */
+
+        off: function (events, fn) {
+            return this.length === 1 ? $.Events.off(this[0], events, fn) :
+                this.each(function () {
+                    $.Events.off(this, events, fn)
+                });
+        },
+
+        /**
+         * Triggers an event of specific type with optional extra arguments
+         *
+         * @param {Object|String} type
+         * @param {Object|String} args
+         * @return {Object}
+         */
+
+        trigger: function (type, args) {
+
+            var el = this[0];
+
+            var types = type.split(specialsplit),
+                i, j, l, call, evt, names, handlers;
+
+            if (threatment['disabeled'](el, type) || threatment['nodeType'](el)) return false;
+
+            for (i = types.length; i--;) {
+                type = types[i].replace(names, '');
+                if (names = types[i].replace(ns, '')) names = names.split('.');
+                if (!names && !args) {
+                    var HTMLEvt = doc.createEvent('HTMLEvents');
+                    HTMLEvt['initEvent'](type, true, true, win, 1);
+                    el.dispatchEvent(HTMLEvt);
+
+                } else {
+
+                    handlers = $.Events.getHandler(el, type, null, false);
+                    evt = new Event(null, el);
+                    evt.type = type;
+                    call = args ? 'apply' : 'call';
+                    args = args ? [evt].concat(args) : evt;
+                    for (j = 0, l = handlers.length; j < l; j++) {
+                        if (handlers[j].inNamespaces(names)) {
+                            handlers[j].handler[call](el, args);
+                        }
+                    }
+                }
+            }
+            return el;
+        }
+    });
+
+    // hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
+    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
+
+    function Event(evt, element) {
+
+        if (!arguments.length) return;
+
+        evt = evt || ((element.ownerDocument || element.document || element).parentWindow || win).evt;
+
+        this.originalEvent = evt;
+
+        if (!evt) return;
+
+        var type = evt.type,
+            target = evt.target,
+            i, p, props, fixHook;
+
+        this.target = target && $.nodeType(3, target) ? target.parentNode : target;
+
+        fixHook = treated[type];
+
+        if (!fixHook) {
+
+            treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
+                rkeyEvent.test(type) ? $.eventHooks['keys'] :
+                function () {
+                    return commonProps;
+            };
+        }
+
+        props = fixHook(evt, this, type);
+
+        for (i = props.length; i--;) {
+            if (!((p = props[i]) in this) && p in evt) this[p] = evt[p];
+        }
+    }
+
+
+    Event.prototype = {
+
+        preventDefault: function () {
+            if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
+            else this.originalEvent.returnValue = false;
+        },
+        stopPropagation: function () {
+            if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
+            else this.originalEvent.cancelBubble = true;
+        },
+        stop: function () {
+            this.preventDefault();
+            this.stopPropagation();
+            this.stopped = true;
+        },
+        stopImmediatePropagation: function () {
+            if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
+            this.isImmediatePropagationStopped = function () {
+                return true;
+            };
+        },
+        isImmediatePropagationStopped: function () {
+            return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
+        },
+        clone: function (currentTarget) {
+            var ne = new Event(this, this.element);
+            ne.currentTarget = currentTarget;
+            return ne;
+        }
+    };
+
+    $.Events = {
+
+        // Add event listener
+
+        add: function (el, events, selector, fn, one) {
+
+            var originalFn, type, types, i, args, entry, first;
+
+            // Dont' allow click on disabeled elements, or events on text and comment nodes
+
+            if (threatment['disabeled'](el, events) || threatment['nodeType'](el)) return false;
+
+            // Types can be a map of types/handlers
+            // TODO!! This is not working on delegated events, have to fix this ASAP !!
+
+            if ($.isUndefined(selector) && $.isObject(events))
+
+                for (type in events) {
+
+                if (events.hasOwnProperty(type)) {
+                    $.Events.add.call(this, el, type, events[type]);
+                }
+
+            } else {
+
+                // Delegated event
+
+                if (!isFunction(selector)) {
+                    originalFn = fn;
+                    args = slice.call(arguments, 4);
+                    fn = $.Events.delegate(selector, originalFn);
+
+                } else {
+                    args = slice.call(arguments, 3);
+                    fn = originalFn = selector;
+                }
+
+                // One
+
+                if (one === 1) {
+
+                    // Make a unique handlet that get removed after first time it's triggered
+                    fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
+                }
+
+                // Handle multiple events separated by a space
+
+                types = events.split(specialsplit);
+
+                for (i = types.length; i--;) {
+                    first = $.Events.putHandler(entry = $.Kernel(
+                        el, types[i].replace(names, '') // event type
+                        , fn, originalFn, types[i].replace(ns, '').split('.') // namespaces
+                        , args, false
+                    ));
+
+                    // Add root listener only if we're the first
+
+                    if (first) {
+
+                        el.addEventListener(entry.eventType, $.Events.rootListener, false);
+
+                    }
+                }
+                return el;
+            }
+        },
+
+        // Remove event listener
+
+        off: function (el, typeSpec, fn) {
+
+            var isTypeStr = isString(typeSpec),
+                type, namespaces, i;
+
+            if (isTypeStr && $.indexOf(typeSpec, ' ') > 0) {
+
+                typeSpec = typeSpec.split(typeSpec);
+
+                for (i = typeSpec.length; i--;)
+                    $.Events.off(el, typeSpec[i], fn);
+                return el;
+            }
+
+            type = isTypeStr && typeSpec.replace(names, '');
+
+            if (type && special[type]) type = special[type].fix;
+
+            if (!typeSpec || isTypeStr) {
+
+                // Namespace
+
+                if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
+
+                // Remove the listener
+
+                $.Events.removeListener(el, type, fn, namespaces);
+
+            } else if (isFunction(typeSpec)) {
+
+                $.Events.removeListener(el, null, typeSpec);
+
+            } else {
+
+                if (typeSpec) {
+
+                    for (var k in typeSpec) {
+
+                        if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+                    }
+                }
+            }
+
+            return el;
+        },
+
+        /**
+         * Set up a delegate helper using the given selector, wrap the handler function
+         * We are using the "find" function to search through the 'elems stack' to find
+         * the selector
+         */
+
+        delegate: function (selector, fn) {
+            function findTarget(target, root) {
+                var i, array = isString(selector) ? $(root).find(selector) : selector;
+
+                for (; target && target !== root; target = target.parentNode) {
+
+                    if (array !== null) {
+
+                        // No need to run a expensive loop if the array length are 1						
+
+                        if (array.length === 1) {
+
+                            if (array[0] === target) return target;
+
+                        } else {
+
+                            for (i = array.length; i--;) {
+                                if (array[i] === target) return target;
+                            }
+                        }
+                    }
+                }
+            }
+
+            function handler(e) {
+                if (e.target.disabled !== true) {
+                    var m = findTarget(e.target, this);
+                    if (m) {
+                        fn.apply(m, arguments);
+                    }
+                }
+            }
+
+            handler.__handlers = {
+                ft: findTarget,
+                selector: selector
+            };
+            return handler;
+        },
+
+        /**
+         * Remove the event listener
+         */
+
+        removeListener: function (element, type, handler, ns) {
+
+            type = type && type.replace(names, '');
+
+            type = $.Events.getHandler(element, type, null, false);
+
+            var removed = {};
+
+            // No point to continue if no event attached on the element
+
+            if (type) {
+
+                var i = 0,
+                    l = type.length;
+
+                for (; i < l; i++) {
+                    if ((!handler || type[i].original === handler) && type[i].inNamespaces(ns)) {
+                        $.Events.delHandler(type[i]);
+                        if (!removed[type[i].eventType])
+                            removed[type[i].eventType] = {
+                                t: type[i].eventType,
+                                c: type[i].type
+                            };
+                    }
+                }
+
+                for (i in removed) {
+                    if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
+                        element.removeEventListener(removed[i].t, $.Events.rootListener, false);
+                    }
+                }
+            }
+        },
+
+        once: function (rm, element, type, handler, callback) {
+            return function () {
+                handler.apply(this, arguments);
+                rm(element, type, callback);
+            };
+        },
+
+        rootListener: function (evt, type) {
+            var listeners = $.Events.getHandler(this, type || evt.type, null, false),
+                l = listeners.length,
+                i = 0;
+
+            evt = new Event(evt, this, true);
+
+            for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
+
+                if (!listeners[i].removed) listeners[i].handler.call(this, evt);
+            }
+        },
+
+        wrappedHandler: function (element, fn, condition, args) {
+
+            function call(evt, eargs) {
+
+                return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
+            }
+
+            function findTarget(evt, eventElement) {
+
+                return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
+            }
+
+            var handler = condition ? function (evt) {
+
+                var target = findTarget(evt, this); // delegated event
+
+                if (condition.apply(target, arguments)) {
+                    if (evt) evt.currentTarget = target;
+                    return call(evt, arguments);
+                }
+            } : function (evt) {
+                if (fn.__handlers) evt = evt.clone(findTarget(evt));
+                return call(evt, arguments);
+            };
+
+            handler.__handlers = fn.__handlers;
+            return handler;
+        },
+
+        findIt: function (element, type, original, handler, root, fn) {
+
+            if (!type || type === '*') {
+
+                for (var t in container) {
+
+                    if (t.charAt(0) === root ? 'r' : '#') {
+                        $.Events.findIt(element, t.substr(1), original, handler, root, fn);
+                    }
+                }
+
+            } else {
+
+                var i = 0,
+                    l,
+                    list = container[root ? 'r' : '#' + type];
+
+                if (!list) {
+
+                    return;
+                }
+
+                for (l = list.length; i < l; i++) {
+
+                    if ((element === '*' || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
+                }
+            }
+        },
+
+        hasHandler: function (element, type, original, root) {
+
+            if (root = container[(root ? "r" : "#") + type])
+                for (type = root.length; type--;)
+                    if (!root[type].root && root[type].matches(element, original, null)) return true;
+            return false;
+        },
+        getHandler: function (element, type, original, root) {
+
+            var entries = [];
+
+            $.Events.findIt(element, type, original, null, root, function (entry) {
+                entries.push(entry);
+            });
+            return entries;
+        },
+        putHandler: function (entry) {
+            var has = !entry.root && !this.hasHandler(entry.element, entry.type, null, false),
+                key = (entry.root ? 'r' : '#') + entry.type;
+            (container[key] || (container[key] = [])).push(entry);
+            return has;
+        },
+        // Find handlers for event delegation
+        delHandler: function (entry) {
+            $.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
+                list.splice(i, 1);
+                entry.removed = true;
+                if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
+                return false;
+            });
+        }
+    };
+
+    // Shortcut methods for 'on'
+
+    $.each("hover;blur; focus;focusin;focusout;load;resize;scroll;unload;click;dblclick;mousedown;mouseup;mousemove;mouseover;mouseout;mouseenter;mouseleave;change;select;submit;keydown;keypress;keyup;error;contextmenu".split(";"), function () {
+
+        var name = this;
+
+        // Handle event binding
+
+        $.fn[name] = function (data, fn) {
+
+            //events, fn, delfn, one
+
+            if (arguments.length > 0) {
+
+                this.on(name, data, fn)
+
+            }
+        };
+    });
+
+})(hAzzle);
+
+// Ajax
+
+;
+(function ($) {
+
+    // Ajax
+    var win = window,
+        doc = document,
+        byTag = 'getElementsByTagName',
+        xmlHttpRequest = 'XMLHttpRequest',
+        crElm = 'createElement',
+        own = 'hasOwnProperty',
+        head = doc.head || doc[byTag]('head')[0],
+        uniqid = 0,
+        lastValue, // data stored by the most recent JSONP callback
+        nav = navigator,
+        isIE10 = $.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
+
+        defaultHeaders = {
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
+            requestedWith: xmlHttpRequest,
+            accepts: {
+                '*': "*/".concat("*"),
+                'text': 'text/plain',
+                'html': 'text/html',
+                'xml': 'application/xml, text/xml',
+                'json': 'application/json, text/javascript',
+                'js': 'application/javascript, text/javascript'
+            }
+        };
+
+    /**
+     * Convert to query string
+     *
+     * @param {Object} obj
+     *
+     * @return {String}
+     *
+     * - Taken from jQuery and optimized it for speed
+     *
+     */
+
+    function ctqs(o, trad) {
+
+        var prefix, i,
+            traditional = trad || false,
+            s = [],
+            enc = encodeURIComponent,
+            add = function (key, value) {
+                // If value is a function, invoke it and return its value
+                value = ($.isFunction(value)) ? value() : (value === null ? '' : value);
+                s[s.length] = enc(key) + '=' + enc(value);
+            };
+        // If an array was passed in, assume that it is an array of form elements.
+        if ($.isArray(o))
+            for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
+        else {
+            for (prefix in o) {
+                buildParams(prefix, o[prefix], traditional, add, o);
+            }
+        }
+        return s.join('&').replace(/%20/g, '+');
+    }
+
+    /**
+     * Build params
+     */
+
+    function buildParams(prefix, obj, traditional, add, o) {
+        var name, i, v, rbracket = /\[\]$/;
+
+        if ($.isArray(obj)) {
+            for (i = 0; obj && i < obj.length; i++) {
+                v = obj[i];
+                if (traditional || rbracket.test(prefix)) {
+                    // Treat each array item as a scalar.
+                    add(prefix, v);
+                } else buildParams(prefix + '[' + ($.isObject(v) ? i : '') + ']', v, traditional, add);
+            }
+        } else if (obj && obj.toString() === '[object Object]') {
+            // Serialize object item.
+            for (name in obj) {
+                if (o[own](prefix)) buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
+            }
+
+        } else add(prefix, obj);
+    }
+
+    /**
+     *  Url append
+     *
+     * @param {String} url
+     * @param {String} query
+     * @return {String}
+     */
+
+    function appendQuery(url, query) {
+        return (url + '&' + query).replace(/[&?]+/, '?')
+    }
+
+    /**
+     * General jsonP callback
+     *
+     * @param {String} url
+     * @param {String} s
+     *
+     * @return {String}
+     **/
+
+    function generalCallback(data) {
+        lastValue = data;
+    }
+
+    /**
+     * jsonP
+     *
+     * @param {Object} o
+     * @param {Function} fn
+     * @param {String} url
+     *
+     * @return {Object}
+     **/
+
+    function handleJsonp(o, fn, url) {
+
+        var reqId = uniqid++,
+            cbkey = o.jsonp || 'callback'; // the 'callback' key
+
+        o = o.jsonpCallback || 'hAzzel_' + $.now(); // the 'callback' value
+
+        var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
+            match = url.match(cbreg),
+            script = doc[crElm]('script'),
+            loaded = 0;
+
+        if (match) {
+            if (match[3] === '?') url = url.replace(cbreg, '$1=' + o); // wildcard callback func name
+            else o = match[3]; // provided callback func name
+        } else url = appendQuery(url, cbkey + '=' + o); // no callback details, add 'em
+
+
+        win[o] = generalCallback;
+
+        script.type = 'text/javascript';
+        script.src = url;
+        script.async = true;
+
+
+        $.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
+
+        script.onload = script.onreadystatechange = function () {
+
+            if (script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded' || loaded) {
+                return false;
+            }
+            script.onload = script.onreadystatechange = null;
+            if (script.onclick) script.onclick();
+            // Call the user callback with the last value stored and clean up values and scripts.
+            fn(lastValue);
+            lastValue = undefined;
+            head.removeChild(script);
+            loaded = 1;
+        };
+
+        // Add the script to the DOM head
+        head.appendChild(script);
+
+        // Enable JSONP timeout
+        return {
+            abort: function () {
+                script.onload = script.onreadystatechange = null;
+                lastValue = undefined;
+                head.removeChild(script);
+                loaded = 1;
+            }
+        };
+    }
+
+    // Extend the hAzzle object
+
+    $.extend({
+
+        ajaxSettings: {
+
+            // Default type of request
+            type: 'GET',
+            // Callback that is executed before request
+            beforeSend: $.noop(),
+            // Callback that is executed if the request succeeds
+            success: $.noop(),
+            // Callback that is executed the the server drops error
+            error: $.noop(),
+            // Callback that is executed on request complete (both: error and success)
+            complete: $.noop(),
+            // Default timeout
+            timeout: 0,
+            // async
+            async: true,
+
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8"
+
+        },
+
+        /**
+         * Ajax method to create ajax request with XMLHTTPRequest
+         *
+         * @param {Object|Function} opt
+         * @param {function|callback} fn
+         * @return {Object}
+         */
+
+        ajax: function (opt, fn) {
+
+            var key, h, err;
+
+            opt = $.extend({}, opt || {});
+
+            for (key in $.ajaxSettings) {
+
+                if (opt[key] === undefined) {
+
+                    opt[key] = $.ajaxSettings[key];
+
+                }
+
+            }
+            fn = fn || function () {};
+
+            var xhr,
+                xDomainRequest = 'XDomainRequest',
+                error = 'error',
+                headers = opt.headers || {},
+                type = (opt.type || 'GET').toLowerCase(),
+                url = $.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
+
+            var dataType = (opt.dataType) ? opt.dataType.toLowerCase() : '',
+                abortTimeout = null,
+                processData = opt.processData || true, // Set to true as default
+                data = (processData !== false && opt.data && !$.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
+                sendWait = false;
+
+            // If no url, stop here and return.
+
+            if (!url) return false;
+
+            // If jsonp or GET, append the query string to end of URL
+
+            if ((dataType === 'jsonp' || type.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
+
+            // If jsonp, we stop it here 
+
+            if (dataType === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
+
+            if (opt.crossOrigin === true) {
+                var _xhr = win.XMLHttpRequest ? new XMLHttpRequest() : null;
+                if (_xhr && 'withCredentials' in _xhr) xhr = _xhr;
+                else if (win.xDomainRequest) xhr = new xDomainRequest();
+                else throw "Browser does not support cross-origin requests";
+            } else {
+                xhr = new XMLHttpRequest()
+            }
+
+            xhr.open(type, url, opt.async === false ? false : true);
+
+            // Set headers
+
+            headers.Accept = headers.Accept || defaultHeaders.accepts[type] || defaultHeaders.accepts['*'];
+
+            if (!opt.crossOrigin && !headers.requestedWith) headers.requestedWith = defaultHeaders.requestedWith;
+
+            if (opt.contentType || opt.data && dataType.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
+
+            // Set headers
+
+            for (h in headers) {
+
+                headers.hasOwnProperty(h) && 'setRequestHeader' in xhr && xhr.setRequestHeader(h, headers[h]);
+
+            }
+            // Set credentials
+
+            if ($.isDefined(opt.withCredentials) && $.isDefined(xhr.withCredentials)) {
+                xhr.withCredentials = !!opt.withCredentials;
+            }
+
+            if (opt.timeout > 0) {
+                abortTimeout = setTimeout(function () {
+                    xhr.abort(); // Or should we use self.abort() ??
+                }, opt.timeout);
+            }
+
+            if (win[xDomainRequest] && xhr instanceof win.xDomainRequest) {
+
+                xhr.onload = fn;
+                xhr.onerror = err;
+                xhr.onprogress = function () {};
+                sendWait = true;
+
+            } else {
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+
+                        // Determine if successful
+
+                        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
+                            var res;
+                            if (xhr) {
+
+                                // json
+
+                                if ((dataType === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
+
+                                // xml
+
+                                if (dataType === 'xml') {
+
+                                    res = xhr.responseXML && xhr.responseXML.parseError && xhr.responseXML.parseError.errorCode && xhr.responseXML.parseError.reason ? null : xhr.responseXML;
+
+                                } else {
+
+                                    res = res || xhr.responseText;
+                                }
+                            }
+                            if (!res && data) res = data;
+                            if (opt.success) opt.success(res);
+                        } else if (opt.error !== undefined) {
+
+                            if (abortTimeout !== null) clearTimeout(abortTimeout);
+                            opt.error(error, opt, xhr);
+                        }
+                    }
+                };
+            }
+
+            // Before open
+
+            if (opt.before) opt.before(xhr);
+
+            if (sendWait) {
+                setTimeout(function () {
+
+                    xhr.send(data);
+                }, 200);
+            } else xhr.send(data);
+
+            return xhr;
+        }
+    });
+
+
+
+    $.each(["get", "post"], function (i, method) {
+
+        $[method] = function (url, data, callback, type) {
+            // shift arguments if data argument was omitted
+            if ($.isFunction(data)) {
+                type = type || callback;
+                callback = data;
+                data = undefined;
+            }
+
+            return $.ajax({
+                url: url,
+                type: method,
+                dataType: type,
+                data: data,
+                success: callback
+            });
+        };
+    });
+
+})(hAzzle);
+
+// Colors
+
+;
+(function ($) {
+
+    var props = "backgroundColor borderBottomColor borderLeftColor borderRightColor borderTopColor borderColor boxShadowColor color textShadowColor columnRuleColor outlineColor textDecorationColor textEmphasisColor".split(' ');
+
+    $.extend($, {
+
+        /**
+         * hAzzle color names
+         *
+         */
+
+        colornames: {
+            aliceblue: {
+                r: 240,
+                g: 248,
+                b: 255
+            },
+            antiquewhite: {
+                r: 250,
+                g: 235,
+                b: 215
+            },
+            aqua: {
+                r: 0,
+                g: 255,
+                b: 255
+            },
+            aquamarine: {
+                r: 127,
+                g: 255,
+                b: 212
+            },
+            azure: {
+                r: 240,
+                g: 255,
+                b: 255
+            },
+            beige: {
+                r: 245,
+                g: 245,
+                b: 220
+            },
+            bisque: {
+                r: 255,
+                g: 228,
+                b: 196
+            },
+            black: {
+                r: 0,
+                g: 0,
+                b: 0
+            },
+            blanchedalmond: {
+                r: 255,
+                g: 235,
+                b: 205
+            },
+            blue: {
+                r: 0,
+                g: 0,
+                b: 255
+            },
+            blueviolet: {
+                r: 138,
+                g: 43,
+                b: 226
+            },
+            brown: {
+                r: 165,
+                g: 42,
+                b: 42
+            },
+            burlywood: {
+                r: 222,
+                g: 184,
+                b: 135
+            },
+            cadetblue: {
+                r: 95,
+                g: 158,
+                b: 160
+            },
+            chartreuse: {
+                r: 127,
+                g: 255,
+                b: 0
+            },
+            chocolate: {
+                r: 210,
+                g: 105,
+                b: 30
+            },
+            coral: {
+                r: 255,
+                g: 127,
+                b: 80
+            },
+            cornflowerblue: {
+                r: 100,
+                g: 149,
+                b: 237
+            },
+            cornsilk: {
+                r: 255,
+                g: 248,
+                b: 220
+            },
+            crimson: {
+                r: 220,
+                g: 20,
+                b: 60
+            },
+            cyan: {
+                r: 0,
+                g: 255,
+                b: 255
+            },
+            darkblue: {
+                r: 0,
+                g: 0,
+                b: 139
+            },
+            darkcyan: {
+                r: 0,
+                g: 139,
+                b: 139
+            },
+            darkgoldenrod: {
+                r: 184,
+                g: 134,
+                b: 11
+            },
+            darkgray: {
+                r: 169,
+                g: 169,
+                b: 169
+            },
+            darkgreen: {
+                r: 0,
+                g: 100,
+                b: 0
+            },
+            darkgrey: {
+                r: 169,
+                g: 169,
+                b: 169
+            },
+            darkkhaki: {
+                r: 189,
+                g: 183,
+                b: 107
+            },
+            darkmagenta: {
+                r: 139,
+                g: 0,
+                b: 139
+            },
+            darkolivegreen: {
+                r: 85,
+                g: 107,
+                b: 47
+            },
+            darkorange: {
+                r: 255,
+                g: 140,
+                b: 0
+            },
+            darkorchid: {
+                r: 153,
+                g: 50,
+                b: 204
+            },
+            darkred: {
+                r: 139,
+                g: 0,
+                b: 0
+            },
+            darksalmon: {
+                r: 233,
+                g: 150,
+                b: 122
+            },
+            darkseagreen: {
+                r: 143,
+                g: 188,
+                b: 143
+            },
+            darkslateblue: {
+                r: 72,
+                g: 61,
+                b: 139
+            },
+            darkslategray: {
+                r: 47,
+                g: 79,
+                b: 79
+            },
+            darkslategrey: {
+                r: 47,
+                g: 79,
+                b: 79
+            },
+            darkturquoise: {
+                r: 0,
+                g: 206,
+                b: 209
+            },
+            darkviolet: {
+                r: 148,
+                g: 0,
+                b: 211
+            },
+            deeppink: {
+                r: 255,
+                g: 20,
+                b: 147
+            },
+            deepskyblue: {
+                r: 0,
+                g: 191,
+                b: 255
+            },
+            dimgrey: {
+                r: 105,
+                g: 105,
+                b: 105
+            },
+            dodgerblue: {
+                r: 30,
+                g: 144,
+                b: 255
+            },
+            firebrick: {
+                r: 178,
+                g: 34,
+                b: 34
+            },
+            floralwhite: {
+                r: 255,
+                g: 250,
+                b: 240
+            },
+            forestgreen: {
+                r: 34,
+                g: 139,
+                b: 34
+            },
+            fuchsia: {
+                r: 255,
+                g: 0,
+                b: 255
+            },
+            gainsboro: {
+                r: 220,
+                g: 220,
+                b: 220
+            },
+            ghostwhite: {
+                r: 248,
+                g: 248,
+                b: 255
+            },
+            gold: {
+                r: 255,
+                g: 215,
+                b: 0
+            },
+            goldenrod: {
+                r: 218,
+                g: 165,
+                b: 32
+            },
+            green: {
+                r: 0,
+                g: 128,
+                b: 0
+            },
+            greenyellow: {
+                r: 173,
+                g: 255,
+                b: 47
+            },
+            grey: {
+                r: 128,
+                g: 128,
+                b: 128
+            },
+            honeydew: {
+                r: 240,
+                g: 255,
+                b: 240
+            },
+            hotpink: {
+                r: 255,
+                g: 105,
+                b: 180
+            },
+            indianred: {
+                r: 205,
+                g: 92,
+                b: 92
+            },
+            indigo: {
+                r: 75,
+                g: 0,
+                b: 130
+            },
+            ivory: {
+                r: 255,
+                g: 255,
+                b: 240
+            },
+            khaki: {
+                r: 240,
+                g: 230,
+                b: 140
+            },
+            lavender: {
+                r: 230,
+                g: 230,
+                b: 250
+            },
+            lavenderblush: {
+                r: 255,
+                g: 240,
+                b: 245
+            },
+            lawngreen: {
+                r: 124,
+                g: 252,
+                b: 0
+            },
+            lemonchiffon: {
+                r: 255,
+                g: 250,
+                b: 205
+            },
+            lightblue: {
+                r: 173,
+                g: 216,
+                b: 230
+
+            },
+            lightcoral: {
+                r: 240,
+                g: 128,
+                b: 128
+            },
+            lightcyan: {
+                r: 224,
+                g: 255,
+                b: 255
+            },
+            lightgoldenrodyellow: {
+                r: 250,
+                g: 250,
+                b: 210
+            },
+            lightslategrey: {
+                r: 119,
+                g: 136,
+                b: 153
+            },
+            lightgray: {
+                r: 211,
+                g: 211,
+                b: 211
+            },
+            lightgreen: {
+                r: 144,
+                g: 238,
+                b: 144
+            },
+            lightgrey: {
+                r: 211,
+                g: 211,
+                b: 211
+            },
+            lightpink: {
+                r: 255,
+                g: 182,
+                b: 193
+            },
+            lightsalmon: {
+                r: 255,
+                g: 160,
+                b: 122
+            },
+            lightseagreen: {
+                r: 32,
+                g: 178,
+                b: 170
+            },
+            lightskyblue: {
+                r: 135,
+                g: 206,
+                b: 250
+            },
+            lightslategray: {
+                r: 119,
+                g: 136,
+                b: 153
+            },
+            lightslategrey: {
+                r: 119,
+                g: 136,
+                b: 153
+            },
+            lightsteelblue: {
+                r: 176,
+                g: 196,
+                b: 222
+            },
+            lightyellow: {
+                r: 255,
+                g: 255,
+                b: 224
+            },
+            lime: {
+                r: 0,
+                g: 255,
+                b: 0
+            },
+            limegreen: {
+                r: 50,
+                g: 205,
+                b: 50
+            },
+            linen: {
+                r: 250,
+                g: 240,
+                b: 230
+            },
+            magenta: {
+                r: 255,
+                g: 0,
+                b: 255
+            },
+            maroon: {
+                r: 128,
+                g: 0,
+                b: 0
+            },
+            mediumaquamarine: {
+                r: 102,
+                g: 205,
+                b: 170
+            },
+            mediumblue: {
+                r: 0,
+                g: 0,
+                b: 205
+            },
+            mediumorchid: {
+                r: 186,
+                g: 85,
+                b: 211
+            },
+            mediumpurple: {
+                r: 147,
+                g: 112,
+                b: 219
+            },
+            mediumseagreen: {
+                r: 60,
+                g: 179,
+                b: 113
+            },
+            mediumslateblue: {
+                r: 123,
+                g: 104,
+                b: 238
+            },
+            mediumspringgreen: {
+                r: 0,
+                g: 250,
+                b: 154
+            },
+            mediumturquoise: {
+                r: 72,
+                g: 209,
+                b: 204
+            },
+            mediumvioletred: {
+                r: 199,
+                g: 21,
+                b: 133
+            },
+            midnightblue: {
+                r: 25,
+                g: 25,
+                b: 112
+            },
+            mintcream: {
+                r: 245,
+                g: 255,
+                b: 250
+            },
+            mistyrose: {
+                r: 255,
+                g: 228,
+                b: 225
+            },
+            moccasin: {
+                r: 255,
+                g: 228,
+                b: 181
+            },
+            navajowhite: {
+                r: 255,
+                g: 222,
+                b: 173
+            },
+            navy: {
+                r: 0,
+                g: 0,
+                b: 128
+            },
+            oldlace: {
+                r: 253,
+                g: 245,
+                b: 230
+            },
+            olive: {
+                r: 128,
+                g: 128,
+                b: 0
+            },
+            olivedrab: {
+                r: 107,
+                g: 142,
+                b: 35
+            },
+            orange: {
+                r: 255,
+                g: 165,
+                b: 0
+            },
+            orangered: {
+                r: 255,
+                g: 69,
+                b: 0
+            },
+            orchid: {
+                r: 218,
+                g: 112,
+                b: 214
+            },
+            palegoldenrod: {
+                r: 238,
+                g: 232,
+                b: 170
+            },
+            palegreen: {
+                r: 152,
+                g: 251,
+                b: 152
+            },
+            paleturquoise: {
+                r: 175,
+                g: 238,
+                b: 238
+            },
+            palevioletred: {
+                r: 219,
+                g: 112,
+                b: 147
+            },
+            papayawhip: {
+                r: 255,
+                g: 239,
+                b: 213
+            },
+            peachpuff: {
+                r: 255,
+                g: 218,
+                b: 185
+            },
+            peru: {
+                r: 205,
+                g: 133,
+                b: 63
+            },
+            pink: {
+                r: 255,
+                g: 192,
+                b: 203
+            },
+            plum: {
+                r: 221,
+                g: 160,
+                b: 221
+            },
+            powderblue: {
+                r: 176,
+                g: 224,
+                b: 230
+            },
+            purple: {
+                r: 128,
+                g: 0,
+                b: 128
+            },
+            red: {
+                r: 255,
+                g: 0,
+                b: 0
+            },
+            rosybrown: {
+                r: 188,
+                g: 143,
+                b: 143
+            },
+            royalblue: {
+                r: 65,
+                g: 105,
+                b: 225
+            },
+            saddlebrown: {
+                r: 139,
+                g: 69,
+                b: 19
+            },
+            salmon: {
+                r: 250,
+                g: 128,
+                b: 114
+            },
+            sandybrown: {
+                r: 244,
+                g: 164,
+                b: 96
+            },
+            seagreen: {
+                r: 46,
+                g: 139,
+                b: 87
+            },
+            seashell: {
+                r: 255,
+                g: 245,
+                b: 238
+            },
+            sienna: {
+                r: 160,
+                g: 82,
+                b: 45
+            },
+            silver: {
+                r: 192,
+                g: 192,
+                b: 192
+            },
+            skyblue: {
+                r: 135,
+                g: 206,
+                b: 235
+            },
+            slateblue: {
+                r: 106,
+                g: 90,
+                b: 205
+            },
+            slategray: {
+                r: 112,
+                g: 128,
+                b: 144
+            },
+            slategrey: {
+                r: 112,
+                g: 128,
+                b: 144
+            },
+            slategrey1: {
+                r: 198,
+                g: 226,
+                b: 255
+            },
+            slategrey2: {
+                r: 185,
+                g: 211,
+                b: 238
+            },
+            snow: {
+                r: 255,
+                g: 250,
+                b: 250
+            },
+            springgreen: {
+                r: 0,
+                g: 255,
+                b: 127
+            },
+            steelblue: {
+                r: 70,
+                g: 130,
+                b: 180
+            },
+            tan: {
+                r: 210,
+                g: 180,
+                b: 140
+            },
+            teal: {
+                r: 0,
+                g: 128,
+                b: 128
+            },
+            thistle: {
+                r: 216,
+                g: 191,
+                b: 216
+            },
+            tomato: {
+                r: 255,
+                g: 99,
+                b: 71
+            },
+            turquoise: {
+                r: 64,
+                g: 224,
+                b: 208
+            },
+            violet: {
+                r: 238,
+                g: 130,
+                b: 238
+            },
+            wheat: {
+                r: 245,
+                g: 222,
+                b: 179
+            },
+            white: {
+                r: 255,
+                g: 255,
+                b: 255
+            },
+            whitesmoke: {
+                r: 245,
+                g: 245,
+                b: 245
+            },
+            yellow: {
+                r: 255,
+                g: 255,
+                b: 0
+            },
+            yellowgreen: {
+                r: 154,
+                g: 205,
+                b: 50
+            },
+            transparent: {
+                r: -1,
+                g: -1,
+                b: -1
+            }
+        },
+
+        color: {
+            normalize: function (input) {
+                var color, alpha,
+                    result, name, i, l,
+                    rhex = /#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/,
+                    rhexshort = /#([a-fA-F0-9])([a-fA-F0-9])([a-fA-F0-9])/,
+                    rrgb = /rgb(?:a)?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(0*\.?\d+)\s*)?\)/,
+                    rrgbpercent = /rgb(?:a)?\(\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*(?:,\s*(0*\.?\d+)\s*)?\)/,
+                    rhsl = /hsl(?:a)?\(\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*(?:,\s*(0*\.?\d+)\s*)?\)/;
+
+                // Handle color: #rrggbb
+                if (result = rhex.exec(input)) {
+                    color = {
+                        r: parseInt(result[1], 16),
+                        g: parseInt(result[2], 16),
+                        b: parseInt(result[3], 16),
+                        source: result[0]
+                    };
+                }
+                // Handle color: #rgb
+                else if (result = rhexshort.exec(input)) {
+                    color = {
+                        r: parseInt(result[1] + result[1], 16),
+                        g: parseInt(result[2] + result[2], 16),
+                        b: parseInt(result[3] + result[3], 16),
+                        source: result[0]
+                    };
+                }
+                // Handle color: rgb[a](r, g, b [, a])
+                else if (result = rrgb.exec(input)) {
+                    color = {
+                        r: parseInt(result[1], 10),
+                        g: parseInt(result[2], 10),
+                        b: parseInt(result[3], 10),
+                        alpha: parseFloat(result[4], 10),
+                        source: result[0]
+                    };
+                }
+                // Handle color: rgb[a](r%, g%, b% [, a])
+                else if (result = rrgbpercent.exec(input)) {
+                    color = {
+                        r: parseInt(result[1] * 2.55, 10),
+                        g: parseInt(result[2] * 2.55, 10),
+                        b: parseInt(result[3] * 2.55, 10),
+                        alpha: parseFloat(result[4], 10),
+                        source: result[0]
+                    };
+                }
+                // Handle color: hsl[a](h%, s%, l% [, a])
+                else if (result = rhsl.exec(input)) {
+                    color = $.color.hsl_to_rgb(
+                        parseFloat(result[1], 10) / 100,
+                        parseFloat(result[2], 10) / 100,
+                        parseFloat(result[3], 10) / 100
+                    );
+                    color.alpha = parseFloat(result[4], 10);
+                    color.source = result[0];
+                }
+                // Handle color: name
+                else {
+                    result = input.split(' ');
+                    for (i = 0, l = result.length; i < l; i++) {
+                        name = result[i];
+
+                        if ($.colornames[name]) {
+                            break;
+                        }
+                    }
+
+                    if (!$.colornames[name]) {
+                        name = 'transparent';
+                    }
+
+                    color = $.colornames[name];
+                    color.source = name;
+                }
+
+                if (!color.alpha && color.alpha !== 0) {
+                    delete color.alpha;
+                }
+
+                return color;
+            },
+
+            hsl_to_rgb: function (h, s, l, a) {
+                var r, g, b, m1, m2;
+
+                if (s === 0) {
+                    r = g = b = l;
+                } else {
+                    if (l <= 0.5) {
+                        m2 = l * (s + 1);
+                    } else {
+                        m2 = (l + s) - (l * s);
+                    }
+
+                    m1 = (l * 2) - m2;
+                    r = parseInt(255 * $.color.hue2rgb(m1, m2, h + (1 / 3)), 10);
+                    g = parseInt(255 * $.color.hue2rgb(m1, m2, h), 10);
+                    b = parseInt(255 * $.color.hue2rgb(m1, m2, h - (1 / 3)), 10);
+                }
+
+                return {
+                    r: r,
+                    g: g,
+                    b: b,
+                    alpha: a
+                };
+            },
+
+            // hsla conversions adapted from:
+            // https://code.google.com/p/maashaack/source/browse/packages/graphics/trunk/src/graphics/colors/HUE2RGB.as?r=5021			
+
+            hue2rgb: function (p, q, h) {
+
+                if (h < 0) {
+
+                    h++;
+                }
+
+                if (h > 1) {
+
+                    h--;
+                }
+
+                if ((h * 6) < 1) {
+                    return p + ((q - p) * h * 6);
+                } else if ((h * 2) < 1) {
+                    return q;
+                } else if ((h * 3) < 2) {
+                    return p + ((q - p) * ((2 / 3) - h) * 6);
+                } else {
+                    return p;
+                }
+            }
+        }
+    });
+
+    $.each(props, function (i, hook) {
+
+        $.cssHooks[hook] = {
+            set: function (elem, value) {
+
+                value = $.color.normalize(value);
+
+                if (!value.alpha) {
+                    value.alpha = 1;
+                }
+
+                elem.style[hook] = 'rgba(' + value.r + ',' + value.g + ',' + value.b + ',' + value.alpha + ')';
+            }
+        };
+    });
+
+
+
+    $.cssHooks.borderColor = {
+        expand: function (value) {
+            var expanded = {};
+
+            each(["Top", "Right", "Bottom", "Left"], function (i, part) {
+                expanded["border" + part + "Color"] = value;
+            });
+            return expanded;
+        }
+    };
+
+
+})(hAzzle);
+
+// Traversing
 
 ;
 (function ($) {
@@ -1930,1270 +5186,111 @@
 
 })(hAzzle);
 
-// Browser
+// Removeable
 
 ;
 (function ($) {
 
-    var nav = navigator,
-        ua = nav.userAgent,
-        t = true,
-        iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase(),
-        likeAndroid = /like android/i.test(ua),
-        android = !likeAndroid && /android/i.test(ua),
-        versionIdentifier = getFirstMatch(/version\/(\d+(\.\d+)?)/i),
-        tablet = /tablet/i.test(ua),
-        mobile = !tablet && /[^-]mobi/i.test(ua),
-        result,
-
-        // Browser regEx	
-
-        pShort = /phantom/i,
-        blackbShort = /blackberry|\bbb\d+/i,
-        operaShort = /opera|opr/i,
-        chromeShort = /chrome|crios|crmo/i,
-        ieShort = /msie|trident/i,
-        sailfishShort = /sailfish/i,
-        seamonkeyShort = /seamonkey\//i,
-        ffShort = /firefox|iceweasel/i,
-        webOsShort = /(web|hpw)os/i,
-        silkShort = /silk/i,
-        safariShort = /safari/i,
-        seamokeyShort = /seamonkey\//i,
-        badaShort = /bada/i,
-        tizenShort = /tizen/i,
-        geckoShort = /gecko\//i,
-        ffMobTab = /\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i,
-        opera = /(?:opera|opr)[\s\/](\d+(\.\d+)?)/i,
-        chrome = /(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i,
-        Firefox = /(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i,
-        msie = /(?:msie |rv:)(\d+(\.\d+)?)/i,
-        iemobile = /iemobile\/(\d+(\.\d+)?)/i,
-        winPhone = /windows phone/i,
-        sailfish = /sailfish\s?browser\/(\d+(\.\d+)?)/i,
-        seamonkey = /seamonkey\/(\d+(\.\d+)?)/i,
-        phantom = /phantomjs\/(\d+(\.\d+)?)/i,
-        BlackBerry = /blackberry[\d]+\/(\d+(\.\d+)?)/i,
-        osBrowser = /w(?:eb)?osbrowser\/(\d+(\.\d+)?)/i,
-        bada = /dolfin\/(\d+(\.\d+)?)/i,
-        tizen = /(?:tizen\s?)?browser\/(\d+(\.\d+)?)/i,
-        appleWebkit = /(apple)?webkit/i,
-        gecko = /gecko\/(\d+(\.\d+)?)/i,
-        touchPad = /touchpad\//i,
-        silk = /silk\/(\d+(\.\d+)?)/i;
-
-    function getFirstMatch(regex) {
-        var match = ua.match(regex);
-        return (match && match.length > 1 && match[1]) || '';
-    }
-
-
-    hAzzle.extend({
-        browser: function () {
-            operaShort.test(ua) ? result = {
-                name: "Opera",
-                opera: t,
-                version: versionIdentifier || getFirstMatch(opera)
-            } : winPhone.test(ua) ? result = {
-                name: "Windows Phone",
-                windowsphone: t,
-                msie: t,
-                version: getFirstMatch(iemobile)
-            } : ieShort.test(ua) ? result = {
-                name: "Internet Explorer",
-                msie: t,
-                version: getFirstMatch(msie)
-            } : chromeShort.test(ua) ? result = {
-                name: "Chrome",
-                chrome: t,
-                version: getFirstMatch(chrome)
-            } : iosdevice ? (result = {
-                name: "iphone" == iosdevice ? "iPhone" : "ipad" == iosdevice ? "iPad" : "iPod"
-            }, versionIdentifier && (result.version = versionIdentifier)) : sailfishShort.test(ua) ? result = {
-                name: "Sailfish",
-                sailfish: t,
-                version: getFirstMatch(sailfish)
-            } : seamokeyShort.test(ua) ? result = {
-                name: "SeaMonkey",
-                seamonkey: t,
-                version: getFirstMatch(seamonkey)
-            } : ffShort.test(ua) ? (result = {
-                name: "Firefox",
-                firefox: t,
-                version: getFirstMatch(Firefox)
-            }, ffMobTab.test(ua) && (result.firefoxos = t)) : silkShort.test(ua) ? result = {
-                name: "Amazon Silk",
-                silk: t,
-                version: getFirstMatch(silk)
-            } : android ? result = {
-                name: "Android",
-                version: versionIdentifier
-            } : pShort.test(ua) ? result = {
-                name: "PhantomJS",
-                phantom: t,
-                version: getFirstMatch(phantom)
-            } : blackbShort.test(ua) || /rim\stablet/i.test(ua) ? result = {
-                name: "BlackBerry",
-                blackberry: t,
-                version: versionIdentifier || getFirstMatch(BlackBerry)
-            } : webOsShort.test(ua) ? (result = {
-                    name: "WebOS",
-                    webos: t,
-                    version: versionIdentifier || getFirstMatch(osBrowser)
-                }, touchPad.test(ua) &&
-                (result.touchpad = t)) : result = badaShort.test(ua) ? {
-                name: "Bada",
-                bada: t,
-                version: getFirstMatch(bada)
-            } : tizenShort.test(ua) ? {
-                name: "Tizen",
-                tizen: t,
-                version: getFirstMatch(tizen) || versionIdentifier
-            } : safariShort.test(ua) ? {
-                name: "Safari",
-                safari: t,
-                version: versionIdentifier
-            } : {};
-
-            // set webkit or gecko flag for browsers based on these engines
-            if (appleWebkit.test(ua)) {
-                result.name = result.name || "Webkit";
-                result.webkit = t;
-                if (!result.version && versionIdentifier) {
-                    result.version = versionIdentifier;
-                }
-            } else if (!result.opera && geckoShort.test(ua)) {
-                result.name = result.name || "Gecko";
-                result.gecko = t;
-                result.version = result.version || getFirstMatch(gecko);
-            }
-
-            // set OS flags for platforms that have multiple browsers
-            if (android || result.silk) {
-                result.android = t;
-            } else if (iosdevice) {
-                result[iosdevice] = t;
-                result.ios = t;
-            }
-
-            // OS version extraction
-            var osVersion = '';
-            if (iosdevice) {
-                osVersion = getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i);
-                osVersion = osVersion.replace(/[_\s]/g, '.');
-            } else if (android) {
-                osVersion = getFirstMatch(/android[ \/-](\d+(\.\d+)*)/i);
-            } else if (result.windowsphone) {
-                osVersion = getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i);
-            } else if (result.webos) {
-                osVersion = getFirstMatch(/(?:web|hpw)os\/(\d+(\.\d+)*)/i);
-            } else if (result.blackberry) {
-                osVersion = getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i);
-            } else if (result.bada) {
-                osVersion = getFirstMatch(/bada\/(\d+(\.\d+)*)/i);
-            } else if (result.tizen) {
-                osVersion = getFirstMatch(/tizen[\/\s](\d+(\.\d+)*)/i);
-            }
-            if (osVersion) {
-                result.osversion = osVersion;
-            }
-
-            // device type extraction
-            var osMajorVersion = osVersion.split('.')[0];
-            if (tablet || iosdevice == 'ipad' || (android && (osMajorVersion == 3 || (osMajorVersion == 4 && !mobile))) || result.silk) {
-                result.tablet = t;
-            } else if (mobile || iosdevice == 'iphone' || iosdevice == 'ipod' || android || result.blackberry || result.webos || result.bada) {
-                result.mobile = t;
-            }
-
-            // Graded Browser Support
-            // http://developer.yahoo.com/yui/articles/gbs
-            if ((result.msie && result.version >= 9) ||
-                (result.chrome && result.version >= 20) ||
-                (result.firefox && result.version >= 10.0) ||
-                (result.safari && result.version >= 5) ||
-                (result.opera && result.version >= 10.0) ||
-                (result.ios && result.osversion && result.osversion.split(".")[0] >= 6)
-            ) {
-                result.a = t;
-            } else if ((result.msie && result.version < 9) ||
-                (result.chrome && result.version < 20) ||
-                (result.firefox && result.version < 10.0) ||
-                (result.safari && result.version < 5) ||
-                (result.opera && result.version < 10.0) ||
-                (result.ios && result.osversion && result.osversion.split(".")[0] < 6)
-            ) {
-                result.c = t;
-            } else result.x = t;
-
-            return result;
-        }
-    })
-
-})(hAzzle);
-
-/**! AJAX
- *
- * TODO!! A lot of work to do here!! This is working as it is, but need to be extended.
- *
- * Whislist:
- *
- *  - Promises
- *  - Longpolling
- */
-/**! AJAX
- *
- * TODO!! A lot of work to do here!! This is working as it is, but need to be extended.
- *
- * Whislist:
- *
- *  - Promises
- *  - Longpolling
- */
-;
-(function ($) {
-
-    // Ajax
-    var win = window,
-        doc = document,
-        byTag = 'getElementsByTagName',
-        xmlHttpRequest = 'XMLHttpRequest',
-        crElm = 'createElement',
-        own = 'hasOwnProperty',
-        head = doc.head || doc[byTag]('head')[0],
-        uniqid = 0,
-        lastValue, // data stored by the most recent JSONP callback
-        nav = navigator,
-        isIE10 = $.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
-
-        defaultHeaders = {
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
-            requestedWith: xmlHttpRequest,
-            accepts: {
-                '*': "*/".concat("*"),
-                'text': 'text/plain',
-                'html': 'text/html',
-                'xml': 'application/xml, text/xml',
-                'json': 'application/json, text/javascript',
-                'js': 'application/javascript, text/javascript'
-            }
-        };
-
     /**
-     * Convert to query string
+     * Remove all child nodes of the set of matched elements from the DOM.
      *
-     * @param {Object} obj
-     *
-     * @return {String}
-     *
-     * - Taken from jQuery and optimized it for speed
-     *
-     */
-
-    function ctqs(o, trad) {
-
-        var prefix, i,
-            traditional = trad || false,
-            s = [],
-            enc = encodeURIComponent,
-            add = function (key, value) {
-                // If value is a function, invoke it and return its value
-                value = ($.isFunction(value)) ? value() : (value === null ? '' : value);
-                s[s.length] = enc(key) + '=' + enc(value);
-            };
-        // If an array was passed in, assume that it is an array of form elements.
-        if ($.isArray(o))
-            for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
-        else {
-            for (prefix in o) {
-                buildParams(prefix, o[prefix], traditional, add, o);
-            }
-        }
-        return s.join('&').replace(/%20/g, '+');
-    }
-
-    /**
-     * Build params
-     */
-
-    function buildParams(prefix, obj, traditional, add, o) {
-        var name, i, v, rbracket = /\[\]$/;
-
-        if ($.isArray(obj)) {
-            for (i = 0; obj && i < obj.length; i++) {
-                v = obj[i];
-                if (traditional || rbracket.test(prefix)) {
-                    // Treat each array item as a scalar.
-                    add(prefix, v);
-                } else buildParams(prefix + '[' + ($.isObject(v) ? i : '') + ']', v, traditional, add);
-            }
-        } else if (obj && obj.toString() === '[object Object]') {
-            // Serialize object item.
-            for (name in obj) {
-                if (o[own](prefix)) buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
-            }
-
-        } else add(prefix, obj);
-    }
-
-    /**
-     *  Url append
-     *
-     * @param {String} url
-     * @param {String} query
-     * @return {String}
-     */
-
-    function appendQuery(url, query) {
-        return (url + '&' + query).replace(/[&?]+/, '?')
-    }
-
-    /**
-     * General jsonP callback
-     *
-     * @param {String} url
-     * @param {String} s
-     *
-     * @return {String}
-     **/
-
-    function generalCallback(data) {
-        lastValue = data;
-    }
-
-    /**
-     * jsonP
-     *
-     * @param {Object} o
-     * @param {Function} fn
-     * @param {String} url
+     * - It first remove all data stored on the object
+     * - Then it remove all event listeners attached on the object
+     * - In the end, it removes all HTML on the elems in the elems stack.
      *
      * @return {Object}
-     **/
+     */
 
-    function handleJsonp(o, fn, url) {
+    $.fn.empty = function () {
 
-        var reqId = uniqid++,
-            cbkey = o.jsonp || 'callback'; // the 'callback' key
+        var elem,
+            i = 0;
 
-        o = o.jsonpCallback || 'hAzzel_' + $.now(); // the 'callback' value
-
-        var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
-            match = url.match(cbreg),
-            script = doc[crElm]('script'),
-            loaded = 0;
-
-        if (match) {
-            if (match[3] === '?') url = url.replace(cbreg, '$1=' + o); // wildcard callback func name
-            else o = match[3]; // provided callback func name
-        } else url = appendQuery(url, cbkey + '=' + o); // no callback details, add 'em
-
-
-        win[o] = generalCallback;
-
-        script.type = 'text/javascript';
-        script.src = url;
-        script.async = true;
-
-
-        $.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
-
-        script.onload = script.onreadystatechange = function () {
-
-            if (script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded' || loaded) {
-                return false;
+        for (;
+            (elem = this[i]) != null; i++) {
+            if (elem.nodeType === 1) {
+                $.removeData(elem);
+                $.Events.off(elem);
+                elem.textContent = "";
             }
-            script.onload = script.onreadystatechange = null;
-            if (script.onclick) script.onclick();
-            // Call the user callback with the last value stored and clean up values and scripts.
-            fn(lastValue);
-            lastValue = undefined;
-            head.removeChild(script);
-            loaded = 1;
-        };
-
-        // Add the script to the DOM head
-        head.appendChild(script);
-
-        // Enable JSONP timeout
-        return {
-            abort: function () {
-                script.onload = script.onreadystatechange = null;
-                lastValue = undefined;
-                head.removeChild(script);
-                loaded = 1;
-            }
-        };
-    }
-
-    // Extend the hAzzle object
-
-    $.extend({
-
-        ajaxSettings: {
-
-            // Default type of request
-            type: 'GET',
-            // Callback that is executed before request
-            beforeSend: $.noop(),
-            // Callback that is executed if the request succeeds
-            success: $.noop(),
-            // Callback that is executed the the server drops error
-            error: $.noop(),
-            // Callback that is executed on request complete (both: error and success)
-            complete: $.noop(),
-            // Default timeout
-            timeout: 0,
-            // async
-            async: true,
-
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8"
-        },
-
-        /**
-         * Ajax method to create ajax request with XMLHTTPRequest
-         *
-         * @param {Object|Function} opt
-         * @param {function|callback} fn
-         * @return {Object}
-         */
-
-        ajax: function (opt, fn) {
-
-            var key, h, err;
-
-            opt = $.extend({}, opt || {});
-
-            for (key in $.ajaxSettings) {
-
-                if (opt[key] === undefined) {
-
-                    opt[key] = $.ajaxSettings[key];
-
-                }
-
-            }
-            fn = fn || function () {};
-
-            var xhr,
-                xDomainRequest = 'XDomainRequest',
-                error = 'error',
-                headers = opt.headers || {},
-                type = (opt.type || 'GET').toLowerCase(),
-                url = $.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
-
-            var dataType = (opt.dataType) ? opt.dataType.toLowerCase() : '',
-                abortTimeout = null,
-                processData = opt.processData || true, // Set to true as default
-                data = (processData !== false && opt.data && !$.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
-                sendWait = false;
-
-            // If no url, stop here and return.
-
-            if (!url) return false;
-
-            // If jsonp or GET, append the query string to end of URL
-
-            if ((dataType === 'jsonp' || type.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
-
-            // If jsonp, we stop it here 
-
-            if (dataType === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
-
-            if (opt.crossOrigin === true) {
-                var _xhr = win.XMLHttpRequest ? new XMLHttpRequest() : null;
-                if (_xhr && 'withCredentials' in _xhr) xhr = _xhr;
-                else if (win.xDomainRequest) xhr = new xDomainRequest();
-                else throw "Browser does not support cross-origin requests";
-            } else {
-                xhr = new XMLHttpRequest()
-            }
-
-            xhr.open(type, url, opt.async === false ? false : true);
-
-            // Set headers
-
-            headers.Accept = headers.Accept || defaultHeaders.accepts[type] || defaultHeaders.accepts['*'];
-
-            if (!opt.crossOrigin && !headers.requestedWith) headers.requestedWith = defaultHeaders.requestedWith;
-
-            if (opt.contentType || opt.data && dataType.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
-
-            // Set headers
-
-            for (h in headers) {
-
-                headers.hasOwnProperty(h) && 'setRequestHeader' in xhr && xhr.setRequestHeader(h, headers[h]);
-
-            }
-            // Set credentials
-
-            if ($.isDefined(opt.withCredentials) && $.isDefined(xhr.withCredentials)) {
-                xhr.withCredentials = !!opt.withCredentials;
-            }
-
-            if (opt.timeout > 0) {
-                abortTimeout = setTimeout(function () {
-                    xhr.abort(); // Or should we use self.abort() ??
-                }, opt.timeout);
-            }
-
-            if (win[xDomainRequest] && xhr instanceof win.xDomainRequest) {
-
-                xhr.onload = fn;
-                xhr.onerror = err;
-                xhr.onprogress = function () {};
-                sendWait = true;
-
-            } else {
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-
-                        // Determine if successful
-
-                        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
-                            var res;
-                            if (xhr) {
-
-                                // json
-
-                                if ((dataType === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
-
-                                // xml
-
-                                if (dataType === 'xml') {
-
-                                    res = xhr.responseXML && xhr.responseXML.parseError && xhr.responseXML.parseError.errorCode && xhr.responseXML.parseError.reason ? null : xhr.responseXML;
-
-                                } else {
-
-                                    res = res || xhr.responseText;
-                                }
-                            }
-                            if (!res && data) res = data;
-                            if (opt.success) opt.success(res);
-                        } else if (opt.error !== undefined) {
-
-                            if (abortTimeout !== null) clearTimeout(abortTimeout);
-                            opt.error(error, opt, xhr);
-                        }
-                    }
-                };
-            }
-
-            // Before open
-
-            if (opt.before) opt.before(xhr);
-
-            if (sendWait) {
-                setTimeout(function () {
-
-                    xhr.send(data);
-                }, 200);
-            } else xhr.send(data);
-
-            return xhr;
         }
-    });
+        return this;
+    },
 
+    /**
+     *  Remove an element from the DOM
+     */
+    $.fn.remove = function () {
 
+        // Discard any data on the element
 
-    $.each(["get", "post"], function (i, method) {
+        return this.removeData().each(function (_, elem) {
 
-        $[method] = function (url, data, callback, type) {
-            // shift arguments if data argument was omitted
-            if ($.isFunction(data)) {
-                type = type || callback;
-                callback = data;
-                data = undefined;
+            // Locate all nodes that belong to this element
+            // and add them to the "elems stack"
+
+            var elements = $(elem).find('*');
+            elements = elements.add(elem);
+
+            $.Events.remove(elem);
+
+            var parent = elem.parentNode;
+
+            if (parent) {
+
+                // Remove all children
+
+                this.parentNode.removeChild(elem);
             }
 
-            return $.ajax({
-                url: url,
-                type: method,
-                dataType: type,
-                data: data,
-                success: callback
-            });
-        };
-    });
+        })
+    };
 
 })(hAzzle);
 
-// Events
+// Parsing
 
 ;
 (function ($) {
-
-    var win = window,
-        doc = document || {},
-        root = doc.documentElement || {},
-        isString = $.isString,
-        isFunction = $.isFunction,
-
-        // Cached handlers
-
-        container = {},
-
-        specialsplit = /\s*,\s*|\s+/,
-        rkeyEvent = /^key/, // key
-        rmouseEvent = /^(?:mouse|pointer|contextmenu)|click/, // mouse
-        ns = /[^\.]*(?=\..*)\.|.*/, // Namespace regEx
-        names = /\..*/,
-
-        // Event and handlers we have fixed
-
-        treated = {},
-
-        // Some prototype references we need
-
-        slice = Array.prototype.slice,
-        concat = Array.prototype.concat,
-        toString = Object.prototype.toString,
-
-        threatment = {
-
-            // Don't do events on disabeled nodes
-
-            disabeled: function (el, type) {
-                if (el.disabeled && type === "click") return true;
-            },
-
-            // Don't do events on text and comment nodes 
-
-            nodeType: function (el) {
-                if ($.nodeType(3, el) || $.nodeType(8, el)) return true;
-            }
-        },
-
-        special = {
-            pointerenter: {
-                fix: "pointerover",
-                condition: checkPointer
-            },
-
-            pointerleave: {
-                fix: "pointerout",
-                condition: checkPointer
-            },
-            mouseenter: {
-                fix: 'mouseover',
-                condition: checkMouse
-            },
-            mouseleave: {
-                fix: 'mouseout',
-                condition: checkMouse
-            },
-            mousewheel: {
-                fix: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
-            }
-        },
-
-        // Includes some event props shared by different events
-
-        commonProps = "altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which".split(" ");
-
-    // Check mouse
-
-    function checkMouse(evt) {
-        if (evt = evt.relatedTarget) {
-            var ac;
-            if (ac = evt !== this)
-                if (ac = "xul" !== evt.prefix)
-                    if (ac = !/document/.test(this.toString())) {
-                        a: {
-                            for (; evt = evt.parentNode;)
-                                if (evt === this) {
-                                    evt = 1;
-                                    break a;
-                                }
-                            evt = 0;
-                        }
-                        ac = !evt;
-                    }
-            evt = ac;
-        } else evt = null === evt;
-        return evt;
-    }
-
-    /**
-  * FIX ME!!  I don't have a pointer device so can't fix this. Maybe in the future.
-              But need to run a check about this condition here.
-  */
-
-    function checkPointer(evt) {
-        return evt;
-    }
-
 
     $.extend($, {
 
-        // Event hooks
-
-        eventHooks: {
-
-            // Mouse and key props are borrowed from jQuery
-
-            keys: function (evt, original) {
-                original.keyCode = evt.keyCode || evt.which;
-                return commonProps.concat(["char", "charCode", "key", "keyCode"]);
-
-            },
-            mouse: function (evt, original) {
-
-                original.rightClick = evt.which === 3 || evt.button === 2;
-
-                original.pos = {
-                    x: 0,
-                    y: 0
-                };
-
-                // Calculate pageX/Y if missing and clientX/Y available
-
-                if (evt.pageX || evt.pageY) {
-                    original.clientX = evt.pageX;
-                    original.clientY = evt.pageY;
-                } else if (evt.clientX || evt.clientY) {
-                    original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
-                    original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
-                }
-
-                return commonProps.concat("button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement".split(" "));
-            }
-        },
-
-        Kernel: function (element, type, handler, original, namespaces, args) {
-
-            // Allow instantiation without the 'new' keyword
-
-            if (!(this instanceof $.Kernel)) {
-                return new $.Kernel(element, type, handler, original, namespaces, args);
-            }
-
-            var _special = special[type],
-                evt = this;
-
-            // Only load the event once upon unload
-
-            if (type === 'unload') {
-
-                handler = $.Events.once($.Events.removeListener, element, type, handler, original);
-            }
-
-            if (_special) {
-                if (_special.condition) {
-                    handler = $.Events.wrappedHandler(element, handler, _special.condition, args);
-                }
-
-                type = _special.fix || type;
-            }
-
-            evt.element = element;
-            evt.type = type;
-            evt.original = original;
-            evt.namespaces = namespaces;
-            evt.eventType = type;
-            evt.target = element;
-            evt.handler = $.Events.wrappedHandler(element, handler, null, args);
-        }
-    });
-
-
-    $.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
-
-        var i, j, c = 0;
-
-        if (!checkNamespaces) {
-
-            return true;
-        }
-
-        if (!this.namespaces) {
-
-            return false;
-        }
-
-        for (i = checkNamespaces.length; i--;) {
-            for (j = this.namespaces.length; j--;) {
-                if (checkNamespaces[i] == this.namespaces[j]) c++;
-            }
-        }
-        return checkNamespaces.length === c;
-    };
-
-    $.Kernel.prototype['matches'] = function (checkElement, checkOriginal, checkHandler) {
-        return this.element === checkElement &&
-            (!checkOriginal || this.original === checkOriginal) &&
-            (!checkHandler || this.handler === checkHandler);
-    };
-
-
-    $.extend($.fn, {
-
         /**
-         * Bind a DOM event to element
+         * Cross-browser JSON parsing
          *
-         * @param {String} events
-         * @param {String} selector
-         * @param {Function} fn
-         * @param {Boolean} one
-         * @return {Object}
+         * @param {String} data
          */
 
-        on: function (events, selector, fn, one) {
-            return this.each(function () {
-                $.Events.add(this, events, selector, fn, one);
-            });
+        parseJSON: function (data) {
+            return typeof data === "string" ? JSON.parse(data + "") : data;
         },
 
-        /**
-         * Bind a DOM event but trigger it once before removing it
-         *
-         * @param {String} events
-         * @param {String} selector
-         * @param {Function} fn
-         * @return {Object}
-         **/
+        parseXML: function (data) {
+            var xml, tmp;
+            if (!data || !$.isString(data)) {
 
-        one: function (types, selector, fn) {
-            return this.on(types, selector, fn, 1);
-        },
-
-        /**
-         * Unbind an event from the element
-         *
-         * @param {String} events
-         * @param {Function} fn
-
-         * @return {Object}
-         */
-
-        off: function (events, fn) {
-            return this.each(function () {
-                $.Events.remove(this, events, fn);
-            });
-        },
-
-        /**
-         * Triggers an event of specific type with optional extra arguments
-         *
-         * @param {Object|String} type
-         * @param {Object|String} args
-         * @return {Object}
-         */
-
-        trigger: function (type, args) {
-
-            var el = this[0];
-
-            var types = type.split(specialsplit),
-                i, j, l, call, evt, names, handlers;
-
-            if (threatment['disabeled'](el, type) || threatment['nodeType'](el)) return false;
-
-            for (i = types.length; i--;) {
-                type = types[i].replace(names, '');
-                if (names = types[i].replace(ns, '')) names = names.split('.');
-                if (!names && !args) {
-                    var HTMLEvt = doc.createEvent('HTMLEvents');
-                    HTMLEvt['initEvent'](type, true, true, win, 1);
-                    el.dispatchEvent(HTMLEvt);
-
-                } else {
-
-                    handlers = $.Events.getHandler(el, type, null, false);
-                    evt = Event(null, el);
-                    evt.type = type;
-                    call = args ? 'apply' : 'call';
-                    args = args ? [evt].concat(args) : evt;
-                    for (j = 0, l = handlers.length; j < l; j++) {
-                        if (handlers[j].inNamespaces(names)) {
-                            handlers[j].handler[call](el, args);
-                        }
-                    }
-                }
+                return null;
             }
-            return el;
-        }
-    });
 
+            // Support: IE9
+            try {
+                tmp = new DOMParser();
+                xml = tmp.parseFromString(data, "text/xml");
+            } catch (e) {
+                xml = undefined;
+            }
 
-
-
-    // hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
-    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
-
-    function Event(evt, element) {
-
-        // Allow instantiation without the 'new' keyword
-        if (!(this instanceof Event)) {
-            return new Event(evt, element);
+            if (!xml || xml.getElementsByTagName("parsererror").length) {
+                return new Error("Invalid XML: " + data);
+            }
+            return xml;
         }
 
-        if (!arguments.length) return;
-
-        evt = evt || ((element.ownerDocument || element.document || element).parentWindow || win).evt;
-
-        this.originalEvent = evt;
-
-        if (!evt) return;
-
-        var type = evt.type,
-            target = evt.target,
-            i, p, props, fixHook;
-
-        this.target = target && $.nodeType(3, target) ? target.parentNode : target;
-
-        fixHook = treated[type];
-
-        if (!fixHook) {
-
-            /* Note! This is more or less the same way as jQuery does it, but
-         I introduced "eventHooks", so it's possible to check
-         against other events too from plugins. */
-
-            treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
-                rkeyEvent.test(type) ? $.eventHooks['keys'] :
-                function () {
-                    return commonProps;
-            };
-        }
-
-        props = fixHook(evt, this, type);
-
-        for (i = props.length; i--;) {
-            if (!((p = props[i]) in this) && p in evt) this[p] = evt[p];
-        }
-    }
-
-
-    Event.prototype = {
-
-        preventDefault: function () {
-            if (this.originalEvent.preventDefault) this.originalEvent.preventDefault();
-            else this.originalEvent.returnValue = false;
-        },
-        stopPropagation: function () {
-            if (this.originalEvent.stopPropagation) this.originalEvent.stopPropagation();
-            else this.originalEvent.cancelBubble = true;
-        },
-        stop: function () {
-            this.preventDefault();
-            this.stopPropagation();
-            this.stopped = true;
-        },
-        stopImmediatePropagation: function () {
-            if (this.originalEvent.stopImmediatePropagation) this.originalEvent.stopImmediatePropagation();
-            this.isImmediatePropagationStopped = function () {
-                return true;
-            };
-        },
-        isImmediatePropagationStopped: function () {
-            return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
-        },
-        clone: function (currentTarget) {
-            var ne = Event(this, this.element);
-            ne.currentTarget = currentTarget;
-            return ne;
-        }
-    };
-
-    $.Events = {
-
-        // Add event listener
-
-        add: function (el, events, selector, fn, one) {
-            var originalFn, type, types, i, args, entry, first;
-
-            // Dont' allow click on disabeled elements, or events on text and comment nodes
-
-            if (threatment['disabeled'](el, events) || threatment['nodeType'](el)) return false;
-
-            // Types can be a map of types/handlers
-            // TODO!! This is not working on delegated events, have to fix this ASAP !!
-
-            if (selector === undefined && $.isObject(events))
-
-                for (type in events) {
-
-                if (events.hasOwnProperty(type)) {
-                    $.Events.add.call(this, el, type, events[type]);
-                }
-
-            } else {
-
-                // Delegated event
-
-                if (!isFunction(selector)) {
-                    originalFn = fn;
-                    args = slice.call(arguments, 4);
-                    fn = $.Events.delegate(selector, originalFn);
-
-                } else {
-                    args = slice.call(arguments, 3);
-                    fn = originalFn = selector;
-                }
-
-                // Handle multiple events separated by a space
-
-                types = events.split(specialsplit);
-
-                // One
-
-                if (one === 1) {
-
-                    // Make a unique handlet that get removed after first time it's triggered
-                    fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
-                }
-
-                for (i = types.length; i--;) {
-                    first = $.Events.putHandler(entry = $.Kernel(
-                        el, types[i].replace(names, '') // event type
-                        , fn, originalFn, types[i].replace(ns, '').split('.') // namespaces
-                        , args, false
-                    ));
-
-                    // Add root listener only if we're the first
-
-                    if (first) el.addEventListener(entry.eventType, $.Events.rootListener, false);
-                }
-                return el;
-            }
-        },
-
-        // Remove event listener
-
-        remove: function (el, typeSpec, fn) {
-
-            var isTypeStr = isString(typeSpec),
-                type, namespaces, i;
-
-            if (isTypeStr && typeSpec.indexOf(' ') > 0) {
-
-                typeSpec = typeSpec.split(typeSpec);
-
-                for (i = typeSpec.length; i--;)
-                    $.Events.remove(el, typeSpec[i], fn);
-                return el;
-            }
-
-            type = isTypeStr && typeSpec.replace(names, '');
-
-            if (type && special[type]) type = special[type].fix;
-
-            if (!typeSpec || isTypeStr) {
-
-                if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
-                $.Events.removeListener(el, type, fn, namespaces);
-
-            } else if (isFunction(typeSpec)) {
-
-                $.Events.removeListener(el, null, typeSpec);
-
-            } else {
-
-                for (var k in typeSpec) {
-
-                    if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
-                }
-            }
-
-            return el;
-        },
-
-        /**
-         * Set up a delegate helper using the given selector, wrap the handler function
-         */
-
-        delegate: function (selector, fn) {
-
-            function findTarget(target, root) {
-                var i, array = isString(selector) ? $.select(selector, root) : selector;
-                for (; target && target !== root; target = target.parentNode) {
-                    if (array !== null) {
-                        for (i = array.length; i--;) {
-                            if (array[i] === target) return target;
-                        }
-                    }
-                }
-            }
-
-            function handler(e) {
-                if (e.target.disabled !== true) {
-                    var m = findTarget(e.target, this);
-                    if (m) fn.apply(m, arguments);
-                }
-            }
-
-            handler.__handlers = {
-                ft: findTarget,
-                selector: selector
-            };
-            return handler;
-        },
-
-        removeListener: function (element, orgType, handler, namespaces) {
-
-            var type = orgType && orgType.replace(names, ''),
-                handlers = $.Events.getHandler(element, type, null, false),
-                removed = {},
-                i, l;
-
-            for (i = 0, l = handlers.length; i < l; i++) {
-                if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                    $.Events.delHandler(handlers[i]);
-                    if (!removed[handlers[i].eventType])
-                        removed[handlers[i].eventType] = {
-                            t: handlers[i].eventType,
-                            c: handlers[i].type
-                        };
-                }
-            }
-
-            for (i in removed) {
-                if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
-                    // last listener of this type, remove the rootListener
-                    element.removeEventListener(removed[i].t, $.Events.rootListener, false);
-                }
-            }
-        },
-
-        once: function (rm, element, type, fn, originalFn) {
-            return function () {
-                fn.apply(this, arguments);
-                rm(element, type, originalFn);
-            };
-        },
-
-        rootListener: function (evt, type) {
-            var listeners = $.Events.getHandler(this, type || evt.type, null, false),
-                l = listeners.length,
-                i = 0;
-
-            evt = Event(evt, this, true);
-
-            for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
-
-                if (!listeners[i].removed) listeners[i].handler.call(this, evt);
-            }
-        },
-
-        wrappedHandler: function (element, fn, condition, args) {
-
-            function call(evt, eargs) {
-
-                return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
-            }
-
-            function findTarget(evt, eventElement) {
-
-                return fn.__handlers ? fn.__handlers.ft(evt.target, element) : eventElement;
-            }
-
-            var handler = condition ? function (evt) {
-
-                var target = findTarget(evt, this); // delegated event
-
-                if (condition.apply(target, arguments)) {
-                    if (evt) evt.currentTarget = target;
-                    return call(evt, arguments);
-                }
-            } : function (evt) {
-                if (fn.__handlers) evt = evt.clone(findTarget(evt));
-                return call(evt, arguments);
-            };
-
-            handler.__handlers = fn.__handlers;
-            return handler;
-        },
-
-        findIt: function (element, type, original, handler, root, fn) {
-
-            if (!type || type === '*') {
-
-                for (var t in container) {
-
-                    if (t.charAt(0) === root ? 'r' : '#') {
-                        $.Events.findIt(element, t.substr(1), original, handler, root, fn);
-                    }
-                }
-
-            } else {
-
-                var i = 0,
-                    l,
-                    list = container[root ? 'r' : '#' + type];
-
-                if (!list) {
-
-                    return;
-                }
-
-                for (l = list.length; i < l; i++) {
-
-                    if ((element === '*' || list[i].matches(element, original, handler)) && !fn(list[i], list, i, type)) return;
-                }
-            }
-        },
-
-        hasHandler: function (element, type, original, root) {
-            if (root = container[(root ? "r" : "#") + type])
-                for (type = root.length; type--;)
-                    if (!root[type].root && root[type].matches(element, original, null)) return true;
-            return false;
-        },
-        getHandler: function (element, type, original, root) {
-
-            var entries = [];
-
-            $.Events.findIt(element, type, original, null, root, function (entry) {
-                entries.push(entry);
-            });
-            return entries;
-        },
-        putHandler: function (entry) {
-            var has = !entry.root && !this.hasHandler(entry.element, entry.type, null, false),
-                key = (entry.root ? 'r' : '#') + entry.type;
-            (container[key] || (container[key] = [])).push(entry);
-            return has;
-        },
-        // Find handlers for event delegation
-        delHandler: function (entry) {
-            $.Events.findIt(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
-                list.splice(i, 1);
-                entry.removed = true;
-                if (list.length === 0) delete container[(entry.root ? 'r' : '#') + entry.type];
-                return false;
-            });
-        }
-    };
-
-
-    // Shortcut methods for 'on'
-    // Using split() here, slow down pageload with 4%
-
-    $.each(["hover", "blur", " focus", "focusin", "focusout", "load", "resize", "scroll", "unload", "click", "dblclick", "mousedown", "mouseup", "mousemove", "mouseover", "mouseout", "mouseenter", "mouseleave", "change", "select", "submit", "keydown", "keypress", "keyup", "error", "contextmenu"], function () {
-
-        var name = this;
-
-        // Handle event binding
-
-        $.fn[name] = function (data, fn) {
-
-            //events, fn, delfn, one
-
-            if (arguments.length > 0) {
-
-                this.on(name, data, fn)
-
-            }
-        };
     });
 
 })(hAzzle);
 
 // Localestorage
-
 
 ;
 (function ($) {
@@ -3482,885 +5579,17 @@
 
 })(hAzzle);
 
+// Clone
 
-// Removeable
-
-/*!
- * Wrap
- */
 ;
 (function ($) {
 
-    $.extend($.fn, {
-
-        /**
-         * Wrap html string with a `div` or wrap special tags with their containers.
-         *
-         * @param {String} html
-         * @return {Object}
-         */
-
-        wrap: function (html) {
-
-            return this.each(function (i) {
-                $(this).wrapAll($.isFunction(html) ? html.call(this, i) : html);
-            });
-        },
-
-        /**
-         *  Wrap an HTML structure around the content of each element in the set of matched elements.
-         *
-         * @param {String} html
-         * @return {Object}
-         *
-         */
-
-        wrapAll: function (html) {
-
-            if (this[0]) {
-                $(this[0]).before(html = $(html));
-                var children;
-                // drill down to the inmost element
-                while ((children = html.children()).length) html = children.first();
-                $(html).append(this);
-            }
-            return this;
-        },
-
-        wrapInner: function (html) {
-            if ($.isFunction(html)) {
-                return this.each(function (i) {
-                    $(this).wrapInner(html.call(this, i));
-                });
-            }
-
-            return this.each(function () {
-                var self = $(this),
-                    contents = self.contents();
-
-                if (contents.length) {
-                    contents.wrapAll(html);
-
-                } else {
-                    self.append(html);
-                }
-            });
-
-        },
-
-        /**
-         *  Wrap an HTML structure around the content of each element in the set of matched elements.
-         *
-         * @param {String} html
-         * @return {Object}
-         *
-         */
-
-        unwrap: function () {
-            this.parent().each(function () {
-                if (!$.nodeName(this, "body")) {
-                    hAzzle(this).replaceWith(hAzzle(this).children());
-                }
-            });
-            return this;
-        }
-    });
-
-
-    // CSS
-
-    var html = window.document.documentElement,
-        doc = document,
-        docbody = doc.body,
-        important = /\s+(!important)/g,
-        background = /background/i,
-        numberOrPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
-        rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i,
-        margin = (/^margin/),
-        relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
-        cssDirection = ["Top", "Right", "Bottom", "Left"],
-
-        isFunction = $.isFunction;
-
-    /**
-     * Dasherize the name
-     *
-     * NOTE!! This is 'ONLY' used when we are using the
-     * the slower cssText because of the '!Important' property
-     *
-     */
-
-    function dasherize(str) {
-        return str.replace(/::/g, '/')
-            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
-            .replace(/([a-z\d])([A-Z])/g, '$1_$2')
-            .replace(/_/g, '-')
-            .toLowerCase();
-    }
-
-    // Extend the $ object
-
-    $.extend({
-
-
-        cssNumber: {
-            'column-count': 1,
-            'columns': 1,
-            'font-weight': 1,
-            'line-height': 1,
-            'opacity': 1,
-            'z-index': 1,
-            'zoom': 1
-        },
-
-        cssHooks: {
-
-            opacity: {
-                get: function (elem, computed) {
-                    if (computed) {
-                        // We should always get a number back from opacity
-                        var ret = $.curCSS(elem, "opacity");
-                        return ret === "" ? "1" : ret;
-                    }
-                }
-            }
-
-        },
-
-        cssNormalTransform: {
-            letterSpacing: "0",
-            fontWeight: "400"
-        },
-
-        cssProps: {
-
-            "float": "cssFloat"
-        },
-
-        // Convert some pixels into another CSS unity.
-        // It's used in $.style() for the += or -=.
-        // * px   : Number.
-        // * unit : String, like "%", "em", "px", ...
-        // * elem : Node, the current element.
-        // * prop : String, the CSS property.
-        pixelsToUnity: function (px, unit, elem, prop) {
-
-            if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
-            else if (unit === "em") return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
-            else if (unit === "%") {
-
-                if (/^(left$|right$|margin|padding)/.test(prop)) {
-                    prop = "width";
-                } else if (/^(top|bottom)$/.test(prop)) {
-                    prop = "height";
-                }
-                elem = /^(relative|absolute|fixed)$/.test($.css(elem, "position")) ?
-                    elem.offsetParent : elem.parentNode;
-                if (elem) {
-                    prop = $.css(elem, prop, true);
-                    if (prop !== 0) {
-                        return px / prop * 100;
-                    }
-                }
-                return 0;
-            }
-
-            if ($.pixelsToUnity.units === undefined) {
-                var units = $.pixelsToUnity.units = {},
-                    div = document.createElement("div");
-                div.style.width = "100cm";
-                document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
-                units.mm = div.offsetWidth / 1000;
-                document.body.removeChild(div);
-                units.cm = units.mm * 10;
-                units.inn = units.cm * 2.54;
-                units.pt = units.inn * 1 / 72;
-
-                units.pc = units.pt * 12;
-            }
-            // If the unity specified is not recognized we return the value.
-            unit = $.pixelsToUnity.units[unit];
-            return unit ? px / unit : px;
-        },
-
-        curCSS: function (elem, name, computed) {
-
-            var ret,
-                style = elem.style;
-
-            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-
-            if (computed) {
-
-
-                var ret = computed.getPropertyValue(name) || computed[name];
-
-                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
-                    ret = $.style(elem, name);
-                }
-            }
-            return $.isUndefined(ret) ? ret + "" : ret;
-        },
-
-        // Globalize CSS
-
-        css: function (elem, name, extra, styles, normalized) {
-
-            var val,
-                num,
-                style = elem.style;
-            /**
-             * If this function are called from within hAzzle.style(), we don't
-             * need to normalize the name again.
-             */
-
-            if (!normalized) {
-
-                // Normalize the name
-
-                name = $.camelCase(name);
-
-                // Transform to normal properties - vendor or not
-
-                name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)));
-
-            }
-
-            // Do we have any cssHooks available?
-
-            var hooks = $.cssHooks[name];
-
-            // If a hook was provided get the computed value from there
-
-            if (hooks) {
-
-                val = hooks['get'](elem, true, extra);
-            }
-
-            // Otherwise, if a way to get the computed value exists, use that
-
-            if (val === undefined) {
-
-                val = $.curCSS(elem, name, styles, style);
-            }
-
-            // Convert "normal" to computed value
-
-            if (val === "normal" && name in $.cssNormalTransform) {
-                val = $.cssNormalTransform[name];
-            }
-
-            // Return, converting to number if forced or a qualifier was provided and val looks numeric
-
-            if (extra === "" || extra) {
-                num = parseFloat(val);
-                return extra === true || $.isNumeric(num) ? num || 0 : val;
-            }
-
-            return val;
-        },
-
-        /**
-         * CSS properties accessor for an element
-         */
-
-        style: function (elem, name, value, extra, hook) {
-
-            // Don't set styles on text and comment nodes
-
-            if (!elem || $.nodeType(3, elem) || $.nodeType(8, elem)) {
-
-                return;
-            }
-
-            var style = elem.style,
-                hooks = '',
-                ret,
-                digit = false;
-
-            if (!style) {
-
-                return;
-            }
-
-            name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)) || name);
-
-            if (extra) {
-
-                name = dasherize(name);
-
-            } else { // Normalize the name
-
-                name = $.camelCase(name);
-            }
-
-            // Do we have any cssHooks available?
-
-            hooks = hook || $.cssHooks[name];
-
-            /**
-             * Convert relative numbers to strings.
-             * It can handle +=, -=, em or %
-             */
-
-            if (typeof value === "string" && (ret = relNum.exec(value))) {
-                value = $.css(elem, name, "", "", name);
-                value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
-
-                // We are dealing with relative numbers, set till true
-
-                digit = true;
-            }
-
-            // Make sure that null and NaN values aren't set.
-
-            if (value === null || value !== value) {
-                return;
-            }
-
-            // If a number was passed in, add 'px' to the (except for certain CSS properties)
-
-            if (digit && !$.cssNumber[name]) {
-
-                value += ret && ret[3] ? ret[3] : "px";
-            }
-
-            // Check for background
-
-            if (value === "" && background.test(name)) {
-
-                if (extra) {
-
-                    return name + ":" + "inherit";
-                }
-
-                style[name] = "inherit";
-            }
-
-            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
-
-                if (extra) {
-
-                    return name + ":" + value;
-                }
-
-                style[name] = value;
-            }
-
-            if (extra) {
-
-                return name + ":" + value;
-            }
-
-            style[name] = value;
-
-        },
-
-
-        setOffset: function (elem, coordinates, i) {
-            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-                position = $.css(elem, "position"),
-                curElem = $(elem),
-                props = {};
-
-            // Set position first, in-case top/left are set even on static elem
-            if (position === "static") {
-                elem.style.position = "relative";
-            }
-
-            curOffset = curElem.offset();
-            curCSSTop = $.css(elem, "top");
-            curCSSLeft = $.css(elem, "left");
-            calculatePosition = (position === "absolute" || position === "fixed") &&
-                (curCSSTop + curCSSLeft).indexOf("auto") > -1;
-
-            // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
-            if (calculatePosition) {
-                curPosition = curElem.position();
-                curTop = curPosition.top;
-                curLeft = curPosition.left;
-
-            } else {
-                curTop = parseFloat(curCSSTop) || 0;
-                curLeft = parseFloat(curCSSLeft) || 0;
-            }
-
-            if (isFunction(coordinates)) {
-                coordinates = coordinates.call(elem, i, curOffset);
-            }
-
-            if (coordinates.top !== null) {
-                props.top = (coordinates.top - curOffset.top) + curTop;
-            }
-            if (coordinates.left !== null) {
-                props.left = (coordinates.left - curOffset.left) + curLeft;
-            }
-
-            if ("using" in coordinates) {
-                coordinates.using.call(elem, props);
-
-            } else {
-                curElem.css(props);
-            }
-        }
-    });
-
-
-    $.extend($.fn, {
-
-        css: function (property, value) {
-
-            if (arguments.length === 1) {
-
-                if (typeof property === 'string') {
-
-                    return this[0] && $.css(this[0], property);
-                }
-
-                for (var key in property) {
-
-                    this.each(function () {
-
-                        // !Important property check
-
-                        if (important.test(property[key])) {
-
-                            this.style.cssText += $.style(this, key, property[key], true);
-
-                        } else {
-
-                            $.style(this, key, property[key]);
-                        }
-                    });
-                }
-
-            } else {
-
-                return this.each(function () {
-
-                    // !Important property check
-
-                    if (important.test(value)) {
-
-                        this.style.cssText += $.style(this, property, value, true);
-
-                    } else {
-
-                        $.style(this, property, value);
-                    }
-                });
-            }
-        },
-
-        /**
-         * Sets the opacity for given element
-         *
-         * @param {elem}
-         * @param {int} level range (0 .. 100)
-         */
-
-        setOpacity: function (value) {
-            if ($.isNumber) {
-                return this.each(function () {
-                    this.style.opacity = value / 100;
-                });
-            }
-        },
-
-        /**
-         * Calculates offset of the current element
-         * @param{coordinates}
-         * @return object with left, top, bottom, right, width and height properties
-         */
-
-        offset: function (coordinates) {
-
-            if (arguments.length) {
-                return coordinates === undefined ?
-                    this :
-                    this.each(function (i) {
-                        $.setOffset(this, coordinates, i);
-                    });
-            }
-
-            var elem = this[0],
-                _win,
-                clientTop = html.clientTop,
-                clientLeft = html.clientLeft,
-                doc = elem && elem.ownerDocument;
-
-            if (!doc) {
-
-                return;
-
-            }
-
-            _win = $.isWindow(doc) ? doc : $.nodeType(9, doc) && doc.defaultView;
-
-            var scrollTop = _win.pageYOffset || html.scrollTop,
-                scrollLeft = _win.pageXOffset || html.scrollLeft,
-                boundingRect = {
-                    top: 0,
-                    left: 0
-                };
-
-            if (elem && elem.ownerDocument) {
-
-                // Make sure it's not a disconnected DOM node
-
-                if (!$.contains(html, elem)) {
-                    return boundingRect;
-                }
-
-                if (typeof elem.getBoundingClientRect !== typeof undefined) {
-                    boundingRect = elem.getBoundingClientRect();
-                }
-
-                return {
-                    top: boundingRect.top + scrollTop - clientTop,
-                    left: boundingRect.left + scrollLeft - clientLeft,
-                    right: boundingRect.right + scrollLeft - clientLeft,
-                    bottom: boundingRect.bottom + scrollTop - clientTop,
-                    width: boundingRect.right - boundingRect.left,
-                    height: boundingRect.bottom - boundingRect.top
-                };
-            }
-        },
-
-        position: function () {
-
-            if (this.length) {
-
-                var offsetParent, offset,
-                    elem = this[0],
-                    parentOffset = {
-                        top: 0,
-                        left: 0
-                    };
-
-                if ($.css(elem, "position") === "fixed") {
-
-                    offset = elem.getBoundingClientRect();
-
-                } else {
-
-                    // Get *real* offsetParent
-
-                    offsetParent = this.offsetParent();
-
-                    // Get correct offsets
-                    offset = this.offset();
-
-                    if (!$.nodeName(offsetParent[0], "html")) {
-                        parentOffset = offsetParent.offset();
-                    }
-
-                    // Subtract element margins
-
-                    parentOffset.top += $.css(offsetParent[0], "borderTopWidth", true);
-                    parentOffset.left += $.css(offsetParent[0], "borderLeftWidth", true);
-                }
-
-                // Subtract parent offsets and element margins
-                return {
-                    top: offset.top - parentOffset.top - $.css(elem, "marginTop", true),
-                    left: offset.left - parentOffset.left - $.css(elem, "marginLeft", true)
-                };
-            }
-        },
-
-        /**  
-         * Get the closest ancestor element that is positioned.
-         */
-
-        offsetParent: function () {
-            return this.map(function (elem) {
-                var offsetParent = elem.offsetParent || html;
-                while (offsetParent && (!$.nodeName(offsetParent, "html") && $.css(offsetParent, "position") === "static")) {
-                    offsetParent = offsetParent.offsetParent;
-                }
-                return offsetParent || html;
-            });
-        }
-
-    });
-
-    // Create width, height, innerHeight, innerWidth, outerHeight and outerWidth methods
-    $.each(["Height", "Width"], function (i, name) {
-
-        var type = name.toLowerCase();
-
-        // innerHeight and innerWidth
-        $.fn["inner" + name] = function () {
-            var elem = this[0];
-            return elem ?
-                elem.style ?
-                parseFloat($.css(elem, type, "padding")) :
-                this[type]() :
-                null;
-        };
-
-        // outerHeight and outerWidth
-
-        $.fn["outer" + name] = function (margin) {
-            var elem = this[0];
-            return elem ?
-                elem.style ?
-                parseFloat($.css(elem, type, margin ? "margin" : "border")) :
-                this[type]() :
-                null;
-        };
-
-        $.fn[type] = function (value) {
-
-            if (isFunction(value)) {
-                return this.each(function (i) {
-                    var self = $(this);
-                    self[type](value.call(this, i, self[type]()));
-                });
-            }
-
-            var elem = this[0],
-                _doc;
-
-            if ($.isWindow(elem)) {
-                return elem.document.documentElement["client" + name];
-            }
-
-            // Get document width or height
-
-            if ($.nodeType(9, elem)) {
-
-                _doc = elem.documentElement;
-
-                // Either scroll[Width/Height] or offset[Width/Height] or client[Width/Height], whichever is greatest
-
-                return Math.max(
-                    elem.body["scroll" + name], _doc["scroll" + name],
-                    elem.body["offset" + name], _doc["offset" + name],
-                    _doc["client" + name]
-                );
-
-                // Get or set width or height on the element
-            } else if ($.isUndefined(value)) {
-
-                return parseFloat($.css(elem, type));
-
-                // Set the width or height on the element (default to pixels if value is unitless)
-            } else {
-
-                // Set the width or height on the element
-                $.style(elem, type, value);
-            }
-            return this;
-
-        };
-
-    });
-
-    $.each(["height", "width"], function (i, name) {
-
-        $.cssHooks[name] = {
-
-            displaySwap: /^(none|table(?!-c[ea]).+)/,
-            numsplit: /^([\-+]?(?:\d*\.)?\d+)(.*)$/i,
-
-            cssShow: {
-                position: "absolute",
-                visibility: "hidden",
-                display: "block"
-            },
-
-            get: function (elem, computed, extra) {
-
-                if (computed) {
-                    if (elem.offsetWidth === 0 && this.displaySwap.test(hAzzle.css(elem, "display"))) {
-
-                        var ret, name,
-                            old = {};
-
-                        // Remember the old values, and insert the new ones
-                        for (name in this.cssShow) {
-                            old[name] = elem.style[name];
-                            elem.style[name] = this.cssShow[name];
-                        }
-
-                        ret = getWH(elem);
-
-                        // Revert the old values
-                        for (name in this.cssShow) {
-                            elem.style[name] = old[name];
-                        }
-
-                        return ret;
-
-                    } else {
-
-                        getWH(elem, name, extra);
-                    }
-
-                }
-            },
-
-            setPositiveNumber: function (value, subs) {
-                var matches = this.numsplit.exec(value);
-                return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value;
-            },
-
-            set: function (elem, value, extra) {
-
-                var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-                return this.setPositiveNumber(value, extra ?
-                    augmentWidthOrHeight(
-                        elem,
-                        name,
-                        extra,
-                        hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
-                        styles
-                    ) : 0
-                );
-            }
-        };
-    });
-
-
-    function getWH(elem, name, extra) {
-
-        // Start with offset property, which is equivalent to the border-box value
-        var val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
-            valueIsBorderBox = true,
-            isBorderBox = $.support.boxSizing && $.css(elem, "boxSizing") === "border-box";
-
-        if (val <= 0) {
-
-            // Fall back to computed then uncomputed css if necessary
-            val = $.curCSS(elem, name);
-            if (val < 0 || val === null) {
-                val = elem.style[name];
-            }
-
-            // Computed unit is not pixels. Stop here and return.
-            if (rnumnonpx.test(val)) {
-                return val;
-            }
-
-            // we need the check for style in case a browser which returns unreliable values
-            // for getComputedStyle silently falls back to the reliable elem.style
-            valueIsBorderBox = isBorderBox && ($.support.boxSizingReliable || val === elem.style[name]);
-
-            // Normalize "", auto, and prepare for extra
-            val = parseFloat(val) || 0;
-        }
-
-        // use the active box-sizing model to add/subtract irrelevant styles
-        return (val +
-            augmentWidthOrHeight(
-                elem,
-                name,
-                extra || (isBorderBox ? "border" : "content"),
-                valueIsBorderBox
-            )
-        ) + "px";
-    }
-
-    function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
-
-        var i = extra === (isBorderBox ? "border" : "content") ? 4 : name === "width" ? 1 : 0,
-            val = 0;
-
-        for (; i < 4; i += 2) {
-
-            if (extra === "margin") {
-                val += $.css(elem, extra + cssDirection[i], true);
-            }
-            if (isBorderBox) {
-                // border-box includes padding, so remove it if we want content
-                if (extra === "content") {
-                    val -= parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
-                }
-
-                if (extra !== "margin") {
-                    val -= parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
-                }
-            } else {
-                // at this point, extra isnt content, so add padding
-                val += parseFloat($.curCSS(elem, "padding" + cssDirection[i])) || 0;
-
-                // at this point, extra isnt content nor padding, so add border
-                if (extra !== "padding") {
-                    val += parseFloat($.curCSS(elem, "border" + cssDirection[i] + "Width")) || 0;
-                }
-            }
-        }
-
-        return val;
-    }
-
-    /**
-     * Process scrollTop and scrollLeft
-     */
-
-    $.each({
-        'scrollTop': 'pageYOffset',
-        'scrollLeft': 'pageXOffset'
-    }, function (name, dir) {
-        $.fn[name] = function (val) {
-            var elem = this[0],
-                win = $.isWindow(elem) ? elem : $.nodeType(9, elem) && elem.defaultView;
-
-            if (typeof val === "undefined") return val ? val[dir] : elem[name];
-            win ? win.scrollTo(window[name]) : elem[name] = val;
-        };
-    });
-
-
-    /**
-     * CSS hooks - margin and padding
-     */
-
-    $.each(["margin", "padding"], function (i, hook) {
-        $.cssHooks[hook] = {
-            get: function (elem, computed, extra) {
-                return $.map(cssDirection, function (dir) {
-                    return $.css(elem, hook + dir);
-                }).join(" ");
-            },
-            set: function (elem, value) {
-                var parts = value.split(/\s/),
-                    values = {
-                        "Top": parts[0],
-                        "Right": parts[1] || parts[0],
-                        "Bottom": parts[2] || parts[0],
-                        "Left": parts[3] || parts[1] || parts[0]
-                    };
-                $.each(cssDirection, function (i, dir) {
-                    elem.style[hook + dir] = values[dir];
-                });
-            }
-        };
-    });
-
-    // HTML
-
-
-    var concat = Array.prototype.concat,
-
-        doc = document,
-
-        isFunction = $.isFunction,
-
-        tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-        rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
-        rhtml = /<|&#?\w+;/,
-        rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
-        rscriptType = /^$|\/(?:java|ecma)script/i,
-        rscriptTypeMasked = /^true\/(.*)/,
-        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
-
+    // Support check 
     (function () {
-        var fragment = doc.createDocumentFragment(),
-            div = fragment.appendChild(doc.createElement("div")),
-            input = doc.createElement("input");
+
+        var fragment = document.createDocumentFragment(),
+            div = fragment.appendChild(document.createElement("div")),
+            input = document.createElement("input");
 
         input.setAttribute("type", "radio");
         input.setAttribute("checked", "checked");
@@ -4368,328 +5597,106 @@
 
         div.appendChild(input);
 
-        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+        hAzzle.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
 
         div.innerHTML = "<textarea>x</textarea>";
-        $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
-    })();
 
+        hAzzle.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
-    /**
-     * Disable "script" tags
-     **/
+    }());
 
-
-    function disableScript(elem) {
-        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
-        return elem;
-    }
+    var rcheckableType = (/^(?:checkbox|radio)$/i);
 
     /**
-     * Restore "script" tags
-     **/
-
-
-    function restoreScript(elem) {
-        var m = rscriptTypeMasked.exec(elem.type);
-        m ? elem.type = m[1] : elem.removeAttribute("type");
-        return elem;
-    }
-
-    $.extend($, {
-
-        /**
-         * HTML Hook created for the future. If $ need to support HTML6 or other
-         * HTML tags, it's easy enough to do it from plugins
-         */
-
-        htmlHooks: {
-
-            regex: /<([\w:]+)/,
-
-            'option': function () {
-
-                return [1, "<select multiple='multiple'>", "</select>"];
-            },
-
-            'thead': function () {
-
-                return [1, "<table>", "</table>"];
-
-            },
-
-            'col': function () {
-
-                return [2, "<table><colgroup>", "</colgroup></table>"];
-
-            },
-            'tr': function () {
-
-                return [2, "<table><tbody>", "</tbody></table>"];
-
-            },
-            'td': function () {
-
-                return [3, "<table><tbody><tr>", "</tr></tbody></table>"];
-
-            }
-        },
-
-
-
-        Evaluated: function (elems, refElements) {
-            var i = 0,
-                l = elems.length;
-
-            for (; i < l; i++) {
-                $.data(elems[i], "evaluated", !refElements || $.data(refElements[i], "evaluated"));
-            }
-        },
-
-        _evalUrl: function (url) {
-            return $.ajax({
-                url: url,
-                type: "GET",
-                dataType: "script",
-                async: false,
-                global: false,
-                "throws": true
-            });
-        },
-
-        parseHTML: function (data, context, keepScripts) {
-
-            if (!data || typeof data !== "string") {
-                return null;
-            }
-
-            if (typeof context === "boolean") {
-                keepScripts = context;
-                context = false;
-            }
-
-            //context = context || document;
-
-            var parsed = rsingleTag.exec(data),
-                scripts = !keepScripts && [],
-
-                // Prevent XSS attack
-
-                context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
-
-            // Single tag
-
-            if (parsed) {
-                return [context.createElement(parsed[1])];
-            }
-
-            parsed = $.createHTML([data], context, scripts);
-
-            if (scripts && scripts.length) {
-                $(scripts).remove();
-            }
-
-            return $.merge([], parsed.childNodes);
-        },
-
-        /*
-	  Create the HTML
-	  *
-	  * Support for HTML 6 through the 'htmlHooks'
-	   *
-	*/
-
-        createHTML: function (elems, context, scripts, selection) {
-
-            if (!context) return;
-
-            var elem, tmp, tag, wrap, contains, j,
-                fragment = context.createDocumentFragment(),
-                nodes = [],
-                i = 0,
-                l = elems.length;
-
-            $.each(elems, function (_, elem) {
-
-                if (elem || elem === 0) {
-
-                    // Add nodes directly
-
-                    if (typeof elem === "object") {
-
-                        $.merge(nodes, elem.nodeType ? [elem] : elem);
-
-                    } else if (!rhtml.test(elem)) {
-
-                        nodes.push(context.createTextNode(elem));
-
-                    } else { // Suport for HTML 6
-
-                        tmp = tmp || fragment.appendChild(context.createElement("div"));
-
-                        // RegEx used here is to recognize HTML5 tags, but can be extended through the 'hook'
-
-                        tag = ($.htmlHooks['regex'].exec(elem) || ["", ""])[1].toLowerCase();
-
-                        wrap = $.htmlHooks[tag] || [0, "", ""];
-
-                        tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
-
-                        // Descend through wrappers to the right content
-                        j = wrap[0];
-
-                        while (j--) {
-                            tmp = tmp.lastChild;
-                        }
-
-                        $.merge(nodes, tmp.childNodes);
-
-                        tmp = fragment.firstChild;
-
-                        tmp.textContent = "";
-                    }
-                }
-            });
-
-            // Remove wrapper from fragment
-            fragment.textContent = "";
-
-            i = 0;
-
-            while ((elem = nodes[i++])) {
-
-                if (selection && $.indexOf.call(selection, elem) === -1) continue;
-
-                contains = $.contains(elem.ownerDocument, elem);
-
-                // Append to fragment
-
-                tmp = $.getChildren(fragment.appendChild(elem), "script");
-
-                if (contains) {
-
-                    $.Evaluated(tmp);
-                }
-
-                // Capture executables
-                if (scripts) {
-                    j = 0;
-                    while ((elem = tmp[j++])) {
-                        if (rscriptType.test(elem.type || "")) {
-                            scripts.push(elem);
-                        }
-                    }
-                }
-            }
-
-            return fragment;
-        }
-    });
+     *  TODO!!!
+     *
+     * - Clone data
+     * - deal with the script tags
+     */
+
+
+    function fixInput(src, dest) {
+        var nodeName = dest.nodeName.toLowerCase();
+        if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
+        else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
+    };
 
     $.extend($.fn, {
 
-        // Inspiration from jQuery
-
-        manipulateDOM: function (args, callback) {
-
-            // Flatten any nested arrays
-
-            args = concat.apply([], args);
-
-            var fragment, first, scripts, hasScripts, node, doc,
-                i = 0,
-                l = this.length,
-                set = this,
-                iNoClone = l - 1,
-                value = args[0],
-                isFunction = $.isFunction(value);
+        clone: function (deep) {
 
 
+            var clone,
+                storage,
+                srcElements, destElements;
 
-            if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
+            return this.map(function (elem) {
 
-                return this.each(function (index) {
-                    var self = set.eq(index);
-                    if (isFunction) {
-                        args[0] = value.call(this, index, self.html());
-                    }
-                    self.manipulateDOM(args, callback);
-                });
-            }
+                /* Get all handlers from the original elem before we do a clone job
+	
+	   NOTE!! This has to be done BEFORE we clone the elem, else
+	          hAzzle will be confused and wonder wich of the two
+			  'identical' elems to get the handlers and data from
+	*/
 
-            if (l) {
+                var handlers = $.Events.getHandler(elem, '', null, false),
+                    l = handlers.length,
+                    i = 0,
+                    args, hDlr;
 
-                fragment = $.createHTML(args, this[0].ownerDocument, false, this);
+                // Get the data before we clone
 
-                first = fragment.firstChild;
+                storage = $(elem).data();
 
-                if (fragment.childNodes.length === 1) {
-                    fragment = first;
-                }
+                // Clone the elem
 
-                if (first) {
-                    scripts = $.map($.getChildren(fragment, "script"), disableScript);
-                    hasScripts = scripts.length;
+                clone = elem.cloneNode(deep || true);
 
-                    while (i < l) {
+                // Copy the events from the original to the clone
 
-                        if (i !== iNoClone && !$.nodeType(3, fragment)) {
+                for (; i < l; i++) {
+                    if (handlers[i].original) {
 
-                            fragment = $.clone(fragment, true, true);
-
-                            if (hasScripts) {
-                                $.merge(scripts, $.getChildren(fragment, "script"));
-                            }
-                        }
-
-                        callback.call(this[i], fragment, i);
-
-                        i++;
-                    }
-
-                    if (hasScripts) {
-                        doc = scripts[scripts.length - 1].ownerDocument;
-
-                        // Reenable scripts
-                        $.map(scripts, restoreScript);
-
-                        // Evaluate executable scripts on first document insertion
-                        for (i = 0; i < hasScripts; i++) {
-
-                            node = scripts[i];
-                            if (rscriptType.test(node.type || "") && !$.data(node, "evaluated") && $.contains(doc, node)) {
-
-                                if (node.src) {
-                                    // Optional AJAX dependency, but won't run scripts if not present
-                                    if ($._evalUrl) {
-                                        $._evalUrl(node.src);
-                                    }
-                                } else {
-                                    $.Evaluated(node.textContent.replace(rcleanScript, ""));
-                                }
-                            }
-                        }
+                        args = [clone, handlers[i].type];
+                        if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
+                        args.push(handlers[i].original);
+                        $.Events.add.apply(null, args);
                     }
                 }
-            }
 
-            return this;
+                // Copy data from the original to the clone
+                if (storage) {
+                    $.each(storage, function (key, value) {
+                        $.data(clone, key, value);
+                    });
+                }
+                // Preserve the rest 
+
+                if (!$.support.noCloneChecked && ($.nodeType(1, elem) || $.nodeType(11, elem)) && !$.isXML(elem)) {
+
+                    destElements = $.getChildren(clone);
+                    srcElements = $.getChildren(elem);
+
+                    for (i = 0, l = srcElements.length; i < l; i++) {
+                        fixInput(srcElements[i], destElements[i]);
+                    }
+                }
+
+                // Preserve script evaluation history
+
+                destElements = $.getChildren(clone, "script");
+
+                if (destElements.length > 0) {
+
+                    $.Evaluated(destElements, !$.contains(elem.ownerDocument, elem) && $.getChildren(elem, "script"));
+                }
+
+                // Return the cloned set
+
+                return clone;
+            });
         }
-
     });
-
-
-
-    /**
-     * Extend the HTMLHook
-     */
-
-    $.each(['optgroup', 'tbody', 'tfoot', 'colgroup', 'caption'], function (name) {
-        $.htmlHooks[name] = function () {
-            return $.htmlHooks['thead'];
-        };
-    });
-
 })(hAzzle);
 
 // Manipulation
@@ -5361,7 +6368,7 @@
 
         },
 
-        /**
+        /*
          * Remove properties from DOM elements
          *
          * @param {String}
@@ -5479,11 +6486,12 @@
 
                         if (name === 'prepend') {
 
-                            target.insertBefore(elem, target.firstChild);
+                            target.insertBefore(elem, target.firstChild)
 
                         } else {
 
-                            target.appendChild(elem);
+                            target.appendChild(elem)
+
                         }
                     }
                 });
@@ -5544,1632 +6552,479 @@
 
 })(hAzzle);
 
-// Removeable
+// HTML
 
 ;
 (function ($) {
+
+    var concat = Array.prototype.concat,
+
+        doc = document,
+
+        isFunction = $.isFunction,
+
+        tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
+        rhtml = /<|&#?\w+;/,
+        rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
+        rscriptType = /^$|\/(?:java|ecma)script/i,
+        rscriptTypeMasked = /^true\/(.*)/,
+        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
+
+    (function () {
+        var fragment = doc.createDocumentFragment(),
+            div = fragment.appendChild(doc.createElement("div")),
+            input = doc.createElement("input");
+
+        input.setAttribute("type", "radio");
+        input.setAttribute("checked", "checked");
+        input.setAttribute("name", "t");
+
+        div.appendChild(input);
+
+        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+
+        div.innerHTML = "<textarea>x</textarea>";
+        $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+    })();
+
 
     /**
-     * Remove all child nodes of the set of matched elements from the DOM.
-     *
-     * @return {Object}
-     */
+     * Disable "script" tags
+     **/
 
-    $.fn.empty = function () {
 
-        // Remove all data to prevent memory leaks
-
-        return this.removeData().each(function (_, elem) {
-
-            if ($.nodeType(1, this)) {
-
-                $.Events.remove(elem);
-
-                // Remove any remaining nodes
-
-                this.textContent = "";
-            }
-        });
-    },
+    function disableScript(elem) {
+        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+        return elem;
+    }
 
     /**
-     *  Remove an element from the DOM
-     */
-    $.fn.remove = function () {
+     * Restore "script" tags
+     **/
 
-        // Discard any data on the element
 
-        return this.removeData().each(function (_, elem) {
-
-            // Locate all nodes that belong to this element
-            // and add them to the "elems stack"
-
-            var elements = $(elem).find('*');
-            elements = elements.add(elem);
-
-            $.Events.remove(elem);
-
-            var parent = elem.parentNode;
-
-            if (parent) {
-
-                // Remove all children
-
-                this.parentNode.removeChild(elem);
-            }
-
-        })
-        return false;
+    function restoreScript(elem) {
+        var m = rscriptTypeMasked.exec(elem.type);
+        m ? elem.type = m[1] : elem.removeAttribute("type");
+        return elem;
     }
-
-})(hAzzle);
-
-
-// Classes
-;
-(function ($) {
-
-    // Check if we can support classList
-
-    var csp = $.support.classList,
-
-        indexOf = Array.prototype.indexOf,
-
-        sMa,
-        whitespace = /\S+/g,
-        _class = /[\t\r\n\f]/g,
-        isFunction = $.isFunction;
-
-    // Check if classList support multiple arguments
-
-    if (csp) {
-
-        (function () {
-
-            var div = document.createElement('div');
-            div.classList.add('a', 'b');
-            sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-        }());
-
-    }
-
-    $.extend($.fn, {
-
-        /**
-         * Add class(es) to element collection
-         *
-         * @param {String} value
-         */
-
-        addClass: function (value) {
-
-            if (isFunction(value)) {
-                return this.each(function (index) {
-                    $(this).addClass(value.call(this, index, this.className));
-                });
-            }
-
-            var cls,
-                cur,
-                j,
-                finalValue,
-                classes = (value || "").match(whitespace) || [];
-
-            return this.each(function (_, elem) {
-
-                // classList
-
-                if ($.nodeType(1, elem)) {
-
-                    if (!csp && !sMa) {
-
-                        elem.classList.add.apply(elem.classList, classes);
-
-                    } else {
-
-                        if (!csp) {
-
-                            cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : " ");
-                        }
-
-                        j = 0;
-                        while ((cls = classes[j++])) {
-
-                            if (csp) {
-                                elem.classList.add(cls);
-                            } else {
-                                if (cur.indexOf(" " + cls + " ") < 0) {
-                                    cur += cls + " ";
-                                }
-                            }
-                        }
-                        if (!csp) {
-                            finalValue = cur.trim(cur);
-
-                            if (elem.className !== finalValue) {
-                                elem.className = finalValue;
-                            }
-                        }
-                    }
-                    return;
-                }
-            });
-        },
-
-        /**
-         * Remove class(es) from element
-         *
-         * @param {String} value
-         */
-
-        removeClass: function (value) {
-
-            var classes, cur, cls, j, finalValue;
-
-            if (isFunction(value)) {
-                return this.each(function (j) {
-                    $(this).removeClass(value.call(this, j, this.className));
-                });
-            }
-
-            classes = (value || "").match(whitespace) || [];
-
-            return this.each(function (_, elem) {
-
-                if (!value) {
-
-                    return elem.className = "";
-                }
-
-                // ClassList
-
-                if (csp && $.nodeType(1, elem) && elem.className) {
-                    if (!value) {
-                        elem.className = '';
-                    }
-                    if (sMa) {
-                        elem.classList.remove.apply(elem.classList, classes);
-                    } else {
-                        j = 0;
-                        while ((cls = classes[j++])) {
-                            elem.classList.remove(cls);
-                        }
-                    }
-
-                    return $.each(classes, function (_, classes) {
-                        elem.classList.remove(classes);
-                    });
-                }
-
-                // Old way of doing things
-
-                cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : "");
-
-                if (cur) {
-                    j = 0;
-                    while ((cls = classes[j++])) {
-                        // Remove *all* instances
-                        while (cur.indexOf(" " + cls + " ") >= 0) {
-                            cur = cur.replace(" " + cls + " ", " ");
-                        }
-                    }
-
-                    // Only assign if different to avoid unneeded rendering.
-
-                    finalValue = value ? $.trim(cur) : "";
-                    if (elem.className !== finalValue) {
-                        elem.className = finalValue;
-                    }
-                }
-            });
-        },
-
-        /**
-         * Checks if an element has the given class
-         *
-         * @param {String} selector(s)
-         * @return {Boolean} true if the element contains all classes
-         */
-
-        hasClass: function (value) {
-
-            var i = 0,
-                l = this.length;
-
-            while (i < l) {
-
-                if (!csp) {
-
-                    if ($.nodeType(1, this[i])) {
-
-                        if (this[i].classList.contains(value)) {
-
-                            return true;
-                        }
-                    }
-
-                } else { // The old way
-
-                    var className = " " + value + " ";
-                    if (this[i].nodeType === 1 && (" " + this[i].className + " ").replace(_class, " ").indexOf(className) >= 0) {
-                        return true;
-                    }
-                }
-                i++;
-            }
-            return false;
-        },
-
-        /**
-         * Replace a class in a element collection
-         *
-         * @param {String} clA
-         * @param {String} clB
-         */
-
-        replaceClass: function (clA, clB) {
-            var current, found;
-            return this.each(function () {
-                current = this.className.split(' '),
-                found = false;
-
-                for (var i = current.length; i--;) {
-                    if (current[i] == clA) {
-                        found = true;
-                        current[i] = clB;
-                    }
-                }
-                if (!found) {
-                    return $(this).addClass(clB, this);
-                }
-                this.className = current.join(' ');
-            });
-        },
-
-        /**
-         * Add class(es) to element, and remove after 'duration' milliseconds
-         * @param {String} clas
-         * @param {Number} duration
-         */
-
-        tempClass: function (clas, duration) {
-            return this.each(function (_, elem) {
-                $(elem).addClass(clas);
-                setTimeout((function () {
-                    $(elem).removeClass(clas);
-                }), duration || /* default 100ms */ 100);
-            });
-        },
-
-        /**
-         * Toggle class(es) on element
-         *
-         * @param {String} value
-         * @param {Boolean} state
-         * @return {Boolean}
-         */
-
-        toggleClass: function (value, state) {
-
-            var type = typeof value;
-
-            if (typeof state === "boolean" && type === "string") {
-                return state ? this.addClass(value) : this.removeClass(value);
-            }
-
-            if (isFunction(value)) {
-                return this.each(function (i) {
-                    $(this).toggleClass(value.call(this, i, this.className, state), state);
-                });
-            }
-
-            var classNames = value.match(whitespace) || [],
-                cls,
-                i = 0,
-                self;
-
-            return this.each(function (_, elem) {
-
-                if (type === "string") {
-
-                    // ClassList
-
-                    self = $(elem);
-
-                    while ((cls = classNames[i++])) {
-
-                        if (csp) {
-
-                            if (typeof state === "boolean") {
-
-                                // IE10+ doesn't support the toggle boolean flag.
-
-                                if (state) {
-
-                                    return elem.classList.add(cls);
-
-                                } else {
-
-                                    return elem.classList.remove(cls);
-                                }
-                            }
-
-                            return elem.classList.toggle(cls);
-                        }
-
-                        // check each className given, space separated list
-
-                        if (self.hasClass(cls)) {
-
-                            self.removeClass(cls);
-
-                        } else {
-
-                            self.addClass(cls);
-                        }
-                    }
-
-                    // Toggle whole class name
-                } else if (type === typeof undefined || type === "boolean") {
-                    if (this.className) {
-                        // store className if set
-                        $.data(this, "__className__", this.className);
-                    }
-
-                    this.className = this.className || value === false ? "" : $.data(this, "__className__") || "";
-                }
-            });
-        }
-    });
-
-})(hAzzle);
-
-
-
-
-// Classes
-;
-(function ($) {
-
-    // Check if we can support classList
-
-    var csp = $.support.classList,
-
-        indexOf = Array.prototype.indexOf,
-
-        sMa,
-        whitespace = /\S+/g,
-        _class = /[\t\r\n\f]/g,
-        isFunction = $.isFunction;
-
-    // Check if classList support multiple arguments
-
-    if (csp) {
-
-        (function () {
-
-            var div = document.createElement('div');
-            div.classList.add('a', 'b');
-            sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-        }());
-
-    }
-
-    $.extend($.fn, {
-
-        /**
-         * Add class(es) to element collection
-         *
-         * @param {String} value
-         */
-
-        addClass: function (value) {
-
-            if (isFunction(value)) {
-                return this.each(function (index) {
-                    $(this).addClass(value.call(this, index, this.className));
-                });
-            }
-
-            var cls,
-                cur,
-                j,
-                finalValue,
-                classes = (value || "").match(whitespace) || [];
-
-            return this.each(function (_, elem) {
-
-                // classList
-
-                if ($.nodeType(1, elem)) {
-
-                    if (!csp && !sMa) {
-
-                        elem.classList.add.apply(elem.classList, classes);
-
-                    } else {
-
-                        if (!csp) {
-
-                            cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : " ");
-                        }
-
-                        j = 0;
-                        while ((cls = classes[j++])) {
-
-                            if (csp) {
-                                elem.classList.add(cls);
-                            } else {
-                                if (cur.indexOf(" " + cls + " ") < 0) {
-                                    cur += cls + " ";
-                                }
-                            }
-                        }
-                        if (!csp) {
-                            finalValue = cur.trim(cur);
-
-                            if (elem.className !== finalValue) {
-                                elem.className = finalValue;
-                            }
-                        }
-                    }
-                    return;
-                }
-            });
-        },
-
-        /**
-         * Remove class(es) from element
-         *
-         * @param {String} value
-         */
-
-        removeClass: function (value) {
-
-            var classes, cur, cls, j, finalValue;
-
-            if (isFunction(value)) {
-                return this.each(function (j) {
-                    $(this).removeClass(value.call(this, j, this.className));
-                });
-            }
-
-            classes = (value || "").match(whitespace) || [];
-
-            return this.each(function (_, elem) {
-
-                if (!value) {
-
-                    return elem.className = "";
-                }
-
-                // ClassList
-
-                if (csp && $.nodeType(1, elem) && elem.className) {
-                    if (!value) {
-                        elem.className = '';
-                    }
-                    if (sMa) {
-                        elem.classList.remove.apply(elem.classList, classes);
-                    } else {
-                        j = 0;
-                        while ((cls = classes[j++])) {
-                            elem.classList.remove(cls);
-                        }
-                    }
-
-                    return $.each(classes, function (_, classes) {
-                        elem.classList.remove(classes);
-                    });
-                }
-
-                // Old way of doing things
-
-                cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : "");
-
-                if (cur) {
-                    j = 0;
-                    while ((cls = classes[j++])) {
-                        // Remove *all* instances
-                        while (cur.indexOf(" " + cls + " ") >= 0) {
-                            cur = cur.replace(" " + cls + " ", " ");
-                        }
-                    }
-
-                    // Only assign if different to avoid unneeded rendering.
-
-                    finalValue = value ? $.trim(cur) : "";
-                    if (elem.className !== finalValue) {
-                        elem.className = finalValue;
-                    }
-                }
-            });
-        },
-
-        /**
-         * Checks if an element has the given class
-         *
-         * @param {String} selector(s)
-         * @return {Boolean} true if the element contains all classes
-         */
-
-        hasClass: function (value) {
-
-            var i = 0,
-                l = this.length;
-
-            while (i < l) {
-
-                if (!csp) {
-
-                    if ($.nodeType(1, this[i])) {
-
-                        if (this[i].classList.contains(value)) {
-
-                            return true;
-                        }
-                    }
-
-                } else { // The old way
-
-                    var className = " " + value + " ";
-                    if (this[i].nodeType === 1 && (" " + this[i].className + " ").replace(_class, " ").indexOf(className) >= 0) {
-                        return true;
-                    }
-                }
-                i++;
-            }
-            return false;
-        },
-
-        /**
-         * Replace a class in a element collection
-         *
-         * @param {String} clA
-         * @param {String} clB
-         */
-
-        replaceClass: function (clA, clB) {
-            var current, found;
-            return this.each(function () {
-                current = this.className.split(' '),
-                found = false;
-
-                for (var i = current.length; i--;) {
-                    if (current[i] == clA) {
-                        found = true;
-                        current[i] = clB;
-                    }
-                }
-                if (!found) {
-                    return $(this).addClass(clB, this);
-                }
-                this.className = current.join(' ');
-            });
-        },
-
-        /**
-         * Add class(es) to element, and remove after 'duration' milliseconds
-         * @param {String} clas
-         * @param {Number} duration
-         */
-
-        tempClass: function (clas, duration) {
-            return this.each(function (_, elem) {
-                $(elem).addClass(clas);
-                setTimeout((function () {
-                    $(elem).removeClass(clas);
-                }), duration || /* default 100ms */ 100);
-            });
-        },
-
-        /**
-         * Toggle class(es) on element
-         *
-         * @param {String} value
-         * @param {Boolean} state
-         * @return {Boolean}
-         */
-
-        toggleClass: function (value, state) {
-
-            var type = typeof value;
-
-            if (typeof state === "boolean" && type === "string") {
-                return state ? this.addClass(value) : this.removeClass(value);
-            }
-
-            if (isFunction(value)) {
-                return this.each(function (i) {
-                    $(this).toggleClass(value.call(this, i, this.className, state), state);
-                });
-            }
-
-            var classNames = value.match(whitespace) || [],
-                cls,
-                i = 0,
-                self;
-
-            return this.each(function (_, elem) {
-
-                if (type === "string") {
-
-                    // ClassList
-
-                    self = $(elem);
-
-                    while ((cls = classNames[i++])) {
-
-                        if (csp) {
-
-                            if (typeof state === "boolean") {
-
-                                // IE10+ doesn't support the toggle boolean flag.
-
-                                if (state) {
-
-                                    return elem.classList.add(cls);
-
-                                } else {
-
-                                    return elem.classList.remove(cls);
-                                }
-                            }
-
-                            return elem.classList.toggle(cls);
-                        }
-
-                        // check each className given, space separated list
-
-                        if (self.hasClass(cls)) {
-
-                            self.removeClass(cls);
-
-                        } else {
-
-                            self.addClass(cls);
-                        }
-                    }
-
-                    // Toggle whole class name
-                } else if (type === typeof undefined || type === "boolean") {
-                    if (this.className) {
-                        // store className if set
-                        $.data(this, "__className__", this.className);
-                    }
-
-                    this.className = this.className || value === false ? "" : $.data(this, "__className__") || "";
-                }
-            });
-        }
-    });
-
-    var props = "backgroundColor borderBottomColor borderLeftColor borderRightColor borderTopColor borderColor boxShadowColor color textShadowColor columnRuleColor outlineColor textDecorationColor textEmphasisColor".split(' ');
 
     $.extend($, {
 
         /**
-         * hAzzle color names
-         *
+         * HTML Hook created for the future. If $ need to support HTML6 or other
+         * HTML tags, it's easy enough to do it from plugins
          */
 
-        colornames: {
-            aliceblue: {
-                r: 240,
-                g: 248,
-                b: 255
-            },
-            antiquewhite: {
-                r: 250,
-                g: 235,
-                b: 215
-            },
-            aqua: {
-                r: 0,
-                g: 255,
-                b: 255
-            },
-            aquamarine: {
-                r: 127,
-                g: 255,
-                b: 212
-            },
-            azure: {
-                r: 240,
-                g: 255,
-                b: 255
-            },
-            beige: {
-                r: 245,
-                g: 245,
-                b: 220
-            },
-            bisque: {
-                r: 255,
-                g: 228,
-                b: 196
-            },
-            black: {
-                r: 0,
-                g: 0,
-                b: 0
-            },
-            blanchedalmond: {
-                r: 255,
-                g: 235,
-                b: 205
-            },
-            blue: {
-                r: 0,
-                g: 0,
-                b: 255
-            },
-            blueviolet: {
-                r: 138,
-                g: 43,
-                b: 226
-            },
-            brown: {
-                r: 165,
-                g: 42,
-                b: 42
-            },
-            burlywood: {
-                r: 222,
-                g: 184,
-                b: 135
-            },
-            cadetblue: {
-                r: 95,
-                g: 158,
-                b: 160
-            },
-            chartreuse: {
-                r: 127,
-                g: 255,
-                b: 0
-            },
-            chocolate: {
-                r: 210,
-                g: 105,
-                b: 30
-            },
-            coral: {
-                r: 255,
-                g: 127,
-                b: 80
-            },
-            cornflowerblue: {
-                r: 100,
-                g: 149,
-                b: 237
-            },
-            cornsilk: {
-                r: 255,
-                g: 248,
-                b: 220
-            },
-            crimson: {
-                r: 220,
-                g: 20,
-                b: 60
-            },
-            cyan: {
-                r: 0,
-                g: 255,
-                b: 255
-            },
-            darkblue: {
-                r: 0,
-                g: 0,
-                b: 139
-            },
-            darkcyan: {
-                r: 0,
-                g: 139,
-                b: 139
-            },
-            darkgoldenrod: {
-                r: 184,
-                g: 134,
-                b: 11
-            },
-            darkgray: {
-                r: 169,
-                g: 169,
-                b: 169
-            },
-            darkgreen: {
-                r: 0,
-                g: 100,
-                b: 0
-            },
-            darkgrey: {
-                r: 169,
-                g: 169,
-                b: 169
-            },
-            darkkhaki: {
-                r: 189,
-                g: 183,
-                b: 107
-            },
-            darkmagenta: {
-                r: 139,
-                g: 0,
-                b: 139
-            },
-            darkolivegreen: {
-                r: 85,
-                g: 107,
-                b: 47
-            },
-            darkorange: {
-                r: 255,
-                g: 140,
-                b: 0
-            },
-            darkorchid: {
-                r: 153,
-                g: 50,
-                b: 204
-            },
-            darkred: {
-                r: 139,
-                g: 0,
-                b: 0
-            },
-            darksalmon: {
-                r: 233,
-                g: 150,
-                b: 122
-            },
-            darkseagreen: {
-                r: 143,
-                g: 188,
-                b: 143
-            },
-            darkslateblue: {
-                r: 72,
-                g: 61,
-                b: 139
-            },
-            darkslategray: {
-                r: 47,
-                g: 79,
-                b: 79
-            },
-            darkslategrey: {
-                r: 47,
-                g: 79,
-                b: 79
-            },
-            darkturquoise: {
-                r: 0,
-                g: 206,
-                b: 209
-            },
-            darkviolet: {
-                r: 148,
-                g: 0,
-                b: 211
-            },
-            deeppink: {
-                r: 255,
-                g: 20,
-                b: 147
-            },
-            deepskyblue: {
-                r: 0,
-                g: 191,
-                b: 255
-            },
-            dimgrey: {
-                r: 105,
-                g: 105,
-                b: 105
-            },
-            dodgerblue: {
-                r: 30,
-                g: 144,
-                b: 255
-            },
-            firebrick: {
-                r: 178,
-                g: 34,
-                b: 34
-            },
-            floralwhite: {
-                r: 255,
-                g: 250,
-                b: 240
-            },
-            forestgreen: {
-                r: 34,
-                g: 139,
-                b: 34
-            },
-            fuchsia: {
-                r: 255,
-                g: 0,
-                b: 255
-            },
-            gainsboro: {
-                r: 220,
-                g: 220,
-                b: 220
-            },
-            ghostwhite: {
-                r: 248,
-                g: 248,
-                b: 255
-            },
-            gold: {
-                r: 255,
-                g: 215,
-                b: 0
-            },
-            goldenrod: {
-                r: 218,
-                g: 165,
-                b: 32
-            },
-            green: {
-                r: 0,
-                g: 128,
-                b: 0
-            },
-            greenyellow: {
-                r: 173,
-                g: 255,
-                b: 47
-            },
-            grey: {
-                r: 128,
-                g: 128,
-                b: 128
-            },
-            honeydew: {
-                r: 240,
-                g: 255,
-                b: 240
-            },
-            hotpink: {
-                r: 255,
-                g: 105,
-                b: 180
-            },
-            indianred: {
-                r: 205,
-                g: 92,
-                b: 92
-            },
-            indigo: {
-                r: 75,
-                g: 0,
-                b: 130
-            },
-            ivory: {
-                r: 255,
-                g: 255,
-                b: 240
-            },
-            khaki: {
-                r: 240,
-                g: 230,
-                b: 140
-            },
-            lavender: {
+        htmlHooks: {
 
-                r: 230,
-                g: 230,
-                b: 250
-            },
-            lavenderblush: {
-                r: 255,
-                g: 240,
-                b: 245
-            },
-            lawngreen: {
-                r: 124,
-                g: 252,
-                b: 0
-            },
-            lemonchiffon: {
-                r: 255,
-                g: 250,
-                b: 205
-            },
-            lightblue: {
-                r: 173,
-                g: 216,
-                b: 230
-            },
-            lightcoral: {
-                r: 240,
-                g: 128,
-                b: 128
-            },
-            lightcyan: {
-                r: 224,
-                g: 255,
-                b: 255
-            },
-            lightgoldenrodyellow: {
-                r: 250,
-                g: 250,
-                b: 210
-            },
-            lightslategrey: {
-                r: 119,
-                g: 136,
-                b: 153
-            },
-            lightgray: {
-                r: 211,
-                g: 211,
-                b: 211
-            },
-            lightgreen: {
-                r: 144,
-                g: 238,
-                b: 144
-            },
-            lightgrey: {
-                r: 211,
-                g: 211,
-                b: 211
-            },
-            lightpink: {
-                r: 255,
-                g: 182,
-                b: 193
-            },
-            lightsalmon: {
-                r: 255,
-                g: 160,
-                b: 122
-            },
-            lightseagreen: {
-                r: 32,
-                g: 178,
-                b: 170
-            },
-            lightskyblue: {
-                r: 135,
-                g: 206,
-                b: 250
-            },
-            lightslategray: {
-                r: 119,
-                g: 136,
-                b: 153
-            },
-            lightslategrey: {
-                r: 119,
-                g: 136,
-                b: 153
-            },
-            lightsteelblue: {
-                r: 176,
-                g: 196,
-                b: 222
-            },
-            lightyellow: {
-                r: 255,
-                g: 255,
-                b: 224
-            },
-            lime: {
-                r: 0,
-                g: 255,
-                b: 0
-            },
-            limegreen: {
-                r: 50,
-                g: 205,
-                b: 50
-            },
-            linen: {
-                r: 250,
-                g: 240,
-                b: 230
-            },
-            magenta: {
-                r: 255,
-                g: 0,
-                b: 255
-            },
-            maroon: {
-                r: 128,
-                g: 0,
-                b: 0
-            },
-            mediumaquamarine: {
-                r: 102,
-                g: 205,
-                b: 170
-            },
-            mediumblue: {
-                r: 0,
-                g: 0,
-                b: 205
-            },
-            mediumorchid: {
-                r: 186,
-                g: 85,
-                b: 211
-            },
-            mediumpurple: {
-                r: 147,
-                g: 112,
-                b: 219
-            },
-            mediumseagreen: {
-                r: 60,
-                g: 179,
-                b: 113
-            },
-            mediumslateblue: {
-                r: 123,
-                g: 104,
-                b: 238
-            },
-            mediumspringgreen: {
-                r: 0,
-                g: 250,
-                b: 154
-            },
-            mediumturquoise: {
-                r: 72,
-                g: 209,
-                b: 204
-            },
-            mediumvioletred: {
-                r: 199,
-                g: 21,
-                b: 133
-            },
-            midnightblue: {
-                r: 25,
-                g: 25,
-                b: 112
-            },
-            mintcream: {
-                r: 245,
-                g: 255,
-                b: 250
-            },
-            mistyrose: {
-                r: 255,
-                g: 228,
-                b: 225
-            },
-            moccasin: {
-                r: 255,
-                g: 228,
-                b: 181
-            },
-            navajowhite: {
-                r: 255,
-                g: 222,
-                b: 173
-            },
-            navy: {
-                r: 0,
-                g: 0,
-                b: 128
-            },
-            oldlace: {
-                r: 253,
-                g: 245,
-                b: 230
-            },
-            olive: {
-                r: 128,
-                g: 128,
-                b: 0
-            },
-            olivedrab: {
-                r: 107,
-                g: 142,
-                b: 35
-            },
-            orange: {
-                r: 255,
-                g: 165,
-                b: 0
-            },
-            orangered: {
-                r: 255,
-                g: 69,
-                b: 0
-            },
-            orchid: {
-                r: 218,
-                g: 112,
-                b: 214
-            },
-            palegoldenrod: {
-                r: 238,
-                g: 232,
-                b: 170
-            },
-            palegreen: {
-                r: 152,
-                g: 251,
-                b: 152
-            },
-            paleturquoise: {
-                r: 175,
-                g: 238,
-                b: 238
-            },
-            palevioletred: {
-                r: 219,
-                g: 112,
-                b: 147
-            },
-            papayawhip: {
-                r: 255,
-                g: 239,
-                b: 213
-            },
-            peachpuff: {
-                r: 255,
-                g: 218,
-                b: 185
-            },
-            peru: {
-                r: 205,
-                g: 133,
-                b: 63
-            },
-            pink: {
-                r: 255,
-                g: 192,
-                b: 203
-            },
-            plum: {
-                r: 221,
-                g: 160,
-                b: 221
-            },
-            powderblue: {
-                r: 176,
-                g: 224,
-                b: 230
-            },
-            purple: {
-                r: 128,
-                g: 0,
-                b: 128
-            },
-            red: {
-                r: 255,
-                g: 0,
-                b: 0
-            },
-            rosybrown: {
-                r: 188,
-                g: 143,
-                b: 143
-            },
-            royalblue: {
-                r: 65,
-                g: 105,
-                b: 225
-            },
-            saddlebrown: {
-                r: 139,
-                g: 69,
-                b: 19
-            },
-            salmon: {
-                r: 250,
-                g: 128,
-                b: 114
-            },
-            sandybrown: {
-                r: 244,
-                g: 164,
-                b: 96
-            },
-            seagreen: {
-                r: 46,
-                g: 139,
-                b: 87
-            },
-            seashell: {
-                r: 255,
-                g: 245,
-                b: 238
-            },
-            sienna: {
-                r: 160,
-                g: 82,
-                b: 45
-            },
-            silver: {
-                r: 192,
-                g: 192,
-                b: 192
-            },
-            skyblue: {
-                r: 135,
-                g: 206,
-                b: 235
-            },
-            slateblue: {
-                r: 106,
-                g: 90,
-                b: 205
-            },
-            slategray: {
-                r: 112,
-                g: 128,
-                b: 144
-            },
-            slategrey: {
-                r: 112,
-                g: 128,
-                b: 144
-            },
-            slategrey1: {
-                r: 198,
-                g: 226,
-                b: 255
-            },
-            slategrey2: {
-                r: 185,
-                g: 211,
-                b: 238
-            },
-            snow: {
-                r: 255,
-                g: 250,
-                b: 250
-            },
-            springgreen: {
-                r: 0,
-                g: 255,
-                b: 127
-            },
-            steelblue: {
-                r: 70,
-                g: 130,
-                b: 180
-            },
-            tan: {
-                r: 210,
-                g: 180,
-                b: 140
-            },
-            teal: {
-                r: 0,
-                g: 128,
-                b: 128
-            },
-            thistle: {
-                r: 216,
-                g: 191,
-                b: 216
-            },
-            tomato: {
-                r: 255,
-                g: 99,
-                b: 71
-            },
-            turquoise: {
-                r: 64,
-                g: 224,
-                b: 208
-            },
-            violet: {
-                r: 238,
-                g: 130,
-                b: 238
-            },
-            wheat: {
-                r: 245,
-                g: 222,
-                b: 179
-            },
-            white: {
-                r: 255,
-                g: 255,
-                b: 255
-            },
-            whitesmoke: {
-                r: 245,
-                g: 245,
-                b: 245
-            },
-            yellow: {
-                r: 255,
-                g: 255,
-                b: 0
-            },
-            yellowgreen: {
-                r: 154,
-                g: 205,
-                b: 50
-            },
-            transparent: {
-                r: -1,
-                g: -1,
-                b: -1
+            regex: /<([\w:]+)/,
+
+            'option': function () {
+
+                return [1, "<select multiple='multiple'>", "</select>"];
+            },
+
+            'thead': function () {
+
+                return [1, "<table>", "</table>"];
+
+            },
+
+            'col': function () {
+
+                return [2, "<table><colgroup>", "</colgroup></table>"];
+
+            },
+            'tr': function () {
+
+                return [2, "<table><tbody>", "</tbody></table>"];
+
+            },
+            'td': function () {
+
+                return [3, "<table><tbody><tr>", "</tr></tbody></table>"];
+
             }
         },
 
-        color: {
-            normalize: function (input) {
-                var color, alpha,
-                    result, name, i, l,
-                    rhex = /#([a-fA-F0-9]{2})([a-fA-F0-9]{2})([a-fA-F0-9]{2})/,
-                    rhexshort = /#([a-fA-F0-9])([a-fA-F0-9])([a-fA-F0-9])/,
-                    rrgb = /rgb(?:a)?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(0*\.?\d+)\s*)?\)/,
-                    rrgbpercent = /rgb(?:a)?\(\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*(?:,\s*(0*\.?\d+)\s*)?\)/,
-                    rhsl = /hsl(?:a)?\(\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*,\s*(\d+(?:\.\d+)?)\%\s*(?:,\s*(0*\.?\d+)\s*)?\)/;
 
-                // Handle color: #rrggbb
-                if (result = rhex.exec(input)) {
-                    color = {
-                        r: parseInt(result[1], 16),
-                        g: parseInt(result[2], 16),
-                        b: parseInt(result[3], 16),
-                        source: result[0]
-                    };
-                }
-                // Handle color: #rgb
-                else if (result = rhexshort.exec(input)) {
-                    color = {
-                        r: parseInt(result[1] + result[1], 16),
-                        g: parseInt(result[2] + result[2], 16),
-                        b: parseInt(result[3] + result[3], 16),
-                        source: result[0]
-                    };
-                }
-                // Handle color: rgb[a](r, g, b [, a])
-                else if (result = rrgb.exec(input)) {
-                    color = {
-                        r: parseInt(result[1], 10),
-                        g: parseInt(result[2], 10),
-                        b: parseInt(result[3], 10),
-                        alpha: parseFloat(result[4], 10),
-                        source: result[0]
-                    };
-                }
-                // Handle color: rgb[a](r%, g%, b% [, a])
-                else if (result = rrgbpercent.exec(input)) {
-                    color = {
-                        r: parseInt(result[1] * 2.55, 10),
-                        g: parseInt(result[2] * 2.55, 10),
-                        b: parseInt(result[3] * 2.55, 10),
-                        alpha: parseFloat(result[4], 10),
-                        source: result[0]
-                    };
-                }
-                // Handle color: hsl[a](h%, s%, l% [, a])
-                else if (result = rhsl.exec(input)) {
-                    color = $.color.hsl_to_rgb(
-                        parseFloat(result[1], 10) / 100,
-                        parseFloat(result[2], 10) / 100,
-                        parseFloat(result[3], 10) / 100
-                    );
-                    color.alpha = parseFloat(result[4], 10);
-                    color.source = result[0];
-                }
-                // Handle color: name
-                else {
-                    result = input.split(' ');
-                    for (i = 0, l = result.length; i < l; i++) {
-                        name = result[i];
 
-                        if ($.colornames[name]) {
-                            break;
+        Evaluated: function (elems, refElements) {
+            var i = 0,
+                l = elems.length;
+
+            for (; i < l; i++) {
+                $.data(elems[i], "evaluated", !refElements || $.data(refElements[i], "evaluated"));
+            }
+        },
+
+        _evalUrl: function (url) {
+            return $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "script",
+                async: false,
+                global: false,
+                "throws": true
+            });
+        },
+
+        parseHTML: function (data, context, keepScripts) {
+
+            if (!data || typeof data !== "string") {
+                return null;
+            }
+
+            if (typeof context === "boolean") {
+                keepScripts = context;
+                context = false;
+            }
+
+            //context = context || document;
+
+            var parsed = rsingleTag.exec(data),
+                scripts = !keepScripts && [],
+
+                // Prevent XSS attack
+
+                context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
+
+            // Single tag
+
+            if (parsed) {
+                return [context.createElement(parsed[1])];
+            }
+
+            parsed = $.createHTML([data], context, scripts);
+
+            if (scripts && scripts.length) {
+                $(scripts).remove();
+            }
+
+            return $.merge([], parsed.childNodes);
+        },
+
+        /*
+	  Create the HTML
+	  *
+	  * Support for HTML 6 through the 'htmlHooks'
+	   *
+	*/
+
+        createHTML: function (elems, context, scripts, selection) {
+
+            if (!context) return;
+
+            var elem, tmp, tag, wrap, contains, j,
+                fragment = context.createDocumentFragment(),
+                nodes = [],
+                i = 0,
+                l = elems.length;
+
+            $.each(elems, function (_, elem) {
+
+                if (elem || elem === 0) {
+
+                    // Add nodes directly
+
+                    if (typeof elem === "object") {
+
+                        $.merge(nodes, elem.nodeType ? [elem] : elem);
+
+                    } else if (!rhtml.test(elem)) {
+
+                        nodes.push(context.createTextNode(elem));
+
+                    } else { // Suport for HTML 6
+
+                        tmp = tmp || fragment.appendChild(context.createElement("div"));
+
+                        // RegEx used here is to recognize HTML5 tags, but can be extended through the 'hook'
+
+                        tag = ($.htmlHooks['regex'].exec(elem) || ["", ""])[1].toLowerCase();
+
+                        wrap = $.htmlHooks[tag] || [0, "", ""];
+
+                        tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
+
+                        // Descend through wrappers to the right content
+                        j = wrap[0];
+
+                        while (j--) {
+                            tmp = tmp.lastChild;
+                        }
+
+                        $.merge(nodes, tmp.childNodes);
+
+                        tmp = fragment.firstChild;
+
+                        tmp.textContent = "";
+                    }
+                }
+            });
+
+            // Remove wrapper from fragment
+            fragment.textContent = "";
+
+            i = 0;
+
+            while ((elem = nodes[i++])) {
+
+                if (selection && $.indexOf.call(selection, elem) === -1) continue;
+
+                contains = $.contains(elem.ownerDocument, elem);
+
+                // Append to fragment
+
+                tmp = $.getChildren(fragment.appendChild(elem), "script");
+
+                if (contains) {
+
+                    $.Evaluated(tmp);
+                }
+
+                // Capture executables
+                if (scripts) {
+                    j = 0;
+                    while ((elem = tmp[j++])) {
+                        if (rscriptType.test(elem.type || "")) {
+                            scripts.push(elem);
                         }
                     }
-
-                    if (!$.colornames[name]) {
-                        name = 'transparent';
-                    }
-
-                    color = $.colornames[name];
-                    color.source = name;
-                }
-
-                if (!color.alpha && color.alpha !== 0) {
-                    delete color.alpha;
-                }
-
-                return color;
-            },
-
-            hsl_to_rgb: function (h, s, l, a) {
-                var r, g, b, m1, m2;
-
-                if (s === 0) {
-                    r = g = b = l;
-                } else {
-                    if (l <= 0.5) {
-                        m2 = l * (s + 1);
-                    } else {
-                        m2 = (l + s) - (l * s);
-                    }
-
-                    m1 = (l * 2) - m2;
-                    r = parseInt(255 * $.color.hue2rgb(m1, m2, h + (1 / 3)), 10);
-                    g = parseInt(255 * $.color.hue2rgb(m1, m2, h), 10);
-                    b = parseInt(255 * $.color.hue2rgb(m1, m2, h - (1 / 3)), 10);
-                }
-
-                return {
-                    r: r,
-                    g: g,
-                    b: b,
-                    alpha: a
-                };
-            },
-
-            // hsla conversions adapted from:
-            // https://code.google.com/p/maashaack/source/browse/packages/graphics/trunk/src/graphics/colors/HUE2RGB.as?r=5021			
-
-            hue2rgb: function (p, q, h) {
-
-                if (h < 0) {
-
-                    h++;
-                }
-
-                if (h > 1) {
-
-                    h--;
-                }
-
-                if ((h * 6) < 1) {
-                    return p + ((q - p) * h * 6);
-                } else if ((h * 2) < 1) {
-                    return q;
-                } else if ((h * 3) < 2) {
-                    return p + ((q - p) * ((2 / 3) - h) * 6);
-                } else {
-                    return p;
                 }
             }
+
+            return fragment;
         }
     });
 
+    $.extend($.fn, {
 
-    $.each(props, function (i, hook) {
+        // Inspiration from jQuery
 
-        $.cssHooks[hook] = {
-            set: function (elem, value) {
+        manipulateDOM: function (args, callback) {
 
-                value = $.color.normalize(value);
+            // Flatten any nested arrays
 
-                if (!value.alpha) {
-                    value.alpha = 1;
+            args = concat.apply([], args);
+
+            var fragment, first, scripts, hasScripts, node, doc,
+                i = 0,
+                l = this.length,
+                set = this,
+                iNoClone = l - 1,
+                value = args[0],
+                isFunction = $.isFunction(value);
+
+
+
+            if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
+
+                return this.each(function (index) {
+                    var self = set.eq(index);
+                    if (isFunction) {
+                        args[0] = value.call(this, index, self.html());
+                    }
+                    self.manipulateDOM(args, callback);
+                });
+            }
+
+            if (l) {
+
+                fragment = $.createHTML(args, this[0].ownerDocument, false, this);
+
+                first = fragment.firstChild;
+
+                if (fragment.childNodes.length === 1) {
+                    fragment = first;
                 }
 
-                elem.style[hook] = 'rgba(' + value.r + ',' + value.g + ',' + value.b + ',' + value.alpha + ')';
+                if (first) {
+                    scripts = $.map($.getChildren(fragment, "script"), disableScript);
+                    hasScripts = scripts.length;
+
+                    while (i < l) {
+
+                        if (i !== iNoClone && !$.nodeType(3, fragment)) {
+
+                            fragment = $.clone(fragment, true, true);
+
+                            if (hasScripts) {
+                                $.merge(scripts, $.getChildren(fragment, "script"));
+                            }
+                        }
+
+                        callback.call(this[i], fragment, i);
+
+                        i++;
+                    }
+
+                    if (hasScripts) {
+                        doc = scripts[scripts.length - 1].ownerDocument;
+
+                        // Reenable scripts
+                        $.map(scripts, restoreScript);
+
+                        // Evaluate executable scripts on first document insertion
+                        for (i = 0; i < hasScripts; i++) {
+
+                            node = scripts[i];
+                            if (rscriptType.test(node.type || "") && !$.data(node, "evaluated") && $.contains(doc, node)) {
+
+                                if (node.src) {
+                                    // Optional AJAX dependency, but won't run scripts if not present
+                                    if ($._evalUrl) {
+                                        $._evalUrl(node.src);
+                                    }
+                                } else {
+                                    $.Evaluated(node.textContent.replace(rcleanScript, ""));
+                                }
+                            }
+                        }
+                    }
+                }
             }
+
+            return this;
+        }
+
+    });
+
+
+
+    /**
+     * Extend the HTMLHook
+     */
+
+    $.each(['optgroup', 'tbody', 'tfoot', 'colgroup', 'caption'], function (name) {
+        $.htmlHooks[name] = function () {
+            return $.htmlHooks['thead'];
         };
     });
 
+})(hAzzle);
 
 
-    $.cssHooks.borderColor = {
-        expand: function (value) {
-            var expanded = {};
 
-            each(["Top", "Right", "Bottom", "Left"], function (i, part) {
-                expanded["border" + part + "Color"] = value;
-            });
-            return expanded;
+
+/*!
+ * HTML
+ */
+
+;
+(function ($) {
+
+
+    var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
+        exprRegex = {
+            ID: /#((?:[\w\u00c0-\uFFFF_-]|\\.)+)/,
+            CLASS: /\.((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?![^[\]]+])/g,
+            NAME: /\[name=['"]*((?:[\w\u00c0-\uFFFF_-]|\\.)+)['"]*\]/,
+            ATTR: /\[\s*((?:[\w\u00c0-\uFFFF_-]|\\.)+)\s*(?:(\S?=)\s*(['"]*)(.*?)\3|)\s*\]/g,
+            TAG: /^((?:[\w\u00c0-\uFFFF\*_-]|\\.)+)/,
+            CLONE: /\:(\d+)(?=$|[:[])/,
+            COMBINATOR: /^[>~+]$/
+        },
+        doc = document,
+        cache = {},
+        attrMap = {
+            'for': 'htmlFor',
+            'class': 'className',
+            'html': 'innerHTML'
+        },
+        callbackTypes = ['ID', 'CLASS', 'NAME', 'ATTR'],
+        exprCallback = {
+            ID: function (match, node) {
+                node.id = match[1];
+            },
+            CLASS: function (match, node) {
+                var cls = node.className.replace(/^\s+$/, '');
+                node.className = cls ? cls + ' ' + match[1] : match[1];
+            },
+            NAME: function (match, node) {
+                node.name = match[1];
+            },
+            ATTR: function (match, node) {
+
+                var attr = match[1],
+                    val = match[4] || true;
+
+                if (val === true || attr === 'innerHTML' || attrMap.hasOwnProperty(attr)) {
+                    node[attrMap[attr] || attr] = val;
+                } else {
+                    node.setAttribute(attr, val);
+                }
+
+            }
+        };
+
+    function create(part, n) {
+
+        var tag = exprRegex.TAG.exec(part),
+            node = doc.createElement(tag && tag[1] !== '*' ? tag[1] : 'div'),
+            fragment = doc.createDocumentFragment(),
+            c = callbackTypes.length,
+            match, regex, callback;
+
+        while (c--) {
+
+            regex = exprRegex[callbackTypes[c]];
+            callback = exprCallback[callbackTypes[c]];
+
+            if (regex.global) {
+
+                while ((match = regex.exec(part)) !== null) {
+                    callback(match, node);
+                }
+
+                continue;
+
+            }
+
+            if (match = regex.exec(part)) {
+                callback(match, node);
+            }
+
         }
-    };
 
+        while (n--) {
+            fragment.appendChild(node.cloneNode(true));
+        }
+
+        return fragment;
+
+    }
+
+    function multiAppend(parents, children) {
+
+        parents = parents.childNodes;
+
+        var i = parents.length,
+            parent;
+
+        while (i--) {
+
+            parent = parents[i];
+
+            if (parent.nodeName.toLowerCase() === 'table') {
+                /* IE requires table to have tbody */
+                parent.appendChild(parent = doc.createElement('tbody'));
+            }
+
+            parent.appendChild(children.cloneNode(true));
+
+        }
+
+    }
+
+})(hAzzle);
+
+// Show / Hide / Toggle
+
+;
+(function ($) {
 
     /**
      * Show | hide | toggle

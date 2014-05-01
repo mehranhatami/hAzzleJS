@@ -1,6 +1,5 @@
 // Classes
-;
-(function ($) {
+; (function ($) {
 
     // Check if we can support classList
 

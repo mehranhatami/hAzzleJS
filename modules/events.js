@@ -40,6 +40,8 @@
 
         // Some prototype references we need
 
+
+        substr = String.prototype.substr,
         slice = Array.prototype.slice,
         concat = Array.prototype.concat,
         toString = Object.prototype.toString,
@@ -192,34 +194,36 @@
     });
 
 
-    $.Kernel.prototype['inNamespaces'] = function (checkNamespaces) {
+    $.Kernel.prototype = {
 
-        var i, j, c = 0;
+        inNamespaces: function (checkNamespaces) {
 
-        if (!checkNamespaces) {
+            var i, j, c = 0;
 
-            return true;
-        }
+            if (!checkNamespaces) {
 
-        if (!this.namespaces) {
-
-            return false;
-        }
-
-        for (i = checkNamespaces.length; i--;) {
-            for (j = this.namespaces.length; j--;) {
-                if (checkNamespaces[i] == this.namespaces[j]) c++;
+                return true;
             }
+
+            if (!this.namespaces) {
+
+                return false;
+            }
+
+            for (i = checkNamespaces.length; i--;) {
+                for (j = this.namespaces.length; j--;) {
+                    if (checkNamespaces[i] == this.namespaces[j]) c++;
+                }
+            }
+            return checkNamespaces.length === c;
+        },
+
+        matches: function (checkElement, checkOriginal, checkHandler) {
+            return this.element === checkElement &&
+                (!checkOriginal || this.original === checkOriginal) &&
+                (!checkHandler || this.handler === checkHandler);
         }
-        return checkNamespaces.length === c;
     };
-
-    $.Kernel.prototype['matches'] = function (checkElement, checkOriginal, checkHandler) {
-        return this.element === checkElement &&
-            (!checkOriginal || this.original === checkOriginal) &&
-            (!checkHandler || this.handler === checkHandler);
-    };
-
 
     $.extend($.fn, {
 
@@ -234,9 +238,10 @@
          */
 
         on: function (events, selector, fn, one) {
-            return this.each(function () {
-                $.Events.add(this, events, selector, fn, one);
-            });
+            return this.length === 1 ? $.Events.add(this[0], events, selector, fn, one) :
+                this.each(function () {
+                    $.Events.add(this, events, selector, fn, one);
+                });
         },
 
         /**
@@ -261,9 +266,10 @@
          */
 
         off: function (events, fn) {
-            return this.each(function () {
-                $.Events.remove(this, events, fn);
-            });
+            return this.length === 1 ? $.Events.off(this[0], events, fn) :
+                this.each(function () {
+                    $.Events.off(this, events, fn)
+                });
         },
 
         /**
@@ -294,7 +300,7 @@
                 } else {
 
                     handlers = $.Events.getHandler(el, type, null, false);
-                    evt = Event(null, el);
+                    evt = new Event(null, el);
                     evt.type = type;
                     call = args ? 'apply' : 'call';
                     args = args ? [evt].concat(args) : evt;
@@ -309,18 +315,10 @@
         }
     });
 
-
-
-
     // hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
     // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
 
     function Event(evt, element) {
-
-        // Allow instantiation without the 'new' keyword
-        if (!(this instanceof Event)) {
-            return new Event(evt, element);
-        }
 
         if (!arguments.length) return;
 
@@ -339,10 +337,6 @@
         fixHook = treated[type];
 
         if (!fixHook) {
-
-            /* Note! This is more or less the same way as jQuery does it, but
-         I introduced "eventHooks", so it's possible to check
-         against other events too from plugins. */
 
             treated[type] = fixHook = rmouseEvent.test(type) ? $.eventHooks['mouse'] :
                 rkeyEvent.test(type) ? $.eventHooks['keys'] :
@@ -384,7 +378,7 @@
             return this.originalEvent.isImmediatePropagationStopped && this.originalEvent.isImmediatePropagationStopped();
         },
         clone: function (currentTarget) {
-            var ne = Event(this, this.element);
+            var ne = new Event(this, this.element);
             ne.currentTarget = currentTarget;
             return ne;
         }
@@ -395,6 +389,7 @@
         // Add event listener
 
         add: function (el, events, selector, fn, one) {
+
             var originalFn, type, types, i, args, entry, first;
 
             // Dont' allow click on disabeled elements, or events on text and comment nodes
@@ -404,7 +399,7 @@
             // Types can be a map of types/handlers
             // TODO!! This is not working on delegated events, have to fix this ASAP !!
 
-            if (selector === undefined && $.isObject(events))
+            if ($.isUndefined(selector) && $.isObject(events))
 
                 for (type in events) {
 
@@ -426,10 +421,6 @@
                     fn = originalFn = selector;
                 }
 
-                // Handle multiple events separated by a space
-
-                types = events.split(specialsplit);
-
                 // One
 
                 if (one === 1) {
@@ -437,6 +428,10 @@
                     // Make a unique handlet that get removed after first time it's triggered
                     fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
                 }
+
+                // Handle multiple events separated by a space
+
+                types = events.split(specialsplit);
 
                 for (i = types.length; i--;) {
                     first = $.Events.putHandler(entry = $.Kernel(
@@ -447,7 +442,11 @@
 
                     // Add root listener only if we're the first
 
-                    if (first) el.addEventListener(entry.eventType, $.Events.rootListener, false);
+                    if (first) {
+
+                        el.addEventListener(entry.eventType, $.Events.rootListener, false);
+
+                    }
                 }
                 return el;
             }
@@ -455,17 +454,17 @@
 
         // Remove event listener
 
-        remove: function (el, typeSpec, fn) {
+        off: function (el, typeSpec, fn) {
 
             var isTypeStr = isString(typeSpec),
                 type, namespaces, i;
 
-            if (isTypeStr && typeSpec.indexOf(' ') > 0) {
+            if (isTypeStr && $.indexOf(typeSpec, ' ') > 0) {
 
                 typeSpec = typeSpec.split(typeSpec);
 
                 for (i = typeSpec.length; i--;)
-                    $.Events.remove(el, typeSpec[i], fn);
+                    $.Events.off(el, typeSpec[i], fn);
                 return el;
             }
 
@@ -475,7 +474,12 @@
 
             if (!typeSpec || isTypeStr) {
 
+                // Namespace
+
                 if (namespaces = isTypeStr && typeSpec.replace(ns, '')) namespaces = namespaces.split('.');
+
+                // Remove the listener
+
                 $.Events.removeListener(el, type, fn, namespaces);
 
             } else if (isFunction(typeSpec)) {
@@ -484,9 +488,12 @@
 
             } else {
 
-                for (var k in typeSpec) {
+                if (typeSpec) {
 
-                    if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+                    for (var k in typeSpec) {
+
+                        if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+                    }
                 }
             }
 
@@ -495,16 +502,29 @@
 
         /**
          * Set up a delegate helper using the given selector, wrap the handler function
+         * We are using the "find" function to search through the 'elems stack' to find
+         * the selector
          */
 
         delegate: function (selector, fn) {
-
             function findTarget(target, root) {
-                var i, array = isString(selector) ? $.select(selector, root) : selector;
+                var i, array = isString(selector) ? $(root).find(selector) : selector;
+
                 for (; target && target !== root; target = target.parentNode) {
+
                     if (array !== null) {
-                        for (i = array.length; i--;) {
-                            if (array[i] === target) return target;
+
+                        // No need to run a expensive loop if the array length are 1						
+
+                        if (array.length === 1) {
+
+                            if (array[0] === target) return target;
+
+                        } else {
+
+                            for (i = array.length; i--;) {
+                                if (array[i] === target) return target;
+                            }
                         }
                     }
                 }
@@ -513,7 +533,9 @@
             function handler(e) {
                 if (e.target.disabled !== true) {
                     var m = findTarget(e.target, this);
-                    if (m) fn.apply(m, arguments);
+                    if (m) {
+                        fn.apply(m, arguments);
+                    }
                 }
             }
 
@@ -524,36 +546,48 @@
             return handler;
         },
 
-        removeListener: function (element, orgType, handler, namespaces) {
+        /**
+         * Remove the event listener
+         */
 
-            var type = orgType && orgType.replace(names, ''),
-                handlers = $.Events.getHandler(element, type, null, false),
-                removed = {},
-                i, l;
+        removeListener: function (element, type, handler, ns) {
 
-            for (i = 0, l = handlers.length; i < l; i++) {
-                if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                    $.Events.delHandler(handlers[i]);
-                    if (!removed[handlers[i].eventType])
-                        removed[handlers[i].eventType] = {
-                            t: handlers[i].eventType,
-                            c: handlers[i].type
-                        };
+            type = type && type.replace(names, '');
+
+            type = $.Events.getHandler(element, type, null, false);
+
+            var removed = {};
+
+            // No point to continue if no event attached on the element
+
+            if (type) {
+
+                var i = 0,
+                    l = type.length;
+
+                for (; i < l; i++) {
+                    if ((!handler || type[i].original === handler) && type[i].inNamespaces(ns)) {
+                        $.Events.delHandler(type[i]);
+                        if (!removed[type[i].eventType])
+                            removed[type[i].eventType] = {
+                                t: type[i].eventType,
+                                c: type[i].type
+                            };
+                    }
                 }
-            }
 
-            for (i in removed) {
-                if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
-                    // last listener of this type, remove the rootListener
-                    element.removeEventListener(removed[i].t, $.Events.rootListener, false);
+                for (i in removed) {
+                    if (!$.Events.hasHandler(element, removed[i].t, null, false)) {
+                        element.removeEventListener(removed[i].t, $.Events.rootListener, false);
+                    }
                 }
             }
         },
 
-        once: function (rm, element, type, fn, originalFn) {
+        once: function (rm, element, type, handler, callback) {
             return function () {
-                fn.apply(this, arguments);
-                rm(element, type, originalFn);
+                handler.apply(this, arguments);
+                rm(element, type, callback);
             };
         },
 
@@ -562,7 +596,7 @@
                 l = listeners.length,
                 i = 0;
 
-            evt = Event(evt, this, true);
+            evt = new Event(evt, this, true);
 
             for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
 
@@ -629,6 +663,7 @@
         },
 
         hasHandler: function (element, type, original, root) {
+
             if (root = container[(root ? "r" : "#") + type])
                 for (type = root.length; type--;)
                     if (!root[type].root && root[type].matches(element, original, null)) return true;
@@ -659,7 +694,6 @@
             });
         }
     };
-
 
     // Shortcut methods for 'on'
 

@@ -2,8 +2,7 @@
  * HTML
  */
  
-;
-(function ($) {
+; (function ($) {
 
     var concat = Array.prototype.concat,
 	

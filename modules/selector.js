@@ -1,5 +1,4 @@
-;
-(function ($) {
+; (function ($) {
 
 
     var slice = Array.prototype.slice,
