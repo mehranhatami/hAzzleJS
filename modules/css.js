@@ -7,13 +7,12 @@
         docbody = doc.body,
         important = /\s+(!important)/g,
         background = /background/i,
-        numberOrPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
         rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i,
-        margin = (/^margin/),
         relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
         cssDirection = ["Top", "Right", "Bottom", "Left"],
 
-        isFunction = $.isFunction;
+        isFunction = $.isFunction,
+        isUndefined = $.isUndefined;
 
     /**
      * Dasherize the name
@@ -98,17 +97,16 @@
                 return 0;
             }
 
-            if ($.pixelsToUnity.units === undefined) {
+            if (isUndefined($.pixelsToUnity.units)) {
                 var units = $.pixelsToUnity.units = {},
-                    div = document.createElement("div");
+                    div = doc.createElement("div");
                 div.style.width = "100cm";
-                document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+                docbody.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
                 units.mm = div.offsetWidth / 1000;
-                document.body.removeChild(div);
+                docbody.removeChild(div);
                 units.cm = units.mm * 10;
                 units.inn = units.cm * 2.54;
                 units.pt = units.inn * 1 / 72;
-
                 units.pc = units.pt * 12;
             }
             // If the unity specified is not recognized we return the value.
@@ -116,23 +114,22 @@
             return unit ? px / unit : px;
         },
 
-	    curCSS: function(elem, name, computed) {
+        curCSS: function (elem, name, computed) {
 
-        var ret,
-            style = elem.style;
+            var ret;
 
-        computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
 
-        if (computed) {
+            if (computed) {
 
-            var ret = computed.getPropertyValue(name) || computed[name];
+                ret = computed.getPropertyValue(name) || computed[name];
 
-            if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
-                ret = $.style(elem, name);
+                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
+                    ret = $.style(elem, name);
+                }
             }
-        }
-        return $.isUndefined(ret) ? ret + "" : ret;
-    },
+            return isUndefined(ret) ? ret + "" : ret;
+        },
 
         // Globalize CSS
 
@@ -288,7 +285,6 @@
 
         },
 
-
         setOffset: function (elem, coordinates, i) {
             var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
                 position = $.css(elem, "position"),
@@ -296,6 +292,7 @@
                 props = {};
 
             // Set position first, in-case top/left are set even on static elem
+
             if (position === "static") {
                 elem.style.position = "relative";
             }
@@ -313,25 +310,31 @@
                 curLeft = curPosition.left;
 
             } else {
+
                 curTop = parseFloat(curCSSTop) || 0;
                 curLeft = parseFloat(curCSSLeft) || 0;
             }
 
             if (isFunction(coordinates)) {
+
                 coordinates = coordinates.call(elem, i, curOffset);
             }
 
-            if (coordinates.top !== null) {
+            if (!$.isNull(coordinates.top)) {
+
                 props.top = (coordinates.top - curOffset.top) + curTop;
             }
-            if (coordinates.left !== null) {
+            if (!$.isNull(coordinates.left)) {
+
                 props.left = (coordinates.left - curOffset.left) + curLeft;
             }
 
             if ("using" in coordinates) {
+
                 coordinates.using.call(elem, props);
 
             } else {
+
                 curElem.css(props);
             }
         }
@@ -344,7 +347,7 @@
 
             if (arguments.length === 1) {
 
-                if (typeof property === 'string') {
+                if ($.isString(property)) {
 
                     return this[0] && $.css(this[0], property);
                 }
@@ -385,21 +388,6 @@
         },
 
         /**
-         * Sets the opacity for given element
-         *
-         * @param {elem}
-         * @param {int} level range (0 .. 100)
-         */
-
-        setOpacity: function (value) {
-            if ($.isNumber) {
-                return this.each(function () {
-                    this.style.opacity = value / 100;
-                });
-            }
-        },
-
-        /**
          * Calculates offset of the current element
          * @param{coordinates}
          * @return object with left, top, bottom, right, width and height properties
@@ -424,7 +412,6 @@
             if (!doc) {
 
                 return;
-
             }
 
             _win = $.isWindow(doc) ? doc : $.nodeType(9, doc) && doc.defaultView;
@@ -461,44 +448,43 @@
 
         position: function () {
 
-            if (this.length) {
+            if (!this[0]) return null;
 
-                var offsetParent, offset,
-                    elem = this[0],
-                    parentOffset = {
-                        top: 0,
-                        left: 0
-                    };
+            var offsetParent, offset,
+                elem = this[0],
+                parentOffset = {
+                    top: 0,
+                    left: 0
+                };
 
-                if ($.css(elem, "position") === "fixed") {
+            if ($.css(elem, "position") === "fixed") {
 
-                    offset = elem.getBoundingClientRect();
+                offset = elem.getBoundingClientRect();
 
-                } else {
+            } else {
 
-                    // Get *real* offsetParent
+                // Get *real* offsetParent
 
-                    offsetParent = this.offsetParent();
+                offsetParent = this.offsetParent();
 
-                    // Get correct offsets
-                    offset = this.offset();
+                // Get correct offsets
+                offset = this.offset();
 
-                    if (!$.nodeName(offsetParent[0], "html")) {
-                        parentOffset = offsetParent.offset();
-                    }
-
-                    // Subtract element margins
-
-                    parentOffset.top += $.css(offsetParent[0], "borderTopWidth", true);
-                    parentOffset.left += $.css(offsetParent[0], "borderLeftWidth", true);
+                if (!$.nodeName(offsetParent[0], "html")) {
+                    parentOffset = offsetParent.offset();
                 }
 
-                // Subtract parent offsets and element margins
-                return {
-                    top: offset.top - parentOffset.top - $.css(elem, "marginTop", true),
-                    left: offset.left - parentOffset.left - $.css(elem, "marginLeft", true)
-                };
+                // Subtract element margins
+
+                parentOffset.top += $.css(offsetParent[0], "borderTopWidth", true);
+                parentOffset.left += $.css(offsetParent[0], "borderLeftWidth", true);
             }
+
+            // Subtract parent offsets and element margins
+            return {
+                top: offset.top - parentOffset.top - $.css(elem, "marginTop", true),
+                left: offset.left - parentOffset.left - $.css(elem, "marginLeft", true)
+            };
         },
 
         /**  
@@ -507,87 +493,46 @@
 
         offsetParent: function () {
             return this.map(function (elem) {
-                var offsetParent = elem.offsetParent || html;
-                while (offsetParent && (!$.nodeName(offsetParent, "html") && $.css(offsetParent, "position") === "static")) {
-                    offsetParent = offsetParent.offsetParent;
+                var op = elem.offsetParent || doc.documentElement;
+                while (op && (!$.nodeName(op, "html") && $.css(op, "position") === "static")) {
+                    op = op.offsetParent || doc.documentElement;
                 }
-                return offsetParent || html;
+                return op;
             });
         }
-
     });
 
-    // Create width, height, innerHeight, innerWidth, outerHeight and outerWidth methods
     $.each(["Height", "Width"], function (i, name) {
-
         var type = name.toLowerCase();
-
-        // innerHeight and innerWidth
         $.fn["inner" + name] = function () {
-            var elem = this[0];
-            return elem ?
-                elem.style ?
-                parseFloat($.css(elem, type, "padding")) :
-                this[type]() :
-                null;
+            var el = this[0];
+            return el && el.style ? parseFloat($.css(el, type, "padding")) : null;
         };
-
-        // outerHeight and outerWidth
-
         $.fn["outer" + name] = function (margin) {
-            var elem = this[0];
-            return elem ?
-                elem.style ?
-                parseFloat($.css(elem, type, margin ? "margin" : "border")) :
-                this[type]() :
-                null;
+            var el = this[0];
+            return el && el.style ? parseFloat($.css(el, type, margin ? "margin" : "border")) : null;
         };
-
-        $.fn[type] = function (value) {
-
-            if (isFunction(value)) {
+        $.fn[type] = function (size) {
+            var el = this[0];
+            if (!el) return size === null ? null : this;
+            if (isFunction(size))
                 return this.each(function (i) {
                     var self = $(this);
-                    self[type](value.call(this, i, self[type]()));
+                    self[type](size.call(this, i, self[type]()));
                 });
-            }
-
-            var elem = this[0],
-                _doc;
-
-            if ($.isWindow(elem)) {
-                return elem.document.documentElement["client" + name];
-            }
-
-            // Get document width or height
-
-            if ($.nodeType(9, elem)) {
-
-                _doc = elem.documentElement;
-
-                // Either scroll[Width/Height] or offset[Width/Height] or client[Width/Height], whichever is greatest
-
+            if ($.isWindow(el)) {
+                return el.document.documentElement["client" + name];
+            } else if ($.nodeType(9, el)) {
                 return Math.max(
-                    elem.body["scroll" + name], _doc["scroll" + name],
-                    elem.body["offset" + name], _doc["offset" + name],
-                    _doc["client" + name]
-                );
-
-                // Get or set width or height on the element
-            } else if ($.isUndefined(value)) {
-
-                return parseFloat($.css(elem, type));
-
-                // Set the width or height on the element (default to pixels if value is unitless)
-            } else {
-
-                // Set the width or height on the element
-                $.style(elem, type, value);
-            }
-            return this;
-
+                    el.documentElement["client" + name],
+                    el.body["scroll" + name], el.documentElement["scroll" + name],
+                    el.body["offset" + name], el.documentElement["offset" + name]);
+            } else if (isUndefined(size)) {
+                var orig = $.css(el, type),
+                    ret = parseFloat(orig);
+                return $.IsNaN(ret) ? orig : ret;
+            } else return this.css(type, $.isString(size) ? size : size + "px");
         };
-
     });
 
     $.each(["height", "width"], function (i, name) {
@@ -640,7 +585,7 @@
             },
 
             set: function (elem, value, extra) {
-                
+
                 var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
                 return this.setPositiveNumber(value, extra ?
                     augmentWidthOrHeight(
@@ -658,7 +603,6 @@
 
     function getWH(elem, name, extra) {
 
-        // Start with offset property, which is equivalent to the border-box value
         var val = name === "width" ? elem.offsetWidth : elem.offsetHeight,
             valueIsBorderBox = true,
             isBorderBox = $.support.boxSizing && $.css(elem, "boxSizing") === "border-box";
@@ -730,7 +674,6 @@
     /**
      * Process scrollTop and scrollLeft
      */
-
     $.each({
         'scrollTop': 'pageYOffset',
         'scrollLeft': 'pageXOffset'
@@ -739,11 +682,10 @@
             var elem = this[0],
                 win = $.isWindow(elem) ? elem : $.nodeType(9, elem) && elem.defaultView;
 
-            if (typeof val === "undefined") return val ? val[dir] : elem[name];
+            if (isUndefined(val)) return val ? val[dir] : elem[name];
             win ? win.scrollTo(window[name]) : elem[name] = val;
         };
     });
-
 
     /**
      * CSS hooks - margin and padding
