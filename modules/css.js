@@ -1,38 +1,28 @@
 // CSS
-; (function ($) {
+;
+(function ($) {
 
-    var html = window.document.documentElement,
-        doc = document,
-        docbody = doc.body,
-        important = /\s+(!important)/g,
+    var doc = document,
+        html = window.document.documentElement,
         background = /background/i,
-        rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i,
-        relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
-        cssDirection = ["Top", "Right", "Bottom", "Left"],
+        rnum = /^[\-+]?(?:\d*\.)?\d+$/i,
+
+        cached = [],
 
         isFunction = $.isFunction,
-        isUndefined = $.isUndefined;
+        isUndefined = $.isUndefined,
 
-    /**
-     * Dasherize the name
-     *
-     * NOTE!! This is 'ONLY' used when we are using the
-     * the slower cssText because of the '!Important' property
-     *
-     */
+        rnumsplit = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
+        cssDirection = ["Top", "Right", "Bottom", "Left"],
 
-    function dasherize(str) {
-        return str.replace(/::/g, '/')
-            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
-            .replace(/([a-z\d])([A-Z])/g, '$1_$2')
-            .replace(/_/g, '-')
-            .toLowerCase();
-    }
+        cssShow = {
+            position: "absolute",
+            visibility: "hidden",
+            display: "block"
+        },
+        relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
 
-    // Extend the $ object
-
-    $.extend({
-
+    $.extend($, {
 
         cssNumber: {
             'column-count': 1,
@@ -46,16 +36,6 @@
 
         cssHooks: {
 
-            opacity: {
-                get: function (elem, computed) {
-                    if (computed) {
-                        // We should always get a number back from opacity
-                        var ret = $.curCSS(elem, "opacity");
-                        return ret === "" ? "1" : ret;
-                    }
-                }
-            }
-
         },
 
         cssNormalTransform: {
@@ -68,13 +48,129 @@
             "float": "cssFloat"
         },
 
-        // Convert some pixels into another CSS unity.
-        // It's used in $.style() for the += or -=.
-        // * px   : Number.
-        // * unit : String, like "%", "em", "px", ...
-        // * elem : Node, the current element.
-        // * prop : String, the CSS property.
-        pixelsToUnity: function (px, unit, elem, prop) {
+        curCSS: function (elem, name, computed) {
+
+            var ret;
+
+            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+
+            if (computed) {
+
+                ret = computed.getPropertyValue(name) || computed[name];
+
+                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
+
+                    ret = $.style(elem, name);
+                }
+            }
+            return isUndefined(ret) ? ret + "" : ret;
+        },
+        css: function (element, name, extra) {
+
+            var computed, val;
+
+            name = $.camelCase(name);
+
+            // Do we have any cssHooks available?
+
+            var hooks = $.cssHooks[name];
+
+            // If a hook was provided get the computed value from there
+
+            if ($.cssHooks[name] && ("get" in hooks)) {
+
+                val = hooks['get'](element, true, extra);
+            }
+
+            if (val === undefined) {
+
+                computed = element.ownerDocument.defaultView.getComputedStyle(element, null);
+
+                if (computed) {
+
+                    val = computed.getPropertyValue(name) || computed[name];
+                }
+
+                if (val === "" && !$.contains(element.ownerDocument, element)) {
+
+                    val = $.style(elem, name);
+                }
+            }
+
+            if (extra === "" || extra) {
+                num = parseFloat(val);
+                return extra === true || $.isNumeric(num) ? num || 0 : val;
+            }
+
+
+            return $.isUndefined(val) ? val + "" : val;
+        },
+
+        /**
+         * CSS properties accessor for an element
+         */
+
+        style: function (element, property, value, extra) {
+
+            value = $.cssProps[value] || ($.cssProps[property] = (value in element.style ? value : $.prefix(property)) || value);
+
+            // Do we have any cssHooks available?
+
+            var hooks = $.cssHooks[property];
+
+            var ret = relNum.exec(value);
+
+            if (ret) {
+				
+				value = $.css(elem, name);
+                value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+				
+                value = (ret[1] + 1) * ret[2] + parseFloat($.css(element, property));
+            }
+
+            // If a number was passed in, add 'px' to the (except for certain CSS properties)
+
+            if (typeof value === 'number' && !$.cssNumber[property]) {
+
+				value += ret && ret[3] ? ret[3] : "px";
+            }
+
+            // Check for background
+
+            if (value === "" && background.test(property)) {
+
+                value = "inherit";
+            }
+
+            if (!hooks || !("set" in hooks) || (value = hooks.set(element, value, extra)) !== undefined) {
+
+                element.style[(value === null || value === ' ') ? 'remove' : 'set' + 'Property'](property, '' + value)
+                return element
+
+            }
+        },
+
+        swap: function (elem, options, callback, args) {
+            var ret, name,
+                old = {};
+
+            // Remember the old values, and insert the new ones
+            for (name in options) {
+                old[name] = elem.style[name];
+                elem.style[name] = options[name];
+            }
+
+            ret = callback.apply(elem, args || []);
+
+            // Revert the old values
+            for (name in options) {
+                elem.style[name] = old[name];
+            }
+
+            return ret;
+        },
+		
+		    pixelsToUnity: function (px, unit, elem, prop) {
 
             if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
             else if (unit === "em") return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
@@ -111,177 +207,6 @@
             // If the unity specified is not recognized we return the value.
             unit = $.pixelsToUnity.units[unit];
             return unit ? px / unit : px;
-        },
-
-        curCSS: function (elem, name, computed) {
-
-            var ret;
-
-            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-
-            if (computed) {
-
-                ret = computed.getPropertyValue(name) || computed[name];
-
-                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
-                    ret = $.style(elem, name);
-                }
-            }
-            return isUndefined(ret) ? ret + "" : ret;
-        },
-
-        // Globalize CSS
-
-        css: function (elem, name, extra, styles, normalized) {
-
-            var val,
-                num,
-                style = elem.style;
-            /**
-             * If this function are called from within hAzzle.style(), we don't
-             * need to normalize the name again.
-             */
-
-            if (!normalized) {
-
-                // Normalize the name
-
-                name = $.camelCase(name);
-
-                // Transform to normal properties - vendor or not
-
-                name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)));
-
-            }
-
-            // Do we have any cssHooks available?
-
-            var hooks = $.cssHooks[name];
-
-            // If a hook was provided get the computed value from there
-
-            if (hooks) {
-
-                val = hooks['get'](elem, true, extra);
-            }
-
-            // Otherwise, if a way to get the computed value exists, use that
-
-            if (val === undefined) {
-
-                val = $.curCSS(elem, name, styles, style);
-            }
-
-            // Convert "normal" to computed value
-
-            if (val === "normal" && name in $.cssNormalTransform) {
-                val = $.cssNormalTransform[name];
-            }
-
-            // Return, converting to number if forced or a qualifier was provided and val looks numeric
-
-            if (extra === "" || extra) {
-                num = parseFloat(val);
-                return extra === true || $.isNumeric(num) ? num || 0 : val;
-            }
-
-            return val;
-        },
-
-        /**
-         * CSS properties accessor for an element
-         */
-
-        style: function (elem, name, value, extra, hook) {
-
-            // Don't set styles on text and comment nodes
-
-            if (!elem || $.nodeType(3, elem) || $.nodeType(8, elem)) {
-
-                return;
-            }
-
-            var style = elem.style,
-                hooks = '',
-                ret,
-                digit = false;
-
-            if (!style) {
-
-                return;
-            }
-
-            name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)) || name);
-
-            if (extra) {
-
-                name = dasherize(name);
-
-            } else { // Normalize the name
-
-                name = $.camelCase(name);
-            }
-
-            // Do we have any cssHooks available?
-
-            hooks = hook || $.cssHooks[name];
-
-            /**
-             * Convert relative numbers to strings.
-             * It can handle +=, -=, em or %
-             */
-
-            if (typeof value === "string" && (ret = relNum.exec(value))) {
-                value = $.css(elem, name, "", "", name);
-                value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
-
-                // We are dealing with relative numbers, set till true
-
-                digit = true;
-            }
-
-            // Make sure that null and NaN values aren't set.
-
-            if (value === null || value !== value) {
-                return;
-            }
-
-            // If a number was passed in, add 'px' to the (except for certain CSS properties)
-
-            if (digit && !$.cssNumber[name]) {
-
-                value += ret && ret[3] ? ret[3] : "px";
-            }
-
-            // Check for background
-
-            if (value === "" && background.test(name)) {
-
-                if (extra) {
-
-                    return name + ":" + "inherit";
-                }
-
-                style[name] = "inherit";
-            }
-
-            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
-
-                if (extra) {
-
-                    return name + ":" + value;
-                }
-
-                style[name] = value;
-            }
-
-            if (extra) {
-
-                return name + ":" + value;
-            }
-
-            style[name] = value;
-
         },
 
         setOffset: function (elem, coordinates, i) {
@@ -337,53 +262,30 @@
                 curElem.css(props);
             }
         }
-    });
 
+    });
 
     $.extend($.fn, {
 
         css: function (property, value) {
 
-            if (arguments.length === 1) {
-
-                if ($.isString(property)) {
-
-                    return this[0] && $.css(this[0], property);
+            if (value == null) {
+                if (typeof property == 'string') {
+                    return this.elems[0] && $.css(this.elems[0], property)
                 }
 
                 for (var key in property) {
 
+
                     this.each(function () {
-
-                        // !Important property check
-
-                        if (important.test(property[key])) {
-
-                            this.style.cssText += $.style(this, key, property[key], true);
-
-                        } else {
-
-                            $.style(this, key, property[key]);
-                        }
+                        $.style(this, key, property[key]);
                     });
                 }
-
-            } else {
-
-                return this.each(function () {
-
-                    // !Important property check
-
-                    if (important.test(value)) {
-
-                        this.style.cssText += $.style(this, property, value, true);
-
-                    } else {
-
-                        $.style(this, property, value);
-                    }
-                });
+                return this;
             }
+            return this.each(function (i, element) {
+                $.style(element, property, value)
+            })
         },
 
         /**
@@ -501,15 +403,31 @@
         }
     });
 
-    $.each(["Height", "Width"], function (i, name) {
-        var type = name.toLowerCase();
+
+
+    $.each({
+        "Height": "height",
+        "Width": "width"
+    }, function (name, type) {
+
         $.fn["inner" + name] = function () {
-            var el = this[0];
-            return el && el.style ? parseFloat($.css(el, type, "padding")) : null;
+
+            var elem = this[0];
+            return elem ?
+                elem.style ?
+                parseFloat($.css(elem, type, "padding")) :
+                this[type]() :
+                null;
+
         };
         $.fn["outer" + name] = function (margin) {
-            var el = this[0];
-            return el && el.style ? parseFloat($.css(el, type, margin ? "margin" : "border")) : null;
+
+            var elem = this[0];
+            return elem ?
+                elem.style ?
+                parseFloat($.css(elem, type, margin ? "margin" : "border")) :
+                this[type]() :
+                null;
         };
         $.fn[type] = function (size) {
             var el = this[0];
@@ -534,70 +452,6 @@
         };
     });
 
-    $.each(["height", "width"], function (i, name) {
-
-        $.cssHooks[name] = {
-
-            displaySwap: /^(none|table(?!-c[ea]).+)/,
-            numsplit: /^([\-+]?(?:\d*\.)?\d+)(.*)$/i,
-
-            cssShow: {
-                position: "absolute",
-                visibility: "hidden",
-                display: "block"
-            },
-
-            get: function (elem, computed, extra) {
-
-                if (computed) {
-                    if (elem.offsetWidth === 0 && this.displaySwap.test(hAzzle.css(elem, "display"))) {
-
-                        var ret, name,
-                            old = {};
-
-                        // Remember the old values, and insert the new ones
-                        for (name in this.cssShow) {
-                            old[name] = elem.style[name];
-                            elem.style[name] = this.cssShow[name];
-                        }
-
-                        ret = getWH(elem);
-
-                        // Revert the old values
-                        for (name in this.cssShow) {
-                            elem.style[name] = old[name];
-                        }
-
-                        return ret;
-
-                    } else {
-
-                        getWH(elem, name, extra);
-                    }
-
-                }
-            },
-
-            setPositiveNumber: function (value, subs) {
-                var matches = this.numsplit.exec(value);
-                return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value;
-            },
-
-            set: function (elem, value, extra) {
-
-                var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-                return this.setPositiveNumber(value, extra ?
-                    augmentWidthOrHeight(
-                        elem,
-                        name,
-                        extra,
-                        hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
-                        styles
-                    ) : 0
-                );
-            }
-        };
-    });
 
 
     function getWH(elem, name, extra) {
@@ -712,5 +566,36 @@
             }
         };
     });
+
+    $.each(["height", "width"], function (i, name) {
+        $.cssHooks[name] = {
+            get: function (elem, computed, extra) {
+                return (cached[elem] ? cached[elem] : cached[elem] = /^(none|table(?!-c[ea]).+)/.test($.css(elem, "display"))) && elem.offsetWidth === 0 ?
+                    $.swap(elem, cssShow, function () {
+                        return getWH(elem, name, extra);
+                    }) :
+                    getWH(elem, name, extra);
+            },
+            set: function (elem, value, extra) {
+                var styles = extra && getStyles(elem);
+                return setPositiveNumber(elem, value, extra ?
+                    augmentWidthOrHeight(
+                        elem,
+                        name,
+                        extra,
+                        $.css(elem, "boxSizing", false, styles) === "border-box",
+                        styles
+                    ) : 0
+                );
+            }
+        };
+    });
+
+    function setPositiveNumber(elem, value, subtract) {
+        var matches = rnumsplit.exec(value);
+        return matches ?
+            Math.max(0, matches[1] - (subtract || 0)) + (matches[2] || "px") :
+            value;
+    }
 
 })(hAzzle);

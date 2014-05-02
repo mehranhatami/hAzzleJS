@@ -16,7 +16,8 @@
  *
  * Todo!! Fix this maybe!!
  */
-; (function ($) {
+;
+(function ($) {
 
     var win = window,
         doc = document || {},
@@ -426,7 +427,7 @@
                 if (one === 1) {
 
                     // Make a unique handlet that get removed after first time it's triggered
-                    fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
+                    fn = $.Events.once($.Events.off, el, events, fn, originalFn);
                 }
 
                 // Handle multiple events separated by a space
@@ -492,7 +493,7 @@
 
                     for (var k in typeSpec) {
 
-                        if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+                        if (typeSpec.hasOwnProperty(k)) $.Events.off(el, k, typeSpec[k]);
                     }
                 }
             }
