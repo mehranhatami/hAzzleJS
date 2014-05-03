@@ -774,14 +774,19 @@
          * Merge two arrays
          */
 
-        merge: function (first, second) {
-            for (var len = +second.length, i = 0, fl = first.length; i < len;) first[fl++] = second[i++];
-            if (len !== len)
-                for (; second[i] !== undefined;) first[fl++] = second[i++];
-            first.length = fl;
-            return first;
-        },
+      merge: function( first, second ) {
+		var len = +second.length,
+			j = 0,
+			i = first.length;
 
+		for ( ; j < len; j++ ) {
+			first[ i++ ] = second[ j ];
+		}
+
+		first.length = i;
+
+		return first;
+	},
         nodeName: function (elem, name) {
             return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
         },
@@ -862,24 +867,22 @@
             return ret;
         },
 
-        makeArray: function (array) {
+       makeArray: function (arr, results) {
 
-            var ret = [];
+          var  a = new Object(arr);
+		  	  ret = results || [];
 
-            if (array !== null) {
-                var i = array.length;
-                // The window, strings (and functions) also have 'length'
-                if (i === null || hAzzle.isString(array) || hAzzle.isFunction(array) || array.setInterval)
-                    ret[0] = array;
-                else
-                    while (i)
-                        ret[--i] = array[i];
-            }
+		if ( arr !== null ) {
+			if ( hAzzle.isArrayLike( a ) ) {
+				hAzzle.merge( ret, hAzzle.isString(arr) ? [ arr ] : arr);
+			} else {
+				push.call( ret, arr );
+			}
+		}
 
-            return ret;
+		return ret;
 
         },
-
         // A function that performs no operations.
 
         noop: function () {

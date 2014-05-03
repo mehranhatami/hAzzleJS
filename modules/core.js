@@ -41,8 +41,6 @@
             }
         },
 
-        cached = [],
-
         // Selector caching
         cache = [],
 
@@ -165,11 +163,11 @@
             var elements;
             if (hAzzle.isString(selector)) {
                 if (this.length === 1) {
-                    elements = hAzzle.select(selector, this.elems)
+                    elements = hAzzle.select(selector, this.elems);
                 } else {
                     elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(selector, element))
-                    }, [])
+                        return elements.concat(hAzzle.select(selector, element));
+                    }, []);
                 }
             } else {
                 var _ = this;
@@ -180,7 +178,7 @@
                     });
                 });
             }
-            return hAzzle(elements)
+            return hAzzle(elements);
         },
 
         /**
@@ -793,8 +791,8 @@
         camelCase: function (str) {
 
             return str.replace(/-(.)/g, function (m, m1) {
-                return m1.toUpperCase()
-            })
+                return m1.toUpperCase();
+            });
         },
 
         map: function (elems, callback, arg) {
@@ -811,7 +809,7 @@
                 for (i in elems) {
                     value = callback(elems[i], i, arg);
 
-                    if (value != null) {
+                    if (value !== null) {
                         ret.push(value);
                     }
                 }
@@ -859,27 +857,20 @@
             return ret;
         },
 
-        makeArray: function (array) {
+        makeArray: function (arr, results) {
 
-            var ret = [];
+            var a = new Object(arr);
+            ret = results || [];
 
-            if (array !== null) {
-                var i = array.length;
-                // The window, strings (and functions) also have 'length'
-                if (i === null || hAzzle.isString(array) || hAzzle.isFunction(array) || array.setInterval)
-                    ret[0] = array;
-                else
-                    while (i)
-                        ret[--i] = array[i];
+            if (arr !== null) {
+                if (hAzzle.isArrayLike(a)) {
+                    hAzzle.merge(ret, hAzzle.isString(arr) ? [arr] : arr);
+                } else {
+                    push.call(ret, arr);
+                }
             }
 
             return ret;
-
-        },
-
-        // A function that performs no operations.
-
-        noop: function () {
 
         },
 
@@ -923,22 +914,7 @@
                     timeout = setTimeout(later, remaining);
                 }
                 return result;
-            }
-        },
-
-        // Delays a function for the given number of milliseconds, and then calls
-        // it with the arguments supplied.
-        delay: function (func, wait) {
-            var args = slice.call(arguments, 2);
-            return setTimeout(function () {
-                return func.apply(null, args);
-            }, wait);
-        },
-
-        // Defers a function, scheduling it to run after the current call stack has
-        // cleared.
-        defer: function (func) {
-            return hAzzle.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
+            };
         }
 
     });
@@ -952,7 +928,6 @@
             return elem && elem.nodeType === value;
         };
     });
-
 
     // Powerfull native functions for dealing with the 'elems stack'
 
