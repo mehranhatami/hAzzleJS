@@ -1,7 +1,8 @@
 /*!
  * Traversing.js
  */
-; (function ($) {
+;
+(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -30,7 +31,7 @@
 
         closest: function (sel, ctx) {
             return this.map(function (elem) {
-             if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
+                if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
                     return elem;
                 }
                 return $.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
@@ -45,26 +46,6 @@
 
         index: function (elem) {
             return elem ? this.indexOf($(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
-        },
-
-        /** Get elements from a spesific position inside the "elems stack"
-         *
-         * @param {arr} array
-         * @return {Object}
-         */
-
-        selectedIndex: function (array) {
-
-            if (array && $.isArray(array)) {
-
-                var result = [],
-                    i = array.length;
-
-                while (i--) {
-                    result.push(this.get(array[i]));
-                }
-                return $(result);
-            }
         },
 
         /**
@@ -120,10 +101,7 @@
          */
 
         not: function (sel) {
-            return $(this.elems.filter(function (element) {
-                return $.matches(element, sel) !== true;
-            }));
-
+            return this.filter(sel, true)
         },
 
         /**
@@ -149,7 +127,7 @@
          */
 
         parent: function (sel) {
-           return $.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
+            return $.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
         },
 
         /**
@@ -240,20 +218,73 @@
         },
 
         /**
-         * Reduce the set of matched elements to the first in the set.
+         * Return an sequense of elements from the 'elems stack', plucked
+         * by the given numbers
+         *
+         * Example:
+         *
+         * $('p').collection([1,6, 9])
+         *
+         * Outputs elem 1,6, 9 from the stack
+         *
+         * @param {array} count
+         * @return {object}
+         *
          */
 
-        first: function () {
-            return $(this.elems[0]);
+        collection: function (count) {
+
+            if (!$.isArray(count)) {
+                return [];
+            }
+
+            var holder = [],
+                i = count.length;
+            while (i--) {
+                holder.push(this.elems[count[i]])
+            }
+
+            return $(holder) || [];
+        },
+
+        /**
+         * Reduce the set of matched elements to the first x in the set.
+         */
+
+        first: function (count) {
+
+            if ((count == null)) {
+
+                return $(this.elems[0]);
+            }
+
+            if (count < 0) {
+
+                return [];
+            }
+
+            return $(slice.call(this.elems, 0, count));
         },
 
         /**
          * Reduce the set of matched elements to the last one in the set.
          */
 
-        last: function () {
+        last: function (count) {
             var elems = this.elems;
-            return $(elems[elems.length - 1]);
+
+            if ((count == null)) {
+
+                return $(elems[elems.length - 1]);
+            }
+
+            return $(slice.call(elems, Math.max(elems.length - count, 0)));
+        },
+
+        // Returns everything but the first entry of the array
+
+        tail: function (count) {
+            return $(slice.call(this.elems, (count == null) ? 1 : count));
         },
 
         contents: function () {
@@ -267,6 +298,7 @@
          * @param {String} sel
          * @return {Object}
          */
+
         siblings: function (sel) {
 
             var siblings = [];

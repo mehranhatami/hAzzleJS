@@ -16,13 +16,13 @@
 			i = 0;
 
 		for ( ; (elem = this[i]) != null; i++ ) {
-			if ( elem.nodeType === 1 ) {
+			if ( $.nodeType(1, elem) ) {
 				$.removeData(elem);
 				$.Events.off(elem);
 				elem.textContent = "";
 			}
 	   }
-	   return this;
+        return this;
     },
 
     /**
@@ -40,7 +40,7 @@
             var elements = $(elem).find('*');
             elements = elements.add(elem);
 
-            $.Events.remove(elem);
+            $.Events.off(elem);
 
             var parent = elem.parentNode;
 

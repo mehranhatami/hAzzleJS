@@ -16,8 +16,7 @@
  *
  * Todo!! Fix this maybe!!
  */
-;
-(function ($) {
+; (function ($) {
 
     var win = window,
         doc = document || {},

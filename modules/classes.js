@@ -1,28 +1,26 @@
 // Classes
-; (function ($) {
+;
+(function ($) {
 
     // Check if we can support classList
 
-    var csp =  !!document.createElement('p').classList,
+    var csp = !!document.createElement('p').classList,
+
+        // ONLY!! for browsers who don't support classlist
 
         indexOf = Array.prototype.indexOf,
 
-        sMa,
+        sMa, // Multiple argumens
         whitespace = /\S+/g,
-        _class = /[\t\r\n\f]/g,
         isFunction = $.isFunction;
 
-    // Check if classList support multiple arguments
+    // Check for support for multiple arguments for classList (IE doesn't have it )
 
-    if (csp) {
-
-        (function () {
-
-            var div = document.createElement('div');
-            div.classList.add('a', 'b');
-            sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-        }());
-    }
+    csp && function () {
+        var div = document.createElement('div');
+        div.classList.add('a', 'b');
+        sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+    }();
 
     $.extend($.fn, {
 
@@ -32,58 +30,29 @@
          * @param {String} value
          */
 
+
         addClass: function (value) {
 
-            if (isFunction(value)) {
-                return this.each(function (index) {
-                    $(this).addClass(value.call(this, index, this.className));
-                });
-            }
-
-            var cls,
-                cur,
-                j,
-                finalValue,
-                classes = (value || "").match(whitespace) || [];
-
-       // I think this could give memory leak, so we need to find a solution here.
-            return this.each(function (_, elem) {
-
-                // classList
-
-                if ($.nodeType(1, elem)) {
-
-                    if (!csp && !sMa) {
-
-                        elem.classList.add.apply(elem.classList, classes);
-
+            return isFunction(value) ? this.each(function (e) {
+                $(this).addClass(value.call(this, index, this.className));
+            }) : this.each(function (_, element) {
+                if ($.nodeType(1, element)) {
+                    if (csp && sMa) {
+                        value.replace(whitespace, function (name) {
+                            element.classList.add(name);
+                        });
                     } else {
-
-                        if (!csp) {
-
-                            cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : " ");
-                        }
-
-                        j = 0;
-                        while ((cls = classes[j++])) {
-
-                            if (csp) {
-                                elem.classList.add(cls);
-                            } else {
-                                if (cur.indexOf(" " + cls + " ") < 0) {
-                                    cur += cls + " ";
-                                }
+                        var classes = ' ' + element.className + ' ',
+                            name;
+                        value = value.trim().split(/\s+/);
+                        while (name = value.shift()) {
+                            if ($.inArray(classes, ' ' + name + ' ') === -1) {
+                                classes += name + ' ';
                             }
                         }
-                        if (!csp) {
-                            finalValue = cur.trim(cur);
-
-                            if (elem.className !== finalValue) {
-                                elem.className = finalValue;
-                            }
-                        }
+                        element.className = classes.trim();
                     }
-                    return;
+                    return element;
                 }
             });
         },
@@ -96,69 +65,56 @@
 
         removeClass: function (value) {
 
-            var classes, cur, cls, j, finalValue;
+            var cls;
 
-            if (isFunction(value)) {
-                return this.each(function (j) {
+            return isFunction(value) ?
+                this.each(function (j) {
                     $(this).removeClass(value.call(this, j, this.className));
-                });
-            }
+                }) : this.each(function (_, element) {
 
-            classes = (value || "").match(whitespace) || [];
-
-            return this.each(function (_, elem) {
-
-                if (!value) {
-
-                    return elem.className = "";
-                }
-
-                // ClassList
-
-                if (csp && $.nodeType(1, elem) && elem.className) {
-                  
-				    if (!value) {
-                        elem.className = '';
+                    if (!value) {
+                        return element.className = "";
                     }
-					
-                    if (sMa) {
-						
-                        elem.classList.remove.apply(elem.classList, classes);
-						
+
+                    if (value === '*') {
+                        element.className = '';
                     } else {
-						
-                        j = 0;
-                        while ((cls = classes[j++])) {
-                            elem.classList.remove(cls);
+                        if ($.isRegExp(value)) {
+                            value = [value];
+                        } else if (csp && $.inArray(value, '*') === -1) {
+                            if (sMa) {
+                                value.replace(whitespace, function (name) {
+                                    element.classList.remove(name);
+                                });
+                            } else {
+                                var i = 0;
+                                while ((cls = value[i++])) {
+                                    element.classList.remove(cls);
+                                }
+                            }
+                            return;
+                        } else {
+                            value = value.trim().split(/\s+/);
                         }
-                    }
 
-                    return $.each(classes, function (_, classes) {
-                        elem.classList.remove(classes);
-                    });
-                }
-
-                // Old way of doing things
-
-                cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : "");
-
-                if (cur) {
-                    j = 0;
-                    while ((cls = classes[j++])) {
-                        // Remove *all* instances
-                        while (cur.indexOf(" " + cls + " ") >= 0) {
-                            cur = cur.replace(" " + cls + " ", " ");
+                        var classes = ' ' + element.className + ' ',
+                            name;
+                        while (name = value.shift()) {
+                            if (name.indexOf && name.indexOf('*') !== -1) {
+                                name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
+                            }
+                            if (name instanceof RegExp) {
+                                classes = classes.replace(name, ' ');
+                            } else {
+                                while (classes.indexOf(' ' + name + ' ') !== -1) {
+                                    classes = classes.replace(' ' + name + ' ', ' ');
+                                }
+                            }
                         }
+                        element.className = classes.trim();
                     }
-
-                    // Only assign if different to avoid unneeded rendering.
-
-                    finalValue = value ? $.trim(cur) : "";
-                    if (elem.className !== finalValue) {
-                        elem.className = finalValue;
-                    }
-                }
-            });
+                    return element;
+                });
         },
 
         /**
@@ -172,30 +128,12 @@
 
             var i = 0,
                 l = this.length;
-
-            while (i < l) {
-
-                if (!csp) {
-
-                    if ($.nodeType(1, this[i])) {
-
-                        if (this[i].classList.contains(value)) {
-
-                            return true;
-                        }
-                    }
-
-                } else { // The old way
-
-                    var className = " " + value + " ";
-                    if (this[i].nodeType === 1 && (" " + this[i].className + " ").replace(_class, " ").indexOf(className) >= 0) {
-                        return true;
-                    }
-                }
-                i++;
+            for (; i < l;) {
+                return csp ?
+                    this[i].classList.contains($.trim(value)) : this[i].nodeType === 1 && (" " + this[i].className + " ").replace(/[\t\r\n\f]/g, " ").indexOf($.trim(value)) >= 0;
             }
-            return false;
         },
+
 
         /**
          * Replace a class in a element collection
@@ -220,21 +158,6 @@
                     return $(this).addClass(clB, this);
                 }
                 this.className = current.join(' ');
-            });
-        },
-
-        /**
-         * Add class(es) to element, and remove after 'duration' milliseconds
-         * @param {String} clas
-         * @param {Number} duration
-         */
-
-        tempClass: function (clas, duration) {
-            return this.each(function (_, elem) {
-                $(elem).addClass(clas);
-                setTimeout((function () {
-                    $(elem).removeClass(clas);
-                }), duration || /* default 100ms */ 100);
             });
         },
 

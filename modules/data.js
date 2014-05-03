@@ -52,8 +52,10 @@
                 }
 
                 var id = $.getUID(elem);
-
-                if (id) {
+           
+		   // Nothing to do if there are no data stored on the elem itself
+           
+		        if ($._data[id]) {
 
                     if (isUndefined(key) && $.nodeType(1, elem)) {
 
@@ -99,8 +101,8 @@
 
                 if ( ! isUndefined(value)) {
 
-
                     // Set and return the value
+					
                     id[key] = value;
                    
                     return id[key];

@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.38
+ * Version: 0.4
  * Released under the MIT License.
  *
- * Date: 2014-05-01
+ * Date: 2014-05-03
  */
 (function (window, undefined) {
 
@@ -61,39 +61,6 @@
      */
 
     hAzzle.support = {};
-
-    // Overrun the native prototype.filter to gain better
-    // performance ( 74 % faster then jQuery)
-
-    Array.prototype.filter = function (a, b, c, d, e) {
-        c = this; // cache the array
-        d = []; // array to hold the new values which match the expression
-        for (e in c) // for each value in the array, 
-        ~~ e + '' == e && e >= 0 && // coerce the array position and if valid,
-            a.call(b, c[e], +e, c) && // pass the current value into the expression and if truthy,
-            d.push(c[e]); // add it to the new array
-
-        return d; // give back the new array
-    };
-
-    /* Faster alternative till native prototype.some
-     *
-     */
-
-    Array.prototype.some = function (fun /*, thisArg */ ) {
-        var t = Object(this),
-            len = t.length >>> 0,
-            thisArg = arguments.length >= 2 ? arguments[1] : void 0,
-            i = 0;
-
-        for (; i < len; i++) {
-            if (i in t && fun.call(thisArg, t[i], i, t))
-                return true;
-        }
-
-        return false;
-    };
-
 
     hAzzle.fn = hAzzle.prototype = {
 
@@ -159,8 +126,6 @@
 
                     // Nodelist
 
-
-
                     hAzzle.isNodeList(sel) ? this.elems = slice.call(sel).filter(hAzzle.isElement) : hAzzle.isElement(sel) ? this.elems = [sel] : this.elems = [];
                 }
             }
@@ -216,7 +181,6 @@
                 });
             }
             return hAzzle(elements)
-
         },
 
         /**
@@ -247,6 +211,7 @@
          *
          * @return {Boolean}
          */
+
         contains: function (sel) {
             return hAzzle.create(this.elems.reduce(function (elements, element) {
                 return elements.concat(hAzzle.select(sel, element).length ? element : null);
@@ -299,12 +264,6 @@
 
         /**
          * Returns a new array with the result of calling callback on each element of the array
-         *
-         * Native 'map' are not fastest solution, and the speed
-         * are different from browser to browser. To get same
-         * speed in all browsers, we have to do it this way.
-         *
-         *  http://jsperf.com/eam-map-vs-for-loop/3
          */
 
         map: function (callback) {
@@ -318,7 +277,6 @@
             }
             return hAzzle(results);
         },
-
 
         /**
          * Sort the elements in the "elems" stack
@@ -360,8 +318,9 @@
          */
 
         indexOf: function (needle) {
-            return needle && hAzzle.indexOf(this.elems, needle);
+            return hAzzle.indexOf(this.elems, needle);
         },
+
 
         /**
          * Make the 'elems stack'  unique
@@ -375,7 +334,7 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (callback) {
+        reduce: function (callback /*, initialValue*/ ) {
 
             var t = Object(this),
                 len = t.length >>> 0,
@@ -398,30 +357,10 @@
             return value;
         },
 
-        /**
-         * Reduce to right, the number of elems in the "elems" stack
-         */
-
-        reduceRight: function (previousValue, currentValue, index, array) {
-            return this.elems['reduceRight'].call(previousValue, currentValue, index, array);
-        },
-
         compact: function (a) {
             return this.filter(a, function (value) {
                 return !!value;
             });
-        },
-
-        /**
-         *  Returns a function that will call 'fn' with 'ctx' for every element in collection.elements.
-         */
-
-        iterate: function (fn, ctx) {
-            return function (a, b, c, d) {
-                return this.each(function () {
-                    fn.call(ctx, this, a, b, c, d);
-                });
-            };
         },
 
         /**
@@ -462,6 +401,7 @@
             target = {};
         }
 
+
         if (arguments.length === 1) target = this;
 
         var slarg = slice.call(arguments),
@@ -480,27 +420,30 @@
 
     hAzzle.extend({
 
-        each: function (obj, callback) {
-            var i = 0,
-                name,
-                length = obj.length;
+        each: function (obj, callback, args) {
+            var value,
+                i = 0,
+                length = obj.length,
+                isArray = hAzzle.isArrayLike(obj);
 
-            if (obj.length === +obj.length) {
+            if (isArray) {
+                for (; i < length; i++) {
+                    value = callback.call(obj[i], i, args ? args : obj[i]);
 
-                for (; i < length;) {
-                    if (callback.call(obj[i], i, obj[i++]) === false) {
+                    if (value === false) {
                         break;
                     }
                 }
-
             } else {
+                for (i in obj) {
+                    value = callback.call(obj[i], i, args ? args : obj[i]);
 
-                for (name in obj) {
-                    if (callback.call(obj[name], name, obj[name]) === false) {
+                    if (value === false) {
                         break;
                     }
                 }
             }
+
 
             return obj;
         },
@@ -587,6 +530,7 @@
         isArray: Array.isArray,
 
         isArrayLike: function (obj) {
+
             if (obj === null || hAzzle.isWindow(obj)) {
                 return false;
 
@@ -594,7 +538,7 @@
 
             var length = obj.length;
 
-            if (nodeTypes[1](obj) && length) {
+            if (obj.nodeType === 1 && length) {
                 return true;
             }
 
@@ -843,41 +787,49 @@
 
         /**
          * camelCase CSS string
-         * - we are using our prefixCache for faster speed
          *
          * @param{String} str
          * @return{String}
          */
 
         camelCase: function (str) {
-            cached[str] || (cached[str] = str.replace(/^-ms-/, "ms-").replace(/^.|-./g, function (letter, index) {
-                return index === 0 ? letter.toLowerCase() : letter.substr(1).toUpperCase();
-            }));
-            return cached[str];
+
+            return str.replace(/-(.)/g, function (m, m1) {
+                return m1.toUpperCase()
+            })
         },
 
-        map: function (elems, fn, arg) {
+        map: function (elems, callback, arg) {
             var value,
                 i = 0,
                 length = elems.length,
+
                 ret = [];
 
-            if (hAzzle.isArrayLike(elems)) {
-                for (; i < length; i++) {
-                    value = fn(elems[i], i, arg);
-                    if (value !== null) {
+            // Go through the array, translating each of the items to their new values
+
+            if (toString.call(elems) === "[object String]") {
+
+                for (i in elems) {
+                    value = callback(elems[i], i, arg);
+
+                    if (value != null) {
                         ret.push(value);
                     }
                 }
             } else {
-                for (i in elems) {
-                    value = fn(elems[i], i, arg);
+
+                for (; i < length; i++) {
+                    value = callback(elems[i], i, arg);
 
                     if (value !== null) {
                         ret.push(value);
                     }
                 }
+
+                // Go through every key on the object,
             }
+
 
             // Flatten any nested arrays
             return concat.apply([], ret);
@@ -888,6 +840,7 @@
         },
 
         /*
+
          * Finds the elements of an array which satisfy a filter function.
          */
 
@@ -915,7 +868,7 @@
             if (array !== null) {
                 var i = array.length;
                 // The window, strings (and functions) also have 'length'
-                if (i === null || $.isString(array) || hAzzle.isFunction(array) || array.setInterval)
+                if (i === null || hAzzle.isString(array) || hAzzle.isFunction(array) || array.setInterval)
                     ret[0] = array;
                 else
                     while (i)
@@ -930,7 +883,66 @@
 
         noop: function () {
 
+        },
+
+        // Invoke a method (with arguments) on every item in a collection.
+
+        invoke: function (obj, method) {
+            var args = slice.call(arguments, 2),
+                isFunc = hAzzle.isFunction(method);
+            return $.map(obj, function (value) {
+                return (isFunc ? method : value[method]).apply(value, args);
+            });
+        },
+
+        throttle: function (func, wait, options) {
+            var context, args, result,
+                timeout = null,
+                previous = 0;
+
+            options || (options = {});
+
+            var later = function () {
+                previous = options.leading === false ? 0 : hAzzle.now();
+                timeout = null;
+                result = func.apply(context, args);
+                context = args = null;
+            };
+
+            return function () {
+                var now = hAzzle.now();
+                if (!previous && options.leading === false) previous = now;
+                var remaining = wait - (now - previous);
+                context = this;
+                args = arguments;
+                if (remaining <= 0) {
+                    clearTimeout(timeout);
+                    timeout = null;
+                    previous = now;
+                    result = func.apply(context, args);
+                    context = args = null;
+                } else if (!timeout && options.trailing !== false) {
+                    timeout = setTimeout(later, remaining);
+                }
+                return result;
+            }
+        },
+
+        // Delays a function for the given number of milliseconds, and then calls
+        // it with the arguments supplied.
+        delay: function (func, wait) {
+            var args = slice.call(arguments, 2);
+            return setTimeout(function () {
+                return func.apply(null, args);
+            }, wait);
+        },
+
+        // Defers a function, scheduling it to run after the current call stack has
+        // cleared.
+        defer: function (func) {
+            return hAzzle.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
         }
+
     });
 
     /**
@@ -940,6 +952,16 @@
     hAzzle.each(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'], function (value) {
         nodeTypes[value] = function (elem) {
             return elem && elem.nodeType === value;
+        };
+    });
+
+
+    // Powerfull native functions for dealing with the 'elems stack'
+
+    hAzzle.each(['pop', 'reverse', 'shift', 'splice', 'unshift'], function () {
+        var method = ArrayProto[this];
+        hAzzle.fn[this] = function () {
+            return method.apply(this.elems, arguments);
         };
     });
 
@@ -1799,6 +1821,7 @@
 
 // Classes
 
+// Classes
 ;
 (function ($) {
 
@@ -1806,24 +1829,21 @@
 
     var csp = !!document.createElement('p').classList,
 
+        // ONLY!! for browsers who don't support classlist
+
         indexOf = Array.prototype.indexOf,
 
-        sMa,
+        sMa, // Multiple argumens
         whitespace = /\S+/g,
-        _class = /[\t\r\n\f]/g,
         isFunction = $.isFunction;
 
-    // Check if classList support multiple arguments
+    // Check for support for multiple arguments for classList (IE doesn't have it )
 
-    if (csp) {
-
-        (function () {
-
-            var div = document.createElement('div');
-            div.classList.add('a', 'b');
-            sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-        }());
-    }
+    csp && function () {
+        var div = document.createElement('div');
+        div.classList.add('a', 'b');
+        sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+    }();
 
     $.extend($.fn, {
 
@@ -1833,58 +1853,29 @@
          * @param {String} value
          */
 
+
         addClass: function (value) {
 
-            if (isFunction(value)) {
-                return this.each(function (index) {
-                    $(this).addClass(value.call(this, index, this.className));
-                });
-            }
-
-            var cls,
-                cur,
-                j,
-                finalValue,
-                classes = (value || "").match(whitespace) || [];
-
-            // I think this could give memory leak, so we need to find a solution here.
-            return this.each(function (_, elem) {
-
-                // classList
-
-                if ($.nodeType(1, elem)) {
-
-                    if (!csp && !sMa) {
-
-                        elem.classList.add.apply(elem.classList, classes);
-
+            return isFunction(value) ? this.each(function (e) {
+                $(this).addClass(value.call(this, index, this.className));
+            }) : this.each(function (_, element) {
+                if ($.nodeType(1, element)) {
+                    if (csp && sMa) {
+                        value.replace(whitespace, function (name) {
+                            element.classList.add(name);
+                        });
                     } else {
-
-                        if (!csp) {
-
-                            cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : " ");
-                        }
-
-                        j = 0;
-                        while ((cls = classes[j++])) {
-
-                            if (csp) {
-                                elem.classList.add(cls);
-                            } else {
-                                if (cur.indexOf(" " + cls + " ") < 0) {
-                                    cur += cls + " ";
-                                }
+                        var classes = ' ' + element.className + ' ',
+                            name;
+                        value = value.trim().split(/\s+/);
+                        while (name = value.shift()) {
+                            if ($.inArray(classes, ' ' + name + ' ') === -1) {
+                                classes += name + ' ';
                             }
                         }
-                        if (!csp) {
-                            finalValue = cur.trim(cur);
-
-                            if (elem.className !== finalValue) {
-                                elem.className = finalValue;
-                            }
-                        }
+                        element.className = classes.trim();
                     }
-                    return;
+                    return element;
                 }
             });
         },
@@ -1897,69 +1888,56 @@
 
         removeClass: function (value) {
 
-            var classes, cur, cls, j, finalValue;
+            var cls;
 
-            if (isFunction(value)) {
-                return this.each(function (j) {
+            return isFunction(value) ?
+                this.each(function (j) {
                     $(this).removeClass(value.call(this, j, this.className));
-                });
-            }
-
-            classes = (value || "").match(whitespace) || [];
-
-            return this.each(function (_, elem) {
-
-                if (!value) {
-
-                    return elem.className = "";
-                }
-
-                // ClassList
-
-                if (csp && $.nodeType(1, elem) && elem.className) {
+                }) : this.each(function (_, element) {
 
                     if (!value) {
-                        elem.className = '';
+                        return element.className = "";
                     }
 
-                    if (sMa) {
-
-                        elem.classList.remove.apply(elem.classList, classes);
-
+                    if (value === '*') {
+                        element.className = '';
                     } else {
-
-                        j = 0;
-                        while ((cls = classes[j++])) {
-                            elem.classList.remove(cls);
+                        if ($.isRegExp(value)) {
+                            value = [value];
+                        } else if (csp && $.inArray(value, '*') === -1) {
+                            if (sMa) {
+                                value.replace(whitespace, function (name) {
+                                    element.classList.remove(name);
+                                });
+                            } else {
+                                var i = 0;
+                                while ((cls = value[i++])) {
+                                    element.classList.remove(cls);
+                                }
+                            }
+                            return;
+                        } else {
+                            value = value.trim().split(/\s+/);
                         }
-                    }
 
-                    return $.each(classes, function (_, classes) {
-                        elem.classList.remove(classes);
-                    });
-                }
-
-                // Old way of doing things
-
-                cur = $.nodeType(1, elem) && (elem.className ? (" " + elem.className + " ").replace(_class, " ") : "");
-
-                if (cur) {
-                    j = 0;
-                    while ((cls = classes[j++])) {
-                        // Remove *all* instances
-                        while (cur.indexOf(" " + cls + " ") >= 0) {
-                            cur = cur.replace(" " + cls + " ", " ");
+                        var classes = ' ' + element.className + ' ',
+                            name;
+                        while (name = value.shift()) {
+                            if (name.indexOf && name.indexOf('*') !== -1) {
+                                name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
+                            }
+                            if (name instanceof RegExp) {
+                                classes = classes.replace(name, ' ');
+                            } else {
+                                while (classes.indexOf(' ' + name + ' ') !== -1) {
+                                    classes = classes.replace(' ' + name + ' ', ' ');
+                                }
+                            }
                         }
+                        element.className = classes.trim();
                     }
-
-                    // Only assign if different to avoid unneeded rendering.
-
-                    finalValue = value ? $.trim(cur) : "";
-                    if (elem.className !== finalValue) {
-                        elem.className = finalValue;
-                    }
-                }
-            });
+                    return element;
+                });
         },
 
         /**
@@ -1973,30 +1951,12 @@
 
             var i = 0,
                 l = this.length;
-
-            while (i < l) {
-
-                if (!csp) {
-
-                    if ($.nodeType(1, this[i])) {
-
-                        if (this[i].classList.contains(value)) {
-
-                            return true;
-                        }
-                    }
-
-                } else { // The old way
-
-                    var className = " " + value + " ";
-                    if (this[i].nodeType === 1 && (" " + this[i].className + " ").replace(_class, " ").indexOf(className) >= 0) {
-                        return true;
-                    }
-                }
-                i++;
+            for (; i < l;) {
+                return csp ?
+                    this[i].classList.contains($.trim(value)) : this[i].nodeType === 1 && (" " + this[i].className + " ").replace(/[\t\r\n\f]/g, " ").indexOf($.trim(value)) >= 0;
             }
-            return false;
         },
+
 
         /**
          * Replace a class in a element collection
@@ -2021,21 +1981,6 @@
                     return $(this).addClass(clB, this);
                 }
                 this.className = current.join(' ');
-            });
-        },
-
-        /**
-         * Add class(es) to element, and remove after 'duration' milliseconds
-         * @param {String} clas
-         * @param {Number} duration
-         */
-
-        tempClass: function (clas, duration) {
-            return this.each(function (_, elem) {
-                $(elem).addClass(clas);
-                setTimeout((function () {
-                    $(elem).removeClass(clas);
-                }), duration || /* default 100ms */ 100);
             });
         },
 
@@ -2108,6 +2053,7 @@
                     }
 
                     // Toggle whole class name
+
                 } else if (type === typeof undefined || type === "boolean") {
                     if (this.className) {
                         // store className if set
@@ -2123,42 +2069,30 @@
 })(hAzzle);
 
 // CSS
-
 ;
 (function ($) {
 
-    var html = window.document.documentElement,
-        doc = document,
-        docbody = doc.body,
-        important = /\s+(!important)/g,
+    var doc = document,
+        html = window.document.documentElement,
         background = /background/i,
-        rnumnonpx = /^-?(?:\d*\.)?\d+(?!px)[^\d\s]+$/i,
-        relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
-        cssDirection = ["Top", "Right", "Bottom", "Left"],
+        rnum = /^[\-+]?(?:\d*\.)?\d+$/i,
+
+        cached = [],
 
         isFunction = $.isFunction,
-        isUndefined = $.isUndefined;
+        isUndefined = $.isUndefined,
 
-    /**
-     * Dasherize the name
-     *
-     * NOTE!! This is 'ONLY' used when we are using the
-     * the slower cssText because of the '!Important' property
-     *
-     */
+        rnumsplit = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
+        cssDirection = ["Top", "Right", "Bottom", "Left"],
 
-    function dasherize(str) {
-        return str.replace(/::/g, '/')
-            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
-            .replace(/([a-z\d])([A-Z])/g, '$1_$2')
-            .replace(/_/g, '-')
-            .toLowerCase();
-    }
+        cssShow = {
+            position: "absolute",
+            visibility: "hidden",
+            display: "block"
+        },
+        relNum = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i;
 
-    // Extend the $ object
-
-    $.extend({
-
+    $.extend($, {
 
         cssNumber: {
             'column-count': 1,
@@ -2172,16 +2106,6 @@
 
         cssHooks: {
 
-            opacity: {
-                get: function (elem, computed) {
-                    if (computed) {
-                        // We should always get a number back from opacity
-                        var ret = $.curCSS(elem, "opacity");
-                        return ret === "" ? "1" : ret;
-                    }
-                }
-            }
-
         },
 
         cssNormalTransform: {
@@ -2194,12 +2118,128 @@
             "float": "cssFloat"
         },
 
-        // Convert some pixels into another CSS unity.
-        // It's used in $.style() for the += or -=.
-        // * px   : Number.
-        // * unit : String, like "%", "em", "px", ...
-        // * elem : Node, the current element.
-        // * prop : String, the CSS property.
+        curCSS: function (elem, name, computed) {
+
+            var ret;
+
+            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+
+            if (computed) {
+
+                ret = computed.getPropertyValue(name) || computed[name];
+
+                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
+
+                    ret = $.style(elem, name);
+                }
+            }
+            return isUndefined(ret) ? ret + "" : ret;
+        },
+        css: function (element, name, extra) {
+
+            var computed, val;
+
+            name = $.camelCase(name);
+
+            // Do we have any cssHooks available?
+
+            var hooks = $.cssHooks[name];
+
+            // If a hook was provided get the computed value from there
+
+            if ($.cssHooks[name] && ("get" in hooks)) {
+
+                val = hooks['get'](element, true, extra);
+            }
+
+            if (val === undefined) {
+
+                computed = element.ownerDocument.defaultView.getComputedStyle(element, null);
+
+                if (computed) {
+
+                    val = computed.getPropertyValue(name) || computed[name];
+                }
+
+                if (val === "" && !$.contains(element.ownerDocument, element)) {
+
+                    val = $.style(elem, name);
+                }
+            }
+
+            if (extra === "" || extra) {
+                num = parseFloat(val);
+                return extra === true || $.isNumeric(num) ? num || 0 : val;
+            }
+
+
+            return $.isUndefined(val) ? val + "" : val;
+        },
+
+        /**
+         * CSS properties accessor for an element
+         */
+
+        style: function (element, property, value, extra) {
+
+            value = $.cssProps[value] || ($.cssProps[property] = (value in element.style ? value : $.prefix(property)) || value);
+
+            // Do we have any cssHooks available?
+
+            var hooks = $.cssHooks[property];
+
+            var ret = relNum.exec(value);
+
+            if (ret) {
+
+                value = $.css(elem, name);
+                value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+
+                value = (ret[1] + 1) * ret[2] + parseFloat($.css(element, property));
+            }
+
+            // If a number was passed in, add 'px' to the (except for certain CSS properties)
+
+            if (typeof value === 'number' && !$.cssNumber[property]) {
+
+                value += ret && ret[3] ? ret[3] : "px";
+            }
+
+            // Check for background
+
+            if (value === "" && background.test(property)) {
+
+                value = "inherit";
+            }
+
+            if (!hooks || !("set" in hooks) || (value = hooks.set(element, value, extra)) !== undefined) {
+
+                element.style[(value === null || value === ' ') ? 'remove' : 'set' + 'Property'](property, '' + value)
+                return element
+
+            }
+        },
+
+        swap: function (elem, options, callback, args) {
+            var ret, name,
+                old = {};
+
+            // Remember the old values, and insert the new ones
+            for (name in options) {
+                old[name] = elem.style[name];
+                elem.style[name] = options[name];
+            }
+
+            ret = callback.apply(elem, args || []);
+
+            // Revert the old values
+            for (name in options) {
+                elem.style[name] = old[name];
+            }
+
+            return ret;
+        },
+
         pixelsToUnity: function (px, unit, elem, prop) {
 
             if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
@@ -2237,177 +2277,6 @@
             // If the unity specified is not recognized we return the value.
             unit = $.pixelsToUnity.units[unit];
             return unit ? px / unit : px;
-        },
-
-        curCSS: function (elem, name, computed) {
-
-            var ret;
-
-            computed = computed || elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-
-            if (computed) {
-
-                ret = computed.getPropertyValue(name) || computed[name];
-
-                if (ret === "" && !$.contains(elem.ownerDocument, elem)) {
-                    ret = $.style(elem, name);
-                }
-            }
-            return isUndefined(ret) ? ret + "" : ret;
-        },
-
-        // Globalize CSS
-
-        css: function (elem, name, extra, styles, normalized) {
-
-            var val,
-                num,
-                style = elem.style;
-            /**
-             * If this function are called from within hAzzle.style(), we don't
-             * need to normalize the name again.
-             */
-
-            if (!normalized) {
-
-                // Normalize the name
-
-                name = $.camelCase(name);
-
-                // Transform to normal properties - vendor or not
-
-                name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)));
-
-            }
-
-            // Do we have any cssHooks available?
-
-            var hooks = $.cssHooks[name];
-
-            // If a hook was provided get the computed value from there
-
-            if (hooks) {
-
-                val = hooks['get'](elem, true, extra);
-            }
-
-            // Otherwise, if a way to get the computed value exists, use that
-
-            if (val === undefined) {
-
-                val = $.curCSS(elem, name, styles, style);
-            }
-
-            // Convert "normal" to computed value
-
-            if (val === "normal" && name in $.cssNormalTransform) {
-                val = $.cssNormalTransform[name];
-            }
-
-            // Return, converting to number if forced or a qualifier was provided and val looks numeric
-
-            if (extra === "" || extra) {
-                num = parseFloat(val);
-                return extra === true || $.isNumeric(num) ? num || 0 : val;
-            }
-
-            return val;
-        },
-
-        /**
-         * CSS properties accessor for an element
-         */
-
-        style: function (elem, name, value, extra, hook) {
-
-            // Don't set styles on text and comment nodes
-
-            if (!elem || $.nodeType(3, elem) || $.nodeType(8, elem)) {
-
-                return;
-            }
-
-            var style = elem.style,
-                hooks = '',
-                ret,
-                digit = false;
-
-            if (!style) {
-
-                return;
-            }
-
-            name = $.cssProps[name] || ($.cssProps[name] = (name in style ? name : $.prefix(name)) || name);
-
-            if (extra) {
-
-                name = dasherize(name);
-
-            } else { // Normalize the name
-
-                name = $.camelCase(name);
-            }
-
-            // Do we have any cssHooks available?
-
-            hooks = hook || $.cssHooks[name];
-
-            /**
-             * Convert relative numbers to strings.
-             * It can handle +=, -=, em or %
-             */
-
-            if (typeof value === "string" && (ret = relNum.exec(value))) {
-                value = $.css(elem, name, "", "", name);
-                value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
-
-                // We are dealing with relative numbers, set till true
-
-                digit = true;
-            }
-
-            // Make sure that null and NaN values aren't set.
-
-            if (value === null || value !== value) {
-                return;
-            }
-
-            // If a number was passed in, add 'px' to the (except for certain CSS properties)
-
-            if (digit && !$.cssNumber[name]) {
-
-                value += ret && ret[3] ? ret[3] : "px";
-            }
-
-            // Check for background
-
-            if (value === "" && background.test(name)) {
-
-                if (extra) {
-
-                    return name + ":" + "inherit";
-                }
-
-                style[name] = "inherit";
-            }
-
-            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
-
-                if (extra) {
-
-                    return name + ":" + value;
-                }
-
-                style[name] = value;
-            }
-
-            if (extra) {
-
-                return name + ":" + value;
-            }
-
-            style[name] = value;
-
         },
 
         setOffset: function (elem, coordinates, i) {
@@ -2463,53 +2332,30 @@
                 curElem.css(props);
             }
         }
-    });
 
+    });
 
     $.extend($.fn, {
 
         css: function (property, value) {
 
-            if (arguments.length === 1) {
-
-                if ($.isString(property)) {
-
-                    return this[0] && $.css(this[0], property);
+            if (value == null) {
+                if (typeof property == 'string') {
+                    return this.elems[0] && $.css(this.elems[0], property)
                 }
 
                 for (var key in property) {
 
+
                     this.each(function () {
-
-                        // !Important property check
-
-                        if (important.test(property[key])) {
-
-                            this.style.cssText += $.style(this, key, property[key], true);
-
-                        } else {
-
-                            $.style(this, key, property[key]);
-                        }
+                        $.style(this, key, property[key]);
                     });
                 }
-
-            } else {
-
-                return this.each(function () {
-
-                    // !Important property check
-
-                    if (important.test(value)) {
-
-                        this.style.cssText += $.style(this, property, value, true);
-
-                    } else {
-
-                        $.style(this, property, value);
-                    }
-                });
+                return this;
             }
+            return this.each(function (i, element) {
+                $.style(element, property, value)
+            })
         },
 
         /**
@@ -2627,15 +2473,31 @@
         }
     });
 
-    $.each(["Height", "Width"], function (i, name) {
-        var type = name.toLowerCase();
+
+
+    $.each({
+        "Height": "height",
+        "Width": "width"
+    }, function (name, type) {
+
         $.fn["inner" + name] = function () {
-            var el = this[0];
-            return el && el.style ? parseFloat($.css(el, type, "padding")) : null;
+
+            var elem = this[0];
+            return elem ?
+                elem.style ?
+                parseFloat($.css(elem, type, "padding")) :
+                this[type]() :
+                null;
+
         };
         $.fn["outer" + name] = function (margin) {
-            var el = this[0];
-            return el && el.style ? parseFloat($.css(el, type, margin ? "margin" : "border")) : null;
+
+            var elem = this[0];
+            return elem ?
+                elem.style ?
+                parseFloat($.css(elem, type, margin ? "margin" : "border")) :
+                this[type]() :
+                null;
         };
         $.fn[type] = function (size) {
             var el = this[0];
@@ -2660,70 +2522,6 @@
         };
     });
 
-    $.each(["height", "width"], function (i, name) {
-
-        $.cssHooks[name] = {
-
-            displaySwap: /^(none|table(?!-c[ea]).+)/,
-            numsplit: /^([\-+]?(?:\d*\.)?\d+)(.*)$/i,
-
-            cssShow: {
-                position: "absolute",
-                visibility: "hidden",
-                display: "block"
-            },
-
-            get: function (elem, computed, extra) {
-
-                if (computed) {
-                    if (elem.offsetWidth === 0 && this.displaySwap.test(hAzzle.css(elem, "display"))) {
-
-                        var ret, name,
-                            old = {};
-
-                        // Remember the old values, and insert the new ones
-                        for (name in this.cssShow) {
-                            old[name] = elem.style[name];
-                            elem.style[name] = this.cssShow[name];
-                        }
-
-                        ret = getWH(elem);
-
-                        // Revert the old values
-                        for (name in this.cssShow) {
-                            elem.style[name] = old[name];
-                        }
-
-                        return ret;
-
-                    } else {
-
-                        getWH(elem, name, extra);
-                    }
-
-                }
-            },
-
-            setPositiveNumber: function (value, subs) {
-                var matches = this.numsplit.exec(value);
-                return matches ? Math.max(0, matches[1] - (subs || 0)) + (matches[2] || "px") : value;
-            },
-
-            set: function (elem, value, extra) {
-
-                var styles = extra && elem.ownerDocument.defaultView.getComputedStyle(elem, null);
-                return this.setPositiveNumber(value, extra ?
-                    augmentWidthOrHeight(
-                        elem,
-                        name,
-                        extra,
-                        hAzzle.css(elem, "boxSizing", false, styles) === "border-box",
-                        styles
-                    ) : 0
-                );
-            }
-        };
-    });
 
 
     function getWH(elem, name, extra) {
@@ -2838,6 +2636,37 @@
             }
         };
     });
+
+    $.each(["height", "width"], function (i, name) {
+        $.cssHooks[name] = {
+            get: function (elem, computed, extra) {
+                return (cached[elem] ? cached[elem] : cached[elem] = /^(none|table(?!-c[ea]).+)/.test($.css(elem, "display"))) && elem.offsetWidth === 0 ?
+                    $.swap(elem, cssShow, function () {
+                        return getWH(elem, name, extra);
+                    }) :
+                    getWH(elem, name, extra);
+            },
+            set: function (elem, value, extra) {
+                var styles = extra && getStyles(elem);
+                return setPositiveNumber(elem, value, extra ?
+                    augmentWidthOrHeight(
+                        elem,
+                        name,
+                        extra,
+                        $.css(elem, "boxSizing", false, styles) === "border-box",
+                        styles
+                    ) : 0
+                );
+            }
+        };
+    });
+
+    function setPositiveNumber(elem, value, subtract) {
+        var matches = rnumsplit.exec(value);
+        return matches ?
+            Math.max(0, matches[1] - (subtract || 0)) + (matches[2] || "px") :
+            value;
+    }
 
 })(hAzzle);
 
@@ -3254,7 +3083,7 @@
                 if (one === 1) {
 
                     // Make a unique handlet that get removed after first time it's triggered
-                    fn = $.Events.once($.Events.remove, el, events, fn, originalFn);
+                    fn = $.Events.once($.Events.off, el, events, fn, originalFn);
                 }
 
                 // Handle multiple events separated by a space
@@ -3320,7 +3149,7 @@
 
                     for (var k in typeSpec) {
 
-                        if (typeSpec.hasOwnProperty(k)) $.Events.remove(el, k, typeSpec[k]);
+                        if (typeSpec.hasOwnProperty(k)) $.Events.off(el, k, typeSpec[k]);
                     }
                 }
             }
@@ -3544,7 +3373,6 @@
     });
 
 })(hAzzle);
-
 // Ajax
 
 ;
@@ -3920,6 +3748,7 @@
 
 // Colors
 
+// Colors
 ;
 (function ($) {
 
@@ -3929,6 +3758,9 @@
 
         /**
          * hAzzle color names
+         *
+         * NOTE!! Only the most used RGB colors are listed, if you need more, you have to
+         * create a plug-in for it.
          *
          */
 
@@ -3973,11 +3805,6 @@
                 g: 0,
                 b: 0
             },
-            blanchedalmond: {
-                r: 255,
-                g: 235,
-                b: 205
-            },
             blue: {
                 r: 0,
                 g: 0,
@@ -4003,30 +3830,10 @@
                 g: 158,
                 b: 160
             },
-            chartreuse: {
-                r: 127,
-                g: 255,
-                b: 0
-            },
-            chocolate: {
-                r: 210,
-                g: 105,
-                b: 30
-            },
             coral: {
                 r: 255,
                 g: 127,
                 b: 80
-            },
-            cornflowerblue: {
-                r: 100,
-                g: 149,
-                b: 237
-            },
-            cornsilk: {
-                r: 255,
-                g: 248,
-                b: 220
             },
             crimson: {
                 r: 220,
@@ -4048,11 +3855,6 @@
                 g: 139,
                 b: 139
             },
-            darkgoldenrod: {
-                r: 184,
-                g: 134,
-                b: 11
-            },
             darkgray: {
                 r: 169,
                 g: 169,
@@ -4068,11 +3870,6 @@
                 g: 169,
                 b: 169
             },
-            darkkhaki: {
-                r: 189,
-                g: 183,
-                b: 107
-            },
             darkmagenta: {
                 r: 139,
                 g: 0,
@@ -4082,16 +3879,6 @@
                 r: 85,
                 g: 107,
                 b: 47
-            },
-            darkorange: {
-                r: 255,
-                g: 140,
-                b: 0
-            },
-            darkorchid: {
-                r: 153,
-                g: 50,
-                b: 204
             },
             darkred: {
                 r: 139,
@@ -4108,81 +3895,12 @@
                 g: 188,
                 b: 143
             },
-            darkslateblue: {
-                r: 72,
-                g: 61,
-                b: 139
-            },
-            darkslategray: {
-                r: 47,
-                g: 79,
-                b: 79
-            },
-            darkslategrey: {
-                r: 47,
-                g: 79,
-                b: 79
-            },
-            darkturquoise: {
-                r: 0,
-                g: 206,
-                b: 209
-            },
             darkviolet: {
                 r: 148,
                 g: 0,
                 b: 211
             },
-            deeppink: {
-                r: 255,
-                g: 20,
-                b: 147
-            },
-            deepskyblue: {
-                r: 0,
-                g: 191,
-                b: 255
-            },
-            dimgrey: {
-                r: 105,
-                g: 105,
-                b: 105
-            },
-            dodgerblue: {
-                r: 30,
-                g: 144,
-                b: 255
-            },
-            firebrick: {
-                r: 178,
-                g: 34,
-                b: 34
-            },
-            floralwhite: {
-                r: 255,
-                g: 250,
-                b: 240
-            },
-            forestgreen: {
-                r: 34,
-                g: 139,
-                b: 34
-            },
-            fuchsia: {
-                r: 255,
-                g: 0,
-                b: 255
-            },
-            gainsboro: {
-                r: 220,
-                g: 220,
-                b: 220
-            },
-            ghostwhite: {
-                r: 248,
-                g: 248,
-                b: 255
-            },
+
             gold: {
                 r: 255,
                 g: 215,
@@ -4208,16 +3926,6 @@
                 g: 128,
                 b: 128
             },
-            honeydew: {
-                r: 240,
-                g: 255,
-                b: 240
-            },
-            hotpink: {
-                r: 255,
-                g: 105,
-                b: 180
-            },
             indianred: {
                 r: 205,
                 g: 92,
@@ -4233,36 +3941,15 @@
                 g: 255,
                 b: 240
             },
-            khaki: {
-                r: 240,
-                g: 230,
-                b: 140
-            },
             lavender: {
                 r: 230,
                 g: 230,
                 b: 250
             },
-            lavenderblush: {
-                r: 255,
-                g: 240,
-                b: 245
-            },
-            lawngreen: {
-                r: 124,
-                g: 252,
-                b: 0
-            },
-            lemonchiffon: {
-                r: 255,
-                g: 250,
-                b: 205
-            },
             lightblue: {
                 r: 173,
                 g: 216,
                 b: 230
-
             },
             lightcoral: {
                 r: 240,
@@ -4273,16 +3960,6 @@
                 r: 224,
                 g: 255,
                 b: 255
-            },
-            lightgoldenrodyellow: {
-                r: 250,
-                g: 250,
-                b: 210
-            },
-            lightslategrey: {
-                r: 119,
-                g: 136,
-                b: 153
             },
             lightgray: {
                 r: 211,
@@ -4303,36 +3980,6 @@
                 r: 255,
                 g: 182,
                 b: 193
-            },
-            lightsalmon: {
-                r: 255,
-                g: 160,
-                b: 122
-            },
-            lightseagreen: {
-                r: 32,
-                g: 178,
-                b: 170
-            },
-            lightskyblue: {
-                r: 135,
-                g: 206,
-                b: 250
-            },
-            lightslategray: {
-                r: 119,
-                g: 136,
-                b: 153
-            },
-            lightslategrey: {
-                r: 119,
-                g: 136,
-                b: 153
-            },
-            lightsteelblue: {
-                r: 176,
-                g: 196,
-                b: 222
             },
             lightyellow: {
                 r: 255,
@@ -4364,85 +4011,15 @@
                 g: 0,
                 b: 0
             },
-            mediumaquamarine: {
-                r: 102,
-                g: 205,
-                b: 170
-            },
-            mediumblue: {
-                r: 0,
-                g: 0,
-                b: 205
-            },
-            mediumorchid: {
-                r: 186,
-                g: 85,
-                b: 211
-            },
-            mediumpurple: {
-                r: 147,
-                g: 112,
-                b: 219
-            },
-            mediumseagreen: {
-                r: 60,
-                g: 179,
-                b: 113
-            },
-            mediumslateblue: {
-                r: 123,
-                g: 104,
-                b: 238
-            },
-            mediumspringgreen: {
-                r: 0,
-                g: 250,
-                b: 154
-            },
-            mediumturquoise: {
-                r: 72,
-                g: 209,
-                b: 204
-            },
-            mediumvioletred: {
-                r: 199,
-                g: 21,
-                b: 133
-            },
             midnightblue: {
                 r: 25,
                 g: 25,
                 b: 112
             },
-            mintcream: {
-                r: 245,
-                g: 255,
-                b: 250
-            },
-            mistyrose: {
-                r: 255,
-                g: 228,
-                b: 225
-            },
             moccasin: {
                 r: 255,
                 g: 228,
                 b: 181
-            },
-            navajowhite: {
-                r: 255,
-                g: 222,
-                b: 173
-            },
-            navy: {
-                r: 0,
-                g: 0,
-                b: 128
-            },
-            oldlace: {
-                r: 253,
-                g: 245,
-                b: 230
             },
             olive: {
                 r: 128,
@@ -4469,36 +4046,6 @@
                 g: 112,
                 b: 214
             },
-            palegoldenrod: {
-                r: 238,
-                g: 232,
-                b: 170
-            },
-            palegreen: {
-                r: 152,
-                g: 251,
-                b: 152
-            },
-            paleturquoise: {
-                r: 175,
-                g: 238,
-                b: 238
-            },
-            palevioletred: {
-                r: 219,
-                g: 112,
-                b: 147
-            },
-            papayawhip: {
-                r: 255,
-                g: 239,
-                b: 213
-            },
-            peachpuff: {
-                r: 255,
-                g: 218,
-                b: 185
-            },
             peru: {
                 r: 205,
                 g: 133,
@@ -4514,11 +4061,6 @@
                 g: 160,
                 b: 221
             },
-            powderblue: {
-                r: 176,
-                g: 224,
-                b: 230
-            },
             purple: {
                 r: 128,
                 g: 0,
@@ -4529,21 +4071,6 @@
                 g: 0,
                 b: 0
             },
-            rosybrown: {
-                r: 188,
-                g: 143,
-                b: 143
-            },
-            royalblue: {
-                r: 65,
-                g: 105,
-                b: 225
-            },
-            saddlebrown: {
-                r: 139,
-                g: 69,
-                b: 19
-            },
             salmon: {
                 r: 250,
                 g: 128,
@@ -4553,16 +4080,6 @@
                 r: 244,
                 g: 164,
                 b: 96
-            },
-            seagreen: {
-                r: 46,
-                g: 139,
-                b: 87
-            },
-            seashell: {
-                r: 255,
-                g: 245,
-                b: 238
             },
             sienna: {
                 r: 160,
@@ -4579,60 +4096,10 @@
                 g: 206,
                 b: 235
             },
-            slateblue: {
-                r: 106,
-                g: 90,
-                b: 205
-            },
-            slategray: {
-                r: 112,
-                g: 128,
-                b: 144
-            },
-            slategrey: {
-                r: 112,
-                g: 128,
-                b: 144
-            },
-            slategrey1: {
-                r: 198,
-                g: 226,
-                b: 255
-            },
-            slategrey2: {
-                r: 185,
-                g: 211,
-                b: 238
-            },
             snow: {
                 r: 255,
                 g: 250,
                 b: 250
-            },
-            springgreen: {
-                r: 0,
-                g: 255,
-                b: 127
-            },
-            steelblue: {
-                r: 70,
-                g: 130,
-                b: 180
-            },
-            tan: {
-                r: 210,
-                g: 180,
-                b: 140
-            },
-            teal: {
-                r: 0,
-                g: 128,
-                b: 128
-            },
-            thistle: {
-                r: 216,
-                g: 191,
-                b: 216
             },
             tomato: {
                 r: 255,
@@ -4742,7 +4209,12 @@
                 // Handle color: name
                 else {
                     result = input.split(' ');
-                    for (i = 0, l = result.length; i < l; i++) {
+
+                    i = 0,
+                    l = result.length;
+
+                    for (; i < l; i++) {
+
                         name = result[i];
 
                         if ($.colornames[name]) {
@@ -4835,28 +4307,20 @@
         };
     });
 
-
-
     $.cssHooks.borderColor = {
         expand: function (value) {
             var expanded = {};
 
-            each(["Top", "Right", "Bottom", "Left"], function (i, part) {
+            $.each(["Top", "Right", "Bottom", "Left"], function (i, part) {
                 expanded["border" + part + "Color"] = value;
             });
             return expanded;
         }
     };
 
+    // Traversing
 
-})(hAzzle);
-
-// Traversing
-
-;
-(function ($) {
-
-    var cached = [],
+  var cached = [],
         slice = Array.prototype.slice;
 
     $.extend($.fn, {
@@ -4898,26 +4362,6 @@
 
         index: function (elem) {
             return elem ? this.indexOf($(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
-        },
-
-        /** Get elements from a spesific position inside the "elems stack"
-         *
-         * @param {arr} array
-         * @return {Object}
-         */
-
-        selectedIndex: function (array) {
-
-            if (array && $.isArray(array)) {
-
-                var result = [],
-                    i = array.length;
-
-                while (i--) {
-                    result.push(this.get(array[i]));
-                }
-                return $(result);
-            }
         },
 
         /**
@@ -4973,10 +4417,7 @@
          */
 
         not: function (sel) {
-            return $(this.elems.filter(function (element) {
-                return $.matches(element, sel) !== true;
-            }));
-
+            return this.filter(sel, true)
         },
 
         /**
@@ -5093,20 +4534,67 @@
         },
 
         /**
-         * Reduce the set of matched elements to the first in the set.
+         * Return an sequense of elements from the 'elems stack', plucked
+         * by the given numbers
+         *
+         * Example:
+         *
+         * $('p').collection([1,6, 9])
+         *
+         * Outputs elem 1,6, 9 from the stack
+         *
+         * @param {array} count
+         * @return {object}
+         *
          */
 
-        first: function () {
-            return $(this.elems[0]);
+        collection: function (count) {
+
+            if (!$.isArray(count)) {
+                return [];
+            }
+
+            var holder = [],
+                i = count.length;
+            while (i--) {
+                holder.push(this.elems[count[i]])
+            }
+
+            return $(holder) || [];
+        },
+
+        /**
+         * Reduce the set of matched elements to the first x in the set.
+         */
+
+        first: function (count) {
+
+            if ((count == null)) {
+
+                return $(this.elems[0]);
+            }
+
+            if (count < 0) {
+
+                return [];
+            }
+
+            return $(slice.call(this.elems, 0, count));
         },
 
         /**
          * Reduce the set of matched elements to the last one in the set.
          */
 
-        last: function () {
+        last: function (count) {
             var elems = this.elems;
-            return $(elems[elems.length - 1]);
+
+            if ((count == null)) {
+
+                return $(elems[elems.length - 1]);
+            }
+
+            return $(slice.call(elems, Math.max(elems.length - count, 0)));
         },
 
         contents: function () {
@@ -5120,6 +4608,7 @@
          * @param {String} sel
          * @return {Object}
          */
+
         siblings: function (sel) {
 
             var siblings = [];
@@ -5184,12 +4673,7 @@
         };
     });
 
-})(hAzzle);
-
-// Removeable
-
-;
-(function ($) {
+    // Removeable
 
     /**
      * Remove all child nodes of the set of matched elements from the DOM.
@@ -5232,7 +4716,7 @@
             var elements = $(elem).find('*');
             elements = elements.add(elem);
 
-            $.Events.remove(elem);
+            $.Events.off(elem);
 
             var parent = elem.parentNode;
 
@@ -5697,12 +5181,8 @@
             });
         }
     });
-})(hAzzle);
 
-// Manipulation
-
-;
-(function ($) {
+    // Manipulation
 
     var // Short-hand functions we are using
 
@@ -6051,33 +5531,25 @@
 
         text: function (value) {
 
-            if (isDefined(value)) {
+            return $.isFunction(value) ? this.each(function (i) {
+                var self = $(this);
+                self.text(value.call(this, i, self.text()));
+            }) : !$.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
 
-                // Avoid memory leaks, do empty()
+                if (NodeMatching(elem)) {
 
-                return this.empty().each(function (_, elem) {
+                    // Firefox does not support insertAdjacentText 
 
-                    if (NodeMatching(elem)) {
+                    if (isString(value) && isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
 
-                        // Firefox does not support insertAdjacentText 
+                        elem.insertAdjacentText('beforeEnd', value);
 
-                        if (isString(value) && isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
+                    } else {
 
-                            elem.insertAdjacentText('beforeEnd', value);
-
-                        } else {
-
-                            elem.textContent = value;
-                        }
+                        elem.textContent = value;
                     }
-                });
-
-            } else {
-
-                // Get the textvalue
-
-                return $.getText(this);
-            }
+                }
+            }) : $.getText(this);
         },
 
         /**
@@ -6096,7 +5568,6 @@
             if (isUndefined(value) && $.nodeType(1, elem)) {
 
                 return elem.innerHTML;
-
             }
 
             // We could have used 'this' inside the loop, but faster if we don't
@@ -6114,8 +5585,8 @@
 
                     } else {
 
-
                         // See if we can take a shortcut and just use innerHTML
+
                         if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !wrapMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
 
                             // Do some magic
@@ -6136,9 +5607,20 @@
                         }
                     }
                 });
-            }
 
-            return this.empty().append(value);
+            } else if ($.isFunction(value)) {
+
+                this.each(function (i) {
+
+                    var self = $(this);
+
+                    self.html(value.call(this, i, self.html()));
+                });
+
+            } else {
+
+                return this.empty().append(value);
+            }
         },
 
         /**
@@ -6393,7 +5875,7 @@
 
             // Use the faster 'insertAdjacentHTML' if we can
 
-            if (isString(html) && this[0].parentNode && !$.isXML(this[0])) {
+            if (isString(html) && this[0].parentNode) {
 
                 return this.before(html).remove();
             }
@@ -6509,6 +5991,7 @@
     }, function (name, second) {
 
         $.fn[name] = function (html) {
+
             if (isString(html) && !$.isXML(this[0])) {
                 return this.each(function () {
                     iAh(this, second, html);
@@ -6549,13 +6032,8 @@
         $.propMap[this.toLowerCase()] = this;
     });
 
+    // HTML
 
-})(hAzzle);
-
-// HTML
-
-;
-(function ($) {
 
     var concat = Array.prototype.concat,
 
@@ -6563,13 +6041,16 @@
 
         isFunction = $.isFunction,
 
-        tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        rtagName = /<([\w:]+)/,
+        rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+
         rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
         rhtml = /<|&#?\w+;/,
         rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
         rscriptType = /^$|\/(?:java|ecma)script/i,
         rscriptTypeMasked = /^true\/(.*)/,
         rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
+
 
     (function () {
         var fragment = doc.createDocumentFragment(),
@@ -6588,11 +6069,9 @@
         $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
     })();
 
-
     /**
      * Disable "script" tags
      **/
-
 
     function disableScript(elem) {
         elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
@@ -6611,45 +6090,6 @@
     }
 
     $.extend($, {
-
-        /**
-         * HTML Hook created for the future. If $ need to support HTML6 or other
-         * HTML tags, it's easy enough to do it from plugins
-         */
-
-        htmlHooks: {
-
-            regex: /<([\w:]+)/,
-
-            'option': function () {
-
-                return [1, "<select multiple='multiple'>", "</select>"];
-            },
-
-            'thead': function () {
-
-                return [1, "<table>", "</table>"];
-
-            },
-
-            'col': function () {
-
-                return [2, "<table><colgroup>", "</colgroup></table>"];
-
-            },
-            'tr': function () {
-
-                return [2, "<table><tbody>", "</tbody></table>"];
-
-            },
-            'td': function () {
-
-                return [3, "<table><tbody><tr>", "</tr></tbody></table>"];
-
-            }
-        },
-
-
 
         Evaluated: function (elems, refElements) {
             var i = 0,
@@ -6677,12 +6117,10 @@
                 return null;
             }
 
-            if (typeof context === "boolean") {
+            if ($.isBoolean(context)) {
                 keepScripts = context;
                 context = false;
             }
-
-            //context = context || document;
 
             var parsed = rsingleTag.exec(data),
                 scripts = !keepScripts && [],
@@ -6694,6 +6132,7 @@
             // Single tag
 
             if (parsed) {
+
                 return [context.createElement(parsed[1])];
             }
 
@@ -6706,13 +6145,10 @@
             return $.merge([], parsed.childNodes);
         },
 
-        /*
-	  Create the HTML
-	  *
-	  * Support for HTML 6 through the 'htmlHooks'
-	   *
-	*/
-
+        /**
+         * Create the HTML
+         *
+         */
         createHTML: function (elems, context, scripts, selection) {
 
             if (!context) return;
@@ -6741,13 +6177,12 @@
 
                         tmp = tmp || fragment.appendChild(context.createElement("div"));
 
-                        // RegEx used here is to recognize HTML5 tags, but can be extended through the 'hook'
+                        // Deserialize a standard representation
 
-                        tag = ($.htmlHooks['regex'].exec(elem) || ["", ""])[1].toLowerCase();
+                        tag = (rtagName.exec(elem) || ["", ""])[1].toLowerCase();
+                        wrap = wrapMap[tag] || wrapMap._default;
+                        tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, "<$1></$2>") + wrap[2];
 
-                        wrap = $.htmlHooks[tag] || [0, "", ""];
-
-                        tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
 
                         // Descend through wrappers to the right content
                         j = wrap[0];
@@ -6766,6 +6201,7 @@
             });
 
             // Remove wrapper from fragment
+
             fragment.textContent = "";
 
             i = 0;
@@ -6786,6 +6222,7 @@
                 }
 
                 // Capture executables
+
                 if (scripts) {
                     j = 0;
                     while ((elem = tmp[j++])) {
@@ -6892,139 +6329,6 @@
 
     });
 
-
-
-    /**
-     * Extend the HTMLHook
-     */
-
-    $.each(['optgroup', 'tbody', 'tfoot', 'colgroup', 'caption'], function (name) {
-        $.htmlHooks[name] = function () {
-            return $.htmlHooks['thead'];
-        };
-    });
-
-})(hAzzle);
-
-
-
-
-/*!
- * HTML
- */
-
-;
-(function ($) {
-
-
-    var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
-        exprRegex = {
-            ID: /#((?:[\w\u00c0-\uFFFF_-]|\\.)+)/,
-            CLASS: /\.((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?![^[\]]+])/g,
-            NAME: /\[name=['"]*((?:[\w\u00c0-\uFFFF_-]|\\.)+)['"]*\]/,
-            ATTR: /\[\s*((?:[\w\u00c0-\uFFFF_-]|\\.)+)\s*(?:(\S?=)\s*(['"]*)(.*?)\3|)\s*\]/g,
-            TAG: /^((?:[\w\u00c0-\uFFFF\*_-]|\\.)+)/,
-            CLONE: /\:(\d+)(?=$|[:[])/,
-            COMBINATOR: /^[>~+]$/
-        },
-        doc = document,
-        cache = {},
-        attrMap = {
-            'for': 'htmlFor',
-            'class': 'className',
-            'html': 'innerHTML'
-        },
-        callbackTypes = ['ID', 'CLASS', 'NAME', 'ATTR'],
-        exprCallback = {
-            ID: function (match, node) {
-                node.id = match[1];
-            },
-            CLASS: function (match, node) {
-                var cls = node.className.replace(/^\s+$/, '');
-                node.className = cls ? cls + ' ' + match[1] : match[1];
-            },
-            NAME: function (match, node) {
-                node.name = match[1];
-            },
-            ATTR: function (match, node) {
-
-                var attr = match[1],
-                    val = match[4] || true;
-
-                if (val === true || attr === 'innerHTML' || attrMap.hasOwnProperty(attr)) {
-                    node[attrMap[attr] || attr] = val;
-                } else {
-                    node.setAttribute(attr, val);
-                }
-
-            }
-        };
-
-    function create(part, n) {
-
-        var tag = exprRegex.TAG.exec(part),
-            node = doc.createElement(tag && tag[1] !== '*' ? tag[1] : 'div'),
-            fragment = doc.createDocumentFragment(),
-            c = callbackTypes.length,
-            match, regex, callback;
-
-        while (c--) {
-
-            regex = exprRegex[callbackTypes[c]];
-            callback = exprCallback[callbackTypes[c]];
-
-            if (regex.global) {
-
-                while ((match = regex.exec(part)) !== null) {
-                    callback(match, node);
-                }
-
-                continue;
-
-            }
-
-            if (match = regex.exec(part)) {
-                callback(match, node);
-            }
-
-        }
-
-        while (n--) {
-            fragment.appendChild(node.cloneNode(true));
-        }
-
-        return fragment;
-
-    }
-
-    function multiAppend(parents, children) {
-
-        parents = parents.childNodes;
-
-        var i = parents.length,
-            parent;
-
-        while (i--) {
-
-            parent = parents[i];
-
-            if (parent.nodeName.toLowerCase() === 'table') {
-                /* IE requires table to have tbody */
-                parent.appendChild(parent = doc.createElement('tbody'));
-            }
-
-            parent.appendChild(children.cloneNode(true));
-
-        }
-
-    }
-
-})(hAzzle);
-
-// Show / Hide / Toggle
-
-;
-(function ($) {
 
     /**
      * Show | hide | toggle
@@ -7196,6 +6500,107 @@
             });
         }
 
+    });
+
+})(hAzzle);
+
+
+// Clone
+
+;
+(function ($) {
+
+    var rcheckableType = (/^(?:checkbox|radio)$/i);
+
+    /**
+     *  TODO!!!
+     *
+     * - Clone data
+     * - deal with the script tags
+     */
+
+
+    function fixInput(src, dest) {
+        var nodeName = dest.nodeName.toLowerCase();
+        if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
+        else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
+    };
+
+    $.extend($.fn, {
+
+        clone: function (deep) {
+
+            return this;
+            var clone,
+                storage,
+                srcElements, destElements;
+
+            return this.map(function (elem) {
+
+                /* Get all handlers from the original elem before we do a clone job
+	
+	   NOTE!! This has to be done BEFORE we clone the elem, else
+	          hAzzle will be confused and wonder wich of the two
+			  'identical' elems to get the handlers and data from
+	*/
+
+                var handlers = $.Events.getHandler(elem, '', null, false),
+                    l = handlers.length,
+                    i = 0,
+                    args, hDlr;
+
+                // Get the data before we clone
+
+                storage = $(elem).data();
+
+                // Clone the elem
+
+                clone = elem.cloneNode(deep || true);
+
+                // Copy the events from the original to the clone
+
+                for (; i < l; i++) {
+                    if (handlers[i].original) {
+
+                        args = [clone, handlers[i].type];
+                        if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
+                        args.push(handlers[i].original);
+                        $.Events.add.apply(null, args);
+                    }
+                }
+
+                // Copy data from the original to the clone
+                if (storage) {
+                    $.each(storage, function (key, value) {
+                        $.data(clone, key, value);
+                    });
+                }
+                // Preserve the rest 
+
+                if (!$.support.noCloneChecked && ($.nodeType(1, elem) || $.nodeType(11, elem)) && !$.isXML(elem)) {
+
+                    destElements = $.getChildren(clone);
+                    srcElements = $.getChildren(elem);
+
+                    for (i = 0, l = srcElements.length; i < l; i++) {
+                        fixInput(srcElements[i], destElements[i]);
+                    }
+                }
+
+                // Preserve script evaluation history
+
+                destElements = $.getChildren(clone, "script");
+
+                if (destElements.length > 0) {
+
+                    $.Evaluated(destElements, !$.contains(elem.ownerDocument, elem) && $.getChildren(elem, "script"));
+                }
+
+                // Return the cloned set
+
+                return clone;
+            });
+        }
     });
 
 })(hAzzle);

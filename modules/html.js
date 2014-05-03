@@ -1,102 +1,80 @@
 /*!
  * HTML
  */
- 
+
 ; (function ($) {
 
     var concat = Array.prototype.concat,
-	
-	    doc = document,
-        
-		isFunction = $.isFunction,
-        
-		tagExpander = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+
+        doc = document,
+
+        isFunction = $.isFunction,
+
+        rtagName = /<([\w:]+)/,
+        rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+
         rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
         rhtml = /<|&#?\w+;/,
         rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
         rscriptType = /^$|\/(?:java|ecma)script/i,
         rscriptTypeMasked = /^true\/(.*)/,
-        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
-  
-(function() {
-	var fragment = doc.createDocumentFragment(),
-		div = fragment.appendChild( doc.createElement( "div" ) ),
-		input = doc.createElement( "input" );
+        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
 
-	input.setAttribute( "type", "radio" );
-	input.setAttribute( "checked", "checked" );
-	input.setAttribute( "name", "t" );
+        wrapMap = {
 
-	div.appendChild( input );
+            // Support: IE 9
+            option: [1, "<select multiple='multiple'>", "</select>"],
 
-	$.support.checkClone = div.cloneNode( true ).cloneNode( true ).lastChild.checked;
+            thead: [1, "<table>", "</table>"],
+            col: [2, "<table><colgroup>", "</colgroup></table>"],
+            tr: [2, "<table><tbody>", "</tbody></table>"],
+            td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
 
-	div.innerHTML = "<textarea>x</textarea>";
-	$.support.noCloneChecked = !!div.cloneNode( true ).lastChild.defaultValue;
-})();
+            _default: [0, "", ""]
+        };
+
+    wrapMap.optgroup = wrapMap.option;
+    wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
+    wrapMap.th = wrapMap.td;
+
+    (function () {
+        var fragment = doc.createDocumentFragment(),
+            div = fragment.appendChild(doc.createElement("div")),
+            input = doc.createElement("input");
+
+        input.setAttribute("type", "radio");
+        input.setAttribute("checked", "checked");
+        input.setAttribute("name", "t");
+
+        div.appendChild(input);
+
+        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+
+        div.innerHTML = "<textarea>x</textarea>";
+        $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+    })();
+
+    /**
+     * Disable "script" tags
+     **/
+
+    function disableScript(elem) {
+        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+        return elem;
+    }
+
+    /**
+     * Restore "script" tags
+     **/
 
 
-        /**
-         * Disable "script" tags
-         **/
-
-
-        function disableScript(elem) {
-            elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
-            return elem;
-        }
-
-        /**
-         * Restore "script" tags
-         **/
-
-
-        function restoreScript(elem) {
-            var m = rscriptTypeMasked.exec(elem.type);
-            m ? elem.type = m[1] : elem.removeAttribute("type");
-            return elem;
-        }
+    function restoreScript(elem) {
+        var m = rscriptTypeMasked.exec(elem.type);
+        m ? elem.type = m[1] : elem.removeAttribute("type");
+        return elem;
+    }
 
     $.extend($, {
-
-        /**
-         * HTML Hook created for the future. If $ need to support HTML6 or other
-         * HTML tags, it's easy enough to do it from plugins
-         */
-
-        htmlHooks: {
-
-            regex: /<([\w:]+)/,
-
-            'option': function () {
-
-                return [1, "<select multiple='multiple'>", "</select>"];
-            },
-
-            'thead': function () {
-
-                return [1, "<table>", "</table>"];
-
-            },
-
-            'col': function () {
-
-                return [2, "<table><colgroup>", "</colgroup></table>"];
-
-            },
-            'tr': function () {
-
-                return [2, "<table><tbody>", "</tbody></table>"];
-
-            },
-            'td': function () {
-
-                return [3, "<table><tbody><tr>", "</tr></tbody></table>"];
-
-            }
-        },
-
-
 
         Evaluated: function (elems, refElements) {
             var i = 0,
@@ -106,17 +84,17 @@
                 $.data(elems[i], "evaluated", !refElements || $.data(refElements[i], "evaluated"));
             }
         },
-		
-		_evalUrl: function( url ) {
-	return $.ajax({
-		url: url,
-		type: "GET",
-		dataType: "script",
-		async: false,
-		global: false,
-		"throws": true
-	});
-},
+
+        _evalUrl: function (url) {
+            return $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "script",
+                async: false,
+                global: false,
+                "throws": true
+            });
+        },
 
         parseHTML: function (data, context, keepScripts) {
 
@@ -124,23 +102,22 @@
                 return null;
             }
 
-            if (typeof context === "boolean") {
+            if ($.isBoolean(context)) {
                 keepScripts = context;
                 context = false;
             }
 
-            //context = context || document;
-
             var parsed = rsingleTag.exec(data),
                 scripts = !keepScripts && [],
 
-           // Prevent XSS attack
+             // Prevent XSS attack
 
-	        context = context || ( isFunction( doc.implementation.createHTMLDocument ) ? doc.implementation.createHTMLDocument() : doc );
-				
+              context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
+
             // Single tag
 
             if (parsed) {
+
                 return [context.createElement(parsed[1])];
             }
 
@@ -153,16 +130,13 @@
             return $.merge([], parsed.childNodes);
         },
 
-        /*
-	  Create the HTML
-	  *
-	  * Support for HTML 6 through the 'htmlHooks'
-	   *
+   /**
+	* Create the HTML
+    *
 	*/
-
         createHTML: function (elems, context, scripts, selection) {
-           
-		   if(!context) return;
+
+            if (!context) return;
 
             var elem, tmp, tag, wrap, contains, j,
                 fragment = context.createDocumentFragment(),
@@ -188,13 +162,12 @@
 
                         tmp = tmp || fragment.appendChild(context.createElement("div"));
 
-                        // RegEx used here is to recognize HTML5 tags, but can be extended through the 'hook'
+                        // Deserialize a standard representation
+						
+                        tag = (rtagName.exec(elem) || ["", ""])[1].toLowerCase();
+                        wrap = wrapMap[tag] || wrapMap._default;
+                        tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, "<$1></$2>") + wrap[2];
 
-                        tag = ($.htmlHooks['regex'].exec(elem) || ["", ""])[1].toLowerCase();
-
-                        wrap = $.htmlHooks[tag] || [0, "", ""];
-
-                        tmp.innerHTML = wrap[1] + elem.replace(tagExpander, "<$1></$2>") + wrap[2];
 
                         // Descend through wrappers to the right content
                         j = wrap[0];
@@ -213,6 +186,7 @@
             });
 
             // Remove wrapper from fragment
+			
             fragment.textContent = "";
 
             i = 0;
@@ -233,6 +207,7 @@
                 }
 
                 // Capture executables
+				
                 if (scripts) {
                     j = 0;
                     while ((elem = tmp[j++])) {
@@ -248,13 +223,13 @@
     });
 
     $.extend($.fn, {
-        
-		// Inspiration from jQuery
-		
+
+        // Inspiration from jQuery
+
         manipulateDOM: function (args, callback) {
 
             // Flatten any nested arrays
-			
+
             args = concat.apply([], args);
 
             var fragment, first, scripts, hasScripts, node, doc,
@@ -268,7 +243,7 @@
 
 
             if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
-				
+
                 return this.each(function (index) {
                     var self = set.eq(index);
                     if (isFunction) {
@@ -279,10 +254,10 @@
             }
 
             if (l) {
-				
+
                 fragment = $.createHTML(args, this[0].ownerDocument, false, this);
-				
-				first = fragment.firstChild;
+
+                first = fragment.firstChild;
 
                 if (fragment.childNodes.length === 1) {
                     fragment = first;
@@ -291,8 +266,8 @@
                 if (first) {
                     scripts = $.map($.getChildren(fragment, "script"), disableScript);
                     hasScripts = scripts.length;
-                  
-				  while(i < l) {
+
+                    while (i < l) {
 
                         if (i !== iNoClone && !$.nodeType(3, fragment)) {
 
@@ -305,7 +280,7 @@
 
                         callback.call(this[i], fragment, i);
 
-						 i++;
+                        i++;
                     }
 
                     if (hasScripts) {
@@ -338,137 +313,5 @@
         }
 
     });
-
-
-
-    /**
-     * Extend the HTMLHook
-     */
-
-    $.each(['optgroup', 'tbody', 'tfoot', 'colgroup', 'caption'], function (name) {
-        $.htmlHooks[name] = function () {
-            return $.htmlHooks['thead'];
-        };
-    });
-
-})(hAzzle);
-
-
-
-
-
-
-
-
-
-/*!
- * HTML
- */
- 
-;
-(function ($) {
-
-
-var chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
-        exprRegex = {
-            ID: /#((?:[\w\u00c0-\uFFFF_-]|\\.)+)/,
-            CLASS: /\.((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?![^[\]]+])/g,
-            NAME: /\[name=['"]*((?:[\w\u00c0-\uFFFF_-]|\\.)+)['"]*\]/,
-            ATTR: /\[\s*((?:[\w\u00c0-\uFFFF_-]|\\.)+)\s*(?:(\S?=)\s*(['"]*)(.*?)\3|)\s*\]/g,
-            TAG: /^((?:[\w\u00c0-\uFFFF\*_-]|\\.)+)/,
-            CLONE: /\:(\d+)(?=$|[:[])/,
-            COMBINATOR: /^[>~+]$/
-        },
-        doc = document,
-        cache = {},
-        attrMap = {
-            'for': 'htmlFor',
-            'class': 'className',
-            'html': 'innerHTML'
-        },
-        callbackTypes = ['ID','CLASS','NAME','ATTR'],
-        exprCallback = {
-            ID: function(match, node) {
-                node.id = match[1];
-            },
-            CLASS: function(match, node) {
-                var cls = node.className.replace(/^\s+$/,'');
-                node.className = cls ? cls + ' ' + match[1] : match[1];
-            },
-            NAME: function(match, node) {
-                node.name = match[1];
-            },
-            ATTR: function(match, node) {
-
-                var attr = match[1],
-                    val = match[4] || true;
-
-                if ( val === true || attr === 'innerHTML' || attrMap.hasOwnProperty(attr) ) {
-                    node[attrMap[attr] || attr] = val;
-                } else {
-                    node.setAttribute( attr, val );
-                }
-
-            }
-        };
-
-    function create(part, n) {
-
-        var tag = exprRegex.TAG.exec(part),
-            node = doc.createElement( tag && tag[1] !== '*' ? tag[1] : 'div' ),
-            fragment = doc.createDocumentFragment(),
-            c = callbackTypes.length,
-            match, regex, callback;
-
-        while (c--) {
-
-            regex = exprRegex[callbackTypes[c]];
-            callback = exprCallback[callbackTypes[c]];
-
-            if (regex.global) {
-
-                while ( (match = regex.exec(part)) !== null ) {
-                    callback( match, node );
-                }
-
-                continue;
-
-            }
-
-            if (match = regex.exec(part)) {
-                callback( match, node );
-            }
-
-        }
-
-        while (n--) {
-            fragment.appendChild( node.cloneNode(true) );
-        }
-
-        return fragment;
-
-    }
-
-    function multiAppend(parents, children) {
-
-        parents = parents.childNodes;
-
-        var i = parents.length,
-            parent;
-
-        while ( i-- ) {
-
-            parent = parents[i];
-
-            if (parent.nodeName.toLowerCase() === 'table') {
-                /* IE requires table to have tbody */
-                parent.appendChild(parent = doc.createElement('tbody'));
-            }
-
-            parent.appendChild(children.cloneNode(true));
-
-        }
-
-    }
 
 })(hAzzle);

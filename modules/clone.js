@@ -1,52 +1,17 @@
-; (function ($) {
-	
-// Support check 
-(function () {
+;
+(function ($) {
 
-    var fragment = document.createDocumentFragment(),
-        div = fragment.appendChild(document.createElement("div")),
-        input = document.createElement("input");
+    var rcheckableType = (/^(?:checkbox|radio)$/i);
 
-    input.setAttribute("type", "radio");
-    input.setAttribute("checked", "checked");
-    input.setAttribute("name", "t");
+    function fixInput(src, dest) {
+        var nodeName = dest.nodeName.toLowerCase();
+        if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
+        else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
+    };
 
-    div.appendChild(input);
+    $.extend({
 
-    hAzzle.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
-
-    div.innerHTML = "<textarea>x</textarea>";
-
-    hAzzle.support.noCloneChecked = !! div.cloneNode(true).lastChild.defaultValue;
-
-}());
-
-var rcheckableType = (/^(?:checkbox|radio)$/i);
-
-/**
- *  TODO!!!
- *
- * - Clone data
- * - deal with the script tags
- */
-
-
-function fixInput(src, dest) {
-    var nodeName = dest.nodeName.toLowerCase();
-    if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
-    else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
-};
-
-$.extend($.fn, {
-
-    clone: function (deep) {
-
-
-        var clone,
-            storage,
-            srcElements, destElements;
-
-        return this.map(function (elem) {
+        clone: function (elem, deep) {
 
             /* Get all handlers from the original elem before we do a clone job
 	
@@ -110,7 +75,16 @@ $.extend($.fn, {
             // Return the cloned set
 
             return clone;
-        });
-    }
-});
+        },
+    });
+
+    $.extend($.fn, {
+        clone: function (deep) {
+            return this.map(function () {
+                return $.clone(this, deep);
+            });
+        }
+    });
+
+
 })(hAzzle);

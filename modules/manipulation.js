@@ -346,12 +346,11 @@
          */
 
         text: function (value) {
-
-            if (isDefined(value)) {
-
-                // Avoid memory leaks, do empty()
-
-                return this.empty().each(function (_, elem) {
+       
+	    return $.isFunction(value) ? this.each(function(i) {
+				var self = $( this );
+				self.text( value.call(this, i, self.text()) );
+			}) : !$.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
 
                     if (NodeMatching(elem)) {
 
@@ -366,14 +365,7 @@
                             elem.textContent = value;
                         }
                     }
-                });
-
-            } else {
-
-                // Get the textvalue
-
-                return $.getText(this);
-            }
+                }) : $.getText(this);
         },
 
         /**
@@ -392,7 +384,6 @@
             if (isUndefined(value) && $.nodeType(1, elem)) {
 
                 return elem.innerHTML;
-
             }
 
             // We could have used 'this' inside the loop, but faster if we don't
@@ -432,9 +423,20 @@
                         }
                     }
                 });
-            }
+
+             } else if ( $.isFunction( value ) ) {
+
+     			this.each(function(i){
+
+ 				var self = $( this );
+
+				self.html( value.call(this, i, self.html()) );
+			});
+
+		} else {
 
             return this.empty().append(value);
+		}
         },
 
         /**
@@ -782,12 +784,11 @@
 
                         if (name === 'prepend') {
 
-                            target.insertBefore(elem, target.firstChild)
+                            target.insertBefore(elem, target.firstChild);
 
                         } else {
 
-                            target.appendChild(elem)
-
+                            target.appendChild(elem);
                         }
                     }
                 });
