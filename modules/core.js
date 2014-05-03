@@ -423,10 +423,10 @@
         each: function (obj, callback, args) {
             var value,
                 i = 0,
-                length = obj.length,
-                isArray = hAzzle.isArrayLike(obj);
+                length = obj.length;
 
-            if (isArray) {
+            if (obj.length === +obj.length) {
+
                 for (; i < length; i++) {
                     value = callback.call(obj[i], i, args ? args : obj[i]);
 
@@ -435,6 +435,7 @@
                     }
                 }
             } else {
+
                 for (i in obj) {
                     value = callback.call(obj[i], i, args ? args : obj[i]);
 
@@ -443,8 +444,6 @@
                     }
                 }
             }
-
-
             return obj;
         },
 
@@ -640,7 +639,6 @@
                 } else {
 
                     return elem[prop];
-
                 }
 
             });
