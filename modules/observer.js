@@ -1,4 +1,3 @@
-
 // MutationObserver for hAzzle
 
 (function($) {
@@ -6,8 +5,8 @@
   var MutationObserver = window.MutationObserver || window.WebKitMutationObserver,
       lifecycles = function(node) {
 
-    var nodes = $(node).find('[lifecycle]').toArray();
-    $(node).is('[lifecycle]') && nodes.push(node);
+    var nodes = $(node).find('[observer]').toArray();
+    $(node).is('[observer]') && nodes.push(node);
     return nodes;
   };
 
@@ -64,7 +63,7 @@
     options.remove && element.whenRemove.push(options.remove);
     options.change && element.whenChange.push(observeAttribute(element, options.change));
 
-    $(this).attr('lifecycle', '');
+    $(this).attr('observer', '');
   },
 
   unObserve: function() {
@@ -79,7 +78,7 @@
     delete element.whenRemove;
     delete element.whenChange;
     
-    $(this).removeAttr('lifecycle');
+    $(this).removeAttr('observer');
   }
 })
 })(hAzzle);
