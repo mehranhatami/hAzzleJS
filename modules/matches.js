@@ -15,7 +15,7 @@ hAzzle.extend(hAzzle.fn, {
         var elements;
         if (hAzzle.isString(selector)) {
             if (this.length === 1) {
-                elements = hAzzle.find(selector, this.elems);
+	                elements = hAzzle.select(selector, this.elems);
             } else {
                 elements = this.elems.reduce(function (elements, element) {
                     return elements.concat(hAzzle.select(selector, element));

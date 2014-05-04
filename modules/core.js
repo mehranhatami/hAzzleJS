@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.4b
+ * Version: 0.4c
  * Released under the MIT License.
  *
  * Date: 2014-05-04
@@ -19,6 +19,11 @@
     if (window['hAzzle']) return;
 
     var
+
+    // Use the correct document accordingly with window argument (sandbox)
+
+        document = window.document,
+
         simpleRegEx = /^.[^:#\[\.,]*$/,
 
         /**
@@ -66,13 +71,21 @@
 
     hAzzle.fn = hAzzle.prototype = {
 
-        constructor: hAzzle,
+        // Start with an empty selector
+
+        selector: "",
+
+        // The default length of a hAzzle object is 0
+
+        length: 0,
 
         init: function (sel, ctx) {
 
             var elems, i;
 
             if (hAzzle.isString(sel)) {
+
+                // HTML
 
                 if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
@@ -109,9 +122,11 @@
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
 
                 } else {
+
                     // Object
 
                     if (hAzzle.isObject(sel)) {
+
                         return this.elems = [sel], this.length = 1, this[0] = sel, this;
                     }
 
@@ -121,8 +136,18 @@
                 }
             }
 
-            elems = this.elems,
-            i = this.length = elems.length;
+            return this.loopHole();
+        },
+
+        /**
+         * Setting up the "elems stack" and adding 'this[x]' and length
+         * to the hAzzle object
+         */
+
+        loopHole: function () {
+
+            var elems = this.elems,
+                i = this.length = elems.length;
 
             while (i--) {
 

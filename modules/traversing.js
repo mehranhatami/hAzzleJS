@@ -1,13 +1,10 @@
 /*!
  * Traversing.js
  */
-;
-(function ($) {
 
-    var cached = [],
-        slice = Array.prototype.slice;
+    var cached = [];
 
-    $.extend($.fn, {
+    hAzzle.extend(hAzzle.fn, {
 
         /**
          * Fetch property from elements
@@ -18,7 +15,7 @@
 
         pluckNode: function (prop) {
             return this.map(function (element) {
-                return $.getClosestNode(element, prop);
+                return hAzzle.getClosestNode(element, prop);
             });
         },
 
@@ -31,10 +28,10 @@
 
         closest: function (sel, ctx) {
             return this.map(function (elem) {
-                if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel === 'object' ? $(sel) : sel)) {
+                if (hAzzle.nodeType(1, elem) && elem !== ctx && !hAzzle.isDocument(elem) && hAzzle.matches(elem, typeof sel === 'object' ? hAzzle(sel) : sel)) {
                     return elem;
                 }
-                return $.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
+                return hAzzle.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
             });
         },
 
@@ -45,7 +42,7 @@
          */
 
         index: function (elem) {
-            return elem ? this.indexOf($(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
+            return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
         },
 
         /**
@@ -56,7 +53,7 @@
          */
         tags: function (tag) {
             return this.map(function (els) {
-                if (els.tagName.toLowerCase() === tag && $.nodeType(1, els)) {
+                if (els.tagName.toLowerCase() === tag && hAzzle.nodeType(1, els)) {
                     return els;
                 }
             });
@@ -71,7 +68,7 @@
          */
 
         add: function (sel, ctx) {
-            return this.concat($(sel, ctx).elems);
+            return this.concat(hAzzle(sel, ctx).elems);
         },
 
         /**
@@ -79,13 +76,13 @@
          */
         has: function (target) {
 
-            var targets = $(target, this),
+            var targets = hAzzle(target, this),
                 i = 0,
                 l = targets.length;
 
             return this.filter(function () {
                 for (; i < l; i++) {
-                    if ($.contains(this, targets[i])) {
+                    if (hAzzle.contains(this, targets[i])) {
                         return true;
                     }
                 }
@@ -127,7 +124,7 @@
          */
 
         parent: function (sel) {
-            return $.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
+            return hAzzle.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
         },
 
         /**
@@ -142,7 +139,7 @@
                 elements = this.elems,
                 fn = function (element) {
                     if ((element = element.parentNode) && element !== document && ancestors.indexOf(element) < 0) {
-                        if ($.nodeType(1, element)) {
+                        if (hAzzle.nodeType(1, element)) {
                             ancestors.push(element);
                             return element;
                         }
@@ -153,7 +150,7 @@
                 elements = elements.map(fn);
             }
 
-            return $.create(ancestors, sel);
+            return hAzzle.create(ancestors, sel);
         },
 
         /**
@@ -166,8 +163,8 @@
 
         children: function (sel) {
 
-            return $(this.reduce(function (els, elem) {
-                if ($.nodeType(1, elem)) {
+            return hAzzle(this.reduce(function (els, elem) {
+                if (hAzzle.nodeType(1, elem)) {
                     return els.concat(slice.call(elem.children));
                 }
             }, []), sel);
@@ -181,7 +178,7 @@
          */
 
         next: function (selector) {
-            return selector ? $(this.pluckNode('nextSibling').filter(selector || [])) : $(this.pluckNode('nextSibling'));
+            return selector ? hAzzle(this.pluckNode('nextSibling').filter(selector || [])) : hAzzle(this.pluckNode('nextSibling'));
         },
 
         nextUntil: function (until) {
@@ -189,11 +186,11 @@
             var matches = [];
 
             this.nextAll().each(function () {
-                if ($(this).is(until)) return false;
+                if (hAzzle(this).is(until)) return false;
                 matches.push(this);
             });
 
-            return $(matches);
+            return hAzzle(matches);
         },
 
         /**
@@ -203,7 +200,7 @@
          */
 
         prev: function (selector) {
-            return selector ? $(this.pluckNode('previousSibling').filter(selector)) : $(this.pluckNode('previousSibling'));
+            return selector ? hAzzle(this.pluckNode('previousSibling').filter(selector)) : hAzzle(this.pluckNode('previousSibling'));
         },
 
         prevUntil: function (until) {
@@ -211,11 +208,11 @@
             var matches = [];
 
             this.prevAll().each(function () {
-                if ($(this).is(until)) return false;
+                if (hAzzle(this).is(until)) return false;
                 matches.push(this);
             });
 
-            return $(matches);
+            return hAzzle(matches);
         },
 
         /**
@@ -224,7 +221,7 @@
          *
          * Example:
          *
-         * $('p').collection([1,6, 9])
+         * hAzzle('p').collection([1,6, 9])
          *
          * Outputs elem 1,6, 9 from the stack
          *
@@ -235,7 +232,7 @@
 
         collection: function (count) {
 
-            if (!$.isArray(count)) {
+            if (!hAzzle.isArray(count)) {
                 return [];
             }
 
@@ -245,7 +242,7 @@
                 holder.push(this.elems[count[i]]);
             }
 
-            return $(holder) || [];
+            return hAzzle(holder) || [];
         },
 
         /**
@@ -256,7 +253,7 @@
 
             if ((count === null)) {
 
-                return $(this.elems[0]);
+                return hAzzle(this.elems[0]);
             }
 
             if (count < 0) {
@@ -276,7 +273,7 @@
 
             if ((count === null)) {
 
-                return $(elems[elems.length - 1]);
+                return hAzzle(elems[elems.length - 1]);
             }
 
             return this.slice(Math.max(elems.length - count, 0));
@@ -306,8 +303,8 @@
 
             if (!cached[sel]) {
                 this.each(function (_, elem) {
-                    $.each(slice.call((elem.parentNode || {}).childNodes), function (_, child) {
-                        if ($.isElement(child) && $.nodeType(1, child) && child !== elem) {
+                    hAzzle.each(slice.call((elem.parentNode || {}).childNodes), function (_, child) {
+                        if (hAzzle.isElement(child) && hAzzle.nodeType(1, child) && child !== elem) {
                             siblings.push(child);
                         }
                     });
@@ -315,12 +312,12 @@
                 cached[sel] = siblings;
             }
 
-            return $.create(cached[sel], sel);
+            return hAzzle.create(cached[sel], sel);
         }
 
     });
 
-    $.extend($, {
+    hAzzle.extend(hAzzle, {
 
         /**
          * Walks the DOM tree using `method`, returns when an element node is found
@@ -334,7 +331,7 @@
         getClosestNode: function (element, method, sel) {
             do {
                 element = element[method];
-            } while (element && ((sel && !$.matches(sel, element)) || !$.isElement(element)));
+            } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
             return element;
         }
     });
@@ -343,13 +340,13 @@
      * Process nextAll and prevAll
      */
 
-    $.each({
+    hAzzle.each({
         'nextAll': 'next',
         'prevAll': 'prev'
     }, function (name, subn) {
 
-        $.fn[name] = function (sel) {
-            var els = $(),
+        hAzzle.fn[name] = function (sel) {
+            var els = hAzzle(),
                 el = this[subn](); // next() or prev()
             while (el.length) {
                 if (typeof sel === 'undefined' || el.is(sel)) {
@@ -360,5 +357,3 @@
             return els;
         };
     });
-
-})(hAzzle);
