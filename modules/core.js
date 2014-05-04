@@ -168,7 +168,7 @@
 
             if (hAzzle.isFunction(sel)) {
                 return hAzzle(hAzzle.grep(this.elems, function (elem, i) {
-                    return !!sel.call(elem, i, elem) !== not || false;
+                    return !!sel.call(elem, i, elem) !== not;
                 }));
             }
 
