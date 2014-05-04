@@ -1,4 +1,5 @@
-; (function ($) {
+;
+(function ($) {
 
 
     var slice = Array.prototype.slice,
@@ -45,14 +46,6 @@
      *
      * @return {Array}
      */
-
-    function containsClass(el, klass) {
-        if (hAzzle.support.classList) {
-            return el.classList.contains(klass);
-        } else {
-            return hAzzle.contains(('' + el.className).split(' '), klass);
-        }
-    }
 
     hAzzle.extend({
 
@@ -191,11 +184,7 @@
                 els = ctx[byClass](_class);
             }
 
-            if (mode === "html" && sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
-
-                els = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
-
-            } else {
+            
 
                 // Pseudos
 
@@ -222,7 +211,7 @@
 
                     els = this.qsa(sel, ctx);
                 }
-            }
+           
 
             return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
         },

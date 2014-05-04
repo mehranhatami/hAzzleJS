@@ -1,7 +1,6 @@
 /* 
  * Support
- */
-/**
+ *
  * Check for CSS Transform and transition support
  *
  * NOTE!!

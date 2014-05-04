@@ -1,10 +1,16 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.4
+ * Version: 0.4a
  * Released under the MIT License.
  *
- * Date: 2014-05-03
+ * Date: 2014-05-04
+ *
+ * Note!! hAzzle are NOT jQuery or Zepto, but loosely following their API's. Some functions will not work at all in hAzzle, and
+ *        others will work differently then you think. In 94% of the cases, hAzzle will work similar to jQuery / Zepto.
+ *        The main reason for this is that hAzzle are using native browser solutions where it's possible. An example is the internal 'Map()'
+ *        function. It's used in closest (), and this function is 45% faster then jQuery / Zepto. But hAzzles internal map () are totally different
+ *        from the aforementioned libraries.
  */
 (function (window, undefined) {
 
@@ -62,34 +68,41 @@
 
     hAzzle.fn = hAzzle.prototype = {
 
+        constructor: hAzzle,
+
         init: function (sel, ctx) {
             var elems, i;
             if (sel instanceof hAzzle) return sel;
             if (hAzzle.isString(sel)) {
 
-                if (cache[sel] && !ctx) {
+                if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    // Backup the "elems stack" before we loop through
+                    els = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
 
-                    this.elems = elems = cache[sel];
+                } else {
 
-                    // Copy the stack over to the hAzzle object so we can access the Protoype
+                    if (cache[sel] && !ctx) {
 
-                    i = this.length = elems.length;
+                        // Backup the "elems stack" before we loop through
 
-                    while (i--) {
+                        this.elems = elems = cache[sel];
 
-                        this[i] = elems[i];
+                        // Copy the stack over to the hAzzle object so we can access the Protoype
+
+                        i = this.length = elems.length;
+
+                        while (i--) {
+
+                            this[i] = elems[i];
+                        }
+
+                        // Return the hAzzle Object
+
+                        return this;
                     }
 
-                    // Return the hAzzle Object
-
-                    return this;
+                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
                 }
-
-
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
-
             } else {
 
                 // Domready
@@ -163,7 +176,7 @@
             var elements;
             if (hAzzle.isString(selector)) {
                 if (this.length === 1) {
-                    elements = hAzzle.select(selector, this.elems);
+                    elements = hAzzle.find(selector, this.elems);
                 } else {
                     elements = this.elems.reduce(function (elements, element) {
                         return elements.concat(hAzzle.select(selector, element));
@@ -185,22 +198,38 @@
          * Filter the collection to contain only items that match the CSS selector
          */
 
-        filter: function (sel, inverse) {
+        filter: function (sel, not) {
 
-            if (typeof sel === 'function') {
-                var fn = sel;
-                return hAzzle(this.elems.filter(function (element, index) {
-                    return fn.call(element, element, index) !== (inverse || false);
+            if (hAzzle.isFunction(sel)) {
+                return hAzzle(hAzzle.grep(this.elems, function (elem, i) {
+                    /* jshint -W018 */
+                    return !!sel.call(elem, i, elem) !== not;
                 }));
+
             }
-            if (sel && sel[0] === '!') { // ! === not
-                sel = sel.substr(1);
-                inverse = true;
+
+            if (sel.nodeType) {
+                return hAzzle.grep(this.elems, function (elem) {
+                    return (elem === sel) !== not;
+                });
+
             }
-            return hAzzle(this.elems.filter(function (element) {
-                return hAzzle.matches(element, sel) !== (inverse || false);
+
+            if (typeof sel === "string") {
+
+                if (/^.[^:#\[\.,]*$/.test(sel)) {
+
+                    return hAzzle(hAzzle.filter(sel, this.elems, not));
+                }
+
+                sel = hAzzle.filter(sel, this.elems);
+            }
+
+            return hAzzle(hAzzle.grep(this.elems, function (elem) {
+                return (Array.prototype.indexOf.call(sel, elem) >= 0) !== not;
             }));
         },
+
 
         /**
          * Check to see if a DOM element is a descendant of another DOM element.
@@ -262,18 +291,16 @@
 
         /**
          * Returns a new array with the result of calling callback on each element of the array
+         * NOTE!! Nothing to do with the jQuery / Zepto API
          */
 
-        map: function (callback) {
-            var results = [],
-                elems = this.elems,
+        map: function (fn) {
+            var elems = this.elems,
                 i = 0,
                 len = elems.length;
-
-            for (; i < len; i++) {
-                results.push(callback(elems[i]));
+            for (i = len; i--;) {
+                return hAzzle(fn(elems[i]));
             }
-            return hAzzle(results);
         },
 
         /**
@@ -332,7 +359,8 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (callback /*, initialValue*/ ) {
+        reduce: function (a, b, c, d) {
+            return this.elems['reduce'](a, b, c, d)
 
             var t = Object(this),
                 len = t.length >>> 0,
@@ -543,10 +571,6 @@
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
         },
 
-        likeArray: function (obj) {
-            return typeof obj.length === 'number';
-        },
-
         isWindow: function (obj) {
             return obj && obj.document && obj.location && obj.alert && obj.setInterval;
         },
@@ -590,8 +614,10 @@
          * Creates a new hAzzle instance applying a filter if necessary
          */
 
-        create: function (elements, sel) {
-            return typeof sel === 'undefined' ? hAzzle(elements) : hAzzle(elements).filter(sel);
+        create: function (elements, selector) {
+
+            //            return typeof sel === 'undefined' ? hAzzle(elements) : hAzzle(elements).filter(sel);
+            return selector == null ? hAzzle(elements) : hAzzle(elements).filter(selector || [])
         },
 
         /**
@@ -770,10 +796,16 @@
          */
 
         merge: function (first, second) {
-            for (var len = +second.length, i = 0, fl = first.length; i < len;) first[fl++] = second[i++];
-            if (len !== len)
-                for (; second[i] !== undefined;) first[fl++] = second[i++];
-            first.length = fl;
+            var len = +second.length,
+                j = 0,
+                i = first.length;
+
+            for (; j < len; j++) {
+                first[i++] = second[j];
+            }
+
+            first.length = i;
+
             return first;
         },
 
@@ -856,6 +888,8 @@
             }
             return ret;
         },
+        // Nothing
+        noop: function () {},
 
         makeArray: function (arr, results) {
 

@@ -1,8 +1,9 @@
-; (function ($) {
+;
+(function ($) {
 
     var // Short-hand functions we are using
 
-    isFunction = $.isFunction,
+        isFunction = $.isFunction,
         isUndefined = $.isUndefined,
         isDefined = $.isDefined,
         isString = $.isString,
@@ -45,15 +46,15 @@
         cached = [],
 
         wrapMap = {
-        
-		'option': [1, '<select multiple="multiple">', '</select>'],
 
-        'thead': [1, '<table>', '</table>'],
-        'col': [2, '<table><colgroup>', '</colgroup></table>'],
-        'tr': [2, '<table><tbody>', '</tbody></table>'],
-        'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
-        '_default': [0, "", ""]
-    };
+            'option': [1, '<select multiple="multiple">', '</select>'],
+
+            'thead': [1, '<table>', '</table>'],
+            'col': [2, '<table><colgroup>', '</colgroup></table>'],
+            'tr': [2, '<table><tbody>', '</tbody></table>'],
+            'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+            '_default': [0, "", ""]
+        };
 
     wrapMap.optgroup = wrapMap.option;
     wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
@@ -129,8 +130,8 @@
                     value,
                     max = one ? index + 1 : options.length,
                     i = index < 0 ?
-                        max :
-                        one ? index : 0;
+                    max :
+                    one ? index : 0;
 
                 for (; i < max; i++) {
 
@@ -277,6 +278,7 @@
                     }
 
                     // The extra argument "2" is to get the right thing for a.href in IE, see jQuery code
+
                     // some elements (e.g. Document) don't have get attribute, so return undefined
 
                     elem = elem.getAttribute(name, 2);
@@ -346,26 +348,26 @@
          */
 
         text: function (value) {
-       
-	    return $.isFunction(value) ? this.each(function(i) {
-				var self = $( this );
-				self.text( value.call(this, i, self.text()) );
-			}) : !$.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
 
-                    if (NodeMatching(elem)) {
+            return $.isFunction(value) ? this.each(function (i) {
+                var self = $(this);
+                self.text(value.call(this, i, self.text()));
+            }) : !$.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
 
-                        // Firefox does not support insertAdjacentText 
+                if (NodeMatching(elem)) {
 
-                        if (isString(value) && isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
+                    // Firefox does not support insertAdjacentText 
 
-                            elem.insertAdjacentText('beforeEnd', value);
+                    if (isString(value) && isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
 
-                        } else {
+                        elem.insertAdjacentText('beforeEnd', value);
 
-                            elem.textContent = value;
-                        }
+                    } else {
+
+                        elem.textContent = value;
                     }
-                }) : $.getText(this);
+                }
+            }) : $.getText(this);
         },
 
         /**
@@ -397,7 +399,7 @@
                      */
                     if (keep && isString(value) && $.nodeType(1, elem)) {
 
-                           iAh(elem, 'beforeend',  value || '');
+                        iAh(elem, 'beforeend', value || '');
 
                     } else {
 
@@ -424,19 +426,19 @@
                     }
                 });
 
-             } else if ( $.isFunction( value ) ) {
+            } else if ($.isFunction(value)) {
 
-     			this.each(function(i){
+                this.each(function (i) {
 
- 				var self = $( this );
+                    var self = $(this);
 
-				self.html( value.call(this, i, self.html()) );
-			});
+                    self.html(value.call(this, i, self.html()));
+                });
 
-		} else {
+            } else {
 
-            return this.empty().append(value);
-		}
+                return this.empty().append(value);
+            }
         },
 
         /**

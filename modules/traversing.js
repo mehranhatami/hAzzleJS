@@ -1,8 +1,8 @@
 /*!
  * Traversing.js
  */
-;
-(function ($) {
+
+; (function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -31,7 +31,7 @@
 
         closest: function (sel, ctx) {
             return this.map(function (elem) {
-                if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
+                if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel === 'object' ? $(sel) : sel)) {
                     return elem;
                 }
                 return $.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
@@ -166,11 +166,13 @@
          */
 
         children: function (sel) {
-            return $(this.reduce(function (els, elem) {
+			
+		    return $(this.reduce(function (els, elem) {
                 if ($.nodeType(1, elem)) {
                     return els.concat(slice.call(elem.children));
                 }
             }, []), sel);
+			
         },
 
         /**
@@ -330,15 +332,24 @@
          * @param{Number/Null } nt
          */
 
-        getClosestNode: function (element, method, sel, nt) {
+        getClosestNode: function (element, method, sel) {
             do {
                 element = element[method];
             } while (element && ((sel && !$.matches(sel, element)) || !$.isElement(element)));
-            if ($.isDefined(nt) && (element !== null && !$.nodeType(nt, element))) {
-                return element;
-            }
             return element;
-        }
+        },
+		
+		sibling: function( n, elem ) {
+		var matched = [];
+
+		for ( ; n; n = n.nextSibling ) {
+			if ( n.nodeType === 1 && n !== elem ) {
+				matched.push( n );
+			}
+		}
+
+		return matched;
+	}
     });
 
     /**
