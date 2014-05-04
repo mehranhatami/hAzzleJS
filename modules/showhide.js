@@ -1,4 +1,5 @@
-; (function ($) {
+;
+(function ($) {
 
     /**
      * Show | hide | toggle
@@ -8,8 +9,8 @@
      */
 
     var elemdisplay = {},
-	    docbody = document.body,
-	    doc = document;
+        docbody = document.body,
+        doc = document;
 
     function actualDisplay(name, doc) {
 

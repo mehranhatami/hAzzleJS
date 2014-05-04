@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.4a
+ * Version: 0.4b
  * Released under the MIT License.
  *
  * Date: 2014-05-04
@@ -12,7 +12,6 @@
  *        function. It's used in closest (), and this function is 45% faster then jQuery / Zepto. But hAzzles internal map () are totally different
  *        from the aforementioned libraries.
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -20,10 +19,11 @@
     if (window['hAzzle']) return;
 
     var
+        simpleRegEx = /^.[^:#\[\.,]*$/,
 
-    /**
-     * Prototype references.
-     */
+        /**
+         * Prototype references.
+         */
 
         ArrayProto = Array.prototype,
 
@@ -48,9 +48,6 @@
             }
         },
 
-        // Selector caching
-        cache = [],
-
         // Different nodeTypes we are checking against for faster speed
 
         nodeTypes = {},
@@ -72,38 +69,20 @@
         constructor: hAzzle,
 
         init: function (sel, ctx) {
+
             var elems, i;
-            if (sel instanceof hAzzle) return sel;
+
             if (hAzzle.isString(sel)) {
 
                 if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    els = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
+                    this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : document, true);
 
                 } else {
 
-                    if (cache[sel] && !ctx) {
-
-                        // Backup the "elems stack" before we loop through
-
-                        this.elems = elems = cache[sel];
-
-                        // Copy the stack over to the hAzzle object so we can access the Protoype
-
-                        i = this.length = elems.length;
-
-                        while (i--) {
-
-                            this[i] = elems[i];
-                        }
-
-                        // Return the hAzzle Object
-
-                        return this;
-                    }
-
-                    this.elems = cache[sel] = hAzzle.select(sel, ctx);
+                    this.elems = hAzzle.select(sel, ctx);
                 }
+
             } else {
 
                 // Domready
@@ -165,58 +144,47 @@
         },
 
         /**
-         * Filter element collection
+         * Filter the collection to contain only items that match the CSS selector
          *
-         * @param {String|Function} sel
+         * @param {String|nodeType|Function} sel
          * @return {Object}
          *
          */
 
-        find: function (selector) {
-
-            var elements;
-            if (hAzzle.isString(selector)) {
-                if (this.length === 1) {
-                    elements = hAzzle.find(selector, this.elems);
-                } else {
-                    elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(selector, element));
-                    }, []);
-                }
-            } else {
-                var _ = this;
-                elements = hAzzle(selector).filter(function () {
-                    var node = this;
-                    return _.elems.some.call(_, function (parent) {
-                        return hAzzle.contains(parent, node);
-                    });
-                });
-            }
-            return hAzzle(elements);
-        },
-
-        /**
-         * Filter the collection to contain only items that match the CSS selector
-         */
-
         filter: function (sel, not) {
+
+            // Do nothing if no selector
+
+            if (typeof sel === 'undefined') {
+
+                return this;
+            }
+
+            // As default not === false, for the :not() function it is set to false
+
+            not = not || false;
+
+            // If we are dealing with a function
 
             if (hAzzle.isFunction(sel)) {
                 return hAzzle(hAzzle.grep(this.elems, function (elem, i) {
-                    return !!sel.call(elem, i, elem) !== not;
+                    return !!sel.call(elem, i, elem) !== not || false;
                 }));
             }
 
-            if (sel.nodeType) {
-                return hAzzle.grep(this.elems, function (elem) {
-                    return (elem === sel) !== not;
-                });
+            // nodeType
 
+            if (sel.nodeType) {
+                return hAzzle(hAzzle.grep(this.elems, function (elem) {
+                    return (elem === sel) !== not;
+                }));
             }
+
+            // String
 
             if (typeof sel === "string") {
 
-                if (/^.[^:#\[\.,]*$/.test(sel)) {
+                if (simpleRegEx.test(sel)) {
 
                     return hAzzle(hAzzle.filter(sel, this.elems, not));
                 }
@@ -228,7 +196,6 @@
                 return (Array.prototype.indexOf.call(sel, elem) >= 0) !== not;
             }));
         },
-
 
         /**
          * Check to see if a DOM element is a descendant of another DOM element.
@@ -245,24 +212,23 @@
         },
 
         /**
-			 * Fetch property from the "elems" stack
-			 *
-			 * @param {String} prop
-			 * @param {Number|Null} nt
-			 * @return {Array}
-			 *
-			 * 'nt' are used if we need to exclude certain nodeTypes.
-	
-			 *
-			 * Example: pluck('parentNode'), selector, 11)
-			 *
-			 * In the example above, the parentNode will only be returned if
-			 *  nodeType !== 11
-			 *
-			 */
+         * Fetch property from the "elems" stack
+         *
+         * @param {String} prop
+         * @param {Number|Null} nt
+         * @return {Array}
+         *
+         * 'nt' are used if we need to exclude certain nodeTypes.
+         *
+         * Example: pluck('parentNode'), selector, 11)
+         *
+         * In the example above, the parentNode will only be returned if
+         *  nodeType !== 11
+         *
+         */
 
-        pluck: function (property, nt) {
-            return hAzzle.pluck(this.elems, property, nt);
+        pluck: function (prop, nt) {
+            return hAzzle.pluck(this.elems, prop, nt);
         },
 
         /**
@@ -273,8 +239,8 @@
          * @return {Array}
          */
 
-        put: function (property, value, nt) {
-            return hAzzle.put(this.elems, property, value, nt);
+        put: function (prop, value, nt) {
+            return hAzzle.put(this.elems, prop, value, nt);
         },
 
         /**
@@ -313,6 +279,7 @@
         /**
          *  Concatenates an array to the 'elems stack'
          */
+
         concat: function () {
             return hAzzle(concat.apply(this.elems, slice.call(arguments).map(function (arr) {
                 return arr instanceof hAzzle ? arr.elements : arr;
@@ -356,6 +323,11 @@
 
         /**
          * Reduce the number of elems in the "elems" stack
+         *
+         * I know this one is ugly as hell, but the other option - to
+         * use native 'prototype reduce' are too slow. So we using an
+         * modified 'shim' solution
+         *
          */
 
         reduce: function (callback /*, initialValue*/ ) {
@@ -381,6 +353,10 @@
             return value;
         },
 
+        /**
+         * Make the 'elems stack' compact, sorted by given selector
+         */
+
         compact: function (a) {
             return this.filter(a, function (value) {
                 return !!value;
@@ -401,13 +377,20 @@
          */
 
         eq: function (index) {
-            if (arguments) {
-                return hAzzle(this.get(index));
-            }
+            return index && hAzzle(this.get(index));
         },
 
+        /**
+         * Retrieve all the elements contained in the hAzzle set, as an array.
+         *
+         * Note! This function is here just to be compatible with jQuery / Zepto API.
+         * The 'elems stack' are already an array, so we return only the
+         * stack without any magic slicing
+         *
+         */
+
         toArray: function () {
-            return slice.call(this);
+            return this.elems;
         }
 
     };
@@ -613,9 +596,7 @@
          */
 
         create: function (elements, selector) {
-
-            //            return typeof sel === 'undefined' ? hAzzle(elements) : hAzzle(elements).filter(sel);
-            return selector == null ? hAzzle(elements) : hAzzle(elements).filter(selector || [])
+            return selector === null ? hAzzle(elements) : hAzzle(elements).filter(selector || []);
         },
 
         /**
@@ -742,6 +723,7 @@
          */
 
         inArray: function (elem, arr, i) {
+
 
             var iOff = (function (find, i /*opt*/ ) {
                 if (typeof i === 'undefined') i = 0;
@@ -891,8 +873,8 @@
 
         makeArray: function (arr, results) {
 
-            var a = new Object(arr);
-            ret = results || [];
+            var a = new Object(arr),
+                ret = results || [];
 
             if (arr !== null) {
                 if (hAzzle.isArrayLike(a)) {

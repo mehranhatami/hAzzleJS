@@ -1,8 +1,8 @@
 /*!
  * Traversing.js
  */
-
-; (function ($) {
+;
+(function ($) {
 
     var cached = [],
         slice = Array.prototype.slice;
@@ -93,7 +93,7 @@
         },
 
         /**
-         * Get elements in list but not with this selector
+         * Remove elements from the set of matched elements.
          *
          * @param {String} sel
          * @return {Object}
@@ -101,7 +101,7 @@
          */
 
         not: function (sel) {
-            return this.filter(sel, true)
+            return this.filter(sel, true);
         },
 
         /**
@@ -147,7 +147,6 @@
                             return element;
                         }
                     }
-
                 };
 
             while (elements.length > 0 && elements[0] !== undefined) {
@@ -166,13 +165,13 @@
          */
 
         children: function (sel) {
-			
-		    return $(this.reduce(function (els, elem) {
+
+            return $(this.reduce(function (els, elem) {
                 if ($.nodeType(1, elem)) {
                     return els.concat(slice.call(elem.children));
                 }
             }, []), sel);
-			
+
         },
 
         /**
@@ -243,7 +242,7 @@
             var holder = [],
                 i = count.length;
             while (i--) {
-                holder.push(this.elems[count[i]])
+                holder.push(this.elems[count[i]]);
             }
 
             return $(holder) || [];
@@ -255,7 +254,7 @@
 
         first: function (count) {
 
-            if ((count == null)) {
+            if ((count === null)) {
 
                 return $(this.elems[0]);
             }
@@ -265,7 +264,7 @@
                 return [];
             }
 
-            return $(slice.call(this.elems, 0, count));
+            return this.slice(0, count);
         },
 
         /**
@@ -275,18 +274,18 @@
         last: function (count) {
             var elems = this.elems;
 
-            if ((count == null)) {
+            if ((count === null)) {
 
                 return $(elems[elems.length - 1]);
             }
 
-            return $(slice.call(elems, Math.max(elems.length - count, 0)));
+            return this.slice(Math.max(elems.length - count, 0));
         },
 
         // Returns everything but the first entry of the array
 
         tail: function (count) {
-            return $(slice.call(this.elems, (count == null) ? 1 : count));
+            return this.slice((count === null) ? 1 : count);
         },
 
         contents: function () {
@@ -338,18 +337,18 @@
             } while (element && ((sel && !$.matches(sel, element)) || !$.isElement(element)));
             return element;
         },
-		
-		sibling: function( n, elem ) {
-		var matched = [];
 
-		for ( ; n; n = n.nextSibling ) {
-			if ( n.nodeType === 1 && n !== elem ) {
-				matched.push( n );
-			}
-		}
+        sibling: function (n, elem) {
+            var matched = [];
 
-		return matched;
-	}
+            for (; n; n = n.nextSibling) {
+                if (n.nodeType === 1 && n !== elem) {
+                    matched.push(n);
+                }
+            }
+
+            return matched;
+        }
     });
 
     /**
