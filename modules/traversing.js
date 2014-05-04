@@ -336,18 +336,6 @@
                 element = element[method];
             } while (element && ((sel && !$.matches(sel, element)) || !$.isElement(element)));
             return element;
-        },
-
-        sibling: function (n, elem) {
-            var matched = [];
-
-            for (; n; n = n.nextSibling) {
-                if (n.nodeType === 1 && n !== elem) {
-                    matched.push(n);
-                }
-            }
-
-            return matched;
         }
     });
 
