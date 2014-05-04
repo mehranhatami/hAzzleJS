@@ -203,7 +203,6 @@
 
             if (hAzzle.isFunction(sel)) {
                 return hAzzle(hAzzle.grep(this.elems, function (elem, i) {
-                    /* jshint -W018 */
                     return !!sel.call(elem, i, elem) !== not;
                 }));
             }
@@ -359,7 +358,7 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (callback) {
+        reduce: function (callback /*, initialValue*/ ) {
 
             var t = Object(this),
                 len = t.length >>> 0,
