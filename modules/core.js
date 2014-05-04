@@ -12,6 +12,7 @@
  *        function. It's used in closest (), and this function is 45% faster then jQuery / Zepto. But hAzzles internal map () are totally different
  *        from the aforementioned libraries.
  */
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -205,7 +206,6 @@
                     /* jshint -W018 */
                     return !!sel.call(elem, i, elem) !== not;
                 }));
-
             }
 
             if (sel.nodeType) {
@@ -359,8 +359,7 @@
          * Reduce the number of elems in the "elems" stack
          */
 
-        reduce: function (a, b, c, d) {
-            return this.elems['reduce'](a, b, c, d)
+        reduce: function (callback) {
 
             var t = Object(this),
                 len = t.length >>> 0,
