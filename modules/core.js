@@ -12,7 +12,6 @@
  *        function. It's used in closest (), and this function is 45% faster then jQuery / Zepto. But hAzzles internal map () are totally different
  *        from the aforementioned libraries.
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -73,7 +72,7 @@
     hAzzle.fn = hAzzle.prototype = {
 
         // Start with an empty selector
-		
+
         selector: "",
 
         // The default length of a hAzzle object is 0
@@ -85,10 +84,10 @@
             var elems, i;
 
             if (hAzzle.isString(sel)) {
-                
-				// HTML
-                
-				if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
+
+                // HTML
+
+                if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
                     this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : document, true);
 
@@ -123,11 +122,11 @@
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
 
                 } else {
-					
+
                     // Object
 
                     if (hAzzle.isObject(sel)) {
-						
+
                         return this.elems = [sel], this.length = 1, this[0] = sel, this;
                     }
 
@@ -137,18 +136,18 @@
                 }
             }
 
-          return this.loopHole();
+            return this.loopHole();
         },
-		
-         /**
-		  * Setting up the "elems stack" and adding 'this[x]' and length
-		  * to the hAzzle object
-		  */
-		  
-		loopHole: function() {
-			
-          var  elems = this.elems,
-		       i = this.length = elems.length;
+
+        /**
+         * Setting up the "elems stack" and adding 'this[x]' and length
+         * to the hAzzle object
+         */
+
+        loopHole: function () {
+
+            var elems = this.elems,
+                i = this.length = elems.length;
 
             while (i--) {
 
@@ -156,7 +155,7 @@
             }
 
             return this;
-		},
+        },
 
         /**
          * Run callback for each element in the collection
@@ -772,7 +771,7 @@
          */
 
         getUID: function (elem) {
-                return elem && (elem.hAzzle_id || (elem.hAzzle_id = uid.next()));
+            return elem && (elem.hAzzle_id || (elem.hAzzle_id = uid.next()));
         },
 
         /**
@@ -820,13 +819,13 @@
         /**
          * camelCase CSS string
          *
-		 * I know jQuery checking for Microsoft missing prefix, but we are in
-		 * 2014, so MS should have fixed their prefix by now.
-		 *
-		 * Angular doesn't have a check for it, so I guess it's fixed.
-		 * Shoot me if I'm wrong!!
-		 *
-		 *
+         * I know jQuery checking for Microsoft missing prefix, but we are in
+         * 2014, so MS should have fixed their prefix by now.
+         *
+         * Angular doesn't have a check for it, so I guess it's fixed.
+         * Shoot me if I'm wrong!!
+         *
+         *
          * @param{String} str
          * @return{String}
          */
@@ -875,9 +874,9 @@
         },
 
         /**
-		 * Check if it's an XML or HTML document
-		 */
-		 
+         * Check if it's an XML or HTML document
+         */
+
         isXML: function (elem) {
             return elem && (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
         },
@@ -930,10 +929,10 @@
                 return (isFunc ? method : value[method]).apply(value, args);
             });
         },
-		
-		/**
-		 * Throttle through a function
-		 */
+
+        /**
+         * Throttle through a function
+         */
 
         throttle: function (func, wait, options) {
             var context, args, result,
