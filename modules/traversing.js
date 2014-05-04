@@ -162,7 +162,6 @@
          */
 
         children: function (sel) {
-
             return hAzzle(this.reduce(function (els, elem) {
                 if (hAzzle.nodeType(1, elem)) {
                     return els.concat(slice.call(elem.children));

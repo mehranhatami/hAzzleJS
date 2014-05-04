@@ -269,14 +269,23 @@
         },
 
         /**
-         * Get the Nth element in the "elems" stack, or all elements
+         * Get the Nth element in the "elems" stack, OR all elements
          *
          * @param {Number} num
          * @return {object}
          */
 
-        get: function (index) {
-            return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice();
+        get: function (num) {
+
+            return num != null ?
+
+                // Return just the one element from the set
+
+                this.elems[0 > num ? this.elems.length + num : num] :
+
+                // Return all the elements in the 'elems stack'
+
+                this.elems;
         },
 
         /**
@@ -479,8 +488,14 @@
             return obj;
         },
 
-        type: function (val) {
-            return toString.call(val);
+        type: function (obj) {
+
+            if (obj == null) {
+
+                return obj + "";
+            }
+
+            return toString.call(obj);
         },
 
         is: function (kind, obj) {
@@ -547,6 +562,9 @@
         },
 
         isNumeric: function (obj) {
+            // parseFloat NaNs numeric-cast false positives (null|true|false|"")
+            // ...but misinterprets leading-number strings, particularly hex literals ("0x...")
+            // subtraction forces infinities to NaN
             return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
         },
 
@@ -559,23 +577,6 @@
         },
 
         isArray: Array.isArray,
-
-        isArrayLike: function (obj) {
-
-            if (obj === null || hAzzle.isWindow(obj)) {
-                return false;
-
-            }
-
-            var length = obj.length;
-
-            if (obj.nodeType === 1 && length) {
-                return true;
-            }
-
-            return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
-                typeof length === 'number' && length > 0 && (length - 1) in obj;
-        },
 
         isWindow: function (obj) {
             return obj && obj.document && obj.location && obj.alert && obj.setInterval;
@@ -621,7 +622,8 @@
          */
 
         create: function (elements, selector) {
-            return selector === null ? hAzzle(elements) : hAzzle(elements).filter(selector || []);
+			
+            return $.isUndefined(selector) ? hAzzle(elements) : hAzzle(elements).filter(selector);
         },
 
         /**
@@ -763,8 +765,10 @@
             return arr === null ? -1 : iOff.call(arr, elem, i);
         },
 
+
         /**
-         *  Return or compute a unique ID for the element
+         *  Global ID for objects
+         *  Return or compute a unique ID
          *
          * @param{Object} elem
          * @return{Object}
@@ -812,12 +816,15 @@
             return first;
         },
 
+        /**
+         * Return the elements nodeName
+         */
         nodeName: function (elem, name) {
             return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
         },
 
         /**
-         * camelCase CSS string
+         * Convert dashed to camelCase
          *
          * I know jQuery checking for Microsoft missing prefix, but we are in
          * 2014, so MS should have fixed their prefix by now.
@@ -910,7 +917,7 @@
                 ret = results || [];
 
             if (arr !== null) {
-                if (hAzzle.isArrayLike(a)) {
+                if (isArraylike(a)) {
                     hAzzle.merge(ret, hAzzle.isString(arr) ? [arr] : arr);
                 } else {
                     push.call(ret, arr);
@@ -979,7 +986,9 @@
         };
     });
 
-    // Powerfull native functions for dealing with the 'elems stack'
+    /**
+     * Populate some powerfull native functions for dealing with the 'elems stack'
+     */
 
     hAzzle.each(['pop', 'reverse', 'shift', 'splice', 'unshift'], function () {
         var method = ArrayProto[this];
@@ -987,6 +996,26 @@
             return method.apply(this.elems, arguments);
         };
     });
+
+
+    function isArraylike(obj) {
+
+        if (obj === null || hAzzle.isWindow(obj)) {
+            return false;
+
+        }
+
+        var length = obj.length;
+
+        if (obj.nodeType === 1 && length) {
+            return true;
+        }
+
+        return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
+            typeof length === 'number' && length > 0 && (length - 1) in obj;
+    }
+
+
 
     // Expose hAzzle to the global object
 
