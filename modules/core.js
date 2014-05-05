@@ -178,7 +178,7 @@
 
         filter: function (sel, not) {
 
-          // Do nothing if no selector
+            // Do nothing if no selector
 
             if (typeof sel === 'undefined') {
 
@@ -412,13 +412,13 @@
 
         eq: function (index) {
 
-           if (index === null) {
+            if (index === null) {
 
-            return hAzzle()
+                return hAzzle()
 
             }
-          
-		  return hAzzle(this.get(index));
+
+            return hAzzle(this.get(index));
 
         },
 
@@ -466,8 +466,36 @@
         return target;
     };
 
-
     hAzzle.extend({
+
+        toObject: function (list, value) {
+
+            var obj = {};
+
+            hAzzle.each(list, function (index, itm) {
+                obj[itm] = value;
+            });
+
+            return obj;
+
+        },
+
+        UTF8encode: function (s) {
+            return unescape(encodeURIComponent(s));
+        },
+
+        UTF8decode: function (s) {
+            return decodeURIComponent(escape(s));
+        },
+
+        /**
+         * Convert input to currency (two decimal fixed number)
+         */
+
+        toCurrency: function (i) {
+            i = parseFloat(i, 10).toFixed(2);
+            return (i == 'NaN') ? '0.00' : i;
+        },
 
         each: function (obj, callback, args) {
             var value,
@@ -584,6 +612,25 @@
             return true;
         },
 
+        /**
+         * Returns true if the given string or list is null, undefined or empty (zero length).
+         * If the second argument is true, the function will ignore whitespace in the string
+         */
+
+        isEmpty: function (str, ignoreWhitespace) {
+            return str == null || !str.length || (ignoreWhitespace && /^\s*$/.test(str));
+        },
+
+        /**
+         * Checks if an string is blank
+         */
+
+        isBlank: function (str) {
+
+            hAzzle.trim(str).length === 0;
+
+        },
+
         isArray: Array.isArray,
 
         isWindow: function (obj) {
@@ -630,7 +677,7 @@
          */
 
         create: function (elements, selector) {
-			
+
             return $.isUndefined(selector) ? hAzzle(elements) : hAzzle(elements).filter(selector);
         },
 
