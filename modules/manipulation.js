@@ -1,4 +1,5 @@
-; (function ($) {
+;
+(function ($) {
 
     var // Short-hand functions we are using
 
@@ -440,6 +441,23 @@
             }
         },
 
+		/**
+		 * Retrive outerHTML on an element
+		 *
+		 * We could have done this in a more 
+		 * native way, but it can be data or events
+		 * stored on the cloned element
+		 */
+
+		outerHTML: function() {
+			
+		 var tmp;
+    
+          return (!this.length) ? this
+            : typeof ( tmp = this[0].outerHTML ) === 'string' ? tmp
+            : hAzzle('<div>').append( this.first().clone() ).html();	
+		},
+
         /**
          * Get value for input/select elements
          * Set value for input/select elements
@@ -680,6 +698,31 @@
                 delete this[$.propMap[name] || name];
             });
         },
+        
+
+        /**
+         * Replace each target element with the set of matched elements
+         *
+         * @param {String} html
+         * @return {Object}
+         */
+		 
+		replaceAll: function(html) {
+		
+		var elems,
+			ret = [],
+			insert = hAzzle( html ),
+			last = insert.length - 1,
+			i = 0;
+
+		for ( ; i <= last; i++ ) {
+			elems = i === last ? this : this.clone( true );
+			hAzzle( insert[ i ] ).replaceWith( elems );
+		}
+
+		return this;
+		
+		},
 
         /**
          * Replace each element in the set of matched elements with the provided new content
@@ -687,8 +730,8 @@
          * @param {String} html
          * @return {Object}
          */
-
-        replaceWith: function (html) {
+		 
+		replaceWith: function (html) {
 
             // Use the faster 'insertAdjacentHTML' if we can
 
@@ -744,7 +787,7 @@
 
         prependTo: function (sel) {
             return this.each(function () {
-                $(sel).prepend(this);
+             //   $(sel).prepend(this);
             });
         }
     });
