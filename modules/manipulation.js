@@ -1,12 +1,10 @@
-;
-(function ($) {
 
     var // Short-hand functions we are using
 
-        isFunction = $.isFunction,
-        isUndefined = $.isUndefined,
-        isDefined = $.isDefined,
-        isString = $.isString,
+        isFunction = hAzzle.isFunction,
+        isUndefined = hAzzle.isUndefined,
+        isDefined = hAzzle.isDefined,
+        isString = hAzzle.isString,
 
         doc = document,
 
@@ -87,7 +85,7 @@
 
     function iAh(elem, direction, html) {
         if (elem && NodeMatching(elem)) {
-            elem.insertAdjacentHTML(direction, $.trim(html));
+            elem.insertAdjacentHTML(direction, hAzzle.trim(html));
         }
     }
 
@@ -103,12 +101,12 @@
      */
 
     function NodeMatching(elem) {
-        return $.nodeType(1, elem) || $.nodeType(9, elem) || $.nodeType(11, elem) ? true : false;
+        return hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || hAzzle.nodeType(11, elem) ? true : false;
     }
 
     // Global
 
-    $.extend($, {
+    hAzzle.extend(hAzzle, {
 
         // Get the properties right
 
@@ -139,10 +137,10 @@
 
                     if ((option.selected || i === index) && !option.disabled &&
                         (optDisabled ? !option.disabled : option.getAttribute("disabled") === null) &&
-                        (!option.parentNode.disabled || !$.nodeName(option.parentNode, "optgroup"))) {
+                        (!option.parentNode.disabled || !hAzzle.nodeName(option.parentNode, "optgroup"))) {
 
                         // Get the specific value for the option
-                        value = $(option).val();
+                        value = hAzzle(option).val();
 
                         // We don't need an array for one selects
                         if (one) {
@@ -157,15 +155,15 @@
             },
 
             'OPTION': function (elem) {
-                var val = $(elem).filter(function (option) {
+                var val = hAzzle(elem).filter(function (option) {
                     return option.selected && !option.disabled;
                 }).pluck('value');
 
-                return val !== null ? val : $.trim($.getText(elem));
+                return val !== null ? val : hAzzle.trim(hAzzle.getText(elem));
             },
             'TYPE': function (elem, value) {
                 if (!radioValue && value === "radio" &&
-                    $.nodeName(elem, "input")) {
+                    hAzzle.nodeName(elem, "input")) {
 
                     var val = elem.value;
                     elem.setAttribute("type", value);
@@ -198,14 +196,14 @@
 
             if (!elem.nodeType) {
                 // If no nodeType, this is expected to be an array
-                for (; node = elem[i++];) ret += $.getText(node);
+                for (; node = elem[i++];) ret += hAzzle.getText(node);
 
             } else if (NodeMatching(elem)) {
 
                 if (isString(elem.textContent)) return elem.textContent;
-                for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += $.getText(elem);
+                for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += hAzzle.getText(elem);
 
-            } else if ($.nodeType(3, elem) || $.nodeType(4, elem)) {
+            } else if (hAzzle.nodeType(3, elem) || hAzzle.nodeType(4, elem)) {
                 return elem.nodeValue;
             }
             return ret;
@@ -225,13 +223,13 @@
             var ret, hooks, notxml;
 
             // don't get/set properties on text, comment and attribute nodes
-            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
+            if (!hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || !hAzzle.nodeType(8, elem)) {
 
-                notxml = !($.nodeType(1, elem)) || !$.isXML(elem);
+                notxml = !(hAzzle.nodeType(1, elem)) || !hAzzle.isXML(elem);
 
                 if (notxml) {
 
-                    hooks = $.propHooks[$.propMap[name] || name];
+                    hooks = hAzzle.propHooks[hAzzle.propMap[name] || name];
                 }
 
                 if (isDefined(value)) {
@@ -261,20 +259,20 @@
                 return;
             }
 
-            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
+            if (!hAzzle.nodeType(2, elem) || hAzzle.nodeType(3, elem) || !hAzzle.nodeType(8, elem)) {
 
                 if (typeof elem.getAttribute === typeof undefined) {
 
-                    return $.prop(elem, name, value);
+                    return hAzzle.prop(elem, name, value);
                 }
 
                 if (isUndefined(value)) {
 
                     // Checks if a "hook" exist for this...:
 
-                    if ($.Hooks[elem.nodeName]) {
+                    if (hAzzle.Hooks[elem.nodeName]) {
 
-                        return $.Hooks[elem.nodeName](elem);
+                        return hAzzle.Hooks[elem.nodeName](elem);
                     }
 
                     // The extra argument "2" is to get the right thing for a.href in IE, see jQuery code
@@ -296,7 +294,7 @@
 
                 if (value === null) {
 
-                    $.removeAttr(elem, name);
+                    hAzzle.removeAttr(elem, name);
                 }
 
 
@@ -306,12 +304,12 @@
 
                     var optionSet, option,
                         options = elem.options,
-                        values = $.makeArray(value),
+                        values = hAzzle.makeArray(value),
                         i = options.length;
 
                     while (i--) {
                         option = options[i];
-                        if ((option.selected = $.inArray(option.value, values) >= 0)) {
+                        if ((option.selected = hAzzle.inArray(option.value, values) >= 0)) {
                             optionSet = true;
                         }
                     }
@@ -334,13 +332,13 @@
 
     // Core
 
-    $.extend($.fn, {
+    hAzzle.extend(hAzzle.fn, {
 
         /**
          * Get text for the first element in the collection
          * Set text for every element in the collection
          *
-         * $('div').text() => div text
+         * hAzzle('div').text() => div text
          *
          * @param {String} value
          * @param {String} dir
@@ -349,10 +347,10 @@
 
         text: function (value) {
 
-            return $.isFunction(value) ? this.each(function (i) {
-                var self = $(this);
+            return hAzzle.isFunction(value) ? this.each(function (i) {
+                var self = hAzzle(this);
                 self.text(value.call(this, i, self.text()));
-            }) : !$.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
+            }) : !hAzzle.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
 
                 if (NodeMatching(elem)) {
 
@@ -367,7 +365,7 @@
                         elem.textContent = value;
                     }
                 }
-            }) : $.getText(this);
+            }) : hAzzle.getText(this);
         },
 
         /**
@@ -383,7 +381,7 @@
 
             var elem = this[0];
 
-            if (isUndefined(value) && $.nodeType(1, elem)) {
+            if (isUndefined(value) && hAzzle.nodeType(1, elem)) {
 
                 return elem.innerHTML;
             }
@@ -397,7 +395,7 @@
                     /**
                      * 'keep' if we want to keep the existing children of the node and add some more.
                      */
-                    if (keep && isString(value) && $.nodeType(1, elem)) {
+                    if (keep && isString(value) && hAzzle.nodeType(1, elem)) {
 
                         iAh(elem, 'beforeend', value || '');
 
@@ -413,7 +411,7 @@
 
                             // Remove stored data on the object to avoid memory leaks
 
-                            $.removeData(elem);
+                            hAzzle.removeData(elem);
 
                             // Get rid of existing children
 
@@ -426,11 +424,11 @@
                     }
                 });
 
-            } else if ($.isFunction(value)) {
+            } else if (hAzzle.isFunction(value)) {
 
                 this.each(function (i) {
 
-                    var self = $(this);
+                    var self = hAzzle(this);
 
                     self.html(value.call(this, i, self.html()));
                 });
@@ -474,12 +472,12 @@
 
                     var val;
 
-                    if (!$.nodeType(1, elem)) {
+                    if (!hAzzle.nodeType(1, elem)) {
                         return;
                     }
 
                     if (isFunction(value)) {
-                        val = value.call(elem, index, $(elem).val());
+                        val = value.call(elem, index, hAzzle(elem).val());
 
                     } else {
 
@@ -494,9 +492,9 @@
 
                         val += "";
 
-                    } else if ($.isArray(val)) {
+                    } else if (hAzzle.isArray(val)) {
 
-                        val = $.map(val, function (value) {
+                        val = hAzzle.map(val, function (value) {
 
                             return value === null ? "" : value + "";
                         });
@@ -504,7 +502,7 @@
 
                     if (elem.type === 'radio' || elem.type === 'checkbox') {
 
-                        return (elem.checked = $.inArray($(elem).val(), value) >= 0);
+                        return (elem.checked = hAzzle.inArray(hAzzle(elem).val(), value) >= 0);
                     }
 
                     if (elem.type === "select") {
@@ -512,12 +510,12 @@
 
                         var optionSet, option,
                             options = elem.options,
-                            values = $.makeArray(value),
+                            values = hAzzle.makeArray(value),
                             i = options.length;
 
                         while (i--) {
                             option = options[i];
-                            if ((option.selected = $.inArray(option.value, values) >= 0)) {
+                            if ((option.selected = hAzzle.inArray(option.value, values) >= 0)) {
                                 optionSet = true;
                             }
                         }
@@ -545,7 +543,7 @@
                     return elem.getAttribute("value") === null ? "on" : elem.value;
                 }
 
-                ret = $.Hooks[elem.tagName] ? $.Hooks[elem.tagName](elem) : elem.value;
+                ret = hAzzle.Hooks[elem.tagName] ? hAzzle.Hooks[elem.tagName](elem) : elem.value;
 
                 return typeof ret === "string" ? ret.replace(/\r\n/g, "") : ret === null ? "" : ret;
 
@@ -563,12 +561,12 @@
          */
 
         attr: function (name, value) {
-            return $.isObject(name) ? this.each(function (index, element) {
-                $.each(name, function (key, value) {
-                    $.attr(element, key, value);
+            return hAzzle.isObject(name) ? this.each(function (index, element) {
+                hAzzle.each(name, function (key, value) {
+                    hAzzle.attr(element, key, value);
                 });
-            }) : $.isUndefined(value) ? $.attr(this[0], name) : this.length === 1 ? $.attr(this[0], name, value) : this.each(function () {
-                return $.attr(this, name, value);
+            }) : hAzzle.isUndefined(value) ? hAzzle.attr(this[0], name) : this.length === 1 ? hAzzle.attr(this[0], name, value) : this.each(function () {
+                return hAzzle.attr(this, name, value);
             });
         },
 
@@ -587,10 +585,10 @@
 
             return this.each(function (_, elem) {
 
-                if (attrNames && $.nodeType(1, elem)) {
+                if (attrNames && hAzzle.nodeType(1, elem)) {
 
                     while ((name = attrNames[i++])) {
-                        propName = $.propMap[name] || name;
+                        propName = hAzzle.propMap[name] || name;
 
                         if (getBooleanAttrName(elem, name)) {
 
@@ -667,11 +665,11 @@
          */
 
         prop: function (name, value) {
-            return $.isObject(name) ? this.each(function (value, element) {
-                $.each(name, function (key, value) {
-                    $.prop(element, key, value);
+            return hAzzle.isObject(name) ? this.each(function (value, element) {
+                hAzzle.each(name, function (key, value) {
+                    hAzzle.prop(element, key, value);
                 });
-            }) : isUndefined(value) ? this[0] && this[0][$.propMap[name] || name] : $.prop(this[0], name, value);
+            }) : isUndefined(value) ? this[0] && this[0][hAzzle.propMap[name] || name] : hAzzle.prop(this[0], name, value);
         },
 
         /**
@@ -695,11 +693,10 @@
 
         removeProp: function (name) {
             return this.each(function () {
-                delete this[$.propMap[name] || name];
+                delete this[hAzzle.propMap[name] || name];
             });
         },
         
-
         /**
          * Replace each target element with the set of matched elements
          *
@@ -735,7 +732,7 @@
 
             // Use the faster 'insertAdjacentHTML' if we can
 
-            if (isString(html) && this[0].parentNode && !$.isXML(this[0])) {
+            if (isString(html) && this[0].parentNode && !hAzzle.isXML(this[0])) {
 
                 return this.before(html).remove();
             }
@@ -744,7 +741,7 @@
 
             if (isFunction(html)) {
                 return this.each(function (index) {
-                    var self = $(this),
+                    var self = hAzzle(this),
                         old = self.html();
                     self.replaceWith(html.call(this, index, old));
                 });
@@ -773,7 +770,7 @@
 
         appendTo: function (sel) {
             return this.each(function () {
-                $(sel).append(this);
+                hAzzle(sel).append(this);
             });
 
         },
@@ -787,7 +784,7 @@
 
         prependTo: function (sel) {
             return this.each(function () {
-             //   $(sel).prepend(this);
+               hAzzle(sel).prepend(this);
             });
         }
     });
@@ -805,33 +802,29 @@
      *	K.F
      */
 
-    $.each({
+    hAzzle.each({
 
         prepend: "afterbegin",
         append: "beforeend"
     }, function (name, second) {
 
-        $.fn[name] = function (html) {
-            if (isString(html) && !$.isXML(this[0])) {
+        hAzzle.fn[name] = function (html) {
+            if (isString(html)) {
                 return this.each(function () {
                     iAh(this, second, html);
                 });
             } else { // The long walk :(
                 return this.manipulateDOM(arguments, function (elem) {
-
                     if (NodeMatching(this)) {
-                        var target = $.nodeName(this, "table") && $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
+                        var target = hAzzle.nodeName(this, "table") && hAzzle.nodeName(hAzzle.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
                             this['getElementsByTagName']("tbody")[0] ||
                             elem.appendChild(this.ownerDocument.createElement("tbody")) : this;
 
                         // Choose correct method	
 
                         if (name === 'prepend') {
-
                             target.insertBefore(elem, target.firstChild);
-
                         } else {
-
                             target.appendChild(elem);
                         }
                     }
@@ -844,13 +837,13 @@
      * Before and After
      */
 
-    $.each({
+    hAzzle.each({
         before: "beforebegin",
         after: "afterend"
     }, function (name, second) {
 
-        $.fn[name] = function (html) {
-            if (isString(html) && !$.isXML(this[0])) {
+        hAzzle.fn[name] = function (html) {
+            if (isString(html) && !hAzzle.isXML(this[0])) {
                 return this.each(function () {
                     iAh(this, second, html);
                 });
@@ -864,7 +857,7 @@
 
     // Support: IE9+
     if (!optSelected) {
-        $.propHooks.selected = {
+        hAzzle.propHooks.selected = {
             get: function (elem) {
                 var parent = elem.parentNode;
                 if (parent && parent.parentNode) {
@@ -875,7 +868,7 @@
         };
     }
 
-    $.each([
+    hAzzle.each([
         "tabIndex",
         "readOnly",
         "maxLength",
@@ -887,8 +880,5 @@
         "frameBorder",
         "contentEditable"
     ], function () {
-        $.propMap[this.toLowerCase()] = this;
+        hAzzle.propMap[this.toLowerCase()] = this;
     });
-
-
-})(hAzzle);

@@ -1,317 +1,263 @@
 /*!
  * HTML
  */
+var concat = Array.prototype.concat,
 
-; (function ($) {
+    doc = document,
 
-    var concat = Array.prototype.concat,
+    isFunction = hAzzle.isFunction,
 
-        doc = document,
+    xhtmlRegEx = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+    tagNameRegEx = /<([\w:]+)/,
+    htmlRegEx = /<|&#?\w+;/,
+    // checked="checked" or checked
+    checkedRegEx = /checked\s*(?:[^=]|=\s*.checked.)/i,
+    rscriptType = /^$|\/(?:java|ecma)script/i,
+    rscriptTypeMasked = /^true\/(.*)/,
+    rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+    singleRegEx = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/);
 
-        isFunction = $.isFunction,
 
-        rtagName = /<([\w:]+)/,
-        rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+(function () {
+    var fragment = doc.createDocumentFragment(),
+        div = fragment.appendChild(doc.createElement("div")),
+        input = doc.createElement("input");
 
-        rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
-        rhtml = /<|&#?\w+;/,
-        rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
-        rscriptType = /^$|\/(?:java|ecma)script/i,
-        rscriptTypeMasked = /^true\/(.*)/,
-        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+    input.setAttribute("type", "radio");
+    input.setAttribute("checked", "checked");
+    input.setAttribute("name", "t");
 
-        wrapMap = {
+    div.appendChild(input);
 
-            // Support: IE 9
-            option: [1, "<select multiple='multiple'>", "</select>"],
+    hAzzle.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
 
-            thead: [1, "<table>", "</table>"],
-            col: [2, "<table><colgroup>", "</colgroup></table>"],
-            tr: [2, "<table><tbody>", "</tbody></table>"],
-            td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
+    div.innerHTML = "<textarea>x</textarea>";
+    hAzzle.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+})();
 
-            _default: [0, "", ""]
-        };
+/**
+ * Disable "script" tags
+ **/
 
-    wrapMap.optgroup = wrapMap.option;
-    wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
-    wrapMap.th = wrapMap.td;
+function disableScript(elem) {
+    elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+    return elem;
+}
 
-    (function () {
-        var fragment = doc.createDocumentFragment(),
-            div = fragment.appendChild(doc.createElement("div")),
-            input = doc.createElement("input");
+/**
+ * Restore "script" tags
+ **/
 
-        input.setAttribute("type", "radio");
-        input.setAttribute("checked", "checked");
-        input.setAttribute("name", "t");
 
-        div.appendChild(input);
+function restoreScript(elem) {
+    var m = rscriptTypeMasked.exec(elem.type);
+    m ? elem.type = m[1] : elem.removeAttribute("type");
+    return elem;
+}
 
-        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+hAzzle.parseHTML = function (data, context, keepScripts) {
+    if (!data || typeof data !== "string") {
+        return null;
+    }
+    if (typeof context === "boolean") {
+        keepScripts = context;
+        context = false;
+    }
+    context = context || document;
 
-        div.innerHTML = "<textarea>x</textarea>";
-        $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
-    })();
+    var parsed = singleRegEx.exec(data),
+        scripts = !keepScripts && [];
 
-    /**
-     * Disable "script" tags
-     **/
-
-    function disableScript(elem) {
-        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
-        return elem;
+    // Single tag
+    if (parsed) {
+        return [context.createElement(parsed[1])];
     }
 
-    /**
-     * Restore "script" tags
-     **/
+    parsed = hAzzle.buildFragment([data], context, scripts);
 
-
-    function restoreScript(elem) {
-        var m = rscriptTypeMasked.exec(elem.type);
-        m ? elem.type = m[1] : elem.removeAttribute("type");
-        return elem;
+    if (scripts && scripts.length) {
+        hAzzle(scripts).remove();
     }
 
-    $.extend($, {
+    return hAzzle.merge([], parsed.childNodes);
+};
 
-        Evaluated: function (elems, refElements) {
-            var i = 0,
-                l = elems.length;
+hAzzle.extend(hAzzle, {
 
-            for (; i < l; i++) {
-                $.data(elems[i], "evaluated", !refElements || $.data(refElements[i], "evaluated"));
-            }
-        },
+    buildFragment: function (elems, context, scripts, selection) {
 
-        _evalUrl: function (url) {
-            return $.ajax({
-                url: url,
-                type: "GET",
-                dataType: "script",
-                async: false,
-                global: false,
-                "throws": true
-            });
-        },
+        var elem, tmp, tag, wrap, contains, j,
+            fragment = context.createDocumentFragment(),
+            nodes = [],
+            i = 0,
+            l = elems.length;
 
-        parseHTML: function (data, context, keepScripts) {
+        for (; i < l; i++) {
+            elem = elems[i];
 
-            if (!data || typeof data !== "string") {
-                return null;
-            }
+            if (elem || elem === 0) {
 
-            if ($.isBoolean(context)) {
-                keepScripts = context;
-                context = false;
-            }
+                // Add nodes directly
+                if (typeof elem === "object") {
+                    // Support: QtWebKit
+                    // hAzzle.merge because push.apply(_, arraylike) throws
+                    hAzzle.merge(nodes, elem.nodeType ? [elem] : elem);
 
-            var parsed = rsingleTag.exec(data),
-                scripts = !keepScripts && [],
+                    // Convert non-html into a text node
+                } else if (!htmlRegEx.test(elem)) {
 
-             // Prevent XSS attack
+                    nodes.push(context.createTextNode(elem));
 
-              context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
+                    // Convert html into DOM nodes
+                } else {
+                    tmp = tmp || fragment.appendChild(context.createElement("div"));
 
-            // Single tag
+                    // Deserialize a standard representation
+                    tag = (tagNameRegEx.exec(elem) || ["", ""])[1].toLowerCase();
+                    wrap = wrapMap[tag] || wrapMap._default;
+                    tmp.innerHTML = wrap[1] + elem.replace(xhtmlRegEx, "<$1></$2>") + wrap[2];
 
-            if (parsed) {
-
-                return [context.createElement(parsed[1])];
-            }
-
-            parsed = $.createHTML([data], context, scripts);
-
-            if (scripts && scripts.length) {
-                $(scripts).remove();
-            }
-
-            return $.merge([], parsed.childNodes);
-        },
-
-   /**
-	* Create the HTML
-    *
-	*/
-        createHTML: function (elems, context, scripts, selection) {
-
-            if (!context) return;
-
-            var elem, tmp, tag, wrap, contains, j,
-                fragment = context.createDocumentFragment(),
-                nodes = [],
-                i = 0,
-                l = elems.length;
-
-            $.each(elems, function (_, elem) {
-
-                if (elem || elem === 0) {
-
-                    // Add nodes directly
-
-                    if (typeof elem === "object") {
-
-                        $.merge(nodes, elem.nodeType ? [elem] : elem);
-
-                    } else if (!rhtml.test(elem)) {
-
-                        nodes.push(context.createTextNode(elem));
-
-                    } else { // Suport for HTML 6
-
-                        tmp = tmp || fragment.appendChild(context.createElement("div"));
-
-                        // Deserialize a standard representation
-						
-                        tag = (rtagName.exec(elem) || ["", ""])[1].toLowerCase();
-                        wrap = wrapMap[tag] || wrapMap._default;
-                        tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, "<$1></$2>") + wrap[2];
-
-
-                        // Descend through wrappers to the right content
-                        j = wrap[0];
-
-                        while (j--) {
-                            tmp = tmp.lastChild;
-                        }
-
-                        $.merge(nodes, tmp.childNodes);
-
-                        tmp = fragment.firstChild;
-
-                        tmp.textContent = "";
-                    }
-                }
-            });
-
-            // Remove wrapper from fragment
-			
-            fragment.textContent = "";
-
-            i = 0;
-
-            while ((elem = nodes[i++])) {
-
-                if (selection && $.indexOf.call(selection, elem) === -1) continue;
-
-                contains = $.contains(elem.ownerDocument, elem);
-
-                // Append to fragment
-
-                tmp = $.getChildren(fragment.appendChild(elem), "script");
-
-                if (contains) {
-
-                    $.Evaluated(tmp);
-                }
-
-                // Capture executables
-				
-                if (scripts) {
-                    j = 0;
-                    while ((elem = tmp[j++])) {
-                        if (rscriptType.test(elem.type || "")) {
-                            scripts.push(elem);
-                        }
-                    }
-                }
-            }
-
-            return fragment;
-        }
-    });
-
-    $.extend($.fn, {
-
-        // Inspiration from jQuery
-
-        manipulateDOM: function (args, callback) {
-
-            // Flatten any nested arrays
-
-            args = concat.apply([], args);
-
-            var fragment, first, scripts, hasScripts, node, doc,
-                i = 0,
-                l = this.length,
-                set = this,
-                iNoClone = l - 1,
-                value = args[0],
-                isFunction = $.isFunction(value);
-
-
-
-            if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
-
-                return this.each(function (index) {
-                    var self = set.eq(index);
-                    if (isFunction) {
-                        args[0] = value.call(this, index, self.html());
-                    }
-                    self.manipulateDOM(args, callback);
-                });
-            }
-
-            if (l) {
-
-                fragment = $.createHTML(args, this[0].ownerDocument, false, this);
-
-                first = fragment.firstChild;
-
-                if (fragment.childNodes.length === 1) {
-                    fragment = first;
-                }
-
-                if (first) {
-                    scripts = $.map($.getChildren(fragment, "script"), disableScript);
-                    hasScripts = scripts.length;
-
-                    while (i < l) {
-
-                        if (i !== iNoClone && !$.nodeType(3, fragment)) {
-
-                            fragment = $.clone(fragment, true, true);
-
-                            if (hasScripts) {
-                                $.merge(scripts, $.getChildren(fragment, "script"));
-                            }
-                        }
-
-                        callback.call(this[i], fragment, i);
-
-                        i++;
+                    // Descend through wrappers to the right content
+                    j = wrap[0];
+                    while (j--) {
+                        tmp = tmp.lastChild;
                     }
 
-                    if (hasScripts) {
-                        doc = scripts[scripts.length - 1].ownerDocument;
+                    hAzzle.merge(nodes, tmp.childNodes);
 
-                        // Reenable scripts
-                        $.map(scripts, restoreScript);
-
-                        // Evaluate executable scripts on first document insertion
-                        for (i = 0; i < hasScripts; i++) {
-
-                            node = scripts[i];
-                            if (rscriptType.test(node.type || "") && !$.data(node, "evaluated") && $.contains(doc, node)) {
-
-                                if (node.src) {
-                                    // Optional AJAX dependency, but won't run scripts if not present
-                                    if ($._evalUrl) {
-                                        $._evalUrl(node.src);
-                                    }
-                                } else {
-                                    $.Evaluated(node.textContent.replace(rcleanScript, ""));
-                                }
-                            }
-                        }
-                    }
+                    // Remember the top-level container
+                    tmp = fragment.firstChild;
+                    tmp.textContent = "";
                 }
             }
-
-            return this;
         }
 
-    });
+        // Remove wrapper from fragment
+        fragment.textContent = "";
 
-})(hAzzle);
+        i = 0;
+		
+        while ((elem = nodes[i++])) {
+
+            if (selection && hAzzle.inArray(elem, selection) !== -1) {
+                continue;
+            }
+
+            contains = hAzzle.contains(elem.ownerDocument, elem);
+
+            // Append to fragment
+            tmp = getAll(fragment.appendChild(elem), "script");
+
+            // Preserve script evaluation history
+            if (contains) {
+                setGlobalEval(tmp);
+            }
+
+            // Capture executables
+            if (scripts) {
+                j = 0;
+                while ((elem = tmp[j++])) {
+                    if (rscriptType.test(elem.type || "")) {
+                        scripts.push(elem);
+                    }
+                }
+            }
+        }
+
+        return fragment;
+    }
+});
+
+
+
+hAzzle.extend(hAzzle.fn, {
+
+
+    manipulateDOM: function (args, callback) {
+
+        // Flatten any nested arrays
+        args = concat.apply([], args);
+
+        var fragment, first, scripts, hasScripts, node, doc,
+            i = 0,
+            l = this.length,
+            set = this,
+            iNoClone = l - 1,
+            value = args[0],
+            isFunction = hAzzle.isFunction(value);
+
+        // We can't cloneNode fragments that contain checked, in WebKit
+        if (isFunction ||
+            (l > 1 && typeof value === "string" &&
+                !hAzzle.support.checkClone && checkedRegEx.test(value))) {
+            return this.each(function (index) {
+                var self = set.eq(index);
+                if (isFunction) {
+                    args[0] = value.call(this, index, self.html());
+                }
+                self.manipulateDOM(args, callback);
+            });
+        }
+
+        if (l) {
+
+            fragment = hAzzle.buildFragment(args, this[0].ownerDocument, false, this);
+
+            first = fragment.firstChild;
+
+            if (fragment.childNodes.length === 1) {
+                fragment = first;
+            }
+
+
+            if (first) {
+                scripts = hAzzle.map(getAll(fragment, "script"), disableScript);
+                hasScripts = scripts.length;
+
+                // Use the original fragment for the last item instead of the first because it can end up
+                // being emptied incorrectly in certain situations (#8070).
+                for (; i < l; i++) {
+                    node = fragment;
+
+                    if (i !== iNoClone) {
+                        node = hAzzle.clone(node, true, true);
+
+                        // Keep references to cloned scripts for later restoration
+                        if (hasScripts) {
+                            // Support: QtWebKit
+                            // hAzzle.merge because push.apply(_, arraylike) throws
+                            hAzzle.merge(scripts, getAll(node, "script"));
+                        }
+                    }
+
+                    callback.call(this[i], node, i);
+                }
+
+            }
+        }
+
+        return this;
+    }
+});
+
+// Mark scripts as having already been evaluated
+
+function setGlobalEval(elems, refElements) {
+    var i = 0,
+        l = elems.length;
+
+    for (; i < l; i++) {
+        hAzzle.data(
+            elems[i], "globalEval", !refElements || hAzzle.data(refElements[i], "globalEval")
+        );
+    }
+}
+
+function getAll(context, tag) {
+    var ret = context.getElementsByTagName ? context.getElementsByTagName(tag || "*") :
+        context.querySelectorAll ? context.querySelectorAll(tag || "*") : [];
+
+    return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
+        hAzzle.merge([context], ret) :
+        ret;
+}
