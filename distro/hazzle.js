@@ -2576,6 +2576,8 @@ hAzzle.extend(hAzzle.fn, {
         }
 
 
+
+
         var arg = arguments[0];
         this.manipulateDOM(arguments, function (elem) {
 
@@ -4103,6 +4105,7 @@ hAzzle.extend(hAzzle.fn, {
         },
 
 
+
         /**
          * Unbind an event from the element
          *
@@ -5281,7 +5284,7 @@ hAzzle.extend(hAzzle.fn, {
 
         // Flatten any nested arrays
 
-        args = concat.apply([], args);
+        args = Array.prototype.concat.apply([], args);
 
         var fragment, first, scripts, hasScripts, node, doc,
             i = 0,
@@ -5766,6 +5769,7 @@ hAzzle.extend(hAzzle.fn, {
                 g: -1,
                 b: -1
             }
+
         },
 
         color: {
