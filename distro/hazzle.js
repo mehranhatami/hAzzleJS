@@ -6578,6 +6578,3 @@ hAzzle.extend ({
     });
 
 })(hAzzle);
-
-
-

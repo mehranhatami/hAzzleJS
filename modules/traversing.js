@@ -108,9 +108,6 @@ hAzzle.extend(hAzzle.fn, {
 
     is: function (sel) {
 
-
-
-
         return !!sel && (
             /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
             hAzzle(sel).index(this[0]) >= 0 :
@@ -174,7 +171,6 @@ hAzzle.extend(hAzzle.fn, {
             return [];
         }
         return hAzzle(this.elems[0]);
-
     },
 
     /**
@@ -228,30 +224,20 @@ hAzzle.extend(hAzzle.fn, {
 
 });
 
+/**
+ * Extending the hAzzle object with some jQuery look-a-like functions.
+ * It's like this so we can be compatible with the jQuery / Zepto API
+ * regarding plugins.
+ */
+ 
 hAzzle.extend(hAzzle, {
-
-    /**
-     * Walks the DOM tree using `method`, returns when an element node is found
-     *
-     * @param{Object} element
-     * @param{String} method
-     * @param{String} sel
-     * @param{Number/Null } nt
-     */
-
-    getClosestNode: function (element, method, sel) {
-        do {
-            element = element[method];
-        } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
-        return element;
-    },
 
     dir: function (elem, dir, until) {
         var matched = [],
             truncate = until !== undefined;
 
-        while ((elem = elem[dir]) && elem.nodeType !== 9) {
-            if (elem.nodeType === 1) {
+        while ((elem = elem[dir]) && !(hAzzle.nodeType(9, elem))) {
+            if (hAzzle.nodeType(1, elem)) {
                 if (truncate && hAzzle(elem).is(hAzzle(until))) {
                     break;
                 }
@@ -265,7 +251,7 @@ hAzzle.extend(hAzzle, {
         var matched = [];
 
         for (; n; n = n.nextSibling) {
-            if (n.nodeType === 1 && n !== elem) {
+            if (hAzzle.nodeType(1, n) && n !== elem) {
                 matched.push(n);
             }
         }
@@ -275,7 +261,7 @@ hAzzle.extend(hAzzle, {
 });
 
 function sibling(cur, dir) {
-    while ((cur = cur[dir]) && cur.nodeType !== 1) {}
+    while ((cur = cur[dir]) && !(hAzzle.nodeType(1, cur)) ) {}
     return cur;
 }
 
@@ -290,7 +276,6 @@ hAzzle.each({
         return sibling(elem, "nextSibling");
     },
     nextUntil: function (elem, i, until) {
-
         return hAzzle.dir(elem, "nextSibling", until);
     },
     nextAll: function (elem) {
