@@ -2,8 +2,6 @@
  * DOM ready
  */
 
-; (function ($) {
-
     var doc = document,
 	    readyList = [],
         readyFired = false,
@@ -34,7 +32,7 @@
 
     // Extend the hAzzle object
 
-    $.extend({
+    hAzzle.extend({
 
     
 	ready: function (callback, context) {
@@ -69,5 +67,3 @@
         }
     }
 });
-
-})(hAzzle);

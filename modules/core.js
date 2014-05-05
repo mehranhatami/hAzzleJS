@@ -678,7 +678,7 @@
 
         create: function (elements, selector) {
 
-            return $.isUndefined(selector) ? hAzzle(elements) : hAzzle(elements).filter(selector);
+            return hAzzle.isUndefined(selector) ? hAzzle(elements) : hAzzle(elements).filter(selector);
         },
 
         /**

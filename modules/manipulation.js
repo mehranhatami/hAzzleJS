@@ -1,5 +1,4 @@
-;
-(function ($) {
+; (function ($) {
 
     var // Short-hand functions we are using
 

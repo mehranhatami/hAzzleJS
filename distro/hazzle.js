@@ -1,12 +1,17 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.4
+ * Version: 0.4d
  * Released under the MIT License.
  *
- * Date: 2014-05-03
+ * Date: 2014-05-05
+ *
+ * Note!! hAzzle are NOT jQuery or Zepto, but loosely following their API's. Some functions will not work at all in hAzzle, and
+ *        others will work differently then you think. In 94% of the cases, hAzzle will work similar to jQuery / Zepto.
+ *        The main reason for this is that hAzzle are using native browser solutions where it's possible. An example is the internal 'Map()'
+ *        function. It's used in closest (), and this function is 45% faster then jQuery / Zepto. But hAzzles internal map () are totally different
+ *        from the aforementioned libraries.
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -15,9 +20,15 @@
 
     var
 
-    /**
-     * Prototype references.
-     */
+    // Use the correct document accordingly with window argument (sandbox)
+
+        document = window.document,
+
+        simpleRegEx = /^.[^:#\[\.,]*$/,
+
+        /**
+         * Prototype references.
+         */
 
         ArrayProto = Array.prototype,
 
@@ -42,11 +53,6 @@
             }
         },
 
-        cached = [],
-
-        // Selector caching
-        cache = [],
-
         // Different nodeTypes we are checking against for faster speed
 
         nodeTypes = {},
@@ -65,33 +71,30 @@
 
     hAzzle.fn = hAzzle.prototype = {
 
+        // Start with an empty selector
+
+        selector: "",
+
+        // The default length of a hAzzle object is 0
+
+        length: 0,
+
         init: function (sel, ctx) {
+
             var elems, i;
-            if (sel instanceof hAzzle) return sel;
+
             if (hAzzle.isString(sel)) {
 
-                if (cache[sel] && !ctx) {
+                // HTML
 
-                    // Backup the "elems stack" before we loop through
+                if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    this.elems = elems = cache[sel];
+                    this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : document, true);
 
-                    // Copy the stack over to the hAzzle object so we can access the Protoype
+                } else {
 
-                    i = this.length = elems.length;
-
-                    while (i--) {
-
-                        this[i] = elems[i];
-                    }
-
-                    // Return the hAzzle Object
-
-                    return this;
+                    this.elems = hAzzle.select(sel, ctx);
                 }
-
-
-                this.elems = cache[sel] = hAzzle.select(sel, ctx);
 
             } else {
 
@@ -119,9 +122,11 @@
                     this.elems = hAzzle.unique(sel.filter(hAzzle.isElement));
 
                 } else {
+
                     // Object
 
                     if (hAzzle.isObject(sel)) {
+
                         return this.elems = [sel], this.length = 1, this[0] = sel, this;
                     }
 
@@ -131,14 +136,24 @@
                 }
             }
 
-            elems = this.elems,
-            i = this.length = elems.length;
+            return this.loopHole();
+        },
+
+        /**
+         * Setting up the "elems stack" and adding 'this[x]' and length
+         * to the hAzzle object
+         */
+
+        loopHole: function () {
+
+            var elems = this.elems,
+                i = this.length = elems.length;
 
             while (i--) {
 
                 this[i] = elems[i];
-
             }
+
             return this;
         },
 
@@ -154,54 +169,56 @@
         },
 
         /**
-         * Filter element collection
+         * Filter the collection to contain only items that match the CSS selector
          *
-         * @param {String|Function} sel
+         * @param {String|nodeType|Function} sel
          * @return {Object}
          *
          */
 
-        find: function (selector) {
+        filter: function (sel, not) {
 
-            var elements;
-            if (hAzzle.isString(selector)) {
-                if (this.length === 1) {
-                    elements = hAzzle.select(selector, this.elems)
-                } else {
-                    elements = this.elems.reduce(function (elements, element) {
-                        return elements.concat(hAzzle.select(selector, element))
-                    }, [])
-                }
-            } else {
-                var _ = this;
-                elements = hAzzle(selector).filter(function () {
-                    var node = this;
-                    return _.elems.some.call(_, function (parent) {
-                        return hAzzle.contains(parent, node);
-                    });
-                });
+            // Do nothing if no selector
+
+            if (typeof sel === 'undefined') {
+
+                return this;
             }
-            return hAzzle(elements)
-        },
 
-        /**
-         * Filter the collection to contain only items that match the CSS selector
-         */
+            // As default not === false, for the :not() function it is set to false
 
-        filter: function (sel, inverse) {
+            not = not || false;
 
-            if (typeof sel === 'function') {
-                var fn = sel;
-                return hAzzle(this.elems.filter(function (element, index) {
-                    return fn.call(element, element, index) !== (inverse || false);
+            // If we are dealing with a function
+
+            if (hAzzle.isFunction(sel)) {
+                return hAzzle(hAzzle.grep(this.elems, function (elem, i) {
+                    return !!sel.call(elem, i, elem) !== not;
                 }));
             }
-            if (sel && sel[0] === '!') { // ! === not
-                sel = sel.substr(1);
-                inverse = true;
+
+            // nodeType
+
+            if (sel.nodeType) {
+                return hAzzle(hAzzle.grep(this.elems, function (elem) {
+                    return (elem === sel) !== not;
+                }));
             }
-            return hAzzle(this.elems.filter(function (element) {
-                return hAzzle.matches(element, sel) !== (inverse || false);
+
+            // String
+
+            if (typeof sel === "string") {
+
+                if (simpleRegEx.test(sel)) {
+
+                    return hAzzle(hAzzle.filter(this.elems, sel, not));
+                }
+
+                sel = hAzzle.filter(sel, this.elems);
+            }
+
+            return hAzzle(hAzzle.grep(this.elems, function (elem) {
+                return (Array.prototype.indexOf.call(sel, elem) >= 0) !== not;
             }));
         },
 
@@ -220,24 +237,23 @@
         },
 
         /**
-			 * Fetch property from the "elems" stack
-			 *
-			 * @param {String} prop
-			 * @param {Number|Null} nt
-			 * @return {Array}
-			 *
-			 * 'nt' are used if we need to exclude certain nodeTypes.
-	
-			 *
-			 * Example: pluck('parentNode'), selector, 11)
-			 *
-			 * In the example above, the parentNode will only be returned if
-			 *  nodeType !== 11
-			 *
-			 */
+         * Fetch property from the "elems" stack
+         *
+         * @param {String} prop
+         * @param {Number|Null} nt
+         * @return {Array}
+         *
+         * 'nt' are used if we need to exclude certain nodeTypes.
+         *
+         * Example: pluck('parentNode'), selector, 11)
+         *
+         * In the example above, the parentNode will only be returned if
+         *  nodeType !== 11
+         *
+         */
 
-        pluck: function (property, nt) {
-            return hAzzle.pluck(this.elems, property, nt);
+        pluck: function (prop, nt) {
+            return hAzzle.pluck(this.elems, prop, nt);
         },
 
         /**
@@ -248,35 +264,42 @@
          * @return {Array}
          */
 
-        put: function (property, value, nt) {
-            return hAzzle.put(this.elems, property, value, nt);
+        put: function (prop, value, nt) {
+            return hAzzle.put(this.elems, prop, value, nt);
         },
 
         /**
-         * Get the Nth element in the "elems" stack, or all elements
+         * Get the Nth element in the "elems" stack, OR all elements
          *
          * @param {Number} num
          * @return {object}
          */
 
-        get: function (index) {
-            return arguments.length ? this.elems[0 > index ? this.elems.length + index : index] : this.elems.slice();
+        get: function (num) {
+
+            return num != null ?
+
+                // Return just the one element from the set
+
+                this.elems[0 > num ? this.elems.length + num : num] :
+
+                // Return all the elements in the 'elems stack'
+
+                this.elems;
         },
 
         /**
          * Returns a new array with the result of calling callback on each element of the array
+         * NOTE!! Nothing to do with the jQuery / Zepto API
          */
 
-        map: function (callback) {
-            var results = [],
-                elems = this.elems,
+        map: function (fn) {
+            var elems = this.elems,
                 i = 0,
                 len = elems.length;
-
-            for (; i < len; i++) {
-                results.push(callback(elems[i]));
+            for (i = len; i--;) {
+                return hAzzle(fn(elems[i]));
             }
-            return hAzzle(results);
         },
 
         /**
@@ -290,6 +313,7 @@
         /**
          *  Concatenates an array to the 'elems stack'
          */
+
         concat: function () {
             return hAzzle(concat.apply(this.elems, slice.call(arguments).map(function (arr) {
                 return arr instanceof hAzzle ? arr.elements : arr;
@@ -333,6 +357,11 @@
 
         /**
          * Reduce the number of elems in the "elems" stack
+         *
+         * I know this one is ugly as hell, but the other option - to
+         * use native 'prototype reduce' are too slow. So we using an
+         * modified 'shim' solution
+         *
          */
 
         reduce: function (callback /*, initialValue*/ ) {
@@ -358,6 +387,10 @@
             return value;
         },
 
+        /**
+         * Make the 'elems stack' compact, sorted by given selector
+         */
+
         compact: function (a) {
             return this.filter(a, function (value) {
                 return !!value;
@@ -378,13 +411,28 @@
          */
 
         eq: function (index) {
-            if (arguments) {
-                return hAzzle(this.get(index));
+
+            if (index === null) {
+
+                return hAzzle()
+
             }
+
+            return hAzzle(this.get(index));
+
         },
 
+        /**
+         * Retrieve all the elements contained in the hAzzle set, as an array.
+         *
+         * Note! This function is here just to be compatible with jQuery / Zepto API.
+         * The 'elems stack' are already an array, so we return only the
+         * stack without any magic slicing
+         *
+         */
+
         toArray: function () {
-            return slice.call(this);
+            return this.elems;
         }
 
     };
@@ -418,16 +466,44 @@
         return target;
     };
 
-
     hAzzle.extend({
+
+        toObject: function (list, value) {
+
+            var obj = {};
+
+            hAzzle.each(list, function (index, itm) {
+                obj[itm] = value;
+            });
+
+            return obj;
+
+        },
+
+        UTF8encode: function (s) {
+            return unescape(encodeURIComponent(s));
+        },
+
+        UTF8decode: function (s) {
+            return decodeURIComponent(escape(s));
+        },
+
+        /**
+         * Convert input to currency (two decimal fixed number)
+         */
+
+        toCurrency: function (i) {
+            i = parseFloat(i, 10).toFixed(2);
+            return (i == 'NaN') ? '0.00' : i;
+        },
 
         each: function (obj, callback, args) {
             var value,
                 i = 0,
-                length = obj.length,
-                isArray = hAzzle.isArrayLike(obj);
+                length = obj.length;
 
-            if (isArray) {
+            if (obj.length === +obj.length) {
+
                 for (; i < length; i++) {
                     value = callback.call(obj[i], i, args ? args : obj[i]);
 
@@ -436,6 +512,7 @@
                     }
                 }
             } else {
+
                 for (i in obj) {
                     value = callback.call(obj[i], i, args ? args : obj[i]);
 
@@ -444,13 +521,17 @@
                     }
                 }
             }
-
-
             return obj;
         },
 
-        type: function (val) {
-            return toString.call(val);
+        type: function (obj) {
+
+            if (obj == null) {
+
+                return obj + "";
+            }
+
+            return toString.call(obj);
         },
 
         is: function (kind, obj) {
@@ -517,6 +598,9 @@
         },
 
         isNumeric: function (obj) {
+            // parseFloat NaNs numeric-cast false positives (null|true|false|"")
+            // ...but misinterprets leading-number strings, particularly hex literals ("0x...")
+            // subtraction forces infinities to NaN
             return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
         },
 
@@ -528,28 +612,26 @@
             return true;
         },
 
+        /**
+         * Returns true if the given string or list is null, undefined or empty (zero length).
+         * If the second argument is true, the function will ignore whitespace in the string
+         */
+
+        isEmpty: function (str, ignoreWhitespace) {
+            return str == null || !str.length || (ignoreWhitespace && /^\s*$/.test(str));
+        },
+
+        /**
+         * Checks if an string is blank
+         */
+
+        isBlank: function (str) {
+
+            hAzzle.trim(str).length === 0;
+
+        },
+
         isArray: Array.isArray,
-
-        isArrayLike: function (obj) {
-
-            if (obj === null || hAzzle.isWindow(obj)) {
-                return false;
-
-            }
-
-            var length = obj.length;
-
-            if (obj.nodeType === 1 && length) {
-                return true;
-            }
-
-            return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
-                typeof length === 'number' && length > 0 && (length - 1) in obj;
-        },
-
-        likeArray: function (obj) {
-            return typeof obj.length === 'number';
-        },
 
         isWindow: function (obj) {
             return obj && obj.document && obj.location && obj.alert && obj.setInterval;
@@ -594,8 +676,9 @@
          * Creates a new hAzzle instance applying a filter if necessary
          */
 
-        create: function (elements, sel) {
-            return typeof sel === 'undefined' ? hAzzle(elements) : hAzzle(elements).filter(sel);
+        create: function (elements, selector) {
+
+            return hAzzle.isUndefined(selector) ? hAzzle(elements) : hAzzle(elements).filter(selector);
         },
 
         /**
@@ -641,7 +724,6 @@
                 } else {
 
                     return elem[prop];
-
                 }
 
             });
@@ -724,12 +806,12 @@
 
         inArray: function (elem, arr, i) {
 
-            var iOff = (function (find, i /*opt*/ ) {
+            var iOff = (function (_find, i /*opt*/ ) {
                 if (typeof i === 'undefined') i = 0;
                 if (i < 0) i += this.length;
                 if (i < 0) i = 0;
                 for (var n = this.length; i < n; i++)
-                    if (i in this && this[i] === find) {
+                    if (i in this && this[i] === _find) {
                         return i;
                     }
                 return -1;
@@ -737,17 +819,17 @@
             return arr === null ? -1 : iOff.call(arr, elem, i);
         },
 
+
         /**
-         *  Return or compute a unique ID for the element
+         *  Global ID for objects
+         *  Return or compute a unique ID
          *
          * @param{Object} elem
          * @return{Object}
          */
 
         getUID: function (elem) {
-            if (hAzzle.isDefined(elem)) {
-                return elem.hAzzle_id || (elem.hAzzle_id = uid.next());
-            }
+            return elem && (elem.hAzzle_id || (elem.hAzzle_id = uid.next()));
         },
 
         /**
@@ -774,25 +856,36 @@
          * Merge two arrays
          */
 
-      merge: function( first, second ) {
-		var len = +second.length,
-			j = 0,
-			i = first.length;
+        merge: function (first, second) {
+            var len = +second.length,
+                j = 0,
+                i = first.length;
 
-		for ( ; j < len; j++ ) {
-			first[ i++ ] = second[ j ];
-		}
+            for (; j < len; j++) {
+                first[i++] = second[j];
+            }
 
-		first.length = i;
+            first.length = i;
 
-		return first;
-	},
+            return first;
+        },
+
+        /**
+         * Return the elements nodeName
+         */
         nodeName: function (elem, name) {
             return elem.nodeName && elem.nodeName.toLowerCase() === name.toLowerCase();
         },
 
         /**
-         * camelCase CSS string
+         * Convert dashed to camelCase
+         *
+         * I know jQuery checking for Microsoft missing prefix, but we are in
+         * 2014, so MS should have fixed their prefix by now.
+         *
+         * Angular doesn't have a check for it, so I guess it's fixed.
+         * Shoot me if I'm wrong!!
+         *
          *
          * @param{String} str
          * @return{String}
@@ -801,8 +894,8 @@
         camelCase: function (str) {
 
             return str.replace(/-(.)/g, function (m, m1) {
-                return m1.toUpperCase()
-            })
+                return m1.toUpperCase();
+            });
         },
 
         map: function (elems, callback, arg) {
@@ -819,7 +912,7 @@
                 for (i in elems) {
                     value = callback(elems[i], i, arg);
 
-                    if (value != null) {
+                    if (value !== null) {
                         ret.push(value);
                     }
                 }
@@ -836,17 +929,20 @@
                 // Go through every key on the object,
             }
 
-
             // Flatten any nested arrays
+
             return concat.apply([], ret);
         },
+
+        /**
+         * Check if it's an XML or HTML document
+         */
 
         isXML: function (elem) {
             return elem && (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
         },
 
         /*
-
          * Finds the elements of an array which satisfy a filter function.
          */
 
@@ -866,27 +962,23 @@
             }
             return ret;
         },
+        // Nothing
+        noop: function () {},
 
-       makeArray: function (arr, results) {
+        makeArray: function (arr, results) {
 
-          var  a = new Object(arr);
-		  	  ret = results || [];
+            var a = new Object(arr),
+                ret = results || [];
 
-		if ( arr !== null ) {
-			if ( hAzzle.isArrayLike( a ) ) {
-				hAzzle.merge( ret, hAzzle.isString(arr) ? [ arr ] : arr);
-			} else {
-				push.call( ret, arr );
-			}
-		}
+            if (arr !== null) {
+                if (isArraylike(a)) {
+                    hAzzle.merge(ret, hAzzle.isString(arr) ? [arr] : arr);
+                } else {
+                    push.call(ret, arr);
+                }
+            }
 
-		return ret;
-
-        },
-        // A function that performs no operations.
-
-        noop: function () {
-
+            return ret;
         },
 
         // Invoke a method (with arguments) on every item in a collection.
@@ -898,6 +990,10 @@
                 return (isFunc ? method : value[method]).apply(value, args);
             });
         },
+
+        /**
+         * Throttle through a function
+         */
 
         throttle: function (func, wait, options) {
             var context, args, result,
@@ -929,22 +1025,7 @@
                     timeout = setTimeout(later, remaining);
                 }
                 return result;
-            }
-        },
-
-        // Delays a function for the given number of milliseconds, and then calls
-        // it with the arguments supplied.
-        delay: function (func, wait) {
-            var args = slice.call(arguments, 2);
-            return setTimeout(function () {
-                return func.apply(null, args);
-            }, wait);
-        },
-
-        // Defers a function, scheduling it to run after the current call stack has
-        // cleared.
-        defer: function (func) {
-            return hAzzle.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
+            };
         }
 
     });
@@ -959,8 +1040,9 @@
         };
     });
 
-
-    // Powerfull native functions for dealing with the 'elems stack'
+    /**
+     * Populate some powerfull native functions for dealing with the 'elems stack'
+     */
 
     hAzzle.each(['pop', 'reverse', 'shift', 'splice', 'unshift'], function () {
         var method = ArrayProto[this];
@@ -969,6 +1051,26 @@
         };
     });
 
+
+    function isArraylike(obj) {
+
+        if (obj === null || hAzzle.isWindow(obj)) {
+            return false;
+
+        }
+
+        var length = obj.length;
+
+        if (obj.nodeType === 1 && length) {
+            return true;
+        }
+
+        return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
+            typeof length === 'number' && length > 0 && (length - 1) in obj;
+    }
+
+
+
     // Expose hAzzle to the global object
 
     window['hAzzle'] = hAzzle;
@@ -976,22 +1078,20 @@
 })(window);
 
 
-// DOM Ready
-
-
-;
-(function ($) {
+/*!
+ * DOM ready
+ */
 
     var doc = document,
-        readyList = [],
+	    readyList = [],
         readyFired = false,
         readyEventHandlersInstalled = false;
 
     // call this when the document is ready
     // this function protects itself against being called more than once
-
+   
     function ready() {
-
+   
         if (!readyFired) {
             // this must be set to true before we start calling callbacks
             readyFired = true;
@@ -1002,7 +1102,7 @@
                 // this event loop finishes so all handlers will still execute
                 // in order and no new ones will be added to the readyList
                 // while we are processing the list
-
+				
                 readyList[i].fn.call(window, readyList[i].ctx);
             }
             // allow any closures held by these functions to free
@@ -1012,141 +1112,134 @@
 
     // Extend the hAzzle object
 
-    $.extend({
+    hAzzle.extend({
 
+    
+	ready: function (callback, context) {
+         
+		 // context are are optional, but document by default
+	     
+		 context = context || doc;
+	
+		if (readyFired) {
+            setTimeout(function() { callback(context); }, 1);
+            return;
+        } else {
 
-        ready: function (callback, context) {
+            // add the function and context to the list
 
-            // context are are optional, but document by default
+            readyList.push({fn: callback, ctx: context});
+        }
+		// if document already ready to go, schedule the ready function to run
+        if (doc.readyState === "complete") {
+			
+            setTimeout(ready, 1);
 
-            context = context || doc;
+		} else if (!readyEventHandlersInstalled) {
 
-            if (readyFired) {
-                setTimeout(function () {
-                    callback(context);
-                }, 1);
-                return;
-            } else {
-
-                // add the function and context to the list
-
-                readyList.push({
-                    fn: callback,
-                    ctx: context
-                });
-            }
-            // if document already ready to go, schedule the ready function to run
-            if (doc.readyState === "complete") {
-
-                setTimeout(ready, 1);
-
-            } else if (!readyEventHandlersInstalled) {
-
-                // otherwise if we don't have event handlers installed, install them
+            // otherwise if we don't have event handlers installed, install them
 
                 doc.addEventListener("DOMContentLoaded", ready, false);
                 // backup is window load event
                 window.addEventListener("load", ready, false);
 
-                readyEventHandlersInstalled = true;
-            }
+            readyEventHandlersInstalled = true;
         }
-    });
-
-})(hAzzle);
-
+    }
+});
 
 // Matches
 
-;
-(function ($) {
 
-    var doc = document,
-        cached = [],
-        ghost = doc.createElement('div');
+var matches = hAzzle.prefix('matchesSelector', document.createElement('div'));
 
+hAzzle.extend(hAzzle.fn, {
 
-    // Fall back to performing a selector if the matchesSelector are not supported
+    /**
+     * Find an element in the collection
+     *
+     * @param {String|Object} selector
+     * @return {Object}
+     *
+     */
 
-    function fallback(sel, element) {
+    find: function (selector) {
 
-        var match;
-
-        if (!element.parentNode) {
-
-            ghost.appendChild(element);
-        }
-
-        match = $.indexOf($.select(sel, element.parentNode), element) >= 0;
-
-        if (element.parentNode === ghost) {
-            ghost.removeChild(element);
-        }
-        return match;
-    }
-
-
-
-    $.extend($, {
-
-        /** 
-         * Returns a predicate for checking whether an object has a given set of `key:value` pairs.
-         */
-
-        matches: function (element, sel) {
-
-            // Make sure that attribute selectors are quoted
-
-            //sel = sel.replace(/=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g, "='$1']");
-
-
-            if (!element || !$.isElement(element) || !sel) {
-                return false;
+        var elements;
+        if (hAzzle.isString(selector)) {
+            if (this.length === 1) {
+	                elements = hAzzle.select(selector, this.elems);
+            } else {
+                elements = this.elems.reduce(function (elements, element) {
+                    return elements.concat(hAzzle.select(selector, element));
+                }, []);
             }
-
-            if (sel['nodeType']) {
-                return element === sel;
-            }
-
-            if (sel instanceof $) {
-                return sel.elems.some(function (sel) {
-                    return $.matches(element, sel);
+        } else {
+            var _ = this;
+            elements = hAzzle(selector).filter(function () {
+                var node = this;
+                return _.elems.some.call(_, function (parent) {
+                    return hAzzle.contains(parent, node);
                 });
-            }
+            });
+        }
+        return hAzzle(elements);
+    }
+});
 
-            if (element === doc) {
-                return false;
-            }
+hAzzle.extend(hAzzle, {
 
-            var matchesSelector = $.prefix('matchesSelector', ghost);
+    filter: function (expr, elems, not) {
 
-            if (matchesSelector) {
-                // IE9 supports matchesSelector, but doesn't work on orphaned elems / disconnected nodes
+        if (not) {
+            expr = ":not(" + expr + ")";
+        }
+        return elems.length === 1 ?
+            hAzzle.matchesSelector(elems[0], expr) ? [elems[0]] : [] :
+            hAzzle.matches(expr, elems);
+    },
 
-                var supportsOrphans = cached[sel] ? cached[sel] : cached[sel] = matchesSelector.call(ghost, 'div');
+    matches: function (expr, elements) {
+        return hAzzle.find(expr, null, null, elements);
+    },
+    matchesSelector: function (elem, expr) {
+        return matches.call(elem, expr);
+    },
 
-                if (supportsOrphans) {
+    find: function (selector, context, results, seed) {
+        var elem, nodeType,
+            i = 0;
 
-                    // Avoid document fragment
+        results = results || [];
+        context = context || document;
 
-                    if (!$.nodeType(11, element)) {
+        // Same basic safeguard as Sizzle
+        if (!selector || typeof selector !== "string") {
+            return results;
+        }
 
-                        return matchesSelector.call(element, sel);
-                    }
+        // Early return if context is not an element or document
+        if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+            return [];
+        }
 
-                } else { // For IE9 or other browsers who fail on orphaned elems, we walk the hard way !! :)
-
-                    return fallback(sel, element);
+        if (seed) {
+            while ((elem = seed[i++])) {
+                if (hAzzle.matchesSelector(elem, selector)) {
+                    results.push(elem);
                 }
             }
+        } else {
 
-            return fallback(sel, element);
+            hAzzle.merge(results, context.querySelectorAll(selector));
         }
-    });
 
-})(hAzzle);
+        return results;
+    }
+});
 
 // Selector engine
+
 
 ;
 (function ($) {
@@ -1197,14 +1290,6 @@
      * @return {Array}
      */
 
-    function containsClass(el, klass) {
-        if (hAzzle.support.classList) {
-            return el.classList.contains(klass);
-        } else {
-            return hAzzle.contains(('' + el.className).split(' '), klass);
-        }
-    }
-
     hAzzle.extend({
 
         pseudos: {
@@ -1224,7 +1309,7 @@
             },
             checked: function () {
                 var nodeName = this.nodeName.toLowerCase();
-                return (nodeName === "input" && !!this.checked) || (nodeName === "option" && !!this.selected);
+                return (nodeName === "input" && !! this.checked) || (nodeName === "option" && !! this.selected);
             },
             parent: function () {
                 return this.parentNode;
@@ -1284,7 +1369,7 @@
                 return (/input|select|textarea|button/i).test(this.nodeName);
             },
             focus: function () {
-                return this === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(this.type || this.href || ~this.tabIndex);
+                return this === document.activeElement && (!document.hasFocus || document.hasFocus()) && !! (this.type || this.href || ~this.tabIndex);
             }
         },
 
@@ -1342,11 +1427,7 @@
                 els = ctx[byClass](_class);
             }
 
-            if (mode === "html" && sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
-
-                els = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : doc, true);
-
-            } else {
+            
 
                 // Pseudos
 
@@ -1373,7 +1454,7 @@
 
                     els = this.qsa(sel, ctx);
                 }
-            }
+           
 
             return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
         },
@@ -1401,676 +1482,1451 @@
     });
 })(hAzzle);
 
+// Traversing
 
-// Data
+/*!
+ * Traversing.js
+ */
+var cached = [],
 
-;
-(function ($) {
+    guaranteedUnique = {
+        children: true,
+        contents: true,
+        next: true,
+        prev: true
+    },
 
-    var isUndefined = $.isUndefined,
-        html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
+    slice = Array.prototype.slice;
 
-    // Extend the hAzzle object
+hAzzle.extend(hAzzle.fn, {
 
-    $.extend({
+    /**
+     * Get the  element that matches the selector, beginning at the current element and progressing up through the DOM tree.
+     *
+     * @param {String} sel
+     * @return {Object}
+     */
 
-        _data: {},
+    closest: function (sel, ctx) {
+        return this.map(function (elem) {
+            if (hAzzle.nodeType(1, elem) && elem !== ctx && !hAzzle.isDocument(elem) && hAzzle.matches(elem, typeof sel === 'object' ? hAzzle(sel) : sel)) {
+                return elem;
+            }
+            do {
+                elem = elem['parentNode'];
+            } while (elem && ((sel && !hAzzle.matches(sel, elem)) || !hAzzle.isElement(elem)));
+            return elem;
+        });
+    },
+
+    /** Determine the position of an element within the matched set of elements
+     *
+     * @param {string} elem
+     * @param {return} Object
+     */
+
+    index: function (elem) {
+        return elem ? this.indexOf(hAzzle(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
+    },
+
+    /**
+     *  Pick elements by tagNames from the "elems stack"
+     *
+     * @param {string} tag
+     * @return {Object}
+     */
+    tags: function (tag) {
+        return this.map(function (els) {
+            if (els.tagName.toLowerCase() === tag && hAzzle.nodeType(1, els)) {
+                return els;
+            }
+        });
+    },
+
+    /**
+     * Adds one element to the set of matched elements.
+     *
+     * @param {String} sel
+     * @param {String} ctx
+     * @return {Object}
+     */
+
+    add: function (sel, ctx) {
+        return this.concat(hAzzle(sel, ctx).elems);
+    },
+
+    /**
+     * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
+     */
+    has: function (target) {
+
+        var targets = hAzzle(target, this),
+            i = 0,
+            l = targets.length;
+
+        return this.filter(function () {
+            for (; i < l; i++) {
+                if (hAzzle.contains(this, targets[i])) {
+                    return true;
+                }
+            }
+        });
+    },
+
+    /**
+     * Remove elements from the set of matched elements.
+     *
+     * @param {String} sel
+     * @return {Object}
+     *
+     */
+
+    not: function (sel) {
+        return this.filter(sel, true);
+    },
+
+    /**
+     * Check if the first element in the element collection matches the selector
+     *
+     * @param {String|Object} sel
+     * @return {Boolean}
+     */
+
+    is: function (sel) {
+
+
+
+
+        return !!sel && (
+            /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
+            hAzzle(sel).index(this[0]) >= 0 :
+            this.filter(sel).length > 0);
+    },
+
+    /**
+     * Get immediate parents of each element in the collection.
+     * If CSS selector is given, filter results to include only ones matching the selector.
+     *
+     * @param {String} sel
+     * @return {Object}
+     */
+
+    parent: function (sel) {
+        return hAzzle.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
+    },
+    /**
+     * Return an sequense of elements from the 'elems stack', plucked
+     * by the given numbers
+     *
+     * Example:
+     *
+     * hAzzle('p').collection([1,6, 9])
+     *
+     * Outputs elem 1,6, 9 from the stack
+     *
+     * @param {array} count
+     * @return {object}
+     *
+     */
+
+    collection: function (count) {
+
+        if (!hAzzle.isArray(count)) {
+            return [];
+        }
+
+        var holder = [],
+            i = count.length;
+        while (i--) {
+            holder.push(this.elems[count[i]]);
+        }
+
+        return hAzzle(holder) || [];
+    },
+
+    /**
+     * Reduce the set of matched elements to the first x in the set.
+     */
+
+    first: function (count) {
+
+        if (count) {
+
+            return this.slice(0, count);
+        }
+
+        if (count < 0) {
+
+            return [];
+        }
+        return hAzzle(this.elems[0]);
+
+    },
+
+    /**
+     * Reduce the set of matched elements to the last one in the set.
+     */
+
+    last: function (count) {
+        var elems = this.elems;
+
+        if (count) {
+            return this.slice(Math.max(elems.length - count, 0));
+        }
+        return hAzzle(elems[elems.length - 1]);
+    },
+
+    // Returns everything but the first entry of the array
+
+    tail: function (count) {
+        return this.slice((count === null) ? 1 : count);
+    },
+
+    contents: function () {
+        return this.map(function (elem) {
+            return elem.contentDocument || slice.call(elem.childNodes);
+        });
+    },
+
+    /**
+     * Return the element's siblings
+     * @param {String} sel
+     * @return {Object}
+     */
+
+    siblings: function (sel) {
+
+        var siblings = [];
+
+        if (!cached[sel]) {
+            this.each(function (_, elem) {
+                hAzzle.each(slice.call((elem.parentNode || {}).childNodes), function (_, child) {
+                    if (hAzzle.isElement(child) && hAzzle.nodeType(1, child) && child !== elem) {
+                        siblings.push(child);
+                    }
+                });
+            });
+            cached[sel] = siblings;
+        }
+
+        return hAzzle.create(cached[sel], sel);
+    }
+
+});
+
+hAzzle.extend(hAzzle, {
+
+    /**
+     * Walks the DOM tree using `method`, returns when an element node is found
+     *
+     * @param{Object} element
+     * @param{String} method
+     * @param{String} sel
+     * @param{Number/Null } nt
+     */
+
+    getClosestNode: function (element, method, sel) {
+        do {
+            element = element[method];
+        } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
+        return element;
+    },
+
+    dir: function (elem, dir, until) {
+        var matched = [],
+            truncate = until !== undefined;
+
+        while ((elem = elem[dir]) && elem.nodeType !== 9) {
+            if (elem.nodeType === 1) {
+                if (truncate && hAzzle(elem).is(hAzzle(until))) {
+                    break;
+                }
+                matched.push(elem);
+            }
+        }
+        return matched;
+    },
+
+    sibling: function (n, elem) {
+        var matched = [];
+
+        for (; n; n = n.nextSibling) {
+            if (n.nodeType === 1 && n !== elem) {
+                matched.push(n);
+            }
+        }
+
+        return matched;
+    }
+});
+
+function sibling(cur, dir) {
+    while ((cur = cur[dir]) && cur.nodeType !== 1) {}
+    return cur;
+}
+
+hAzzle.each({
+    parents: function (elem) {
+        return hAzzle.dir(elem, "parentNode");
+    },
+    parentsUntil: function (elem, i, until) {
+        return hAzzle.dir(elem, "parentNode", until);
+    },
+    next: function (elem) {
+        return sibling(elem, "nextSibling");
+    },
+    nextUntil: function (elem, i, until) {
+
+        return hAzzle.dir(elem, "nextSibling", until);
+    },
+    nextAll: function (elem) {
+        return hAzzle.dir(elem, "nextSibling");
+    },
+    prev: function (elem) {
+        return sibling(elem, "previousSibling");
+    },
+    prevAll: function (elem) {
+        return hAzzle.dir(elem, "previousSibling");
+    },
+    prevUntil: function (elem, i, until) {
+        return hAzzle.dir(elem, "previousSibling", until);
+    },
+	
+    children: function (elem) {
+        return hAzzle.sibling(elem.firstChild);
+    }
+}, function (name, fn) {
+    hAzzle.fn[name] = function (until, selector) {
+
+        var matched = hAzzle.map(this, fn, until);
+
+        if (name.slice(-5) !== "Until") {
+            selector = until;
+        }
+
+        if (selector && typeof selector === "string") {
+            matched = hAzzle.filter(selector, matched);
+        }
+
+        if (this.length > 1) {
+            // Remove duplicates
+            if (!guaranteedUnique[name]) {
+                hAzzle.unique(matched);
+            }
+
+            // Reverse order for parents* and prev-derivatives
+            if (/^(?:parents|prev(?:Until|All))/.test(name)) {
+                matched.reverse();
+            }
+        }
+        return $(matched);
+    };
+});
+
+// Manipulation
+
+; (function ($) {
+
+    var // Short-hand functions we are using
+
+        isFunction = $.isFunction,
+        isUndefined = $.isUndefined,
+        isDefined = $.isDefined,
+        isString = $.isString,
+
+        doc = document,
+
+        // Boolean attributes and elements
+
+        boolean_attr = {
+            'multiple': true,
+            'selected': true,
+            'checked': true,
+            'disabled': true,
+            'readOnly': true,
+            'required': true,
+            'open': true
+        },
+
+        boolean_elements = {
+            'input': true,
+            'select': true,
+            'option': true,
+            'textarea': true,
+            'button': true,
+            'form': true,
+            'details': true
+        },
+
+        // Cross-browser compatible variabels
+
+        optSelected,
+        optDisabled,
+        radioValue,
+        checkOn,
+
+        // RegEx we are using
+
+        rtagName = /<([\w:]+)/,
+
+        cached = [],
+
+        wrapMap = {
+
+            'option': [1, '<select multiple="multiple">', '</select>'],
+
+            'thead': [1, '<table>', '</table>'],
+            'col': [2, '<table><colgroup>', '</colgroup></table>'],
+            'tr': [2, '<table><tbody>', '</tbody></table>'],
+            'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+            '_default': [0, "", ""]
+        };
+
+    wrapMap.optgroup = wrapMap.option;
+    wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
+    wrapMap.th = wrapMap.td;
+
+    // Support check
+
+    (function () {
+
+        var input = doc.createElement("input"),
+            select = doc.createElement("select"),
+            opt = select.appendChild(doc.createElement("option"));
+
+        optSelected = opt.selected;
+
+        select.disabled = true;
+        optDisabled = !opt.disabled;
+
+        input.type = "checkbox";
+
+        checkOn = input.value !== "";
+
+        input.value = "t";
+        input.type = "radio";
+
+        radioValue = input.value === "t";
+    }());
+
+    // insertAdjacentHTML
+
+    function iAh(elem, direction, html) {
+        if (elem && NodeMatching(elem)) {
+            elem.insertAdjacentHTML(direction, $.trim(html));
+        }
+    }
+
+    function getBooleanAttrName(element, name) {
+        // check dom last since we will most likely fail on name
+        var booleanAttr = boolean_attr[name.toLowerCase()];
+        // booleanAttr is here twice to minimize DOM access
+        return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
+    }
+
+    /**
+     * Check if the elem matches the current nodeType
+     */
+
+    function NodeMatching(elem) {
+        return $.nodeType(1, elem) || $.nodeType(9, elem) || $.nodeType(11, elem) ? true : false;
+    }
+
+    // Global
+
+    $.extend($, {
+
+        // Get the properties right
+
+        propMap: {
+
+            "for": "htmlFor",
+            "class": "className"
+        },
+
+        Hooks: {
+
+            'SELECT': function (elem) {
+
+                var option,
+                    options = elem.options,
+                    index = elem.selectedIndex,
+                    one = elem.type === "select-one" || index < 0,
+                    values = one ? null : [],
+                    value,
+                    max = one ? index + 1 : options.length,
+                    i = index < 0 ?
+                    max :
+                    one ? index : 0;
+
+                for (; i < max; i++) {
+
+                    option = options[i];
+
+                    if ((option.selected || i === index) && !option.disabled &&
+                        (optDisabled ? !option.disabled : option.getAttribute("disabled") === null) &&
+                        (!option.parentNode.disabled || !$.nodeName(option.parentNode, "optgroup"))) {
+
+                        // Get the specific value for the option
+                        value = $(option).val();
+
+                        // We don't need an array for one selects
+                        if (one) {
+                            return value;
+                        }
+
+                        // Multi-Selects return an array
+                        values.push(value);
+                    }
+                }
+                return values;
+            },
+
+            'OPTION': function (elem) {
+                var val = $(elem).filter(function (option) {
+                    return option.selected && !option.disabled;
+                }).pluck('value');
+
+                return val !== null ? val : $.trim($.getText(elem));
+            },
+            'TYPE': function (elem, value) {
+                if (!radioValue && value === "radio" &&
+                    $.nodeName(elem, "input")) {
+
+                    var val = elem.value;
+                    elem.setAttribute("type", value);
+                    if (val) {
+                        elem.value = val;
+                    }
+                    return value;
+                }
+            }
+        },
+
+        // Inspired by jQuery	
+
+        propHooks: {
+            tabIndex: {
+                get: function (elem) {
+                    return elem.hasAttribute("tabindex") || /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ?
+                        elem.tabIndex : -1;
+                }
+            }
+        },
 
         /**
-         * Check if an element contains data
-         *
-         * @param{String/Object} elem
-         * @param{String} key
-         * @return {Object}
+         * Get text
          */
 
-        hasData: function (elem) {
+        getText: function (elem) {
+            var node, ret = "",
+                i = 0;
 
-            if (elem.nodeType) {
-                if ($._data[$.getUID(elem)]) {
+            if (!elem.nodeType) {
+                // If no nodeType, this is expected to be an array
+                for (; node = elem[i++];) ret += $.getText(node);
 
-                    return true;
+            } else if (NodeMatching(elem)) {
+
+                if (isString(elem.textContent)) return elem.textContent;
+                for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += $.getText(elem);
+
+            } else if ($.nodeType(3, elem) || $.nodeType(4, elem)) {
+                return elem.nodeValue;
+            }
+            return ret;
+        },
+
+        /**
+         * Get / set the value of a property for the first element in the set of matched elements
+         *
+         * @param {Object} elem
+         * @param {String} name
+         * @param {String/Null} value
+         *
+         */
+
+        prop: function (elem, name, value) {
+
+            var ret, hooks, notxml;
+
+            // don't get/set properties on text, comment and attribute nodes
+            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
+
+                notxml = !($.nodeType(1, elem)) || !$.isXML(elem);
+
+                if (notxml) {
+
+                    hooks = $.propHooks[$.propMap[name] || name];
+                }
+
+                if (isDefined(value)) {
+
+                    return hooks && "set" in hooks && isDefined((ret = hooks.set(elem, value, name))) ? ret : (elem[name] = value);
 
                 } else {
 
-                    return false;
+                    return hooks && "get" in hooks && (ret = hooks.get(elem, name)) !== null ? ret : elem[name];
                 }
             }
         },
 
         /**
-         * Remove data from an element
+         * Get / set the value of an attribute for the first element in the set of matched elements
          *
-         * @param {String/Object} elem
-         * @param {String} key
-         * @return {Object}
+         * @param {Object} elem
+         * @param {String} name
+         * @param {String/Null} value
+         *
          */
 
-        removeData: function (elem, key) {
+        attr: function (elem, name, value) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
+            if (!elem) {
 
-                if (!elem instanceof $) {
-                    elem = $(elem);
-                }
-
-                var id = $.getUID(elem);
-
-                if (id) {
-
-                    if (isUndefined(key) && $.nodeType(1, elem)) {
-
-                        $._data[id] = {};
-
-                    } else {
-
-                        if ($._data[id]) {
-                            delete $._data[id][key];
-                        } else {
-                            $._data[id] = null;
-                        }
-                    }
-
-                }
+                return;
             }
-        },
 
-        data: function (elem, key, value) {
+            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
+                if (typeof elem.getAttribute === typeof undefined) {
 
-                var id = $._data[$.getUID(elem)];
-
-                // Create and unique ID for this elem
-
-                if (!id && elem.nodeType) {
-                    var pid = $.getUID(elem);
-                    id = $._data[pid] = {};
-                }
-
-                // Return all data on saved on the element
-
-                if (isUndefined(key)) {
-
-                    return id;
+                    return $.prop(elem, name, value);
                 }
 
                 if (isUndefined(value)) {
 
-                    return id[key];
+                    // Checks if a "hook" exist for this...:
+
+                    if ($.Hooks[elem.nodeName]) {
+
+                        return $.Hooks[elem.nodeName](elem);
+                    }
+
+                    // The extra argument "2" is to get the right thing for a.href in IE, see jQuery code
+
+                    // some elements (e.g. Document) don't have get attribute, so return undefined
+
+                    elem = elem.getAttribute(name, 2);
+
+                    return elem === null ? undefined : elem;
                 }
 
-                if (!isUndefined(value)) {
+                // Jquery support a value to be an function, but I don't see the point
+                // in supporting this now. If someone want to implement it, go for it !!
+
+                if (isFunction(value)) {
+                    console.log("Not supported!");
+                    return;
+                }
+
+                if (value === null) {
+
+                    $.removeAttr(elem, name);
+                }
 
 
-                    // Set and return the value
-                    id[key] = value;
+                // Value is set - no need for hooks on this one...
 
-                    return id[key];
+                if (elem.nodeName === 'SELECT') {
+
+                    var optionSet, option,
+                        options = elem.options,
+                        values = $.makeArray(value),
+                        i = options.length;
+
+                    while (i--) {
+                        option = options[i];
+                        if ((option.selected = $.inArray(option.value, values) >= 0)) {
+                            optionSet = true;
+                        }
+                    }
+
+                    if (!optionSet) {
+                        elem.selectedIndex = -1;
+                    }
+                    return values;
+
+                } else {
+
+                    elem.setAttribute(name, value + "");
+                    return value;
+
                 }
             }
         }
     });
 
+
+    // Core
+
     $.extend($.fn, {
 
         /**
-         * Remove attributes from element collection
+         * Get text for the first element in the collection
+         * Set text for every element in the collection
          *
-         * @param {String} key
+         * $('div').text() => div text
+         *
+         * @param {String} value
+         * @param {String} dir
+         * @return {Object|String}
+         */
+
+        text: function (value) {
+
+            return $.isFunction(value) ? this.each(function (i) {
+                var self = $(this);
+                self.text(value.call(this, i, self.text()));
+            }) : !$.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
+
+                if (NodeMatching(elem)) {
+
+                    // Firefox does not support insertAdjacentText 
+
+                    if (isString(value) && isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
+
+                        elem.insertAdjacentText('beforeEnd', value);
+
+                    } else {
+
+                        elem.textContent = value;
+                    }
+                }
+            }) : $.getText(this);
+        },
+
+        /**
+         * Get html from element.
+         * Set html to element.
+         *
+         * @param {String} value
+         * @param {String} keep
+         * @return {Object|String}
+         */
+
+        html: function (value, keep) {
+
+            var elem = this[0];
+
+            if (isUndefined(value) && $.nodeType(1, elem)) {
+
+                return elem.innerHTML;
+            }
+
+            // We could have used 'this' inside the loop, but faster if we don't
+
+            if (isString(value)) {
+
+                return this.each(function (_, elem) {
+
+                    /**
+                     * 'keep' if we want to keep the existing children of the node and add some more.
+                     */
+                    if (keep && isString(value) && $.nodeType(1, elem)) {
+
+                        iAh(elem, 'beforeend', value || '');
+
+                    } else {
+
+
+                        // See if we can take a shortcut and just use innerHTML
+                        if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !wrapMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+
+                            // Do some magic
+
+                            value = cached[value] ? cached[value] : cached[value] = value.replace(/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, "<$1></$2>");
+
+                            // Remove stored data on the object to avoid memory leaks
+
+                            $.removeData(elem);
+
+                            // Get rid of existing children
+
+                            elem.textContent = '';
+
+                            // Do innerHTML
+
+                            elem.innerHTML = value;
+                        }
+                    }
+                });
+
+            } else if ($.isFunction(value)) {
+
+                this.each(function (i) {
+
+                    var self = $(this);
+
+                    self.html(value.call(this, i, self.html()));
+                });
+
+            } else {
+
+                return this.empty().append(value);
+            }
+        },
+
+        /**
+         * Get value for input/select elements
+         * Set value for input/select elements
+         *
+         * @param {String} value
+         * @return {Object|String}
+         */
+
+        val: function (value) {
+
+            if (arguments.length) {
+
+                return this.each(function (index, elem) {
+
+                    var val;
+
+                    if (!$.nodeType(1, elem)) {
+                        return;
+                    }
+
+                    if (isFunction(value)) {
+                        val = value.call(elem, index, $(elem).val());
+
+                    } else {
+
+                        val = value;
+                    }
+
+                    if (val === null) {
+
+                        val = "";
+
+                    } else if (typeof val === "number") {
+
+                        val += "";
+
+                    } else if ($.isArray(val)) {
+
+                        val = $.map(val, function (value) {
+
+                            return value === null ? "" : value + "";
+                        });
+                    }
+
+                    if (elem.type === 'radio' || elem.type === 'checkbox') {
+
+                        return (elem.checked = $.inArray($(elem).val(), value) >= 0);
+                    }
+
+                    if (elem.type === "select") {
+
+
+                        var optionSet, option,
+                            options = elem.options,
+                            values = $.makeArray(value),
+                            i = options.length;
+
+                        while (i--) {
+                            option = options[i];
+                            if ((option.selected = $.inArray(option.value, values) >= 0)) {
+                                optionSet = true;
+                            }
+                        }
+
+                        // force browsers to behave consistently when non-matching value is set
+
+                        if (!optionSet) {
+
+                            elem.selectedIndex = -1;
+                        }
+
+                        return values;
+                    }
+
+                    elem.value = val;
+                });
+
+            } else {
+
+                var elem = this[0],
+                    ret;
+
+                if (!checkOn) {
+
+                    return elem.getAttribute("value") === null ? "on" : elem.value;
+                }
+
+                ret = $.Hooks[elem.tagName] ? $.Hooks[elem.tagName](elem) : elem.value;
+
+                return typeof ret === "string" ? ret.replace(/\r\n/g, "") : ret === null ? "" : ret;
+
+            }
+        },
+
+        /**
+         * Get attribute from element
+         * Set attribute to element collection
+         *
+         * @param {String} name
+         * @param {String|Object} value
+         *
+         * @return {Object|String}
+         */
+
+        attr: function (name, value) {
+            return $.isObject(name) ? this.each(function (index, element) {
+                $.each(name, function (key, value) {
+                    $.attr(element, key, value);
+                });
+            }) : $.isUndefined(value) ? $.attr(this[0], name) : this.length === 1 ? $.attr(this[0], name, value) : this.each(function () {
+                return $.attr(this, name, value);
+            });
+        },
+
+        /**
+         * Remove a given attribute from an element
+         *
+         * @param {String} value
          *
          * @return {Object}
          */
 
-        removeData: function (key) {
-            return this.each(function () {
-                $.removeData(this, key);
-            });
-        },
+        removeAttr: function (value) {
 
-        /**
-         * Store random data on the hAzzle Object
-         *
-         * @param {String} key(s)
-         * @param {String|Object} value
-         *
-         * @return {Object|String}
-         *
-         */
-
-        data: function (key, value) {
-
-            if (isUndefined(key)) {
-
-                var data = $.data(this[0]),
-                    elem = this[0];
-
-                if (hAzzle.nodeType(1, elem) && !$.data(elem, "parsedAttrs")) {
-
-                    var attr = elem.attributes,
-                        name,
-                        i = 0,
-                        l = attr.length;
-
-                    for (; i < l; i++) {
-
-                        name = attr[i].name;
-
-                        if (name.indexOf("data-") === 0) {
-
-                            name = $.camelCase(name.substr(5));
-
-                            data = data[name];
-
-                            // Try to fetch data from the HTML5 data- attribute
-
-                            if ($.isUndefined(data) && $.nodeType(1, elem)) {
-
-                                var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
-
-                                data = elem.getAttribute(name);
-
-                                if (typeof data === "string") {
-                                    try {
-                                        data = data === "true" ? true :
-                                            data === "false" ? false :
-                                            data === "null" ? null : +data + "" === data ? +data :
-                                            html5Json.test(data) ? JSON.parse(data + "") : data;
-                                    } catch (e) {}
-
-                                    // Make sure we set the data so it isn't changed later
-
-                                    $.data(elem, key, data);
-
-                                } else {
-                                    data = undefined;
-                                }
-                            }
-                            return data;
-                        }
-                    }
-                    $.data(elem, "parsedAttrs", true);
-                }
-
-                // 'key' defined, but no 'data'.
-
-            } else if (isUndefined(value)) {
-
-                if (this.length === 1) {
-
-                    return $.data(this.elems[0], key);
-
-                } else {
-
-                    // Sets multiple values
-
-                    return this.elems.map(function (el) {
-
-                        return $.data(el, key);
-
-                    });
-                }
-
-            } else {
-
-                return $.data(this[0], key, value);
-            }
-        }
-
-    });
-
-})(hAzzle);
-
-// Browser
-
-;
-(function ($) {
-
-    var nav = navigator,
-        ua = nav.userAgent,
-        t = true,
-        iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase(),
-        likeAndroid = /like android/i.test(ua),
-        android = !likeAndroid && /android/i.test(ua),
-        versionIdentifier = getFirstMatch(/version\/(\d+(\.\d+)?)/i),
-        tablet = /tablet/i.test(ua),
-        mobile = !tablet && /[^-]mobi/i.test(ua),
-        result,
-
-        // Browser regEx	
-
-        pShort = /phantom/i,
-        blackbShort = /blackberry|\bbb\d+/i,
-        operaShort = /opera|opr/i,
-        chromeShort = /chrome|crios|crmo/i,
-        ieShort = /msie|trident/i,
-        sailfishShort = /sailfish/i,
-        seamonkeyShort = /seamonkey\//i,
-        ffShort = /firefox|iceweasel/i,
-        webOsShort = /(web|hpw)os/i,
-        silkShort = /silk/i,
-        safariShort = /safari/i,
-        seamokeyShort = /seamonkey\//i,
-        badaShort = /bada/i,
-        tizenShort = /tizen/i,
-        geckoShort = /gecko\//i,
-        ffMobTab = /\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i,
-        opera = /(?:opera|opr)[\s\/](\d+(\.\d+)?)/i,
-        chrome = /(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i,
-        Firefox = /(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i,
-        msie = /(?:msie |rv:)(\d+(\.\d+)?)/i,
-        iemobile = /iemobile\/(\d+(\.\d+)?)/i,
-        winPhone = /windows phone/i,
-        sailfish = /sailfish\s?browser\/(\d+(\.\d+)?)/i,
-        seamonkey = /seamonkey\/(\d+(\.\d+)?)/i,
-        phantom = /phantomjs\/(\d+(\.\d+)?)/i,
-        BlackBerry = /blackberry[\d]+\/(\d+(\.\d+)?)/i,
-        osBrowser = /w(?:eb)?osbrowser\/(\d+(\.\d+)?)/i,
-        bada = /dolfin\/(\d+(\.\d+)?)/i,
-        tizen = /(?:tizen\s?)?browser\/(\d+(\.\d+)?)/i,
-        appleWebkit = /(apple)?webkit/i,
-        gecko = /gecko\/(\d+(\.\d+)?)/i,
-        touchPad = /touchpad\//i,
-        silk = /silk\/(\d+(\.\d+)?)/i;
-
-    function getFirstMatch(regex) {
-        var match = ua.match(regex);
-        return (match && match.length > 1 && match[1]) || '';
-    }
-
-
-    hAzzle.extend({
-        browser: function () {
-            operaShort.test(ua) ? result = {
-                name: "Opera",
-                opera: t,
-                version: versionIdentifier || getFirstMatch(opera)
-            } : winPhone.test(ua) ? result = {
-                name: "Windows Phone",
-                windowsphone: t,
-                msie: t,
-                version: getFirstMatch(iemobile)
-            } : ieShort.test(ua) ? result = {
-                name: "Internet Explorer",
-                msie: t,
-                version: getFirstMatch(msie)
-            } : chromeShort.test(ua) ? result = {
-                name: "Chrome",
-                chrome: t,
-                version: getFirstMatch(chrome)
-            } : iosdevice ? (result = {
-                name: "iphone" == iosdevice ? "iPhone" : "ipad" == iosdevice ? "iPad" : "iPod"
-            }, versionIdentifier && (result.version = versionIdentifier)) : sailfishShort.test(ua) ? result = {
-                name: "Sailfish",
-                sailfish: t,
-                version: getFirstMatch(sailfish)
-            } : seamokeyShort.test(ua) ? result = {
-                name: "SeaMonkey",
-                seamonkey: t,
-                version: getFirstMatch(seamonkey)
-            } : ffShort.test(ua) ? (result = {
-                name: "Firefox",
-                firefox: t,
-                version: getFirstMatch(Firefox)
-            }, ffMobTab.test(ua) && (result.firefoxos = t)) : silkShort.test(ua) ? result = {
-                name: "Amazon Silk",
-                silk: t,
-                version: getFirstMatch(silk)
-            } : android ? result = {
-                name: "Android",
-                version: versionIdentifier
-            } : pShort.test(ua) ? result = {
-                name: "PhantomJS",
-                phantom: t,
-                version: getFirstMatch(phantom)
-            } : blackbShort.test(ua) || /rim\stablet/i.test(ua) ? result = {
-                name: "BlackBerry",
-                blackberry: t,
-                version: versionIdentifier || getFirstMatch(BlackBerry)
-            } : webOsShort.test(ua) ? (result = {
-                    name: "WebOS",
-                    webos: t,
-                    version: versionIdentifier || getFirstMatch(osBrowser)
-                }, touchPad.test(ua) &&
-                (result.touchpad = t)) : result = badaShort.test(ua) ? {
-                name: "Bada",
-                bada: t,
-                version: getFirstMatch(bada)
-            } : tizenShort.test(ua) ? {
-                name: "Tizen",
-                tizen: t,
-                version: getFirstMatch(tizen) || versionIdentifier
-            } : safariShort.test(ua) ? {
-                name: "Safari",
-                safari: t,
-                version: versionIdentifier
-            } : {};
-
-            // set webkit or gecko flag for browsers based on these engines
-            if (appleWebkit.test(ua)) {
-                result.name = result.name || "Webkit";
-                result.webkit = t;
-                if (!result.version && versionIdentifier) {
-                    result.version = versionIdentifier;
-                }
-            } else if (!result.opera && geckoShort.test(ua)) {
-                result.name = result.name || "Gecko";
-                result.gecko = t;
-                result.version = result.version || getFirstMatch(gecko);
-            }
-
-            // set OS flags for platforms that have multiple browsers
-            if (android || result.silk) {
-                result.android = t;
-            } else if (iosdevice) {
-                result[iosdevice] = t;
-                result.ios = t;
-            }
-
-            // OS version extraction
-            var osVersion = '';
-            if (iosdevice) {
-                osVersion = getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i);
-                osVersion = osVersion.replace(/[_\s]/g, '.');
-            } else if (android) {
-                osVersion = getFirstMatch(/android[ \/-](\d+(\.\d+)*)/i);
-            } else if (result.windowsphone) {
-                osVersion = getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i);
-            } else if (result.webos) {
-                osVersion = getFirstMatch(/(?:web|hpw)os\/(\d+(\.\d+)*)/i);
-            } else if (result.blackberry) {
-                osVersion = getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i);
-            } else if (result.bada) {
-                osVersion = getFirstMatch(/bada\/(\d+(\.\d+)*)/i);
-            } else if (result.tizen) {
-                osVersion = getFirstMatch(/tizen[\/\s](\d+(\.\d+)*)/i);
-            }
-            if (osVersion) {
-                result.osversion = osVersion;
-            }
-
-            // device type extraction
-            var osMajorVersion = osVersion.split('.')[0];
-            if (tablet || iosdevice == 'ipad' || (android && (osMajorVersion == 3 || (osMajorVersion == 4 && !mobile))) || result.silk) {
-                result.tablet = t;
-            } else if (mobile || iosdevice == 'iphone' || iosdevice == 'ipod' || android || result.blackberry || result.webos || result.bada) {
-                result.mobile = t;
-            }
-
-            // Graded Browser Support
-            // http://developer.yahoo.com/yui/articles/gbs
-            if ((result.msie && result.version >= 9) ||
-                (result.chrome && result.version >= 20) ||
-                (result.firefox && result.version >= 10.0) ||
-                (result.safari && result.version >= 5) ||
-                (result.opera && result.version >= 10.0) ||
-                (result.ios && result.osversion && result.osversion.split(".")[0] >= 6)
-            ) {
-                result.a = t;
-            } else if ((result.msie && result.version < 9) ||
-                (result.chrome && result.version < 20) ||
-                (result.firefox && result.version < 10.0) ||
-                (result.safari && result.version < 5) ||
-                (result.opera && result.version < 10.0) ||
-                (result.ios && result.osversion && result.osversion.split(".")[0] < 6)
-            ) {
-                result.c = t;
-            } else result.x = t;
-
-            return result;
-        }
-    })
-
-})(hAzzle);
-
-// Classes
-
-// Classes
-;
-(function ($) {
-
-    // Check if we can support classList
-
-    var csp = !!document.createElement('p').classList,
-
-        // ONLY!! for browsers who don't support classlist
-
-        indexOf = Array.prototype.indexOf,
-
-        sMa, // Multiple argumens
-        whitespace = /\S+/g,
-        isFunction = $.isFunction;
-
-    // Check for support for multiple arguments for classList (IE doesn't have it )
-
-    csp && function () {
-        var div = document.createElement('div');
-        div.classList.add('a', 'b');
-        sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-    }();
-
-    $.extend($.fn, {
-
-        /**
-         * Add class(es) to element collection
-         *
-         * @param {String} value
-         */
-
-
-        addClass: function (value) {
-
-            return isFunction(value) ? this.each(function (e) {
-                $(this).addClass(value.call(this, index, this.className));
-            }) : this.each(function (_, element) {
-                if ($.nodeType(1, element)) {
-                    if (csp && sMa) {
-                        value.replace(whitespace, function (name) {
-                            element.classList.add(name);
-                        });
-                    } else {
-                        var classes = ' ' + element.className + ' ',
-                            name;
-                        value = value.trim().split(/\s+/);
-                        while (name = value.shift()) {
-                            if ($.inArray(classes, ' ' + name + ' ') === -1) {
-                                classes += name + ' ';
-                            }
-                        }
-                        element.className = classes.trim();
-                    }
-                    return element;
-                }
-            });
-        },
-
-        /**
-         * Remove class(es) from element
-         *
-         * @param {String} value
-         */
-
-        removeClass: function (value) {
-
-            var cls;
-
-            return isFunction(value) ?
-                this.each(function (j) {
-                    $(this).removeClass(value.call(this, j, this.className));
-                }) : this.each(function (_, element) {
-
-                    if (!value) {
-                        return element.className = "";
-                    }
-
-                    if (value === '*') {
-                        element.className = '';
-                    } else {
-                        if ($.isRegExp(value)) {
-                            value = [value];
-                        } else if (csp && $.inArray(value, '*') === -1) {
-                            if (sMa) {
-                                value.replace(whitespace, function (name) {
-                                    element.classList.remove(name);
-                                });
-                            } else {
-                                var i = 0;
-                                while ((cls = value[i++])) {
-                                    element.classList.remove(cls);
-                                }
-                            }
-                            return;
-                        } else {
-                            value = value.trim().split(/\s+/);
-                        }
-
-                        var classes = ' ' + element.className + ' ',
-                            name;
-                        while (name = value.shift()) {
-                            if (name.indexOf && name.indexOf('*') !== -1) {
-                                name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
-                            }
-                            if (name instanceof RegExp) {
-                                classes = classes.replace(name, ' ');
-                            } else {
-                                while (classes.indexOf(' ' + name + ' ') !== -1) {
-                                    classes = classes.replace(' ' + name + ' ', ' ');
-                                }
-                            }
-                        }
-                        element.className = classes.trim();
-                    }
-                    return element;
-                });
-        },
-
-        /**
-         * Checks if an element has the given class
-         *
-         * @param {String} selector(s)
-         * @return {Boolean} true if the element contains all classes
-         */
-
-        hasClass: function (value) {
-
-            var i = 0,
-                l = this.length;
-            for (; i < l;) {
-                return csp ?
-                    this[i].classList.contains($.trim(value)) : this[i].nodeType === 1 && (" " + this[i].className + " ").replace(/[\t\r\n\f]/g, " ").indexOf($.trim(value)) >= 0;
-            }
-        },
-
-
-        /**
-         * Replace a class in a element collection
-         *
-         * @param {String} clA
-         * @param {String} clB
-         */
-
-        replaceClass: function (clA, clB) {
-            var current, found, i;
-            return this.each(function () {
-                current = this.className.split(' '),
-                found = false;
-
-                for (i = current.length; i--;) {
-                    if (current[i] == clA) {
-                        found = true;
-                        current[i] = clB;
-                    }
-                }
-                if (!found) {
-                    return $(this).addClass(clB, this);
-                }
-                this.className = current.join(' ');
-            });
-        },
-
-        /**
-         * Toggle class(es) on element
-         *
-         * @param {String} value
-         * @param {Boolean} state
-         * @return {Boolean}
-         */
-
-        toggleClass: function (value, state) {
-
-            var type = typeof value;
-
-            if (typeof state === "boolean" && type === "string") {
-                return state ? this.addClass(value) : this.removeClass(value);
-            }
-
-            if (isFunction(value)) {
-                return this.each(function (i) {
-                    $(this).toggleClass(value.call(this, i, this.className, state), state);
-                });
-            }
-
-            var classNames = value.match(whitespace) || [],
-                cls,
-                i = 0,
-                self;
+            var name, propName, i = 0,
+                attrNames = value && value.match(/\S+/g);
 
             return this.each(function (_, elem) {
 
-                if (type === "string") {
+                if (attrNames && $.nodeType(1, elem)) {
 
-                    // ClassList
+                    while ((name = attrNames[i++])) {
+                        propName = $.propMap[name] || name;
 
-                    self = $(elem);
+                        if (getBooleanAttrName(elem, name)) {
 
-                    while ((cls = classNames[i++])) {
-
-                        if (csp) {
-
-                            if (typeof state === "boolean") {
-
-                                // IE10+ doesn't support the toggle boolean flag.
-
-                                if (state) {
-
-                                    return elem.classList.add(cls);
-
-                                } else {
-
-                                    return elem.classList.remove(cls);
-                                }
-                            }
-
-                            return elem.classList.toggle(cls);
+                            elem[propName] = false;
                         }
 
-                        // check each className given, space separated list
-
-                        if (self.hasClass(cls)) {
-
-                            self.removeClass(cls);
-
-                        } else {
-
-                            self.addClass(cls);
-                        }
+                        elem.removeAttribute(name);
                     }
-
-                    // Toggle whole class name
-
-                } else if (type === typeof undefined || type === "boolean") {
-                    if (this.className) {
-                        // store className if set
-                        $.data(this, "__className__", this.className);
-                    }
-
-                    this.className = this.className || value === false ? "" : $.data(this, "__className__") || "";
                 }
+            });
+        },
+
+        /**
+         * Check if an element have an attribute
+         *
+         * @param{String} name
+         * @return {Boolean}
+         */
+
+        hasAttr: function (name) {
+            return name && isDefined(this.attr(name));
+        },
+
+        /**
+         * Sets an HTML5 data attribute
+         *
+         * @param{String} dataAttribute
+         * @param{String} dataValue
+         *
+         * @return {Object}
+         */
+
+        dataAttr: function (dataAttribute, dataValue) {
+
+            if (!dataAttribute || !isString(dataAttribute)) {
+                return false;
+            }
+
+            //if dataAttribute is an object, we will use it to set a data attribute for every key
+            if (typeof (dataAttribute) == "object") {
+                for (var key in dataAttribute) {
+                    this.attr('data-' + key, dataAttribute[key]);
+                }
+
+                return this;
+            }
+
+            //if a value was passed, we'll set that value for the specified dataAttribute
+            else if (dataValue) {
+                return this.attr('data-' + dataAttribute, dataValue);
+            }
+
+            // lastly, try to just return the requested dataAttribute's value from the element
+            else {
+                var value = this.attr('data-' + dataAttribute);
+
+                // specifically checking for undefined in case "value" ends up evaluating to false
+
+                if (isUndefined(value)) {
+                    return;
+                }
+
+                return value;
+            }
+        },
+
+        /**
+         * Read or set properties of DOM elements
+         *
+         * @param {String/Object}
+         * @param {String/Null}
+         *
+         * @return {Object}
+         */
+
+        prop: function (name, value) {
+            return $.isObject(name) ? this.each(function (value, element) {
+                $.each(name, function (key, value) {
+                    $.prop(element, key, value);
+                });
+            }) : isUndefined(value) ? this[0] && this[0][$.propMap[name] || name] : $.prop(this[0], name, value);
+        },
+
+        /**
+         * Toggle properties
+         */
+
+        toggleProp: function (property) {
+            return this.each(function () {
+                return this.prop(property, !this.prop(property));
+            });
+
+        },
+
+        /*
+         * Remove properties from DOM elements
+         *
+         * @param {String}
+         *
+         * @return {Object}
+         */
+
+        removeProp: function (name) {
+            return this.each(function () {
+                delete this[$.propMap[name] || name];
+            });
+        },
+
+        /**
+         * Replace each element in the set of matched elements with the provided new content
+         *
+         * @param {String} html
+         * @return {Object}
+         */
+
+        replaceWith: function (html) {
+
+            // Use the faster 'insertAdjacentHTML' if we can
+
+            if (isString(html) && this[0].parentNode && !$.isXML(this[0])) {
+
+                return this.before(html).remove();
+            }
+
+            // If function
+
+            if (isFunction(html)) {
+                return this.each(function (index) {
+                    var self = $(this),
+                        old = self.html();
+                    self.replaceWith(html.call(this, index, old));
+                });
+            }
+
+            var arg = arguments[0];
+            this.manipulateDOM(arguments, function (elem) {
+
+                arg = this.parentNode;
+
+                if (arg) {
+                    arg.replaceChild(elem, this);
+                }
+            });
+
+            // Force removal if there was no new content (e.g., from empty arguments)
+            return arg && (arg.length || arg.nodeType) ? this : this.remove();
+        },
+
+        /**
+         * Append the current element to another
+         *
+         * @param {Object|String} sel
+         * @return {Object}
+         */
+
+        appendTo: function (sel) {
+            return this.each(function () {
+                $(sel).append(this);
+            });
+
+        },
+
+        /**
+         * Prepend the current element to another.
+         *
+         * @param {Object|String} sel
+         * @return {Object}
+         */
+
+        prependTo: function (sel) {
+            return this.each(function () {
+                $(sel).prepend(this);
             });
         }
     });
 
+    /* 
+     * Prepend, Append, Befor and After
+     *
+     *  NOTE!!!
+     *
+     *  If 'html' are plain text, we use the insertAdjacentHTML to inject the content.
+     *	This method is faster, and now supported by all major browsers.
+     *
+     *	If not a pure string, we have to go the long way jQuery walked before us :)
+     *
+     *	K.F
+     */
+
+    $.each({
+
+        prepend: "afterbegin",
+        append: "beforeend"
+    }, function (name, second) {
+
+        $.fn[name] = function (html) {
+            if (isString(html) && !$.isXML(this[0])) {
+                return this.each(function () {
+                    iAh(this, second, html);
+                });
+            } else { // The long walk :(
+                return this.manipulateDOM(arguments, function (elem) {
+
+                    if (NodeMatching(this)) {
+                        var target = $.nodeName(this, "table") && $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
+                            this['getElementsByTagName']("tbody")[0] ||
+                            elem.appendChild(this.ownerDocument.createElement("tbody")) : this;
+
+                        // Choose correct method	
+
+                        if (name === 'prepend') {
+
+                            target.insertBefore(elem, target.firstChild);
+
+                        } else {
+
+                            target.appendChild(elem);
+                        }
+                    }
+                });
+            }
+        };
+    });
+
+    /**
+     * Before and After
+     */
+
+    $.each({
+        before: "beforebegin",
+        after: "afterend"
+    }, function (name, second) {
+
+        $.fn[name] = function (html) {
+            if (isString(html) && !$.isXML(this[0])) {
+                return this.each(function () {
+                    iAh(this, second, html);
+                });
+            }
+            return this.manipulateDOM(arguments, function (elem) {
+                this.parentNode && this.parentNode.insertBefore(elem, name === 'after' ? this.nextSibling : this);
+            });
+        };
+    });
+
+
+    // Support: IE9+
+    if (!optSelected) {
+        $.propHooks.selected = {
+            get: function (elem) {
+                var parent = elem.parentNode;
+                if (parent && parent.parentNode) {
+                    parent.parentNode.selectedIndex;
+                }
+                return null;
+            }
+        };
+    }
+
+    $.each([
+        "tabIndex",
+        "readOnly",
+        "maxLength",
+        "cellSpacing",
+        "cellPadding",
+        "rowSpan",
+        "colSpan",
+        "useMap",
+        "frameBorder",
+        "contentEditable"
+    ], function () {
+        $.propMap[this.toLowerCase()] = this;
+    });
+
+
 })(hAzzle);
+
+// Classes
+
+// Classes
+// Check if we can support classList
+var csp = !!document.createElement('p').classList,
+
+    // ONLY!! for browsers who don't support classlist
+
+    indexOf = Array.prototype.indexOf,
+
+    sMa, // Multiple argumens
+    whitespace = /\S+/g,
+    isFunction = hAzzle.isFunction;
+
+// Check for support for multiple arguments for classList (IE doesn't have it )
+
+csp && function () {
+    var div = document.createElement('div');
+    div.classList.add('a', 'b');
+    sMa = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+}();
+
+hAzzle.extend(hAzzle.fn, {
+
+    /**
+     * Add class(es) to element collection
+     *
+     * @param {String} value
+     */
+
+
+    addClass: function (value) {
+        var element;
+        return isFunction(value) ? this.each(function (e) {
+            hAzzle(this).addClass(value.call(this, index, this.className));
+        }) : this.each(function () {
+            element = this;
+            if (hAzzle.nodeType(1, element)) {
+                if (csp && sMa) {
+                    value.replace(whitespace, function (name) {
+                        element.classList.add(name);
+                    });
+                } else {
+                    var classes = ' ' + element.className + ' ',
+                        name;
+                    value = value.trim().split(/\s+/);
+                    while (name = value.shift()) {
+                        if (hAzzle.inArray(classes, ' ' + name + ' ') === -1) {
+                            classes += name + ' ';
+                        }
+                    }
+                    element.className = classes.trim();
+                }
+                return element;
+            }
+        });
+    },
+
+    /**
+     * Remove class(es) from element
+     *
+     * @param {String} value
+     */
+
+    removeClass: function (value) {
+
+        var cls, element;
+
+        // Function
+
+        return isFunction(value) ?
+            this.each(function (j) {
+                hAzzle(this).removeClass(value.call(this, j, this.className));
+            }) : this.each(function () {
+                element = this;
+                if (!value) {
+                    return element.className = "";
+                }
+
+                if (value === '*') {
+                    element.className = '';
+                } else {
+                    if (hAzzle.isRegExp(value)) {
+                        value = [value];
+                    } else if (csp && hAzzle.inArray(value, '*') === -1) {
+                        if (sMa) {
+                            value.replace(whitespace, function (name) {
+                                element.classList.remove(name);
+                            });
+                        } else {
+                            var i = 0;
+                            while ((cls = value[i++])) {
+                                element.classList.remove(cls);
+                            }
+                        }
+                        return;
+                    } else {
+                        value = value.trim().split(/\s+/);
+                    }
+
+                    var classes = ' ' + element.className + ' ',
+                        name;
+                    while (name = value.shift()) {
+                        if (name.indexOf('*') !== -1) {
+                            name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
+                        }
+                        if (name instanceof RegExp) {
+                            classes = classes.replace(name, ' ');
+                        } else {
+                            while (classes.indexOf(' ' + name + ' ') !== -1) {
+                                classes = classes.replace(' ' + name + ' ', ' ');
+                            }
+                        }
+                    }
+                    element.className = classes.trim();
+                }
+                return element;
+            });
+    },
+
+    /**
+     * Checks if an element has the given class
+
+
+     *
+     * @param {String} selector(s)
+     * @return {Boolean} true if the element contains all classes
+     */
+
+    hasClass: function (value) {
+
+        var i = 0,
+            l = this.length;
+        for (; i < l;) {
+            return csp ?
+                this[i].classList.contains(hAzzle.trim(value)) :
+                this[i].nodeType === 1 && (" " + this[i].className + " ").replace(/[\t\r\n\f]/g, " ").indexOf(hAzzle.trim(value)) >= 0;
+        }
+    },
+
+
+    /**
+     * Replace a class in a element collection
+     *
+     * @param {String} clA
+     * @param {String} clB
+     */
+
+    replaceClass: function (clA, clB) {
+        var current, found, i;
+        return this.each(function () {
+            current = this.className.split(' '),
+            found = false;
+
+            for (i = current.length; i--;) {
+                if (current[i] == clA) {
+                    found = true;
+                    current[i] = clB;
+                }
+            }
+            if (!found) {
+                return hAzzle(this).addClass(clB, this);
+            }
+            this.className = current.join(' ');
+        });
+    },
+
+    /**
+     * Toggle class(es) on element
+     *
+     * @param {String} value
+     * @param {Boolean} state
+     * @return {Boolean}
+     */
+
+    toggleClass: function (value, state) {
+
+        var type = typeof value;
+
+        if (typeof state === "boolean" && type === "string") {
+            return state ? this.addClass(value) : this.removeClass(value);
+        }
+
+        if (isFunction(value)) {
+            return this.each(function (i) {
+                hAzzle(this).toggleClass(value.call(this, i, this.className, state), state);
+            });
+        }
+
+        var classNames = value.match(whitespace) || [],
+            cls,
+            i = 0,
+            self;
+
+        return this.each(function (_, elem) {
+
+            if (type === "string") {
+
+                // ClassList
+
+                self = hAzzle(elem);
+
+                while ((cls = classNames[i++])) {
+
+                    if (csp) {
+
+                        if (typeof state === "boolean") {
+
+                            // IE10+ doesn't support the toggle boolean flag.
+
+                            if (state) {
+
+                                return elem.classList.add(cls);
+
+                            } else {
+
+                                return elem.classList.remove(cls);
+                            }
+                        }
+
+                        return elem.classList.toggle(cls);
+                    }
+
+                    // check each className given, space separated list
+
+                    if (self.hasClass(cls)) {
+
+                        self.removeClass(cls);
+
+                    } else {
+
+                        self.addClass(cls);
+                    }
+                }
+
+                // Toggle whole class name
+            } else if (type === typeof undefined || type === "boolean") {
+                if (this.className) {
+                    // store className if set
+                    hAzzle.data(this, "__className__", this.className);
+                }
+
+                this.className = this.className || value === false ? "" : hAzzle.data(this, "__className__") || "";
+            }
+        });
+    }
+});
+
+// CSS
+
 
 // CSS
 ;
@@ -2195,10 +3051,10 @@
             var ret = relNum.exec(value);
 
             if (ret) {
-
-                value = $.css(elem, name);
+				
+				value = $.css(elem, name);
                 value = $.pixelsToUnity(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
-
+				
                 value = (ret[1] + 1) * ret[2] + parseFloat($.css(element, property));
             }
 
@@ -2206,7 +3062,7 @@
 
             if (typeof value === 'number' && !$.cssNumber[property]) {
 
-                value += ret && ret[3] ? ret[3] : "px";
+				value += ret && ret[3] ? ret[3] : "px";
             }
 
             // Check for background
@@ -2243,8 +3099,8 @@
 
             return ret;
         },
-
-        pixelsToUnity: function (px, unit, elem, prop) {
+		
+		    pixelsToUnity: function (px, unit, elem, prop) {
 
             if (unit === "" || unit === "px") return px; // Don't waste our time if there is no conversion to do.
             else if (unit === "em") return px / hAzzle.css(elem, "fontSize", ""); // "em" refers to the fontSize of the current element.
@@ -2674,10 +3530,297 @@
 
 })(hAzzle);
 
+// Removeable
+
+;(function ($) {
+
+    /**
+     * Remove all child nodes of the set of matched elements from the DOM.
+     *
+     * - It first remove all data stored on the object
+     * - Then it remove all event listeners attached on the object
+     * - In the end, it removes all HTML on the elems in the elems stack.
+     *
+     * @return {Object}
+     */
+
+    $.fn.empty = function () {
+
+		var elem,
+			i = 0;
+
+		for ( ; (elem = this[i]) != null; i++ ) {
+			if ( $.nodeType(1, elem) ) {
+				$.removeData(elem);
+				$.Events.off(elem);
+				elem.textContent = "";
+			}
+	   }
+        return this;
+    },
+
+    /**
+     *  Remove an element from the DOM
+     */
+    $.fn.remove = function () {
+
+        // Discard any data on the element
+
+        return this.removeData().each(function (_, elem) {
+
+            // Locate all nodes that belong to this element
+            // and add them to the "elems stack"
+
+            var elements = $(elem).find('*');
+            elements = elements.add(elem);
+
+            $.Events.off(elem);
+
+            var parent = elem.parentNode;
+
+            if (parent) {
+
+                // Remove all children
+
+                this.parentNode.removeChild(elem);
+            }
+
+        })
+        return false;
+    };
+
+})(hAzzle);
+
+
+
+// Data
+
+
+/** 
+ * Data
+ */
+
+; (function ($) {
+
+   var isUndefined = $.isUndefined,
+       html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
+
+    // Extend the hAzzle object
+
+    $.extend({
+		
+        _data: {},
+
+		/**
+         * Check if an element contains data
+         *
+         * @param{String/Object} elem
+         * @param{String} key
+         * @return {Object}
+         */
+		 
+		hasData: function (elem) {
+
+            if (elem.nodeType) {
+                if ($._data[$.getUID(elem)]) {
+
+                    return true;
+
+                } else {
+
+                    return false;
+                }
+            }
+        },
+
+        /**
+         * Remove data from an element
+         *
+         * @param {String/Object} elem
+         * @param {String} key
+         * @return {Object}
+         */
+
+        removeData: function (elem, key) {
+
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !( +elem.nodeType )) {
+
+                if (!elem instanceof $) {
+                    elem = $(elem);
+                }
+
+                var id = $.getUID(elem);
+           
+		   // Nothing to do if there are no data stored on the elem itself
+           
+		        if ($._data[id]) {
+
+                    if (isUndefined(key) && $.nodeType(1, elem)) {
+
+                        $._data[id] = {};
+
+                    } else {
+
+                        if ($._data[id]) {
+                            delete $._data[id][key];
+                        } else {
+                            $._data[id] = null;
+                        }
+                    }
+
+                }
+            }
+        },
+
+        data: function (elem, key, value) {
+
+            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !( +elem.nodeType )) {
+
+                var id = $._data[$.getUID(elem)];
+
+                // Create and unique ID for this elem
+
+                if (!id && elem.nodeType) {
+                    var pid = $.getUID(elem);
+                    id = $._data[pid] = {};
+                }
+
+                // Return all data on saved on the element
+
+                if (isUndefined(key)) {
+
+                    return id;
+                }
+
+                if (isUndefined(value)) {
+
+                    return id[key];
+                }
+
+                if ( ! isUndefined(value)) {
+
+                    // Set and return the value
+					
+                    id[key] = value;
+                   
+                    return id[key];
+                }
+            }
+        }
+    });
+
+    $.extend($.fn, {
+
+        /**
+         * Remove attributes from element collection
+         *
+         * @param {String} key
+         *
+         * @return {Object}
+         */
+
+        removeData: function (key) {
+            return this.each(function () {
+                $.removeData(this, key);
+            });
+        },
+
+        /**
+         * Store random data on the hAzzle Object
+         *
+         * @param {String} key(s)
+         * @param {String|Object} value
+         *
+         * @return {Object|String}
+         *
+         */
+
+        data: function (key, value) {
+
+            if (isUndefined(key)) {
+
+                var data = $.data(this[0]),
+                    elem = this[0];
+
+                if (hAzzle.nodeType(1, elem) && !$.data(elem, "parsedAttrs")) {
+
+                    var attr = elem.attributes,
+                        name,
+                        i = 0,
+                        l = attr.length;
+
+                    for (; i < l; i++) {
+
+                        name = attr[i].name;
+
+                        if (name.indexOf("data-") === 0) {
+
+                            name = $.camelCase(name.substr(5));
+
+                            data = data[name];
+
+                            // Try to fetch data from the HTML5 data- attribute
+
+                            if ($.isUndefined(data) && $.nodeType(1, elem)) {
+
+                                var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
+
+                                data = elem.getAttribute(name);
+
+                                if (typeof data === "string") {
+                                    try {
+                                        data = data === "true" ? true :
+                                            data === "false" ? false :
+                                            data === "null" ? null : +data + "" === data ? +data :
+                                            html5Json.test(data) ? JSON.parse(data + "") : data;
+                                    } catch (e) {}
+
+                                    // Make sure we set the data so it isn't changed later
+
+                                    $.data(elem, key, data);
+
+                                } else {
+                                    data = undefined;
+                                }
+                            }
+                            return data;
+                        }
+                    }
+                    $.data(elem, "parsedAttrs", true);
+                }
+
+                // 'key' defined, but no 'data'.
+
+            } else if (isUndefined(value)) {
+
+                if (this.length === 1) {
+
+                    return $.data(this.elems[0], key);
+
+                } else {
+
+                    // Sets multiple values
+
+                    return this.elems.map(function (el) {
+
+                        return $.data(el, key);
+
+                    });
+                }
+
+            } else {
+
+                return $.data(this[0], key, value);
+            }
+        }
+
+    });
+
+})(hAzzle);
+
 // Events
 
-;
-(function ($) {
+; (function ($) {
 
     var win = window,
         doc = document || {},
@@ -3377,380 +4520,814 @@
     });
 
 })(hAzzle);
-// Ajax
 
-;
-(function ($) {
+/*!
+ * Browser
+ */
+; (function ($) {
 
-    // Ajax
-    var win = window,
-        doc = document,
-        byTag = 'getElementsByTagName',
-        xmlHttpRequest = 'XMLHttpRequest',
-        crElm = 'createElement',
-        own = 'hasOwnProperty',
-        head = doc.head || doc[byTag]('head')[0],
-        uniqid = 0,
-        lastValue, // data stored by the most recent JSONP callback
-        nav = navigator,
-        isIE10 = $.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
+    var nav = navigator,
+	    ua = nav.userAgent,
+        t = true,
+        iosdevice = getFirstMatch(/(ipod|iphone|ipad)/i).toLowerCase(),
+        likeAndroid = /like android/i.test(ua),
+        android = !likeAndroid && /android/i.test(ua),
+        versionIdentifier = getFirstMatch(/version\/(\d+(\.\d+)?)/i),
+        tablet = /tablet/i.test(ua),
+        mobile = !tablet && /[^-]mobi/i.test(ua),
+        result,
 
-        defaultHeaders = {
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
-            requestedWith: xmlHttpRequest,
-            accepts: {
-                '*': "*/".concat("*"),
-                'text': 'text/plain',
-                'html': 'text/html',
-                'xml': 'application/xml, text/xml',
-                'json': 'application/json, text/javascript',
-                'js': 'application/javascript, text/javascript'
+     // Browser regEx	
+
+        pShort = /phantom/i,
+        blackbShort = /blackberry|\bbb\d+/i,
+        operaShort = /opera|opr/i,
+        chromeShort = /chrome|crios|crmo/i,
+        ieShort = /msie|trident/i,
+        sailfishShort = /sailfish/i,
+        seamonkeyShort = /seamonkey\//i,
+        ffShort = /firefox|iceweasel/i,
+        webOsShort = /(web|hpw)os/i,
+        silkShort = /silk/i,
+        safariShort = /safari/i,
+        seamokeyShort = /seamonkey\//i,
+        badaShort = /bada/i,
+        tizenShort = /tizen/i,
+        geckoShort = /gecko\//i,
+        ffMobTab = /\((mobile|tablet);[^\)]*rv:[\d\.]+\)/i,
+        opera = /(?:opera|opr)[\s\/](\d+(\.\d+)?)/i,
+        chrome = /(?:chrome|crios|crmo)\/(\d+(\.\d+)?)/i,
+        Firefox = /(?:firefox|iceweasel)[ \/](\d+(\.\d+)?)/i,
+        msie = /(?:msie |rv:)(\d+(\.\d+)?)/i,
+        iemobile = /iemobile\/(\d+(\.\d+)?)/i,
+        winPhone = /windows phone/i,
+        sailfish = /sailfish\s?browser\/(\d+(\.\d+)?)/i,
+        seamonkey = /seamonkey\/(\d+(\.\d+)?)/i,
+        phantom = /phantomjs\/(\d+(\.\d+)?)/i,
+        BlackBerry = /blackberry[\d]+\/(\d+(\.\d+)?)/i,
+        osBrowser = /w(?:eb)?osbrowser\/(\d+(\.\d+)?)/i,
+        bada = /dolfin\/(\d+(\.\d+)?)/i,
+        tizen = /(?:tizen\s?)?browser\/(\d+(\.\d+)?)/i,
+        appleWebkit = /(apple)?webkit/i,
+        gecko = /gecko\/(\d+(\.\d+)?)/i,
+        touchPad = /touchpad\//i,
+        silk = /silk\/(\d+(\.\d+)?)/i;
+
+    function getFirstMatch(regex) {
+        var match = ua.match(regex);
+        return (match && match.length > 1 && match[1]) || '';
+    }
+
+
+hAzzle.extend ({
+    browser: function () {
+        operaShort.test(ua) ? result = {
+            name: "Opera",
+            opera: t,
+            version: versionIdentifier || getFirstMatch(opera)
+        } : winPhone.test(ua) ? result = {
+            name: "Windows Phone",
+            windowsphone: t,
+            msie: t,
+            version: getFirstMatch(iemobile)
+        } : ieShort.test(ua) ? result = {
+            name: "Internet Explorer",
+            msie: t,
+            version: getFirstMatch(msie)
+        } : chromeShort.test(ua) ? result = {
+            name: "Chrome",
+            chrome: t,
+            version: getFirstMatch(chrome)
+        } : iosdevice ? (result = {
+            name: "iphone" == iosdevice ? "iPhone" : "ipad" == iosdevice ? "iPad" : "iPod"
+        }, versionIdentifier && (result.version = versionIdentifier)) : sailfishShort.test(ua) ? result = {
+            name: "Sailfish",
+            sailfish: t,
+            version: getFirstMatch(sailfish)
+        } : seamokeyShort.test(ua) ? result = {
+            name: "SeaMonkey",
+            seamonkey: t,
+            version: getFirstMatch(seamonkey)
+        } : ffShort.test(ua) ? (result = {
+            name: "Firefox",
+            firefox: t,
+            version: getFirstMatch(Firefox)
+        }, ffMobTab.test(ua) && (result.firefoxos = t)) : silkShort.test(ua) ? result = {
+            name: "Amazon Silk",
+            silk: t,
+            version: getFirstMatch(silk)
+        } : android ? result = {
+            name: "Android",
+            version: versionIdentifier
+        } : pShort.test(ua) ? result = {
+            name: "PhantomJS",
+            phantom: t,
+            version: getFirstMatch(phantom)
+        } : blackbShort.test(ua) || /rim\stablet/i.test(ua) ? result = {
+            name: "BlackBerry",
+            blackberry: t,
+            version: versionIdentifier || getFirstMatch(BlackBerry)
+        } : webOsShort.test(ua) ? (result = {
+                name: "WebOS",
+                webos: t,
+                version: versionIdentifier || getFirstMatch(osBrowser)
+            }, touchPad.test(ua) &&
+            (result.touchpad = t)) : result = badaShort.test(ua) ? {
+            name: "Bada",
+            bada: t,
+            version: getFirstMatch(bada)
+        } : tizenShort.test(ua) ? {
+            name: "Tizen",
+            tizen: t,
+            version: getFirstMatch(tizen) || versionIdentifier
+        } : safariShort.test(ua) ? {
+            name: "Safari",
+            safari: t,
+            version: versionIdentifier
+        } : {};
+
+        // set webkit or gecko flag for browsers based on these engines
+        if (appleWebkit.test(ua)) {
+            result.name = result.name || "Webkit";
+            result.webkit = t;
+            if (!result.version && versionIdentifier) {
+                result.version = versionIdentifier;
             }
-        };
-
-    /**
-     * Convert to query string
-     *
-     * @param {Object} obj
-     *
-     * @return {String}
-     *
-     * - Taken from jQuery and optimized it for speed
-     *
-     */
-
-    function ctqs(o, trad) {
-
-        var prefix, i,
-            traditional = trad || false,
-            s = [],
-            enc = encodeURIComponent,
-            add = function (key, value) {
-                // If value is a function, invoke it and return its value
-                value = ($.isFunction(value)) ? value() : (value === null ? '' : value);
-                s[s.length] = enc(key) + '=' + enc(value);
-            };
-        // If an array was passed in, assume that it is an array of form elements.
-        if ($.isArray(o))
-            for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
-        else {
-            for (prefix in o) {
-                buildParams(prefix, o[prefix], traditional, add, o);
-            }
+        } else if (!result.opera && geckoShort.test(ua)) {
+            result.name = result.name || "Gecko";
+            result.gecko = t;
+            result.version = result.version || getFirstMatch(gecko);
         }
-        return s.join('&').replace(/%20/g, '+');
-    }
 
-    /**
-     * Build params
-     */
+        // set OS flags for platforms that have multiple browsers
+        if (android || result.silk) {
+            result.android = t;
+        } else if (iosdevice) {
+            result[iosdevice] = t;
+            result.ios = t;
+        }
 
-    function buildParams(prefix, obj, traditional, add, o) {
-        var name, i, v, rbracket = /\[\]$/;
+        // OS version extraction
+        var osVersion = '';
+        if (iosdevice) {
+            osVersion = getFirstMatch(/os (\d+([_\s]\d+)*) like mac os x/i);
+            osVersion = osVersion.replace(/[_\s]/g, '.');
+        } else if (android) {
+            osVersion = getFirstMatch(/android[ \/-](\d+(\.\d+)*)/i);
+        } else if (result.windowsphone) {
+            osVersion = getFirstMatch(/windows phone (?:os)?\s?(\d+(\.\d+)*)/i);
+        } else if (result.webos) {
+            osVersion = getFirstMatch(/(?:web|hpw)os\/(\d+(\.\d+)*)/i);
+        } else if (result.blackberry) {
+            osVersion = getFirstMatch(/rim\stablet\sos\s(\d+(\.\d+)*)/i);
+        } else if (result.bada) {
+            osVersion = getFirstMatch(/bada\/(\d+(\.\d+)*)/i);
+        } else if (result.tizen) {
+            osVersion = getFirstMatch(/tizen[\/\s](\d+(\.\d+)*)/i);
+        }
+        if (osVersion) {
+            result.osversion = osVersion;
+        }
 
-        if ($.isArray(obj)) {
-            for (i = 0; obj && i < obj.length; i++) {
-                v = obj[i];
-                if (traditional || rbracket.test(prefix)) {
-                    // Treat each array item as a scalar.
-                    add(prefix, v);
-                } else buildParams(prefix + '[' + ($.isObject(v) ? i : '') + ']', v, traditional, add);
-            }
-        } else if (obj && obj.toString() === '[object Object]') {
-            // Serialize object item.
-            for (name in obj) {
-                if (o[own](prefix)) buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
-            }
+        // device type extraction
+        var osMajorVersion = osVersion.split('.')[0];
+        if (tablet || iosdevice == 'ipad' || (android && (osMajorVersion == 3 || (osMajorVersion == 4 && !mobile))) || result.silk) {
+            result.tablet = t;
+        } else if (mobile || iosdevice == 'iphone' || iosdevice == 'ipod' || android || result.blackberry || result.webos || result.bada) {
+            result.mobile = t;
+        }
 
-        } else add(prefix, obj);
-    }
+        // Graded Browser Support
+        // http://developer.yahoo.com/yui/articles/gbs
+        if ((result.msie && result.version >= 9) ||
+            (result.chrome && result.version >= 20) ||
+            (result.firefox && result.version >= 10.0) ||
+            (result.safari && result.version >= 5) ||
+            (result.opera && result.version >= 10.0) ||
+            (result.ios && result.osversion && result.osversion.split(".")[0] >= 6)
+        ) {
+            result.a = t;
+        } else if ((result.msie && result.version < 9) ||
+            (result.chrome && result.version < 20) ||
+            (result.firefox && result.version < 10.0) ||
+            (result.safari && result.version < 5) ||
+            (result.opera && result.version < 10.0) ||
+            (result.ios && result.osversion && result.osversion.split(".")[0] < 6)
+        ) {
+            result.c = t;
+        } else result.x = t;
 
-    /**
-     *  Url append
-     *
-     * @param {String} url
-     * @param {String} query
-     * @return {String}
-     */
+        return result;
+    }	
+})
 
-    function appendQuery(url, query) {
-        return (url + '&' + query).replace(/[&?]+/, '?')
-    }
+})(hAzzle);
 
-    /**
-     * General jsonP callback
-     *
-     * @param {String} url
-     * @param {String} s
-     *
-     * @return {String}
-     **/
+// Localestorage
 
-    function generalCallback(data) {
-        lastValue = data;
-    }
+; (function ($) {
 
-    /**
-     * jsonP
-     *
-     * @param {Object} o
-     * @param {Function} fn
-     * @param {String} url
-     *
-     * @return {Object}
-     **/
+    var isObject = $.isObject,
+        isString = $.isString,
+        win = window,
+        doc = document,
 
-    function handleJsonp(o, fn, url) {
+        // Common 5MB localStorage
 
-        var reqId = uniqid++,
-            cbkey = o.jsonp || 'callback'; // the 'callback' key
+        defaultSize = 5242880;
 
-        o = o.jsonpCallback || 'hAzzel_' + $.now(); // the 'callback' value
+    // Inital check to see if localStorage is supported in the browser
 
-        var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
-            match = url.match(cbreg),
-            script = doc[crElm]('script'),
-            loaded = 0;
+    (function () {
+        var supported = false;
 
-        if (match) {
-            if (match[3] === '?') url = url.replace(cbreg, '$1=' + o); // wildcard callback func name
-            else o = match[3]; // provided callback func name
-        } else url = appendQuery(url, cbkey + '=' + o); // no callback details, add 'em
+        // Derived from Modernizer (http://github.com/Modernizr/Modernizr)
 
+        try {
+            localStorage.setItem('hAzzle', 'hAzzle');
+            localStorage.removeItem('hAzzle');
+            supported = true;
+        } catch (e) {
+            supported = false;
+        }
 
-        win[o] = generalCallback;
+        /**
+         *  Implements localStorage if not supported
+         *
+         * NOTE !! We are going to remove this 'shim' in the future. Just now Opera Mini and IE Mobile 9 and older are not supporting this one.
+         *
+         * From https://developer.mozilla.org/en-US/docs/Web/Guide/DOM/Storage?redirectlocale=en-US&redirectslug=DOM%2FStorage
+         */
 
-        script.type = 'text/javascript';
-        script.src = url;
-        script.async = true;
+        if (!supported) {
+            win.localStorage = {
+                getItem: function (sKey) {
+                    if (!sKey || !this.hasOwnProperty(sKey)) {
+                        return null;
+                    }
+                    return unescape(doc.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") +
+                        "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
+                },
 
+                key: function (nKeyId) {
+                    return unescape(doc.cookie.replace(/\s*\=(?:.(?!;))*$/, "").split(/\s*\=(?:[^;](?!;))*[^;]?;\s*/)[nKeyId]);
+                },
 
-        $.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
+                setItem: function (sKey, sValue) {
+                    if (!sKey) {
+                        return;
+                    }
+                    doc.cookie = escape(sKey) + "=" + escape(sValue) + "; expires=Tue, 19 Jan 2038 03:14:07 GMT; path=/";
+                    this.length = doc.cookie.match(/\=/g).length;
+                },
 
-        script.onload = script.onreadystatechange = function () {
+                length: 0,
 
-            if (script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded' || loaded) {
-                return false;
-            }
-            script.onload = script.onreadystatechange = null;
-            if (script.onclick) script.onclick();
-            // Call the user callback with the last value stored and clean up values and scripts.
-            fn(lastValue);
-            lastValue = undefined;
-            head.removeChild(script);
-            loaded = 1;
-        };
+                removeItem: function (sKey) {
+                    if (!sKey || !this.hasOwnProperty(sKey)) {
+                        return;
+                    }
+                    doc.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+                    this.length--;
+                },
 
-        // Add the script to the DOM head
-        head.appendChild(script);
+                // Really bad name, but not my idea :)
 
-        // Enable JSONP timeout
-        return {
-            abort: function () {
-                script.onload = script.onreadystatechange = null;
-                lastValue = undefined;
-                head.removeChild(script);
-                loaded = 1;
-            }
-        };
-    }
+                hasOwnProperty: function (sKey) {
+                    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(doc.cookie);
+                }
+            };
 
-    // Extend the hAzzle object
+            win.localStorage.length = (doc.cookie.match(/\=/g) || win.localStorage).length;
+        }
+    })();
 
     $.extend({
 
-        ajaxSettings: {
+        /**
+         * Convert bytes to human readable KB / MB / GB
+         */
 
-            // Default type of request
-            type: 'GET',
-            // Callback that is executed before request
-            beforeSend: $.noop(),
-            // Callback that is executed if the request succeeds
-            success: $.noop(),
-            // Callback that is executed the the server drops error
-            error: $.noop(),
-            // Callback that is executed on request complete (both: error and success)
-            complete: $.noop(),
-            // Default timeout
-            timeout: 0,
-            // async
-            async: true,
+        bytesToSize: function (bytes) {
+            var k = 1000,
+                sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
 
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8"
+            if (bytes === 0) {
+
+                return '0 Bytes';
+            }
+            var i = parseInt(Math.floor(Math.log(bytes) / Math.log(k)), 10);
+            return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i];
+        },
+
+        /**
+         * Removes all key / value pairs from localStorage
+         */
+
+        clearStorage: function () {
+            localStorage.clear();
+        },
+
+        /**
+         * Returns an array of keys currently stored in localStorage.
+         */
+
+        storageContains: function (key) {
+
+            if (key && isString(key)) {
+                return $.indexOf(this.getStorageKeys(), key) !== -1;
+            }
+        },
+
+        /**
+         * Returns an array of keys currently stored in localStorage.
+         */
+
+        getStorageKeys: function () {
+
+            var result = [],
+                i = 0;
+
+            for (i = localStorage.length; i--;) {
+                result.push(localStorage.key(i));
+            }
+
+            return result;
+        },
+
+        /**
+         * Returns an approximation of how much space is left in localStorage
+         */
+
+        getRemainingStorageSpace: function () {
+            return this.bytesToSize(defaultSize - this.getStorageSize(true));
+        },
+
+        /**
+         * Returns the size of the total contents in localStorage.
+         *
+         */
+
+        getStorageSize: function ( /*INTERNAL*/ pure) {
+
+            if (pure) {
+
+                return JSON.stringify(localStorage).length;
+
+            } else { // Human readable
+
+                return this.bytesToSize(JSON.stringify(localStorage).length);
+            }
+        },
+
+        /**
+         *  Returns true if localStorage has no key/value pairs
+         */
+
+        isStorageEmpty: function () {
+            return this.getStorageKeys().length === 0;
+        },
+
+        /**
+         * Removes the specified key/value pair
+         */
+
+        removeStorage: function (key) {
+
+            if (!key) {
+
+                return;
+            }
+
+            if (isString(key)) {
+
+                localStorage.removeItem(key);
+
+            } else if ($.isArray(key)) {
+
+                var i = key.length;
+
+                while (i--) {
+
+                    if (isString(key[i])) {
+
+                        localStorage.removeItem(key[i]);
+                    }
+                }
+            }
+        },
+
+        /**
+         * Returns the proper-type value of a specified key
+         */
+        getStorage: function (key, defaultValue) {
+
+            if (key && isString(key)) {
+
+                var value = localStorage.getItem(key).toLowerCase(), // retrieve value
+                    number = parseFloat(value); // to allow for number checking
+
+                if (value === null) {
+
+                    // Returns default value if key is not set, otherwise returns null
+                    return arguments.length === 2 ? defaultValue : null;
+                }
+
+                if (!$.IsNaN(number)) {
+
+                    return number; // value was of type number
+                }
+
+                if (value === 'true' || value === 'false') {
+                    return value === 'true'; //value was of type boolean
+                }
+
+                try {
+                    value = JSON.parse(value + "");
+                    return value;
+
+                } catch (e) {
+
+                    return value;
+                }
+            }
 
         },
 
         /**
-         * Ajax method to create ajax request with XMLHTTPRequest
-         *
-         * @param {Object|Function} opt
-         * @param {function|callback} fn
-         * @return {Object}
-         */
+         * Stores a given object in localStorage, allowing access to individual object properties
+         **/
 
-        ajax: function (opt, fn) {
+        setStorage: function (key, value) {
 
-            var key, h, err;
+            if (arguments.length === 1) {
 
-            opt = $.extend({}, opt || {});
+                this.store(key);
 
-            for (key in $.ajaxSettings) {
+            } else if (key && isString(key)) {
 
-                if (opt[key] === undefined) {
+                if (isObject(value)) {
 
-                    opt[key] = $.ajaxSettings[key];
-
+                    value = JSON.stringify(value);
                 }
 
+                localStorage.setItem(key, value);
             }
-            fn = fn || function () {};
+        },
 
-            var xhr,
-                xDomainRequest = 'XDomainRequest',
-                error = 'error',
-                headers = opt.headers || {},
-                type = (opt.type || 'GET').toLowerCase(),
-                url = $.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
+        /**
+         * Saves a given object in localStorage, allowing access to individual object properties
+         **/
 
-            var dataType = (opt.dataType) ? opt.dataType.toLowerCase() : '',
-                abortTimeout = null,
-                processData = opt.processData || true, // Set to true as default
-                data = (processData !== false && opt.data && !$.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
-                sendWait = false;
+        saveStorage: function (value) {
+            var property;
 
-            // If no url, stop here and return.
+            if (value && isObject(value) && !(value instanceof Array)) {
+                for (property in value) {
+                    localStorage.setItem(property, value[property]);
+                }
+            }
+        },
 
-            if (!url) return false;
+        /**
+         * Returns an object representation of the current state of localStorage
+         *
+         */
 
-            // If jsonp or GET, append the query string to end of URL
+        StorageToObject: function () {
 
-            if ((dataType === 'jsonp' || type.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
+            var o = {},
+                keys = this.getStorageKeys(),
+                i = keys.length;
 
-            // If jsonp, we stop it here 
-
-            if (dataType === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
-
-            if (opt.crossOrigin === true) {
-                var _xhr = win.XMLHttpRequest ? new XMLHttpRequest() : null;
-                if (_xhr && 'withCredentials' in _xhr) xhr = _xhr;
-                else if (win.xDomainRequest) xhr = new xDomainRequest();
-                else throw "Browser does not support cross-origin requests";
-            } else {
-                xhr = new XMLHttpRequest()
+            while (i--) {
+                o[keys[i]] = this.getStorage(keys[i]);
             }
 
-            xhr.open(type, url, opt.async === false ? false : true);
-
-            // Set headers
-
-            headers.Accept = headers.Accept || defaultHeaders.accepts[type] || defaultHeaders.accepts['*'];
-
-            if (!opt.crossOrigin && !headers.requestedWith) headers.requestedWith = defaultHeaders.requestedWith;
-
-            if (opt.contentType || opt.data && dataType.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
-
-            // Set headers
-
-            for (h in headers) {
-
-                headers.hasOwnProperty(h) && 'setRequestHeader' in xhr && xhr.setRequestHeader(h, headers[h]);
-
-            }
-            // Set credentials
-
-            if ($.isDefined(opt.withCredentials) && $.isDefined(xhr.withCredentials)) {
-                xhr.withCredentials = !!opt.withCredentials;
-            }
-
-            if (opt.timeout > 0) {
-                abortTimeout = setTimeout(function () {
-                    xhr.abort(); // Or should we use self.abort() ??
-                }, opt.timeout);
-            }
-
-            if (win[xDomainRequest] && xhr instanceof win.xDomainRequest) {
-
-                xhr.onload = fn;
-                xhr.onerror = err;
-                xhr.onprogress = function () {};
-                sendWait = true;
-
-            } else {
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-
-                        // Determine if successful
-
-                        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
-                            var res;
-                            if (xhr) {
-
-                                // json
-
-                                if ((dataType === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
-
-                                // xml
-
-                                if (dataType === 'xml') {
-
-                                    res = xhr.responseXML && xhr.responseXML.parseError && xhr.responseXML.parseError.errorCode && xhr.responseXML.parseError.reason ? null : xhr.responseXML;
-
-                                } else {
-
-                                    res = res || xhr.responseText;
-                                }
-                            }
-                            if (!res && data) res = data;
-                            if (opt.success) opt.success(res);
-                        } else if (opt.error !== undefined) {
-
-                            if (abortTimeout !== null) clearTimeout(abortTimeout);
-                            opt.error(error, opt, xhr);
-                        }
-                    }
-                };
-            }
-
-            // Before open
-
-            if (opt.before) opt.before(xhr);
-
-            if (sendWait) {
-                setTimeout(function () {
-
-                    xhr.send(data);
-                }, 200);
-            } else xhr.send(data);
-
-            return xhr;
+            return o;
         }
-    });
 
-
-
-    $.each(["get", "post"], function (i, method) {
-
-        $[method] = function (url, data, callback, type) {
-            // shift arguments if data argument was omitted
-            if ($.isFunction(data)) {
-                type = type || callback;
-                callback = data;
-                data = undefined;
-            }
-
-            return $.ajax({
-                url: url,
-                type: method,
-                dataType: type,
-                data: data,
-                success: callback
-            });
-        };
     });
 
 })(hAzzle);
 
-// Colors
+/*!
+ * HTML
+ */
+
+; (function ($) {
+
+    var concat = Array.prototype.concat,
+
+        doc = document,
+
+        isFunction = $.isFunction,
+
+        rtagName = /<([\w:]+)/,
+        rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+
+        rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
+        rhtml = /<|&#?\w+;/,
+        rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
+        rscriptType = /^$|\/(?:java|ecma)script/i,
+        rscriptTypeMasked = /^true\/(.*)/,
+        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+
+        wrapMap = {
+
+            // Support: IE 9
+            option: [1, "<select multiple='multiple'>", "</select>"],
+
+            thead: [1, "<table>", "</table>"],
+            col: [2, "<table><colgroup>", "</colgroup></table>"],
+            tr: [2, "<table><tbody>", "</tbody></table>"],
+            td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
+
+            _default: [0, "", ""]
+        };
+
+    wrapMap.optgroup = wrapMap.option;
+    wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
+    wrapMap.th = wrapMap.td;
+
+    (function () {
+        var fragment = doc.createDocumentFragment(),
+            div = fragment.appendChild(doc.createElement("div")),
+            input = doc.createElement("input");
+
+        input.setAttribute("type", "radio");
+        input.setAttribute("checked", "checked");
+        input.setAttribute("name", "t");
+
+        div.appendChild(input);
+
+        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+
+        div.innerHTML = "<textarea>x</textarea>";
+        $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+    })();
+
+    /**
+     * Disable "script" tags
+     **/
+
+    function disableScript(elem) {
+        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
+        return elem;
+    }
+
+    /**
+     * Restore "script" tags
+     **/
+
+
+    function restoreScript(elem) {
+        var m = rscriptTypeMasked.exec(elem.type);
+        m ? elem.type = m[1] : elem.removeAttribute("type");
+        return elem;
+    }
+
+    $.extend($, {
+
+        Evaluated: function (elems, refElements) {
+            var i = 0,
+                l = elems.length;
+
+            for (; i < l; i++) {
+                $.data(elems[i], "evaluated", !refElements || $.data(refElements[i], "evaluated"));
+            }
+        },
+
+        _evalUrl: function (url) {
+            return $.ajax({
+                url: url,
+                type: "GET",
+                dataType: "script",
+                async: false,
+                global: false,
+                "throws": true
+            });
+        },
+
+        parseHTML: function (data, context, keepScripts) {
+
+            if (!data || typeof data !== "string") {
+                return null;
+            }
+
+            if ($.isBoolean(context)) {
+                keepScripts = context;
+                context = false;
+            }
+
+            var parsed = rsingleTag.exec(data),
+                scripts = !keepScripts && [],
+
+             // Prevent XSS attack
+
+              context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
+
+            // Single tag
+
+            if (parsed) {
+
+                return [context.createElement(parsed[1])];
+            }
+
+            parsed = $.createHTML([data], context, scripts);
+
+            if (scripts && scripts.length) {
+                $(scripts).remove();
+            }
+
+            return $.merge([], parsed.childNodes);
+        },
+
+   /**
+	* Create the HTML
+    *
+	*/
+        createHTML: function (elems, context, scripts, selection) {
+
+            if (!context) return;
+
+            var elem, tmp, tag, wrap, contains, j,
+                fragment = context.createDocumentFragment(),
+                nodes = [],
+                i = 0,
+                l = elems.length;
+
+            $.each(elems, function (_, elem) {
+
+                if (elem || elem === 0) {
+
+                    // Add nodes directly
+
+                    if (typeof elem === "object") {
+
+                        $.merge(nodes, elem.nodeType ? [elem] : elem);
+
+                    } else if (!rhtml.test(elem)) {
+
+                        nodes.push(context.createTextNode(elem));
+
+                    } else { // Suport for HTML 6
+
+                        tmp = tmp || fragment.appendChild(context.createElement("div"));
+
+                        // Deserialize a standard representation
+						
+                        tag = (rtagName.exec(elem) || ["", ""])[1].toLowerCase();
+                        wrap = wrapMap[tag] || wrapMap._default;
+                        tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, "<$1></$2>") + wrap[2];
+
+
+                        // Descend through wrappers to the right content
+                        j = wrap[0];
+
+                        while (j--) {
+                            tmp = tmp.lastChild;
+                        }
+
+                        $.merge(nodes, tmp.childNodes);
+
+                        tmp = fragment.firstChild;
+
+                        tmp.textContent = "";
+                    }
+                }
+            });
+
+            // Remove wrapper from fragment
+			
+            fragment.textContent = "";
+
+            i = 0;
+
+            while ((elem = nodes[i++])) {
+
+                if (selection && $.indexOf.call(selection, elem) === -1) continue;
+
+                contains = $.contains(elem.ownerDocument, elem);
+
+                // Append to fragment
+
+                tmp = $.getChildren(fragment.appendChild(elem), "script");
+
+                if (contains) {
+
+                    $.Evaluated(tmp);
+                }
+
+                // Capture executables
+				
+                if (scripts) {
+                    j = 0;
+                    while ((elem = tmp[j++])) {
+                        if (rscriptType.test(elem.type || "")) {
+                            scripts.push(elem);
+                        }
+                    }
+                }
+            }
+
+            return fragment;
+        }
+    });
+
+    $.extend($.fn, {
+
+        // Inspiration from jQuery
+
+        manipulateDOM: function (args, callback) {
+
+            // Flatten any nested arrays
+
+            args = concat.apply([], args);
+
+            var fragment, first, scripts, hasScripts, node, doc,
+                i = 0,
+                l = this.length,
+                set = this,
+                iNoClone = l - 1,
+                value = args[0],
+                isFunction = $.isFunction(value);
+
+
+
+            if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
+
+                return this.each(function (index) {
+                    var self = set.eq(index);
+                    if (isFunction) {
+                        args[0] = value.call(this, index, self.html());
+                    }
+                    self.manipulateDOM(args, callback);
+                });
+            }
+
+            if (l) {
+
+                fragment = $.createHTML(args, this[0].ownerDocument, false, this);
+
+                first = fragment.firstChild;
+
+                if (fragment.childNodes.length === 1) {
+                    fragment = first;
+                }
+
+                if (first) {
+                    scripts = $.map($.getChildren(fragment, "script"), disableScript);
+                    hasScripts = scripts.length;
+
+                    while (i < l) {
+
+                        if (i !== iNoClone && !$.nodeType(3, fragment)) {
+
+                            fragment = $.clone(fragment, true, true);
+
+                            if (hasScripts) {
+                                $.merge(scripts, $.getChildren(fragment, "script"));
+                            }
+                        }
+
+                        callback.call(this[i], fragment, i);
+
+                        i++;
+                    }
+
+                    if (hasScripts) {
+                        doc = scripts[scripts.length - 1].ownerDocument;
+
+                        // Reenable scripts
+                        $.map(scripts, restoreScript);
+
+                        // Evaluate executable scripts on first document insertion
+                        for (i = 0; i < hasScripts; i++) {
+
+                            node = scripts[i];
+                            if (rscriptType.test(node.type || "") && !$.data(node, "evaluated") && $.contains(doc, node)) {
+
+                                if (node.src) {
+                                    // Optional AJAX dependency, but won't run scripts if not present
+                                    if ($._evalUrl) {
+                                        $._evalUrl(node.src);
+                                    }
+                                } else {
+                                    $.Evaluated(node.textContent.replace(rcleanScript, ""));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return this;
+        }
+
+    });
+
+})(hAzzle);
 
 // Colors
 ;
@@ -3763,9 +5340,9 @@
         /**
          * hAzzle color names
          *
-         * NOTE!! Only the most used RGB colors are listed, if you need more, you have to
-         * create a plug-in for it.
-         *
+		 * NOTE!! Only the most used RGB colors are listed, if you need more, you have to
+		 * create a plug-in for it.
+		 *
          */
 
         colornames: {
@@ -4322,2017 +5899,54 @@
         }
     };
 
-    // Traversing
-
-  var cached = [],
-        slice = Array.prototype.slice;
-
-    $.extend($.fn, {
-
-        /**
-         * Fetch property from elements
-         *
-         * @param {String} prop
-         * @return {Array}
-         */
-
-        pluckNode: function (prop) {
-            return this.map(function (element) {
-                return $.getClosestNode(element, prop);
-            });
-        },
-
-        /**
-         * Get the  element that matches the selector, beginning at the current element and progressing up through the DOM tree.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        closest: function (sel, ctx) {
-            return this.map(function (elem) {
-                if ($.nodeType(1, elem) && elem !== ctx && !$.isDocument(elem) && $.matches(elem, typeof sel == 'object' ? $(sel) : sel)) {
-                    return elem;
-                }
-                return $.getClosestNode(elem, 'parentNode', sel, /* NodeType 11 */ 11);
-            });
-        },
-
-        /** Determine the position of an element within the matched set of elements
-         *
-         * @param {string} elem
-         * @param {return} Object
-         */
-
-        index: function (elem) {
-            return elem ? this.indexOf($(elem)[0]) : this.parent().children().indexOf(this[0]) || -1;
-        },
-
-        /**
-         *  Pick elements by tagNames from the "elems stack"
-         *
-         * @param {string} tag
-         * @return {Object}
-         */
-        tags: function (tag) {
-            return this.map(function (els) {
-                if (els.tagName.toLowerCase() === tag && $.nodeType(1, els)) {
-                    return els;
-                }
-            });
-        },
-
-        /**
-         * Adds one element to the set of matched elements.
-         *
-         * @param {String} sel
-         * @param {String} ctx
-         * @return {Object}
-         */
-
-        add: function (sel, ctx) {
-            return this.concat($(sel, ctx).elems);
-        },
-
-        /**
-         * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
-         */
-        has: function (target) {
-
-            var targets = $(target, this),
-                i = 0,
-                l = targets.length;
-
-            return this.filter(function () {
-                for (; i < l; i++) {
-                    if ($.contains(this, targets[i])) {
-                        return true;
-                    }
-                }
-            });
-        },
-
-        /**
-         * Get elements in list but not with this selector
-         *
-         * @param {String} sel
-         * @return {Object}
-         *
-         */
-
-        not: function (sel) {
-            return this.filter(sel, true)
-        },
-
-        /**
-         * Check if the first element in the element collection matches the selector
-         *
-         * @param {String|Object} sel
-         * @return {Boolean}
-         */
-
-        is: function (sel) {
-            return !!sel && (
-                /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
-                hAzzle(sel).index(this[0]) >= 0 :
-                this.filter(sel).length > 0);
-        },
-
-        /**
-         * Get immediate parents of each element in the collection.
-         * If CSS selector is given, filter results to include only ones matching the selector.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        parent: function (sel) {
-            return $.create(this.pluck('parentNode', /* NodeType 11 */ 11), sel);
-        },
-
-        /**
-         *  Get the ancestors of each element in the current set of matched elements
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        parents: function (sel) {
-            var ancestors = [],
-                elements = this.elems,
-                fn = function (element) {
-                    if ((element = element.parentNode) && element !== document && ancestors.indexOf(element) < 0) {
-                        if ($.nodeType(1, element)) {
-                            ancestors.push(element);
-                            return element;
-                        }
-                    }
-
-                };
-
-            while (elements.length > 0 && elements[0] !== undefined) {
-                elements = elements.map(fn);
-            }
-
-            return $.create(ancestors, sel);
-        },
-
-        /**
-         * Get all decending elements of a given element
-         * If selector is given, filter the results to only include ones matching the CSS selector.
-         *
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        children: function (sel) {
-            return $(this.reduce(function (els, elem) {
-                if ($.nodeType(1, elem)) {
-                    return els.concat(slice.call(elem.children));
-                }
-            }, []), sel);
-        },
-
-        /**
-         *  Return the element's next sibling
-         *
-         * @return {Object}
-         */
-
-        next: function (selector) {
-            return selector ? $(this.pluckNode('nextSibling').filter(selector || [])) : $(this.pluckNode('nextSibling'));
-        },
-
-        nextUntil: function (until) {
-
-            var matches = [];
-
-            this.nextAll().each(function () {
-                if ($(this).is(until)) return false;
-                matches.push(this);
-            });
-
-            return $(matches);
-        },
-
-        /**
-         *  Return the element's previous sibling
-         *
-         * @return {Object}
-         */
-
-        prev: function (selector) {
-            return selector ? $(this.pluckNode('previousSibling').filter(selector)) : $(this.pluckNode('previousSibling'));
-        },
-
-        prevUntil: function (until) {
-
-            var matches = [];
-
-            this.prevAll().each(function () {
-                if ($(this).is(until)) return false;
-                matches.push(this);
-            });
-
-            return $(matches);
-        },
-
-        /**
-         * Return an sequense of elements from the 'elems stack', plucked
-         * by the given numbers
-         *
-         * Example:
-         *
-         * $('p').collection([1,6, 9])
-         *
-         * Outputs elem 1,6, 9 from the stack
-         *
-         * @param {array} count
-         * @return {object}
-         *
-         */
-
-        collection: function (count) {
-
-            if (!$.isArray(count)) {
-                return [];
-            }
-
-            var holder = [],
-                i = count.length;
-            while (i--) {
-                holder.push(this.elems[count[i]])
-            }
-
-            return $(holder) || [];
-        },
-
-        /**
-         * Reduce the set of matched elements to the first x in the set.
-         */
-
-        first: function (count) {
-
-            if ((count == null)) {
-
-                return $(this.elems[0]);
-            }
-
-            if (count < 0) {
-
-                return [];
-            }
-
-            return $(slice.call(this.elems, 0, count));
-        },
-
-        /**
-         * Reduce the set of matched elements to the last one in the set.
-         */
-
-        last: function (count) {
-            var elems = this.elems;
-
-            if ((count == null)) {
-
-                return $(elems[elems.length - 1]);
-            }
-
-            return $(slice.call(elems, Math.max(elems.length - count, 0)));
-        },
-
-        contents: function () {
-            return this.map(function (elem) {
-                return elem.contentDocument || slice.call(elem.childNodes);
-            });
-        },
-
-        /**
-         * Return the element's siblings
-         * @param {String} sel
-         * @return {Object}
-         */
-
-        siblings: function (sel) {
-
-            var siblings = [];
-
-            if (!cached[sel]) {
-                this.each(function (_, elem) {
-                    $.each(slice.call((elem.parentNode || {}).childNodes), function (_, child) {
-                        if ($.isElement(child) && $.nodeType(1, child) && child !== elem) {
-                            siblings.push(child);
-                        }
-                    });
-                });
-                cached[sel] = siblings;
-            }
-
-            return $.create(cached[sel], sel);
-        }
-
-    });
-
-    $.extend($, {
-
-        /**
-         * Walks the DOM tree using `method`, returns when an element node is found
-         *
-         * @param{Object} element
-         * @param{String} method
-         * @param{String} sel
-         * @param{Number/Null } nt
-         */
-
-        getClosestNode: function (element, method, sel, nt) {
-            do {
-                element = element[method];
-            } while (element && ((sel && !$.matches(sel, element)) || !$.isElement(element)));
-            if ($.isDefined(nt) && (element !== null && !$.nodeType(nt, element))) {
-                return element;
-            }
-            return element;
-        }
-    });
-
-    /**
-     * Process nextAll and prevAll
-     */
-
-    $.each({
-        'nextAll': 'next',
-        'prevAll': 'prev'
-    }, function (name, subn) {
-
-        $.fn[name] = function (sel) {
-            var els = $(),
-                el = this[subn](); // next() or prev()
-            while (el.length) {
-                if (typeof sel === 'undefined' || el.is(sel)) {
-                    els = els.add(el);
-                }
-                el = el[subn](); // next() or prev()
-            }
-            return els;
-        };
-    });
-
-    // Removeable
-
-    /**
-     * Remove all child nodes of the set of matched elements from the DOM.
-     *
-     * - It first remove all data stored on the object
-     * - Then it remove all event listeners attached on the object
-     * - In the end, it removes all HTML on the elems in the elems stack.
-     *
-     * @return {Object}
-     */
-
-    $.fn.empty = function () {
-
-        var elem,
-            i = 0;
-
-        for (;
-            (elem = this[i]) != null; i++) {
-            if (elem.nodeType === 1) {
-                $.removeData(elem);
-                $.Events.off(elem);
-                elem.textContent = "";
-            }
-        }
-        return this;
-    },
-
-    /**
-     *  Remove an element from the DOM
-     */
-    $.fn.remove = function () {
-
-        // Discard any data on the element
-
-        return this.removeData().each(function (_, elem) {
-
-            // Locate all nodes that belong to this element
-            // and add them to the "elems stack"
-
-            var elements = $(elem).find('*');
-            elements = elements.add(elem);
-
-            $.Events.off(elem);
-
-            var parent = elem.parentNode;
-
-            if (parent) {
-
-                // Remove all children
-
-                this.parentNode.removeChild(elem);
-            }
-
-        })
-    };
-
 })(hAzzle);
 
 // Parsing
 
-;
-(function ($) {
+; (function ($) {
 
-    $.extend($, {
+ $.extend($, {
 
-        /**
-         * Cross-browser JSON parsing
-         *
-         * @param {String} data
-         */
+    /**
+     * Cross-browser JSON parsing
+     *
+     * @param {String} data
+     */
 
-        parseJSON: function (data) {
-            return typeof data === "string" ? JSON.parse(data + "") : data;
-        },
+    parseJSON: function (data) {
+		 return typeof data === "string" ? JSON.parse(data + "") : data;
+    },
 
-        parseXML: function (data) {
-            var xml, tmp;
-            if (!data || !$.isString(data)) {
+    parseXML: function (data) {
+        var xml, tmp;
+        if (!data || !$.isString(data)) {
 
-                return null;
-            }
-
-            // Support: IE9
-            try {
-                tmp = new DOMParser();
-                xml = tmp.parseFromString(data, "text/xml");
-            } catch (e) {
-                xml = undefined;
-            }
-
-            if (!xml || xml.getElementsByTagName("parsererror").length) {
-                return new Error("Invalid XML: " + data);
-            }
-            return xml;
+            return null;
         }
 
-    });
-
-})(hAzzle);
-
-// Localestorage
-
-;
-(function ($) {
-
-    var isObject = $.isObject,
-        isString = $.isString,
-        win = window,
-        doc = document,
-
-        // Common 5MB localStorage
-
-        defaultSize = 5242880;
-
-    // Inital check to see if localStorage is supported in the browser
-
-    (function () {
-        var supported = false;
-
-        // Derived from Modernizer (http://github.com/Modernizr/Modernizr)
-
+        // Support: IE9
         try {
-            localStorage.setItem('hAzzle', 'hAzzle');
-            localStorage.removeItem('hAzzle');
-            supported = true;
+            tmp = new DOMParser();
+            xml = tmp.parseFromString(data, "text/xml");
         } catch (e) {
-            supported = false;
+            xml = undefined;
         }
 
-        /**
-         *  Implements localStorage if not supported
-         *
-         * NOTE !! We are going to remove this 'shim' in the future. Just now Opera Mini and IE Mobile 9 and older are not supporting this one.
-         *
-         * From https://developer.mozilla.org/en-US/docs/Web/Guide/DOM/Storage?redirectlocale=en-US&redirectslug=DOM%2FStorage
-         */
-
-        if (!supported) {
-            win.localStorage = {
-                getItem: function (sKey) {
-                    if (!sKey || !this.hasOwnProperty(sKey)) {
-                        return null;
-                    }
-                    return unescape(doc.cookie.replace(new RegExp("(?:^|.*;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") +
-                        "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
-                },
-
-                key: function (nKeyId) {
-                    return unescape(doc.cookie.replace(/\s*\=(?:.(?!;))*$/, "").split(/\s*\=(?:[^;](?!;))*[^;]?;\s*/)[nKeyId]);
-                },
-
-                setItem: function (sKey, sValue) {
-                    if (!sKey) {
-                        return;
-                    }
-                    doc.cookie = escape(sKey) + "=" + escape(sValue) + "; expires=Tue, 19 Jan 2038 03:14:07 GMT; path=/";
-                    this.length = doc.cookie.match(/\=/g).length;
-                },
-
-                length: 0,
-
-                removeItem: function (sKey) {
-                    if (!sKey || !this.hasOwnProperty(sKey)) {
-                        return;
-                    }
-                    doc.cookie = escape(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-                    this.length--;
-                },
-
-                // Really bad name, but not my idea :)
-
-                hasOwnProperty: function (sKey) {
-                    return (new RegExp("(?:^|;\\s*)" + escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\=")).test(doc.cookie);
-                }
-            };
-
-            win.localStorage.length = (doc.cookie.match(/\=/g) || win.localStorage).length;
+        if (!xml || xml.getElementsByTagName("parsererror").length) {
+            return new Error("Invalid XML: " + data);
         }
-    })();
+        return xml;
+    }
 
-    $.extend({
-
-        /**
-         * Convert bytes to human readable KB / MB / GB
-         */
-
-        bytesToSize: function (bytes) {
-            var k = 1000,
-                sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-
-            if (bytes === 0) {
-
-                return '0 Bytes';
-            }
-            var i = parseInt(Math.floor(Math.log(bytes) / Math.log(k)), 10);
-            return (bytes / Math.pow(k, i)).toPrecision(3) + ' ' + sizes[i];
-        },
-
-        /**
-         * Removes all key / value pairs from localStorage
-         */
-
-        clearStorage: function () {
-            localStorage.clear();
-        },
-
-        /**
-         * Returns an array of keys currently stored in localStorage.
-         */
-
-        storageContains: function (key) {
-
-            if (key && isString(key)) {
-                return $.indexOf(this.getStorageKeys(), key) !== -1;
-            }
-        },
-
-        /**
-         * Returns an array of keys currently stored in localStorage.
-         */
-
-        getStorageKeys: function () {
-
-            var result = [],
-                i = 0;
-
-            for (i = localStorage.length; i--;) {
-                result.push(localStorage.key(i));
-            }
-
-            return result;
-        },
-
-        /**
-         * Returns an approximation of how much space is left in localStorage
-         */
-
-        getRemainingStorageSpace: function () {
-            return this.bytesToSize(defaultSize - this.getStorageSize(true));
-        },
-
-        /**
-         * Returns the size of the total contents in localStorage.
-         *
-         */
-
-        getStorageSize: function ( /*INTERNAL*/ pure) {
-
-            if (pure) {
-
-                return JSON.stringify(localStorage).length;
-
-            } else { // Human readable
-
-                return this.bytesToSize(JSON.stringify(localStorage).length);
-            }
-        },
-
-        /**
-         *  Returns true if localStorage has no key/value pairs
-         */
-
-        isStorageEmpty: function () {
-            return this.getStorageKeys().length === 0;
-        },
-
-        /**
-         * Removes the specified key/value pair
-         */
-
-        removeStorage: function (key) {
-
-            if (!key) {
-
-                return;
-            }
-
-            if (isString(key)) {
-
-                localStorage.removeItem(key);
-
-            } else if ($.isArray(key)) {
-
-                var i = key.length;
-
-                while (i--) {
-
-                    if (isString(key[i])) {
-
-                        localStorage.removeItem(key[i]);
-                    }
-                }
-            }
-        },
-
-        /**
-         * Returns the proper-type value of a specified key
-         */
-        getStorage: function (key, defaultValue) {
-
-            if (key && isString(key)) {
-
-                var value = localStorage.getItem(key).toLowerCase(), // retrieve value
-                    number = parseFloat(value); // to allow for number checking
-
-                if (value === null) {
-
-                    // Returns default value if key is not set, otherwise returns null
-                    return arguments.length === 2 ? defaultValue : null;
-                }
-
-                if (!$.IsNaN(number)) {
-
-                    return number; // value was of type number
-                }
-
-                if (value === 'true' || value === 'false') {
-                    return value === 'true'; //value was of type boolean
-                }
-
-                try {
-                    value = JSON.parse(value + "");
-                    return value;
-
-                } catch (e) {
-
-                    return value;
-                }
-            }
-
-        },
-
-        /**
-         * Stores a given object in localStorage, allowing access to individual object properties
-         **/
-
-        setStorage: function (key, value) {
-
-            if (arguments.length === 1) {
-
-                this.store(key);
-
-            } else if (key && isString(key)) {
-
-                if (isObject(value)) {
-
-                    value = JSON.stringify(value);
-                }
-
-                localStorage.setItem(key, value);
-            }
-        },
-
-        /**
-         * Saves a given object in localStorage, allowing access to individual object properties
-         **/
-
-        saveStorage: function (value) {
-            var property;
-
-            if (value && isObject(value) && !(value instanceof Array)) {
-                for (property in value) {
-                    localStorage.setItem(property, value[property]);
-                }
-            }
-        },
-
-        /**
-         * Returns an object representation of the current state of localStorage
-         *
-         */
-
-        StorageToObject: function () {
-
-            var o = {},
-                keys = this.getStorageKeys(),
-                i = keys.length;
-
-            while (i--) {
-                o[keys[i]] = this.getStorage(keys[i]);
-            }
-
-            return o;
-        }
-
-    });
+});
 
 })(hAzzle);
 
-// Clone
+// Show | Hide | Toggle
+
 
 ;
 (function ($) {
-
-    // Support check 
-    (function () {
-
-        var fragment = document.createDocumentFragment(),
-            div = fragment.appendChild(document.createElement("div")),
-            input = document.createElement("input");
-
-        input.setAttribute("type", "radio");
-        input.setAttribute("checked", "checked");
-        input.setAttribute("name", "t");
-
-        div.appendChild(input);
-
-        hAzzle.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
-
-        div.innerHTML = "<textarea>x</textarea>";
-
-        hAzzle.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
-
-    }());
-
-    var rcheckableType = (/^(?:checkbox|radio)$/i);
-
-    /**
-     *  TODO!!!
-     *
-     * - Clone data
-     * - deal with the script tags
-     */
-
-
-    function fixInput(src, dest) {
-        var nodeName = dest.nodeName.toLowerCase();
-        if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
-        else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
-    };
-
-    $.extend($.fn, {
-
-        clone: function (deep) {
-
-
-            var clone,
-                storage,
-                srcElements, destElements;
-
-            return this.map(function (elem) {
-
-                /* Get all handlers from the original elem before we do a clone job
-	
-	   NOTE!! This has to be done BEFORE we clone the elem, else
-	          hAzzle will be confused and wonder wich of the two
-			  'identical' elems to get the handlers and data from
-	*/
-
-                var handlers = $.Events.getHandler(elem, '', null, false),
-                    l = handlers.length,
-                    i = 0,
-                    args, hDlr;
-
-                // Get the data before we clone
-
-                storage = $(elem).data();
-
-                // Clone the elem
-
-                clone = elem.cloneNode(deep || true);
-
-                // Copy the events from the original to the clone
-
-                for (; i < l; i++) {
-                    if (handlers[i].original) {
-
-                        args = [clone, handlers[i].type];
-                        if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
-                        args.push(handlers[i].original);
-                        $.Events.add.apply(null, args);
-                    }
-                }
-
-                // Copy data from the original to the clone
-                if (storage) {
-                    $.each(storage, function (key, value) {
-                        $.data(clone, key, value);
-                    });
-                }
-                // Preserve the rest 
-
-                if (!$.support.noCloneChecked && ($.nodeType(1, elem) || $.nodeType(11, elem)) && !$.isXML(elem)) {
-
-                    destElements = $.getChildren(clone);
-                    srcElements = $.getChildren(elem);
-
-                    for (i = 0, l = srcElements.length; i < l; i++) {
-                        fixInput(srcElements[i], destElements[i]);
-                    }
-                }
-
-                // Preserve script evaluation history
-
-                destElements = $.getChildren(clone, "script");
-
-                if (destElements.length > 0) {
-
-                    $.Evaluated(destElements, !$.contains(elem.ownerDocument, elem) && $.getChildren(elem, "script"));
-                }
-
-                // Return the cloned set
-
-                return clone;
-            });
-        }
-    });
-
-    // Manipulation
-
-    var // Short-hand functions we are using
-
-        isFunction = $.isFunction,
-        isUndefined = $.isUndefined,
-        isDefined = $.isDefined,
-        isString = $.isString,
-
-        doc = document,
-
-        // Boolean attributes and elements
-
-        boolean_attr = {
-            'multiple': true,
-            'selected': true,
-            'checked': true,
-            'disabled': true,
-            'readOnly': true,
-            'required': true,
-            'open': true
-        },
-
-        boolean_elements = {
-            'input': true,
-            'select': true,
-            'option': true,
-            'textarea': true,
-            'button': true,
-            'form': true,
-            'details': true
-        },
-
-        // Cross-browser compatible variabels
-
-        optSelected,
-        optDisabled,
-        radioValue,
-        checkOn,
-
-        // RegEx we are using
-
-        rtagName = /<([\w:]+)/,
-
-        cached = [],
-
-        wrapMap = {
-
-            'option': [1, '<select multiple="multiple">', '</select>'],
-
-            'thead': [1, '<table>', '</table>'],
-            'col': [2, '<table><colgroup>', '</colgroup></table>'],
-            'tr': [2, '<table><tbody>', '</tbody></table>'],
-            'td': [3, '<table><tbody><tr>', '</tr></tbody></table>'],
-            '_default': [0, "", ""]
-        };
-
-    wrapMap.optgroup = wrapMap.option;
-    wrapMap.tbody = wrapMap.tfoot = wrapMap.colgroup = wrapMap.caption = wrapMap.thead;
-    wrapMap.th = wrapMap.td;
-
-    // Support check
-
-    (function () {
-
-        var input = doc.createElement("input"),
-            select = doc.createElement("select"),
-            opt = select.appendChild(doc.createElement("option"));
-
-        optSelected = opt.selected;
-
-        select.disabled = true;
-        optDisabled = !opt.disabled;
-
-        input.type = "checkbox";
-
-        checkOn = input.value !== "";
-
-        input.value = "t";
-        input.type = "radio";
-
-        radioValue = input.value === "t";
-    }());
-
-    // insertAdjacentHTML
-
-    function iAh(elem, direction, html) {
-        if (elem && NodeMatching(elem)) {
-            elem.insertAdjacentHTML(direction, $.trim(html));
-        }
-    }
-
-    function getBooleanAttrName(element, name) {
-        // check dom last since we will most likely fail on name
-        var booleanAttr = boolean_attr[name.toLowerCase()];
-        // booleanAttr is here twice to minimize DOM access
-        return booleanAttr && boolean_elements[element.nodeName] && booleanAttr;
-    }
-
-    /**
-     * Check if the elem matches the current nodeType
-     */
-
-    function NodeMatching(elem) {
-        return $.nodeType(1, elem) || $.nodeType(9, elem) || $.nodeType(11, elem) ? true : false;
-    }
-
-    // Global
-
-    $.extend($, {
-
-        // Get the properties right
-
-        propMap: {
-
-            "for": "htmlFor",
-            "class": "className"
-        },
-
-        Hooks: {
-
-            'SELECT': function (elem) {
-
-                var option,
-                    options = elem.options,
-                    index = elem.selectedIndex,
-                    one = elem.type === "select-one" || index < 0,
-                    values = one ? null : [],
-                    value,
-                    max = one ? index + 1 : options.length,
-                    i = index < 0 ?
-                    max :
-                    one ? index : 0;
-
-                for (; i < max; i++) {
-
-                    option = options[i];
-
-                    if ((option.selected || i === index) && !option.disabled &&
-                        (optDisabled ? !option.disabled : option.getAttribute("disabled") === null) &&
-                        (!option.parentNode.disabled || !$.nodeName(option.parentNode, "optgroup"))) {
-
-                        // Get the specific value for the option
-                        value = $(option).val();
-
-                        // We don't need an array for one selects
-                        if (one) {
-                            return value;
-                        }
-
-                        // Multi-Selects return an array
-                        values.push(value);
-                    }
-                }
-                return values;
-            },
-
-            'OPTION': function (elem) {
-                var val = $(elem).filter(function (option) {
-                    return option.selected && !option.disabled;
-                }).pluck('value');
-
-                return val !== null ? val : $.trim($.getText(elem));
-            },
-            'TYPE': function (elem, value) {
-                if (!radioValue && value === "radio" &&
-                    $.nodeName(elem, "input")) {
-
-                    var val = elem.value;
-                    elem.setAttribute("type", value);
-                    if (val) {
-                        elem.value = val;
-                    }
-                    return value;
-                }
-            }
-        },
-
-        // Inspired by jQuery	
-
-        propHooks: {
-            tabIndex: {
-                get: function (elem) {
-                    return elem.hasAttribute("tabindex") || /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ?
-                        elem.tabIndex : -1;
-                }
-            }
-        },
-
-        /**
-         * Get text
-         */
-
-        getText: function (elem) {
-            var node, ret = "",
-                i = 0;
-
-            if (!elem.nodeType) {
-                // If no nodeType, this is expected to be an array
-                for (; node = elem[i++];) ret += $.getText(node);
-
-            } else if (NodeMatching(elem)) {
-
-                if (isString(elem.textContent)) return elem.textContent;
-                for (elem = elem.firstChild; elem; elem = elem.nextSibling) ret += $.getText(elem);
-
-            } else if ($.nodeType(3, elem) || $.nodeType(4, elem)) {
-                return elem.nodeValue;
-            }
-            return ret;
-        },
-
-        /**
-         * Get / set the value of a property for the first element in the set of matched elements
-         *
-         * @param {Object} elem
-         * @param {String} name
-         * @param {String/Null} value
-         *
-         */
-
-        prop: function (elem, name, value) {
-
-            var ret, hooks, notxml;
-
-            // don't get/set properties on text, comment and attribute nodes
-            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
-
-                notxml = !($.nodeType(1, elem)) || !$.isXML(elem);
-
-                if (notxml) {
-
-                    hooks = $.propHooks[$.propMap[name] || name];
-                }
-
-                if (isDefined(value)) {
-
-                    return hooks && "set" in hooks && isDefined((ret = hooks.set(elem, value, name))) ? ret : (elem[name] = value);
-
-                } else {
-
-                    return hooks && "get" in hooks && (ret = hooks.get(elem, name)) !== null ? ret : elem[name];
-                }
-            }
-        },
-
-        /**
-         * Get / set the value of an attribute for the first element in the set of matched elements
-         *
-         * @param {Object} elem
-         * @param {String} name
-         * @param {String/Null} value
-         *
-         */
-
-        attr: function (elem, name, value) {
-
-            if (!elem) {
-
-                return;
-            }
-
-            if (!$.nodeType(2, elem) || $.nodeType(3, elem) || !$.nodeType(8, elem)) {
-
-                if (typeof elem.getAttribute === typeof undefined) {
-
-                    return $.prop(elem, name, value);
-                }
-
-                if (isUndefined(value)) {
-
-                    // Checks if a "hook" exist for this...:
-
-                    if ($.Hooks[elem.nodeName]) {
-
-                        return $.Hooks[elem.nodeName](elem);
-                    }
-
-                    // The extra argument "2" is to get the right thing for a.href in IE, see jQuery code
-                    // some elements (e.g. Document) don't have get attribute, so return undefined
-
-                    elem = elem.getAttribute(name, 2);
-
-                    return elem === null ? undefined : elem;
-                }
-
-                // Jquery support a value to be an function, but I don't see the point
-                // in supporting this now. If someone want to implement it, go for it !!
-
-                if (isFunction(value)) {
-                    console.log("Not supported!");
-                    return;
-                }
-
-                if (value === null) {
-
-                    $.removeAttr(elem, name);
-                }
-
-
-                // Value is set - no need for hooks on this one...
-
-                if (elem.nodeName === 'SELECT') {
-
-                    var optionSet, option,
-                        options = elem.options,
-                        values = $.makeArray(value),
-                        i = options.length;
-
-                    while (i--) {
-                        option = options[i];
-                        if ((option.selected = $.inArray(option.value, values) >= 0)) {
-                            optionSet = true;
-                        }
-                    }
-
-                    if (!optionSet) {
-                        elem.selectedIndex = -1;
-                    }
-                    return values;
-
-                } else {
-
-                    elem.setAttribute(name, value + "");
-                    return value;
-
-                }
-            }
-        }
-    });
-
-
-    // Core
-
-    $.extend($.fn, {
-
-        /**
-         * Get text for the first element in the collection
-         * Set text for every element in the collection
-         *
-         * $('div').text() => div text
-         *
-         * @param {String} value
-         * @param {String} dir
-         * @return {Object|String}
-         */
-
-        text: function (value) {
-
-            return $.isFunction(value) ? this.each(function (i) {
-                var self = $(this);
-                self.text(value.call(this, i, self.text()));
-            }) : !$.isObject(value) && isDefined(value) ? this.empty().each(function (_, elem) {
-
-                if (NodeMatching(elem)) {
-
-                    // Firefox does not support insertAdjacentText 
-
-                    if (isString(value) && isDefined(HTMLElement) && HTMLElement.prototype.insertAdjacentText) {
-
-                        elem.insertAdjacentText('beforeEnd', value);
-
-                    } else {
-
-                        elem.textContent = value;
-                    }
-                }
-            }) : $.getText(this);
-        },
-
-        /**
-         * Get html from element.
-         * Set html to element.
-         *
-         * @param {String} value
-         * @param {String} keep
-         * @return {Object|String}
-         */
-
-        html: function (value, keep) {
-
-            var elem = this[0];
-
-            if (isUndefined(value) && $.nodeType(1, elem)) {
-
-                return elem.innerHTML;
-            }
-
-            // We could have used 'this' inside the loop, but faster if we don't
-
-            if (isString(value)) {
-
-                return this.each(function (_, elem) {
-
-                    /**
-                     * 'keep' if we want to keep the existing children of the node and add some more.
-                     */
-                    if (keep && isString(value) && $.nodeType(1, elem)) {
-
-                        iAh(elem, 'beforeend', value || '');
-
-                    } else {
-
-                        // See if we can take a shortcut and just use innerHTML
-
-                        if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !wrapMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
-
-                            // Do some magic
-
-                            value = cached[value] ? cached[value] : cached[value] = value.replace(/<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi, "<$1></$2>");
-
-                            // Remove stored data on the object to avoid memory leaks
-
-                            $.removeData(elem);
-
-                            // Get rid of existing children
-
-                            elem.textContent = '';
-
-                            // Do innerHTML
-
-                            elem.innerHTML = value;
-                        }
-                    }
-                });
-
-            } else if ($.isFunction(value)) {
-
-                this.each(function (i) {
-
-                    var self = $(this);
-
-                    self.html(value.call(this, i, self.html()));
-                });
-
-            } else {
-
-                return this.empty().append(value);
-            }
-        },
-
-        /**
-         * Get value for input/select elements
-         * Set value for input/select elements
-         *
-         * @param {String} value
-         * @return {Object|String}
-         */
-
-        val: function (value) {
-
-            if (arguments.length) {
-
-                return this.each(function (index, elem) {
-
-                    var val;
-
-                    if (!$.nodeType(1, elem)) {
-                        return;
-                    }
-
-                    if (isFunction(value)) {
-                        val = value.call(elem, index, $(elem).val());
-
-                    } else {
-
-                        val = value;
-                    }
-
-                    if (val === null) {
-
-                        val = "";
-
-                    } else if (typeof val === "number") {
-
-                        val += "";
-
-                    } else if ($.isArray(val)) {
-
-                        val = $.map(val, function (value) {
-
-                            return value === null ? "" : value + "";
-                        });
-                    }
-
-                    if (elem.type === 'radio' || elem.type === 'checkbox') {
-
-                        return (elem.checked = $.inArray($(elem).val(), value) >= 0);
-                    }
-
-                    if (elem.type === "select") {
-
-
-                        var optionSet, option,
-                            options = elem.options,
-                            values = $.makeArray(value),
-                            i = options.length;
-
-                        while (i--) {
-                            option = options[i];
-                            if ((option.selected = $.inArray(option.value, values) >= 0)) {
-                                optionSet = true;
-                            }
-                        }
-
-                        // force browsers to behave consistently when non-matching value is set
-
-                        if (!optionSet) {
-
-                            elem.selectedIndex = -1;
-                        }
-
-                        return values;
-                    }
-
-                    elem.value = val;
-                });
-
-            } else {
-
-                var elem = this[0],
-                    ret;
-
-                if (!checkOn) {
-
-                    return elem.getAttribute("value") === null ? "on" : elem.value;
-                }
-
-                ret = $.Hooks[elem.tagName] ? $.Hooks[elem.tagName](elem) : elem.value;
-
-                return typeof ret === "string" ? ret.replace(/\r\n/g, "") : ret === null ? "" : ret;
-
-            }
-        },
-
-        /**
-         * Get attribute from element
-         * Set attribute to element collection
-         *
-         * @param {String} name
-         * @param {String|Object} value
-         *
-         * @return {Object|String}
-         */
-
-        attr: function (name, value) {
-            return $.isObject(name) ? this.each(function (index, element) {
-                $.each(name, function (key, value) {
-                    $.attr(element, key, value);
-                });
-            }) : $.isUndefined(value) ? $.attr(this[0], name) : this.length === 1 ? $.attr(this[0], name, value) : this.each(function () {
-                return $.attr(this, name, value);
-            });
-        },
-
-        /**
-         * Remove a given attribute from an element
-         *
-         * @param {String} value
-         *
-         * @return {Object}
-         */
-
-        removeAttr: function (value) {
-
-            var name, propName, i = 0,
-                attrNames = value && value.match(/\S+/g);
-
-            return this.each(function (_, elem) {
-
-                if (attrNames && $.nodeType(1, elem)) {
-
-                    while ((name = attrNames[i++])) {
-                        propName = $.propMap[name] || name;
-
-                        if (getBooleanAttrName(elem, name)) {
-
-                            elem[propName] = false;
-                        }
-
-                        elem.removeAttribute(name);
-                    }
-                }
-            });
-        },
-
-        /**
-         * Check if an element have an attribute
-         *
-         * @param{String} name
-         * @return {Boolean}
-         */
-
-        hasAttr: function (name) {
-            return name && isDefined(this.attr(name));
-        },
-
-        /**
-         * Sets an HTML5 data attribute
-         *
-         * @param{String} dataAttribute
-         * @param{String} dataValue
-         *
-         * @return {Object}
-         */
-
-        dataAttr: function (dataAttribute, dataValue) {
-
-            if (!dataAttribute || !isString(dataAttribute)) {
-                return false;
-            }
-
-            //if dataAttribute is an object, we will use it to set a data attribute for every key
-            if (typeof (dataAttribute) == "object") {
-                for (var key in dataAttribute) {
-                    this.attr('data-' + key, dataAttribute[key]);
-                }
-
-                return this;
-            }
-
-            //if a value was passed, we'll set that value for the specified dataAttribute
-            else if (dataValue) {
-                return this.attr('data-' + dataAttribute, dataValue);
-            }
-
-            // lastly, try to just return the requested dataAttribute's value from the element
-            else {
-                var value = this.attr('data-' + dataAttribute);
-
-                // specifically checking for undefined in case "value" ends up evaluating to false
-
-                if (isUndefined(value)) {
-                    return;
-                }
-
-                return value;
-            }
-        },
-
-        /**
-         * Read or set properties of DOM elements
-         *
-         * @param {String/Object}
-         * @param {String/Null}
-         *
-         * @return {Object}
-         */
-
-        prop: function (name, value) {
-            return $.isObject(name) ? this.each(function (value, element) {
-                $.each(name, function (key, value) {
-                    $.prop(element, key, value);
-                });
-            }) : isUndefined(value) ? this[0] && this[0][$.propMap[name] || name] : $.prop(this[0], name, value);
-        },
-
-        /**
-         * Toggle properties
-         */
-
-        toggleProp: function (property) {
-            return this.each(function () {
-                return this.prop(property, !this.prop(property));
-            });
-
-        },
-
-        /*
-         * Remove properties from DOM elements
-         *
-         * @param {String}
-         *
-         * @return {Object}
-         */
-
-        removeProp: function (name) {
-            return this.each(function () {
-                delete this[$.propMap[name] || name];
-            });
-        },
-
-        /**
-         * Replace each element in the set of matched elements with the provided new content
-         *
-         * @param {String} html
-         * @return {Object}
-         */
-
-        replaceWith: function (html) {
-
-            // Use the faster 'insertAdjacentHTML' if we can
-
-            if (isString(html) && this[0].parentNode) {
-
-                return this.before(html).remove();
-            }
-
-            // If function
-
-            if (isFunction(html)) {
-                return this.each(function (index) {
-                    var self = $(this),
-                        old = self.html();
-                    self.replaceWith(html.call(this, index, old));
-                });
-            }
-
-            var arg = arguments[0];
-            this.manipulateDOM(arguments, function (elem) {
-
-                arg = this.parentNode;
-
-                if (arg) {
-                    arg.replaceChild(elem, this);
-                }
-            });
-
-            // Force removal if there was no new content (e.g., from empty arguments)
-            return arg && (arg.length || arg.nodeType) ? this : this.remove();
-        },
-
-        /**
-         * Append the current element to another
-         *
-         * @param {Object|String} sel
-         * @return {Object}
-         */
-
-        appendTo: function (sel) {
-            return this.each(function () {
-                $(sel).append(this);
-            });
-
-        },
-
-        /**
-         * Prepend the current element to another.
-         *
-         * @param {Object|String} sel
-         * @return {Object}
-         */
-
-        prependTo: function (sel) {
-            return this.each(function () {
-                $(sel).prepend(this);
-            });
-        }
-    });
-
-    /* 
-     * Prepend, Append, Befor and After
-     *
-     *  NOTE!!!
-     *
-     *  If 'html' are plain text, we use the insertAdjacentHTML to inject the content.
-     *	This method is faster, and now supported by all major browsers.
-     *
-     *	If not a pure string, we have to go the long way jQuery walked before us :)
-     *
-     *	K.F
-     */
-
-    $.each({
-
-        prepend: "afterbegin",
-        append: "beforeend"
-    }, function (name, second) {
-
-        $.fn[name] = function (html) {
-            if (isString(html) && !$.isXML(this[0])) {
-                return this.each(function () {
-                    iAh(this, second, html);
-                });
-            } else { // The long walk :(
-                return this.manipulateDOM(arguments, function (elem) {
-
-                    if (NodeMatching(this)) {
-                        var target = $.nodeName(this, "table") && $.nodeName($.nodeType(11, elem) ? elem : elem.firstChild, "tr") ?
-                            this['getElementsByTagName']("tbody")[0] ||
-                            elem.appendChild(this.ownerDocument.createElement("tbody")) : this;
-
-                        // Choose correct method	
-
-                        if (name === 'prepend') {
-
-                            target.insertBefore(elem, target.firstChild)
-
-                        } else {
-
-                            target.appendChild(elem)
-
-                        }
-                    }
-                });
-            }
-        };
-    });
-
-    /**
-     * Before and After
-     */
-
-    $.each({
-        before: "beforebegin",
-        after: "afterend"
-    }, function (name, second) {
-
-        $.fn[name] = function (html) {
-
-            if (isString(html) && !$.isXML(this[0])) {
-                return this.each(function () {
-                    iAh(this, second, html);
-                });
-            }
-            return this.manipulateDOM(arguments, function (elem) {
-                this.parentNode && this.parentNode.insertBefore(elem, name === 'after' ? this.nextSibling : this);
-            });
-        };
-    });
-
-
-    // Support: IE9+
-    if (!optSelected) {
-        $.propHooks.selected = {
-            get: function (elem) {
-                var parent = elem.parentNode;
-                if (parent && parent.parentNode) {
-                    parent.parentNode.selectedIndex;
-                }
-                return null;
-            }
-        };
-    }
-
-    $.each([
-        "tabIndex",
-        "readOnly",
-        "maxLength",
-        "cellSpacing",
-        "cellPadding",
-        "rowSpan",
-        "colSpan",
-        "useMap",
-        "frameBorder",
-        "contentEditable"
-    ], function () {
-        $.propMap[this.toLowerCase()] = this;
-    });
-
-    // HTML
-
-
-    var concat = Array.prototype.concat,
-
-        doc = document,
-
-        isFunction = $.isFunction,
-
-        rtagName = /<([\w:]+)/,
-        rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-
-        rsingleTag = (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
-        rhtml = /<|&#?\w+;/,
-        rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
-        rscriptType = /^$|\/(?:java|ecma)script/i,
-        rscriptTypeMasked = /^true\/(.*)/,
-        rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
-
-
-    (function () {
-        var fragment = doc.createDocumentFragment(),
-            div = fragment.appendChild(doc.createElement("div")),
-            input = doc.createElement("input");
-
-        input.setAttribute("type", "radio");
-        input.setAttribute("checked", "checked");
-        input.setAttribute("name", "t");
-
-        div.appendChild(input);
-
-        $.support.checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
-
-        div.innerHTML = "<textarea>x</textarea>";
-        $.support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
-    })();
-
-    /**
-     * Disable "script" tags
-     **/
-
-    function disableScript(elem) {
-        elem.type = (elem.getAttribute("type") !== null) + "/" + elem.type;
-        return elem;
-    }
-
-    /**
-     * Restore "script" tags
-     **/
-
-
-    function restoreScript(elem) {
-        var m = rscriptTypeMasked.exec(elem.type);
-        m ? elem.type = m[1] : elem.removeAttribute("type");
-        return elem;
-    }
-
-    $.extend($, {
-
-        Evaluated: function (elems, refElements) {
-            var i = 0,
-                l = elems.length;
-
-            for (; i < l; i++) {
-                $.data(elems[i], "evaluated", !refElements || $.data(refElements[i], "evaluated"));
-            }
-        },
-
-        _evalUrl: function (url) {
-            return $.ajax({
-                url: url,
-                type: "GET",
-                dataType: "script",
-                async: false,
-                global: false,
-                "throws": true
-            });
-        },
-
-        parseHTML: function (data, context, keepScripts) {
-
-            if (!data || typeof data !== "string") {
-                return null;
-            }
-
-            if ($.isBoolean(context)) {
-                keepScripts = context;
-                context = false;
-            }
-
-            var parsed = rsingleTag.exec(data),
-                scripts = !keepScripts && [],
-
-                // Prevent XSS attack
-
-                context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : doc);
-
-            // Single tag
-
-            if (parsed) {
-
-                return [context.createElement(parsed[1])];
-            }
-
-            parsed = $.createHTML([data], context, scripts);
-
-            if (scripts && scripts.length) {
-                $(scripts).remove();
-            }
-
-            return $.merge([], parsed.childNodes);
-        },
-
-        /**
-         * Create the HTML
-         *
-         */
-        createHTML: function (elems, context, scripts, selection) {
-
-            if (!context) return;
-
-            var elem, tmp, tag, wrap, contains, j,
-                fragment = context.createDocumentFragment(),
-                nodes = [],
-                i = 0,
-                l = elems.length;
-
-            $.each(elems, function (_, elem) {
-
-                if (elem || elem === 0) {
-
-                    // Add nodes directly
-
-                    if (typeof elem === "object") {
-
-                        $.merge(nodes, elem.nodeType ? [elem] : elem);
-
-                    } else if (!rhtml.test(elem)) {
-
-                        nodes.push(context.createTextNode(elem));
-
-                    } else { // Suport for HTML 6
-
-                        tmp = tmp || fragment.appendChild(context.createElement("div"));
-
-                        // Deserialize a standard representation
-
-                        tag = (rtagName.exec(elem) || ["", ""])[1].toLowerCase();
-                        wrap = wrapMap[tag] || wrapMap._default;
-                        tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, "<$1></$2>") + wrap[2];
-
-
-                        // Descend through wrappers to the right content
-                        j = wrap[0];
-
-                        while (j--) {
-                            tmp = tmp.lastChild;
-                        }
-
-                        $.merge(nodes, tmp.childNodes);
-
-                        tmp = fragment.firstChild;
-
-                        tmp.textContent = "";
-                    }
-                }
-            });
-
-            // Remove wrapper from fragment
-
-            fragment.textContent = "";
-
-            i = 0;
-
-            while ((elem = nodes[i++])) {
-
-                if (selection && $.indexOf.call(selection, elem) === -1) continue;
-
-                contains = $.contains(elem.ownerDocument, elem);
-
-                // Append to fragment
-
-                tmp = $.getChildren(fragment.appendChild(elem), "script");
-
-                if (contains) {
-
-                    $.Evaluated(tmp);
-                }
-
-                // Capture executables
-
-                if (scripts) {
-                    j = 0;
-                    while ((elem = tmp[j++])) {
-                        if (rscriptType.test(elem.type || "")) {
-                            scripts.push(elem);
-                        }
-                    }
-                }
-            }
-
-            return fragment;
-        }
-    });
-
-    $.extend($.fn, {
-
-        // Inspiration from jQuery
-
-        manipulateDOM: function (args, callback) {
-
-            // Flatten any nested arrays
-
-            args = concat.apply([], args);
-
-            var fragment, first, scripts, hasScripts, node, doc,
-                i = 0,
-                l = this.length,
-                set = this,
-                iNoClone = l - 1,
-                value = args[0],
-                isFunction = $.isFunction(value);
-
-
-
-            if (isFunction || (l > 1 && typeof value === "string" && !$.support.checkClone && rchecked.test(value))) {
-
-                return this.each(function (index) {
-                    var self = set.eq(index);
-                    if (isFunction) {
-                        args[0] = value.call(this, index, self.html());
-                    }
-                    self.manipulateDOM(args, callback);
-                });
-            }
-
-            if (l) {
-
-                fragment = $.createHTML(args, this[0].ownerDocument, false, this);
-
-                first = fragment.firstChild;
-
-                if (fragment.childNodes.length === 1) {
-                    fragment = first;
-                }
-
-                if (first) {
-                    scripts = $.map($.getChildren(fragment, "script"), disableScript);
-                    hasScripts = scripts.length;
-
-                    while (i < l) {
-
-                        if (i !== iNoClone && !$.nodeType(3, fragment)) {
-
-                            fragment = $.clone(fragment, true, true);
-
-                            if (hasScripts) {
-                                $.merge(scripts, $.getChildren(fragment, "script"));
-                            }
-                        }
-
-                        callback.call(this[i], fragment, i);
-
-                        i++;
-                    }
-
-                    if (hasScripts) {
-                        doc = scripts[scripts.length - 1].ownerDocument;
-
-                        // Reenable scripts
-                        $.map(scripts, restoreScript);
-
-                        // Evaluate executable scripts on first document insertion
-                        for (i = 0; i < hasScripts; i++) {
-
-                            node = scripts[i];
-                            if (rscriptType.test(node.type || "") && !$.data(node, "evaluated") && $.contains(doc, node)) {
-
-                                if (node.src) {
-                                    // Optional AJAX dependency, but won't run scripts if not present
-                                    if ($._evalUrl) {
-                                        $._evalUrl(node.src);
-                                    }
-                                } else {
-                                    $.Evaluated(node.textContent.replace(rcleanScript, ""));
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return this;
-        }
-
-    });
-
 
     /**
      * Show | hide | toggle
@@ -6509,102 +6123,461 @@
 })(hAzzle);
 
 
-// Clone
 
-;
-(function ($) {
-
-    var rcheckableType = (/^(?:checkbox|radio)$/i);
-
-    /**
-     *  TODO!!!
-     *
-     * - Clone data
-     * - deal with the script tags
-     */
-
-
-    function fixInput(src, dest) {
-        var nodeName = dest.nodeName.toLowerCase();
-        if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
-        else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
-    };
+/*!
+ * Wrap
+ */
+; (function ($) {
 
     $.extend($.fn, {
 
-        clone: function (deep) {
+        /**
+         * Wrap html string with a `div` or wrap special tags with their containers.
+         *
+         * @param {String} html
+         * @return {Object}
+         */
 
-            return this;
-            var clone,
-                storage,
-                srcElements, destElements;
+        wrap: function (html) {
 
-            return this.map(function (elem) {
-
-                /* Get all handlers from the original elem before we do a clone job
-	
-	   NOTE!! This has to be done BEFORE we clone the elem, else
-	          hAzzle will be confused and wonder wich of the two
-			  'identical' elems to get the handlers and data from
-	*/
-
-                var handlers = $.Events.getHandler(elem, '', null, false),
-                    l = handlers.length,
-                    i = 0,
-                    args, hDlr;
-
-                // Get the data before we clone
-
-                storage = $(elem).data();
-
-                // Clone the elem
-
-                clone = elem.cloneNode(deep || true);
-
-                // Copy the events from the original to the clone
-
-                for (; i < l; i++) {
-                    if (handlers[i].original) {
-
-                        args = [clone, handlers[i].type];
-                        if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
-                        args.push(handlers[i].original);
-                        $.Events.add.apply(null, args);
-                    }
-                }
-
-                // Copy data from the original to the clone
-                if (storage) {
-                    $.each(storage, function (key, value) {
-                        $.data(clone, key, value);
-                    });
-                }
-                // Preserve the rest 
-
-                if (!$.support.noCloneChecked && ($.nodeType(1, elem) || $.nodeType(11, elem)) && !$.isXML(elem)) {
-
-                    destElements = $.getChildren(clone);
-                    srcElements = $.getChildren(elem);
-
-                    for (i = 0, l = srcElements.length; i < l; i++) {
-                        fixInput(srcElements[i], destElements[i]);
-                    }
-                }
-
-                // Preserve script evaluation history
-
-                destElements = $.getChildren(clone, "script");
-
-                if (destElements.length > 0) {
-
-                    $.Evaluated(destElements, !$.contains(elem.ownerDocument, elem) && $.getChildren(elem, "script"));
-                }
-
-                // Return the cloned set
-
-                return clone;
+            return this.each(function (i) {
+                $(this).wrapAll($.isFunction(html) ? html.call(this, i) : html);
             });
+        },
+
+        /**
+         *  Wrap an HTML structure around the content of each element in the set of matched elements.
+         *
+         * @param {String} html
+         * @return {Object}
+         *
+         */
+
+        wrapAll: function (html) {
+
+            if (this[0]) {
+                $(this[0]).before(html = $(html));
+                var children;
+                // drill down to the inmost element
+                while ((children = html.children()).length) html = children.first();
+                $(html).append(this);
+            }
+            return this;
+        },
+
+        wrapInner: function (html) {
+            if ($.isFunction(html)) {
+                return this.each(function (i) {
+                    $(this).wrapInner(html.call(this, i));
+                });
+            }
+
+            return this.each(function () {
+                var self = $(this),
+                    contents = self.contents();
+
+                if (contents.length) {
+                    contents.wrapAll(html);
+
+                } else {
+                    self.append(html);
+                }
+            });
+
+        },
+
+        /**
+         *  Wrap an HTML structure around the content of each element in the set of matched elements.
+         *
+         * @param {String} html
+         * @return {Object}
+         *
+         */
+
+        unwrap: function () {
+            this.parent().each(function () {
+                if (!$.nodeName(this, "body")) {
+                    hAzzle(this).replaceWith(hAzzle(this).children());
+                }
+            });
+            return this;
         }
     });
 
 })(hAzzle);
+
+// Ajax
+
+
+; (function ($) {
+
+    // Ajax
+    var win = window,
+        doc = document,
+        byTag = 'getElementsByTagName',
+        xmlHttpRequest = 'XMLHttpRequest',
+        crElm = 'createElement',
+        own = 'hasOwnProperty',
+        head = doc.head || doc[byTag]('head')[0],
+        uniqid = 0,
+        lastValue, // data stored by the most recent JSONP callback
+        nav = navigator,
+        isIE10 = $.indexOf(nav.userAgent, 'MSIE 10.0') !== -1,
+
+        defaultHeaders = {
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8", // Force UTF-8
+            requestedWith: xmlHttpRequest,
+            accepts: {
+                '*': "*/".concat("*"),
+                'text': 'text/plain',
+                'html': 'text/html',
+                'xml': 'application/xml, text/xml',
+                'json': 'application/json, text/javascript',
+                'js': 'application/javascript, text/javascript'
+            }
+        };
+
+    /**
+     * Convert to query string
+     *
+     * @param {Object} obj
+     *
+     * @return {String}
+     *
+     * - Taken from jQuery and optimized it for speed
+     *
+     */
+
+    function ctqs(o, trad) {
+
+        var prefix, i,
+            traditional = trad || false,
+            s = [],
+            enc = encodeURIComponent,
+            add = function (key, value) {
+                // If value is a function, invoke it and return its value
+                value = ($.isFunction(value)) ? value() : (value === null ? '' : value);
+                s[s.length] = enc(key) + '=' + enc(value);
+            };
+        // If an array was passed in, assume that it is an array of form elements.
+        if ($.isArray(o))
+            for (i = 0; o && i < o.length; i++) add(o[i].name, o[i].value);
+        else {
+            for (prefix in o) {
+                buildParams(prefix, o[prefix], traditional, add, o);
+            }
+        }
+        return s.join('&').replace(/%20/g, '+');
+    }
+
+    /**
+     * Build params
+     */
+
+    function buildParams(prefix, obj, traditional, add, o) {
+        var name, i, v, rbracket = /\[\]$/;
+
+        if ($.isArray(obj)) {
+            for (i = 0; obj && i < obj.length; i++) {
+                v = obj[i];
+                if (traditional || rbracket.test(prefix)) {
+                    // Treat each array item as a scalar.
+                    add(prefix, v);
+                } else buildParams(prefix + '[' + ($.isObject(v) ? i : '') + ']', v, traditional, add);
+            }
+        } else if (obj && obj.toString() === '[object Object]') {
+            // Serialize object item.
+            for (name in obj) {
+                if (o[own](prefix)) buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
+            }
+
+        } else add(prefix, obj);
+    }
+
+    /**
+     *  Url append
+     *
+     * @param {String} url
+     * @param {String} query
+     * @return {String}
+     */
+
+    function appendQuery(url, query) {
+        return (url + '&' + query).replace(/[&?]+/, '?')
+    }
+
+    /**
+     * General jsonP callback
+     *
+     * @param {String} url
+     * @param {String} s
+     *
+     * @return {String}
+     **/
+
+    function generalCallback(data) {
+        lastValue = data;
+    }
+
+    /**
+     * jsonP
+     *
+     * @param {Object} o
+     * @param {Function} fn
+     * @param {String} url
+     *
+     * @return {Object}
+     **/
+
+    function handleJsonp(o, fn, url) {
+
+        var reqId = uniqid++,
+            cbkey = o.jsonp || 'callback'; // the 'callback' key
+
+        o = o.jsonpCallback || 'hAzzel_' + $.now(); // the 'callback' value
+
+        var cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
+            match = url.match(cbreg),
+            script = doc[crElm]('script'),
+            loaded = 0;
+
+        if (match) {
+            if (match[3] === '?') url = url.replace(cbreg, '$1=' + o); // wildcard callback func name
+            else o = match[3]; // provided callback func name
+        } else url = appendQuery(url, cbkey + '=' + o); // no callback details, add 'em
+
+
+        win[o] = generalCallback;
+
+        script.type = 'text/javascript';
+        script.src = url;
+        script.async = true;
+
+
+        $.isDefined(script.onreadystatechange) && !isIE10 && (script.event = "onclick", script.htmlFor = script.id = "_hAzzel_" + reqId);
+
+        script.onload = script.onreadystatechange = function () {
+
+            if (script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded' || loaded) {
+                return false;
+            }
+            script.onload = script.onreadystatechange = null;
+            if (script.onclick) script.onclick();
+            // Call the user callback with the last value stored and clean up values and scripts.
+            fn(lastValue);
+            lastValue = undefined;
+            head.removeChild(script);
+            loaded = 1;
+        };
+
+        // Add the script to the DOM head
+        head.appendChild(script);
+
+        // Enable JSONP timeout
+        return {
+            abort: function () {
+                script.onload = script.onreadystatechange = null;
+                lastValue = undefined;
+                head.removeChild(script);
+                loaded = 1;
+            }
+        };
+    }
+
+    // Extend the hAzzle object
+
+    $.extend({
+
+        ajaxSettings: {
+
+            // Default type of request
+            type: 'GET',
+            // Callback that is executed before request
+            beforeSend: $.noop(),
+            // Callback that is executed if the request succeeds
+            success: $.noop(),
+            // Callback that is executed the the server drops error
+            error: $.noop(),
+            // Callback that is executed on request complete (both: error and success)
+            complete: $.noop(),
+            // Default timeout
+            timeout: 0,
+            // async
+            async: true,
+
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8"
+
+        },
+
+        /**
+         * Ajax method to create ajax request with XMLHTTPRequest
+         *
+         * @param {Object|Function} opt
+         * @param {function|callback} fn
+         * @return {Object}
+         */
+
+        ajax: function (opt, fn) {
+          
+		  var key, h, err;
+		  
+            opt = $.extend({}, opt || {});
+
+            for (key in $.ajaxSettings) {
+
+                if (opt[key] === undefined) {
+
+                    opt[key] = $.ajaxSettings[key];
+
+                }
+
+            }
+            fn = fn || function () {};
+
+            var xhr,
+                xDomainRequest = 'XDomainRequest',
+                error = 'error',
+                headers = opt.headers || {},
+                type = (opt.type || 'GET').toLowerCase(),
+                url = $.isString(opt) ? opt : opt.url; // URL or options with URL inside. 
+				
+            var dataType = (opt.dataType) ? opt.dataType.toLowerCase() : '',
+                abortTimeout = null,
+                processData = opt.processData || true, // Set to true as default
+                data = (processData !== false && opt.data && !$.isString(opt.data)) ? ctqs(opt.data) : (opt.data || null),
+                sendWait = false;
+
+            // If no url, stop here and return.
+
+            if (!url) return false;
+
+            // If jsonp or GET, append the query string to end of URL
+
+            if ((dataType === 'jsonp' || type.toLowerCase() === 'get') && data) url = appendQuery(url, data), data = null;
+
+            // If jsonp, we stop it here 
+
+            if (dataType === 'jsonp' && /(=)\?(?=&|$)|\?\?/.test(url)) return handleJsonp(opt, fn, url);
+
+            if (opt.crossOrigin === true) {
+                var _xhr = win.XMLHttpRequest ? new XMLHttpRequest() : null;
+                if (_xhr && 'withCredentials' in _xhr) xhr = _xhr;
+                else if (win.xDomainRequest) xhr = new xDomainRequest();
+                else throw "Browser does not support cross-origin requests";
+            } else {
+                xhr = new XMLHttpRequest()
+            }
+
+            xhr.open(type, url, opt.async === false ? false : true);
+
+            // Set headers
+
+            headers.Accept = headers.Accept || defaultHeaders.accepts[type] || defaultHeaders.accepts['*'];
+
+            if (!opt.crossOrigin && !headers.requestedWith) headers.requestedWith = defaultHeaders.requestedWith;
+
+            if (opt.contentType || opt.data && dataType.toLowerCase() !== 'get') xhr.setRequestHeader('Content-Type', (opt.contentType || 'application/x-www-form-urlencoded'));
+
+            // Set headers
+
+            for (h in headers) {
+
+                headers.hasOwnProperty(h) && 'setRequestHeader' in xhr && xhr.setRequestHeader(h, headers[h]);
+
+            }
+            // Set credentials
+
+            if ($.isDefined(opt.withCredentials) && $.isDefined(xhr.withCredentials)) {
+                xhr.withCredentials = !! opt.withCredentials;
+            }
+
+            if (opt.timeout > 0) {
+                abortTimeout = setTimeout(function () {
+                    xhr.abort(); // Or should we use self.abort() ??
+                }, opt.timeout);
+            }
+
+            if (win[xDomainRequest] && xhr instanceof win.xDomainRequest) {
+
+                xhr.onload = fn;
+                xhr.onerror = err;
+                xhr.onprogress = function () {};
+                sendWait = true;
+
+            } else {
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4) {
+
+                        // Determine if successful
+
+                        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
+                            var res;
+                            if (xhr) {
+
+                                // json
+
+                                if ((dataType === 'json' || false) && (res = JSON.parse(xhr.responseText)) === null) res = xhr.responseText;
+
+                                // xml
+
+                                if (dataType === 'xml') {
+
+                                    res = xhr.responseXML && xhr.responseXML.parseError && xhr.responseXML.parseError.errorCode && xhr.responseXML.parseError.reason ? null : xhr.responseXML;
+
+                                } else {
+
+                                    res = res || xhr.responseText;
+                                }
+                            }
+                            if (!res && data) res = data;
+                            if (opt.success) opt.success(res);
+                        } else if (opt.error !== undefined) {
+
+                            if (abortTimeout !== null) clearTimeout(abortTimeout);
+                            opt.error(error, opt, xhr);
+                        }
+                    }
+                };
+            }
+
+            // Before open
+
+            if (opt.before) opt.before(xhr);
+
+            if (sendWait) {
+                setTimeout(function () {
+
+                    xhr.send(data);
+                }, 200);
+            } else xhr.send(data);
+
+            return xhr;
+        }
+    });
+
+
+
+    $.each(["get", "post"], function (i, method) {
+
+        $[method] = function (url, data, callback, type) {
+            // shift arguments if data argument was omitted
+            if ($.isFunction(data)) {
+                type = type || callback;
+                callback = data;
+                data = undefined;
+            }
+
+            return $.ajax({
+                url: url,
+                type: method,
+                dataType: type,
+                data: data,
+                success: callback
+            });
+        };
+    });
+
+})(hAzzle);
+
+
+
