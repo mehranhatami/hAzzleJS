@@ -894,24 +894,6 @@
         },
 
         /**
-         * Merge two arrays
-         */
-
-        merge: function (first, second) {
-            var len = +second.length,
-                j = 0,
-                i = first.length;
-
-            for (; j < len; j++) {
-                first[i++] = second[j];
-            }
-
-            first.length = i;
-
-            return first;
-        },
-
-        /**
          * Return the elements nodeName
          */
         nodeName: function (elem, name) {
@@ -1107,6 +1089,59 @@
 
         return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
             typeof length === 'number' && length > 0 && (length - 1) in obj;
+    }
+
+
+    /**
+     * Merge two arrays
+     *
+     * Note!! hAzzle.merge() are one of our Core functions and
+     * need to be super fast. But there are problems cross-browser.
+     * For FireFox we are using while-loop and for-loop
+     * for the other browsers
+     */
+
+    // Firefox 
+
+    if (typeof InstallTrigger !== 'undefined') {
+        hAzzle.merge = function (first, second) {
+            var j = 0,
+                i = first.length;
+
+            while (second[j] !== undefined) {
+                first[i++] = second[j++];
+            }
+
+            first.length = i;
+
+            return first;
+        }
+
+        // All other browsers	
+
+    } else {
+
+        hAzzle.merge = function (first, second) {
+
+            var j = 0,
+                i = first.length;
+
+            if (typeof InstallTrigger !== 'undefined') {
+                while (second[j] !== undefined) {
+                    first[i++] = second[j++];
+                }
+            } else {
+                var len = +second.length;
+                for (; j < len; j++) {
+                    first[i++] = second[j];
+                }
+
+            }
+
+            first.length = i;
+
+            return first;
+        }
     }
 
     // Expose hAzzle to the global object

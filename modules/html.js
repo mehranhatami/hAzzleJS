@@ -4,7 +4,7 @@
 var concat = Array.prototype.concat,
 
     doc = document,
-
+    cached = [],
     isFunction = hAzzle.isFunction,
 
     xhtmlRegEx = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
@@ -55,8 +55,13 @@ function restoreScript(elem) {
     return elem;
 }
 
-hAzzle.parseHTML = function (data, context, keepScripts) {
-    if (!data || typeof data !== "string") {
+
+
+hAzzle.extend({
+	
+	parseHTML: function (data, context, keepScripts) {
+    
+	if (!data || typeof data !== "string") {
         return null;
     }
     if (typeof context === "boolean") {
@@ -72,20 +77,22 @@ hAzzle.parseHTML = function (data, context, keepScripts) {
         scripts = !keepScripts && [];
 
     // Single tag
-    if (parsed) {
-        return [context.createElement(parsed[1])];
+    
+	if (parsed) {
+    
+	    return [context.createElement(parsed[1])];
     }
 
     parsed = hAzzle.buildFragment([data], context, scripts);
 
     if (scripts && scripts.length) {
+		
         hAzzle(scripts).remove();
     }
 
     return hAzzle.merge([], parsed.childNodes);
-};
-
-hAzzle.extend(hAzzle, {
+  
+  },
 
     buildFragment: function (elems, context, scripts, selection) {
 
@@ -94,9 +101,10 @@ hAzzle.extend(hAzzle, {
             nodes = [],
             i = 0,
             l = elems.length;
-
-        for (; i < l; i++) {
-            elem = elems[i];
+        
+		for(i = elems.length; i--;){
+        
+		    elem = elems[i];
 
             if (elem || elem === 0) {
 
@@ -113,6 +121,7 @@ hAzzle.extend(hAzzle, {
 
                     // Convert html into DOM nodes
                 } else {
+					
                     tmp = tmp || fragment.appendChild(context.createElement("div"));
 
                     // Deserialize a standard representation
