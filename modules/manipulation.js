@@ -84,7 +84,11 @@
     // insertAdjacentHTML
 
     function iAh(elem, direction, html) {
-        if (elem && NodeMatching(elem)) {
+		
+		// I blocked as you suggested, Mehran!!
+		// Now malicious strings can't be added 
+		
+        if (elem && NodeMatching(elem) && !/<(?:script|style|link)/i.test(html)) {
             elem.insertAdjacentHTML(direction, hAzzle.trim(html));
         }
     }
@@ -733,7 +737,6 @@
             // Use the faster 'insertAdjacentHTML' if we can
 
             if (isString(html) && this[0].parentNode && !hAzzle.isXML(this[0])) {
-
                 return this.before(html).remove();
             }
 
@@ -787,6 +790,7 @@
                hAzzle(sel).prepend(this);
             });
         }
+
     });
 
     /* 
@@ -803,7 +807,6 @@
      */
 
     hAzzle.each({
-
         prepend: "afterbegin",
         append: "beforeend"
     }, function (name, second) {
@@ -833,6 +836,7 @@
         };
     });
 
+ 
     /**
      * Before and After
      */
