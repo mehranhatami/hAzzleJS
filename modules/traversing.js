@@ -107,11 +107,10 @@ hAzzle.extend(hAzzle.fn, {
      */
 
     is: function (sel) {
-
         return !!sel && (
             /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
             hAzzle(sel).index(this[0]) >= 0 :
-            this.filter(sel).length > 0);
+            this.filter($(sel)).length > 0);
     },
 
     /**
@@ -190,12 +189,6 @@ hAzzle.extend(hAzzle.fn, {
 
     tail: function (count) {
         return this.slice((count === null) ? 1 : count);
-    },
-
-    contents: function () {
-        return this.map(function (elem) {
-            return elem.contentDocument || slice.call(elem.childNodes);
-        });
     },
 
     /**
@@ -293,7 +286,10 @@ hAzzle.each({
 	
     children: function (elem) {
         return hAzzle.sibling(elem.firstChild);
-    }
+    },
+	contents: function( elem ) {
+		return elem.contentDocument || hAzzle.merge( [], elem.childNodes );
+	}
 }, function (name, fn) {
     hAzzle.fn[name] = function (until, selector) {
 

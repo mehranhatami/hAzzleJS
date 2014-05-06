@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.4d
+ * Version: 0.5
  * Released under the MIT License.
  *
- * Date: 2014-05-05
+ * Date: 2014-05-06
  *
  * Note!! hAzzle are NOT jQuery or Zepto, but loosely following their API's. Some functions will not work at all in hAzzle, and
  *        others will work differently then you think. In 94% of the cases, hAzzle will work similar to jQuery / Zepto.
@@ -81,15 +81,63 @@
 
         init: function (sel, ctx) {
 
-            var elems, i;
+            if (sel instanceof hAzzle) return sel;
 
+            if (!sel) {
+                return this;
+            }
             if (hAzzle.isString(sel)) {
 
                 // HTML
 
                 if (sel[0] === "<" && sel[sel.length - 1] === ">" && sel.length >= 3) {
 
-                    this.elems = hAzzle.parseHTML(sel, ctx && ctx.nodeType ? ctx.ownerDocument || ctx : document, true);
+                    var attr;
+
+                    // Move the parsed HTML over to the 'elems stack'
+
+                    this.elems = hAzzle.parseHTML(
+                        sel,
+                        ctx && ctx.nodeType ? ctx.ownerDocument || ctx : document,
+                        true
+                    );
+
+                    // Merge it with the hAzzle Object
+
+                    hAzzle.merge(this, this.elems);
+
+                    // Set attributes if any...:
+
+                    if ((/^<(\w+)\s*\/?>(?:<\/\1>|)$/).test(sel) && hAzzle.isObject(ctx)) {
+
+                        for (attr in ctx) {
+
+                            // Properties of context are called as methods if possible
+
+                            if (hAzzle.isFunction(this[attr])) {
+
+                                this[attr](ctx[attr]);
+
+                            } else {
+
+                                // Use the fastest addClass for setting class attributes
+
+                                if (attr === "class") {
+
+                                    this.addClass(ctx[attr]);
+
+                                    // ...and otherwise set as attributes 								
+
+                                } else {
+
+                                    this.attr(attr, ctx[attr]);
+
+                                }
+                            }
+                        }
+                    }
+
+                    return this;
 
                 } else {
 
@@ -127,6 +175,8 @@
 
                     if (hAzzle.isObject(sel)) {
 
+                        //alert( sel[0]);
+                        this.context = sel[0];
                         return this.elems = [sel], this.length = 1, this[0] = sel, this;
                     }
 
@@ -277,7 +327,7 @@
 
         get: function (num) {
 
-            return num != null ?
+            return num !== null ?
 
                 // Return just the one element from the set
 
@@ -414,8 +464,7 @@
 
             if (index === null) {
 
-                return hAzzle()
-
+                return hAzzle();
             }
 
             return hAzzle(this.get(index));
@@ -480,14 +529,6 @@
 
         },
 
-        UTF8encode: function (s) {
-            return unescape(encodeURIComponent(s));
-        },
-
-        UTF8decode: function (s) {
-            return decodeURIComponent(escape(s));
-        },
-
         /**
          * Convert input to currency (two decimal fixed number)
          */
@@ -526,7 +567,7 @@
 
         type: function (obj) {
 
-            if (obj == null) {
+            if (obj === null) {
 
                 return obj + "";
             }
@@ -618,7 +659,7 @@
          */
 
         isEmpty: function (str, ignoreWhitespace) {
-            return str == null || !str.length || (ignoreWhitespace && /^\s*$/.test(str));
+            return str === null || !str.length || (ignoreWhitespace && /^\s*$/.test(str));
         },
 
         /**
@@ -1051,7 +1092,6 @@
         };
     });
 
-
     function isArraylike(obj) {
 
         if (obj === null || hAzzle.isWindow(obj)) {
@@ -1068,8 +1108,6 @@
         return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
             typeof length === 'number' && length > 0 && (length - 1) in obj;
     }
-
-
 
     // Expose hAzzle to the global object
 

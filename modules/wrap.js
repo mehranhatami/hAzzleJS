@@ -39,27 +39,6 @@
             return this;
         },
 
-        wrapInner: function (html) {
-            if ($.isFunction(html)) {
-                return this.each(function (i) {
-                    $(this).wrapInner(html.call(this, i));
-                });
-            }
-
-            return this.each(function () {
-                var self = $(this),
-                    contents = self.contents();
-
-                if (contents.length) {
-                    contents.wrapAll(html);
-
-                } else {
-                    self.append(html);
-                }
-            });
-
-        },
-
         /**
          *  Wrap an HTML structure around the content of each element in the set of matched elements.
          *
@@ -69,12 +48,11 @@
          */
 
         unwrap: function () {
-            this.parent().each(function () {
-                if (!$.nodeName(this, "body")) {
-                    hAzzle(this).replaceWith(hAzzle(this).children());
-                }
-            });
-            return this;
+           return this.parent().each(function() {
+			if ( !$.nodeName( this, "body" ) ) {
+				$( this ).replaceWith( this.childNodes );
+			}
+		});
         }
     });
 
