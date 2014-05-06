@@ -63,9 +63,12 @@ hAzzle.parseHTML = function (data, context, keepScripts) {
         keepScripts = context;
         context = false;
     }
-    context = context || document;
 
-    var parsed = singleRegEx.exec(data),
+   // Prevent XSS attack
+
+   context = context || ( isFunction( doc.implementation.createHTMLDocument ) ? doc.implementation.createHTMLDocument() : document );
+   
+   var parsed = singleRegEx.exec(data),
         scripts = !keepScripts && [];
 
     // Single tag
