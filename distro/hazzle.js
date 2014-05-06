@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.5a
+ * Version: 0.5.1
  * Released under the MIT License.
  *
  * Date: 2014-05-06
@@ -141,7 +141,7 @@
 
                 } else {
 
-                    this.elems = hAzzle.select(sel, ctx);
+                    this.elems = hAzzle.find(sel, ctx);
                 }
 
             } else {
@@ -261,7 +261,7 @@
 
                 if (simpleRegEx.test(sel)) {
 
-                    return hAzzle(hAzzle.filter(this.elems, sel, not));
+                    return hAzzle(hAzzle.filter(sel, this.elems, not));
                 }
 
                 sel = hAzzle.filter(sel, this.elems);
@@ -282,7 +282,7 @@
 
         contains: function (sel) {
             return hAzzle.create(this.elems.reduce(function (elements, element) {
-                return elements.concat(hAzzle.select(sel, element).length ? element : null);
+                return elements.concat(hAzzle.find(sel, element).length ? element : null);
             }, []));
         },
 
@@ -325,19 +325,12 @@
          * @return {object}
          */
 
-        get: function (num) {
-
-            return num !== null ?
-
-                // Return just the one element from the set
-
-                this.elems[0 > num ? this.elems.length + num : num] :
-
-                // Return all the elements in the 'elems stack'
-
-                this.elems;
+        get: function (index) {
+            if (index == null) {
+                return this.elems.slice()
+            }
+            return this.elems[index < 0 ? this.elems.length + index : index]
         },
-
         /**
          * Returns a new array with the result of calling callback on each element of the array
          * NOTE!! Nothing to do with the jQuery / Zepto API
@@ -707,8 +700,8 @@
          * Produces a duplicate-free version of the array.
          */
         unique: function (array) {
-            return array.filter(function (item, idx) {
-                return hAzzle.indexOf(array, item) === idx;
+            return array.filter(function (itm, idx) {
+                return hAzzle.indexOf(array, itm) === idx;
             });
 
         },
@@ -1094,7 +1087,14 @@
 
     /**
      * Merge two arrays
+     *
+     * Note!! hAzzle.merge() are one of our Core functions and
+     * need to be super fast. But there are problems cross-browser.
+     * For FireFox we are using while-loop and for-loop
+     * for the other browsers
      */
+
+    // Firefox 
 
     if (typeof InstallTrigger !== 'undefined') {
         hAzzle.merge = function (first, second) {
@@ -1109,15 +1109,26 @@
 
             return first;
         }
+
+        // All other browsers	
+
     } else {
 
         hAzzle.merge = function (first, second) {
-            var len = +second.length,
-                j = 0,
+
+            var j = 0,
                 i = first.length;
 
-            for (; j < len; j++) {
-                first[i++] = second[j];
+            if (typeof InstallTrigger !== 'undefined') {
+                while (second[j] !== undefined) {
+                    first[i++] = second[j++];
+                }
+            } else {
+                var len = +second.length;
+                for (; j < len; j++) {
+                    first[i++] = second[j];
+                }
+
             }
 
             first.length = i;
@@ -1208,10 +1219,16 @@ hAzzle.extend({
     }
 });
 
-// Matches
+// Selector / Matches
 
+
+var push = Array.prototype.push;
+
+// Native matchSelector;
 
 var matches = hAzzle.prefix('matchesSelector', document.createElement('div'));
+
+//var matches = hAzzle.prefix('matchesSelector', document.createElement('div'));
 
 hAzzle.extend(hAzzle.fn, {
 
@@ -1224,14 +1241,13 @@ hAzzle.extend(hAzzle.fn, {
      */
 
     find: function (selector) {
-
         var elements;
         if (hAzzle.isString(selector)) {
             if (this.length === 1) {
-                elements = hAzzle.select(selector, this.elems);
+                elements = hAzzle.find(selector, this.elems);
             } else {
                 elements = this.elems.reduce(function (elements, element) {
-                    return elements.concat(hAzzle.select(selector, element));
+                    return elements.concat(hAzzle.find(selector, element));
                 }, []);
             }
         } else {
@@ -1254,19 +1270,32 @@ hAzzle.extend(hAzzle, {
         if (not) {
             expr = ":not(" + expr + ")";
         }
+
+
+
         return elems.length === 1 ?
             hAzzle.matchesSelector(elems[0], expr) ? [elems[0]] : [] :
             hAzzle.matches(expr, elems);
     },
 
     matches: function (expr, elements) {
+
         return hAzzle.find(expr, null, null, elements);
+
     },
+
     matchesSelector: function (elem, expr) {
+
         return matches.call(elem, expr);
     },
 
     find: function (selector, context, results, seed) {
+
+        var match, elem, m, nodeType,
+            // QSA vars
+            i, groups, old, nid, newContext, newSelector;
+
+
         var elem, nodeType,
             i = 0;
 
@@ -1275,272 +1304,72 @@ hAzzle.extend(hAzzle, {
 
         // Same basic safeguard as Sizzle
         if (!selector || typeof selector !== "string") {
+
             return results;
         }
 
         // Early return if context is not an element or document
         if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+
             return [];
         }
 
-        if (seed) {
+
+        if (!seed) {
+
+            // Shortcuts
+            if ((match = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/.exec(selector))) {
+
+                // #id
+                if ((sel = match[1])) {
+
+                    elem = context.getElementById(sel);
+
+                    if (elem && elem.parentNode) {
+                        // Handle the case where IE, Opera, and Webkit return items
+                        // by name instead of ID
+                        if (elem.id === m) {
+
+                            results.push(elem);
+                            return results;
+                        }
+                    } else {
+
+                        return results;
+                    }
+
+                    // .class	
+
+                } else if ((sel = match[2])) {
+
+                    push.apply(results, context.getElementsByClassName(sel));
+                    return results;
+
+                    // tag
+
+                } else if ((sel = match[3])) {
+
+                    push.apply(results, context.getElementsByTagName(selector));
+                    return results;
+                }
+            }
+
+            results = context.querySelectorAll(selector);
+
+            // Seed
+
+        } else {
             while ((elem = seed[i++])) {
                 if (hAzzle.matchesSelector(elem, selector)) {
                     results.push(elem);
                 }
             }
-        } else {
-
-            hAzzle.merge(results, context.querySelectorAll(selector));
         }
 
-        return results;
+        return hAzzle.isNodeList(results) ? slice.call(results) : hAzzle.isElement(results) ? [results] : results;
     }
 });
 
-// Selector engine
-
-
-;
-(function ($) {
-
-
-    var slice = Array.prototype.slice,
-        doc = document,
-        byClass = 'getElementsByClassName',
-        byTag = 'getElementsByTagName',
-        byId = 'getElementById',
-        nodeType = 'nodeType',
-        byAll = 'querySelectorAll',
-
-
-        // RegExp we are using
-
-        expresso = {
-
-            idClassTagNameExp: /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-            tagNameAndOrIdAndOrClassExp: /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/,
-            pseudos: /(.*):(\w+)(?:\(([^)]+)\))?$\s*/
-        };
-
-    /**
-     * Normalize context.
-     *
-     * @param {String|Array} ctx
-     *
-     * @return {Object}
-     */
-
-    function normalizeCtx(ctx) {
-        if (!ctx) return doc;
-        if (typeof ctx === 'string') return hAzzle.select(ctx)[0];
-        if (!ctx[nodeType] && typeof ctx === 'object' && isFinite(ctx.length)) return ctx[0];
-        if (ctx[nodeType]) return ctx;
-        return ctx;
-    }
-
-    /**
-     * Determine if the element contains the klass.
-     * Uses the `classList` api if it's supported.
-     * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
-     *
-     * @param {Object} el
-     * @param {String} klass
-     *
-     * @return {Array}
-     */
-
-    hAzzle.extend({
-
-        pseudos: {
-            disabled: function () {
-                return this.disabled === true;
-            },
-            enabled: function () {
-                return this.disabled === false && this.type !== "hidden";
-            },
-            selected: function () {
-
-                if (this.parentNode) {
-                    this.parentNode.selectedIndex;
-                }
-
-                return this.selected === true;
-            },
-            checked: function () {
-                var nodeName = this.nodeName.toLowerCase();
-                return (nodeName === "input" && !!this.checked) || (nodeName === "option" && !!this.selected);
-            },
-            parent: function () {
-                return this.parentNode;
-            },
-            first: function (elem) {
-                if (elem === 0) return this;
-            },
-            last: function (elem, nodes) {
-                if (elem === nodes.length - 1) return this;
-            },
-            empty: function () {
-                var elem = this;
-                for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-                    if (elem.nodeType < 6) {
-                        return false;
-                    }
-                }
-                return true;
-            },
-            eq: function (elem, _, value) {
-                if (elem === value) return this;
-            },
-            contains: function (elem, _, text) {
-                if (hAzzle(this).text().indexOf(text) > -1) return this;
-            },
-            has: function (elem, _, sel) {
-                if (hAzzle.qsa(this, sel).length) return this;
-            },
-            radio: function () {
-                return "radio" === this.type;
-            },
-            checkbox: function () {
-                return "checkbox" === this.type;
-            },
-            file: function () {
-                return "file" === this.type;
-            },
-            password: function () {
-                return "password" === this.type;
-            },
-            submit: function () {
-                return "submit" === this.type;
-            },
-            image: function () {
-                return "image" === this.type;
-            },
-            button: function () {
-                var name = this.nodeName.toLowerCase();
-                return name === "input" && this.type === "button" || name === "button";
-            },
-            target: function () {
-
-                var hash = window.location && window.location.hash;
-                return hash && hash.slice(1) === this.id;
-            },
-            input: function () {
-                return (/input|select|textarea|button/i).test(this.nodeName);
-            },
-            focus: function () {
-                return this === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(this.type || this.href || ~this.tabIndex);
-            }
-        },
-
-        /*
-         * QuerySelectorAll function
-         */
-
-        qsa: function (sel, ctx) {
-
-            try {
-                return ctx[byAll](sel);
-
-            } catch (e) {
-                console.error('error performing selector: %o', sel);
-            }
-        },
-
-        /**
-         * Find elements by selectors.
-         *
-         * @param {String} sel
-         * @param {Object} ctx
-         * @return {Object}
-         */
-
-        select: function (sel, ctx) {
-
-            var m, els = [];
-
-            // Get the right context to use.
-
-            ctx = normalizeCtx(ctx);
-
-
-            var mode, id, tag, _class;
-            if (/^#[\w\-]*$/.test(sel)) { // single #id
-                mode = "id";
-                id = sel.substring(1);
-            } else if (/^\.([\w\-]*)$/.test(sel)) { // class
-                mode = "class";
-                _class = sel.substring(1);
-            } else if (/^\s*<[\w\W]+>.*/.test(sel)) { // at least one html tag
-                mode = "html";
-            } else { // selector expr
-                mode = "expr";
-            }
-
-            // simple #id selector without context
-
-            if (mode === "id" && !ctx) {
-                els = ctx[byId](id);
-            }
-
-            if (mode === "class" && !ctx) {
-                els = ctx[byClass](_class);
-            }
-
-
-
-            // Pseudos
-
-            if (m = expresso['pseudos'].exec(sel)) {
-
-                var filter = hAzzle.pseudos[m[2]],
-                    arg = m[3];
-
-                sel = this.qsa(m[1], ctx);
-
-                els = hAzzle.unique(hAzzle.map(sel, function (n, i) {
-
-                    try {
-                        return filter.call(n, i, sel, arg);
-
-                    } catch (e) {
-                        console.error('error performing selector: %o', sel);
-                    }
-
-
-                }));
-
-            } else { // QuerySelectorAll
-
-                els = this.qsa(sel, ctx);
-            }
-
-
-            return hAzzle.isNodeList(els) ? slice.call(els) : hAzzle.isElement(els) ? [els] : els;
-        },
-
-        /***
-         * Get all child nodes...:
-         *
-         * THIS FUNCTION IS IMPORTANT!!!  But have to be done different and speeded up!!!
-         *
-         *
-         *
-         */
-
-        getChildren: function (context, tag) {
-
-
-            var ret = context.getElementsByTagName ? context.getElementsByTagName(tag || "*") :
-                context.querySelectorAll ? context.querySelectorAll(tag || "*") : [];
-
-            return tag === undefined || tag && $.nodeName(context, tag) ?
-                $.merge([context], ret) :
-                ret;
-        }
-
-    });
-})(hAzzle);
 
 // Traversing
 
@@ -2293,6 +2122,7 @@ hAzzle.extend(hAzzle.fn, {
 
                     // See if we can take a shortcut and just use innerHTML
                     if (typeof value === "string" && !/<(?:script|style|link)/i.test(value) && !wrapMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+
 
                         // Do some magic
 
@@ -3183,6 +3013,7 @@ hAzzle.extend(hAzzle.fn, {
             // Revert the old values
             for (name in options) {
                 elem.style[name] = old[name];
+
             }
 
             return ret;
@@ -3673,6 +3504,7 @@ hAzzle.extend(hAzzle.fn, {
                 // Remove all children
 
                 this.parentNode.removeChild(elem);
+
             }
 
         })
@@ -3685,229 +3517,229 @@ hAzzle.extend(hAzzle.fn, {
 
 // Data
 
-
 /** 
  * Data
  */
 
-;
-(function ($) {
+var isUndefined = hAzzle.isUndefined,
+    nodeType = hAzzle.nodeType,
+    html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
 
-    var isUndefined = $.isUndefined,
-        html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
+// Extend the hAzzle object
 
-    // Extend the hAzzle object
+hAzzle.extend({
 
-    $.extend({
+    _data: {},
 
-        _data: {},
+    /**
+     * Check if an element contains data
+     *
+     * @param{String/Object} elem
+     * @param{String} key
+     * @return {Object}
+     */
 
-        /**
-         * Check if an element contains data
-         *
-         * @param{String/Object} elem
-         * @param{String} key
-         * @return {Object}
-         */
+    hasData: function (elem) {
 
-        hasData: function (elem) {
+        if (elem.nodeType) {
+            if (hAzzle._data[hAzzle.getUID(elem)]) {
 
-            if (elem.nodeType) {
-                if ($._data[$.getUID(elem)]) {
-
-                    return true;
-
-                } else {
-
-                    return false;
-                }
-            }
-        },
-
-        /**
-         * Remove data from an element
-         *
-         * @param {String/Object} elem
-         * @param {String} key
-         * @return {Object}
-         */
-
-        removeData: function (elem, key) {
-
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
-
-                if (!elem instanceof $) {
-                    elem = $(elem);
-                }
-
-                var id = $.getUID(elem);
-
-                // Nothing to do if there are no data stored on the elem itself
-
-                if ($._data[id]) {
-
-                    if (isUndefined(key) && $.nodeType(1, elem)) {
-
-                        $._data[id] = {};
-
-                    } else {
-
-                        if ($._data[id]) {
-                            delete $._data[id][key];
-                        } else {
-                            $._data[id] = null;
-                        }
-                    }
-
-                }
-            }
-        },
-
-        data: function (elem, key, value) {
-
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !(+elem.nodeType)) {
-
-                var id = $._data[$.getUID(elem)];
-
-                // Create and unique ID for this elem
-
-                if (!id && elem.nodeType) {
-                    var pid = $.getUID(elem);
-                    id = $._data[pid] = {};
-                }
-
-                // Return all data on saved on the element
-
-                if (isUndefined(key)) {
-
-                    return id;
-                }
-
-                if (isUndefined(value)) {
-
-                    return id[key];
-                }
-
-                if (!isUndefined(value)) {
-
-                    // Set and return the value
-
-                    id[key] = value;
-
-                    return id[key];
-                }
-            }
-        }
-    });
-
-    $.extend($.fn, {
-
-        /**
-         * Remove attributes from element collection
-         *
-         * @param {String} key
-         *
-         * @return {Object}
-         */
-
-        removeData: function (key) {
-            return this.each(function () {
-                $.removeData(this, key);
-            });
-        },
-
-        /**
-         * Store random data on the hAzzle Object
-         *
-         * @param {String} key(s)
-         * @param {String|Object} value
-         *
-         * @return {Object|String}
-         *
-         */
-
-        data: function (key, value) {
-
-            if (isUndefined(key)) {
-
-                var data = $.data(this[0]),
-                    elem = this[0];
-
-                if (hAzzle.nodeType(1, elem) && !$.data(elem, "parsedAttrs")) {
-
-                    var attr = elem.attributes,
-                        name,
-                        i = 0,
-                        l = attr.length;
-
-                    for (; i < l; i++) {
-
-                        name = attr[i].name;
-
-                        if (name.indexOf("data-") === 0) {
-
-                            name = $.camelCase(name.substr(5));
-
-                            data = data[name];
-
-                            // Try to fetch data from the HTML5 data- attribute
-
-                            if ($.isUndefined(data) && $.nodeType(1, elem)) {
-
-                                var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
-
-                                data = elem.getAttribute(name);
-
-                                if (typeof data === "string") {
-                                    try {
-                                        data = data === "true" ? true :
-                                            data === "false" ? false :
-                                            data === "null" ? null : +data + "" === data ? +data :
-                                            html5Json.test(data) ? JSON.parse(data + "") : data;
-                                    } catch (e) {}
-
-                                    // Make sure we set the data so it isn't changed later
-
-                                    $.data(elem, key, data);
-
-                                } else {
-                                    data = undefined;
-                                }
-                            }
-                            return data;
-                        }
-                    }
-                    $.data(elem, "parsedAttrs", true);
-                }
-
-                // 'key' defined, but no 'data'.
-
-            } else if (isUndefined(value)) {
-
-                if (this.length === 1) {
-
-                    return $.data(this.elems[0], key);
-
-                } else {
-
-                    // Sets multiple values
-
-                    return this.elems.map(function (el) {
-
-                        return $.data(el, key);
-
-                    });
-                }
+                return true;
 
             } else {
 
-                return $.data(this[0], key, value);
+                return false;
             }
         }
+    },
 
-    });
+    /**
+     * Remove data from an element
+     *
+     * @param {String/Object} elem
+     * @param {String} key
+     * @return {Object}
+     */
 
-})(hAzzle);
+    removeData: function (elem, key) {
+
+        if (nodeType(1, elem) || nodeType(9, elem) || !(+elem.nodeType)) {
+
+            if (!elem instanceof hAzzle) {
+                elem = hAzzle(elem);
+            }
+
+            var id = hAzzle.getUID(elem);
+
+            // Nothing to do if there are no data stored on the elem itself
+
+            if (hAzzle._data[id]) {
+
+                if (isUndefined(key) && nodeType(1, elem)) {
+
+                    hAzzle._data[id] = {};
+
+                } else {
+
+                    if (hAzzle._data[id]) {
+                        delete hAzzle._data[id][key];
+                    } else {
+                        hAzzle._data[id] = null;
+                    }
+                }
+
+            }
+        }
+    },
+
+    data: function (elem, key, value) {
+
+        if (nodeType(1, elem) || nodeType(9, elem) || !(+elem.nodeType)) {
+
+            var id = hAzzle._data[hAzzle.getUID(elem)];
+
+            // Create and unique ID for this elem
+
+            if (!id && elem.nodeType) {
+                var pid = hAzzle.getUID(elem);
+                id = hAzzle._data[pid] = {};
+            }
+
+            // Return all data on saved on the element
+
+            if (isUndefined(key)) {
+
+                return id;
+            }
+
+            if (isUndefined(value)) {
+
+                return id[key];
+            }
+
+            if (!isUndefined(value)) {
+
+                // Set and return the value
+
+                id[key] = value;
+
+                return id[key];
+            }
+        }
+    }
+});
+
+hAzzle.extend(hAzzle.fn, {
+
+    /**
+     * Remove attributes from element collection
+     *
+     * @param {String} key
+     *
+     * @return {Object}
+     */
+
+    removeData: function (key) {
+        return this.each(function () {
+            hAzzle.removeData(this, key);
+        });
+    },
+
+    /**
+     * Getter/setter of a data entry value on the hAzzle Object. Tries to read the appropriate
+     * HTML5 data-* attribute if it exists
+     * @param  {String|Object|Array}  key(s)
+     * @param  {Object}               value
+     * @return {Object|String }
+     */
+
+    data: function (key, value) {
+        var len = arguments.length,
+            keyType = typeof key;
+
+        // If no arguments, try to get the data from the HTML5 data- attribute
+
+        if (!len) {
+
+            var data = hAzzle.data(this[0]),
+                elem = this[0];
+
+            if (nodeType(1, elem) && !hAzzle.data(elem, "parsedAttrs")) {
+
+                var attr = elem.attributes,
+                    name,
+                    i = 0,
+                    l = attr.length;
+
+                for (; i < l; i++) {
+
+                    name = attr[i].name;
+
+                    if (name.indexOf("data-") === 0) {
+
+                        name = hAzzle.camelCase(name.substr(5));
+
+                        data = data[name];
+
+                        // Try to fetch data from the HTML5 data- attribute
+
+                        if (isUndefined(data) && nodeType(1, elem)) {
+
+                            var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
+
+                            data = elem.getAttribute(name);
+
+                            if (typeof data === "string") {
+                                try {
+                                    data = data === "true" ? true :
+                                        data === "false" ? false :
+                                        data === "null" ? null : +data + "" === data ? +data :
+                                        html5Json.test(data) ? JSON.parse(data + "") : data;
+                                } catch (e) {}
+
+                                // Make sure we set the data so it isn't changed later
+
+                                hAzzle.data(elem, key, data);
+
+                            } else {
+                                data = undefined;
+                            }
+                        }
+                        return data;
+                    }
+                }
+
+                hAzzle.data(elem, "parsedAttrs", true);
+            }
+
+            // 'key' defined, but no 'data'.
+
+        } else if (len === 1) {
+
+            if (this.length === 1) {
+
+                return hAzzle.data(this.elems[0], key);
+
+            } else {
+
+                // Sets multiple values
+
+                return this.elems.map(function (el) {
+
+                    return hAzzle.data(el, key);
+
+                });
+            }
+
+        } else if (len === 2) {
+
+            return hAzzle.data(this[0], key, value);
+        }
+
+        hAzzle.error("Something went wrong!");
+    }
+
+});
 
 // Events
 
@@ -4962,34 +4794,43 @@ function restoreScript(elem) {
     return elem;
 }
 
-hAzzle.parseHTML = function (data, context, keepScripts) {
-    if (!data || typeof data !== "string") {
-        return null;
-    }
-    if (typeof context === "boolean") {
-        keepScripts = context;
-        context = false;
-    }
-    context = context || document;
 
-    var parsed = singleRegEx.exec(data),
-        scripts = !keepScripts && [];
+hAzzle.extend({
 
-    // Single tag
-    if (parsed) {
-        return [context.createElement(parsed[1])];
-    }
+    parseHTML: function (data, context, keepScripts) {
 
-    parsed = hAzzle.buildFragment([data], context, scripts);
+        if (!data || typeof data !== "string") {
+            return null;
+        }
+        if (typeof context === "boolean") {
+            keepScripts = context;
+            context = false;
+        }
 
-    if (scripts && scripts.length) {
-        hAzzle(scripts).remove();
-    }
+        // Prevent XSS attack
 
-    return hAzzle.merge([], parsed.childNodes);
-};
+        context = context || (isFunction(doc.implementation.createHTMLDocument) ? doc.implementation.createHTMLDocument() : document);
 
-hAzzle.extend(hAzzle, {
+        var parsed = singleRegEx.exec(data),
+            scripts = !keepScripts && [];
+
+        // Single tag
+
+        if (parsed) {
+
+            return [context.createElement(parsed[1])];
+        }
+
+        parsed = hAzzle.buildFragment([data], context, scripts);
+
+        if (scripts && scripts.length) {
+
+            hAzzle(scripts).remove();
+        }
+
+        return hAzzle.merge([], parsed.childNodes);
+
+    },
 
     buildFragment: function (elems, context, scripts, selection) {
 
@@ -4999,9 +4840,9 @@ hAzzle.extend(hAzzle, {
             i = 0,
             l = elems.length;
 
-        for (i = elems.length; i--;) {
+        while (l--) {
 
-            elem = elems[i];
+            elem = elems[l];
 
             if (elem || elem === 0) {
 
@@ -5055,7 +4896,7 @@ hAzzle.extend(hAzzle, {
             contains = hAzzle.contains(elem.ownerDocument, elem);
 
             // Append to fragment
-            tmp = cached[elem] ? cached[elem] : cached[elem] = getAll(fragment.appendChild(elem), "script");
+            tmp = getAll(fragment.appendChild(elem), "script");
 
             // Preserve script evaluation history
             if (contains) {
@@ -5078,13 +4919,13 @@ hAzzle.extend(hAzzle, {
 });
 
 
-
 hAzzle.extend(hAzzle.fn, {
 
 
     manipulateDOM: function (args, callback) {
 
         // Flatten any nested arrays
+
         args = concat.apply([], args);
 
         var fragment, first, scripts, hasScripts, node, doc,
@@ -5123,8 +4964,6 @@ hAzzle.extend(hAzzle.fn, {
                 scripts = hAzzle.map(getAll(fragment, "script"), disableScript);
                 hasScripts = scripts.length;
 
-                // Use the original fragment for the last item instead of the first because it can end up
-                // being emptied incorrectly in certain situations (#8070).
                 for (; i < l; i++) {
                     node = fragment;
 
@@ -5133,8 +4972,7 @@ hAzzle.extend(hAzzle.fn, {
 
                         // Keep references to cloned scripts for later restoration
                         if (hasScripts) {
-                            // Support: QtWebKit
-                            // hAzzle.merge because push.apply(_, arraylike) throws
+
                             hAzzle.merge(scripts, getAll(node, "script"));
                         }
                     }
@@ -6402,8 +6240,6 @@ function getAll(context, tag) {
             return xhr;
         }
     });
-
-
 
     $.each(["get", "post"], function (i, method) {
 

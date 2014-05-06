@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.5
+ * Version: 0.5.1
  * Released under the MIT License.
  *
  * Date: 2014-05-06
@@ -141,7 +141,7 @@
 
                 } else {
 
-                    this.elems = hAzzle.select(sel, ctx);
+                    this.elems = hAzzle.find(sel, ctx);
                 }
 
             } else {
@@ -261,7 +261,7 @@
 
                 if (simpleRegEx.test(sel)) {
 
-                    return hAzzle(hAzzle.filter(this.elems, sel, not));
+                    return hAzzle(hAzzle.filter(sel, this.elems, not));
                 }
 
                 sel = hAzzle.filter(sel, this.elems);
@@ -282,7 +282,7 @@
 
         contains: function (sel) {
             return hAzzle.create(this.elems.reduce(function (elements, element) {
-                return elements.concat(hAzzle.select(sel, element).length ? element : null);
+                return elements.concat(hAzzle.find(sel, element).length ? element : null);
             }, []));
         },
 
@@ -325,17 +325,11 @@
          * @return {object}
          */
 
-        get: function (num) {
-
-            return num !== null ?
-
-                // Return just the one element from the set
-
-                this.elems[0 > num ? this.elems.length + num : num] :
-
-                // Return all the elements in the 'elems stack'
-
-                this.elems;
+        get: function (index) {
+            if (index == null) {
+                return this.elems.slice()
+            }
+            return this.elems[index < 0 ? this.elems.length + index : index]
         },
 
         /**
@@ -707,8 +701,8 @@
          * Produces a duplicate-free version of the array.
          */
         unique: function (array) {
-            return array.filter(function (item, idx) {
-                return hAzzle.indexOf(array, item) === idx;
+            return array.filter(function (itm, idx) {
+                return hAzzle.indexOf(array, itm) === idx;
             });
 
         },

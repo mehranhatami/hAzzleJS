@@ -2,14 +2,13 @@
  * Data
  */
 
-; (function ($) {
-
-   var isUndefined = $.isUndefined,
+   var isUndefined = hAzzle.isUndefined,
+       nodeType = hAzzle.nodeType,
        html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
 
     // Extend the hAzzle object
 
-    $.extend({
+    hAzzle.extend({
 		
         _data: {},
 
@@ -24,7 +23,7 @@
 		hasData: function (elem) {
 
             if (elem.nodeType) {
-                if ($._data[$.getUID(elem)]) {
+                if (hAzzle._data[hAzzle.getUID(elem)]) {
 
                     return true;
 
@@ -45,28 +44,28 @@
 
         removeData: function (elem, key) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !( +elem.nodeType )) {
+            if (nodeType(1, elem) || nodeType(9, elem) || !( +elem.nodeType )) {
 
-                if (!elem instanceof $) {
-                    elem = $(elem);
+                if (!elem instanceof hAzzle) {
+                    elem = hAzzle(elem);
                 }
 
-                var id = $.getUID(elem);
+                var id = hAzzle.getUID(elem);
            
 		   // Nothing to do if there are no data stored on the elem itself
            
-		        if ($._data[id]) {
+		        if (hAzzle._data[id]) {
 
-                    if (isUndefined(key) && $.nodeType(1, elem)) {
+                    if (isUndefined(key) && nodeType(1, elem)) {
 
-                        $._data[id] = {};
+                        hAzzle._data[id] = {};
 
                     } else {
 
-                        if ($._data[id]) {
-                            delete $._data[id][key];
+                        if (hAzzle._data[id]) {
+                            delete hAzzle._data[id][key];
                         } else {
-                            $._data[id] = null;
+                            hAzzle._data[id] = null;
                         }
                     }
 
@@ -76,15 +75,15 @@
 
         data: function (elem, key, value) {
 
-            if (hAzzle.nodeType(1, elem) || hAzzle.nodeType(9, elem) || !( +elem.nodeType )) {
+            if (nodeType(1, elem) || nodeType(9, elem) || !( +elem.nodeType )) {
 
-                var id = $._data[$.getUID(elem)];
+                var id = hAzzle._data[hAzzle.getUID(elem)];
 
                 // Create and unique ID for this elem
 
                 if (!id && elem.nodeType) {
-                    var pid = $.getUID(elem);
-                    id = $._data[pid] = {};
+                    var pid = hAzzle.getUID(elem);
+                    id = hAzzle._data[pid] = {};
                 }
 
                 // Return all data on saved on the element
@@ -111,7 +110,7 @@
         }
     });
 
-    $.extend($.fn, {
+    hAzzle.extend(hAzzle.fn, {
 
         /**
          * Remove attributes from element collection
@@ -123,28 +122,30 @@
 
         removeData: function (key) {
             return this.each(function () {
-                $.removeData(this, key);
+                hAzzle.removeData(this, key);
             });
         },
 
-        /**
-         * Store random data on the hAzzle Object
-         *
-         * @param {String} key(s)
-         * @param {String|Object} value
-         *
-         * @return {Object|String}
-         *
-         */
+      /**
+       * Getter/setter of a data entry value on the hAzzle Object. Tries to read the appropriate
+       * HTML5 data-* attribute if it exists
+       * @param  {String|Object|Array}  key(s)
+       * @param  {Object}               value 
+       * @return {Object|String }
+       */
 
         data: function (key, value) {
+           var len = arguments.length,
+                keyType = typeof key;
+				
+           // If no arguments, try to get the data from the HTML5 data- attribute
+           
+		   if (!len) {
 
-            if (isUndefined(key)) {
-
-                var data = $.data(this[0]),
+                var data = hAzzle.data(this[0]),
                     elem = this[0];
 
-                if (hAzzle.nodeType(1, elem) && !$.data(elem, "parsedAttrs")) {
+                if (nodeType(1, elem) && !hAzzle.data(elem, "parsedAttrs")) {
 
                     var attr = elem.attributes,
                         name,
@@ -157,13 +158,13 @@
 
                         if (name.indexOf("data-") === 0) {
 
-                            name = $.camelCase(name.substr(5));
+                            name = hAzzle.camelCase(name.substr(5));
 
                             data = data[name];
 
                             // Try to fetch data from the HTML5 data- attribute
 
-                            if ($.isUndefined(data) && $.nodeType(1, elem)) {
+                            if (isUndefined(data) && nodeType(1, elem)) {
 
                                 var name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
 
@@ -179,7 +180,7 @@
 
                                     // Make sure we set the data so it isn't changed later
 
-                                    $.data(elem, key, data);
+                                    hAzzle.data(elem, key, data);
 
                                 } else {
                                     data = undefined;
@@ -188,16 +189,17 @@
                             return data;
                         }
                     }
-                    $.data(elem, "parsedAttrs", true);
+					
+                    hAzzle.data(elem, "parsedAttrs", true);
                 }
 
                 // 'key' defined, but no 'data'.
 
-            } else if (isUndefined(value)) {
+            } else if (len === 1) {
 
                 if (this.length === 1) {
 
-                    return $.data(this.elems[0], key);
+                    return hAzzle.data(this.elems[0], key);
 
                 } else {
 
@@ -205,17 +207,17 @@
 
                     return this.elems.map(function (el) {
 
-                        return $.data(el, key);
+                        return hAzzle.data(el, key);
 
                     });
                 }
 
-            } else {
+            } else if(len === 2) {
 
-                return $.data(this[0], key, value);
+                return hAzzle.data(this[0], key, value);
             }
+			
+			 hAzzle.error("Something went wrong!");
         }
 
     });
-
-})(hAzzle);
