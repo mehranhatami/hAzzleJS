@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.5.2
+ * Version: 0.5.3
  * Released under the MIT License.
  *
- * Date: 2014-05-07
+ * Date: 2014-05-08
  *
  * Note!! hAzzle are NOT jQuery or Zepto, but loosely following their API's. Some functions will not work at all in hAzzle, and
  *        others will work differently then you think. In 94% of the cases, hAzzle will work similar to jQuery / Zepto.
@@ -326,10 +326,14 @@
          */
 
         get: function (index) {
-            if (index == null) {
-                return this.elems.slice()
+            var elems = this.elems;
+            if (elems) {
+                if (index == null) {
+                    return elems && this.elems.slice()
+                }
+                return elems[index < 0 ? elems.length + index : index]
             }
-            return this.elems[index < 0 ? this.elems.length + index : index]
+            return [];
         },
 
         /**

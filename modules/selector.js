@@ -1,12 +1,4 @@
-/**
- *
- * WORK IN PROGRESS!!!
- *
- * I'm working on this. This is the beginning of the new selector engine
- *
- */
-var push = Array.prototype.push,
-    slice = Array.prototype.slice;
+// Selector / Matches
 
 // Native matchSelector polyfi;
 

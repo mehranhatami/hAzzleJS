@@ -13,13 +13,6 @@
 
         clone: function (elem, deep) {
 
-            /* Get all handlers from the original elem before we do a clone job
-	
-	   NOTE!! This has to be done BEFORE we clone the elem, else
-	          hAzzle will be confused and wonder wich of the two
-			  'identical' elems to get the handlers and data from
-	*/
-
             var handlers = $.Events.getHandler(elem, '', null, false),
                 l = handlers.length,
                 i = 0,
@@ -37,7 +30,6 @@
 
             for (; i < l; i++) {
                 if (handlers[i].original) {
-
                     args = [clone, handlers[i].type];
                     if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
                     args.push(handlers[i].original);
@@ -46,6 +38,7 @@
             }
 
             // Copy data from the original to the clone
+
             if (storage) {
                 $.each(storage, function (key, value) {
                     $.data(clone, key, value);
@@ -65,7 +58,7 @@
 
             // Preserve script evaluation history
 
-            destElements = $.getChildren(clone, "script");
+            destElements = getAll(clone, "script");
 
             if (destElements.length > 0) {
 
@@ -80,8 +73,8 @@
 
     $.extend($.fn, {
         clone: function (deep) {
-            return this.map(function () {
-                return $.clone(this, deep);
+            return this.map(function (elem) {
+                return $.clone(elem, deep);
             });
         }
     });

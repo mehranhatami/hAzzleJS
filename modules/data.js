@@ -212,12 +212,10 @@
                     });
                 }
 
-            } else if(len === 2) {
+            } else {
 
                 return hAzzle.data(this[0], key, value);
             }
-			
-			 hAzzle.error("Something went wrong!");
         }
 
     });

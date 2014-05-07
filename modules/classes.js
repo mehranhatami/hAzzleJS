@@ -28,19 +28,28 @@ hAzzle.extend(hAzzle.fn, {
 
 
     addClass: function (value) {
-        var element;
+        var element,
+            classes = (value || '').match(whitespace) || [];
         return isFunction(value) ? this.each(function (e) {
             hAzzle(this).addClass(value.call(this, index, this.className));
         }) : this.each(function () {
             element = this;
-            if (hAzzle.nodeType(1, element)) {
-                if (csp && sMa) {
-                    value.replace(whitespace, function (name) {
-                        element.classList.add(name);
-                    });
+            if (element.nodeType === 1) {
+                if (csp) {
+
+                    if (sMa) {
+
+                        element.classList.add.apply(element.classList, classes);
+
+                    } else {
+
+                        value.replace(whitespace, function (name) {
+                            element.classList.add(name);
+                        });
+                    }
                 } else {
-                    var classes = ' ' + element.className + ' ',
-                        name;
+                    var name;
+                    classes = ' ' + element.className + ' ',
                     value = value.trim().split(/\s+/);
                     while (name = value.shift()) {
                         if (hAzzle.inArray(classes, ' ' + name + ' ') === -1) {
@@ -54,6 +63,7 @@ hAzzle.extend(hAzzle.fn, {
         });
     },
 
+
     /**
      * Remove class(es) from element
      *
@@ -62,7 +72,9 @@ hAzzle.extend(hAzzle.fn, {
 
     removeClass: function (value) {
 
-        var cls, element;
+        var cls,
+            element,
+            classes = (value || '').match(whitespace) || [];
 
         // Function
 
@@ -71,49 +83,54 @@ hAzzle.extend(hAzzle.fn, {
                 hAzzle(this).removeClass(value.call(this, j, this.className));
             }) : this.each(function () {
                 element = this;
-                if (!value) {
-                    return element.className = "";
-                }
+                if (element.nodeType === 1 && element.className) {
 
-                if (value === '*') {
-                    element.className = '';
-                } else {
-                    if (hAzzle.isRegExp(value)) {
-                        value = [value];
-                    } else if (csp && hAzzle.inArray(value, '*') === -1) {
-                        if (sMa) {
-                            value.replace(whitespace, function (name) {
-                                element.classList.remove(name);
-                            });
-                        } else {
-                            var i = 0;
-                            while ((cls = value[i++])) {
-                                element.classList.remove(cls);
-                            }
-                        }
-                        return;
+                    if (!value) {
+                        return element.className = '';
+                    }
+
+                    if (value === '*') {
+                        element.className = '';
                     } else {
-                        value = value.trim().split(/\s+/);
-                    }
-
-                    var classes = ' ' + element.className + ' ',
-                        name;
-                    while (name = value.shift()) {
-                        if (name.indexOf('*') !== -1) {
-                            name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
-                        }
-                        if (name instanceof RegExp) {
-                            classes = classes.replace(name, ' ');
-                        } else {
-                            while (classes.indexOf(' ' + name + ' ') !== -1) {
-                                classes = classes.replace(' ' + name + ' ', ' ');
+                        if (hAzzle.isRegExp(value)) {
+                            value = [value];
+                        } else if (csp && hAzzle.inArray(value, '*') === -1) {
+                            if (sMa) {
+                                element.classList.remove.apply(element.classList, classes);
+                            } else {
+                                var i = 0;
+                                while ((cls = classes[i++])) {
+                                    element.classList.remove(cls);
+                                }
                             }
+                            return;
+                        } else {
+                            value = value.trim().split(/\s+/);
+
+
+                            var name;
+
+                            classes = ' ' + element.className + ' ';
+
+                            while (name = value.shift()) {
+                                if (name.indexOf('*') !== -1) {
+                                    name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
+                                }
+                                if (name instanceof RegExp) {
+                                    classes = classes.replace(name, ' ');
+                                } else {
+                                    while (classes.indexOf(' ' + name + ' ') !== -1) {
+                                        classes = classes.replace(' ' + name + ' ', ' ');
+                                    }
+                                }
+                            }
+                            element.className = classes.trim();
                         }
+                        return element;
                     }
-                    element.className = classes.trim();
                 }
-                return element;
             });
+
     },
 
     /**

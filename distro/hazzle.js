@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.5.1
+ * Version: 0.5.3
  * Released under the MIT License.
  *
- * Date: 2014-05-06
+ * Date: 2014-05-08
  *
  * Note!! hAzzle are NOT jQuery or Zepto, but loosely following their API's. Some functions will not work at all in hAzzle, and
  *        others will work differently then you think. In 94% of the cases, hAzzle will work similar to jQuery / Zepto.
@@ -261,12 +261,12 @@
 
                 if (simpleRegEx.test(sel)) {
 
-                    return hAzzle(hAzzle.find(not ? sel = ":not(" + sel + ")" : sel, null, null, this.elems));	
+                    return hAzzle(hAzzle.find(not ? sel = ":not(" + sel + ")" : sel, null, null, this.elems));
                 }
-				
+
                 sel = hAzzle.find(sel, null, null, this.elems);
             }
-			
+
             return hAzzle(hAzzle.grep(this.elems, function (elem) {
                 return (Array.prototype.indexOf.call(sel, elem) >= 0) !== not;
             }));
@@ -326,10 +326,14 @@
          */
 
         get: function (index) {
-            if (index == null) {
-                return this.elems.slice()
+            var elems = this.elems;
+            if (elems) {
+                if (index == null) {
+                    return elems && this.elems.slice()
+                }
+                return elems[index < 0 ? elems.length + index : index]
             }
-            return this.elems[index < 0 ? this.elems.length + index : index]
+            return [];
         },
 
         /**
@@ -1347,6 +1351,10 @@ hAzzle.extend({
         return hAzzle.isNodeList(results) ? slice.call(results) : hAzzle.isElement(results) ? [results] : results;
     }
 });
+
+/*!
+ * Traversing.js
+ */
 /*!
  * Traversing.js
  */
@@ -1360,7 +1368,7 @@ var cached = [],
     },
 
     slice = Array.prototype.slice,
-	push = Array.prototype.push;
+    push = Array.prototype.push;
 
 hAzzle.extend(hAzzle.fn, {
 
@@ -1457,14 +1465,10 @@ hAzzle.extend(hAzzle.fn, {
      */
 
     is: function (sel) {
-
-
-
-
         return !!sel && (
             /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i.test(sel) ?
             hAzzle(sel).index(this[0]) >= 0 :
-            this.filter(sel).length > 0);
+            this.filter($(sel)).length > 0);
     },
 
     /**
@@ -1524,7 +1528,6 @@ hAzzle.extend(hAzzle.fn, {
             return [];
         }
         return hAzzle(this.elems[0]);
-
     },
 
     /**
@@ -1544,12 +1547,6 @@ hAzzle.extend(hAzzle.fn, {
 
     tail: function (count) {
         return this.slice((count === null) ? 1 : count);
-    },
-
-    contents: function () {
-        return this.map(function (elem) {
-            return elem.contentDocument || slice.call(elem.childNodes);
-        });
     },
 
     /**
@@ -1578,30 +1575,20 @@ hAzzle.extend(hAzzle.fn, {
 
 });
 
+/**
+ * Extending the hAzzle object with some jQuery look-a-like functions.
+ * It's like this so we can be compatible with the jQuery / Zepto API
+ * regarding plugins.
+ */
+
 hAzzle.extend(hAzzle, {
-
-    /**
-     * Walks the DOM tree using `method`, returns when an element node is found
-     *
-     * @param{Object} element
-     * @param{String} method
-     * @param{String} sel
-     * @param{Number/Null } nt
-     */
-
-    getClosestNode: function (element, method, sel) {
-        do {
-            element = element[method];
-        } while (element && ((sel && !hAzzle.matches(sel, element)) || !hAzzle.isElement(element)));
-        return element;
-    },
 
     dir: function (elem, dir, until) {
         var matched = [],
             truncate = until !== undefined;
 
-        while ((elem = elem[dir]) && elem.nodeType !== 9) {
-            if (elem.nodeType === 1) {
+        while ((elem = elem[dir]) && !(hAzzle.nodeType(9, elem))) {
+            if (hAzzle.nodeType(1, elem)) {
                 if (truncate && hAzzle(elem).is(hAzzle(until))) {
                     break;
                 }
@@ -1615,7 +1602,7 @@ hAzzle.extend(hAzzle, {
         var matched = [];
 
         for (; n; n = n.nextSibling) {
-            if (n.nodeType === 1 && n !== elem) {
+            if (hAzzle.nodeType(1, n) && n !== elem) {
                 matched.push(n);
             }
         }
@@ -1625,9 +1612,17 @@ hAzzle.extend(hAzzle, {
 });
 
 function sibling(cur, dir) {
-    while ((cur = cur[dir]) && cur.nodeType !== 1) {}
-    return cur;
+
+    while (cur = cur[dir]) {
+
+        if (cur.nodeType === 1) {
+            return cur;
+        }
+    }
+
 }
+
+
 
 hAzzle.each({
     parents: function (elem) {
@@ -1640,7 +1635,6 @@ hAzzle.each({
         return sibling(elem, "nextSibling");
     },
     nextUntil: function (elem, i, until) {
-
         return hAzzle.dir(elem, "nextSibling", until);
     },
     nextAll: function (elem) {
@@ -1658,6 +1652,9 @@ hAzzle.each({
 
     children: function (elem) {
         return hAzzle.sibling(elem.firstChild);
+    },
+    contents: function (elem) {
+        return elem.contentDocument || hAzzle.merge([], elem.childNodes);
     }
 }, function (name, fn) {
     hAzzle.fn[name] = function (until, selector) {
@@ -1669,7 +1666,7 @@ hAzzle.each({
         }
 
         if (selector && typeof selector === "string") {
-            matched = hAzzle.filter(selector, matched);
+            matched = hAzzle.find(selector, null, null, matched);
         }
 
         if (this.length > 1) {
@@ -1686,7 +1683,6 @@ hAzzle.each({
         return $(matched);
     };
 });
-
 
 var // Short-hand functions we are using
 
@@ -2600,21 +2596,29 @@ hAzzle.extend(hAzzle.fn, {
      * @param {String} value
      */
 
-
     addClass: function (value) {
-        var element;
+        var element,
+            classes = (value || '').match(whitespace) || [];
         return isFunction(value) ? this.each(function (e) {
             hAzzle(this).addClass(value.call(this, index, this.className));
         }) : this.each(function () {
             element = this;
-            if (hAzzle.nodeType(1, element)) {
-                if (csp && sMa) {
-                    value.replace(whitespace, function (name) {
-                        element.classList.add(name);
-                    });
+            if (element.nodeType === 1) {
+                if (csp) {
+
+                    if (sMa) {
+
+                        element.classList.add.apply(element.classList, classes);
+
+                    } else {
+
+                        value.replace(whitespace, function (name) {
+                            element.classList.add(name);
+                        });
+                    }
                 } else {
-                    var classes = ' ' + element.className + ' ',
-                        name;
+                    var name;
+                    classes = ' ' + element.className + ' ',
                     value = value.trim().split(/\s+/);
                     while (name = value.shift()) {
                         if (hAzzle.inArray(classes, ' ' + name + ' ') === -1) {
@@ -2626,9 +2630,9 @@ hAzzle.extend(hAzzle.fn, {
                 return element;
             }
         });
-    },
+	},
 
-    /**
+     /**
      * Remove class(es) from element
      *
      * @param {String} value
@@ -2636,7 +2640,9 @@ hAzzle.extend(hAzzle.fn, {
 
     removeClass: function (value) {
 
-        var cls, element;
+        var cls,
+            element,
+            classes = (value || '').match(whitespace) || [];
 
         // Function
 
@@ -2645,49 +2651,54 @@ hAzzle.extend(hAzzle.fn, {
                 hAzzle(this).removeClass(value.call(this, j, this.className));
             }) : this.each(function () {
                 element = this;
-                if (!value) {
-                    return element.className = "";
-                }
+                if (element.nodeType === 1 && element.className) {
 
-                if (value === '*') {
-                    element.className = '';
-                } else {
-                    if (hAzzle.isRegExp(value)) {
-                        value = [value];
-                    } else if (csp && hAzzle.inArray(value, '*') === -1) {
-                        if (sMa) {
-                            value.replace(whitespace, function (name) {
-                                element.classList.remove(name);
-                            });
-                        } else {
-                            var i = 0;
-                            while ((cls = value[i++])) {
-                                element.classList.remove(cls);
-                            }
-                        }
-                        return;
+                    if (!value) {
+                        return element.className = '';
+                    }
+
+                    if (value === '*') {
+                        element.className = '';
                     } else {
-                        value = value.trim().split(/\s+/);
-                    }
-
-                    var classes = ' ' + element.className + ' ',
-                        name;
-                    while (name = value.shift()) {
-                        if (name.indexOf('*') !== -1) {
-                            name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
-                        }
-                        if (name instanceof RegExp) {
-                            classes = classes.replace(name, ' ');
-                        } else {
-                            while (classes.indexOf(' ' + name + ' ') !== -1) {
-                                classes = classes.replace(' ' + name + ' ', ' ');
+                        if (hAzzle.isRegExp(value)) {
+                            value = [value];
+                        } else if (csp && hAzzle.inArray(value, '*') === -1) {
+                            if (sMa) {
+                                element.classList.remove.apply(element.classList, classes);
+                            } else {
+                                var i = 0;
+                                while ((cls = classes[i++])) {
+                                    element.classList.remove(cls);
+                                }
                             }
+                            return;
+                        } else {
+                            value = value.trim().split(/\s+/);
+
+
+                            var name;
+
+                            classes = ' ' + element.className + ' ';
+
+                            while (name = value.shift()) {
+                                if (name.indexOf('*') !== -1) {
+                                    name = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g');
+                                }
+                                if (name instanceof RegExp) {
+                                    classes = classes.replace(name, ' ');
+                                } else {
+                                    while (classes.indexOf(' ' + name + ' ') !== -1) {
+                                        classes = classes.replace(' ' + name + ' ', ' ');
+                                    }
+                                }
+                            }
+                            element.className = classes.trim();
                         }
+                        return element;
                     }
-                    element.className = classes.trim();
                 }
-                return element;
             });
+
     },
 
     /**
@@ -6246,5 +6257,92 @@ function getAll(context, tag) {
             });
         };
     });
+
+})(hAzzle);
+
+
+// Clone
+
+
+;(function ($) {
+
+    var rcheckableType = (/^(?:checkbox|radio)$/i);
+
+    function fixInput(src, dest) {
+        var nodeName = dest.nodeName.toLowerCase();
+        if ("input" === nodeName && rcheckableType.test(src.type)) dest.checked = src.checked;
+        else if ("input" === nodeName || "textarea" === nodeName) dest.defaultValue = src.defaultValue;
+    };
+
+    $.extend({
+
+        clone: function (elem, deep) {
+
+            var handlers = $.Events.getHandler(elem, '', null, false),
+                l = handlers.length,
+                i = 0,
+                args, hDlr;
+
+            // Get the data before we clone
+
+            storage = $(elem).data();
+
+            // Clone the elem
+
+            clone = elem.cloneNode(deep || true);
+
+            // Copy the events from the original to the clone
+
+            for (; i < l; i++) {
+                if (handlers[i].original) {
+                    args = [clone, handlers[i].type];
+                    if (hDlr = handlers[i].handler.__handler) args.push(hDlr.selector);
+                    args.push(handlers[i].original);
+                    $.Events.add.apply(null, args);
+                }
+            }
+
+            // Copy data from the original to the clone
+
+            if (storage) {
+                $.each(storage, function (key, value) {
+                    $.data(clone, key, value);
+                });
+            }
+            // Preserve the rest 
+
+            if (!$.support.noCloneChecked && ($.nodeType(1, elem) || $.nodeType(11, elem)) && !$.isXML(elem)) {
+
+                destElements = $.getChildren(clone);
+                srcElements = $.getChildren(elem);
+
+                for (i = 0, l = srcElements.length; i < l; i++) {
+                    fixInput(srcElements[i], destElements[i]);
+                }
+            }
+
+            // Preserve script evaluation history
+
+            destElements = getAll(clone, "script");
+
+            if (destElements.length > 0) {
+
+                $.Evaluated(destElements, !$.contains(elem.ownerDocument, elem) && $.getChildren(elem, "script"));
+            }
+
+            // Return the cloned set
+
+            return clone;
+        }
+    });
+
+    $.extend($.fn, {
+        clone: function (deep) {
+            return this.map(function (elem) {
+                return $.clone(elem, deep);
+            });
+        }
+    });
+
 
 })(hAzzle);

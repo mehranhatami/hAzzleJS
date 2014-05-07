@@ -10,9 +10,8 @@ var cached = [],
         prev: true
     },
 
-     slice = Array.prototype.slice,
-	push = Array.prototype.push;
-
+    slice = Array.prototype.slice,
+    push = Array.prototype.push;
 
 hAzzle.extend(hAzzle.fn, {
 
@@ -224,7 +223,7 @@ hAzzle.extend(hAzzle.fn, {
  * It's like this so we can be compatible with the jQuery / Zepto API
  * regarding plugins.
  */
- 
+
 hAzzle.extend(hAzzle, {
 
     dir: function (elem, dir, until) {
@@ -256,9 +255,17 @@ hAzzle.extend(hAzzle, {
 });
 
 function sibling(cur, dir) {
-    while ((cur = cur[dir]) && !(hAzzle.nodeType(1, cur)) ) {}
-    return cur;
+
+    while (cur = cur[dir]) {
+
+        if (cur.nodeType === 1) {
+            return cur;
+        }
+    }
+
 }
+
+
 
 hAzzle.each({
     parents: function (elem) {
@@ -285,13 +292,13 @@ hAzzle.each({
     prevUntil: function (elem, i, until) {
         return hAzzle.dir(elem, "previousSibling", until);
     },
-	
+
     children: function (elem) {
         return hAzzle.sibling(elem.firstChild);
     },
-	contents: function( elem ) {
-		return elem.contentDocument || hAzzle.merge( [], elem.childNodes );
-	}
+    contents: function (elem) {
+        return elem.contentDocument || hAzzle.merge([], elem.childNodes);
+    }
 }, function (name, fn) {
     hAzzle.fn[name] = function (until, selector) {
 
@@ -302,7 +309,7 @@ hAzzle.each({
         }
 
         if (selector && typeof selector === "string") {
-            matched = hAzzle.filter(selector, matched);
+            matched = hAzzle.find(selector, null, null, matched);
         }
 
         if (this.length > 1) {
