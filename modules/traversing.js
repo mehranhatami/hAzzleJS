@@ -10,7 +10,9 @@ var cached = [],
         prev: true
     },
 
-    slice = Array.prototype.slice;
+     slice = Array.prototype.slice,
+	push = Array.prototype.push;
+
 
 hAzzle.extend(hAzzle.fn, {
 
@@ -23,12 +25,12 @@ hAzzle.extend(hAzzle.fn, {
 
     closest: function (sel, ctx) {
         return this.map(function (elem) {
-            if (hAzzle.nodeType(1, elem) && elem !== ctx && !hAzzle.isDocument(elem) && hAzzle.matches(elem, typeof sel === 'object' ? hAzzle(sel) : sel)) {
+            if (hAzzle.nodeType(1, elem) && elem !== ctx && !hAzzle.isDocument(elem) && hAzzle.find(elem, null, null, typeof sel === 'object' ? hAzzle(sel) : sel)) {
                 return elem;
             }
             do {
                 elem = elem['parentNode'];
-            } while (elem && ((sel && !hAzzle.matches(sel, elem)) || !hAzzle.isElement(elem)));
+            } while (elem && ((sel && !hAzzle.find(sel, null, null, elem)) || !hAzzle.isElement(elem)));
             return elem;
         });
     },

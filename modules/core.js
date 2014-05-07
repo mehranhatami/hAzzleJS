@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.5.1
+ * Version: 0.5.2
  * Released under the MIT License.
  *
- * Date: 2014-05-06
+ * Date: 2014-05-07
  *
  * Note!! hAzzle are NOT jQuery or Zepto, but loosely following their API's. Some functions will not work at all in hAzzle, and
  *        others will work differently then you think. In 94% of the cases, hAzzle will work similar to jQuery / Zepto.
@@ -21,8 +21,8 @@
     var
 
     // Use the correct document accordingly with window argument (sandbox)
-
-        document = window.document,
+        win = window,
+        document = win.document || {},
 
         simpleRegEx = /^.[^:#\[\.,]*$/,
 
@@ -261,10 +261,10 @@
 
                 if (simpleRegEx.test(sel)) {
 
-                    return hAzzle(hAzzle.filter(sel, this.elems, not));
+                    return hAzzle(hAzzle.find(not ? sel = ":not(" + sel + ")" : sel, null, null, this.elems));
                 }
 
-                sel = hAzzle.filter(sel, this.elems);
+                sel = hAzzle.find(sel, null, null, this.elems);
             }
 
             return hAzzle(hAzzle.grep(this.elems, function (elem) {

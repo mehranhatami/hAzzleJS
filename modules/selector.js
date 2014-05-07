@@ -5,79 +5,56 @@
  * I'm working on this. This is the beginning of the new selector engine
  *
  */
-var push = Array.prototype.push;
+var push = Array.prototype.push,
+    slice = Array.prototype.slice;
 
-// Native matchSelector;
+// Native matchSelector polyfi;
 
 var matches = hAzzle.prefix('matchesSelector', document.createElement('div'));
 
 hAzzle.extend(hAzzle.fn, {
 
     /**
-     * Find an element in the collection
+     * Find the first matched element by css selector
      *
      * @param {String|Object} selector
      * @return {Object}
      *
      */
 
-    find: function (selector) {
-        var elements;
-        if (hAzzle.isString(selector)) {
-            if (this.length === 1) {
-                elements = hAzzle.find(selector, this.elems);
-            } else {
-                elements = this.elems.reduce(function (elements, element) {
-                    return elements.concat(hAzzle.find(selector, element));
-                }, []);
+  find: function (selector) {
+        var i,
+            len = this.length,
+            ret = [],
+            self = this;
+
+	   // String
+	   
+	   if (typeof selector === "string") {
+            for (i = 0; i < len; i++) {
+                hAzzle.find(selector, self[i], ret);
             }
-        } else {
-            var _ = this;
-            elements = hAzzle(selector).filter(function () {
-                var node = this;
-                return _.elems.some.call(_, function (parent) {
-                    return hAzzle.contains(parent, node);
-                });
+			 return hAzzle(ret);
+        } else { // Object
+           return hAzzle(selector).filter(function () {
+                for (i = 0; i < len; i++) {
+                    if (hAzzle.contains(self[i], this)) {
+                        return true;
+                    }
+                }
             });
         }
-        return hAzzle(elements);
     }
 });
 
-hAzzle.extend(hAzzle, {
-
-    filter: function (expr, elems, not) {
-
-        if (not) {
-            expr = ":not(" + expr + ")";
-        }
-
-
-
-        return elems.length === 1 ?
-            hAzzle.matchesSelector(elems[0], expr) ? [elems[0]] : [] :
-            hAzzle.matches(expr, elems);
-    },
-
-    matches: function (expr, elements) {
-
-        return hAzzle.find(expr, null, null, elements);
-
-    },
-
-    matchesSelector: function (elem, expr) {
-
-        return matches.call(elem, expr);
-    },
+hAzzle.extend({
 
     find: function (selector, context, results, seed) {
 
-        var match, elem, m, nodeType,
-            // QSA vars
-            i, groups, old, nid, newContext, newSelector;
-
-
-        var elem, nodeType,
+        var match, 
+		  sel,
+		   bool, // Boolean for filter function
+		   elem, m, nodeType,
             i = 0;
 
         results = results || [];
@@ -95,10 +72,10 @@ hAzzle.extend(hAzzle, {
             return [];
         }
 
-
         if (!seed) {
 
             // Shortcuts
+			
             if ((match = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/.exec(selector))) {
 
                 // #id
@@ -133,15 +110,21 @@ hAzzle.extend(hAzzle, {
                     push.apply(results, context.getElementsByTagName(selector));
                     return results;
                 }
-            }
+            } 
+			
+			// Everything else
 
             results = context.querySelectorAll(selector);
 
             // Seed
 
         } else {
+
             while ((elem = seed[i++])) {
-                if (hAzzle.matchesSelector(elem, selector)) {
+
+				bool = matches.call(elem, selector);
+            
+			    if (bool) {
                     results.push(elem);
                 }
             }
