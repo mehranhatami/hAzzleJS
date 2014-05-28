@@ -1,0 +1,202 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/opt/node-v0.10.28-linux-x64/bin/node',
+1 verbose cli   '/opt/node-v0.10.28-linux-x64/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'fixmyjs',
+1 verbose cli   '-g' ]
+2 info using npm@1.4.9
+3 info using node@v0.10.28
+4 verbose cache add [ 'fixmyjs', null ]
+5 verbose cache add name=undefined spec="fixmyjs" args=["fixmyjs",null]
+6 verbose parsed url { protocol: null,
+6 verbose parsed url   slashes: null,
+6 verbose parsed url   auth: null,
+6 verbose parsed url   host: null,
+6 verbose parsed url   port: null,
+6 verbose parsed url   hostname: null,
+6 verbose parsed url   hash: null,
+6 verbose parsed url   search: null,
+6 verbose parsed url   query: null,
+6 verbose parsed url   pathname: 'fixmyjs',
+6 verbose parsed url   path: 'fixmyjs',
+6 verbose parsed url   href: 'fixmyjs' }
+7 silly lockFile c3eb70c8-fixmyjs fixmyjs
+8 verbose lock fixmyjs /home/mehran/.npm/c3eb70c8-fixmyjs.lock
+9 silly lockFile c3eb70c8-fixmyjs fixmyjs
+10 silly lockFile c3eb70c8-fixmyjs fixmyjs
+11 verbose addNamed [ 'fixmyjs', '' ]
+12 verbose addNamed [ null, '*' ]
+13 silly lockFile 23eda06e-fixmyjs fixmyjs@
+14 verbose lock fixmyjs@ /home/mehran/.npm/23eda06e-fixmyjs.lock
+15 silly addNameRange { name: 'fixmyjs', range: '*', hasData: false }
+16 verbose url raw fixmyjs
+17 verbose url resolving [ 'https://registry.npmjs.org/', './fixmyjs' ]
+18 verbose url resolved https://registry.npmjs.org/fixmyjs
+19 info trying registry request attempt 1 at 11:53:58
+20 http GET https://registry.npmjs.org/fixmyjs
+21 http 200 https://registry.npmjs.org/fixmyjs
+22 silly registry.get cb [ 200,
+22 silly registry.get   { date: 'Sun, 25 May 2014 07:24:03 GMT',
+22 silly registry.get     server: 'CouchDB/1.5.0 (Erlang OTP/R14B04)',
+22 silly registry.get     etag: '"22MXBF7YD5EH74C122GKQKKH1"',
+22 silly registry.get     'content-type': 'application/json',
+22 silly registry.get     via: '1.1 varnish',
+22 silly registry.get     'cache-control': 'max-age=1',
+22 silly registry.get     'content-length': '70256',
+22 silly registry.get     'accept-ranges': 'bytes',
+22 silly registry.get     age: '3218',
+22 silly registry.get     'x-served-by': 'cache-v36-ASH, cache-jfk1029-JFK',
+22 silly registry.get     'x-cache': 'MISS, MISS',
+22 silly registry.get     'x-cache-hits': '0, 0',
+22 silly registry.get     'x-timer': 'S1401002643.695209,VS0,VE14',
+22 silly registry.get     vary: 'Accept',
+22 silly registry.get     'keep-alive': 'timeout=10, max=50',
+22 silly registry.get     connection: 'Keep-Alive' } ]
+23 silly addNameRange number 2 { name: 'fixmyjs', range: '*', hasData: true }
+24 silly addNameRange versions [ 'fixmyjs',
+24 silly addNameRange   [ '0.4.5',
+24 silly addNameRange     '0.5.0',
+24 silly addNameRange     '0.5.1',
+24 silly addNameRange     '0.5.5',
+24 silly addNameRange     '0.6.0',
+24 silly addNameRange     '0.6.2',
+24 silly addNameRange     '0.6.5',
+24 silly addNameRange     '0.7.1',
+24 silly addNameRange     '0.7.2',
+24 silly addNameRange     '0.7.3',
+24 silly addNameRange     '0.7.4',
+24 silly addNameRange     '0.9.0',
+24 silly addNameRange     '0.9.1',
+24 silly addNameRange     '0.9.2',
+24 silly addNameRange     '0.10.0',
+24 silly addNameRange     '0.10.1',
+24 silly addNameRange     '0.10.2',
+24 silly addNameRange     '0.10.3',
+24 silly addNameRange     '0.10.4',
+24 silly addNameRange     '0.10.5',
+24 silly addNameRange     '0.10.6',
+24 silly addNameRange     '0.11.0',
+24 silly addNameRange     '0.13.0',
+24 silly addNameRange     '0.13.1' ] ]
+25 verbose addNamed [ 'fixmyjs', '0.13.1' ]
+26 verbose addNamed [ '0.13.1', '0.13.1' ]
+27 silly lockFile 9fe0f746-fixmyjs-0-13-1 fixmyjs@0.13.1
+28 verbose lock fixmyjs@0.13.1 /home/mehran/.npm/9fe0f746-fixmyjs-0-13-1.lock
+29 silly lockFile 87d9ee83-s-org-fixmyjs-fixmyjs-0-13-1-tgz https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz
+30 verbose lock https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz /home/mehran/.npm/87d9ee83-s-org-fixmyjs-fixmyjs-0-13-1-tgz.lock
+31 verbose addRemoteTarball [ 'https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz',
+31 verbose addRemoteTarball   'ecdaba5d8c6169ba67b2eb6dc85de965811f0e43' ]
+32 info retry fetch attempt 1 at 11:54:01
+33 verbose fetch to= /home/mehran/tmp/npm-10963-9xX-bAVB/1401002641190-0.909062217688188/tmp.tgz
+34 http GET https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz
+35 http 200 https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz
+36 verbose tar unpack /home/mehran/tmp/npm-10963-9xX-bAVB/1401002641190-0.909062217688188/tmp.tgz
+37 silly lockFile e29c8ab4-ehran-npm-fixmyjs-0-13-1-package tar:///home/mehran/.npm/fixmyjs/0.13.1/package
+38 verbose lock tar:///home/mehran/.npm/fixmyjs/0.13.1/package /home/mehran/.npm/e29c8ab4-ehran-npm-fixmyjs-0-13-1-package.lock
+39 silly lockFile b1ccf9dd-641190-0-909062217688188-tmp-tgz tar:///home/mehran/tmp/npm-10963-9xX-bAVB/1401002641190-0.909062217688188/tmp.tgz
+40 verbose lock tar:///home/mehran/tmp/npm-10963-9xX-bAVB/1401002641190-0.909062217688188/tmp.tgz /home/mehran/.npm/b1ccf9dd-641190-0-909062217688188-tmp-tgz.lock
+41 silly gunzTarPerm modes [ '755', '644' ]
+42 silly gunzTarPerm extractEntry package.json
+43 silly gunzTarPerm extractEntry README.md
+44 silly gunzTarPerm extractEntry LICENSE
+45 silly gunzTarPerm extractEntry bin/fixmyjs
+46 silly gunzTarPerm extractEntry lib/cli.js
+47 silly gunzTarPerm extractEntry lib/index.js
+48 silly gunzTarPerm extractEntry lib/legacy.js
+49 silly gunzTarPerm extractEntry lib/rules/camelCase.js
+50 silly gunzTarPerm extractEntry lib/rules/dotNotation.js
+51 silly gunzTarPerm extractEntry lib/rules/emptyStatement.js
+52 silly gunzTarPerm extractEntry lib/rules/eqeqeq.js
+53 silly gunzTarPerm extractEntry lib/rules/index.js
+54 silly gunzTarPerm extractEntry lib/rules/delete.js
+55 silly gunzTarPerm extractEntry lib/rules/invalidConstructor.js
+56 silly gunzTarPerm extractEntry lib/rules/isNaN.js
+57 silly gunzTarPerm extractEntry lib/rules/newSideEffects.js
+58 silly gunzTarPerm extractEntry lib/rules/parseInt.js
+59 silly gunzTarPerm extractEntry lib/rules/snake_case.js
+60 silly gunzTarPerm extractEntry lib/rules/debugger.js
+61 silly gunzTarPerm extractEntry lib/rules/updateExpression.js
+62 silly gunzTarPerm extractEntry lib/rules/curly.js
+63 silly gunzTarPerm extractEntry lib/rules/useLiteral.js
+64 silly gunzTarPerm extractEntry lib/rules/initUndefined.js
+65 silly lockFile e29c8ab4-ehran-npm-fixmyjs-0-13-1-package tar:///home/mehran/.npm/fixmyjs/0.13.1/package
+66 silly lockFile e29c8ab4-ehran-npm-fixmyjs-0-13-1-package tar:///home/mehran/.npm/fixmyjs/0.13.1/package
+67 silly lockFile b1ccf9dd-641190-0-909062217688188-tmp-tgz tar:///home/mehran/tmp/npm-10963-9xX-bAVB/1401002641190-0.909062217688188/tmp.tgz
+68 silly lockFile b1ccf9dd-641190-0-909062217688188-tmp-tgz tar:///home/mehran/tmp/npm-10963-9xX-bAVB/1401002641190-0.909062217688188/tmp.tgz
+69 silly lockFile 87d9ee83-s-org-fixmyjs-fixmyjs-0-13-1-tgz https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz
+70 silly lockFile 87d9ee83-s-org-fixmyjs-fixmyjs-0-13-1-tgz https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz
+71 silly lockFile 9fe0f746-fixmyjs-0-13-1 fixmyjs@0.13.1
+72 silly lockFile 9fe0f746-fixmyjs-0-13-1 fixmyjs@0.13.1
+73 silly lockFile 23eda06e-fixmyjs fixmyjs@
+74 silly lockFile 23eda06e-fixmyjs fixmyjs@
+75 silly resolved [ { name: 'fixmyjs',
+75 silly resolved     version: '0.13.1',
+75 silly resolved     description: 'Automatically fixes your JavaScript based on lint rules',
+75 silly resolved     homepage: 'http://fixmyjs.com',
+75 silly resolved     license: 'MIT',
+75 silly resolved     author:
+75 silly resolved      { name: 'Josh Perez',
+75 silly resolved        email: 'josh@goatslacker.com',
+75 silly resolved        url: 'http://github.com/goatslacker' },
+75 silly resolved     repository: { type: 'git', url: 'git://github.com/jshint/fixmyjs' },
+75 silly resolved     bugs: { url: 'https://github.com/jshint/fixmyjs/issues' },
+75 silly resolved     bin: { fixmyjs: './bin/fixmyjs' },
+75 silly resolved     keywords: [ 'beautify', 'hint', 'jshint', 'jslint', 'lint' ],
+75 silly resolved     main: './lib/index.js',
+75 silly resolved     dependencies:
+75 silly resolved      { commander: '~2.0.0',
+75 silly resolved        diff: '~1.0.7',
+75 silly resolved        escodegen: '~0.0.28',
+75 silly resolved        esprima: '~1.0.4',
+75 silly resolved        fu: '0.1.x',
+75 silly resolved        jshint: '~2.3.0',
+75 silly resolved        minimatch: '~0.2.12' },
+75 silly resolved     devDependencies: { testla: '0.1.x' },
+75 silly resolved     preferGlobal: true,
+75 silly resolved     scripts: { lint: 'jshint .', test: 'npm run lint && testla test' },
+75 silly resolved     files: [ 'bin', 'lib', 'LICENSE', 'README.md' ],
+75 silly resolved     engines: { node: '*' },
+75 silly resolved     readme: '# fixmyjs || jshint-autofix\n\n[![Build Status](https://secure.travis-ci.org/jshint/fixmyjs.png)](http://travis-ci.org/jshint/fixmyjs)\n[![NPM version](https://badge.fury.io/js/fixmyjs.png)](http://badge.fury.io/js/fixmyjs)\n[![Dependency Status](https://david-dm.org/jshint/fixmyjs.png)](https://david-dm.org/jshint/fixmyjs)\n[![devDependency Status](https://david-dm.org/jshint/fixmyjs/dev-status.png)](https://david-dm.org/jshint/fixmyjs#info=devDependencies)\n\nMeant to automatically fix your lint errors in a non-destructive way.\n\nFor the website see <https://github.com/goatslacker/fixmyjs.com>.\n\n## How to Install CLI\n\n```\nnpm install fixmyjs -g\n```\n\n## Usage\n\n```\nfixmyjs your_file.js\n```\n\nor from node.js\n\n```js\nvar fixmyjs = require(\'fixmyjs\')\nvar stringFixedCode = fixmyjs.fix(stringOfCode, objectOfOptions)\n```\n\n## Website\n\n[fixmyjs.com](http://fixmyjs.com) allows you to use this tool on the web.\n\n## Currently supports\n\n* `asi` Missing semicolons.\n* `camelcase|snakecase` Enforces camelCase and snake_case convention.\n* `curly` Adds curly braces to statements.\n* `debugger` Removes debugger statements\n* `plusplus` Converts plusplus and minusminus.\n* `quotmark` Enforces single and double quote style.\n* Adds parenthesis when invoking a constructor\n* Adds the radix parameter to parseInt\n* Convert to use array literal and object literal\n* Dot notation conversion\n* Extra trailing commas\n* Leading and trailing zeroes on decimals.\n* Missing whitespaces.\n* Mixed spaces/tabs\n* Proper indentation\n* Removes deletion of variables\n* Removes `undefined` when assigning to variables\n* Removes unnecessary semicolons\n* Uses isNaN function rather than comparing to NaN\n\n### Contributing\n\n* Indent 2 spaces\n* Single quotes > Double quotes\n* Use ASI\n* Maximum line length is 80 characters\n* Avoid mutation\n* Write tests\n* Code must pass `npm test`\n\n# License\n\nCopyright (C) 2011 by Josh Perez <josh@goatslacker.com>\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the "Software"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n',
+75 silly resolved     readmeFilename: 'README.md',
+75 silly resolved     _id: 'fixmyjs@0.13.1',
+75 silly resolved     _shasum: 'ecdaba5d8c6169ba67b2eb6dc85de965811f0e43',
+75 silly resolved     _from: 'fixmyjs@',
+75 silly resolved     _resolved: 'https://registry.npmjs.org/fixmyjs/-/fixmyjs-0.13.1.tgz' } ]
+76 info install fixmyjs@0.13.1 into /opt/node-v0.10.28-linux-x64/lib
+77 info installOne fixmyjs@0.13.1
+78 info /opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs unbuild
+79 verbose tar unpack /home/mehran/.npm/fixmyjs/0.13.1/package.tgz
+80 silly lockFile 9d4733ec-nux-x64-lib-node-modules-fixmyjs tar:///opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs
+81 verbose lock tar:///opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs /home/mehran/.npm/9d4733ec-nux-x64-lib-node-modules-fixmyjs.lock
+82 silly lockFile b1aaf59e-n-npm-fixmyjs-0-13-1-package-tgz tar:///home/mehran/.npm/fixmyjs/0.13.1/package.tgz
+83 verbose lock tar:///home/mehran/.npm/fixmyjs/0.13.1/package.tgz /home/mehran/.npm/b1aaf59e-n-npm-fixmyjs-0-13-1-package-tgz.lock
+84 silly gunzTarPerm modes [ '755', '644' ]
+85 error Error: EACCES, mkdir '/opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs'
+85 error  { [Error: EACCES, mkdir '/opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs']
+85 error   errno: 3,
+85 error   code: 'EACCES',
+85 error   path: '/opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs',
+85 error   fstream_type: 'Directory',
+85 error   fstream_path: '/opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs',
+85 error   fstream_class: 'DirWriter',
+85 error   fstream_stack:
+85 error    [ '/opt/node-v0.10.28-linux-x64/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23',
+85 error      '/opt/node-v0.10.28-linux-x64/lib/node_modules/npm/node_modules/mkdirp/index.js:37:53',
+85 error      'Object.oncomplete (fs.js:107:15)' ] }
+86 error Please try running this command again as root/Administrator.
+87 error System Linux 3.2.0-4-amd64
+88 error command "/opt/node-v0.10.28-linux-x64/bin/node" "/opt/node-v0.10.28-linux-x64/bin/npm" "install" "fixmyjs" "-g"
+89 error cwd /home/mehran/Programming/hAzzleJS/src
+90 error node -v v0.10.28
+91 error npm -v 1.4.9
+92 error path /opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs
+93 error fstream_path /opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs
+94 error fstream_type Directory
+95 error fstream_class DirWriter
+96 error code EACCES
+97 error errno 3
+98 error stack Error: EACCES, mkdir '/opt/node-v0.10.28-linux-x64/lib/node_modules/fixmyjs'
+99 error fstream_stack /opt/node-v0.10.28-linux-x64/lib/node_modules/npm/node_modules/fstream/lib/dir-writer.js:36:23
+99 error fstream_stack /opt/node-v0.10.28-linux-x64/lib/node_modules/npm/node_modules/mkdirp/index.js:37:53
+99 error fstream_stack Object.oncomplete (fs.js:107:15)
+100 verbose exit [ 3, true ]

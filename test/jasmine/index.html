@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Jasmine Spec Runner</title>
+        <link rel="stylesheet" href="/bower_components/jasmine/lib/jasmine-core/jasmine.css">
+    </head>
+    <body>
+        <script src="/bower_components/jasmine/lib/jasmine-core/jasmine.js"></script>
+        <script src="/bower_components/jasmine/lib/jasmine-core/jasmine-html.js"></script>
+
+        <!-- include source files here... -->
+        <script type="text/javascript" src="/modules/hazzle.js"></script>
+        <script type="text/javascript" src="/modules/features.js"></script>
+        <script type="text/javascript" src="/modules/selector.js"></script>
+        <script type="text/javascript" src="/modules/traversing.js"></script>
+        <script type="text/javascript" src="/modules/css.js"></script>
+        <script type="text/javascript" src="/modules/classes.js"></script>
+        <script type="text/javascript" src="/modules/manipulation.js"></script>
+        <script type="text/javascript" src="/modules/removeable.js"></script>
+        <script type="text/javascript" src="/modules/events.js"></script>
+        <script type="text/javascript" src="/modules/data.js"></script>
+        <script type="text/javascript" src="/modules/clone.js"></script>
+        <script type="text/javascript" src="/modules/parsing.js"></script>
+        <script type="text/javascript" src="/modules/observer.js"></script>
+        <script type="text/javascript" src="/modules/localestorage.js"></script>
+        <script type="text/javascript" src="/modules/browser.js"></script>
+
+        <!-- include spec files here... -->
+        <script src="spec/hazzle-spec.js"></script>
+        <script src="spec/selector-spec.js"></script>
+
+        <script>
+            (function() {
+                var jasmineEnv = jasmine.getEnv();
+                jasmineEnv.updateInterval = 1000;
+                var htmlReporter = new jasmine.HtmlReporter();
+                jasmineEnv.addReporter(htmlReporter);
+                jasmineEnv.specFilter = function(spec) {
+                    return htmlReporter.specFilter(spec);
+                };
+                var currentWindowOnload = window.onload;
+                window.onload = function() {
+                    if (currentWindowOnload) {
+                        currentWindowOnload();
+                    }
+                    execJasmine();
+                };
+                function execJasmine() {
+                    jasmineEnv.execute();
+                }
+            })();
+        </script>
+    </body>
+</html>

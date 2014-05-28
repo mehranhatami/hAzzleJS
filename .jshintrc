@@ -1,0 +1,9 @@
+{
+    "strict": false,
+	"predef":[
+	  "hAzzle",
+	  "module",
+	  "define",
+	  "expect"
+	]
+}
