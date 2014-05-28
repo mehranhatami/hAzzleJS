@@ -1,7 +1,7 @@
 {
   "name": "hazzle",
   "description": "",
-  "version": "0.0.0",
+  "version": "1.6.1-BETA",
   "devDependencies": {
     "karma": "~0.10.1",
     "karma-mocha": "~0.1.0",
