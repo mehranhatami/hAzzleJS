@@ -1,7 +1,7 @@
 // Classes
 var csp = hAzzle.features.classList,
     sMa = hAzzle.features.sMa, // Multiple argumens
-	classCache = {},
+    classCache = {},
     indexOf = Array.prototype.indexOf,
     rclass = /[\t\r\n\f]/g,
     whitespaceRegex = /\S+/g;
@@ -16,54 +16,61 @@ hAzzle.extend({
      */
 
     addClass: function (value) {
-        var cur,
-            j,
-            clazz,
-            finalValue,
-            classes;
-
-        if (typeof value === "function") {
-
-            return this.each(function (el, index) {
-                hAzzle(el).addClass(value.call(el, index, el.className));
+        var finalValue, classes, i, len = this.length;
+        if (hAzzle.isFunction(value)) {
+            return this.each(function (i) {
+                hAzzle(this).addClass(value.call(this, i, this.className));
             });
         }
-        classes = (value || '').match(whitespaceRegex) || [];
+        if (value && typeof value === "string") {
 
-        return this.each(function (el) {
-            if (el.nodeType === 1) {
-                if (csp) {
-                    if (sMa) {
-                        el.classList.add.apply(el.classList, classes);
-                    } else {
-                        try {
-                            value.replace(whitespaceRegex, function (name) {
-                                el.classList.add(name);
-                            });
-                        } catch (e) {}
-                    }
-                } else {
-                    cur = el.nodeType === 1 && (el.className ? (" " + el.className + " ").replace(rclass, " ") : " ");
+            classes = (value || '').match(whitespaceRegex) || [];
 
-                    if (cur) {
-                        j = 0;
-                        while ((clazz = classes[j++])) {
-                            if (cur.indexOf(" " + clazz + " ") < 0) {
-                                cur += clazz + " ";
+            for (; i < len; i++) {
+                var elem = this[i];
+
+                if (elem.nodeType === 1) {
+                    var c, cl;
+
+                    if (csp) {
+
+                        if (sMa) {
+                            elem.classList.add.apply(elem.classList, classes);
+                        } else {
+
+                            for (c = 0, cl = classes.length; c < cl; c++) {
+                                elem.classList.add(classes[c]);
                             }
+                            elem.className = hAzzle.trim(elem.className); // added to pass unit tests
                         }
 
-                        // only assign if different to avoid unneeded rendering.
-                        finalValue = hAzzle.trim(cur);
-                        if (el.className !== finalValue) {
-                            el.className = finalValue;
+                    } else {
+                        if (!elem.className) {
+                            elem.className = value;
+                        } else {
+                            var className = " " + elem.className + " ",
+                                setClass = elem.className;
+
+                            for (c = 0, cl = classes.length; c < cl; c++) {
+                                if (className.indexOf(" " + classes[c] + " ") < 0) {
+                                    setClass += " " + classes[c];
+                                }
+                            }
+
+                            // only assign if different to avoid unneeded rendering.
+                            finalValue = hAzzle.trim(cur);
+                            if (elem.className !== finalValue) {
+                                elem.className = finalValue;
+                            }
                         }
                     }
                 }
-                return el;
             }
-        });
+        }
+
+        return this;
     },
+
 
     /**
      * Remove class(es) from element
@@ -116,9 +123,9 @@ hAzzle.extend({
 
                             while ((name = value.shift())) {
                                 if (name.indexOf('*') !== -1) {
-									
-                                   name = name in classCache ? 
-                                        classCache[name] : 
+
+                                    name = name in classCache ?
+                                        classCache[name] :
                                         (classCache[name] = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g'));
                                 }
                                 if (name instanceof RegExp) {
@@ -172,40 +179,40 @@ hAzzle.extend({
      *
      * @param {String} oC
      * @param {String} nC
-     * @param {Boolean} anc	 
+     * @param {Boolean} anc
      * @return {hAzzle}
      */
 
-    replaceClass: function(oC, nC, anC){
-		var el;
-       return this.each(function() {
-           el = hAzzle(this);
-           if (el.hasClass(oC) || anC === true) {
-                 el.removeClass(oC);
-                 el.addClass(nC);
+    replaceClass: function (oC, nC, anC) {
+        var el;
+        return this.each(function () {
+            el = hAzzle(this);
+            if (el.hasClass(oC) || anC === true) {
+                el.removeClass(oC);
+                el.addClass(nC);
             }
         });
     },
 
-  /**
-   * Add class that will be removed after 'duration' milliseconds
-   * @param {String} clas
-   * @param {Number} duration
-   *
-   *  Mehran!! Fix this function, and clear the timeout!!!
-   *           Else we get an ugly memory leak !!
-   *
-   */
-        tempClass: function (clas, duration) {
-			var el;
-		return this.each(function() {
-			el = hAzzle(this);
+    /**
+     * Add class that will be removed after 'duration' milliseconds
+     * @param {String} clas
+     * @param {Number} duration
+     *
+     *  Mehran!! Fix this function, and clear the timeout!!!
+     *           Else we get an ugly memory leak !!
+     *
+     */
+    tempClass: function (clas, duration) {
+        var el;
+        return this.each(function () {
+            el = hAzzle(this);
             el.addClass(clas);
             setTimeout((function () {
                 el.removeClass(clas);
             }), duration);
-			});
-        },
+        });
+    },
 
     /**
      * Toggle class(es) on element
