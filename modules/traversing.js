@@ -1,10 +1,9 @@
 /*!
  * DOM traversing
  */
-var Ap = [],
-    slice = Ap.slice,
-    reverse = Ap.reverse,
-    push = Ap.push;
+var _arr = [],
+    slice = _arr.slice,
+    push = _arr.push;
 
 
 // Filter for siblings
@@ -153,6 +152,15 @@ function filterFn(callback) {
 // Extend hAzzle
 
 hAzzle.extend({
+	
+	/**
+	 * Create an array of selected selectors
+	 */
+	 
+	toArray: function() {
+		return slice.call( this );
+   },
+		
 
     /**
      * Find the first matched element by css selector
@@ -272,18 +280,29 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    parent: function (selector) {
+     parent: function (selector) {
 
-        var matched = hAzzle.map(this, function (elem) {
-            var parent = elem.parentNode;
-            return parent && parent.nodeType !== 11 ? parent : null;
+    var parent,
+        matched = hAzzle.map(this, function (elem) {
+
+            if ((parent = elem.parentNode)) {
+               
+            // If no document fragment return parent, else return null
+
+           return parent.nodeType !== 11 ? parent : null;
+
+            }
         });
 
-        if (selector && typeof selector === "string") {
-            matched = hAzzle.select(selector, null, null, matched);
-        }
-        return hAzzle(matched);
-    },
+    if (selector && typeof selector === "string") {
+        matched = hAzzle.select(selector, null, null, matched);
+    }
+	if ( this.length > 1 ) {
+	
+	hAzzle.unique( matched );
+	}
+    return hAzzle(matched);
+},
 
     parents: function () {
         return this.up.apply(this, arguments.length ? arguments : ['*']);
@@ -425,7 +444,7 @@ hAzzle.extend({
         });
     },
 
-    PreviousSiblings: function (elem, filter) {
+    PreviousSiblings: function (selector, index, filter) {
         var self = this,
             arr = slice.call(this, 0),
             i = 0,
@@ -444,7 +463,7 @@ hAzzle.extend({
         });
     },
 
-    NextSiblings: function (selector, filter) {
+    NextSiblings: function (selector, index, filter) {
         var self = this,
             arr = slice.call(this, 0),
             i = 0,
@@ -552,9 +571,9 @@ hAzzle.extend({
      */
 
     not: function (selector) {
-        return hAzzle(hAzzle.filter(this, function () {
-            return !filterFn(selector).apply(this, arguments);
-        }));
+        return hAzzle.filter(this, function (elem) {
+			return !hAzzle.matches(selector, elem);
+        });
     },
 
     /**
@@ -619,20 +638,16 @@ hAzzle.extend({
         return this;
     },
 
-    toArray: function () {
-        return Ap.slice.call(this);
-    },
-
     size: function () {
         return this.length;
     },
 
     // Internal usage only
 
-    push: Ap.push,
-    sort: Ap.sort,
-    splice: Ap.splice,
-    reverse: Ap.reverse,
-    concat: Ap.concat,
-    indexOf: Ap.indexOf
+    push: _arr.push,
+    sort: _arr.sort,
+    splice: _arr.splice,
+    reverse: _arr.reverse,
+    concat: _arr.concat,
+    indexOf: _arr.indexOf
 });
