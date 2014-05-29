@@ -431,8 +431,8 @@ hAzzle.extend({
         }
 
         if (elem.type === 'radio' || elem.type === 'checkbox') {
-
-          return (elem.checked = hAzzle.inArray(hAzzle(elem).val(), value) >= 0);
+          elem.checked = (hAzzle.inArray(hAzzle(elem).val(), value) >= 0);
+          return elem.checked;
         }
 
         if (elem.type === 'select') {
