@@ -1,9 +1,9 @@
 /*!
  * DOM traversing
  */
-var _arr = [],
-    slice = _arr.slice,
-    push = _arr.push;
+var emptyArray = [],
+    slice = emptyArray.slice,
+    push = emptyArray.push;
 
 
 // Filter for siblings
@@ -682,10 +682,10 @@ hAzzle.extend({
 
     // Internal usage only
 
-    push: _arr.push,
-    sort: _arr.sort,
-    splice: _arr.splice,
-    reverse: _arr.reverse,
-    concat: _arr.concat,
-    indexOf: _arr.indexOf
+    push: emptyArray.push,
+    sort: emptyArray.sort,
+    splice: emptyArray.splice,
+    reverse: emptyArray.reverse,
+    concat: emptyArray.concat,
+    indexOf: emptyArray.indexOf
 });
