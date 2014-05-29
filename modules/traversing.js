@@ -65,25 +65,40 @@ function collect(el, fn) {
             ret.push(res[j++]);
         }
     }
-    return ret;
+    return hAzzle(ret);
+}
+
+function findIndex(selector, index) {
+
+	if(typeof selector === "undefined" && typeof index !== "number") {
+		
+		return 0;
+	}
+	
+	else if(typeof selector === "number") {
+	
+	    return selector;
+	}
+	else if( typeof index === "number") {
+		
+	    return index;
+		
+	} else {
+		
+		return null;
+	}
 }
 
 /**
  * Traverse multiple DOM elements
  */
 
-function findIndex(selector, index) {
-    return index = typeof selector === "undefined" && typeof index !== "number" ? 0 :
-        typeof selector === "number" ? selector :
-        typeof index === "number" ? index :
-        null;
-}
 
-function traverse(el, property, selector, index, expression) {
+function traversing(el, property, selector, index, expression) {
 
     index = findIndex(selector, index);
 
-    return hAzzle(collect(el, function (el, elind) {
+    return collect(el, function (el, elind) {
 
         var i = index || 0,
             isString = typeof selector === "string" ? selector : '*',
@@ -93,10 +108,10 @@ function traverse(el, property, selector, index, expression) {
 
             el = el[property];
         }
-       
-	   // Always skip document fragments
-       
-	    while (el && (index === null || i >= 0) && el.nodeType < 11) {
+
+        // Always skip document fragments
+
+        while (el && (index === null || i >= 0) && el.nodeType < 11) {
 
             if (el.nodeType === 1 && (!expression || expression === true || filterFn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
 
@@ -104,9 +119,9 @@ function traverse(el, property, selector, index, expression) {
 
                     ret.unshift(el);
 
-                } else { 
+                } else {
 
-				    ret.push(el);
+                    ret.push(el);
                 }
             }
 
@@ -114,7 +129,7 @@ function traverse(el, property, selector, index, expression) {
         }
 
         return ret;
-    }));
+    });
 }
 
 
@@ -154,15 +169,15 @@ function filterFn(callback) {
 // Extend hAzzle
 
 hAzzle.extend({
-	
-	/**
-	 * Create an array of selected selectors
-	 */
-	 
-	toArray: function() {
-		return slice.call( this );
-   },
-		
+
+    /**
+     * Create an array of selected selectors
+     */
+
+    toArray: function () {
+        return slice.call(this);
+    },
+
 
     /**
      * Find the first matched element by css selector
@@ -250,9 +265,12 @@ hAzzle.extend({
     down: function (selector, index) {
 
         index = findIndex(selector, index);
+		
+		selector = typeof selector === 'string' ? selector : '*';
 
-        return hAzzle(collect(this, function (el) {
-            var f = hAzzle.select(typeof selector === 'string' ? selector : '*', el);
+        return collect(this, function (el) {
+			
+            var f = hAzzle.select(selector, el);
 
             if (index === null) {
 
@@ -263,7 +281,7 @@ hAzzle.extend({
                 return [f[index]] || [];
 
             }
-        }));
+        });
     },
     /**
      * Returns element's first ancestor (or the Nth ancestor, if index is specified)
@@ -271,7 +289,7 @@ hAzzle.extend({
      */
 
     up: function (selector, index) {
-        return traverse(this, 'parentNode', selector, index);
+        return traversing(this, 'parentNode', selector, index);
     },
 
     /**
@@ -282,29 +300,29 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-     parent: function (selector) {
+    parent: function (selector) {
 
-    var parent,
-        matched = hAzzle.map(this, function (elem) {
+        var parent,
+            matched = hAzzle.map(this, function (elem) {
 
-            if ((parent = elem.parentNode)) {
-               
-            // Always skip document fragments
+                if ((parent = elem.parentNode)) {
 
-           return parent.nodeType !== 11 ? parent : null;
+                    // Always skip document fragments
 
-            }
-        });
+                    return parent.nodeType !== 11 ? parent : null;
 
-    if (selector && typeof selector === "string") {
-        matched = hAzzle.select(selector, null, null, matched);
-    }
-	if ( this.length > 1 ) {
-	
-	hAzzle.unique( matched );
-	}
-    return hAzzle(matched);
-},
+                }
+            });
+
+        if (selector && typeof selector === "string") {
+            matched = hAzzle.select(selector, null, null, matched);
+        }
+        if (this.length > 1) {
+
+            hAzzle.unique(matched);
+        }
+        return hAzzle(matched);
+    },
 
     parents: function () {
         return this.up.apply(this, arguments.length ? arguments : ['*']);
@@ -327,10 +345,10 @@ hAzzle.extend({
         if (typeof selector === 'number') {
             index = selector;
             selector = '*';
-        } else { 
+        } else {
             index = 0;
         }
-        return traverse(this, 'parentNode', selector, index, true);
+        return traversing(this, 'parentNode', selector, index, true);
     },
 
 
@@ -345,7 +363,7 @@ hAzzle.extend({
      */
 
     prev: function (selector, index) {
-        return traverse(this, 'previousSibling', selector, index);
+        return traversing(this, 'previousSibling', selector, index);
 
     },
 
@@ -370,7 +388,7 @@ hAzzle.extend({
      */
 
     next: function (selector, index) {
-        return traverse(this, 'nextSibling', selector, index);
+        return traversing(this, 'nextSibling', selector, index);
 
     },
 
@@ -419,6 +437,7 @@ hAzzle.extend({
 
         return hAzzle(holder) || this;
     },
+	
     /**
      * Collects all of element's siblings and returns them as an Array of elements
      * OR collect Nth siblings, if index is specified
@@ -441,7 +460,7 @@ hAzzle.extend({
             }
         }
 
-        return traverse(arr, 'nextSibling', selector || '*', index, function (el, i) {
+        return traversing(arr, 'nextSibling', selector || '*', index, function (el, i) {
             return el !== self[i];
         });
     },
@@ -460,7 +479,7 @@ hAzzle.extend({
                 }
             }
         }
-        return traverse(arr, 'previousSibling', selector || '*', index, function (el, i) {
+        return traversing(arr, 'previousSibling', selector || '*', index, function (el, i) {
             return el !== self[i];
         });
     },
@@ -480,7 +499,7 @@ hAzzle.extend({
             }
         }
 
-        return traverse(arr, 'nextSibling', selector || '*', index, function (el, i) {
+        return traversing(arr, 'nextSibling', selector || '*', index, function (el, i) {
             return el !== self[i];
         });
     },
@@ -495,7 +514,7 @@ hAzzle.extend({
      */
 
     children: function (selector, index) {
-        return traverse(this.down.call(this), 'nextSibling', selector || '*', index, true);
+        return traversing(this.down.call(this), 'nextSibling', selector || '*', index, true);
     },
 
     /**
@@ -530,9 +549,7 @@ hAzzle.extend({
 
     eq: function (index) {
         return hAzzle(this.get(index));
-
     },
-
 
     /**
      * @param {number} index
@@ -574,7 +591,7 @@ hAzzle.extend({
 
     not: function (selector) {
         return hAzzle.filter(this, function (elem) {
-			return !hAzzle.matches(selector, elem);
+            return !hAzzle.matches(selector, elem);
         });
     },
 
