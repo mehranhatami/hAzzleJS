@@ -3,7 +3,11 @@
  *
  * Mehran! I re-wrote this function because jshint say it's to complex
  *
+ *          Add a few feature detection to avoid sniffing. My suggestion is
+ *          that you run an feature detect test, and add   (tampered width) in
+ *          parentheses behind version or browser name
  */
+ 
 hAzzle.extend({
 
     browser: function () {
@@ -42,19 +46,21 @@ hAzzle.extend({
         
 		// Normalize name for Internet Explorer 11
         
-		if (browser === "trident" || browser === "crmo") {
+		if (browser === "trident") {
             browser = "msie";
         }
 
-        // Mobile platforms
+        // Mobile / Tablet platforms
 
         if (platform === "android" ||
             platform === "ipad" ||
             platform === "iphone" ||
+            platform === "blackberry" ||
+            platform === "j2me" ||
+            platform === "webtv" ||						
             platform === "windows phone") {
             mobile = true;
         }
-
         // Desktop platforms
 
         if (browser === "cros" ||
@@ -76,6 +82,7 @@ hAzzle.extend({
         }
 
         // Chrome, Opera 15+ and Safari are webkit based browsers
+		
         if (browser === "chrome" || browser === "opr" || browser === "safari") {
             webkit = true;
         }
