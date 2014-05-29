@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.6
+ * Version: 0.61
  * Released under the MIT License.
  *
- * Date: 2014-05-28
+ * Date: 2014-05-29
  */
 (function (window, undefined) {
 
@@ -17,11 +17,18 @@
 
     var win = window,
         doc = win.document,
-        html = doc.documentElement,
+        docElem = doc.documentElement,
+
+        ntest = /^[^{]+\{\s*\[native \w/,
 
         // Establish the object that gets returned to break out of a loop iteration.
 
         breaker = {},
+
+        /*
+         * Holds javascript natives
+         */
+        natives = {},
 
         // DOM ready related
 
@@ -91,6 +98,14 @@
      */
 
     hAzzle.Core = Core.prototype = {
+
+        // The current version of hAzzle being used
+
+        hAzzle: '0.6.1',
+
+        length: 0,
+
+        selector: "",
 
         /**
          * Returns a new array with the result of calling callback on each element of the array
@@ -162,7 +177,7 @@
      * Extend the contents of two objects
      */
 
-    hAzzle.extend = function (destination, source, /* INTERNAL */ where) {
+    hAzzle.extend = function (destination, source) {
 
         for (var property in destination) {
             // Objects only
@@ -178,26 +193,44 @@
 
     hAzzle.extend({
 
+        /**
+         * Determine the type of object being tested.
+         *
+         * @param {Mixed} object
+         * @return {String} object type
+         */
+
         type: function (obj) {
+
             if (obj === null) {
-                return obj + '';
+                return obj + "";
             }
-            return toString.call(obj);
+
+            if (obj === undefined) {
+                return 'undefined';
+            }
+            if (typeof obj === Object(obj)) {
+                return 'object';
+            }
+
+            var str = toString.call(obj);
+
+            if (natives[str]) {
+                return natives[str];
+            }
+
+            return typeof obj;
         },
         is: function (kind, obj) {
             return hAzzle.indexOf(kind, this.type(obj)) >= 0;
         },
+
+        /**
+         * Checks if an string are empty.
+         */
+
         isEmpty: function (str, ignoreWhitespace) {
             return str === null || !str.length || ignoreWhitespace && /^\s*$/.test(str);
-        },
-        isDate: function (val) {
-            return !!(val && val.getTimezoneOffset && val.setUTCFullYear);
-        },
-        isRegExp: function (r) {
-            return !!(r && r.test && r.exec && (r.ignoreCase || r.ignoreCase === false));
-        },
-        isArguments: function (a) {
-            return !!(a && Object.prototype.hasOwnProperty.call(a, 'callee'));
         },
         isObject: function (obj) {
             return obj === Object(obj);
@@ -218,15 +251,11 @@
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
         },
+
         isArray: Array.isArray,
+
         isWindow: function (obj) {
-            return obj && obj.document && obj.location && obj.alert && obj.setInterval;
-        },
-        isFile: function (obj) {
-            return toString.call(obj) === '[object File]';
-        },
-        isBlob: function (obj) {
-            return toString.call(obj) === '[object Blob]';
+            return obj !== null && obj === obj.window;
         },
         isDocument: function (obj) {
             return obj !== null && obj.nodeType === obj.DOCUMENT_NODE;
@@ -236,18 +265,6 @@
         },
         isBoolean: function (value) {
             return value === true || value === false;
-        },
-        error: function (msg) {
-            throw new Error(msg);
-        },
-        isNumber: function (o) {
-            return toString.call(o) === '[object Number]';
-        },
-        isString: function (o) {
-            return toString.call(o) === '[object String]';
-        },
-        isFunction: function (o) {
-            return toString.call(o) === '[object Function]';
         },
         isDefined: function (o) {
             return o !== void 0;
@@ -274,6 +291,14 @@
          */
 
         now: Date.now,
+
+        /**
+         * Error function
+         */
+
+        error: function (msg) {
+            throw new Error(msg);
+        },
 
         /**
          * Determine if the array or object contains a given value
@@ -618,6 +643,20 @@
             return el.nodeName && el.nodeName.toLowerCase() === name.toLowerCase();
         },
 
+        merge: function (first, second) {
+            var len = +second.length,
+                j = 0,
+                i = first.length;
+
+            for (; j < len; j++) {
+                first[i++] = second[j];
+            }
+
+            first.length = i;
+
+            return first;
+        },
+
         /*
          * Finds the elements of an array which satisfy a filter function.
          */
@@ -784,12 +823,10 @@
 
             var matched = [];
 
-            until === until || "";
-
             while ((el = el[dir]) && el.nodeType !== 9) {
                 if (el.nodeType === 1) {
                     if (until) {
-                        if (hAzzle(el).is(until)) {
+                        if (hAzzle(el).is(until || "")) {
                             break;
                         }
                     }
@@ -825,18 +862,41 @@
         }
     }
 
-
     /**
      * Check if an element contains another element
      */
 
-    hAzzle.contains = 'compareDocumentPosition' in html ? function (container, element) {
-        var pos = (container.compareDocumentPosition(element) & 16);
-        return (pos === 16);
-    } : function (container, element) {
-        return container !== element && container.contains(element);
+
+    hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
+        var adown = a.nodeType === 9 ? a.documentElement : a,
+            bup = b && b.parentNode;
+        return a === bup || !!(bup && bup.nodeType === 1 && (
+            adown.contains ?
+            adown.contains(bup) :
+            a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+        ));
+    } : function (a, b) {
+        if (b) {
+            while ((b = b.parentNode)) {
+                if (b === a) {
+                    return true;
+                }
+            }
+        }
+        return false;
     };
 
+    // Populate the native list
+    hAzzle.each("Boolean Number String Function Array Date RegExp Object Error Arguments".split(" "), function (name) {
+        natives["[object " + name + "]"] = name.toLowerCase();
+    });
+
+    // Add some isType methods
+    hAzzle.each(['Number', 'String', 'Function', 'File', 'Blob', 'RegExp', 'Data', 'Arguments'], function (name) {
+        hAzzle["is" + name] = function (o) {
+            return toString.call(o) === '[object Number]';
+        };
+    });
 
     // Expose hAzzle to the global object
 
