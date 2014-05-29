@@ -93,8 +93,10 @@ function traverse(el, property, selector, index, expression) {
 
             el = el[property];
         }
-
-        while (el && (index === null || i >= 0)) {
+       
+	   // Always skip document fragments
+       
+	    while (el && (index === null || i >= 0) && el.nodeType < 11) {
 
             if (el.nodeType === 1 && (!expression || expression === true || filterFn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
 
@@ -102,9 +104,9 @@ function traverse(el, property, selector, index, expression) {
 
                     ret.unshift(el);
 
-                } else {
+                } else { 
 
-                    ret.push(el);
+				    ret.push(el);
                 }
             }
 
@@ -287,7 +289,7 @@ hAzzle.extend({
 
             if ((parent = elem.parentNode)) {
                
-            // If no document fragment return parent, else return null
+            // Always skip document fragments
 
            return parent.nodeType !== 11 ? parent : null;
 
@@ -325,7 +327,7 @@ hAzzle.extend({
         if (typeof selector === 'number') {
             index = selector;
             selector = '*';
-        } else if (typeof index !== 'number') {
+        } else { 
             index = 0;
         }
         return traverse(this, 'parentNode', selector, index, true);
