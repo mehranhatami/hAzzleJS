@@ -103,10 +103,6 @@
 
         hAzzle: '0.6.1',
 
-        length: 0,
-
-        selector: "",
-
         /**
          * Returns a new array with the result of calling callback on each element of the array
          * @param {function} fn
@@ -206,10 +202,11 @@
                 return obj + "";
             }
 
-            if (obj === undefined) {
+            if (typeof obj === "undefined") {
                 return 'undefined';
             }
-            if (typeof obj === Object(obj)) {
+
+            if (typeof obj === "object") {
                 return 'object';
             }
 
@@ -221,6 +218,7 @@
 
             return typeof obj;
         },
+
         is: function (kind, obj) {
             return hAzzle.indexOf(kind, this.type(obj)) >= 0;
         },
@@ -389,13 +387,27 @@
          */
 
         each: function (ar, fn, scope, arg) {
+
             if (!ar) {
+
                 return;
             }
+
             var ind, i = 0,
                 l = ar.length;
+
             for (; i < l; i++) {
-                ind = arg ? ar.length - i - 1 : i;
+
+                if (arg) {
+
+                    ind = ar.length - i - 1;
+
+                } else {
+
+                    ind = i;
+
+                }
+
                 fn.call(scope || ar[ind], ar[ind], ind, ar);
             }
             return ar;
@@ -699,7 +711,7 @@
                     results.push(value);
                 }
             });
-            return results;
+            return hAzzle(results);
         },
 
         /**

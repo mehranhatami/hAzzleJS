@@ -68,41 +68,43 @@ function collect(el, fn) {
     return hAzzle(ret);
 }
 
-function findIndex(selector, index) {
+function getDOMLocation(selector, index) {
 
-	if(typeof selector === "undefined" && typeof index !== "number") {
-		
-		return 0;
-	}
-	
-	else if(typeof selector === "number") {
-	
-	    return selector;
-	}
-	else if( typeof index === "number") {
-		
-	    return index;
-		
-	} else {
-		
-		return null;
-	}
+    if (typeof selector === "undefined" && typeof index !== "number") {
+
+        return 0;
+    } else if (typeof selector === "number") {
+
+        return selector;
+    } else if (typeof index === "number") {
+
+        return index;
+
+    } else {
+
+        return null;
+    }
 }
 
 /**
  * Traverse multiple DOM elements
  */
 
-
 function traversing(el, property, selector, index, expression) {
 
-    index = findIndex(selector, index);
+    // Find our position in the DOM tree
+
+    index = getDOMLocation(selector, index);
+
+    var i,
+        isString,
+        ret = [];
 
     return collect(el, function (el, elind) {
 
-        var i = index || 0,
-            isString = typeof selector === "string" ? selector : '*',
-            ret = [];
+        i = index || 0;
+        isString = typeof selector === "string" ? selector : '*';
+
 
         if (!expression) {
 
@@ -113,7 +115,7 @@ function traversing(el, property, selector, index, expression) {
 
         while (el && (index === null || i >= 0) && el.nodeType < 11) {
 
-            if (el.nodeType === 1 && (!expression || expression === true || filterFn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
+            if (el.nodeType === 1 && (!expression || expression === true || filtered(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
 
                 if (index === null && property !== 'nextSibling' && property !== 'parentNode') {
 
@@ -153,7 +155,7 @@ function eqIndex(length, index, def) {
  * Filter function, for use by filter(), is() & not()
  */
 
-function filterFn(callback) {
+function filtered(callback) {
     var to;
     return callback.nodeType === 1 ? function (el) {
         return el === callback;
@@ -264,13 +266,13 @@ hAzzle.extend({
 
     down: function (selector, index) {
 
-        index = findIndex(selector, index);
-		
-		selector = typeof selector === 'string' ? selector : '*';
+        // Locate where we are in the DOM tree
+
+        index = getDOMLocation(selector, index);
 
         return collect(this, function (el) {
-			
-            var f = hAzzle.select(selector, el);
+
+            var f = hAzzle.select(typeof selector === 'string' ? selector : '*', el);
 
             if (index === null) {
 
@@ -354,6 +356,8 @@ hAzzle.extend({
 
 
     /**
+
+
      * Get the immediately preceding sibling of each element
      * OR Nth preceding siblings of each element, if index is specified
      *
@@ -437,7 +441,7 @@ hAzzle.extend({
 
         return hAzzle(holder) || this;
     },
-	
+
     /**
      * Collects all of element's siblings and returns them as an Array of elements
      * OR collect Nth siblings, if index is specified
@@ -514,7 +518,10 @@ hAzzle.extend({
      */
 
     children: function (selector, index) {
-        return traversing(this.down.call(this), 'nextSibling', selector || '*', index, true);
+        var self = this;
+        return traversing(self.down.call(self), 'nextSibling', selector || '*', index, true);
+
+
     },
 
     /**
@@ -578,7 +585,7 @@ hAzzle.extend({
     },
 
     filter: function (callback) {
-        return hAzzle(hAzzle.filter(this, filterFn(callback)));
+        return hAzzle(hAzzle.filter(this, filtered(callback)));
     },
 
     /**
@@ -633,7 +640,7 @@ hAzzle.extend({
 
         var i = 0,
             l = this.length,
-            fn = filterFn(selector);
+            fn = filtered(selector);
 
         for (; i < l; i++) {
             if (fn(this[i], i)) {
@@ -659,6 +666,18 @@ hAzzle.extend({
 
     size: function () {
         return this.length;
+    },
+
+    contents: function () {
+
+        var matched = hAzzle.map(this, function (elem) {
+            return elem.contentDocument || hAzzle.merge([], elem.childNodes);
+        });
+
+        if (this.length > 1) {
+            hAzzle.unique(matched);
+        }
+        return hAzzle(matched);
     },
 
     // Internal usage only
