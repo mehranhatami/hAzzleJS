@@ -10,7 +10,7 @@
 
     // hAzzle already defined, leave now
 
-    if (window['hAzzle']) {
+    if (window.hAzzle) {
 
         return;
     }
@@ -80,10 +80,10 @@
 
             // Domready
 
-            if (typeof selector === "function") {
+            if (typeof selector === 'function') {
                 return hAzzle.ready(selector);
             }
-            selector = typeof selector === "string" ? hAzzle.select(selector, context) : hAzzle.unique(!selector.nodeType &&
+            selector = typeof selector === 'string' ? hAzzle.select(selector, context) : hAzzle.unique(!selector.nodeType &&
                 typeof selector.length !== 'undefined' ?
                 selector : [selector]);
             var i = this.length = selector.length;
@@ -177,7 +177,7 @@
 
         for (var property in destination) {
             // Objects only
-            if (destination[property] && destination[property].constructor && typeof destination[property] === "object") {
+            if (destination[property] && destination[property].constructor && typeof destination[property] === 'object') {
                 (source || Core.prototype)[property] = destination[property] || {};
             } else {
                 if (destination.hasOwnProperty(property)) {
@@ -199,14 +199,14 @@
         type: function (obj) {
 
             if (obj === null) {
-                return obj + "";
+                return obj + '';
             }
 
-            if (typeof obj === "undefined") {
+            if (typeof obj === 'undefined') {
                 return 'undefined';
             }
 
-            if (typeof obj === "object") {
+            if (typeof obj === 'object') {
                 return 'object';
             }
 
@@ -241,8 +241,8 @@
             return true;
         },
         isNumeric: function (obj) {
-            // parseFloat NaNs numeric-cast false positives (null|true|false|"")
-            // ...but misinterprets leading-number strings, particularly hex literals ("0x...")
+            // parseFloat NaNs numeric-cast false positives (null|true|false|'')
+            // ...but misinterprets leading-number strings, particularly hex literals ('0x...')
             // subtraction forces infinities to NaN
             return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
         },
@@ -644,7 +644,7 @@
          */
 
         isXML: function (elem) {
-            return elem && (elem.ownerDocument || elem).documentElement.nodeName !== "HTML";
+            return elem && (elem.ownerDocument || elem).documentElement.nodeName !== 'HTML';
         },
 
         /**
@@ -739,7 +739,7 @@
                 });
             }
             // if document already ready to go, schedule the ready function to run
-            if (doc.readyState === "complete") {
+            if (doc.readyState === 'complete') {
 
                 setTimeout(ready, 1);
 
@@ -747,9 +747,9 @@
 
                 // otherwise if we don't have event handlers installed, install them
 
-                doc.addEventListener("DOMContentLoaded", ready, false);
+                doc.addEventListener('DOMContentLoaded', ready, false);
                 // backup is window load event
-                window.addEventListener("load", ready, false);
+                window.addEventListener('load', ready, false);
 
                 readyEventHandlersInstalled = true;
             }
@@ -838,7 +838,7 @@
             while ((el = el[dir]) && el.nodeType !== 9) {
                 if (el.nodeType === 1) {
                     if (until) {
-                        if (hAzzle(el).is(until || "")) {
+                        if (hAzzle(el).is(until || '')) {
                             break;
                         }
                     }
@@ -899,19 +899,19 @@
     };
 
     // Populate the native list
-    hAzzle.each("Boolean Number String Function Array Date RegExp Object Error Arguments".split(" "), function (name) {
-        natives["[object " + name + "]"] = name.toLowerCase();
+    hAzzle.each('Boolean Number String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {
+        natives['[object ' + name + ']'] = name.toLowerCase();
     });
 
     // Add some isType methods
     hAzzle.each(['Number', 'String', 'Function', 'File', 'Blob', 'RegExp', 'Data', 'Arguments'], function (name) {
-        hAzzle["is" + name] = function (o) {
+        hAzzle['is' + name] = function (o) {
             return toString.call(o) === '[object Number]';
         };
     });
 
     // Expose hAzzle to the global object
 
-    window['hAzzle'] = hAzzle;
+    window.hAzzle = hAzzle;
 
-})(window);
+})(this);
