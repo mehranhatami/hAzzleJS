@@ -783,16 +783,16 @@
         nodes: function (el, dir, /*INTERNAL */ until) {
 
             var matched = [];
-			
-              until === until || "";
+
+            until === until || "";
 
             while ((el = el[dir]) && el.nodeType !== 9) {
                 if (el.nodeType === 1) {
                     if (until) {
-					if(hAzzle(el).is(until)) {
-                        break;
+                        if (hAzzle(el).is(until)) {
+                            break;
+                        }
                     }
-					}
                     matched.push(el);
                 }
             }
