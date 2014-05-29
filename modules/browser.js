@@ -7,14 +7,15 @@
  *          that you run an feature detect test, and add   (tampered width) in
  *          parentheses behind version or browser name
  */
- 
+var win = this;
+
 hAzzle.extend({
 
     browser: function () {
 
         // Return the result as an Object
 
-        var ua = window.navigator.userAgent.toLowerCase(),
+        var ua = win.navigator.userAgent.toLowerCase(),
             browserParts = /(ie|rv|msie|trident|firefox|chrome|crios|crmo|safari|opera|opr|sailfish|seamonkey|iceweasel|silk|tizen)(?:.*version)?(?:[ \/])?([\w.]+)/.exec(ua),
             platform = /(mac|win|linux|freebsd|mobile|iphone|ipod|ipad|android|blackberry|j2me|webtv|cros|window phone)/.exec(ua)[1],
             mobile = false,
