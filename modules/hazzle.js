@@ -386,17 +386,19 @@
          * @return {hAzzle|Array}
          */
 
-        each: function (ar, fn, scope, arg) {
+                each: function (ar, fn, scope, arg) {
 
-            if (typeof ar !== "object") {
+          var ind,
+		      value,
+              i = 0,
+              l = ar.length;
+
+         if (hAzzle.isArray(ar)) {
 
                 if (!ar) {
 
                     return;
                 }
-
-                var ind, i = 0,
-                    l = ar.length;
 
                 for (; i < l; i++) {
 
@@ -412,17 +414,16 @@
                     fn.call(scope || ar[ind], ar[ind], ind, ar);
                 }
             } else { // Object
-                for (name in ar) {
-                    if (fn.call(ar[name], name, ar[name]) === false) {
-                        break;
-                    }
+                for (i in ar) {
+					value = fn.call( ar[ i ], i, ar[ i ] );
+					if ( value === false ) {
+						break;
+					}
                 }
             }
 
             return ar;
-
         },
-
 
         /**
          * @param {hAzzle|Array} ar
