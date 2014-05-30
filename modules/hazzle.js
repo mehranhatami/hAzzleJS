@@ -220,7 +220,7 @@
         },
 
         is: function (kind, obj) {
-            return hAzzle.indexOf(kind, this.type(obj)) >= 0;
+            return hAzzle.inArray(kind, this.type(obj)) >= 0;
         },
 
         /**
@@ -296,24 +296,6 @@
 
         error: function (msg) {
             throw new Error(msg);
-        },
-
-        /**
-         * Determine if the array or object contains a given value
-         */
-
-        indexOf: function (array, obj) {
-            if (obj === null) {
-                return false;
-            }
-            var i = 0,
-                l = array.length;
-            for (; i < l; i++) {
-                if (obj === array[i]) {
-                    return i;
-                }
-            }
-            return !1;
         },
 
         // Keep the identity function around for default iterators.
@@ -512,31 +494,36 @@
             }
             return a;
         },
+		
+		 // Use a comparator function to figure out the smallest index at which
+  // an object should be inserted so as to maintain order. Uses binary search.
+    sortedIndex: function(array, obj, iterator, context) {
+    iterator = lookupIterator(iterator);
+    var value = iterator.call(context, obj);
+    var low = 0, high = array.length;
+    while (low < high) {
+      var mid = (low + high) >>> 1;
+      iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;
+    }
+    return low;
+  },
+  
+ /**
+  * Check if an element exist in an array
+  */
+ 
+  inArray: function (array, value, index) {
+		var i = (index || 0),
+            m = array.length;
 
-        /**
-         * Check if an element exist in an array
-         */
-        inArray: function (elem, arr, i) {
-            var iOff = function (_find, i) {
-                if (typeof i === 'undefined') {
-                    i = 0;
-                }
-                if (i < 0) {
-                    i += this.length;
-                }
-                if (i < 0) {
-                    i = 0;
-                }
-                for (var n = this.length; i < n; i++) {
-                    if (i in this && this[i] === _find) {
-                        return i;
-                    }
-                }
-                return -1;
-            };
-            return arr === null ? -1 : iOff.call(arr, elem, i);
-        },
-
+      for (; i < m; i++) {
+        if (array[i] === value) {
+          return i;
+        }
+      }
+      return -1;
+    },
+ 
         map: function (elems, callback, arg) {
             var value, i = 0,
                 length = elems.length,
@@ -887,6 +874,7 @@
         }
         return false;
     };
+
 
     // Populate the native list
     hAzzle.each('Boolean Number String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {

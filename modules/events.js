@@ -483,7 +483,7 @@ hAzzle.Events = {
         var isTypeStr = typeof typeSpec === 'string',
             type, namespaces, i, k;
 
-        if (isTypeStr && hAzzle.indexOf(typeSpec, ' ') > 0) {
+        if (isTypeStr && hAzzle.inArray(typeSpec, ' ') > 0) {
             typeSpec = typeSpec.split(typeSpec);
 
             // Mehran ! Check if you can use a while loop here
