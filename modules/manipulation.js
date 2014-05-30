@@ -1,42 +1,26 @@
 /*!
  * Manipulation
  */
+ 
 var win = this,
     doc = win.document,
-    parentNode = 'parentNode',
-    setAttribute = 'setAttribute',
-    getAttribute = 'getAttribute',
     singleTag = /^\s*<([^\s>]+)/,
     specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
     wp = /\S+/g,
 
-    // Inspiration from jQuery
+    // We have to close these tags to support XHTML	
 
-    table = ['<table>', '</table>', 1],
-    td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
-    option = ['<select>', '</select>', 1],
-    noscope = ['_', '', 0, 1],
-    tagMap = { // tags that we have trouble *inserting*
-        thead: table,
-        tbody: table,
-        tfoot: table,
-        colgroup: table,
-        caption: table,
+    tagMap = { 
+        thead: ['<table>', '</table>', 1],
         tr: ['<table><tbody>', '</tbody></table>', 2],
-        th: td,
-        td: td,
+        td: ['<table><tbody><tr>', '</tr></tbody></table>', 3],
         col: ['<table><colgroup>', '</colgroup></table>', 2],
         fieldset: ['<form>', '</form>', 1],
         legend: ['<form><fieldset>', '</fieldset></form>', 2],
-        option: option,
-        optgroup: option,
-        script: noscope,
-        style: noscope,
-        link: noscope,
-        param: noscope,
-        base: noscope
+        option:  ['<select multiple="multiple">', '</select>', 1],
+        base:  ['_', '', 0, 1]
     },
 
     special = {
@@ -84,7 +68,7 @@ var win = this,
 
         'OPTION': function (elem) {
 
-            var val = elem[getAttribute](name, 2);
+            var val = elem.getAttribute(name, 2);
 
             return val !== null ? val : hAzzle.trim(hAzzle.getText(elem));
         }
@@ -117,6 +101,12 @@ var win = this,
             el.insertAdjacentHTML(direction, hAzzle.trim(html));
         }
     };
+
+// Support: IE 9
+tagMap.optgroup = tagMap.option;
+tagMap.script = tagMap.style = tagMap.link = tagMap.param = tagMap.base;
+tagMap.tbody = tagMap.tfoot = tagMap.colgroup = tagMap.caption = tagMap.thead;
+tagMap.th = tagMap.td;
 
 function getBooleanAttrName(element, name) {
     // check dom last since we will most likely fail on name
@@ -159,7 +149,7 @@ hAzzle.extend({
             return;
         }
 
-        if (typeof elem[getAttribute] === typeof undefined) {
+        if (typeof elem.getAttribute === typeof undefined) {
 
             return this.prop(name, value);
         }
@@ -173,7 +163,7 @@ hAzzle.extend({
                 return hooks[elem.nodeName](elem);
             }
 
-            elem = elem[getAttribute](name, 2);
+            elem = elem.getAttribute(name, 2);
 
             return elem === null ? undefined : elem;
         }
@@ -206,7 +196,7 @@ hAzzle.extend({
 
         } else {
 
-            elem[setAttribute](name, value + '');
+            elem.setAttribute(name, value + '');
             return value;
         }
     },
@@ -334,9 +324,7 @@ hAzzle.extend({
             } else {
 
                 return this[toggle ? 'attr' : 'removeAttr'](attr, attr);
-
             }
-
         }
     },
 
@@ -363,8 +351,8 @@ hAzzle.extend({
      */
 
     toggleProp: function (property) {
-        return this.each(function () {
-            return this.prop(property, !this.prop(property));
+        return this.each(function (el) {
+            return el.prop(property, !el.prop(property));
         });
 
     },
@@ -735,7 +723,7 @@ hAzzle.create = function (node) {
             p = tag ? tagMap[tag[1].toLowerCase()] : null,
             dep = p ? p[2] + 1 : 1,
             ns = p && p[3],
-            pn = parentNode;
+            pn = 'parentNode';
 
         el.innerHTML = p ? (p[0] + node + p[1]) : node;
 
