@@ -102,7 +102,7 @@ hAzzle.extend({
 
             function onEnd(e) {
                 var endX, endY, diffX, diffY,
-				absDiffX, absDiffY, dirX, dirY, 
+                    absDiffX, absDiffY, dirX, dirY,
                     ele = e.target,
                     changed = e.changedTouches[0],
                     customEvent = '',
@@ -153,3 +153,97 @@ hAzzle.extend({
     }
 
 }, hAzzle);
+
+
+hAzzle.extend({
+
+
+    /**
+     * Tap on a elem to fire a action
+     *
+     * @param {function} fn
+     *
+     */
+
+    tap: function (fn) {
+        return this.on('tap', fn, false);
+    },
+
+    /**
+     * Double Tap on a elem to fire a action
+     *
+     * @param {function} fn
+     *
+     */
+
+
+    doubleTap: function (fn) {
+        return this.on('doubleTap', fn, false);
+    },
+
+    /**
+     * Use two finger to tap
+     *
+     * @param {function} fn
+     *
+     */
+
+    twoFingerTap: function (fn) {
+        return this.on('twoFingerTap', fn, false);
+    },
+
+    /**
+     * Hold a finger on the element to fire an action
+     *
+     * @param {function} fn
+     *
+     */
+
+    longTouch: function (fn) {
+        return this.on('longTouch', fn, false);
+    },
+
+    /**
+     * Swipe left
+     *
+     * @param {function} fn
+     *
+     */
+
+    swipeLeft: function (fn) {
+        return this.on('swipeLeft', fn, false);
+    },
+
+    /**
+     * Swipe right
+     *
+     * @param {function} fn
+     *
+     */
+
+    swipeRight: function (fn) {
+        return this.on('swipeRight', fn, false);
+    },
+
+    /**
+     * Swipe up
+     *
+     * @param {function} fn
+     *
+     */
+
+    swipeUp: function (fn) {
+        return this.on('swipeUp', fn, false);
+    },
+
+    /**
+     * Swipe down
+     *
+     * @param {function} fn
+     *
+     */
+
+    swipeDown: function (fn) {
+        return this.on('swipeDown', fn, false);
+    }
+});
