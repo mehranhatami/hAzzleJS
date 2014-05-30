@@ -424,12 +424,15 @@ hAzzle.Events = {
 
                 // One
                 if (one === 1) {
+					
+					// Mehran!  Why didn't you change this comment?  "handlet" should have been "handler"
+					
                     // Make a unique handlet that get removed after first time it's triggered
                     fn = hAzzle.Events.once(hAzzle.Events.off, el, events, fn, originalFn);
                 }
                 // Handle multiple events separated by a space
 
-                types = (events || "").match(/\S*,\S*|\S+/g) || [""];
+                types = (events || "").match(specialsplit) || [""];
 
                 i = types.length;
 
