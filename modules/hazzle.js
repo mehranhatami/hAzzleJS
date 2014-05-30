@@ -4,7 +4,7 @@
  * Version: 0.61
  * Released under the MIT License.
  *
- * Date: 2014-05-29
+ * Date: 2014-05-30
  */
 (function (window, undefined) {
 
@@ -388,29 +388,39 @@
 
         each: function (ar, fn, scope, arg) {
 
-            if (!ar) {
+            if (typeof ar !== "object") {
 
-                return;
-            }
+                if (!ar) {
 
-            var ind, i = 0,
-                l = ar.length;
-
-            for (; i < l; i++) {
-
-                if (arg) {
-
-                    ind = ar.length - i - 1;
-
-                } else {
-
-                    ind = i;
-
+                    return;
                 }
 
-                fn.call(scope || ar[ind], ar[ind], ind, ar);
+                var ind, i = 0,
+                    l = ar.length;
+
+                for (; i < l; i++) {
+
+                    if (arg) {
+
+                        ind = ar.length - i - 1;
+
+                    } else {
+
+                        ind = i;
+                    }
+
+                    fn.call(scope || ar[ind], ar[ind], ind, ar);
+                }
+            } else { // Object
+                for (name in ar) {
+                    if (fn.call(ar[name], name, ar[name]) === false) {
+                        break;
+                    }
+                }
             }
+
             return ar;
+
         },
 
 
