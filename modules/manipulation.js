@@ -501,7 +501,7 @@ hAzzle.extend({
 	}
 
     var append = function (el, i) {
-      hAzzle.each(hAzzle.normalize(html, i), function (node) {
+      hAzzle.each(hAzzle.normalize(value, i), function (node) {
         el.appendChild(node);
       });
     };
