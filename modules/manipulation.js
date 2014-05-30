@@ -4,7 +4,8 @@
  
 var win = this,
     doc = win.document,
-    singleTag = /^\s*<([^\s>]+)/,
+//    singleTag = /^\s*<([^\s>]+)/,
+	singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
     specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
@@ -12,7 +13,7 @@ var win = this,
 
     // We have to close these tags to support XHTML	
 
-    tagMap = { 
+    htmlMap = { 
         thead: ['<table>', '</table>', 1],
         tr: ['<table><tbody>', '</tbody></table>', 2],
         td: ['<table><tbody><tr>', '</tr></tbody></table>', 3],
@@ -103,10 +104,10 @@ var win = this,
     };
 
 // Support: IE 9
-tagMap.optgroup = tagMap.option;
-tagMap.script = tagMap.style = tagMap.link = tagMap.param = tagMap.base;
-tagMap.tbody = tagMap.tfoot = tagMap.colgroup = tagMap.caption = tagMap.thead;
-tagMap.th = tagMap.td;
+htmlMap.optgroup = htmlMap.option;
+htmlMap.script = htmlMap.style = htmlMap.link = htmlMap.param = htmlMap.base;
+htmlMap.tbody = htmlMap.tfoot = htmlMap.colgroup = htmlMap.caption = htmlMap.thead;
+htmlMap.th = htmlMap.td;
 
 function getBooleanAttrName(element, name) {
     // check dom last since we will most likely fail on name
@@ -703,29 +704,42 @@ hAzzle.extend({
 
 // Create HTML
 
-hAzzle.create = function (node) {
+hAzzle.create = function (html, context) {
+  
+  // Prevent XSS vulnerability
+  
+  var tag,
+      defaultContext = typeof doc.implementation.createHTMLDocument === "function" ?
+      doc.implementation.createHTMLDocument() :
+      doc;
 
-    if (node !== '' && typeof node === 'string') {
+    context = context || defaultContext;
+	
+    if (html !== '' && typeof html === 'string') {
 
-        // Script tag
+        /**
+		 * Create script tags
+		 */
 
-        if (simpleScriptTagRe.test(node)) {
-
-            // Has to be returned as an array
-
-            return [cSFH(node)];
-
+        if (simpleScriptTagRe.test(html)) {
+            return [cSFH(html)];
         }
 
-        var tag = node.match(singleTag),
-            el = doc.createElement('div'),
-            els = [],
-            p = tag ? tagMap[tag[1].toLowerCase()] : null,
-            dep = p ? p[2] + 1 : 1,
-            ns = p && p[3],
-            pn = 'parentNode';
+	// Single tag
 
-        el.innerHTML = p ? (p[0] + node + p[1]) : node;
+	if ( ( tag = html.match(singleTag)) ) {
+
+		return [ context.createElement( tag[1] ) ];
+	}
+		
+      var el = context.createElement('div'),
+          els = [],
+          p = tag ? htmlMap[tag[1].toLowerCase()] : null,
+          dep = p ? p[2] + 1 : 1,
+          ns = p && p[3],
+          pn = 'parentNode';
+
+        el.innerHTML = p ? (p[0] + html + p[1]) : html;
 
         while (dep--) {
 
@@ -760,7 +774,7 @@ hAzzle.create = function (node) {
 
     } else {
 
-        return hAzzle.isNode(node) ? [node.cloneNode(true)] : [];
+        return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
     }
 
 };
