@@ -386,42 +386,21 @@
          * @return {hAzzle|Array}
          */
 
-                each: function (ar, fn, scope, arg) {
+        each: function (ar, callback, scope, args) {
 
-          var ind,
-		      value,
-              i = 0,
-              l = ar.length;
+            var ind, i = 0,
+                l = ar.length;
+            for (; i < l; i++) {
+                if (args) {
 
-         if (hAzzle.isArray(ar)) {
+                    ind = ar.length - i - 1;
 
-                if (!ar) {
+                } else {
 
-                    return;
+                    ind = i;
                 }
-
-                for (; i < l; i++) {
-
-                    if (arg) {
-
-                        ind = ar.length - i - 1;
-
-                    } else {
-
-                        ind = i;
-                    }
-
-                    fn.call(scope || ar[ind], ar[ind], ind, ar);
-                }
-            } else { // Object
-                for (i in ar) {
-					value = fn.call( ar[ i ], i, ar[ i ] );
-					if ( value === false ) {
-						break;
-					}
-                }
+                callback.call(scope || ar[ind], ar[ind], ind, ar);
             }
-
             return ar;
         },
 
