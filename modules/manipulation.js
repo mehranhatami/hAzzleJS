@@ -1,10 +1,8 @@
 /*!
  * Manipulation
  */
-//REVIEW Keny: This doesn't really seem to be your code, it had a lot of missing semicolons
-//and undefined variables with a lot of bugs
-var
-win = this,
+
+var win = this,
   doc = win.document,
   parentNode = 'parentNode',
   setAttribute = 'setAttribute',
@@ -517,34 +515,18 @@ hAzzle.extend({
    */
 
   text: function (value) {
-
     if (typeof value === 'function') {
-      return this.each(function (i) {
-        var self = hAzzle(this);
-        self.text(value.call(this, i, self.text()));
+      return this.each(function (el, i) {
+        var self = hAzzle(el);
+        self.text(value.call(el, i, self.text()));
       });
     }
-
-    if (typeof value !== 'object' && typeof value !== 'undefined') {
-
-      return this.empty().each(function (elem) {
-
-        if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
-
-          // Firefox does not support insertAdjacentText 
-
-          if (typeof value === 'string' && typeof HTMLElement !== 'undefined' && HTMLElement.prototype.insertAdjacentText) {
-
-            elem.insertAdjacentText('beforeEnd', value);
-
-          } else {
-
-            elem.textContent = value;
-          }
-        }
-      });
-    }
-    return hAzzle.getText(this);
+    return typeof value === "undefined" ? hAzzle.getText(this[0]) : 
+       this.empty().each(function () {
+	       if ( this.nodeType === 1 || this.nodeType === 9 || this.nodeType === 11) {
+		   this.textContent = value;
+		   }
+	   });
   },
 
   /**
