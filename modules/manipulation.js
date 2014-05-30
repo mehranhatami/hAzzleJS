@@ -485,22 +485,52 @@ hAzzle.extend({
    * @return {hAzzle|string}
    */
 
-  html: function (html) {
+  html: function (value) {
+	  
+    var el = this[0] || {};
+	  
+	if(typeof value === 'undefined' && el.nodeType === 1) {
+	   return this[0].innerHTML;
+	}
+	
+	if (typeof value === "function") {
+        this.each(function (el, i) {
+         var self = hAzzle(el);
+         self.html(value.call(el, i, self.html()));
+     });
+	}
+
     var append = function (el, i) {
       hAzzle.each(hAzzle.normalize(html, i), function (node) {
         el.appendChild(node);
       });
-    },
-      updateElement = function (el, i) {
-        try {
-          if (typeof html === 'string' && !specialTags.test(el.tagName)) {
-            el.innerHTML = html.replace(uniqueTags, '<$1></$2>');
-            return;
-          }
-        } catch (e) {}
-        append(el, i);
-      };
-    return typeof html !== 'undefined' ? this.empty().each(updateElement) : this[0] ? this[0].innerHTML : '';
+    };
+
+      return this.empty().each(function (el, i) {
+
+          if (typeof value === 'string' && !specialTags.test(el.tagName)) {
+            
+			// Mehran!! Why didn't you stop any memory leaks here? 
+			
+			value = value.replace(uniqueTags, '<$1></$2>');
+			
+			// Remove stored data on the object to avoid memory leaks
+
+             hAzzle.removeData(el);
+			 
+			 // Get rid of existing children
+
+             el.textContent = '';
+
+			// Do innerHTML
+
+			el.innerHTML = value;
+			
+          } else {
+		    
+			append(el, i);	  
+		  }
+      });
   },
 
   /**
