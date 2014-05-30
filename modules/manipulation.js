@@ -1,11 +1,10 @@
 /*!
  * Manipulation
  */
- 
 var win = this,
     doc = win.document,
-//    singleTag = /^\s*<([^\s>]+)/,
-	singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
+    //    singleTag = /^\s*<([^\s>]+)/,
+    singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
     specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
@@ -13,15 +12,15 @@ var win = this,
 
     // We have to close these tags to support XHTML	
 
-    htmlMap = { 
+    htmlMap = {
         thead: ['<table>', '</table>', 1],
         tr: ['<table><tbody>', '</tbody></table>', 2],
         td: ['<table><tbody><tr>', '</tr></tbody></table>', 3],
         col: ['<table><colgroup>', '</colgroup></table>', 2],
         fieldset: ['<form>', '</form>', 1],
         legend: ['<form><fieldset>', '</fieldset></form>', 2],
-        option:  ['<select multiple="multiple">', '</select>', 1],
-        base:  ['_', '', 0, 1]
+        option: ['<select multiple="multiple">', '</select>', 1],
+        base: ['_', '', 0, 1]
     },
 
     special = {
@@ -702,42 +701,51 @@ hAzzle.extend({
 
 });
 
-// Create HTML
+/**
+ * Create HTML
+ *
+ *  @param {string} html
+ *  @param {string} context
+ *  @return {hAzzle}
+ *
+ * 'context' are just an extra parameter so
+ * we can create html on CSS nodes as well
+ * as document.
+ *
+ */
 
 hAzzle.create = function (html, context) {
-  
-  // Prevent XSS vulnerability
-  
-  var tag,
-      defaultContext = typeof doc.implementation.createHTMLDocument === "function" ?
-      doc.implementation.createHTMLDocument() :
-      doc;
+
+    // Prevent XSS vulnerability
+
+    var tag,
+        defaultContext = typeof doc.implementation.createHTMLDocument === "function" ?
+        doc.implementation.createHTMLDocument() :
+        doc;
 
     context = context || defaultContext;
-	
+
     if (html !== '' && typeof html === 'string') {
 
-        /**
-		 * Create script tags
-		 */
+        // Create script tags
 
         if (simpleScriptTagRe.test(html)) {
             return [cSFH(html)];
         }
 
-	// Single tag
+        // Single tag
 
-	if ( ( tag = html.match(singleTag)) ) {
+        if ((tag = html.match(singleTag))) {
 
-		return [ context.createElement( tag[1] ) ];
-	}
-		
-      var el = context.createElement('div'),
-          els = [],
-          p = tag ? htmlMap[tag[1].toLowerCase()] : null,
-          dep = p ? p[2] + 1 : 1,
-          ns = p && p[3],
-          pn = 'parentNode';
+            return [context.createElement(tag[1])];
+        }
+
+        var el = context.createElement('div'),
+            els = [],
+            p = tag ? htmlMap[tag[1].toLowerCase()] : null,
+            dep = p ? p[2] + 1 : 1,
+            ns = p && p[3],
+            pn = 'parentNode';
 
         el.innerHTML = p ? (p[0] + html + p[1]) : html;
 
