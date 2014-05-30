@@ -1,6 +1,28 @@
 /*!
  * Event handler
- */
+ *
+ * Mehran!
+ *
+ * Important!
+ *
+ * - Avoid non-left-click bubbling in Firefox
+ * - Make sure everything is working with iFrame
+ * - Fix the delegation problem as mentioned before. Clone the DOM tree etc as I wrote in an email
+ * - For delegated events, try to put nodes in an array as illustrated in an email to you
+ * - Fix all comments with your name
+ * - Delegate handlers only called once
+ * - Add support for Cordova 2.5 (WebKit)
+ * - Prevent triggered image.load events from bubbling to window.load
+ * - Fix blur()
+ * - Fix focusout / focusIn for Firefox
+ * - For cross-browser consistency, make sure we don't do click events on links
+ * - Create "bubbling" focus and blur events
+ *
+ * Good luck!
+ *
+ * Kenny
+ *
+ *****/
 var win = window,
     doc = document || {},
     root = doc.documentElement || {},
@@ -19,9 +41,9 @@ var win = window,
     // touch and gestures 
     touchEvent = /^touch|^gesture/i,
 
-   // focus
+    // focus
     focusRegEx = /^(?:focusinfocus|focusoutblur)$/,
-	
+
     overOutRegex = /over|out/,
 
     // Namespace regEx   
@@ -37,19 +59,6 @@ var win = window,
     slice = Array.prototype.slice,
     //concat = Array.prototype.concat,
 
-    threatment = {
-        disabeled: function (el, type) {
-            if (el.disabeled && type === 'click') {
-                return true;
-            }
-            return false;
-        },
-        nodeType: function (el) {
-            if (el.nodeType === 3 || el.nodeType === 8) {
-                return true;
-            }
-        }
-    },
     special = {
         pointerenter: {
             fix: 'pointerover',
@@ -81,26 +90,26 @@ function check(evt) {
 
 hAzzle.extend({
     eventHooks: {
-		
-		/**
-		 * Mehran!!  Fix this!!
-		 *
-		 * Firefox doesn't support focusin/focusout events. So you have to find
-		 * an solution on this in this function.
-		 *
-		 */
-		
-		focusinout: function(evt, original) {
-		
-		},
-		
+
+        /**
+         * Mehran!!  Fix this!!
+         *
+         * Firefox doesn't support focusin/focusout events. So you have to find
+         * an solution on this in this function.
+         *
+         */
+
+        focusinout: function (evt, original) {
+
+        },
+
         keys: function (evt, original) {
             // Add which for key events
             original.keyCode = evt.keyCode || evt.which;
             return commonProps.concat('char charCode key keyCode keyIdentifier keyLocation location'.split(' '));
         },
         mouse: function (evt, original, type) {
-			// click: 1 === left; 2 === middle; 3 === right
+            // click: 1 === left; 2 === middle; 3 === right
             original.rightClick = evt.which === 3 || evt.button === 2;
             original.pos = {
                 x: 0,
@@ -225,8 +234,9 @@ hAzzle.extend({
             i = types.length,
             j, l, call, evt, names, handlers;
 
-        if (threatment.disabeled(el, type) || threatment.nodeType(el)) {
-            return false;
+        // Don't do events on text and comment nodes
+        if (el && (el.nodeType === 3 || el.nodeType === 8)) {
+            return;
         }
 
         while (i--) {
@@ -312,17 +322,21 @@ function Event(evt, element) {
 
     fixHook = treated[type];
 
+    /**
+     * Mehran! Try to make this more readable
+     */
+
     if (!fixHook) {
         treated[type] = fixHook = rmouseEvent.test(type) ?
-		           hAzzle.eventHooks.mouse : 
-				   focusRegEx.test(type) ? 
-				   eventHooks.focusinout : 
-				   touchEvent.test(type) ? 
-				   hAzzle.eventHooks.touch : 
-				   rkeyEvent.test(type) ? 
-				   hAzzle.eventHooks.keys : function () {
-					   
-            return commonProps;
+            hAzzle.eventHooks.mouse :
+            focusRegEx.test(type) ?
+            eventHooks.focusinout :
+            touchEvent.test(type) ?
+            hAzzle.eventHooks.touch :
+            rkeyEvent.test(type) ?
+            hAzzle.eventHooks.keys : function () {
+
+                return commonProps;
         };
     }
     props = fixHook(evt, this, type);
@@ -390,22 +404,38 @@ Event.prototype = {
 hAzzle.Events = {
     add: function (el, events, selector, fn, one) {
         var originalFn, type, types, i, args, entry, first;
-        // Dont' allow click on disabeled elements, or events on text and comment nodes
-        if (threatment.disabeled(el, events) || threatment.nodeType(el)) {
-            return false;
+
+        // Don't attach events to noData or text/comment nodes (allow plain objects tho)
+        if (el.nodeType === 3 || el.nodeType === 8 || !events) {
+            return;
         }
-        // Types can be a map of types/handlers
 
         /**
          * Mehran!!!
          *
          * TODO!! This is not working on delegated events, have to fix this ASAP !!
          *
+         * So you know what's going on. This is for multiple handlers.
+         *
+         * Example:
+         *
+         *  // multiple handlers
+         * hAzzle( "button" ).first().on({
+         *  click: function (e) { alert("clicked"); },
+         *  mouseover: function (e) { alert("mouseover"); }
+         *  });
+         *
+         *
+         * So, Mehran! You have to find an way to get this to work with delegated events
+         *
          */
 
-        if (typeof selector === "undefined" && typeof events === "Object")
+        if (typeof selector === "undefined" && typeof events === "object")
             for (type in events) {
                 if (events.hasOwnProperty(type)) {
+
+                    // Mehran !  Note!!		events[type] are the function itself
+
                     hAzzle.Events.add.call(this, el, type, events[type]);
                 }
 
@@ -424,9 +454,9 @@ hAzzle.Events = {
 
                 // One
                 if (one === 1) {
-					
-					// Mehran!  Why didn't you change this comment?  "handlet" should have been "handler"
-					
+
+                    // Mehran!  Why didn't you change this comment?  "handlet" should have been "handler"
+
                     // Make a unique handlet that get removed after first time it's triggered
                     fn = hAzzle.Events.once(hAzzle.Events.off, el, events, fn, originalFn);
                 }
@@ -456,7 +486,7 @@ hAzzle.Events = {
         if (isTypeStr && hAzzle.indexOf(typeSpec, ' ') > 0) {
             typeSpec = typeSpec.split(typeSpec);
 
-            // Mehran ! Check if you can use while loop here
+            // Mehran ! Check if you can use a while loop here
 
             for (i = typeSpec.length; i--;) {
                 hAzzle.Events.off(el, typeSpec[i], fn);
@@ -469,11 +499,13 @@ hAzzle.Events = {
         if (type && special[type]) {
             type = special[type].fix;
         }
-        // Namespace 
 
         if (!typeSpec || isTypeStr) {
 
             // Namespace
+
+            // Mehran! Maybe an trim() here? You have to test and check if that works!
+
             if ((namespaces = isTypeStr) && typeSpec.replace(ns, '')) {
                 namespaces = namespaces.split('.');
             }
