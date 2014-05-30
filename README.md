@@ -1,15 +1,8 @@
 # hAzzleJS v. 0.6.1 BETA [![Build Status](https://travis-ci.org/hazzlejs/hAzzleJS.svg?branch=master)](https://travis-ci.org/hazzlejs/hAzzleJS) [![Code Climate](https://codeclimate.com/github/hazzlejs/hAzzleJS.png)](https://codeclimate.com/github/hazzlejs/hAzzleJS)
 
-**hAzzle** is a javascript library that tries it best to be the fastest one, and still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
+**hAzzle** aims to be the fastest JavaScript library, but still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
 
-**hAzzle** are using native browsers functions - ES5 -, and because of that - it has many things common with underscore.js even the API itself follows the Zepto / jQuery way for easier development of plugins.
-
-The DOM traversing methods are in average 80% faster then jQuery and Zepto.
-
-You can use your own selector engine if you want, just replace it with the selector.js module.
-
-39,2 KB minimized
-
+**hAzzle** has much in common with jQuery / Zepto / Prototype, but is an independent library. It's still in a beta stage, but can easily be used in production.
 
 Browser compatiblity
 --------------------
