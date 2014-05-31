@@ -462,12 +462,12 @@ hAzzle.hACE.prototype = {
         // Our stop function
 
         self.stopIt = function () {
+
             if (steps >= 0 && self.hasStarted) {
 
-                var s = self.hACEDuration,
+                var v,
+				    percent = self.hACEDuration - (steps * stepDuration),
                     values;
-
-                s = s - (steps * stepDuration);
 
                 steps--;
                
@@ -479,7 +479,7 @@ hAzzle.hACE.prototype = {
 			   
                 if (self.differences.hasOwnProperty('mehran')) {
 
-                    values = self.startVal + (self.differences.mehran - self.startVal) * self.easing.call(hAzzle.easing, s / self.hACEDuration);
+                    values = self.startVal + (self.differences.mehran - self.startVal) * self.easing.call(hAzzle.easing, percent / self.hACEDuration);
 
                 } else {
 
@@ -490,9 +490,9 @@ hAzzle.hACE.prototype = {
 
                 if (typeof values === 'object') {
 
-                    for (var v in self.differences) {
+                    for (v in self.differences) {
 
-                        values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * self.easing.call(hAzzle.easing, s / self.hACEDuration);
+                        values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * self.easing.call(hAzzle.easing, percent / self.hACEDuration);
                     }
                 }
 
