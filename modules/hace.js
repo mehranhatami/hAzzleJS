@@ -81,13 +81,6 @@ function run() {
 
 hAzzle.extend({
 
-    /**
-     * Mehran!
-     *
-     * frameRate are exposed to the global hAzzle Object so we can
-     * overrun it in plugins and / or other Core functions
-     */
-
     frameRate: 60,
 
     hACE: function () {
@@ -150,7 +143,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     add: function (name, fn) {
-        if (typeof name === "string" && fn) {
+        if (typeof name === "string" && typeof fn === "function") {
             this.hACEPipe[name] = fn;
         }
     },
