@@ -340,8 +340,11 @@ hAzzle.hACE.prototype = {
      */
 
     ease: function (fn) {
-        this.easing = fn;
-        return this;
+		
+	// Use default easing function if no ease 'fn' defined
+	
+     this.easing = fn || hAzzle.easing.linear;
+     return this;
     },
 
     /**
@@ -415,6 +418,8 @@ hAzzle.hACE.prototype = {
     start: function () {
 
         var self = this;
+		
+
         if (!self.canStart) return self;
         if (self.delayDuration > 0 && !self.delayed) {
             setTimeout(function () {
@@ -443,21 +448,6 @@ hAzzle.hACE.prototype = {
         }
 
         self.hasStarted = true;
-
-        /**
-         * Mehran!
-		FIX IT!!
-		
-		self.easing are defined on the hACE main function, but it can't be found here - undefined.
-		Figure out why this happend.
-		
-		After you have solved that problem, you can delete this line:
-		
-		self.easing = self.easing || hAzzle.easing.linear
-		
-		*/
-
-        self.easing = self.easing || hAzzle.easing.linear;
 
         // Our stop function
 
