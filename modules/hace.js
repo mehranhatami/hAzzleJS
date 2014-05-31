@@ -111,7 +111,7 @@ hAzzle.extend({
         self.delayed = false;
         self.repeatCount = 0;
         self.paused = false;
-        self.easing = hAzzle.easing.linear;
+        self.easing = hAzzle.easing.linear; // Default easing function
 
         // All of them are using hAzzle.noop, so we can save some bytes, we do it like this
 
@@ -150,7 +150,9 @@ hAzzle.hACEPipe.prototype = {
      */
 
     add: function (name, fn) {
-        this.hACEPipe[name] = fn;
+        if (name && fn) {
+            this.hACEPipe[name] = fn;
+        }
     },
 
     /**
@@ -162,7 +164,9 @@ hAzzle.hACEPipe.prototype = {
      */
 
     remove: function (name) {
-        delete this.hACEPipe[name];
+        if (name) {
+            delete this.hACEPipe[name];
+        }
     },
 
     /**
@@ -200,7 +204,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     has: function (name) {
-        return name in this.hACEPipe;
+        return name ? name in this.hACEPipe : "";
     },
 
     /**
@@ -340,11 +344,12 @@ hAzzle.hACE.prototype = {
      */
 
     ease: function (fn) {
-		
-	// Use default easing function if no ease 'fn' defined
-	
-     this.easing = fn || hAzzle.easing.linear;
-     return this;
+
+        if (fn) {
+
+            this.easing = fn;
+        }
+        return this;
     },
 
     /**
@@ -418,7 +423,7 @@ hAzzle.hACE.prototype = {
     start: function () {
 
         var self = this;
-		
+
 
         if (!self.canStart) return self;
         if (self.delayDuration > 0 && !self.delayed) {
@@ -456,17 +461,17 @@ hAzzle.hACE.prototype = {
             if (steps >= 0 && self.hasStarted) {
 
                 var v,
-				    percent = self.hACEDuration - (steps * stepDuration),
+                    percent = self.hACEDuration - (steps * stepDuration),
                     values;
 
                 steps--;
-               
-			    /* Mehran!
+
+                /* Mehran!
     
                  Mr. Robert Penners way of doing easing seems not to be valid in 2014. So
                  I modified this so we avoid jsLint errors.
                */
-			   
+
                 if (self.differences.hasOwnProperty('mehran')) {
 
                     values = self.startVal + (self.differences.mehran - self.startVal) * self.easing.call(hAzzle.easing, percent / self.hACEDuration);
@@ -529,6 +534,7 @@ hAzzle.hACE.prototype = {
         // Add the animation and the stop function to the 'pipe'
 
         hAzzle.pipe.add(self.name, self.stopIt);
+
 
         return self;
     },
