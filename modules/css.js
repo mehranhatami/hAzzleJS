@@ -36,11 +36,11 @@ var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
         MozBoxFlex: 1,
         columns: 1,
         fontWeight: 1,
-    },
+    };
 
     // Placeholder for color functions
 
-    colorHook = {};
+    
 
 function getStyle(el, property) {
     var value = null,
@@ -201,13 +201,14 @@ hAzzle.extend({
      */
 
     css: function (property, value) {
+
         var p, iter = property,
             color,
             type,
             ret;
 
         // is this a request for just getting a style?
-        if (value === undefined && typeof property === 'string') {
+        if (typeof value === 'undefined' && typeof property === 'string') {
 
             value = this[0];
 
@@ -224,6 +225,7 @@ hAzzle.extend({
 
                 return property === 'width' ? p.width : property === 'height' ? p.height : '';
             }
+
             return (property = styleProperty(property)) ? getStyle(value, property) : null;
         }
 
@@ -263,7 +265,7 @@ hAzzle.extend({
 
                     // If a number was passed in, add 'px' to the (except for certain CSS properties)
 
-                    if (type === 'number' && !unitless[p]) {
+                    if (type === 'number' && unitless[p]) {
 
                         v += 'px';
                     }
@@ -274,11 +276,11 @@ hAzzle.extend({
 
                     // Translate all colors to RGB...
 
-                    if (typeof (color = colorHook[k]) === 'function') {
+                    if (typeof (color = hAzzle.colorHook[k]) === 'function') {
 
                         return color(el, v);
                     }
-
+//alert(v)
                     el.style[p] = hAzzle.setter(el, v);
                 }
             }
@@ -502,7 +504,8 @@ hAzzle.extend({
 // Let us extend the hAzzle Object a litle ...
 
 hAzzle.extend({
-
+	
+	colorHook: {},
 
     /**
      * hAzzle color names
@@ -1095,7 +1098,7 @@ function xy(el, x, y) {
 
 hAzzle.each(props, function (hook) {
 
-    colorHook[hook] = function (elem, value) {
+    hAzzle.colorHook[hook] = function (elem, value) {
 
         value = hAzzle.color.normalize(value);
 
