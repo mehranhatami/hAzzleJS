@@ -81,7 +81,7 @@ function run() {
 
 hAzzle.extend({
 
-    frameRate: 60,
+    frameRate: 60, // fps
 
     hACE: function () {
 
@@ -161,7 +161,6 @@ hAzzle.hACEPipe.prototype = {
             delete this.hACEPipe[name];
         }
     },
-
     /**
      * Starts the animation engine
      *
@@ -229,6 +228,7 @@ hAzzle.hACEPipe.prototype = {
     }
 };
 
+
 /**
  * hAzzle.pipe has to be created and
  * started automaticly else the
@@ -280,7 +280,6 @@ hAzzle.hACE.prototype = {
         this.startVal = typeof val === "number" ? val : 0;
         return this;
     },
-
     /**
      * End position
      *
@@ -403,6 +402,7 @@ hAzzle.hACE.prototype = {
         self.start();
     },
 
+
     /**
      * Start the animation
      *
@@ -450,7 +450,6 @@ hAzzle.hACE.prototype = {
             if (steps >= 0 && self.hasStarted) {
 
                 var v,
-                    divident,
                     percent = self.hACEDuration - (steps * stepDuration),
                     ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration),
                     values;
@@ -459,8 +458,7 @@ hAzzle.hACE.prototype = {
 
                 if (self.differences.hasOwnProperty('mehran')) {
 
-                    divident = self.startVal + (self.differences.mehran - self.startVal);
-                    values = divident * ease;
+                    values = self.startVal + (self.differences.mehran - self.startVal) * ease;
 
                 } else {
 
@@ -473,9 +471,7 @@ hAzzle.hACE.prototype = {
 
                     for (v in self.differences) {
 
-                        divident = self.startVal[v] + (self.differences[v] - self.startVal[v]);
-                        values = divident * ease;
-
+                        values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * ease;
                     }
                 }
 
@@ -516,7 +512,6 @@ hAzzle.hACE.prototype = {
                     self.andThen.call(self);
                     self.controller.queue.shift();
                 }
-
             }
         };
 
@@ -525,8 +520,10 @@ hAzzle.hACE.prototype = {
         hAzzle.pipe.add(self.name, self.stopIt);
 
 
+
         return self;
     },
+
 
     /**
      * Stop the animation
