@@ -1,6 +1,7 @@
 /**
  * hAzzle Animation Core engine ( hACE )
  */
+ 
 var win = this,
     thousand  = 1000,
 
@@ -52,8 +53,7 @@ requestAnimFrame(function (timestamp) {
 });
 
 /**
- * Our runer
- *
+ * "Run" 
  */
 
 function run() {
@@ -87,7 +87,7 @@ hAzzle.extend({
 
     fps: 60,
 
-    hACE: function (ctlr) {
+    hACE: function () {
 
         var self = this;
 
@@ -95,7 +95,7 @@ hAzzle.extend({
 
         self.name = hAzzle.getUID(self);
 
-        self.controller = ctlr || new hAzzle.hACEController();
+        self.controller = new hAzzle.hACEController();
 
         self.startVal = 0;
         self.endVal = 0;
@@ -105,7 +105,7 @@ hAzzle.extend({
         self.hasCompleted = false;
         self.hACEDuration = 400;
         self.delayDuration = 0;
-        self.isDelayed = false;
+        self.delayed = false;
         self.repeatCount = 0;
         self.paused = false;
         self.easing = hAzzle.easing.easeNone;
@@ -148,7 +148,6 @@ hAzzle.AnimationPipe.prototype = {
 
     add: function (name, fn) {
         this.pipeline[name] = fn;
-        return this;
     },
 
     /**
@@ -161,7 +160,6 @@ hAzzle.AnimationPipe.prototype = {
 
     remove: function (name) {
         delete this.pipeline[name];
-        return this;
     },
 
     /**
@@ -186,7 +184,6 @@ hAzzle.AnimationPipe.prototype = {
 
             run();
         }
-        return this;
     },
 
     /**
@@ -246,20 +243,20 @@ hAzzle.pipe.start();
 hAzzle.hACEController.prototype = {
 
     queue: function () {
-		
-        var nt = new hAzzle.hACE(this),
-            pt = this.queue[this.queue.length - 1];
-        if (!pt || pt && pt.hasCompleted) {
-            nt.canStart = true;
+        var self = this,
+		   _hACE = new hAzzle.hACE(self),
+            _queue = self.queue[self.queue.length - 1];
+        if (!_queue || _queue && _queue.hasCompleted) {
+            _hACE.canStart = true;
         } else {
-            nt.canStart = false;
-            pt.then(function () {
-                nt.canStart = true;
-                nt.start();
+            _hACE.canStart = false;
+            _queue.then(function () {
+                _hACE.canStart = true;
+                _hACE.start();
             });
         }
-        this.queue.push(nt);
-        return nt;
+        self.queue.push(_hACE);
+        return _hACE;
     }
 };
 
@@ -413,11 +410,11 @@ hAzzle.hACE.prototype = {
 
         var self = this;
         if (!self.canStart) return self;
-        if (self.delayDuration > 0 && !self.isDelayed) {
+        if (self.delayDuration > 0 && !self.delayed) {
             setTimeout(function () {
                 self.start();
             }, self.delayDuration);
-            self.isDelayed = true;
+            self.delayed = true;
             return self;
         }
 
@@ -447,42 +444,53 @@ hAzzle.hACE.prototype = {
             if (steps >= 0 && self.hasStarted) {
 
                 var s = self.hACEDuration,
-                    vals;
+                    values;
 
                 s = s - (steps * stepDuration);
+				
                 steps--;
 
                 if (self.differences.hasOwnProperty('mehran')) {
 
-                    vals = self.easing.call(hAzzle.easing, s, self.startVal, self.differences['mehran'], self.hACEDuration);
+                    values = self.easing.call(hAzzle.easing, s, self.startVal, self.differences['mehran'], self.hACEDuration);
 
                 } else {
 
-                    vals = {};
-
+                    values = {};
                 }
 
-                // If object
+                // if 'values' are an 'Object'
 
-                if (typeof vals === 'object') {
+                if (typeof values === 'object') {
                     for (var v in self.differences) {
-                        vals[v] = self.easing.call(hAzzle.easing, s, self.startVal[v], self.differences[v], self.hACEDuration);
+                        values[v] = self.easing.call(hAzzle.easing, s, self.startVal[v], self.differences[v], self.hACEDuration);
                     }
                 }
 
-                self.onStep.call(self, vals);
+                self.onStep.call(self, values);
 
             } else if (!self.hasStarted) {
 
                 // If animation have not started, remove it from the 'pipe'
 
                 hAzzle.pipe.remove(self.name);
-                self.onStopped.call(self);
+                
+				self.onStopped.call(self);
+				
             } else {
+				
+				// Remove from the 'pipe'
                 hAzzle.pipe.remove(self.name);
-                self.hasStarted = false;
-                self.isDelayed = false;
-                if (self.repeatCount > 0 || self.repeatCount === -1 || self.repeatCount === Infinity) {
+                
+				// Not started yet
+				
+				self.hasStarted = false;
+                
+				// Set delayed to false
+				
+				self.delayed = false;
+                
+				if (self.repeatCount > 0 || self.repeatCount === -1 || self.repeatCount === Infinity) {
                     self.repeatCount = self.repeatCount < 0 || self.repeatCount === Infinity ? self.repeatCount : self.repeatCount--;
                     self.onComplete.call(self, self.end);
                     self.start();
