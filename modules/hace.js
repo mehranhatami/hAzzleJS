@@ -439,13 +439,13 @@ hAzzle.hACE.prototype = {
                 self.differences[val] = self.endVal[val] - self.startVal[val];
             }
         } else {
-            self.differences['mehran'] = self.endVal - self.startVal;
+            self.differences.mehran = self.endVal - self.startVal;
         }
 
         self.hasStarted = true;
 
         /**
-	    * Mehran!
+         * Mehran!
 		FIX IT!!
 		
 		self.easing are defined on the hACE main function, but it can't be found here - undefined.
@@ -457,7 +457,7 @@ hAzzle.hACE.prototype = {
 		
 		*/
 
-        self.easing = self.easing || hAzzle.easing.linear
+        self.easing = self.easing || hAzzle.easing.linear;
 
         // Our stop function
 
@@ -470,14 +470,16 @@ hAzzle.hACE.prototype = {
                 s = s - (steps * stepDuration);
 
                 steps--;
-                /* Mehran!
+               
+			    /* Mehran!
     
-	      Mr. Robert Penners way of doing easing seems not to be valid in 2014. So
-	      I modified this so we avoid jsLint errors.
-       */
+                 Mr. Robert Penners way of doing easing seems not to be valid in 2014. So
+                 I modified this so we avoid jsLint errors.
+               */
+			   
                 if (self.differences.hasOwnProperty('mehran')) {
 
-                    values = self.startVal + (self.differences['mehran'] - self.startVal) * self.easing.call(hAzzle.easing, s / self.hACEDuration);
+                    values = self.startVal + (self.differences.mehran - self.startVal) * self.easing.call(hAzzle.easing, s / self.hACEDuration);
 
                 } else {
 
