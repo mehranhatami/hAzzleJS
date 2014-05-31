@@ -461,20 +461,17 @@ hAzzle.hACE.prototype = {
             if (steps >= 0 && self.hasStarted) {
 
                 var v,
+                    divident,
                     percent = self.hACEDuration - (steps * stepDuration),
+                    ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration),
                     values;
 
                 steps--;
 
-                /* Mehran!
-    
-                 Mr. Robert Penners way of doing easing seems not to be valid in 2014. So
-                 I modified this so we avoid jsLint errors.
-               */
-
                 if (self.differences.hasOwnProperty('mehran')) {
 
-                    values = self.startVal + (self.differences.mehran - self.startVal) * self.easing.call(hAzzle.easing, percent / self.hACEDuration);
+                    divident = self.startVal + (self.differences.mehran - self.startVal);
+                    values = divident * ease;
 
                 } else {
 
@@ -487,7 +484,9 @@ hAzzle.hACE.prototype = {
 
                     for (v in self.differences) {
 
-                        values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * self.easing.call(hAzzle.easing, percent / self.hACEDuration);
+                        divident = self.startVal[v] + (self.differences[v] - self.startVal[v]);
+                        values = divident * ease;
+
                     }
                 }
 
