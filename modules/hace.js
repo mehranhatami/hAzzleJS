@@ -1,9 +1,8 @@
 /**
  * hAzzle Animation Core engine ( hACE )
  */
- 
 var win = this,
-    thousand  = 1000,
+    thousand = 1000,
 
     /**
      * Mehran!
@@ -20,7 +19,11 @@ var win = this,
     blacklisted = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
     perf = win.performance || {},
     perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow),
-    now = perfNow ? function () { return perfNow.call(perf); } : function () { return hAzzle.now(); },
+    now = perfNow ? function () {
+        return perfNow.call(perf);
+    } : function () {
+        return hAzzle.now();
+    },
     fixTs = false, // feature detected below
 
     // RequestAnimationFrame
@@ -53,7 +56,7 @@ requestFrame(function (timestamp) {
 });
 
 /**
- * "Run" 
+ * "Run"
  */
 
 function run() {
@@ -108,7 +111,7 @@ hAzzle.extend({
         self.delayed = false;
         self.repeatCount = 0;
         self.paused = false;
-        self.easing = hAzzle.easing.easeNone;
+        self.easing = hAzzle.easing.linear;
 
         // All of them are using hAzzle.noop, so we can save some bytes, we do it like this
 
@@ -120,7 +123,7 @@ hAzzle.extend({
         self.hACEPipe = {};
         self.then = now();
         self.now = self.raf = self.delta = 'undefined';
-        self.interval = thousand  / hAzzle.frameRate;
+        self.interval = thousand / hAzzle.frameRate;
         self.running = self.hasNative = false;
     },
 
@@ -178,13 +181,13 @@ hAzzle.hACEPipe.prototype = {
          */
 
         if (!this.running) {
-			
+
             hAzzle.frameRate = frameRate || hAzzle.frameRate;
             this.interval = 1000 / hAzzle.frameRate;
-            
-			// Start the animation
-            
-			run();
+
+            // Start the animation
+
+            run();
         }
     },
 
@@ -208,7 +211,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     pause: function () {
-		var self = this;
+        var self = this;
         if (self.running) {
             cancelFrame.call(win, self.raf);
             self.running = false;
@@ -225,7 +228,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     setframeRate: function (frameRate) {
-        this.interval = thousand  / frameRate;
+        this.interval = thousand / frameRate;
     }
 };
 
@@ -247,7 +250,7 @@ hAzzle.hACEController.prototype = {
 
     queue: function () {
         var self = this,
-		   _hACE = new hAzzle.hACE(self),
+            _hACE = new hAzzle.hACE(self),
             _queue = self.queue[self.queue.length - 1];
         if (!_queue || _queue && _queue.hasCompleted) {
             _hACE.canStart = true;
@@ -422,7 +425,7 @@ hAzzle.hACE.prototype = {
         }
 
         var val,
-            stepDuration = thousand  / hAzzle.frameRate,
+            stepDuration = thousand / hAzzle.frameRate,
             steps = self.hACEDuration / stepDuration;
 
         if (typeof self.endVal === 'object') {
@@ -441,21 +444,40 @@ hAzzle.hACE.prototype = {
 
         self.hasStarted = true;
 
+        /**
+	    * Mehran!
+		FIX IT!!
+		
+		self.easing are defined on the hACE main function, but it can't be found here - undefined.
+		Figure out why this happend.
+		
+		After you have solved that problem, you can delete this line:
+		
+		self.easing = self.easing || hAzzle.easing.linear
+		
+		*/
+
+        self.easing = self.easing || hAzzle.easing.linear
+
         // Our stop function
 
-        self.stpFn = function () {
+        self.stopIt = function () {
             if (steps >= 0 && self.hasStarted) {
 
                 var s = self.hACEDuration,
                     values;
 
                 s = s - (steps * stepDuration);
-				
-                steps--;
 
+                steps--;
+                /* Mehran!
+    
+	      Mr. Robert Penners way of doing easing seems not to be valid in 2014. So
+	      I modified this so we avoid jsLint errors.
+       */
                 if (self.differences.hasOwnProperty('mehran')) {
 
-                    values = self.easing.call(hAzzle.easing, s, self.startVal, self.differences['mehran'], self.hACEDuration);
+                    values = self.startVal + (self.differences['mehran'] - self.startVal) * self.easing.call(hAzzle.easing, s / self.hACEDuration);
 
                 } else {
 
@@ -465,8 +487,10 @@ hAzzle.hACE.prototype = {
                 // if 'values' are an 'Object'
 
                 if (typeof values === 'object') {
+
                     for (var v in self.differences) {
-                        values[v] = self.easing.call(hAzzle.easing, s, self.startVal[v], self.differences[v], self.hACEDuration);
+
+                        values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * self.easing.call(hAzzle.easing, s / self.hACEDuration);
                     }
                 }
 
@@ -477,27 +501,31 @@ hAzzle.hACE.prototype = {
                 // If animation have not started, remove it from the 'pipe'
 
                 hAzzle.pipe.remove(self.name);
-                
-				self.onStopped.call(self);
-				
+
+                self.onStopped.call(self);
+
             } else {
-				
-				// Remove from the 'pipe'
+
+                // Remove from the 'pipe'
+
                 hAzzle.pipe.remove(self.name);
-                
-				// Not started yet
-				
-				self.hasStarted = false;
-                
-				// Set delayed to false
-				
-				self.delayed = false;
-                
-				if (self.repeatCount > 0 || self.repeatCount === -1 || self.repeatCount === Infinity) {
+
+                // Not started yet
+
+                self.hasStarted = false;
+
+                // Set delayed to false
+
+                self.delayed = false;
+
+                if (self.repeatCount > 0 || self.repeatCount === -1 || self.repeatCount === Infinity) {
+
                     self.repeatCount = self.repeatCount < 0 || self.repeatCount === Infinity ? self.repeatCount : self.repeatCount--;
                     self.onComplete.call(self, self.end);
                     self.start();
+
                 } else {
+
                     self.hasCompleted = true;
                     self.onComplete.call(self, self.end);
                     self.andThen.call(self);
@@ -508,7 +536,7 @@ hAzzle.hACE.prototype = {
 
         // Add the animation and the stop function to the 'pipe'
 
-        hAzzle.pipe.add(self.name, self.stpFn);
+        hAzzle.pipe.add(self.name, self.stopIt);
 
         return self;
     },
@@ -555,7 +583,7 @@ hAzzle.hACE.prototype = {
 
         // Add the animation back into the pipe
 
-        hAzzle.pipe.add(this.name, this.stpFn);
+        hAzzle.pipe.add(this.name, this.stopIt);
 
         return this;
     },
