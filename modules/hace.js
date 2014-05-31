@@ -112,10 +112,10 @@ hAzzle.extend({
         self.repeatCount = 0;
         self.paused = false;
         self.easing = hAzzle.easing.linear; // Default easing function
-
-        // All of them are using hAzzle.noop, so we can save some bytes, we do it like this
-
-        self.onStep = self.onComplete = self.onStopped = self.andThen = hAzzle.noop;
+        self.onStep = hAzzle.noop,
+        self.onComplete = hAzzle.noop,
+        self.onStopped = hAzzle.noop,
+        self.andThen = hAzzle.noop;
     },
 
     hACEPipe: function () {
@@ -150,7 +150,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     add: function (name, fn) {
-        if (name && fn) {
+        if (typeof name === "string" && fn) {
             this.hACEPipe[name] = fn;
         }
     },
@@ -164,7 +164,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     remove: function (name) {
-        if (name) {
+        if (typeof name === "string") {
             delete this.hACEPipe[name];
         }
     },
@@ -204,7 +204,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     has: function (name) {
-        return name ? name in this.hACEPipe : "";
+        return typeof name === "string" ? name in this.hACEPipe : "";
     },
 
     /**
@@ -224,7 +224,7 @@ hAzzle.hACEPipe.prototype = {
     },
 
     /**
-     * Set frameRate
+     * Set frameRate (fps)
      *
      * @param {Number} frameRate
      * @return {hAzzle}
@@ -232,7 +232,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     setframeRate: function (frameRate) {
-        this.interval = thousand / frameRate;
+        this.interval = thousand / frameRate || hAzzle.frameRate;
     }
 };
 
@@ -284,7 +284,7 @@ hAzzle.hACE.prototype = {
      */
 
     from: function (val) {
-        this.startVal = val;
+        this.startVal = typeof val === "number" ? val : 0;
         return this;
     },
 
@@ -296,7 +296,7 @@ hAzzle.hACE.prototype = {
      */
 
     to: function (val) {
-        this.endVal = val;
+        this.endVal = typeof val === "number" ? val : 0;
         return this;
     },
 
@@ -308,7 +308,7 @@ hAzzle.hACE.prototype = {
      */
 
     duration: function (ms) {
-        this.hACEDuration = ms;
+        this.hACEDuration = typeof ms === "number" ? ms : thousand;
         return this;
     },
 
@@ -320,7 +320,7 @@ hAzzle.hACE.prototype = {
      */
 
     delay: function (ms) {
-        this.delayDuration = ms;
+        this.delayDuration = typeof ms === "number" ? ms : 1;
         return this;
     },
 
@@ -332,7 +332,7 @@ hAzzle.hACE.prototype = {
      */
 
     repeat: function (count) {
-        this.repeatCount = count;
+        this.repeatCount = typeof count === "number" ? count : 0;
         return this;
     },
 
@@ -344,11 +344,7 @@ hAzzle.hACE.prototype = {
      */
 
     ease: function (fn) {
-
-        if (fn) {
-
-            this.easing = fn;
-        }
+        this.easing = fn || hAzzle.easing.linear;
         return this;
     },
 
@@ -360,7 +356,7 @@ hAzzle.hACE.prototype = {
      */
 
     step: function (fn) {
-        this.onStep = fn;
+        this.onStep = fn || hAzzle.noop;
         return this;
     },
 
@@ -372,7 +368,7 @@ hAzzle.hACE.prototype = {
      */
 
     complete: function (fn) {
-        this.onComplete = fn;
+        this.onComplete = fn || hAzzle.noop;
         return this;
     },
 
@@ -384,7 +380,7 @@ hAzzle.hACE.prototype = {
      */
 
     stopped: function (fn) {
-        this.onStopped = fn;
+        this.onStopped = fn || hAzzle.noop;
         return this;
     },
 
@@ -396,7 +392,7 @@ hAzzle.hACE.prototype = {
      */
 
     then: function (fn) {
-        this.andThen = fn;
+        this.andThen = fn || hAzzle.noop;
         return this;
     },
 
@@ -527,6 +523,7 @@ hAzzle.hACE.prototype = {
                     self.andThen.call(self);
                     self.controller.queue.shift();
                 }
+
             }
         };
 
