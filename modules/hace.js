@@ -25,7 +25,7 @@ var win = this,
 
     // RequestAnimationFrame
 
-    requestAnimFrame = (function () {
+    requestFrame = (function () {
         var legacy = (function fallback(callback) {
             var currTime = now(),
                 lastTime = currTime + timeToCall,
@@ -39,14 +39,14 @@ var win = this,
 
     // CancelAnimationFrame
 
-    cancelAnimFrame = function () {
+    cancelFrame = function () {
         var legacy = (function (id) {
             clearTimeout(id);
         });
         return !blacklisted ? (hAzzle.prefix('CancelAnimationFrame') || hAzzle.prefix('CancelRequestAnimationFrame') || legacy) : legacy;
     }();
 
-requestAnimFrame(function (timestamp) {
+requestFrame(function (timestamp) {
     // feature-detect if rAF and now() are of the same scale (epoch or high-res),
     // if not, we have to do a timestamp fix on each frame
     fixTs = timestamp > 1e12 !== now() > 1e12;
@@ -60,14 +60,14 @@ function run() {
     var hp = hAzzle.pipe,
         n;
 
-    hp.raf = requestAnimFrame.call(win, run);
+    hp.raf = requestFrame.call(win, run);
     hp.now = now();
     hp.delta = hp.now - hp.then;
     if (hp.delta > hp.interval) {
-        for (n in hp.pipeline) {
-            if (hp.pipeline.hasOwnProperty(n)) {
+        for (n in hp.hACEPipe) {
+            if (hp.hACEPipe.hasOwnProperty(n)) {
 
-                hp.pipeline[n](hp.delta);
+                hp.hACEPipe[n](hp.delta);
             }
         }
         hp.then = hp.now - (hp.delta % hp.interval);
@@ -81,11 +81,11 @@ hAzzle.extend({
     /**
      * Mehran!
      *
-     * fps are exposed to the global hAzzle Object so we can
+     * frameRate are exposed to the global hAzzle Object so we can
      * overrun it in plugins and / or other Core functions
      */
 
-    fps: 60,
+    frameRate: 60,
 
     hACE: function () {
 
@@ -115,12 +115,12 @@ hAzzle.extend({
         self.onStep = self.onComplete = self.onStopped = self.andThen = hAzzle.noop;
     },
 
-    AnimationPipe: function () {
+    hACEPipe: function () {
         var self = this;
-        self.pipeline = {};
+        self.hACEPipe = {};
         self.then = now();
         self.now = self.raf = self.delta = 'undefined';
-        self.interval = thousand  / hAzzle.fps;
+        self.interval = thousand  / hAzzle.frameRate;
         self.running = self.hasNative = false;
     },
 
@@ -132,13 +132,13 @@ hAzzle.extend({
 
 
 /**
- * Prototype for AnimationPipe
+ * Prototype for hACEPipe
  */
 
-hAzzle.AnimationPipe.prototype = {
+hAzzle.hACEPipe.prototype = {
 
     /**
-     * Add animation to the pipeline
+     * Add animation to the 'pipe'
      *
      * @param{String} name
      * @param{Function} fn
@@ -147,11 +147,11 @@ hAzzle.AnimationPipe.prototype = {
      */
 
     add: function (name, fn) {
-        this.pipeline[name] = fn;
+        this.hACEPipe[name] = fn;
     },
 
     /**
-     * Remove animation from the pipeline
+     * Remove animation from the 'pipe'
      *
      * @param{String} name
      * @return{hAzzle}
@@ -159,18 +159,18 @@ hAzzle.AnimationPipe.prototype = {
      */
 
     remove: function (name) {
-        delete this.pipeline[name];
+        delete this.hACEPipe[name];
     },
 
     /**
      * Starts the animation engine
      *
-     * @param{Nummber} fps
+     * @param{Nummber} frameRate
      * @return{hAzzle}
      *
      */
 
-    start: function (fps) {
+    start: function (frameRate) {
 
         /**
          * Only call "run" if the animation
@@ -179,15 +179,17 @@ hAzzle.AnimationPipe.prototype = {
 
         if (!this.running) {
 			
-            hAzzle.fps = fps || hAzzle.fps;
-            this.interval = 1000 / hAzzle.fps;
-
-            run();
+            hAzzle.frameRate = frameRate || hAzzle.frameRate;
+            this.interval = 1000 / hAzzle.frameRate;
+            
+			// Start the animation
+            
+			run();
         }
     },
 
     /**
-     * Check if the pipeline contains an animation
+     * Check if the 'pipe' contains an animation
      *
      * @param {String} name
      * @return {hAzzle}
@@ -195,7 +197,7 @@ hAzzle.AnimationPipe.prototype = {
      */
 
     has: function (name) {
-        return name in this.pipeline;
+        return name in this.hACEPipe;
     },
 
     /**
@@ -208,31 +210,32 @@ hAzzle.AnimationPipe.prototype = {
     pause: function () {
 		var self = this;
         if (self.running) {
-            cancelAnimFrame.call(win, self.raf);
+            cancelFrame.call(win, self.raf);
             self.running = false;
         }
         return this;
     },
 
     /**
-     * Set FPS
+     * Set frameRate
      *
-     * @param {Number} fps
+     * @param {Number} frameRate
      * @return {hAzzle}
      *
      */
 
-    setFPS: function (fps) {
-        this.interval = thousand  / fps;
+    setframeRate: function (frameRate) {
+        this.interval = thousand  / frameRate;
     }
 };
 
 /**
- * Pipeline has to be created and
- * started automaticly
+ * hAzzle.pipe has to be created and
+ * started automaticly else the
+ * hACE will not run
  */
 
-hAzzle.pipe = new hAzzle.AnimationPipe();
+hAzzle.pipe = new hAzzle.hACEPipe();
 hAzzle.pipe.start();
 
 
@@ -261,7 +264,7 @@ hAzzle.hACEController.prototype = {
 };
 
 /**
- * Prototype for AnimationPipe
+ * Prototype for hACE
  */
 
 hAzzle.hACE.prototype = {
@@ -419,7 +422,7 @@ hAzzle.hACE.prototype = {
         }
 
         var val,
-            stepDuration = thousand  / hAzzle.fps,
+            stepDuration = thousand  / hAzzle.frameRate,
             steps = self.hACEDuration / stepDuration;
 
         if (typeof self.endVal === 'object') {
