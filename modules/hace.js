@@ -64,8 +64,10 @@ function run() {
         n;
 
     hp.raf = requestFrame.call(win, run);
+    delete hp.raf;
     hp.now = now();
     hp.delta = hp.now - hp.then;
+
     if (hp.delta > hp.interval) {
         for (n in hp.hACEPipe) {
             if (hp.hACEPipe.hasOwnProperty(n)) {
@@ -451,10 +453,16 @@ hAzzle.hACE.prototype = {
 
                 var v,
                     percent = self.hACEDuration - (steps * stepDuration),
-                    ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration),
+                    ease,
                     values;
 
                 steps--;
+
+                if (percent < 0) {
+                    percent = 0;
+                }
+
+                ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration);
 
                 if (self.differences.hasOwnProperty('mehran')) {
 
