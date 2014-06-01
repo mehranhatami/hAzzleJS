@@ -55,11 +55,14 @@ requestFrame(function (timestamp) {
     fixTs = timestamp > 1e12 !== now() > 1e12;
 }),
 
+// String based duration aka jQuery style
+
 speed = {
-    'slow': 8500,
-    'normal': 1500,
-    'fast': 400,
-    'quick': 180
+    slow: 8500,
+    fast: 400,
+    quick: 180,
+    // Default speed
+    _default: 1500
 };
 
 /**
@@ -71,8 +74,9 @@ function run() {
         n;
 
     /* If the animation are running,
-   no point to start it again
-*/
+    no point to start it again
+  */
+
     if (hp.running) {
         return false;
     }
@@ -91,6 +95,10 @@ function run() {
         }
         hp.then = hp.now - (hp.delta % hp.interval);
     }
+
+    // Set to undefined to avoid leaks
+
+    hp.now = undefined;
 }
 
 // Extend the hAzzle Object
@@ -115,7 +123,7 @@ hAzzle.extend({
         self.canStart = true;
         self.hasStarted = false;
         self.hasCompleted = false;
-        self.hACEDuration = speed.normal;
+        self.hACEDuration = speed._default;
         self.delayDuration = 0;
         self.delayed = false;
         self.repeatCount = 0;
@@ -328,11 +336,11 @@ hAzzle.hACE.prototype = {
 
         if (typeof ms === "string") {
 
-            this.hACEDuration = speed[ms] || speed.normal;
+            this.hACEDuration = speed[ms] || speed._default;
 
         } else if (typeof ms === "number") {
 
-            this.hACEDuration = ms || speed.normal;
+            this.hACEDuration = ms || speed._default;
         }
 
         return this;
