@@ -1,11 +1,21 @@
+
+var win = this,
+    doc = win.document,
+    unitless = { lineHeight: 1, zoom: 1, zIndex: 1, opacity: 1 };
+
 // CSS transform
+
+
+
 var transform = function () {
     var styles = doc.createElement('a').style,
         props = ['webkitTransform', 'MozTransform', 'OTransform', 'msTransform', 'Transform'],
         i = 0,
         len = props.length;
     for (; i < len; i++) {
-        if (props[i] in styles) return props[i]
+        if (props[i] in styles) {
+		return props[i];
+		}
     }
 }();
 
@@ -25,6 +35,8 @@ function by(val, start, m, r, i) {
         parseInt(val, 10);
 }
 
+
+
 /**
  * hAzzle CSS animation engine ( hCAE )
  */
@@ -42,6 +54,7 @@ hAzzle.extend({
         var el,
             k,
             v,
+			tmp,
             from,
             to,
             property,
@@ -59,10 +72,17 @@ hAzzle.extend({
         return this[typeof queue && this.length > 1 ? 'queue' : 'each'](function () {
 
             el = this;
+			
+          // Never do animation on hidden CSS nodes
+		  
+			if(el.style.display === 'none') {
+				
+			   el.style.display === 'block';
+			}
 
             // Start hACE
 
-            anim = new hAzzle.hACE()
+            anim = new hAzzle.hACE();
 
             /* Set duration, callback and easing
              *
@@ -90,23 +110,27 @@ hAzzle.extend({
 
             for (k in options) {
 
-                // CSS style
-
-                v = getStyle(el, k);
+            v = getStyle(el, k);
+            tmp = typeof options[k] === "function" ? options[k](el) : options[k];
 
                 property = k;
 
                 from = parseFloat(v, 10);
-                to = by(options[k], parseFloat(v, 10))
-
+                to = by(tmp, parseFloat(v, 10));
+				
             }
 
             anim.from(from);
             anim.to(to);
 
             anim.step(function (val) {
+              
+			  if(!unitless[property]) {
 
-                el.style[hAzzle.camelize(property)] = val + (property === "opacity" ? '' : 'px');
+			      val += 'px';
+			  }
+
+                el.style[hAzzle.camelize(property)] = val;
 
             });
 
@@ -121,7 +145,7 @@ hAzzle.extend({
             }
         });
     },
-})
+});
 
 /**
  * FadeIn and FadeOut
@@ -135,5 +159,5 @@ hAzzle.each(['fadeIn', 'fadeOut'], function (name) {
             complete: callback,
             easing: easing
         });
-    }
+    };
 });
