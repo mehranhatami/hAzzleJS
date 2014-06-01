@@ -63,6 +63,13 @@ function run() {
     var hp = hAzzle.pipe,
         n;
 
+    /* If the animation are running,
+   no point to start it again
+*/
+    if (hp.running) {
+        return false;
+    }
+
     hp.raf = requestFrame.call(win, run);
     delete hp.raf;
     hp.now = now();
@@ -427,7 +434,7 @@ hAzzle.hACE.prototype = {
 
         var val,
             stepDuration = thousand / hAzzle.frameRate,
-            steps = self.hACEDuration / stepDuration;
+            steps = self.hACEDuration / stepDuration || 0;
 
         if (typeof self.endVal === 'object') {
             if (typeof self.startVal !== 'object') {
@@ -527,8 +534,6 @@ hAzzle.hACE.prototype = {
 
         hAzzle.pipe.add(self.name, self.stopIt);
 
-
-
         return self;
     },
 
@@ -540,8 +545,12 @@ hAzzle.hACE.prototype = {
      */
 
     stop: function () {
-        this.hasStarted = false;
-        return this;
+        var self = this;
+        if (self.hasStarted) {
+            self.hasStarted = false;
+            cancelFrame.call(win, self.raf);
+        }
+        return self;
     },
 
     /**
@@ -551,11 +560,13 @@ hAzzle.hACE.prototype = {
      */
 
     pause: function () {
+        var self = this;
+        // Remove the animation from the pipe if animation are running
+        if (self.hasStarted) {
 
-        // Remove the animation from the pipe
-
-        hAzzle.pipe.remove(this.name);
-        return this;
+            hAzzle.pipe.remove(self.name);
+        }
+        return self;
 
     },
 
@@ -566,18 +577,21 @@ hAzzle.hACE.prototype = {
      */
 
     resume: function () {
+        var self = this;
+        if (self.hasStarted) {
 
-        // Do nothing if the animation are in the pipe
+            // Do nothing if the animation are in the pipe
 
-        if (hAzzle.pipe.has(this.name)) {
-            return;
+            if (hAzzle.pipe.has(self.name)) {
+                return;
+            }
+
+            // Add the animation back into the pipe
+
+            hAzzle.pipe.add(self.name, self.stopIt);
+
+            return self;
         }
-
-        // Add the animation back into the pipe
-
-        hAzzle.pipe.add(this.name, this.stopIt);
-
-        return this;
     },
 
     /**
