@@ -558,7 +558,7 @@ hAzzle.hACE.prototype = {
                     self.hasCompleted = true;
                     self.onComplete.call(self, self.end);
                     self.andThen.call(self);
-                    self.controller.queue.shift();
+                    self.controller.queuee.shift();
                 }
             }
         };
@@ -578,7 +578,7 @@ hAzzle.hACE.prototype = {
      */
 
     stop: function () {
-        var self = this;
+	    var self = this;
         if (self.hasStarted) {
             self.hasStarted = false;
             cancelFrame.call(win, self.raf);
