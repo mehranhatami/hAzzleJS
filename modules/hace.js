@@ -268,7 +268,7 @@ hAzzle.pipe.start();
 
 hAzzle.hACEController.prototype = {
 
-    queuee: function () {
+    queue: function () {
         var self = this,
             _hACE = new hAzzle.hACE(self),
             _queue = self.q[self.q.length - 1];
@@ -558,7 +558,7 @@ hAzzle.hACE.prototype = {
                     self.hasCompleted = true;
                     self.onComplete.call(self, self.end);
                     self.andThen.call(self);
-                    self.controller.queuee.shift();
+                    self.controller.q.shift();
                 }
             }
         };
@@ -669,7 +669,7 @@ hAzzle.hACE.prototype = {
      */
 
     queue: function () {
-        return this.controller.queuee();
+        return this.controller.queue();
     }
 
 };
