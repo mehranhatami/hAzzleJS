@@ -116,7 +116,6 @@ hAzzle.extend({
         self.name = hAzzle.getUID(self);
 
         self.controller = new hAzzle.hACEController();
-
         self.startVal = 0;
         self.endVal = 0;
         self.differences = {};
@@ -145,7 +144,7 @@ hAzzle.extend({
     },
 
     hACEController: function () {
-        this.queue = [];
+        this.q = [];
     }
 
 }, hAzzle);
@@ -269,10 +268,10 @@ hAzzle.pipe.start();
 
 hAzzle.hACEController.prototype = {
 
-    queue: function () {
+    queuee: function () {
         var self = this,
             _hACE = new hAzzle.hACE(self),
-            _queue = self.queue[self.queue.length - 1];
+            _queue = self.q[self.q.length - 1];
         if (!_queue || _queue && _queue.hasCompleted) {
             _hACE.canStart = true;
         } else {
@@ -282,7 +281,7 @@ hAzzle.hACEController.prototype = {
                 _hACE.start();
             });
         }
-        self.queue.push(_hACE);
+        self.q.push(_hACE);
         return _hACE;
     }
 };
@@ -670,7 +669,7 @@ hAzzle.hACE.prototype = {
      */
 
     queue: function () {
-        return this.controller.queue();
+        return this.controller.queuee();
     }
 
 };
