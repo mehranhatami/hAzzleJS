@@ -312,7 +312,7 @@ hAzzle.hACE.prototype = {
      */
 
     to: function (val) {
-        this.endVal = typeof val === "number" ? val : 0;
+        this.endVal = typeof val === "number" ? val : 20;
         return this;
     },
 
@@ -371,6 +371,7 @@ hAzzle.hACE.prototype = {
     },
 
     /**
+
      * Easing
      *
      * @param {Function} fn
@@ -584,6 +585,41 @@ hAzzle.hACE.prototype = {
             cancelFrame.call(win, self.raf);
         }
         return self;
+    },
+
+    /**
+     * Mehran!
+     *
+     * For the forward() and rewind() function. Make sure
+     * the speed increase / decrease happend on current
+     * step, and not start the animation over again from
+     * start.
+     */
+
+    /**
+     * Increase the animation speed
+     *
+     * @param {Number} count
+     * @return {hAzzle}
+     */
+
+    forward: function (count) {
+        if (typeof count === "number") {
+            this.hACEDuration = this.hACEDuration / count || 0;
+        }
+    },
+
+    /**
+     * Decrease the animation speed
+     *
+     * @param {Number} count
+     * @return {hAzzle}
+     */
+
+    rewind: function (count) {
+        if (typeof count === "number") {
+            this.hACEDuration = this.hACEDuration * count || 0;
+        }
     },
 
     /**
