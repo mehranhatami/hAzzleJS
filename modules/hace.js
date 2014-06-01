@@ -53,7 +53,14 @@ requestFrame(function (timestamp) {
     // feature-detect if rAF and now() are of the same scale (epoch or high-res),
     // if not, we have to do a timestamp fix on each frame
     fixTs = timestamp > 1e12 !== now() > 1e12;
-});
+}),
+
+speed = {
+    'slow': 8500,
+    'normal': 1500,
+    'fast': 400,
+    'quick': 180
+};
 
 /**
  * "Run"
@@ -108,7 +115,7 @@ hAzzle.extend({
         self.canStart = true;
         self.hasStarted = false;
         self.hasCompleted = false;
-        self.hACEDuration = 400;
+        self.hACEDuration = speed.normal;
         self.delayDuration = 0;
         self.delayed = false;
         self.repeatCount = 0;
@@ -309,7 +316,25 @@ hAzzle.hACE.prototype = {
      */
 
     duration: function (ms) {
-        this.hACEDuration = typeof ms === "number" ? ms : thousand;
+
+        /**
+         * To make this familiar with jQuery, hAzzle are
+         * supporting:
+         *
+         * - slow
+         * - fast
+         * - quick
+         */
+
+        if (typeof ms === "string") {
+
+            this.hACEDuration = speed[ms] || speed.normal;
+
+        } else if (typeof ms === "number") {
+
+            this.hACEDuration = ms || speed.normal;
+        }
+
         return this;
     },
 
