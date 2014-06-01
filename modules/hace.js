@@ -605,7 +605,7 @@ hAzzle.hACE.prototype = {
 
     forward: function (count) {
         if (typeof count === "number") {
-            this.hACEDuration = this.hACEDuration / count || 0;
+            this.hACEDuration = this.hACEDuration / count || speed._default;
         }
     },
 
@@ -618,7 +618,7 @@ hAzzle.hACE.prototype = {
 
     rewind: function (count) {
         if (typeof count === "number") {
-            this.hACEDuration = this.hACEDuration * count || 0;
+            this.hACEDuration = this.hACEDuration * count || speed._default;
         }
     },
 
