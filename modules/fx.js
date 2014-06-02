@@ -29,17 +29,137 @@ function by(val, start, m, r, i) {
  */
 
 function createStepping(el, property, partOne, partTwo, partThree, partFour) {
+
     return function (val) {
+
+        var style = el.style,
+            prop = hAzzle.camelize(property),
+            display;
+
+        /**
+         * Used for Transform rotate
+         *
+         * Example:
+         *
+         * rotate(30deg)
+         *
+         */
+
         if (partOne && partTwo && !partThree) {
-            el.style[hAzzle.camelize(property)] = partOne + val + partTwo;
-        } else
-        if (partThree && partFour) {
-            el.style[hAzzle.camelize(property)] = partOne + val + partTwo + partThree + val + partFour;
+
+            style[prop] = partOne + val + partTwo;
+
+            /**
+             * Used for Transform skew and translate
+             *
+             * Examples:
+             *
+             * skew(30deg, 90deg)
+             *
+             * translate(-10px, 0px)
+             *
+             * FIX ME!!!
+             *
+             * Need to do some changes in hACE, so we get
+             * returned two different 'val' values for
+             * x and y coordinates
+             *
+             * Also need to fix it so we can do relative animation
+             * on the values itself
+             *
+             */
+
+        } else if (partThree && partFour) {
+
+            style[prop] = partOne + val + partTwo + partThree + val + partFour;
+
+            /**
+             * 'Normal' CSS animation without extra parts
+             */
+
         } else {
-            if (!hAzzle.unitless[property]) {
-                val += 'px';
+
+            /**
+             * Special threatment for when we are hiding an element.
+             * We need to save current state, and hide the
+             * element after the animation.
+             *
+             * Mostly used for 'opacity'
+             *
+             */
+
+            if (partOne === "hide") {
+
+                display = hAzzle.getStyle(el, 'display');
+
+                if (display === 'none' && !hAzzle.data(el, 'fxshow')) {
+                    hAzzle.data(el, 'fxshow', display);
+                }
+
+                // Do the animation
+
+                style[prop] = val;
+
+                // Hide the element when the counter reach 0
+
+                if (val === 0) {
+
+                    style.display = 'none';
+                }
+                /**
+                 * Special threatment for when we are showing an element.
+                 * We need to get the current state, and show the
+                 * element before the animation.
+                 *
+                 * The element can have been hidden by an previous
+                 * animation, or with CSS stylesheet
+                 *
+                 * Mostly used for 'opacity'
+                 *
+                 */
+
+            } else if (partOne === "show") {
+
+                display = style.display;
+
+                if (!hAzzle.data(el, "fxshow") && display === "none") {
+                    display = style.display = "";
+                }
+
+                // Set elements which have been overridden with display: none
+                // in a stylesheet to whatever the default browser style is
+                // for such an element
+
+                if (display === "" && hAzzle.getStyle(el, "display") === "none") {
+                    hAzzle.data(el, "fxshow", defaultDisplay(el.nodeName));
+                }
+
+                // Make the element visible
+
+                if (display === "" || display === "none") {
+                    style.display = hAzzle.data(el, "fxshow") || "";
+                }
+
+                // Do the animation
+
+                el.style[prop] = val;
+
+                /**
+                 * Regular animation without any special threatments
+                 */
+
+            } else {
+
+                /**
+                 * Don't use 'px' on certain CSS styles
+                 */
+                if (!hAzzle.unitless[property]) {
+
+                    val += 'px';
+                }
+
+                style[prop] = val;
             }
-            el.style[hAzzle.camelize(property)] = val;
         }
     };
 }
@@ -74,12 +194,13 @@ hAzzle.extend({
     },
 
     animate: function (opt, value, cb) {
-
+        //alert(callback)
         var iter = opt,
             v,
             tmp,
             ae,
             m,
+            style,
             from = [],
             to = [],
             step = [],
@@ -96,9 +217,9 @@ hAzzle.extend({
         }
 
         /*
-		   Example:
-		   
-		   hAzzle('#node').animate( {}, speed);
+           Example:
+
+           hAzzle('#node').animate( {}, speed);
 		*/
 
         if (typeof value === "number") {
@@ -116,11 +237,12 @@ hAzzle.extend({
          * run the queue system. Else we run normal 'each'
          */
 
+
         function fn(el) {
 
             // Never do animation on hidden CSS nodes
 
-            var style = el.style;
+            style = el.style;
 
             // Start hACE
 
@@ -130,40 +252,40 @@ hAzzle.extend({
 
             hAzzle.data(el, "anim", anim);
 
+
+            /**
+             * IMPORTANT!!
+             *
+             * We have to do all the CSS checks in the beginning of this
+             * loop and update / remove from the options BEFORE
+             * we use 'hAzzle.getStyle()' and get the CSS node
+             * values and animates them.
+             *
+             */
+
+            if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
+
+                iter.overflow = [style.overflow, style.overflowX, style.overflowY];
+
+                display = hAzzle.getStyle(el, 'display');
+
+                checkDisplay = display === 'none' ?
+                    hAzzle.data(el, 'fxshow') || defaultDisplay(el.nodeName) : display;
+
+                if (checkDisplay === 'inline' && hAzzle.getStyle(el, 'float') === 'none') {
+                    style.display = 'inline-block';
+                }
+            }
+
+            // Fix the overflow property
+
+            if (iter.overflow) {
+                style.overflow = 'hidden';
+            }
+
             ae = keys(iter);
 
             for (var i = 0; i < ae.length; i++) {
-
-                /**
-                 * IMPORTANT!!
-                 *
-                 * We have to do all the CSS checks in the beginning of this
-                 * loop and update / remove from the options BEFORE
-                 * we use 'hAzzle.getStyle()' and get the CSS node
-                 * values and animates them.
-                 *
-                 */
-
-                if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
-
-                    iter.overflow = [style.overflow, style.overflowX, style.overflowY];
-
-                    display = hAzzle.getStyle(el, "display");
-
-                    checkDisplay = display === 'none' ?
-                        hAzzle.data(el, 'olddisplay') || defaultDisplay(el.nodeName) : display;
-
-                    if (checkDisplay === 'inline' && hAzzle.getStyle(el, 'float') === 'none') {
-
-                        style.display === 'inline-block';
-                    }
-                }
-
-                // Fix the overflow property
-
-                if (iter.overflow) {
-                    style.overflow = 'hidden';
-                }
 
                 // Duration
 
@@ -175,7 +297,7 @@ hAzzle.extend({
                 // Callback
 
                 if (ae[i] === "callback") {
-                    duration = iter[ae[i]];
+                    callback = iter[ae[i]];
                     delete iter.callback;
                 }
 
@@ -207,7 +329,7 @@ hAzzle.extend({
                      * For now we have the same X and Y values for skew and translate
                      */
 
-                    // Rotation		  
+                    // Rotation
 
                     if ((m = tmp.match(rotate))) {
                         step[i] = createStepping(el, ae[i], "rotate(", "deg)");
@@ -234,26 +356,47 @@ hAzzle.extend({
 
                 } else {
 
-                    from[i] = parseFloat(v);
-                    to[i] = by(tmp, parseFloat(v));
-                    step[i] = createStepping(el, ae[i]);
+                    if (tmp === "hide") {
+                        from[i] = 1;
+                        to[i] = 0;
+                        step[i] = createStepping(el, ae[i], 'hide');
+                    } else if (tmp === "show") {
+                        //	alert ( ae[i]  );
+
+                        if (ae[i] === "height") {
+
+
+                            from[i] = parseFloat(v);
+                            to[i] = 0;
+
+
+                        } else if (ae[i] === "opacity") {
+
+                            to[i] = 1;
+                            from[i] = 0;
+
+                        }
+                        step[i] = createStepping(el, ae[i], 'show');
+                    } else {
+                        from[i] = parseFloat(v);
+                        to[i] = by(tmp, parseFloat(v));
+                        step[i] = createStepping(el, ae[i]);
+                    }
                 }
 
             }
 
             // Here starts the fun ........... NOT AT ALL !!!	
 
-            if (ae.length === 1) {
+            if (!ae.length) {
 
                 anim.from(from[0])
                     .to(to[0])
                     .ease(easing)
                     .duration(duration)
                     .step(step[0])
-                    .complete(function () {
-                        this.reverse();
-
-                    }).start();
+                    .complete(callback)
+                    .start();
 
             } else {
 
@@ -268,10 +411,7 @@ hAzzle.extend({
                             .ease(easing)
                             .duration(duration)
                             .step(step[b])
-                            .complete(function () {
-                                this.reverse();
-
-                            }).start();
+                            .complete(callback).start();
 
                         // Series of animation on the same CSS node, 
                         // So we need to queue
@@ -284,10 +424,7 @@ hAzzle.extend({
                             .ease(easing)
                             .duration(duration)
                             .step(step[b])
-                            .complete(function () {
-                                this.reverse();
-
-                            })
+                            .complete(callback)
                             .start();
                     }
                 }
@@ -298,19 +435,4 @@ hAzzle.extend({
 
         return this.each(fn);
     },
-});
-
-/**
- * FadeIn and FadeOut
- */
-
-hAzzle.each(['fadeIn', 'fadeOut'], function (name) {
-    hAzzle.Core[name] = function (speed, callback, easing) {
-        return this.animate({
-            opacity: name === 'fadeIn' ? 1 : 0,
-            duration: speed,
-            complete: callback,
-            easing: easing
-        });
-    };
 });
