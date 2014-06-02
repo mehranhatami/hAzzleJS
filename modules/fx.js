@@ -54,9 +54,9 @@ function by(val, start, m, r, i) {
  *
  */
 
-function createStepping(el, property, partOne, partTwo, partThree, partFour) {
+function createStepping(el, property, endvalue, restore, partOne, partTwo, partThree, partFour) {
 
-    return function (val) {
+    return function (val, end) {
 
         var style = el.style,
             prop = hAzzle.camelize(property),
@@ -179,7 +179,6 @@ function createStepping(el, property, partOne, partTwo, partThree, partFour) {
                     if (display === "" || display === "none") {
                         style.display = hAzzle.data(el, "fxshow") || "";
                     }
-                    //alert("d")
                 }
                 // Do the animation
 
@@ -200,6 +199,33 @@ function createStepping(el, property, partOne, partTwo, partThree, partFour) {
                 }
 
                 style[prop] = val;
+            }
+
+
+            // We are at the end of the current animation,
+            // so we restore the values back to normal
+
+            if (endvalue === end) {
+
+                if (restore.display) {
+
+                    // Reset the overflow
+
+                    if (restore.overflow) {
+                        hAzzle.each(["", "X", "Y"], function (value, index) {
+                            el.style["overflow" + value] = restore.overflow[index];
+                        });
+                    }
+
+                    // Reset the display
+                    var old = hAzzle.data(el, "fxshow");
+                    style.display = old ? old : restore.display;
+
+                    if (hAzzle.getStyle(el, "display") == "none") {
+                        style.display = "block";
+                    }
+                }
+
             }
         }
     };
@@ -225,6 +251,7 @@ hAzzle.extend({
             from = [],
             to = [],
             step = [],
+            restore = {},
             display,
             checkDisplay,
             duration,
@@ -267,26 +294,6 @@ hAzzle.extend({
 
             hAzzle.data(el, "anim", anim);
 
-            if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
-
-                iter.overflow = [style.overflow, style.overflowX, style.overflowY];
-
-                display = hAzzle.getStyle(el, 'display');
-
-                checkDisplay = display === 'none' ?
-                    hAzzle.data(el, 'fxshow') || defaultDisplay(el.nodeName) : display;
-
-                if (checkDisplay === 'inline' && hAzzle.getStyle(el, 'float') === 'none') {
-                    style.display = 'inline-block';
-                }
-            }
-
-            // Fix the overflow property
-
-            if (iter.overflow) {
-                style.overflow = 'hidden';
-            }
-
             // Duration
 
             if (iter.duration) {
@@ -309,28 +316,56 @@ hAzzle.extend({
                 delete iter.callback;
             }
 
-          // Iterate through the 'iter' object. I'm using
-          // Object keys for this
+            // Iterate through the 'iter' object. I'm using
+            // Object keys for this
 
             ae = keys(iter);
 
             for (var i = 0; i < ae.length; i++) {
 
+                // Allways zero out 'restore' for each iteration
+
+                restore = {};
+
+                if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
+
+                    // Backup 'overflow'
+
+                    restore.overflow = [style.overflow, style.overflowX, style.overflowY];
+
+                    // Backup 'display' so we can restore it back to normal later on
+
+                    restore.display = display = hAzzle.getStyle(el, 'display');
+
+                    checkDisplay = display === 'none' ?
+                        hAzzle.data(el, 'fxshow') || defaultDisplay(el.nodeName) : display;
+
+                    if (checkDisplay === 'inline' && hAzzle.getStyle(el, 'float') === 'none') {
+                        style.display = 'inline-block';
+                    }
+                }
+
+                // Fix the overflow property
+
+                if (restore.overflow) {
+                    style.overflow = 'hidden';
+                }
+
                 /**
-				 * Special effects
-				 *
-				 * Note!! This is just temporary. A lot of things
-				 * will be changed here.
-				 */ 
+                 * Special effects
+                 *
+                 * Note!! This is just temporary. A lot of things
+                 * will be changed here.
+                 */
 
                 if (iter[ae[i]] === "hide") {
                     from[i] = 1;
                     to[i] = 0;
-                    step[i] = createStepping(el, ae[i], 'hide');
+                    step[i] = createStepping(el, ae[i], 0, restore, 'hide');
                 } else if (iter[ae[i]] === "show") {
                     to[i] = 1;
                     from[i] = 0;
-                    step[i] = createStepping(el, ae[i], 'show');
+                    step[i] = createStepping(el, ae[i], 1, restore, 'show');
 
                 } else { // Normal animation and CSS Transform
 
@@ -359,38 +394,44 @@ hAzzle.extend({
                         // Rotation
 
                         if ((m = tmp.match(rotate))) {
-                            step[i] = createStepping(el, ae[i], "rotate(", "deg)");
-                            to[i] = by(m[1], null);
+                            to = by(m[1], null);
+                            step[i] = createStepping(el, ae[i], to, restore, "rotate(", "deg)");
+                            to[i] = to;
 
                             // Scale 
 
                         } else if ((m = tmp.match(scale))) {
-                            step[i] = createStepping(el, ae[i], "scale(", ")");
-                            to[i] = by(m[1], null);
+                            to = by(m[1], null);
+                            step[i] = createStepping(el, ae[i], to, restore, "scale(", ")");
+                            to[i] = to;
 
                             // Skew
 
                         } else if ((m = tmp.match(skew))) {
-                            step[i] = createStepping(el, ae[i], "skew(", "deg", ',', "deg)");
-                            to[i] = by(m[1], null);
+                            to = by(m[1], null);
+                            step[i] = createStepping(el, ae[i], to, restore, "skew(", "deg", ',', "deg)");
+                            to[i] = to;
 
                             // Translate
 
                         } else if ((m = tmp.match(translate))) {
-                            step[i] = createStepping(el, ae[i], "translate(", "px", ',', "px)");
-                            to[i] = by(m[1], null);
+                            to = by(m[1], null);
+                            step[i] = createStepping(el, ae[i], to, restore, "translate(", "px", ',', "px)");
+                            to[i] = to;
                         }
 
                     } else {
 
                         from[i] = parseFloat(v);
                         to[i] = by(tmp, parseFloat(v));
-                        step[i] = createStepping(el, ae[i]);
+
+
+                        step[i] = createStepping(el, ae[i], by(tmp, parseFloat(v)), restore);
                     }
 
                 }
             }
-			
+
             // Here starts the fun ........... NOT AT ALL !!!	
 
             if (!ae.length) {
@@ -435,6 +476,8 @@ hAzzle.extend({
                 }
             }
         }
+
+
 
         // Return the function
 
