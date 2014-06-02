@@ -2,7 +2,12 @@
  * hAzzle CSS animation engine ( hCAE )
  */
 var win = this,
-    keys = Object.keys;
+    keys = Object.keys,
+    rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
+    scale = /scale\(((?:[+\-]=)?([\d\.]+))\)/,
+    skew = /skew\(((?:[+\-]=)?([\-\d\.]+))deg, ?((?:[+\-]=)?([\-\d\.]+))deg\)/,
+    translate = /translate\(((?:[+\-]=)?([\-\d\.]+))px, ?((?:[+\-]=)?([\-\d\.]+))px\)/;
+
 //    doc = win.document;
 
 
@@ -23,15 +28,19 @@ function by(val, start, m, r, i) {
  *
  */
 
-function createStepping(el, property) {
+function createStepping(el, property, partOne, partTwo, partThree, partFour) {
     return function (val) {
-
-        if (!hAzzle.unitless[property]) {
-
-            val += 'px';
+        if (partOne && partTwo && !partThree) {
+            el.style[hAzzle.camelize(property)] = partOne + val + partTwo;
+        } else
+        if (partThree && partFour) {
+            el.style[hAzzle.camelize(property)] = partOne + val + partTwo + partThree + val + partFour;
+        } else {
+            if (!hAzzle.unitless[property]) {
+                val += 'px';
+            }
+            el.style[hAzzle.camelize(property)] = val;
         }
-
-        el.style[hAzzle.camelize(property)] = val;
     };
 }
 
@@ -70,6 +79,7 @@ hAzzle.extend({
             v,
             tmp,
             ae,
+            m,
             from = [],
             to = [],
             step = [],
@@ -181,9 +191,54 @@ hAzzle.extend({
                 v = hAzzle.getStyle(el, ae[i]);
                 tmp = iter[ae[i]];
 
-                from[i] = parseFloat(v, 10);
-                to[i] = by(tmp, parseFloat(v, 10));
-                step[i] = createStepping(el, ae[i]);
+
+                /**
+                 * CSS Transformation
+                 */
+
+                if (ae[i] === 'transform') {
+
+                    /**
+                     * Mehran!!
+                     *
+                     * A lot of work still remains with CSS transform. Some of it has to do
+                     * with hACE. I will change this later on.
+                     *
+                     * For now we have the same X and Y values for skew and translate
+                     */
+
+                    // Rotation		  
+
+                    if ((m = tmp.match(rotate))) {
+                        step[i] = createStepping(el, ae[i], "rotate(", "deg)");
+                        to[i] = by(m[1], null);
+
+                        // Scale 
+
+                    } else if ((m = tmp.match(scale))) {
+                        step[i] = createStepping(el, ae[i], "scale(", ")");
+                        to[i] = by(m[1], null);
+
+                        // Skew
+
+                    } else if ((m = tmp.match(skew))) {
+                        step[i] = createStepping(el, ae[i], "skew(", "deg", ',', "deg)");
+                        to[i] = by(m[1], null);
+
+                        // Translate
+
+                    } else if ((m = tmp.match(translate))) {
+                        step[i] = createStepping(el, ae[i], "translate(", "px", ',', "px)");
+                        to[i] = by(m[1], null);
+                    }
+
+                } else {
+
+                    from[i] = parseFloat(v);
+                    to[i] = by(tmp, parseFloat(v));
+                    step[i] = createStepping(el, ae[i]);
+                }
+
             }
 
             // Here starts the fun ........... NOT AT ALL !!!	
