@@ -5,7 +5,7 @@
  *
  * hCAE are only using some of the functions
  * that exist in hAzzle Animation Core engine ( hACE ).
- * 
+ *
  * Therefor, it is recomended only to use hCAE for
  * 'normal' CSS animations and effects
  * such as fadeIn and fadeOut.
@@ -27,7 +27,6 @@
  *   in the queue
  *
  */
- 
 var win = this,
     keys = Object.keys,
     rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
@@ -292,103 +291,111 @@ hAzzle.extend({
                     style.display = 'inline-block';
                 }
             }
-		 
+
             // Fix the overflow property
 
             if (iter.overflow) {
                 style.overflow = 'hidden';
             }
 
+
+            // Duration
+
+            if (iter.duration) {
+                duration = iter.duration;
+                delete iter.duration;
+            }
+
+            // Easing
+
+            if (iter.easing) {
+                easing = hAzzle.easing[iter.easing];
+                delete iter.easing;
+            }
+
+
+            // Callback
+
+            if (iter.callback) {
+                callback = iter.callback;
+                delete iter.callback;
+            }
+
+
+
             ae = keys(iter);
 
             for (var i = 0; i < ae.length; i++) {
 
-                // Duration
+                // Special effects
 
-                if (ae[i] === "duration") {
-                    duration = iter[ae[i]];
-                    delete iter.duration;
-                }
+                if (iter[ae[i]] === "hide") {
+                    from[i] = 1;
+                    to[i] = 0;
+                    step[i] = createStepping(el, ae[i], 'hide');
+                } else if (iter[ae[i]] === "show") {
+                    to[i] = 1;
+                    from[i] = 0;
+                    step[i] = createStepping(el, ae[i], 'show');
 
-                // Callback
-
-                if (ae[i] === "callback") {
-                    callback = iter[ae[i]];
-                    delete iter.callback;
-                }
-
-                // Easing
-
-                if (ae[i] === "easing") {
-                    easing = hAzzle.easing[iter[ae[i]]];
-                    delete iter.easing;
-                }
-
-                // So, now we had a little fun, let us do the real magic...
-
-                v = hAzzle.getStyle(el, ae[i]);
-                tmp = iter[ae[i]];
+                } else { // Normal animation
 
 
-                /**
-                 * CSS Transformation
-                 */
+                    // So, now we had a little fun, let us do the real magic...
 
-                if (ae[i] === 'transform') {
+                    v = hAzzle.getStyle(el, ae[i]);
+                    tmp = iter[ae[i]];
+
 
                     /**
-                     * Mehran!!
-                     *
-                     * A lot of work still remains with CSS transform. Some of it has to do
-                     * with hACE. I will change this later on.
-                     *
-                     * For now we have the same X and Y values for skew and translate
+                     * CSS Transformation
                      */
 
-                    // Rotation
+                    if (ae[i] === 'transform') {
 
-                    if ((m = tmp.match(rotate))) {
-                        step[i] = createStepping(el, ae[i], "rotate(", "deg)");
-                        to[i] = by(m[1], null);
+                        /**
+                         * Mehran!!
+                         *
+                         * A lot of work still remains with CSS transform. Some of it has to do
+                         * with hACE. I will change this later on.
+                         *
+                         * For now we have the same X and Y values for skew and translate
+                         */
 
-                        // Scale 
+                        // Rotation
 
-                    } else if ((m = tmp.match(scale))) {
-                        step[i] = createStepping(el, ae[i], "scale(", ")");
-                        to[i] = by(m[1], null);
+                        if ((m = tmp.match(rotate))) {
+                            step[i] = createStepping(el, ae[i], "rotate(", "deg)");
+                            to[i] = by(m[1], null);
 
-                        // Skew
+                            // Scale 
 
-                    } else if ((m = tmp.match(skew))) {
-                        step[i] = createStepping(el, ae[i], "skew(", "deg", ',', "deg)");
-                        to[i] = by(m[1], null);
+                        } else if ((m = tmp.match(scale))) {
+                            step[i] = createStepping(el, ae[i], "scale(", ")");
+                            to[i] = by(m[1], null);
 
-                        // Translate
+                            // Skew
 
-                    } else if ((m = tmp.match(translate))) {
-                        step[i] = createStepping(el, ae[i], "translate(", "px", ',', "px)");
-                        to[i] = by(m[1], null);
-                    }
+                        } else if ((m = tmp.match(skew))) {
+                            step[i] = createStepping(el, ae[i], "skew(", "deg", ',', "deg)");
+                            to[i] = by(m[1], null);
 
-                } else {
+                            // Translate
 
-                    if (tmp === "hide") {
-                        from[i] = 1;
-                        to[i] = 0;
-                        step[i] = createStepping(el, ae[i], 'hide');
-                    } else if (tmp === "show") {
-                        to[i] = 1;
-                        from[i] = 0;
-                        step[i] = createStepping(el, ae[i], 'show');
+                        } else if ((m = tmp.match(translate))) {
+                            step[i] = createStepping(el, ae[i], "translate(", "px", ',', "px)");
+                            to[i] = by(m[1], null);
+                        }
+
                     } else {
+
                         from[i] = parseFloat(v);
                         to[i] = by(tmp, parseFloat(v));
                         step[i] = createStepping(el, ae[i]);
                     }
+
                 }
-
             }
-
             // Here starts the fun ........... NOT AT ALL !!!	
 
             if (!ae.length) {
@@ -459,48 +466,44 @@ hAzzle.extend({
     forward: function (count) {
         hAzzle.data(this[0], "anim").forward(count);
     },
-  
-  /**
-   * FadeIn an element
-   *
-   * @param{Number} speed
-   * @param{Fumction} callback
-   * @param{String} easing
-   * @return {hAzzle}
-   *
-   */
-  
-  fadeIn: function (speed, callback, easing) {
-	return hAzzle.getStyle(this[0], 'display') === 'none' ?
-        this.animate({
-            opacity: 'show',
-            duration: speed,
-            callback: callback,
-            easing: easing
-        })
-		: this;
-    },
-	
-  /**
-   * FadeOut an element
-   *
-   * @param{Number} speed
-   * @param{Fumction} callback
-   * @param{String} easing
-   * @return {hAzzle}
-   *
-   */
 
- fadeOut: function (speed, callback, easing) {
-	return hAzzle.getStyle(this[0], 'display') === 'block' ?
-        this.animate({
-            opacity: 'hide',
-            duration: speed,
-            callback: callback,
-            easing: easing
-        })
-		: this;
+    /**
+     * FadeIn an element
+     *
+     * @param{Number} speed
+     * @param{Fumction} callback
+     * @param{String} easing
+     * @return {hAzzle}
+     *
+     */
+
+    fadeIn: function (speed, callback, easing) {
+        return hAzzle.getStyle(this[0], 'display') === 'none' ?
+            this.animate({
+                opacity: 'show',
+                duration: speed,
+                callback: callback,
+                easing: easing
+            }) : this;
+    },
+
+    /**
+     * FadeOut an element
+     *
+     * @param{Number} speed
+     * @param{Fumction} callback
+     * @param{String} easing
+     * @return {hAzzle}
+     *
+     */
+
+    fadeOut: function (speed, callback, easing) {
+        return hAzzle.getStyle(this[0], 'display') === 'block' ?
+            this.animate({
+                opacity: 'hide',
+                duration: speed,
+                callback: callback,
+                easing: easing
+            }) : this;
     }
 })
-
-
