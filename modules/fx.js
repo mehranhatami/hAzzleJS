@@ -64,21 +64,41 @@ hAzzle.extend({
         hAzzle.data(this[0], "anim").forward(count);
     },
 
-    animate: function (opt, value) {
+    animate: function (opt, value, cb) {
 
         var iter = opt,
             v,
             tmp,
+            ae,
             from = [],
             to = [],
             step = [],
             display,
             checkDisplay,
+            duration,
+            callback,
+            easing,
             anim;
 
         if (typeof opt === 'string') {
             iter = {};
             iter[opt] = value;
+        }
+
+        /*
+		   Example:
+		   
+		   hAzzle('#node').animate( {}, speed);
+		*/
+
+        if (typeof value === "number") {
+
+            duration = value;
+        }
+
+        if (typeof cb === "function") {
+
+            callback = cb;
         }
 
         /**
@@ -100,9 +120,7 @@ hAzzle.extend({
 
             hAzzle.data(el, "anim", anim);
 
-            // Single element
-
-            var ae = keys(iter);
+            ae = keys(iter);
 
             for (var i = 0; i < ae.length; i++) {
 
@@ -137,6 +155,27 @@ hAzzle.extend({
                     style.overflow = 'hidden';
                 }
 
+                // Duration
+
+                if (ae[i] === "duration") {
+                    duration = iter[ae[i]];
+                    delete iter.duration;
+                }
+
+                // Callback
+
+                if (ae[i] === "callback") {
+                    duration = iter[ae[i]];
+                    delete iter.callback;
+                }
+
+                // Easing
+
+                if (ae[i] === "easing") {
+                    easing = hAzzle.easing[iter[ae[i]]];
+                    delete iter.easing;
+                }
+
                 // So, now we had a little fun, let us do the real magic...
 
                 v = hAzzle.getStyle(el, ae[i]);
@@ -153,7 +192,8 @@ hAzzle.extend({
 
                 anim.from(from[0])
                     .to(to[0])
-                    .ease(hAzzle.easing.easeOutBouncee)
+                    .ease(easing)
+                    .duration(duration)
                     .step(step[0])
                     .complete(function () {
                         this.reverse();
@@ -170,7 +210,8 @@ hAzzle.extend({
 
                         anim.from(from[b])
                             .to(to[b])
-                            .ease(hAzzle.easing.easeOutBouncee)
+                            .ease(easing)
+                            .duration(duration)
                             .step(step[b])
                             .complete(function () {
                                 this.reverse();
@@ -185,7 +226,8 @@ hAzzle.extend({
                         anim.queue()
                             .from(from[b])
                             .to(to[b])
-                            .ease(hAzzle.easing.easeOutBouncee)
+                            .ease(easing)
+                            .duration(duration)
                             .step(step[b])
                             .complete(function () {
                                 this.reverse();
