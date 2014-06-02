@@ -188,26 +188,6 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    stop: function () {
-        hAzzle.data(this[0], "anim").stop();
-    },
-
-    pause: function () {
-        hAzzle.data(this[0], "anim").pause();
-    },
-
-    resume: function () {
-        hAzzle.data(this[0], "anim").resume();
-    },
-
-    rewind: function (count) {
-        hAzzle.data(this[0], "anim").rewind(count);
-    },
-
-    forward: function (count) {
-        hAzzle.data(this[0], "anim").forward(count);
-    },
-
     animate: function (opt, value, cb) {
         //alert(callback)
         var iter = opt,
@@ -285,7 +265,7 @@ hAzzle.extend({
                     style.display = 'inline-block';
                 }
             }
-
+		 
             // Fix the overflow property
 
             if (iter.overflow) {
@@ -432,22 +412,69 @@ hAzzle.extend({
         return this.each(fn);
 
     },
-});
 
+    stop: function () {
+        hAzzle.data(this[0], "anim").stop();
+    },
 
+    pause: function () {
+        hAzzle.data(this[0], "anim").pause();
+    },
 
+    resume: function () {
+        hAzzle.data(this[0], "anim").resume();
+    },
 
-/**
- * FadeIn and FadeOut
- */
+    rewind: function (count) {
+        hAzzle.data(this[0], "anim").rewind(count);
+    },
 
-hAzzle.each(['fadeIn', 'fadeOut'], function (name) {
-    hAzzle.Core[name] = function (speed, callback, easing) {
-        return this.animate({
-            opacity: name === 'fadeIn' ? 'show' : 'hide',
+    forward: function (count) {
+        hAzzle.data(this[0], "anim").forward(count);
+    },
+  
+  /**
+   * FadeIn an element
+   *
+   * @param{Number} speed
+   * @param{Fumction} callback
+   * @param{String} easing
+   * @return {hAzzle}
+   *
+   */
+  
+  fadeIn: function (speed, callback, easing) {
+	return hAzzle.getStyle(this[0], 'display') === 'none' ?
+        this.animate({
+            opacity: 'show',
             duration: speed,
             callback: callback,
             easing: easing
-        });
-    };
-});
+        })
+		: this;
+    },
+	
+  /**
+   * FadeOut an element
+   *
+   * @param{Number} speed
+   * @param{Fumction} callback
+   * @param{String} easing
+   * @return {hAzzle}
+   *
+   */
+
+ fadeOut: function (speed, callback, easing) {
+	var style = this[0].style.display;
+	return hAzzle.getStyle(this[0], 'display') === 'block' ?
+        this.animate({
+            opacity: 'hide',
+            duration: speed,
+            callback: callback,
+            easing: easing
+        })
+		: this;
+    }
+})
+
+
