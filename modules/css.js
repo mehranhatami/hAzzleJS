@@ -4,9 +4,8 @@
 var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
     rrelNum = new RegExp('^([+-])=(' + pnum + ')', 'i'),
 
-    win = window,
+    win = this,
     doc = win.document,
-    docbody = document.body,
     html = doc.documentElement,
     px = 'px',
     elemdisplay = {},
@@ -24,57 +23,24 @@ var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
         'outlineColor',
         'textDecorationColor',
         'textEmphasisColor'
-    ],
-
-    unitless = {
-        lineHeight: 1,
-        zoom: 1,
-        zIndex: 1,
-        opacity: 1,
-        boxFlex: 1,
-        WebkitBoxFlex: 1,
-        MozBoxFlex: 1,
-        columns: 1,
-        fontWeight: 1,
-    };
-
-    // Placeholder for color functions
-
-    
-
-function getStyle(el, property) {
-    var value = null,
-        computed;
-
-    if (el.ownerDocument.defaultView.opener) {
-        computed = el.ownerDocument.defaultView.getComputedStyle(el, null);
-    } else {
-        computed = win.getComputedStyle(el, null);
-    }
-
-    if (computed) {
-
-        value = computed.getPropertyValue(property) || computed[property];
-
-        if (value === '' && !hAzzle.contains(el.ownerDocument, el)) {
-            value = el.style[property];
-        }
-    }
-    return el.style[value] || value;
-}
+    ];
 
 
 function actualDisplay(name, doc) {
 
     var style,
+        docbody = doc.body,
         display,
         elem = doc.createElement(name);
+
     // Vanila solution is the best choice here
 
     docbody.appendChild(elem);
 
-    display = win.getDefaultComputedStyle && (style = win.getDefaultComputedStyle(elem[0])) ? style.display : getStyle(elem[0], 'display');
+    display = win.getDefaultComputedStyle && (style = win.getDefaultComputedStyle(elem)) ? style.display : hAzzle.getStyle(elem[0], 'display');
+
     docbody.removeChild(elem);
+
     return display;
 }
 
@@ -143,7 +109,7 @@ function show(elem) {
         style.display = '';
     }
 
-    if ((style.display === '' && getStyle(elem, 'display') === 'none') || !hAzzle.contains(elem.ownerDocument.documentElement, elem)) {
+    if ((style.display === '' && hAzzle.getStyle(elem, 'display') === 'none') || !hAzzle.contains(elem.ownerDocument.documentElement, elem)) {
         hAzzle.data(elem, 'display', defaultDisplay(elem.nodeName));
     }
 }
@@ -157,7 +123,7 @@ function show(elem) {
 
 function hide(elem) {
     if (!isHidden(elem)) {
-        var display = getStyle(elem, 'display');
+        var display = hAzzle.getStyle(elem, 'display');
         if (display !== 'none') {
             hAzzle.data(elem, 'display', display);
         }
@@ -188,6 +154,44 @@ function styleProperty(p) {
     return p ? hAzzle.camelize(p) : null;
 }
 
+
+hAzzle.extend({
+
+    unitless: {
+        lineHeight: 1,
+        zoom: 1,
+        zIndex: 1,
+        opacity: 1,
+        boxFlex: 1,
+        WebkitBoxFlex: 1,
+        MozBoxFlex: 1,
+        columns: 1,
+        fontWeight: 1,
+    },
+
+    getStyle: function (el, property) {
+        var value = null,
+            computed;
+
+        if (el.ownerDocument.defaultView.opener) {
+            computed = el.ownerDocument.defaultView.getComputedStyle(el, null);
+        } else {
+            computed = win.getComputedStyle(el, null);
+        }
+
+        if (computed) {
+
+            value = computed.getPropertyValue(property) || computed[property];
+
+
+            if (value === '' && !hAzzle.contains(el.ownerDocument, el)) {
+                value = el.style[property];
+            }
+        }
+        return el.style[value] || value;
+    }
+
+}, hAzzle)
 
 
 hAzzle.extend({
@@ -226,7 +230,7 @@ hAzzle.extend({
                 return property === 'width' ? p.width : property === 'height' ? p.height : '';
             }
 
-            return (property = styleProperty(property)) ? getStyle(value, property) : null;
+            return (property = styleProperty(property)) ? hAzzle.getStyle(value, property) : null;
         }
 
         if (typeof property === 'string') {
@@ -247,7 +251,7 @@ hAzzle.extend({
                     // convert relative number strings
 
                     if (typeof value === 'string' && (ret = rrelNum.exec(value))) {
-                        v = (ret[1] + 1) * ret[2] + parseFloat(getStyle(el, k));
+                        v = (ret[1] + 1) * ret[2] + parseFloat(hAzzle.getStyle(el, k));
                         type = 'number';
                     }
 
@@ -265,7 +269,7 @@ hAzzle.extend({
 
                     // If a number was passed in, add 'px' to the (except for certain CSS properties)
 
-                    if (type === 'number' && unitless[p]) {
+                    if (type === 'number' && hAzzle.unitless[p]) {
 
                         v += 'px';
                     }
@@ -280,7 +284,7 @@ hAzzle.extend({
 
                         return color(el, v);
                     }
-//alert(v)
+
                     el.style[p] = hAzzle.setter(el, v);
                 }
             }
@@ -358,7 +362,7 @@ hAzzle.extend({
 
         // Get width or height on the element
         if (value === undefined) {
-            orig = getStyle(elem, 'width');
+            orig = hAzzle.getStyle(elem, 'width');
             ret = parseFloat(orig);
             return hAzzle.IsNaN(ret) ? ret : orig;
         }
@@ -387,7 +391,7 @@ hAzzle.extend({
 
         // Get width or height on the element
         if (value === undefined) {
-            orig = getStyle(elem, 'height');
+            orig = hAzzle.getStyle(elem, 'height');
             ret = parseFloat(orig);
             return hAzzle.IsNaN(ret) ? ret : orig;
         }
@@ -443,7 +447,7 @@ hAzzle.extend({
     offsetParent: function () {
         return hAzzle(this.map(function (el) {
             var op = el.offsetParent || doc.documentElement;
-            while (op && (!hAzzle.nodeName(op, 'html') && getStyle(op, 'position') === 'static')) {
+            while (op && (!hAzzle.nodeName(op, 'html') && hAzzle.getStyle(op, 'position') === 'static')) {
                 op = op.offsetParent || doc.documentElement;
             }
             return op;
@@ -504,8 +508,8 @@ hAzzle.extend({
 // Let us extend the hAzzle Object a litle ...
 
 hAzzle.extend({
-	
-	colorHook: {},
+
+    colorHook: {},
 
     /**
      * hAzzle color names
