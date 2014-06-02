@@ -3,10 +3,10 @@
  *
  * NOTE!!
  *
- * hCAE only uses some of the functions
- * in hAzzle Animation Core engine ( hACE ).
+ * hCAE are only using some of the functions
+ * that exist in hAzzle Animation Core engine ( hACE ).
  * 
- * It's recomended only to use hCAE for
+ * Therefor, it is recomended only to use hCAE for
  * 'normal' CSS animations and effects
  * such as fadeIn and fadeOut.
  *
