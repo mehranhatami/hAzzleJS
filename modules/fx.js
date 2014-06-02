@@ -1,6 +1,33 @@
 /**
  * hAzzle CSS animation engine ( hCAE )
+ *
+ * NOTE!!
+ *
+ * hCAE only uses some of the functions
+ * in hAzzle Animation Core engine ( hACE ).
+ * 
+ * It's recomended only to use hCAE for
+ * 'normal' CSS animations and effects
+ * such as fadeIn and fadeOut.
+ *
+ * If you want to perform more powerfull
+ * animation, hACE are what you need to use.
+ *
+ * Some of the features supported in hACE
+ * and not in hCAE, are:
+ *
+ * - Chainable animation with different
+ *   easing, callbacks on each animation
+ *   in the queue
+ *
+ * - reverse of all or selected animations
+ *   in the queue
+ *
+ * - repetation of all or selected animations
+ *   in the queue
+ *
  */
+ 
 var win = this,
     keys = Object.keys,
     rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
@@ -465,7 +492,6 @@ hAzzle.extend({
    */
 
  fadeOut: function (speed, callback, easing) {
-	var style = this[0].style.display;
 	return hAzzle.getStyle(this[0], 'display') === 'block' ?
         this.animate({
             opacity: 'hide',
