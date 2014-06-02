@@ -269,6 +269,7 @@ hAzzle.pipe.start();
 hAzzle.hACEController.prototype = {
 
     queue: function () {
+
         var self = this,
             _hACE = new hAzzle.hACE(self),
             _queue = self.q[self.q.length - 1];
@@ -498,10 +499,7 @@ hAzzle.hACE.prototype = {
 
                 steps--;
 
-                if (percent < 0) {
-                    percent = 0;
-                }
-
+               
                 ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration);
 
                 if (self.differences.hasOwnProperty('mehran')) {
@@ -521,6 +519,10 @@ hAzzle.hACE.prototype = {
 
                         values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * ease;
                     }
+                }
+				
+				 if (values < 0) {
+                    values = 0;
                 }
 
                 self.onStep.call(self, values);
@@ -578,8 +580,11 @@ hAzzle.hACE.prototype = {
      */
 
     stop: function () {
+
 	    var self = this;
+		
         if (self.hasStarted) {
+
             self.hasStarted = false;
             cancelFrame.call(win, self.raf);
         }
@@ -631,7 +636,6 @@ hAzzle.hACE.prototype = {
         var self = this;
         // Remove the animation from the pipe if animation are running
         if (self.hasStarted) {
-
             hAzzle.pipe.remove(self.name);
         }
         return self;
