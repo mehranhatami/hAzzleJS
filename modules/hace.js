@@ -403,6 +403,7 @@ hAzzle.hACE.prototype = {
      */
 
     complete: function (fn) {
+//		alert( fn)
         this.onComplete = fn || hAzzle.noop;
         return this;
     },
@@ -521,11 +522,13 @@ hAzzle.hACE.prototype = {
                     }
                 }
 				
+				// Avoid negative values, and set values to '0' 
+				
 				 if (values < 0) {
                     values = 0;
                 }
 
-                self.onStep.call(self, values);
+                self.onStep.call(self, values, self.endVal);
 
             } else if (!self.hasStarted) {
 
