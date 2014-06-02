@@ -1,33 +1,12 @@
-
+/**
+ * hAzzle CSS animation engine ( hCAE )
+ */
 var win = this,
-    doc = win.document,
-    unitless = { lineHeight: 1, zoom: 1, zIndex: 1, opacity: 1 };
-
-// CSS transform
+    keys = Object.keys;
+//    doc = win.document;
 
 
-
-var transform = function () {
-    var styles = doc.createElement('a').style,
-        props = ['webkitTransform', 'MozTransform', 'OTransform', 'msTransform', 'Transform'],
-        i = 0,
-        len = props.length;
-    for (; i < len; i++) {
-        if (props[i] in styles) {
-		return props[i];
-		}
-    }
-}();
-
-
-function getStyle(el, property) {
-    var value = null;
-    var computed = document.defaultView.getComputedStyle(el, '');
-    computed && (value = computed[hAzzle.camelize(property)]);
-    return el.style[property] || value;
-}
-
-
+// If a +=/-= token was provided, we're doing a relative animation	
 function by(val, start, m, r, i) {
     return (m = /^([+\-])=([\d\.]+)/.exec(val)) ?
         (i = parseInt(m[2], 10)) && (r = (start + i)) && m[1] == '+' ?
@@ -35,11 +14,27 @@ function by(val, start, m, r, i) {
         parseInt(val, 10);
 }
 
-
-
 /**
- * hAzzle CSS animation engine ( hCAE )
+ * Create animation stepping
+ *
+ * @param {Object} el
+ * @param {String} property
+ * @param {Function}
+ *
  */
+
+function createStepping(el, property) {
+    return function (val) {
+
+        if (!hAzzle.unitless[property]) {
+
+            val += 'px';
+        }
+
+        el.style[hAzzle.camelize(property)] = val;
+    };
+}
+
 hAzzle.extend({
 
     /**
@@ -49,101 +44,162 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    animate: function (options) {
+    stop: function () {
+        hAzzle.data(this[0], "anim").stop();
+    },
 
-        var el,
-            k,
+    pause: function () {
+        hAzzle.data(this[0], "anim").pause();
+    },
+
+    resume: function () {
+        hAzzle.data(this[0], "anim").resume();
+    },
+
+    rewind: function (count) {
+        hAzzle.data(this[0], "anim").rewind(count);
+    },
+
+    forward: function (count) {
+        hAzzle.data(this[0], "anim").forward(count);
+    },
+
+    animate: function (opt, value) {
+
+        var iter = opt,
             v,
-			tmp,
-            from,
-            to,
-            property,
-            anim,
+            tmp,
+            from = [],
+            to = [],
+            step = [],
+            display,
+            checkDisplay,
+            anim;
 
-            // Check if the 'queue' are activated on the system
-
-            queue = typeof hAzzle.Core['queue'] !== 'undefined';
+        if (typeof opt === 'string') {
+            iter = {};
+            iter[opt] = value;
+        }
 
         /**
          * If the "queue" plugin are used, and length are more then 1, we
          * run the queue system. Else we run normal 'each'
          */
 
-        return this[typeof queue && this.length > 1 ? 'queue' : 'each'](function () {
+        function fn(el) {
 
-            el = this;
-			
-          // Never do animation on hidden CSS nodes
-		  
-			if(el.style.display === 'none') {
-				
-			   el.style.display === 'block';
-			}
+            // Never do animation on hidden CSS nodes
+
+            var style = el.style;
 
             // Start hACE
 
             anim = new hAzzle.hACE();
 
-            /* Set duration, callback and easing
-             *
-             * NOTE!! We are deleting this after this
-             * param have been set so we don't get
-             * trouble with our CSS animation
-             *
-             */
+            // Save it on the node
 
-            anim.duration(options.duration);
-            anim.complete(options.complete);
-            anim.ease(hAzzle.easing[options.easing]);
+            hAzzle.data(el, "anim", anim);
 
-            delete options.complete;
-            delete options.duration;
-            delete options.easing;
+            // Single element
 
-            /**
-             * CSS animation starts here...
-             */
+            var ae = keys(iter);
 
-            // Collect CSS styles
-            // I choose not to use our CSS module for this so
-            // we can gain better performance
+            for (var i = 0; i < ae.length; i++) {
 
-            for (k in options) {
+                /**
+                 * IMPORTANT!!
+                 *
+                 * We have to do all the CSS checks in the beginning of this
+                 * loop and update / remove from the options BEFORE
+                 * we use 'hAzzle.getStyle()' and get the CSS node
+                 * values and animates them.
+                 *
+                 */
 
-            v = getStyle(el, k);
-            tmp = typeof options[k] === "function" ? options[k](el) : options[k];
+                if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
 
-                property = k;
+                    iter.overflow = [style.overflow, style.overflowX, style.overflowY];
 
-                from = parseFloat(v, 10);
-                to = by(tmp, parseFloat(v, 10));
-				
+                    display = hAzzle.getStyle(el, "display");
+
+                    checkDisplay = display === 'none' ?
+                        hAzzle.data(el, 'olddisplay') || defaultDisplay(el.nodeName) : display;
+
+                    if (checkDisplay === 'inline' && hAzzle.getStyle(el, 'float') === 'none') {
+
+                        style.display === 'inline-block';
+                    }
+                }
+
+                // Fix the overflow property
+
+                if (iter.overflow) {
+                    style.overflow = 'hidden';
+                }
+
+                // So, now we had a little fun, let us do the real magic...
+
+                v = hAzzle.getStyle(el, ae[i]);
+                tmp = iter[ae[i]];
+
+                from[i] = parseFloat(v, 10);
+                to[i] = by(tmp, parseFloat(v, 10));
+                step[i] = createStepping(el, ae[i]);
             }
 
-            anim.from(from);
-            anim.to(to);
+            // Here starts the fun ........... NOT AT ALL !!!	
 
-            anim.step(function (val) {
-              
-			  if(!unitless[property]) {
+            if (ae.length === 1) {
 
-			      val += 'px';
-			  }
+                anim.from(from[0])
+                    .to(to[0])
+                    .ease(hAzzle.easing.easeOutBouncee)
+                    .step(step[0])
+                    .complete(function () {
+                        this.reverse();
 
-                el.style[hAzzle.camelize(property)] = val;
+                    }).start();
 
-            });
+            } else {
 
-            /**
-             * If no animation queue, we start the animation
-             * directly. Else the animation are started
-             * within the queue
-             */
+                for (var b = 0; b < step.length; b++) {
 
-            if (!queue) {
-                anim.start();
+                    // The first animation in the set - no queue
+
+                    if (b === 0) {
+
+                        anim.from(from[b])
+                            .to(to[b])
+                            .ease(hAzzle.easing.easeOutBouncee)
+                            .step(step[b])
+                            .complete(function () {
+                                this.reverse();
+
+                            }).start();
+
+                        // Series of animation on the same CSS node, 
+                        // So we need to queue
+
+                    } else {
+
+                        anim.queue()
+                            .from(from[b])
+                            .to(to[b])
+                            .ease(hAzzle.easing.easeOutBouncee)
+                            .step(step[b])
+                            .complete(function () {
+                                this.reverse();
+
+                            })
+                            .start();
+                    }
+                }
             }
-        });
+        }
+
+        // Return the function
+
+        return this.each(fn);
     },
 });
 
