@@ -90,12 +90,19 @@ function createStepping(el, property, partOne, partTwo, partThree, partFour) {
 
             if (partOne === "hide") {
 
-                display = hAzzle.getStyle(el, 'display');
+                /**
+                 * Note!  We only save display state on the start of
+                 * the 'stepping' - when the 'val' === 1.
+                 */
 
-                if (display === 'none' && !hAzzle.data(el, 'fxshow')) {
-                    hAzzle.data(el, 'fxshow', display);
+                if (val === 1) {
+
+                    display = hAzzle.getStyle(el, 'display');
+
+                    if (display === 'none' && !hAzzle.data(el, 'fxshow')) {
+                        hAzzle.data(el, 'fxshow', display);
+                    }
                 }
-
                 // Do the animation
 
                 style[prop] = val;
@@ -122,24 +129,32 @@ function createStepping(el, property, partOne, partTwo, partThree, partFour) {
 
                 display = style.display;
 
-                if (!hAzzle.data(el, "fxshow") && display === "none") {
-                    display = style.display = "";
+                /**
+                 * Note!  We have to have this 'block' check here, else
+                 * everything will run for every step count
+                 */
+
+                if (display !== 'block') {
+
+                    if (!hAzzle.data(el, "fxshow") && display === "none") {
+                        display = style.display = "";
+                    }
+
+                    // Set elements which have been overridden with display: none
+                    // in a stylesheet to whatever the default browser style is
+                    // for such an element
+
+                    if (display === "" || hAzzle.getStyle(el, "display") === "none") {
+                        hAzzle.data(el, "fxshow", defaultDisplay(el.nodeName));
+                    }
+
+                    // Make the element visible
+
+                    if (display === "" || display === "none") {
+                        style.display = hAzzle.data(el, "fxshow") || "";
+                    }
+                    //alert("d")
                 }
-
-                // Set elements which have been overridden with display: none
-                // in a stylesheet to whatever the default browser style is
-                // for such an element
-
-                if (display === "" && hAzzle.getStyle(el, "display") === "none") {
-                    hAzzle.data(el, "fxshow", defaultDisplay(el.nodeName));
-                }
-
-                // Make the element visible
-
-                if (display === "" || display === "none") {
-                    style.display = hAzzle.data(el, "fxshow") || "";
-                }
-
                 // Do the animation
 
                 el.style[prop] = val;
@@ -231,12 +246,6 @@ hAzzle.extend({
 
             callback = cb;
         }
-
-        /**
-         * If the "queue" plugin are used, and length are more then 1, we
-         * run the queue system. Else we run normal 'each'
-         */
-
 
         function fn(el) {
 
@@ -361,21 +370,8 @@ hAzzle.extend({
                         to[i] = 0;
                         step[i] = createStepping(el, ae[i], 'hide');
                     } else if (tmp === "show") {
-                        //	alert ( ae[i]  );
-
-                        if (ae[i] === "height") {
-
-
-                            from[i] = parseFloat(v);
-                            to[i] = 0;
-
-
-                        } else if (ae[i] === "opacity") {
-
-                            to[i] = 1;
-                            from[i] = 0;
-
-                        }
+                        to[i] = 1;
+                        from[i] = 0;
                         step[i] = createStepping(el, ae[i], 'show');
                     } else {
                         from[i] = parseFloat(v);
@@ -411,7 +407,8 @@ hAzzle.extend({
                             .ease(easing)
                             .duration(duration)
                             .step(step[b])
-                            .complete(callback).start();
+                            .complete(callback) // Only run 'callback' once
+                        .start();
 
                         // Series of animation on the same CSS node, 
                         // So we need to queue
@@ -424,7 +421,6 @@ hAzzle.extend({
                             .ease(easing)
                             .duration(duration)
                             .step(step[b])
-                            .complete(callback)
                             .start();
                     }
                 }
@@ -434,5 +430,24 @@ hAzzle.extend({
         // Return the function
 
         return this.each(fn);
+
     },
+});
+
+
+
+
+/**
+ * FadeIn and FadeOut
+ */
+
+hAzzle.each(['fadeIn', 'fadeOut'], function (name) {
+    hAzzle.Core[name] = function (speed, callback, easing) {
+        return this.animate({
+            opacity: name === 'fadeIn' ? 'show' : 'hide',
+            duration: speed,
+            callback: callback,
+            easing: easing
+        });
+    };
 });
