@@ -267,17 +267,6 @@ hAzzle.extend({
 
             hAzzle.data(el, "anim", anim);
 
-
-            /**
-             * IMPORTANT!!
-             *
-             * We have to do all the CSS checks in the beginning of this
-             * loop and update / remove from the options BEFORE
-             * we use 'hAzzle.getStyle()' and get the CSS node
-             * values and animates them.
-             *
-             */
-
             if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
 
                 iter.overflow = [style.overflow, style.overflowX, style.overflowY];
@@ -297,7 +286,6 @@ hAzzle.extend({
             if (iter.overflow) {
                 style.overflow = 'hidden';
             }
-
 
             // Duration
 
@@ -321,13 +309,19 @@ hAzzle.extend({
                 delete iter.callback;
             }
 
-
+          // Iterate through the 'iter' object. I'm using
+          // Object keys for this
 
             ae = keys(iter);
 
             for (var i = 0; i < ae.length; i++) {
 
-                // Special effects
+                /**
+				 * Special effects
+				 *
+				 * Note!! This is just temporary. A lot of things
+				 * will be changed here.
+				 */ 
 
                 if (iter[ae[i]] === "hide") {
                     from[i] = 1;
@@ -338,7 +332,7 @@ hAzzle.extend({
                     from[i] = 0;
                     step[i] = createStepping(el, ae[i], 'show');
 
-                } else { // Normal animation
+                } else { // Normal animation and CSS Transform
 
 
                     // So, now we had a little fun, let us do the real magic...
@@ -396,6 +390,7 @@ hAzzle.extend({
 
                 }
             }
+			
             // Here starts the fun ........... NOT AT ALL !!!	
 
             if (!ae.length) {
@@ -506,4 +501,4 @@ hAzzle.extend({
                 easing: easing
             }) : this;
     }
-})
+});
