@@ -135,6 +135,16 @@ hAzzle.extend({
         self.onStopped = hAzzle.noop,
         self.andThen = hAzzle.noop;
     },
+	
+	/**
+	 * All animations are saved in the 'pipe'.
+	 * and executed one after one.
+	 *
+	 * When we pause or resume, we are in
+	 * reality removing / adding the 
+	 * from / to the 'pipe'
+	 *
+	 */
 
     hACEPipe: function () {
         var self = this;
@@ -148,6 +158,9 @@ hAzzle.extend({
     },
 
     hACEController: function () {
+		
+   // Our 'queue' where we keep all queued animations
+		
         this.q = [];
     }
 
@@ -342,6 +355,7 @@ hAzzle.hACE.prototype = {
      *
      * In the step() function, we then grab the returned
      * value like this:
+
 
      *
      * - val.x
@@ -578,47 +592,87 @@ hAzzle.hACE.prototype = {
 
         self.hasStarted = true;
 
-        // Our stop function
+        /**
+         *
+         * At this point, the animation have ended.
+         *
+         * Mehran!!
+         *
+         * FIX ME!!
+         *
+         * If we are 'queue' the animation in an sequence,
+         * we have to do it so we can run and
+         *
+         *       onEnd()
+         *
+         * function after all animations are
+         * finished.
+         *
+         * This because we need to restore CSS values to
+         * normal state after last animation.
+         *
+         */
 
         self.stopIt = function () {
 
-            if (steps >= 0 && self.hasStarted) {
+        // If the animation have started...
+		
+		if (steps >= 0 && self.hasStarted) {
 
                 var v,
                     percent = self.hACEDuration - (steps * stepDuration),
                     ease,
-                    values;
+                    tick;
 
                 steps--;
+
+                // Calculat the easing
 
                 ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration);
 
                 if (self.differences.hasOwnProperty('mehran')) {
 
-                    values = self.startVal + (self.differences.mehran - self.startVal) * ease;
+                    tick = self.startVal + (self.differences.mehran - self.startVal) * ease;
 
                 } else {
 
-                    values = {};
+                    tick = {};
                 }
 
-                // if 'values' are an 'Object'
+                /**
+                 * The 'tick' can be an object if
+                 * we - as one example - are dealing with
+                 * x and y coordinates.
+                 *
+                 * The tick will then look like:
+                 *
+                 * { x: value,  y: value }
+                 *
+                 */
 
-                if (typeof values === 'object') {
+                if (typeof tick === 'object') {
 
                     for (v in self.differences) {
 
-                        values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * ease;
+                        tick[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * ease;
                     }
                 }
 
-                // Avoid negative values, and set values to '0' 
+                /**
+                 * Avoid a negative 'tick', and set 'tick' to '0'
+                 *
+                 * A 'negative tick' can occur if the 'tick' are like
+                 *
+                 *  -3,324, -1,77 etc
+                 */
 
-                if (values < 0) {
-                    values = 0;
+                if (tick < 0) {
+                    tick = 0;
                 }
-
-                self.onStep.call(self, values, self.endVal);
+                
+				// Call the 'step' function
+				
+                self.onStep.call(self, tick, self.endVal);
 
             } else if (!self.hasStarted) {
 
