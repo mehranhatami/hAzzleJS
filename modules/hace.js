@@ -3,77 +3,100 @@
  */
 var win = this,
     thousand = 1000,
-    lastTime = 0,
-
-    /**
-     * Mehran!
-     *
-     * There are bug in iOS v6 and older iOS. I did a primitive
-     * way to prevent this, just blacklisted. There are other
-     * ways around it - much better once.
-     *
-     * Can you look into this and fix?
-     *
-     * How many are using iOS 6 now? Isn't iOS 8 soon?
-     */
-
     blacklisted = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
     perf = win.performance || {},
+    top,
+    requestFrame,
+    cancelFrame,
     perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow),
+
     now = perfNow ? function () {
         return perfNow.call(perf);
     } : function () {
         return hAzzle.now();
-    },
-    fixTs = false, // feature detected below
+    };
 
-    /** RequestAnimationFrame
-     *
-     * Mehran!
-     *
-     * We gain better performance if we not choose to use hAzzle.prefix()
-     * Because that function have a couple of loops that we can avoid.
-     */
+// Test if we are within a foreign domain. Use raf from the top if possible.
+try {
+    // Accessing .name will throw SecurityError within a foreign domain.
+    win.top.name;
+    top = win.top;
+} catch (e) {
+    top = win;
+}
 
-    requestFrame = (function () {
-        var legacy = function (callback) {
-            var now = hAzzle.now(),
-                nextTime = Math.max(lastTime + 17, now);
-            return setTimeout(function () {
-                    callback(lastTime = nextTime);
-                },
-                nextTime - now);
+requestFrame = top.requestAnimationFrame;
+cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+
+if (!blacklisted && !requestFrame) {
+
+    requestFrame = win.requestAnimationFrame ||
+        win.webkitRequestAnimationFrame ||
+        win.oRequestAnimationFrame ||
+        win.msRequestAnimationFrame ||
+        win.mozRequestAnimationFrame;
+
+    cancelFrame = win.cancelAnimationFrame ||
+        win.cancelRequestAnimationFrame ||
+        win.webkitCancelAnimationFrame ||
+        win.webkitCancelRequestAnimationFrame ||
+        win.mozCancelAnimationFrame ||
+        win.oCancelAnimationFrame ||
+        win.mozCancelRequestAnimationFrame;
+}
+
+
+if (!requestFrame || !cancelFrame) {
+    var last = 0,
+        id = 0,
+        queue = [],
+        frameDuration = thousand / 60;
+
+    requestFrame = function (callback) {
+        if (queue.length === 0) {
+            var _now = now(),
+                next = Math.max(0, frameDuration - (_now - last));
+				
+                last = next + _now;
+
+            setTimeout(function () {
+                var cp = queue.slice(0),
+                    i = 0,
+                    len = cp.length;
+
+                // Clear queue here to prevent
+                // callbacks from appending listeners
+                // to the current frame's queue
+                
+				queue.length = 0;
+				
+                for (; i < len; i++) {
+                    if (!cp[i].cancelled) {
+                        try {
+                            cp[i].callback(last);
+                        } catch (e) {}
+                    }
+                }
+            }, next);
         }
-        return !blacklisted ? win.requestAnimationFrame ||
-            win.webkitRequestAnimationFrame ||
-            win.oRequestAnimationFrame ||
-            win.msRequestAnimationFrame ||
-            win.mozRequestAnimationFrame ||
-            legacy : legacy;
-    })(),
+        queue.push({
+            handle: ++id,
+            callback: callback,
+            cancelled: false
+        });
+        return id;
+    };
 
-    // CancelAnimationFrame
-
-    cancelFrame = function () {
-        var legacy = function (id) {
-            clearTimeout(id);
-        };
-        return !blacklisted ? win.cancelAnimationFrame ||
-            win.cancelRequestAnimationFrame ||
-            win.webkitCancelAnimationFrame ||
-            win.webkitCancelRequestAnimationFrame ||
-            win.mozCancelAnimationFrame ||
-            win.oCancelAnimationFrame ||
-            win.mozCancelRequestAnimationFrame ||
-            legacy : legacy;
-    }();
-
-requestFrame(function (timestamp) {
-    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-    // if not, we have to do a timestamp fix on each frame
-    fixTs = timestamp > 1e12 !== now() > 1e12;
-});
-
+    cancelFrame = function (handle) {
+        var i = 0,
+            len = queue.length;
+        for (; i < len; i++) {
+            if (queue[i].handle === handle) {
+                queue[i].cancelled = true;
+            }
+        }
+    };
+}
 
 // Extend the hAzzle Object
 
@@ -187,7 +210,7 @@ hAzzle.extend({
      *
      */
 
-    hACEPipe: function (fps) {
+    hACEPipe: function () {
         var self = this;
         self.hACEPipe = {};
         self.then = now();
@@ -951,20 +974,20 @@ hAzzle.hACE.prototype = {
      * last running animation.
      * It should be fixed so it stop
      * all running animations.
-	 *
-	 *
-	 * BIG NOTE!!!
-	 *
-	 * I'm starting to see an solution on this problem!!
-	 *
-	 * Get the 'raf' value from the 'pipe' first. This value 
-	 * contains the ID on the running animation.
-	 *
-	 * See the technical info I sent you in email.
-	 *
-	 * You then use that 'raf' value to controll which
-	 * animation to stop, pause and resume.
-	 *
+     *
+     *
+     * BIG NOTE!!!
+     *
+     * I'm starting to see an solution on this problem!!
+     *
+     * Get the 'raf' value from the 'pipe' first. This value
+     * contains the ID on the running animation.
+     *
+     * See the technical info I sent you in email.
+     *
+     * You then use that 'raf' value to controll which
+     * animation to stop, pause and resume.
+     *
      *
      * AFTER THAT, it should be extended ...
      *
