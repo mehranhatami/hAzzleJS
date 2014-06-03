@@ -98,7 +98,6 @@ hAzzle.extend({
         var hp = hAzzle.pipe,
             n;
         hp.raf = requestFrame.call(win, hAzzle.tick);
-        delete self.raf;
         hp.now = now();
         hp.delta = hp.now - hp.then;
         if (hp.delta > hp.interval) {
