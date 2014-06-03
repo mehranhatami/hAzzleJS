@@ -3,33 +3,40 @@
  */
 var win = this,
     thousand = 1000,
-    blacklisted = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
     perf = win.performance || {},
     top,
     requestFrame,
     cancelFrame,
-    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow),
 
+	// Use the best resolution timer that is currently available
+
+    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow),
     now = perfNow ? function () {
         return perfNow.call(perf);
     } : function () {
-        return hAzzle.now();
+		var nowOffset;
+		if(performance.timing && performance.timing.navigationStart) {
+		   nowOffset = performance.timing.navigationStart;
+		}
+		return hAzzle.now - nowOffset;
     };
 
-// Test if we are within a foreign domain. Use raf from the top if possible.
-try {
+   // Test if we are within a foreign domain. Use raf from the top if possible.
+    
+	try {
+		
     // Accessing .name will throw SecurityError within a foreign domain.
-    win.top.name;
-    top = win.top;
-} catch (e) {
-    top = win;
-}
+	
+     win.top.name;
+     top = win.top;
+    } catch (e) {
+     top = win;
+    }
 
-requestFrame = top.requestAnimationFrame;
-cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+  requestFrame = top.requestAnimationFrame;
+  cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
 
-if (!blacklisted && !requestFrame) {
-
+ if (!requestFrame) {
     requestFrame = win.requestAnimationFrame ||
         win.webkitRequestAnimationFrame ||
         win.oRequestAnimationFrame ||
@@ -59,7 +66,7 @@ if (!requestFrame || !cancelFrame) {
 				
                 last = next + _now;
 
-            setTimeout(function () {
+            win.setTimeout(function () {
                 var cp = queue.slice(0),
                     i = 0,
                     len = cp.length;
@@ -93,6 +100,7 @@ if (!requestFrame || !cancelFrame) {
         for (; i < len; i++) {
             if (queue[i].handle === handle) {
                 queue[i].cancelled = true;
+//				clearTimeout(queue[i]); // Need to be tested first !!
             }
         }
     };
@@ -302,6 +310,14 @@ hAzzle.hACEPipe.prototype = {
 
             hAzzle.tick();
         }
+    },
+	
+    stop: function() {
+     var self = this;
+	 if (self.running) {
+          self.running = false;
+        cancelFrame.call(win, self.raf);
+      }
     },
 
     /**
@@ -1022,19 +1038,7 @@ hAzzle.hACE.prototype = {
      */
 
     stop: function (gotoEnd) {
-        var self = this;
-        if (self.hasStarted) {
-            self.hasStarted = false;
-            cancelFrame.call(win, self.raf);
-        }
-
-        if (gotoEnd) {
-
-            // Go to the last tick and end it
-            // Call callback
-
-        }
-
+		self.hasStarted = false;
         return self;
     },
 
