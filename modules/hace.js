@@ -126,8 +126,22 @@ hAzzle.extend({
         self.hasCompleted = false;
         self.hACEDuration = hAzzle.speed._default;
         self.delayDuration = 0;
+
+        /**
+         * @property delayed
+         * @type {Boolean}
+         * @default false
+         */
+
         self.delayed = false;
         self.repeatCount = 0;
+
+        /**
+         * @property paused
+         * @type {Boolean}
+         * @default false
+         */
+
         self.paused = false;
         self.easing = hAzzle.easing.linear; // Default easing function
         self.onStep = hAzzle.noop,
@@ -135,16 +149,16 @@ hAzzle.extend({
         self.onStopped = hAzzle.noop,
         self.andThen = hAzzle.noop;
     },
-	
-	/**
-	 * All animations are saved in the 'pipe'.
-	 * and executed one after one.
-	 *
-	 * When we pause or resume, we are in
-	 * reality removing / adding the 
-	 * from / to the 'pipe'
-	 *
-	 */
+
+    /**
+     * All animations are saved in the 'pipe'.
+     * and executed one after one.
+     *
+     * When we pause or resume, we are in
+     * reality removing / adding the
+     * from / to the 'pipe'
+     *
+     */
 
     hACEPipe: function () {
         var self = this;
@@ -158,9 +172,9 @@ hAzzle.extend({
     },
 
     hACEController: function () {
-		
-   // Our 'queue' where we keep all queued animations
-		
+
+        // Our 'queue' where we keep all queued animations
+
         this.q = [];
     }
 
@@ -245,7 +259,7 @@ hAzzle.hACEPipe.prototype = {
     },
 
     /**
-     * Pause an animation in the pipe
+     * Pause the specified animation
      * This method cancels the requestAnimationFrame callback.
      * @return {hAzzle}
      *
@@ -318,7 +332,7 @@ hAzzle.hACE.prototype = {
     /**
      * Start position
      *
-     * @param {Number/Object} val
+     * @param {Number/Object} properties
      * @return {hAzzle}
      *
      * 'val' could be an object. Example
@@ -328,15 +342,15 @@ hAzzle.hACE.prototype = {
      *
      */
 
-    from: function (val) {
+    from: function (properties) {
 
-        if (typeof val === 'number') {
+        if (typeof properties === 'number') {
 
-            this.startVal = val || 0;
+            this.startVal = properties || 0;
 
-        } else if (typeof val === 'object') {
+        } else if (typeof properties === 'object') {
 
-            this.startVal = val || {};
+            this.startVal = properties || {};
 
         }
         return this;
@@ -345,7 +359,7 @@ hAzzle.hACE.prototype = {
     /**
      * End position
      *
-     * @param {Number/Object} val
+     * @param {Number/Object} properties
      * @return {hAzzle}
      *
      * 'val' could be an object. Example
@@ -363,15 +377,15 @@ hAzzle.hACE.prototype = {
      */
 
 
-    to: function (val) {
+    to: function (properties) {
 
-        if (typeof val === 'number') {
+        if (typeof properties === 'number') {
 
-            this.endVal = val || 0;
+            this.endVal = properties || 0;
 
-        } else if (typeof val === 'object') {
+        } else if (typeof properties === 'object') {
 
-            this.endVal = val || {};
+            this.endVal = properties || {};
 
         }
         return this;
@@ -415,24 +429,24 @@ hAzzle.hACE.prototype = {
     /**
      * Set an delay in ms before execution
      *
-     * @param {Number} ms
+     * @param {Number} amount
      * @return {hAzzle}
      */
 
-    delay: function (ms) {
-        this.delayDuration = typeof ms === "number" ? ms : 1;
+    delay: function (amount) {
+        this.delayDuration = typeof amount === "number" ? amount : 1;
         return this;
     },
 
     /**
      * Repetation of the animation x times
      *
-     * @param {Number} count
+     * @param {Number} times
      * @return {hAzzle}
      */
 
-    repeat: function (count) {
-        this.repeatCount = typeof count === "number" ? count : 0;
+    repeat: function (times) {
+        this.repeatCount = typeof times === "number" ? times : 0;
         return this;
     },
 
@@ -440,36 +454,36 @@ hAzzle.hACE.prototype = {
 
      * Easing
      *
-     * @param {Function} fn
+     * @param {Function} callback 
      * @return {hAzzle}
      */
 
-    ease: function (fn) {
-        this.easing = fn || hAzzle.easing.linear;
+    ease: function (callback) {
+        this.easing = callback || hAzzle.easing.linear;
         return this;
     },
 
     /**
      * Animation steping
      *
-     * @param {Function} fn
+     * @param {Function} callback
      * @return {hAzzle}
      */
 
-    step: function (fn) {
-        this.onStep = fn || hAzzle.noop;
+    step: function (callback) {
+        this.onStep = callback || hAzzle.noop;
         return this;
     },
 
     /**
      * Function to be executed when animation are completed
      *
-     * @param {Function} fn
+     * @param {Function} callback
      * @return {hAzzle}
      */
 
-    complete: function (fn) {
-        this.onComplete = fn || hAzzle.noop;
+    complete: function (callback) {
+        this.onComplete = callback || hAzzle.noop;
         return this;
     },
 
@@ -479,19 +493,19 @@ hAzzle.hACE.prototype = {
      * This function will only run as an callback after
      * the stop() have been executed.
      *
-     * @param {Function} fn
+     * @param {Function} callback
      * @return {hAzzle}
      */
 
-    stopped: function (fn) {
-        this.onStopped = fn || hAzzle.noop;
+    stopped: function (callback) {
+        this.onStopped = callback || hAzzle.noop;
         return this;
     },
 
     /**
      * Then
      *
-     * @param {Function} fn
+     * @param {Function} callback
      * @return {hAzzle}
      *
      * 'then' are an 'promise' like
@@ -518,8 +532,8 @@ hAzzle.hACE.prototype = {
      *
      */
 
-    then: function (fn) {
-        this.andThen = fn || hAzzle.noop;
+    then: function (callback) {
+        this.andThen = callback || hAzzle.noop;
         return this;
     },
 
@@ -615,9 +629,9 @@ hAzzle.hACE.prototype = {
 
         self.stopIt = function () {
 
-        // If the animation have started...
-		
-		if (steps >= 0 && self.hasStarted) {
+            // If the animation have started...
+
+            if (steps >= 0 && self.hasStarted) {
 
                 var v,
                     percent = self.hACEDuration - (steps * stepDuration),
@@ -669,18 +683,29 @@ hAzzle.hACE.prototype = {
                 if (tick < 0) {
                     tick = 0;
                 }
-                
-				// Call the 'step' function
-				
+
+                // Call the 'step' function
+
                 self.onStep.call(self, tick, self.endVal);
 
             } else if (!self.hasStarted) {
 
-                // If animation have not started, remove it from the 'pipe'
+                /**
+                 * If animation have not started yet, remove it from the 'pipe'
+                 *
+                 * This will be executed when we stop the animation using the
+                 * stop() function
+                 *
+                 * Part of this has to be extended. See the stop() function
+                 * comment for further info
+                 *
+                 */
 
                 hAzzle.pipe.remove(self.name);
 
                 self.onStopped.call(self);
+
+                // The animation have finished, and stopped itself
 
             } else {
 
@@ -688,13 +713,22 @@ hAzzle.hACE.prototype = {
 
                 hAzzle.pipe.remove(self.name);
 
-                // Not started yet
+                // Set hasStarted to false
 
                 self.hasStarted = false;
 
                 // Set delayed to false
 
                 self.delayed = false;
+
+                /**
+                 * Related to the repeat() function.
+                 *
+                 * If .repeat(count) are used, the animation will be
+                 * repeated x times, and when finish it execute
+                 * the OnComplete() function.
+                 *
+                 */
 
                 if (self.repeatCount > 0 || self.repeatCount === -1 || self.repeatCount === Infinity) {
 
@@ -724,47 +758,47 @@ hAzzle.hACE.prototype = {
      * Stop the animation
      *
      * @return {hAzzle}
-	 *
-	 * Mehran!!
-	 *
-	 * See the hACE issues email I sent 
-	 * you earlier.
-	 *
-	 * The stop function only stop the
-	 * last running animation.
-	 * It should be fixed so it stop
-	 * all running animations.
-	 *
-	 * and it should be extended ...
-	 *
-	 * - Boolan value true / false. If true it should
-	 *   jump to the end of the tick
-	 *
-	 * - string param. This is related to the
-	 *   'queue system'. So before this, when we
-	 *   'queue' an animation, we should fix it so:
-	 *
-	 *    .queue()
-	 *
-	 *    become:
-	 *
-	 *    .queue( name )
-	 *
-	 *  so every animation in the queue got an unique name the
-	 *  user of hAzzle Core are choosing.
-	 *  
-	 *  In this case and with the string param we can stop
-	 *  running animations by name, and not all animations.
-	 *
-	 *  Say we have 500 animations, and we should stop
-	 *  animation number 245 that has the name 'jiesa'.
-	 *  We just paste in the name 'jiesa' and only that
-	 *  animation are stopped.
-	 *
-	 * - number param. Same as 'string param', but with the
-	 *   difference that we paste in an number and not an name.
-	 *   If we have 500 animations, we paste inn number
-	 *   245 and not the name 'jiesa' to stop it.
+     *
+     * Mehran!!
+     *
+     * See the hACE issues email I sent
+     * you earlier.
+     *
+     * The stop function only stop the
+     * last running animation.
+     * It should be fixed so it stop
+     * all running animations.
+     *
+     * and it should be extended ...
+     *
+     * - Boolan value true / false. If true it should
+     *   jump to the end of the tick
+     *
+     * - string param. This is related to the
+     *   'queue system'. So before this, when we
+     *   'queue' an animation, we should fix it so:
+     *
+     *    .queue()
+     *
+     *    become:
+     *
+     *    .queue( name )
+     *
+     *  so every animation in the queue got an unique name the
+     *  user of hAzzle Core are choosing.
+     *
+     *  In this case and with the string param we can stop
+     *  running animations by name, and not all animations.
+     *
+     *  Say we have 500 animations, and we should stop
+     *  animation number 245 that has the name 'jiesa'.
+     *  We just paste in the name 'jiesa' and only that
+     *  animation are stopped.
+     *
+     * - number param. Same as 'string param', but with the
+     *   difference that we paste in an number and not an name.
+     *   If we have 500 animations, we paste inn number
+     *   245 and not the name 'jiesa' to stop it.
      */
 
     stop: function () {
@@ -774,6 +808,19 @@ hAzzle.hACE.prototype = {
             cancelFrame.call(win, self.raf);
         }
         return self;
+    },
+
+    /**
+     * Stop and remove all existing animations.
+     */
+
+    stopAll: function () {
+
+        // Loop through the queue
+        // Stop all animations
+        // Remove all animations from the pipe
+        // Cancel the frame
+
     },
 
     /**
@@ -815,23 +862,23 @@ hAzzle.hACE.prototype = {
      * Pause the animation
      *
      * @return {hAzzle}
-	 *
-	 *  FIX ME!!
-	 *
-	 * The animation that got paused now are the last one
-	 * added. Need to be fixed.
-	 *
-	 * This also has to be extended the same way as the stop() 
-	 * function, but here we pause the animation not stopping it.
-	 *
+     *
+     *  FIX ME!!
+     *
+     * The animation that got paused now are the last one
+     * added. Need to be fixed.
+     *
+     * This also has to be extended the same way as the stop()
+     * function, but here we pause the animation not stopping it.
+     *
      */
 
     pause: function () {
         var self = this;
-     
-	    // Remove the animation from the pipe if animation are running
-     
-	    if (self.hasStarted) {
+
+        // Remove the animation from the pipe if animation are running
+
+        if (self.hasStarted) {
             hAzzle.pipe.remove(self.name);
         }
         return self;
@@ -843,14 +890,14 @@ hAzzle.hACE.prototype = {
      *
      * @return {hAzzle}
      *
-	 *  FIX ME!!
-	 *
-	 * The animation that we resume after we paused it, are the last one
-	 * added. Need to be fixed.
-	 *
-	 * This also has to be extended the same way as the stop() 
-	 * function, but here we pause the animation not stopping it.
-	 *
+     *  FIX ME!!
+     *
+     * The animation that we resume after we paused it, are the last one
+     * added. Need to be fixed.
+     *
+     * This also has to be extended the same way as the stop()
+     * function, but here we pause the animation not stopping it.
+     *
      */
 
     resume: function () {
