@@ -391,7 +391,7 @@ hAzzle.hACEController.prototype = {
             // If no name, empty the queue		
 
         } else {
-            return this.q.length = 0;
+            return this.q = [];
         }
     },
 
