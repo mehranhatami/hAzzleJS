@@ -60,9 +60,9 @@ requestFrame(function (timestamp) {
 
 hAzzle.extend({
 
-    fps: 60, // fps
+    fps: 60, // fps. This can be changed publicly. 
 
-    // String based duration aka jQuery style	
+    // String based duration aka jQuery style. This can be changed publicly.
 
     speed: {
         slow: 8500,
@@ -117,7 +117,7 @@ hAzzle.extend({
 
         self.name = hAzzle.getUID(self);
 
-        // Init the internal state
+        // Normalize some internal values
 
         self.controller = controller || new hAzzle.hACEController();
         self.startVal = 0;
@@ -154,10 +154,10 @@ hAzzle.extend({
         self.repeatCount = 0;
 
         self.easing = hAzzle.easing.linear; // Default easing function
-        self.onStep = hAzzle.noop,
-        self.onComplete = hAzzle.noop,
-        self.onStopped = hAzzle.noop,
-        self.andThen = hAzzle.noop;
+        self.onStep = function () {};
+        self.onComplete = function () {};
+        self.onStopped = function () {};
+        self.andThen = function () {};
     },
 
     /**
@@ -177,7 +177,11 @@ hAzzle.extend({
         self.now = 'undefined';
         self.raf = 'undefined';
         self.delta = 'undefined';
+
+        // The framerate at which hAzzle updates.
+
         self.interval = thousand / hAzzle.fps;
+
         self.running = self.hasNative = false;
     },
 
@@ -345,7 +349,7 @@ hAzzle.hACEController.prototype = {
      *
      */
 
-    iterateQueue: function (name) {
+    queueIterate: function (name) {
 
         var self = this,
             _hACE = new hAzzle.hACE(self),
@@ -371,6 +375,15 @@ hAzzle.hACEController.prototype = {
             }
 
         }
+        return this;
+    },
+
+    queueShift: function (name) {
+        return this.q[typeof name === 'string' || typeof name === 'number' ? name : ''].shift();
+    },
+
+    queueUnShift: function (name) {
+        return this.q[typeof name === 'string' || typeof name === 'number' ? name : ''].unshift();
     },
 
     // Empty the animation queue
@@ -391,8 +404,9 @@ hAzzle.hACEController.prototype = {
             // If no name, empty the queue		
 
         } else {
-            return this.q = [];
+            this.q = [];
         }
+        return this;
     },
 
     // Return the length of the queue
@@ -561,7 +575,7 @@ hAzzle.hACE.prototype = {
      */
 
     step: function (callback) {
-        this.onStep = callback || hAzzle.noop;
+        this.onStep = callback || function () {};
         return this;
     },
 
@@ -573,7 +587,7 @@ hAzzle.hACE.prototype = {
      */
 
     complete: function (callback) {
-        this.onComplete = callback || hAzzle.noop;
+        this.onComplete = callback || function () {};
         return this;
     },
 
@@ -588,7 +602,7 @@ hAzzle.hACE.prototype = {
      */
 
     stopped: function (callback) {
-        this.onStopped = callback || hAzzle.noop;
+        this.onStopped = callback || function () {};
         return this;
     },
 
@@ -623,7 +637,7 @@ hAzzle.hACE.prototype = {
      */
 
     then: function (callback) {
-        this.andThen = callback || hAzzle.noop;
+        this.andThen = callback || function () {};
         return this;
     },
 
@@ -657,6 +671,13 @@ hAzzle.hACE.prototype = {
 
             return self;
         }
+
+        /* Set timeOut for delay
+         *
+         *	Mehran!
+         *
+         * Fix me! Make sure we are deleating this
+         * timeOut later on so we avoid memory leaks */
 
         if (self.delayDuration > 0 && !self.delayed) {
             setTimeout(function () {
@@ -926,12 +947,20 @@ hAzzle.hACE.prototype = {
      *   245 and not the name 'jiesa' to stop it.
      */
 
-    stop: function () {
+    stop: function (gotoEnd) {
         var self = this;
         if (self.hasStarted) {
             self.hasStarted = false;
             cancelFrame.call(win, self.raf);
         }
+
+        if (gotoEnd) {
+
+            // Go to the last tick and end it
+            // Call callback
+
+        }
+
         return self;
     },
 
