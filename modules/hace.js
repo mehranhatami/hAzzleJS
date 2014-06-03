@@ -3,6 +3,7 @@
  */
 var win = this,
     thousand = 1000,
+	lastTime  = 0,
 
     /**
      * Mehran!
@@ -26,27 +27,43 @@ var win = this,
     },
     fixTs = false, // feature detected below
 
-    // RequestAnimationFrame
+    /** RequestAnimationFrame
+     *
+     * Mehran!
+     *
+     * We gain better performance if we not are using hAzzle.prefix
+     * Because that function have a couple of loops that we can avoid
+     */
 
     requestFrame = (function () {
-        var legacy = (function fallback(callback) {
-            var currTime = now(),
-                lastTime = currTime + timeToCall,
-                timeToCall = Math.max(0, 17 - (currTime - lastTime));
-            return win.setTimeout(function () {
-                callback(currTime + timeToCall);
-            }, timeToCall);
-        });
-        return !blacklisted ? (hAzzle.prefix('RequestAnimationFrame') || legacy) : legacy;
+        var legacy =function(callback) {
+            var now = hAzzle.now(),
+                nextTime = Math.max(lastTime + 17, now);
+            return setTimeout(function() { callback(lastTime = nextTime); },
+                              nextTime - now);
+        }
+        return !blacklisted ? win.requestAnimationFrame ||
+            win.webkitRequestAnimationFrame ||
+            win.oRequestAnimationFrame ||
+            win.msRequestAnimationFrame ||
+            win.mozRequestAnimationFrame ||
+            legacy : legacy;
     })(),
 
     // CancelAnimationFrame
 
     cancelFrame = function () {
-        var legacy = (function (id) {
+        var legacy = function (id) {
             clearTimeout(id);
-        });
-        return !blacklisted ? (hAzzle.prefix('CancelAnimationFrame') || hAzzle.prefix('CancelRequestAnimationFrame') || legacy) : legacy;
+        };
+        return !blacklisted ? win.cancelAnimationFrame ||
+            win.cancelRequestAnimationFrame ||
+            win.webkitCancelAnimationFrame ||
+            win.webkitCancelRequestAnimationFrame ||
+            win.mozCancelAnimationFrame ||
+            win.oCancelAnimationFrame ||
+            win.mozCancelRequestAnimationFrame ||
+            legacy : legacy;
     }();
 
 requestFrame(function (timestamp) {
@@ -121,6 +138,7 @@ hAzzle.extend({
 
         self.controller = controller || new hAzzle.hACEController();
         self.startVal = 0;
+
         self.endVal = 0;
         self.differences = {};
         self.canStart = true;
@@ -569,9 +587,15 @@ hAzzle.hACE.prototype = {
      */
 
     ease: function (callback) {
+
         var self = this;
+
         if (typeof callback === 'string') {
+
             self.easing = hAzzle.easing[callback] || hAzzle.easing.linear;
+
+            // else, it's an Function
+
         } else if (typeof callback === 'function') {
             self.easing = callback || hAzzle.easing.linear;
         }
