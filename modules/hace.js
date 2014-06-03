@@ -3,7 +3,7 @@
  */
 var win = this,
     thousand = 1000,
-	lastTime  = 0,
+    lastTime = 0,
 
     /**
      * Mehran!
@@ -31,16 +31,18 @@ var win = this,
      *
      * Mehran!
      *
-     * We gain better performance if we not are using hAzzle.prefix
-     * Because that function have a couple of loops that we can avoid
+     * We gain better performance if we not choose to use hAzzle.prefix()
+     * Because that function have a couple of loops that we can avoid.
      */
 
     requestFrame = (function () {
-        var legacy =function(callback) {
+        var legacy = function (callback) {
             var now = hAzzle.now(),
                 nextTime = Math.max(lastTime + 17, now);
-            return setTimeout(function() { callback(lastTime = nextTime); },
-                              nextTime - now);
+            return setTimeout(function () {
+                    callback(lastTime = nextTime);
+                },
+                nextTime - now);
         }
         return !blacklisted ? win.requestAnimationFrame ||
             win.webkitRequestAnimationFrame ||
@@ -93,27 +95,24 @@ hAzzle.extend({
     // Our ticker
 
     tick: function () {
-        var self = this;
-        return function () {
-            var n;
-            self.raf = requestFrame.call(win, hAzzle.tick.call(self));
-            delete self.raf;
-            self.now = now();
-            self.delta = self.now - self.then;
-            if (self.delta > self.interval) {
-                for (n in self.hACEPipe) {
-                    if (self.hACEPipe.hasOwnProperty(n)) {
-                        self.hACEPipe[n]();
-                    }
+        var hp = hAzzle.pipe,
+            n;
+        hp.raf = requestFrame.call(win, hAzzle.tick);
+        delete self.raf;
+        hp.now = now();
+        hp.delta = hp.now - hp.then;
+        if (hp.delta > hp.interval) {
+            for (n in hp.hACEPipe) {
+                if (hp.hACEPipe.hasOwnProperty(n)) {
+                    hp.hACEPipe[n](hp.delta);
                 }
-                self.then = self.now - (self.delta % self.interval);
             }
+            hp.then = hp.now - (hp.delta % hp.interval);
+        }
 
-            // Set to undefined to avoid leaks
+        // Set to undefined to avoid leaks
 
-            self.now = undefined;
-
-        };
+        hp.now = undefined;
     },
 
     hACE: function (controller) {
@@ -189,12 +188,18 @@ hAzzle.extend({
      *
      */
 
-    hACEPipe: function () {
+    hACEPipe: function (fps) {
         var self = this;
         self.hACEPipe = {};
         self.then = now();
         self.now = 'undefined';
+
+        // 'raf' are the returned value from the animation frame
+
         self.raf = 'undefined';
+
+        // 'delta' are only used inside hAzzle.tick()
+
         self.delta = 'undefined';
 
         // The framerate at which hAzzle updates.
@@ -262,8 +267,6 @@ hAzzle.hACEPipe.prototype = {
 
     start: function (fps) {
 
-
-
         /**
          * Only start the animation, if the
          * animation are not running
@@ -275,7 +278,7 @@ hAzzle.hACEPipe.prototype = {
 
             // Start the animation
 
-            hAzzle.tick.call(this)();
+            hAzzle.tick();
         }
     },
 
