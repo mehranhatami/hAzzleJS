@@ -597,6 +597,7 @@ hAzzle.hACE.prototype = {
         }
 
         var val,
+		    start,
             end,
             stepDuration = thousand / hAzzle.fps,
             steps = self.hACEDuration / stepDuration || 0;
@@ -613,20 +614,21 @@ hAzzle.hACE.prototype = {
 
             for (val in self.endVal) {
 
-                end = self.endVal[val];
+                start = self.startVal[val];
+			    end = self.endVal[val];
 
                 // Parses relative end values with start as base (e.g.: +10, -3)
 
                 if (typeof end === "string") {
 
-                    end = self.startVal[val] + parseFloat(end, 10);
+                    end = start + parseFloat(end, 10);
                 }
 
                 // Protect against non numeric properties.
 
                 if (typeof end === "number") {
 
-                    self.differences[val] = end - self.startVal[val];
+                    self.differences[val] = end - start;
                 }
             }
 
