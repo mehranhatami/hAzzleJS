@@ -157,6 +157,7 @@ hAzzle.extend({
         self.onStep = function () {};
         self.onComplete = function () {};
         self.onStopped = function () {};
+        self.onEnd = function () {};
         self.andThen = function () {};
     },
 
@@ -187,9 +188,7 @@ hAzzle.extend({
 
     hACEController: function () {
 
-        // Our 'queue' where we keep all queued animations
-
-        this.q = [];
+        this.q = []; // Our 'queue' where we keep all queued animations
     }
 
 }, hAzzle);
@@ -244,6 +243,8 @@ hAzzle.hACEPipe.prototype = {
      */
 
     start: function (fps) {
+
+
 
         /**
          * Only start the animation, if the
@@ -322,21 +323,31 @@ hAzzle.hACEController.prototype = {
 
         var self = this,
             _hACE = new hAzzle.hACE(self),
-            _queue = self.q[self.q.length - 1];
+            _queue = self.q[self.q.length];
+
+
         if (!_queue || _queue && _queue.hasCompleted) {
+
             _hACE.canStart = true;
+
         } else {
+
             _hACE.canStart = false;
             _queue.then(function () {
                 _hACE.canStart = true;
                 _hACE.start();
             });
         }
+
+        // Push the animation to the queue
         self.q.push(_hACE);
+
         return _hACE;
     },
 
     /**
+
+
      * Mehran!!
      *
      * Experimental attempt.
@@ -745,26 +756,7 @@ hAzzle.hACE.prototype = {
 
         self.hasStarted = true;
 
-        /**
-         *
-         * At this point, the animation have ended.
-         *
-         * Mehran!!
-         *
-         * FIX ME!!
-         *
-         * If we are 'queue' the animation in an sequence,
-         * we have to do it so we can run and
-         *
-         *       onEnd()
-         *
-         * function after all animations are
-         * finished.
-         *
-         * This because we need to restore CSS values to
-         * normal state after last animation.
-         *
-         */
+        // Animation have stopped. Deal with it !!
 
         self.stopIt = function () {
 
@@ -885,6 +877,25 @@ hAzzle.hACE.prototype = {
 
                         self.andThen.call(self);
 
+                    }
+
+                    /**
+                     * Mehran!
+                     *
+                     * onEnd() function that will be executed
+                     * after all animations in the queue are
+                     * finished.
+                     *
+                     * Just make sure this really happend, and
+                     * there is no problems.
+                     *
+                     */
+
+                    if (self.controller.q.length === 0) {
+
+                        // Call the onEnd function so we can clean up our mess
+
+                        self.onEnd.call(self);
                     }
 
                     self.controller.q.shift();
@@ -1090,6 +1101,20 @@ hAzzle.hACE.prototype = {
 
     queue: function () {
         return this.controller.queue();
-    }
+    },
 
+    /**
+     * Function to be executed after all
+     * animations have been ended
+     *
+     * @param {Function} callback
+     * @return {hAzzle}
+     */
+
+    end: function (callback) {
+        if (typeof callback === "function") {
+            this.onEnd = callback;
+        }
+        return this;
+    }
 };
