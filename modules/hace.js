@@ -952,8 +952,22 @@ hAzzle.hACE.prototype = {
      * last running animation.
      * It should be fixed so it stop
      * all running animations.
+	 *
+	 *
+	 * BIG NOTE!!!
+	 *
+	 * I'm starting to see an solution on this problem!!
+	 *
+	 * Get the 'raf' value from the 'pipe' first. This value 
+	 * contains the ID on the running animation.
+	 *
+	 * See the technical info I sent you in email.
+	 *
+	 * You then use that 'raf' value to controll which
+	 * animation to stop, pause and resume.
+	 *
      *
-     * and it should be extended ...
+     * AFTER THAT, it should be extended ...
      *
      * - Boolan value true / false. If true it should
      *   jump to the end of the tick
