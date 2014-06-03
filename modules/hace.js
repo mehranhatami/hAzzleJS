@@ -134,7 +134,6 @@ hAzzle.extend({
          */
 
         self.delayed = false;
-        self.repeatCount = 0;
 
         /**
          * @property paused
@@ -143,6 +142,27 @@ hAzzle.extend({
          */
 
         self.paused = false;
+
+        /**
+         * @property repeatCount
+         * @type {Number}
+         * @default false
+         */
+
+        self.repeatCount = 0;
+
+        /**
+         * @property repetations
+         * @type {Number}
+         * @default false
+         *
+         * Note! Holds the maximum
+         * number we are going to do,
+         * so we can run the
+         * onComplete() after all
+         * repetations are done
+         */
+
         self.easing = hAzzle.easing.linear; // Default easing function
         self.onStep = hAzzle.noop,
         self.onComplete = hAzzle.noop,
@@ -379,13 +399,17 @@ hAzzle.hACE.prototype = {
 
     to: function (properties) {
 
-        if (typeof properties === 'number') {
-
-            this.endVal = properties || 0;
-
-        } else if (typeof properties === 'object') {
+        if (typeof properties === 'object') {
 
             this.endVal = properties || {};
+
+            // This can be everything from number to string
+            // We are dealing with it later on if it's
+            // an relative number
+
+        } else {
+
+            this.endVal = properties;
 
         }
         return this;
@@ -442,6 +466,7 @@ hAzzle.hACE.prototype = {
      * Repetation of the animation x times
      *
      * @param {Number} times
+     * @param {Boolean} end
      * @return {hAzzle}
      */
 
@@ -577,13 +602,14 @@ hAzzle.hACE.prototype = {
         }
 
         var val,
+            end,
             stepDuration = thousand / hAzzle.fps,
             steps = self.hACEDuration / stepDuration || 0;
 
         if (typeof self.endVal === 'object') {
 
             // Force the 'startVal' to be an object
-            // if 'endVal' are an object
+            // if 'endVal' already are an object
 
             if (typeof self.startVal !== 'object') {
 
@@ -592,16 +618,41 @@ hAzzle.hACE.prototype = {
 
             for (val in self.endVal) {
 
-                if (!self.startVal.hasOwnProperty(val)) {
-                    self.startVal[val] = 0;
+                end = self.endVal[val];
+
+                // Parses relative end values with start as base (e.g.: +10, -3)
+
+                if (typeof end === "string") {
+
+                    end = self.startVal[val] + parseFloat(end, 10);
                 }
 
-                self.differences[val] = self.endVal[val] - self.startVal[val];
+                // Protect against non numeric properties.
+
+                if (typeof end === "number") {
+
+                    self.differences[val] = end - self.startVal[val];
+                }
             }
 
         } else {
 
-            self.differences.mehran = self.endVal - self.startVal;
+            start = self.startVal;
+            end = self.endVal;
+
+            // Parses relative end values with start as base (e.g.: +10, -3)
+
+            if (typeof end === "string") {
+
+                end = start + parseFloat(end, 10);
+            }
+
+            // Protect against non numeric properties.
+
+            if (typeof end === "number") {
+
+                self.differences.mehran = end - start;
+            }
         }
 
         self.hasStarted = true;
@@ -680,7 +731,8 @@ hAzzle.hACE.prototype = {
                  *  -3,324, -1,77 etc
                  */
 
-                if (tick < 0) {
+                if (typeof tick !== 'object' && tick < 0) {
+
                     tick = 0;
                 }
 
@@ -705,9 +757,7 @@ hAzzle.hACE.prototype = {
 
                 self.onStopped.call(self);
 
-                // The animation have finished, and stopped itself
-
-            } else {
+            } else { // The animation have finished, and stopped itself
 
                 // Remove from the 'pipe'
 
@@ -730,17 +780,29 @@ hAzzle.hACE.prototype = {
                  *
                  */
 
-                if (self.repeatCount > 0 || self.repeatCount === -1 || self.repeatCount === Infinity) {
-
+                if (self.repeatCount > 0 || self.repeatCount === -1) {
                     self.repeatCount = self.repeatCount < 0 || self.repeatCount === Infinity ? self.repeatCount : self.repeatCount--;
-                    self.onComplete.call(self, self.end);
+
+                    // Start all over again
+
                     self.start();
 
                 } else {
 
                     self.hasCompleted = true;
-                    self.onComplete.call(self, self.end);
-                    self.andThen.call(self);
+
+                    if (self.onComplete !== null) {
+
+                        self.onComplete.call(self);
+
+                    }
+
+                    if (self.andThen !== null) {
+
+                        self.andThen.call(self);
+
+                    }
+
                     self.controller.q.shift();
                 }
             }
