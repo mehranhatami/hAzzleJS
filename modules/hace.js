@@ -330,7 +330,77 @@ hAzzle.hACEController.prototype = {
         }
         self.q.push(_hACE);
         return _hACE;
+    },
+
+    /**
+     * Mehran!!
+     *
+     * Experimental attempt.
+     *
+     * Here is what I think of how to
+     * grab things from queue by name
+     * or number
+     *
+     *   NOT WORKING OR IN USE!!!!
+     *
+     */
+
+    iterateQueue: function (name) {
+
+        var self = this,
+            _hACE = new hAzzle.hACE(self),
+            _queue;
+
+        if (typeof name === 'string') {
+
+            _queue = self.q[name];
+
+        } else if (typeof name === 'number') {
+
+            _queue = self.q[name];
+        }
+
+        if (_queue) {
+
+            _queue.shift();
+
+            if (_queue.length) {
+
+            } else {
+
+            }
+
+        }
+    },
+
+    // Empty the animation queue
+
+    queueEmpty: function (name) {
+
+        // If number, delete from queue by name
+
+        if (typeof name === 'string') {
+
+            delete this.q[name];
+
+            // If number, delete from queue by number
+        } else if (typeof name === 'number') {
+
+            delete this.q[name];
+
+            // If no name, empty the queue		
+
+        } else {
+            return this.q.length = 0;
+        }
+    },
+
+    // Return the length of the queue
+    queueLength: function () {
+
+        return this.q.length;
     }
+
 };
 
 /**
@@ -597,7 +667,7 @@ hAzzle.hACE.prototype = {
         }
 
         var val,
-		    start,
+            start,
             end,
             stepDuration = thousand / hAzzle.fps,
             steps = self.hACEDuration / stepDuration || 0;
@@ -615,7 +685,7 @@ hAzzle.hACE.prototype = {
             for (val in self.endVal) {
 
                 start = self.startVal[val];
-			    end = self.endVal[val];
+                end = self.endVal[val];
 
                 // Parses relative end values with start as base (e.g.: +10, -3)
 
