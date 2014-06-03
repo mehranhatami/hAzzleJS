@@ -61,59 +61,59 @@ requestFrame(function (timestamp) {
 hAzzle.extend({
 
     fps: 60, // fps
-	
-  // String based duration aka jQuery style	
-	
-	speed: {
-    slow: 8500,
-    fast: 400,
-    quick: 180,
-    // Default speed
-    _default: 1500
-    
-	},
-	
-	// Our ticker
-	
-	tick: function() {
-		var self = this;
-		return function() {
-			var n;
-			self.raf = requestFrame.call(win, hAzzle.tick.call(self));
-			delete self.raf;
-			self.now = now();
-			self.delta = self.now - self.then;
-			if (self.delta > self.interval) {
-				for (n in self.hACEPipe) {
-                if (self.hACEPipe.hasOwnProperty(n)) {
-					self.hACEPipe[n]();
-				}
-              }	
-				self.then = self.now - (self.delta % self.interval);
-			}
 
-		// Set to undefined to avoid leaks
+    // String based duration aka jQuery style	
 
-        self.now = undefined;	
+    speed: {
+        slow: 8500,
+        fast: 400,
+        quick: 180,
+        // Default speed
+        _default: 1500
 
-		};
-	},
+    },
+
+    // Our ticker
+
+    tick: function () {
+        var self = this;
+        return function () {
+            var n;
+            self.raf = requestFrame.call(win, hAzzle.tick.call(self));
+            delete self.raf;
+            self.now = now();
+            self.delta = self.now - self.then;
+            if (self.delta > self.interval) {
+                for (n in self.hACEPipe) {
+                    if (self.hACEPipe.hasOwnProperty(n)) {
+                        self.hACEPipe[n]();
+                    }
+                }
+                self.then = self.now - (self.delta % self.interval);
+            }
+
+            // Set to undefined to avoid leaks
+
+            self.now = undefined;
+
+        };
+    },
 
     hACE: function (controller) {
 
         var self = this;
 
         /*
-		 * Unique ID on each animation
-		 *
-		 * This 'id' will be created everytime
-		 * we create an new 'hACE' instance.
-		 *
-		 * Meaning every animations in
-		 * the chain who are using the
-		 * current instance, have the same
-		 * unique 'id'
-		 */
+         * Unique ID on each animation
+         *
+         * This 'id' will be created everytime
+         * we create an new 'hACE' instance.
+         *
+         * Meaning every animations in
+         * the chain who are using the
+         * current instance, have the same
+         * unique 'id'
+         */
 
         self.name = hAzzle.getUID(self);
 
@@ -141,8 +141,8 @@ hAzzle.extend({
         self.hACEPipe = {};
         self.then = now();
         self.now = 'undefined';
-		self.raf = 'undefined';
-		self.delta = 'undefined';
+        self.raf = 'undefined';
+        self.delta = 'undefined';
         self.interval = thousand / hAzzle.fps;
         self.running = self.hasNative = false;
     },
@@ -188,18 +188,18 @@ hAzzle.hACEPipe.prototype = {
             delete this.hACEPipe[name];
         }
     },
-	
+
     /**
      * Starts the animation engine
      *
      * @param{Nummber} fps
      * @return{hAzzle}
      *
-	 * Note!
-	 *
-	 * 'fps' is an number to to be used as the 
-	 * approximated FPS for the defined functions to run at.
-	 *
+     * Note!
+     *
+     * 'fps' is an number to to be used as the
+     * approximated FPS for the defined functions to run at.
+     *
      */
 
     start: function (fps) {
@@ -213,10 +213,10 @@ hAzzle.hACEPipe.prototype = {
             hAzzle.fps = fps || hAzzle.fps;
             this.interval = 1000 / hAzzle.fps;
 
-			// Start the animation
-			
-			hAzzle.tick.call(this)();
-		}
+            // Start the animation
+
+            hAzzle.tick.call(this)();
+        }
     },
 
     /**
@@ -342,6 +342,7 @@ hAzzle.hACE.prototype = {
      *
      * In the step() function, we then grab the returned
      * value like this:
+
      *
      * - val.x
      * - val.y
@@ -675,7 +676,7 @@ hAzzle.hACE.prototype = {
         var self = this;
         if (self.hasStarted) {
             self.hasStarted = false;
-              cancelFrame.call(win, self.raf);
+            cancelFrame.call(win, self.raf);
         }
         return self;
     },
