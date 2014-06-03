@@ -107,7 +107,7 @@ hAzzle.extend({
 
     frameRate: 60, // fps
 
-    hACE: function () {
+    hACE: function (controller) {
 
         var self = this;
 
@@ -115,7 +115,7 @@ hAzzle.extend({
 
         self.name = hAzzle.getUID(self);
 
-        self.controller = new hAzzle.hACEController();
+        self.controller = controller || new hAzzle.hACEController();
         self.startVal = 0;
         self.endVal = 0;
         self.differences = {};
@@ -296,23 +296,60 @@ hAzzle.hACE.prototype = {
     /**
      * Start position
      *
-     * @param {Number} val
+     * @param {Number/Object} val
      * @return {hAzzle}
+     *
+     * 'val' could be an object. Example
+     * if we are dealing with 'X' and 'Y' coordinates.
+     *
+     * from( {x:20, y: 20  })
+     *
      */
 
     from: function (val) {
-        this.startVal = typeof val === "number" ? val : 0;
+
+        if (typeof val === 'number') {
+
+            this.startVal = val || 0;
+
+        } else if (typeof val === 'object') {
+
+            this.startVal = val || {};
+
+        }
         return this;
     },
+
     /**
      * End position
      *
-     * @param {Number} val
+     * @param {Number/Object} val
      * @return {hAzzle}
+     *
+     * 'val' could be an object. Example
+     * if we are dealing with 'X' and 'Y' coordinates.
+     *
+     * from( {x:30, y: 30  })
+     *
+     * In the step() function, we then grab the returned
+     * value like this:
+     *
+     * - val.x
+     * - val.y
      */
 
+
     to: function (val) {
-        this.endVal = typeof val === "number" ? val : 20;
+
+        if (typeof val === 'number') {
+
+            this.endVal = val || 0;
+
+        } else if (typeof val === 'object') {
+
+            this.endVal = val || {};
+
+        }
         return this;
     },
 
@@ -332,6 +369,11 @@ hAzzle.hACE.prototype = {
          * - slow
          * - fast
          * - quick
+         *
+         * and
+         *
+         * _default as an fallback
+         *
          */
 
         if (typeof ms === "string") {
@@ -403,13 +445,15 @@ hAzzle.hACE.prototype = {
      */
 
     complete: function (fn) {
-//		alert( fn)
         this.onComplete = fn || hAzzle.noop;
         return this;
     },
 
     /**
-     * Function to be executed when animation are stopped
+     * Function to be executed when the animation have stopped.
+     *
+     * This function will only run as an callback after
+     * the stop() have been executed.
      *
      * @param {Function} fn
      * @return {hAzzle}
@@ -425,6 +469,29 @@ hAzzle.hACE.prototype = {
      *
      * @param {Function} fn
      * @return {hAzzle}
+     *
+     * 'then' are an 'promise' like
+     * function and will be executed
+     * after the complete() function.
+     *
+     * Example:
+     *
+     *  new hAzzle.hACE()
+     *     .from()
+     *     .to()
+     * .step(function(val) {})
+     * .complete(function() {
+     *
+     * alert( 'completed the animnation!' )
+     * })
+     * .then(function() {
+     *
+     * // Going in reverse
+     *
+     * this.reverse();
+     * })
+     * .start()
+     *
      */
 
     then: function (fn) {
@@ -458,7 +525,11 @@ hAzzle.hACE.prototype = {
         var self = this;
 
 
-        if (!self.canStart) return self;
+        if (!self.canStart) {
+
+            return self;
+        }
+
         if (self.delayDuration > 0 && !self.delayed) {
             setTimeout(function () {
                 self.start();
@@ -472,16 +543,26 @@ hAzzle.hACE.prototype = {
             steps = self.hACEDuration / stepDuration || 0;
 
         if (typeof self.endVal === 'object') {
+
+            // Force the 'startVal' to be an object
+            // if 'endVal' are an object
+
             if (typeof self.startVal !== 'object') {
+
                 self.startVal = {};
             }
+
             for (val in self.endVal) {
+
                 if (!self.startVal.hasOwnProperty(val)) {
                     self.startVal[val] = 0;
                 }
+
                 self.differences[val] = self.endVal[val] - self.startVal[val];
             }
+
         } else {
+
             self.differences.mehran = self.endVal - self.startVal;
         }
 
@@ -500,7 +581,6 @@ hAzzle.hACE.prototype = {
 
                 steps--;
 
-               
                 ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration);
 
                 if (self.differences.hasOwnProperty('mehran')) {
@@ -521,10 +601,10 @@ hAzzle.hACE.prototype = {
                         values[v] = self.startVal[v] + (self.differences[v] - self.startVal[v]) * ease;
                     }
                 }
-				
-				// Avoid negative values, and set values to '0' 
-				
-				 if (values < 0) {
+
+                // Avoid negative values, and set values to '0' 
+
+                if (values < 0) {
                     values = 0;
                 }
 
@@ -583,13 +663,10 @@ hAzzle.hACE.prototype = {
      */
 
     stop: function () {
-
-	    var self = this;
-		
+        var self = this;
         if (self.hasStarted) {
-
             self.hasStarted = false;
-            cancelFrame.call(win, self.raf);
+              cancelFrame.call(win, self.raf);
         }
         return self;
     },
