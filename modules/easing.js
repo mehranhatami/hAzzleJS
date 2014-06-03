@@ -22,20 +22,93 @@ hAzzle.easing = {
         return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
     },
 
-    easeOut: function (t) {
-        return Math.sin(t * Math.PI / 2);
+    easeOut: function (p) {
+        return Math.sin(p * Math.PI / 2);
+    },
+	
+	easeOutCubic: function(p){
+      return (Math.pow((p-1), 3) +1);
     },
 
-    easeOutStrong: function (t) {
-        return (t === 1) ? 1 : 1 - Math.pow(2, -10 * t);
+    easeInOutCubic: function(p){
+      if ((p/=0.5) < 1) {
+		  
+		  return 0.5*Math.pow(p,3);
+	  }
+      return 0.5 * (Math.pow((p-2),3) + 2);
     },
 
-    easeIn: function (t) {
-        return t * t;
+    easeInQuart: function(pos){
+      return Math.pow(pos, 4);
     },
 
-    easeInStrong: function (t) {
-        return (t === 0) ? 0 : Math.pow(2, 10 * (t - 1));
+    easeOutStrong: function (p) {
+        return (p === 1) ? 1 : 1 - Math.pow(2, -10 * p);
+    },
+
+    easeIn: function (p) {
+        return p * p;
+    },
+
+    easeInStrong: function (p) {
+        return (p === 0) ? 0 : Math.pow(2, 10 * (p - 1));
+    },
+	
+	 easeInOutQuart: function(p){
+      if ((p/=0.5) < 1) {return 0.5*Math.pow(p,4);}
+      return -0.5 * ((p-=2)*Math.pow(p,3) - 2);
+    },
+
+    easeInQuint: function(p){
+      return Math.pow(p, 5);
+    },
+
+    easeOutQuint: function(p){
+      return (Math.pow((p-1), 5) +1);
+    },
+
+    easeInOutQuint: function(p){
+      if ((p/=0.5) < 1) {
+		   
+		   return 0.5*Math.pow(p,5);
+	  }
+      return 0.5 * (Math.pow((p-2),5) + 2);
+    },
+
+    easeInSine: function(p){
+      return -Math.cos(p * (Math.PI/2)) + 1;
+    },
+
+    easeOutSine: function(p){
+      return Math.sin(p * (Math.PI/2));
+    },
+	
+	easeInExpo: function(p){
+      return (p===0) ? 0 : Math.pow(2, 10 * (p - 1));
+    },
+
+    easeOutExpo: function(p){
+      return (p===1) ? 1 : -Math.pow(2, -10 * p) + 1;
+    },
+
+    easeInOutExpo: function(p){
+      if(p===0) {return 0;}
+      if(p===1) {return 1;}
+      if((p/=0.5) < 1) {return 0.5 * Math.pow(2,10 * (p-1));}
+      return 0.5 * (-Math.pow(2, -10 * --p) + 2);
+    },
+
+	 easeInCirc: function(p){
+      return -(Math.sqrt(1 - (p*p)) - 1);
+    },
+
+    easeOutCirc: function(p){
+      return Math.sqrt(1 - Math.pow((p-1), 2));
+    },
+
+    easeInOutCirc: function(p){
+      if((p/=0.5) < 1) {return -0.5 * (Math.sqrt(1 - p*p) - 1);}
+      return 0.5 * (Math.sqrt(1 - (p-=2)*p) + 1);
     },
 
     easeOutBounce: function (p) {
@@ -52,12 +125,18 @@ hAzzle.easing = {
 
     easeInBack: function (p) {
         var s = 1.70158;
-        return (p) * p * ((s + 1) * p - s);
+        return ((p) * p * ((s + 1) * p - s));
     },
 
     easeOutBack: function (p) {
         var s = 1.70158;
         return (p = p - 1) * p * ((s + 1) * p + s) + 1;
+    },
+    
+	easeInOutBack: function(p){
+      var s = 1.70158;
+      if((p/=0.5) < 1) {return 0.5*(p*p*(((s*=(1.525))+1)*p -s));}
+      return 0.5*((p-=2)*p*(((s*=(1.525))+1)*p +s) +2);
     },
 
     bounce: function (t) {
@@ -96,6 +175,12 @@ hAzzle.easing = {
         var s = 1.70158;
         return (p -= 1) * p * ((s + 1) * p + s) + 1;
     },
+   
+   swingFromTo: function(p) {
+      var s = 1.70158;
+      return ((p/=0.5) < 1) ? 0.5*(p*p*(((s*=(1.525))+1)*p - s)) :
+      0.5*((p-=2)*p*(((s*=(1.525))+1)*p + s) + 2);
+    },
 
     swingFrom: function (p) {
         var s = 1.70158;
@@ -120,5 +205,18 @@ hAzzle.easing = {
             return hAzzle.easing.sinusoidal(p * 2);
         else
             return hAzzle.easing.sinusoidal(1 - (p - 0.5) * 2);
+    },
+
+    easeFromTo: function(p) {
+      if ((p/=0.5) < 1) {return 0.5*Math.pow(p,4);}
+      return -0.5 * ((p-=2)*Math.pow(p,3) - 2);
+    },
+
+    easeFrom: function(p) {
+      return Math.pow(p,4);
+    },
+
+    easeTo: function(p) {
+      return Math.pow(p,0.25);
     }
 };
