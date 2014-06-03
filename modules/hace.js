@@ -475,9 +475,9 @@ hAzzle.hACE.prototype = {
 
     ease: function (callback) {
         var self = this;
-        if (typeof easing === 'string') {
+        if (typeof callback === 'string') {
             self.easing = hAzzle.easing[callback] || hAzzle.easing.linear;
-        } else if (typeof easing === 'function') {
+        } else if (typeof callback === 'function') {
             self.easing = callback || hAzzle.easing.linear;
         }
         return self;
