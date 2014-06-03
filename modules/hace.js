@@ -719,10 +719,7 @@ hAzzle.hACE.prototype = {
                 }
 
                 /**
-                 * Avoid a negative 'tick', and set 'tick' to '0'
-                 *
-                 * A 'negative tick' can occur if the 'tick' (e.g.: -3,324, -1,77 )
-                 *
+                 * Avoid a negative 'tick' (e.g.: -3,324, -1,77 ), and set 'tick' to '0'
                  */
 
                 if (typeof tick !== 'object' && tick < 0) {
