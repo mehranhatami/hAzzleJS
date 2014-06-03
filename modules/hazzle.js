@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.61
+ * Version: 0.62
  * Released under the MIT License.
  *
- * Date: 2014-05-30
+ * Date: 2014-06-03
  */
 (function (window, undefined) {
 
@@ -494,36 +494,23 @@
             }
             return a;
         },
-		
-		 // Use a comparator function to figure out the smallest index at which
-  // an object should be inserted so as to maintain order. Uses binary search.
-    sortedIndex: function(array, obj, iterator, context) {
-    iterator = lookupIterator(iterator);
-    var value = iterator.call(context, obj);
-    var low = 0, high = array.length;
-    while (low < high) {
-      var mid = (low + high) >>> 1;
-      iterator.call(context, array[mid]) < value ? low = mid + 1 : high = mid;
-    }
-    return low;
-  },
-  
- /**
-  * Check if an element exist in an array
-  */
- 
-  inArray: function (array, value, index) {
-		var i = (index || 0),
-            m = array.length;
 
-      for (; i < m; i++) {
-        if (array[i] === value) {
-          return i;
-        }
-      }
-      return -1;
-    },
- 
+        /**
+         * Check if an element exist in an array
+         */
+
+        inArray: function (array, value, index) {
+            var i = (index || 0),
+                m = array.length;
+
+            for (; i < m; i++) {
+                if (array[i] === value) {
+                    return i;
+                }
+            }
+            return -1;
+        },
+
         map: function (elems, callback, arg) {
             var value, i = 0,
                 length = elems.length,
@@ -604,8 +591,9 @@
             return ret;
         },
 
+
         /**
-         *  Global ID for objects
+         *  Global ID for objects and hACE
          *  Return or compute a unique ID
          *
          * @param{Object} elem
@@ -823,6 +811,61 @@
                 }
             }
             return matched;
+        },
+        keys: function (obj) {
+
+            var keys = [],
+                k;
+
+            for (k in obj) {
+
+                keys.push(k);
+
+            }
+
+            if (typeof obj == 'function') {
+
+                return keys.filter(function (k) {
+
+                    if (new Function()[k]) {
+
+                        return false;
+
+                    } else {
+
+                        return true;
+                    }
+                });
+
+            } else {
+
+                return keys;
+            }
+        },
+
+        keysOwn: function (obj, noFunctions) {
+            var keys = [],
+                k;
+            if (obj.hasOwnProperty) {
+
+                for (k in obj) {
+
+                    if (obj.hasOwnProperty(k) && (!noFunctions || typeof obj[k] !== 'function')) {
+                        keys.push(k);
+                    }
+                }
+            } else {
+                keys = Object.keys(obj);
+            }
+            return keys;
+        },
+
+        rand: function (x, y) {
+            if (typeof x === 'undefined') {
+                y = +x;
+                x = 0;
+            }
+            return Math.rand(x, y);
         }
 
     }, hAzzle);
@@ -854,7 +897,6 @@
     /**
      * Check if an element contains another element
      */
-
 
     hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
         var adown = a.nodeType === 9 ? a.documentElement : a,
