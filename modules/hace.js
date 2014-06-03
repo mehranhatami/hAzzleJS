@@ -117,6 +117,8 @@ hAzzle.extend({
 
         self.name = hAzzle.getUID(self);
 
+        // Init the internal state
+
         self.controller = controller || new hAzzle.hACEController();
         self.startVal = 0;
         self.endVal = 0;
@@ -150,18 +152,6 @@ hAzzle.extend({
          */
 
         self.repeatCount = 0;
-
-        /**
-         * @property repetations
-         * @type {Number}
-         * @default false
-         *
-         * Note! Holds the maximum
-         * number we are going to do,
-         * so we can run the
-         * onComplete() after all
-         * repetations are done
-         */
 
         self.easing = hAzzle.easing.linear; // Default easing function
         self.onStep = hAzzle.noop,
@@ -479,13 +469,18 @@ hAzzle.hACE.prototype = {
 
      * Easing
      *
-     * @param {Function} callback 
+     * @param {String / Function} callback 
      * @return {hAzzle}
      */
 
     ease: function (callback) {
-        this.easing = callback || hAzzle.easing.linear;
-        return this;
+        var self = this;
+        if (typeof easing === 'string') {
+            self.easing = hAzzle.easing[callback] || hAzzle.easing.linear;
+        } else if (typeof easing === 'function') {
+            self.easing = callback || hAzzle.easing.linear;
+        }
+        return self;
     },
 
     /**
@@ -979,6 +974,15 @@ hAzzle.hACE.prototype = {
 
             return self;
         }
+    },
+
+    /**
+     * Returns whether or not a animation is running.
+     * @return {boolean}
+     */
+
+    isPlaying: function () {
+        return self.hasStarted;
     },
 
     /**
