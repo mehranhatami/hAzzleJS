@@ -724,6 +724,47 @@ hAzzle.hACE.prototype = {
      * Stop the animation
      *
      * @return {hAzzle}
+	 *
+	 * Mehran!!
+	 *
+	 * See the hACE issues email I sent 
+	 * you earlier.
+	 *
+	 * The stop function only stop the
+	 * last running animation.
+	 * It should be fixed so it stop
+	 * all running animations.
+	 *
+	 * and it should be extended ...
+	 *
+	 * - Boolan value true / false. If true it should
+	 *   jump to the end of the tick
+	 *
+	 * - string param. This is related to the
+	 *   'queue system'. So before this, when we
+	 *   'queue' an animation, we should fix it so:
+	 *
+	 *    .queue()
+	 *
+	 *    become:
+	 *
+	 *    .queue( name )
+	 *
+	 *  so every animation in the queue got an unique name the
+	 *  user of hAzzle Core are choosing.
+	 *  
+	 *  In this case and with the string param we can stop
+	 *  running animations by name, and not all animations.
+	 *
+	 *  Say we have 500 animations, and we should stop
+	 *  animation number 245 that has the name 'jiesa'.
+	 *  We just paste in the name 'jiesa' and only that
+	 *  animation are stopped.
+	 *
+	 * - number param. Same as 'string param', but with the
+	 *   difference that we paste in an number and not an name.
+	 *   If we have 500 animations, we paste inn number
+	 *   245 and not the name 'jiesa' to stop it.
      */
 
     stop: function () {
@@ -774,12 +815,23 @@ hAzzle.hACE.prototype = {
      * Pause the animation
      *
      * @return {hAzzle}
+	 *
+	 *  FIX ME!!
+	 *
+	 * The animation that got paused now are the last one
+	 * added. Need to be fixed.
+	 *
+	 * This also has to be extended the same way as the stop() 
+	 * function, but here we pause the animation not stopping it.
+	 *
      */
 
     pause: function () {
         var self = this;
-        // Remove the animation from the pipe if animation are running
-        if (self.hasStarted) {
+     
+	    // Remove the animation from the pipe if animation are running
+     
+	    if (self.hasStarted) {
             hAzzle.pipe.remove(self.name);
         }
         return self;
@@ -790,6 +842,15 @@ hAzzle.hACE.prototype = {
      * Resume the animation
      *
      * @return {hAzzle}
+     *
+	 *  FIX ME!!
+	 *
+	 * The animation that we resume after we paused it, are the last one
+	 * added. Need to be fixed.
+	 *
+	 * This also has to be extended the same way as the stop() 
+	 * function, but here we pause the animation not stopping it.
+	 *
      */
 
     resume: function () {
