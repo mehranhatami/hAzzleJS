@@ -53,65 +53,67 @@ requestFrame(function (timestamp) {
     // feature-detect if rAF and now() are of the same scale (epoch or high-res),
     // if not, we have to do a timestamp fix on each frame
     fixTs = timestamp > 1e12 !== now() > 1e12;
-}),
+});
 
-// String based duration aka jQuery style
-
-speed = {
-    slow: 8500,
-    fast: 400,
-    quick: 180,
-    // Default speed
-    _default: 1500
-};
-
-/**
- * "Run"
- */
-
-function run() {
-    var hp = hAzzle.pipe,
-        n;
-
-    /* If the animation are running,
-    no point to start it again
-  */
-
-    if (hp.running) {
-        return false;
-    }
-
-    hp.raf = requestFrame.call(win, run);
-    delete hp.raf;
-    hp.now = now();
-    hp.delta = hp.now - hp.then;
-
-    if (hp.delta > hp.interval) {
-        for (n in hp.hACEPipe) {
-            if (hp.hACEPipe.hasOwnProperty(n)) {
-
-                hp.hACEPipe[n](hp.delta);
-            }
-        }
-        hp.then = hp.now - (hp.delta % hp.interval);
-    }
-
-    // Set to undefined to avoid leaks
-
-    hp.now = undefined;
-}
 
 // Extend the hAzzle Object
 
 hAzzle.extend({
 
-    frameRate: 60, // fps
+    fps: 60, // fps
+	
+  // String based duration aka jQuery style	
+	
+	speed: {
+    slow: 8500,
+    fast: 400,
+    quick: 180,
+    // Default speed
+    _default: 1500
+    
+	},
+	
+	// Our ticker
+	
+	tick: function() {
+		var self = this;
+		return function() {
+			var n;
+			self.raf = requestFrame.call(win, hAzzle.tick.call(self));
+			delete self.raf;
+			self.now = now();
+			self.delta = self.now - self.then;
+			if (self.delta > self.interval) {
+				for (n in self.hACEPipe) {
+                if (self.hACEPipe.hasOwnProperty(n)) {
+					self.hACEPipe[n]();
+				}
+              }	
+				self.then = self.now - (self.delta % self.interval);
+			}
+
+		// Set to undefined to avoid leaks
+
+        self.now = undefined;	
+
+		};
+	},
 
     hACE: function (controller) {
 
         var self = this;
 
-        // Unique ID on each animation
+        /*
+		 * Unique ID on each animation
+		 *
+		 * This 'id' will be created everytime
+		 * we create an new 'hACE' instance.
+		 *
+		 * Meaning every animations in
+		 * the chain who are using the
+		 * current instance, have the same
+		 * unique 'id'
+		 */
 
         self.name = hAzzle.getUID(self);
 
@@ -122,7 +124,7 @@ hAzzle.extend({
         self.canStart = true;
         self.hasStarted = false;
         self.hasCompleted = false;
-        self.hACEDuration = speed._default;
+        self.hACEDuration = hAzzle.speed._default;
         self.delayDuration = 0;
         self.delayed = false;
         self.repeatCount = 0;
@@ -138,8 +140,10 @@ hAzzle.extend({
         var self = this;
         self.hACEPipe = {};
         self.then = now();
-        self.now = self.raf = self.delta = 'undefined';
-        self.interval = thousand / hAzzle.frameRate;
+        self.now = 'undefined';
+		self.raf = 'undefined';
+		self.delta = 'undefined';
+        self.interval = thousand / hAzzle.fps;
         self.running = self.hasNative = false;
     },
 
@@ -184,30 +188,35 @@ hAzzle.hACEPipe.prototype = {
             delete this.hACEPipe[name];
         }
     },
+	
     /**
      * Starts the animation engine
      *
-     * @param{Nummber} frameRate
+     * @param{Nummber} fps
      * @return{hAzzle}
      *
+	 * Note!
+	 *
+	 * 'fps' is an number to to be used as the 
+	 * approximated FPS for the defined functions to run at.
+	 *
      */
 
-    start: function (frameRate) {
+    start: function (fps) {
 
         /**
-         * Only call "run" if the animation
-         * are not running
+         * Only start the animation, if the
+         * animation are not running
          */
 
         if (!this.running) {
+            hAzzle.fps = fps || hAzzle.fps;
+            this.interval = 1000 / hAzzle.fps;
 
-            hAzzle.frameRate = frameRate || hAzzle.frameRate;
-            this.interval = 1000 / hAzzle.frameRate;
-
-            // Start the animation
-
-            run();
-        }
+			// Start the animation
+			
+			hAzzle.tick.call(this)();
+		}
     },
 
     /**
@@ -224,7 +233,7 @@ hAzzle.hACEPipe.prototype = {
 
     /**
      * Pause an animation in the pipe
-     *
+     * This method cancels the requestAnimationFrame callback.
      * @return {hAzzle}
      *
      */
@@ -239,15 +248,15 @@ hAzzle.hACEPipe.prototype = {
     },
 
     /**
-     * Set frameRate (fps)
+     * Takes a number to be used as an approximated FPS for the defined functions to run at.
      *
-     * @param {Number} frameRate
+     * @param {Number} fps
      * @return {hAzzle}
      *
      */
 
-    setframeRate: function (frameRate) {
-        this.interval = thousand / frameRate || hAzzle.frameRate;
+    setFPS: function (fps) {
+        this.interval = thousand / fps || hAzzle.fps;
     }
 };
 
@@ -378,11 +387,11 @@ hAzzle.hACE.prototype = {
 
         if (typeof ms === "string") {
 
-            this.hACEDuration = speed[ms] || speed._default;
+            this.hACEDuration = hAzzle.speed[ms] || hAzzle.speed._default;
 
         } else if (typeof ms === "number") {
 
-            this.hACEDuration = ms || speed._default;
+            this.hACEDuration = ms || hAzzle.speed._default;
         }
 
         return this;
@@ -539,7 +548,7 @@ hAzzle.hACE.prototype = {
         }
 
         var val,
-            stepDuration = thousand / hAzzle.frameRate,
+            stepDuration = thousand / hAzzle.fps,
             steps = self.hACEDuration / stepDuration || 0;
 
         if (typeof self.endVal === 'object') {
@@ -689,7 +698,7 @@ hAzzle.hACE.prototype = {
 
     forward: function (count) {
         if (typeof count === "number") {
-            this.hACEDuration = this.hACEDuration / count || speed._default;
+            this.hACEDuration = this.hACEDuration / count || hAzzle.speed._default;
         }
     },
 
@@ -702,7 +711,7 @@ hAzzle.hACE.prototype = {
 
     rewind: function (count) {
         if (typeof count === "number") {
-            this.hACEDuration = this.hACEDuration * count || speed._default;
+            this.hACEDuration = this.hACEDuration * count || hAzzle.speed._default;
         }
     },
 
@@ -729,6 +738,7 @@ hAzzle.hACE.prototype = {
      */
 
     resume: function () {
+
         var self = this;
         if (self.hasStarted) {
 
