@@ -125,9 +125,35 @@ function createStepping(el, property, cat) {
         } else if (cat === 'scale') {
             style[prop] = 'scale(' + val + ')';
         } else if (cat === 'skew') {
-            style[prop] = 'skew(' + val.x + 'deg,' + val.y + 'deg)';
+
+            style[prop] = 'skewX(' + val.x + 'deg)';
+
+            if (val.y === 0) {
+
+            } else if (val.x === 0) {
+
+                style[prop] = 'skewY(' + val.y + 'deg)';
+
+            } else {
+
+                style[prop] = 'skew(' + val.x + 'deg,' + val.y + 'deg)';
+            }
+
+
         } else if (cat === 'translate') {
-            style[prop] = 'translate(' + val.x + 'px,' + val.y + 'px)';
+
+            style[prop] = 'translateX(' + val.x + 'px)';
+
+            if (val.y === 0) {
+
+            } else if (val.x === 0) {
+
+                style[prop] = 'translateY(' + val.y + 'px)';
+
+            } else {
+
+                style[prop] = 'translate(' + val.x + 'px,' + val.y + 'px)';
+            }
         }
 
         /**
@@ -424,6 +450,14 @@ hAzzle.extend({
                     if (ae[i] === 'transform') {
 
                         var pt = parseTransform(el, tmp);
+
+                        /**
+                         * Note!
+                         *
+                         * All transform properties start with 0,
+                         * Nothing we can do with it. Or ??
+                         *
+                         */
 
                         step[i] = pt.stepping;
                         to[i] = pt.to;
