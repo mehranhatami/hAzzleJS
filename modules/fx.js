@@ -1,30 +1,21 @@
 /**
  * hAzzle CSS animation engine ( hCAE )
  *
- * NOTE!!
+ * SUPORTS:
+ * --------
  *
- * hCAE are only using some of the functions
- * that exist in hAzzle Animation Core engine ( hACE ).
+ *  CSS transform:
+ *  
+ * - rotate
+ * - scale
+ * - skew
+ * - skewX
+ * - skewY  
+ * - translate
+ * - translateX
+ * - translateY
  *
- * Therefor, it is recomended only to use hCAE for
- * 'normal' CSS animations and effects
- * such as fadeIn and fadeOut.
  *
- * If you want to perform more powerfull
- * animation, hACE are what you need to use.
- *
- * Some of the features supported in hACE
- * and not in hCAE, are:
- *
- * - Chainable animation with different
- *   easing, callbacks on each animation
- *   in the queue
- *
- * - reverse of all or selected animations
- *   in the queue
- *
- * - repetation of all or selected animations
- *   in the queue
  *
  */
 var cached = [],
@@ -83,6 +74,7 @@ function parseTransform(el, style) {
         };
         values.stepping = createStepping(el, '', 'translate');
     }
+	
     return values;
 }
 
@@ -126,10 +118,11 @@ function createStepping(el, property, cat) {
             style[prop] = 'scale(' + val + ')';
         } else if (cat === 'skew') {
 
-            style[prop] = 'skewX(' + val.x + 'deg)';
 
             if (val.y === 0) {
 
+              style[prop] = 'skewX(' + val.x + 'deg)';
+			  
             } else if (val.x === 0) {
 
                 style[prop] = 'skewY(' + val.y + 'deg)';
@@ -142,9 +135,9 @@ function createStepping(el, property, cat) {
 
         } else if (cat === 'translate') {
 
-            style[prop] = 'translateX(' + val.x + 'px)';
-
             if (val.y === 0) {
+
+            style[prop] = 'translateX(' + val.x + 'px)';
 
             } else if (val.x === 0) {
 
@@ -154,7 +147,10 @@ function createStepping(el, property, cat) {
 
                 style[prop] = 'translate(' + val.x + 'px,' + val.y + 'px)';
             }
-        }
+        } else 
+		
+		
+		
 
         /**
          * Special threatment for when we are hiding an element.
