@@ -31,7 +31,7 @@ hAzzle.extend({
         fast: 200,
         quick: 50,
         // Default speed
-        _default: 550
+        _default: 1150
 
     },
 
@@ -482,7 +482,6 @@ hAzzle.hACE.prototype = {
         } else {
 
             this.endVal = properties;
-
         }
         return this;
     },
@@ -743,7 +742,7 @@ hAzzle.hACE.prototype = {
 
             if (typeof end === "number") {
 
-                self.differences.mehran = end - start;
+                self.differences.mehran = end;
             }
         }
 
