@@ -27,11 +27,11 @@ hAzzle.extend({
     // String based duration aka jQuery style. This can be changed publicly.
 
     speed: {
-        slow: 8500,
-        fast: 400,
-        quick: 180,
+        slow: 1300,
+        fast: 200,
+        quick: 50,
         // Default speed
-        _default: 1500
+        _default: 550
 
     },
 
