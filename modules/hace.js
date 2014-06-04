@@ -23,26 +23,26 @@ hAzzle.extend({
 
     // Our ticker
 
-  tick: function () {
+    tick: function () {
         var hp = hAzzle.pipe,
-           qfix,
+            qfix,
             n;
 
         hp.raf = hAzzle.requestFrame.call(win, hAzzle.tick);
-		
+
         qfix = hp.raf > 1e12 !== hAzzle.pnow() > 1e12;
 
         if (qfix) {
 
-          hp.now = qfix;
+            hp.now = qfix;
 
-		} else {
+        } else {
 
-         // Integer milliseconds since unix epoch
-		  
-         hp.now = hAzzle.pnow();
+            // Integer milliseconds since unix epoch
 
-		}
+            hp.now = hAzzle.pnow();
+
+        }
 
         hp.delta = hp.now - hp.then;
         if (hp.delta > hp.interval) {
@@ -868,6 +868,13 @@ hAzzle.hACE.prototype = {
                      *
                      * Just make sure this really happend, and
                      * there is no problems.
+                     *
+                     * Update: june 4 - 2014.
+                     *
+                     * There are issues. This is not working at
+                     * it should. The onEnd() function seems to
+                     * be triggered twice, and if only two
+                     * queued animations. Not working at all!!
                      *
                      */
 
