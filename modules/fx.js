@@ -27,8 +27,11 @@
  *   in the queue
  *
  */
-var win = this,
-    doc = this.document || {},
+var cached = [],
+
+    // Only check for vendor prefix upon page refresh
+
+    transform = hAzzle.cssProperties().transform,
     keys = Object.keys,
     rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
     scale = /scale\(((?:[+\-]=)?([\d\.]+))\)/,
@@ -48,19 +51,19 @@ function by(val, start, m, r, i) {
 
 
 
-function parseTransform(el, style, prop, v) {
+function parseTransform(el, style) {
     var values = {},
         m;
 
     if (m = style.match(rotate)) {
         values.to = by(m[1], null);
-        values.stepping = createStepping(el, prop, 'rotate', v);
+        values.stepping = createStepping(el, '', 'rotate');
     }
 
     if (m = style.match(scale)) {
 
         values.to = by(m[1], null);
-        values.stepping = createStepping(el, prop, 'scale', v);
+        values.stepping = createStepping(el, '', 'scale');
     }
     if (m = style.match(skew)) {
 
@@ -69,7 +72,7 @@ function parseTransform(el, style, prop, v) {
             y: by(m[3], null)
         };
 
-        values.stepping = createStepping(el, prop, 'skew', v);
+        values.stepping = createStepping(el, '', 'skew');
     }
 
     if (m = style.match(translate)) {
@@ -78,7 +81,7 @@ function parseTransform(el, style, prop, v) {
             x: by(m[1], null),
             y: by(m[3], null)
         };
-        values.stepping = createStepping(el, prop, 'translate', v);
+        values.stepping = createStepping(el, '', 'translate');
     }
     return values;
 }
@@ -89,7 +92,8 @@ function parseTransform(el, style, prop, v) {
  *
  * @param {Object} el
  * @param {String} property
- * @param {Function}
+ * @param {String} cat
+ * @return {Function}
  *
  */
 
@@ -98,7 +102,22 @@ function createStepping(el, property, cat) {
     return function (val) {
 
         var style = el.style,
-            prop = hAzzle.camelize(property),
+
+            /**
+             * Note! If we are not caching this, we
+             * get performance loss because the same
+             * request will be requested for each 'tick'.
+             *
+             * Multiple elements will be created multiple
+             * times e.g.
+             *
+             */
+
+            prop = cached[property] ?
+            cached[property] :
+            cached[property] = property === '' ?
+            transform :
+            hAzzle.camelize(property),
             display;
 
         if (cat === 'rotate') {
@@ -110,8 +129,6 @@ function createStepping(el, property, cat) {
         } else if (cat === 'translate') {
             style[prop] = 'translate(' + val.x + 'px,' + val.y + 'px)';
         }
-
-
 
         /**
          * Special threatment for when we are hiding an element.
@@ -251,17 +268,6 @@ function cleanUp(el, restore) {
 
     });
 }
-var transform = function () {
-    var styles = doc.createElement('a').style,
-        props = ['webkitTransform', 'MozTransform', 'OTransform', 'msTransform', 'Transform'],
-        i;
-    for (i = 0; i < props.length; i++) {
-        if (props[i] in styles) {
-
-            return props[i];
-        }
-    }
-}();
 
 hAzzle.extend({
 
@@ -417,7 +423,7 @@ hAzzle.extend({
 
                     if (ae[i] === 'transform') {
 
-                        var pt = parseTransform(el, tmp, ae[i] === 'transform' ? transform : ae[i], v);
+                        var pt = parseTransform(el, tmp);
 
                         step[i] = pt.stepping;
                         to[i] = pt.to;

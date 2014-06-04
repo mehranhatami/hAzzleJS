@@ -23,8 +23,79 @@ var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
         'outlineColor',
         'textDecorationColor',
         'textEmphasisColor'
-    ];
+    ],
 
+    cssPrefixes = ["Webkit", "O", "Moz", "ms"],
+
+    cssProperties = {
+
+        'Webkit': function () {
+            return {
+                property: '-webkit-transition',
+                end: 'webkitTransitionEnd',
+                transform: 'WebkitTransform',
+                animation: 'WebkitAnimation'
+            };
+        },
+        'Moz': function () {
+            return {
+                property: '-moz-transition',
+                end: 'transitionend',
+                transform: 'MozTransform',
+                animation: 'MozAnimation'
+            };
+        },
+        'O': function () {
+            return {
+                property: '-o-transition',
+                end: 'oTransitionEnd otransitionend',
+                transform: 'OAnimation',
+                animation: 'WebkitAnimation'
+            };
+        },
+        'ms': function () {
+            return {
+                property: 'transition',
+                end: 'transitionend',
+                transform: 'msTransform',
+                animation: 'msAnimation'
+            };
+        },
+        'Khtml': function () {
+            return {
+                property: '-khtml-transition',
+                end: 'transitionend',
+                transform: 'transform',
+                animation: ''
+            };
+        },
+        '': function () {
+            return {
+                property: 'transition',
+                end: 'transitionend',
+                transform: 'transform',
+                animation: 'animation'
+            };
+        }
+    };
+
+
+/**
+ * Get CSS3 transition prefix
+ */
+
+function getVendorPrefix() {
+    var el = doc.createElement("div"),
+        i = cssPrefixes.length;
+
+    while (i--) {
+        if (cssPrefixes[i] + "Transition" in el.style) {
+            return cssPrefixes[i];
+        }
+    }
+
+    return "transition" in el.style ? "" : false;
+}
 
 function actualDisplay(name, doc) {
 
@@ -167,6 +238,7 @@ hAzzle.extend({
         MozBoxFlex: 1,
         columns: 1,
         fontWeight: 1,
+        overflow: 1
     },
 
     getStyle: function (el, property) {
@@ -191,8 +263,7 @@ hAzzle.extend({
         return el.style[value] || value;
     }
 
-}, hAzzle)
-
+}, hAzzle);
 
 hAzzle.extend({
 
@@ -1054,6 +1125,10 @@ hAzzle.extend({
                 return p;
             }
         }
+    },
+
+    cssProperties: function () {
+        return cssProperties[getVendorPrefix()]();
     }
 
 }, hAzzle);
