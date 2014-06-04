@@ -2,12 +2,21 @@
  * hAzzle Animation Core engine ( hACE )
  */
 var win = this,
+    thousand = 1000,
 
-    // Function that will be run on end of each animation
+    /**
+     * Callback function that will be run after all animations have
+     * been completed.
+     */
 
-    messy = function () {},
+    onCallback = hAzzle.noop(),
 
-    thousand = 1000;
+    /**
+     * Function that will be run after all animations have
+     * been completed.
+     */
+
+    onEnd = hAzzle.noop();
 
 // Extend the hAzzle Object
 
@@ -123,7 +132,6 @@ hAzzle.extend({
         self.onStep = function () {};
         self.onComplete = function () {};
         self.onStopped = function () {};
-        self.onEnd = function () {};
         self.andThen = function () {};
     },
 
@@ -660,8 +668,7 @@ hAzzle.hACE.prototype = {
 
     start: function () {
 
-        var self = this,
-            dd = "faen";
+        var self = this;
 
 
         if (!self.canStart) {
@@ -862,7 +869,6 @@ hAzzle.hACE.prototype = {
                     if (self.andThen !== null) {
 
                         self.andThen.call(self);
-
                     }
 
                     /**
@@ -877,19 +883,9 @@ hAzzle.hACE.prototype = {
                      *
                      * Update: june 4 - 2014.
                      *
-                     * There are issues. This is not working at
-                     * it should. The onEnd() function seems to
-                     * be triggered twice, and if only two
-                     * queued animations. Not working at all!!
-                     *
-                     * Further update in my investigation regarding
-                     * this issue.
-                     *
-                     * It has to be added at the very end of the last
-                     * queue / animation chains, else it will become
-                     * an empty function.
-                     *
-                     * This also has to be fixed.
+                     * There are issues. It has to be added at the very end
+                     * of the last queue / animation chain. I'm not really
+                     * sure that is happening.
                      *
                      * I also belive we have to check for:
                      *
@@ -901,7 +897,21 @@ hAzzle.hACE.prototype = {
                      */
 
                     if (self.controller.q.length === 0) {
-                        messy.call(self);
+
+
+                        // Callback function
+
+                        if (onCallback) {
+
+                            onCallback();
+                        }
+
+                        // Cleanup function
+
+                        if (onEnd) {
+
+                            onEnd();
+                        }
                     }
 
                     self.controller.q.shift();
@@ -1121,9 +1131,24 @@ hAzzle.hACE.prototype = {
 
     end: function (callback) {
         if (typeof callback === "function") {
-            //  self.onEnd = callback
-            messy = callback;
+            onEnd = callback;
+        }
+        return this;
+    },
+
+    /**
+     * Callback function that will be executed
+     * after all animations have been ended
+     *
+     * @param {Function} callback
+     * @return {hAzzle}
+     */
+
+    callback: function (callback) {
+        if (typeof callback === "function") {
+            onCallback = callback;
         }
         return this;
     }
+
 };
