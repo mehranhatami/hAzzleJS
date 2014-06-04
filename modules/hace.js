@@ -33,7 +33,7 @@ hAzzle.extend({
 
         if (qfix) {
 
-          hp.now = hAzzle.fixTs;
+          hp.now = qfix;
 
 		} else {
 
