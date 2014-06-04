@@ -28,6 +28,7 @@
  *
  */
 var win = this,
+    doc = this.document || {},
     keys = Object.keys,
     rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
     scale = /scale\(((?:[+\-]=)?([\d\.]+))\)/,
@@ -45,6 +46,44 @@ function by(val, start, m, r, i) {
         parseInt(val, 10);
 }
 
+
+
+function parseTransform(el, style, prop, v) {
+    var values = {},
+        m;
+
+    if (m = style.match(rotate)) {
+        values.to = by(m[1], null);
+        values.stepping = createStepping(el, prop, 'rotate', v);
+    }
+
+    if (m = style.match(scale)) {
+
+        values.to = by(m[1], null);
+        values.stepping = createStepping(el, prop, 'scale', v);
+    }
+    if (m = style.match(skew)) {
+
+        values.to = {
+            x: by(m[1], null),
+            y: by(m[3], null)
+        };
+
+        values.stepping = createStepping(el, prop, 'skew', v);
+    }
+
+    if (m = style.match(translate)) {
+
+        values.to = {
+            x: by(m[1], null),
+            y: by(m[3], null)
+        };
+        values.stepping = createStepping(el, prop, 'translate', v);
+    }
+    return values;
+}
+
+
 /**
  * Create animation stepping
  *
@@ -54,7 +93,7 @@ function by(val, start, m, r, i) {
  *
  */
 
-function createStepping(el, property, partOne, partTwo, partThree, partFour) {
+function createStepping(el, property, cat) {
 
     return function (val) {
 
@@ -62,144 +101,112 @@ function createStepping(el, property, partOne, partTwo, partThree, partFour) {
             prop = hAzzle.camelize(property),
             display;
 
+        if (cat === 'rotate') {
+            style[prop] = 'rotate(' + val + 'deg)';
+        } else if (cat === 'scale') {
+            style[prop] = 'scale(' + val + ')';
+        } else if (cat === 'skew') {
+            style[prop] = 'skew(' + val.x + 'deg,' + val.y + 'deg)';
+        } else if (cat === 'translate') {
+            style[prop] = 'translate(' + val.x + 'px,' + val.y + 'px)';
+        }
+
+
+
         /**
-         * Used for Transform rotate
+         * Special threatment for when we are hiding an element.
+         * We need to save current state, and hide the
+         * element after the animation.
          *
-         * Example:
-         *
-         * rotate(30deg)
+         * Mostly used for 'opacity'
          *
          */
 
-        if (partOne && partTwo && !partThree) {
-
-            style[prop] = partOne + val + partTwo;
+        if (cat === "hide") {
 
             /**
-             * Used for Transform skew and translate
-             *
-             * Examples:
-             *
-             * skew(30deg, 90deg)
-             *
-             * translate(-10px, 0px)
-             *
-             * FIX ME!!!
-             *
-             * Need to do some changes in hACE, so we get
-             * returned two different 'val' values for
-             * x and y coordinates
-             *
-             * Also need to fix it so we can do relative animation
-             * on the values itself
-             *
+             * Note!  We only save display state on the start of
+             * the 'stepping' - when the 'val' === 1.
              */
 
-        } else if (partThree && partFour) {
+            if (val === 1) {
 
-            style[prop] = partOne + val + partTwo + partThree + val + partFour;
+                display = hAzzle.getStyle(el, 'display');
 
+                if (display === 'none' && !hAzzle.data(el, 'fxshow')) {
+                    hAzzle.data(el, 'fxshow', display);
+                }
+            }
+            // Do the animation
+
+            style[prop] = val;
+
+            // Hide the element when the counter reach 0
+
+            if (val === 0) {
+
+                style.display = 'none';
+            }
             /**
-             * 'Normal' CSS animation without extra parts
-             */
-
-        } else {
-
-            /**
-             * Special threatment for when we are hiding an element.
-             * We need to save current state, and hide the
-             * element after the animation.
+             * Special threatment for when we are showing an element.
+             * We need to get the current state, and show the
+             * element before the animation.
+             *
+             * The element can have been hidden by an previous
+             * animation, or with CSS stylesheet
              *
              * Mostly used for 'opacity'
              *
              */
 
-            if (partOne === "hide") {
+        } else if (cat === "show") {
 
-                /**
-                 * Note!  We only save display state on the start of
-                 * the 'stepping' - when the 'val' === 1.
-                 */
+            display = style.display;
 
-                if (val === 1) {
+            /**
+             * Note!  We have to have this 'block' check here, else
+             * everything will run for every step count
+             */
 
-                    display = hAzzle.getStyle(el, 'display');
+            if (display !== 'block') {
 
-                    if (display === 'none' && !hAzzle.data(el, 'fxshow')) {
-                        hAzzle.data(el, 'fxshow', display);
-                    }
-                }
-                // Do the animation
-
-                style[prop] = val;
-
-                // Hide the element when the counter reach 0
-
-                if (val === 0) {
-
-                    style.display = 'none';
-                }
-                /**
-                 * Special threatment for when we are showing an element.
-                 * We need to get the current state, and show the
-                 * element before the animation.
-                 *
-                 * The element can have been hidden by an previous
-                 * animation, or with CSS stylesheet
-                 *
-                 * Mostly used for 'opacity'
-                 *
-                 */
-
-            } else if (partOne === "show") {
-
-                display = style.display;
-
-                /**
-                 * Note!  We have to have this 'block' check here, else
-                 * everything will run for every step count
-                 */
-
-                if (display !== 'block') {
-
-                    if (!hAzzle.data(el, "fxshow") && display === "none") {
-                        display = style.display = "";
-                    }
-
-                    // Set elements which have been overridden with display: none
-                    // in a stylesheet to whatever the default browser style is
-                    // for such an element
-
-                    if (display === "" || hAzzle.getStyle(el, "display") === "none") {
-                        hAzzle.data(el, "fxshow", defaultDisplay(el.nodeName));
-                    }
-
-                    // Make the element visible
-
-                    if (display === "" || display === "none") {
-                        style.display = hAzzle.data(el, "fxshow") || "";
-                    }
-                }
-                // Do the animation
-
-                el.style[prop] = val;
-
-                /**
-                 * Regular animation without any special threatments
-                 */
-
-            } else {
-
-                /**
-                 * Don't use 'px' on certain CSS styles
-                 */
-                if (!hAzzle.unitless[property]) {
-
-                    val += 'px';
+                if (!hAzzle.data(el, "fxshow") && display === "none") {
+                    display = style.display = "";
                 }
 
-                style[prop] = val;
+                // Set elements which have been overridden with display: none
+                // in a stylesheet to whatever the default browser style is
+                // for such an element
+
+                if (display === "" || hAzzle.getStyle(el, "display") === "none") {
+                    hAzzle.data(el, "fxshow", defaultDisplay(el.nodeName));
+                }
+
+                // Make the element visible
+
+                if (display === "" || display === "none") {
+                    style.display = hAzzle.data(el, "fxshow") || "";
+                }
             }
+            // Do the animation
+
+            el.style[prop] = val;
+
+            /**
+             * Regular animation without any special threatments
+             */
+
+        } else {
+
+            /**
+             * Don't use 'px' on certain CSS styles
+             */
+            if (!hAzzle.unitless[property]) {
+
+                val += 'px';
+            }
+
+            style[prop] = val;
         }
     };
 }
@@ -244,7 +251,17 @@ function cleanUp(el, restore) {
 
     });
 }
+var transform = function () {
+    var styles = doc.createElement('a').style,
+        props = ['webkitTransform', 'MozTransform', 'OTransform', 'msTransform', 'Transform'],
+        i;
+    for (i = 0; i < props.length; i++) {
+        if (props[i] in styles) {
 
+            return props[i];
+        }
+    }
+}();
 
 hAzzle.extend({
 
@@ -394,46 +411,16 @@ hAzzle.extend({
                     v = hAzzle.getStyle(el, ae[i]);
                     tmp = iter[ae[i]];
 
-
                     /**
                      * CSS Transformation
                      */
 
                     if (ae[i] === 'transform') {
 
-                        /**
-                         * Mehran!!
-                         *
-                         * A lot of work still remains with CSS transform. Some of it has to do
-                         * with hACE. I will change this later on.
-                         *
-                         * For now we have the same X and Y values for skew and translate
-                         */
+                        var pt = parseTransform(el, tmp, ae[i] === 'transform' ? transform : ae[i], v);
 
-                        // Rotation
-
-                        if ((m = tmp.match(rotate))) {
-                            step[i] = createStepping(el, ae[i], "rotate(", "deg)");
-                            to[i] = by(m[1], null);
-
-                            // Scale 
-
-                        } else if ((m = tmp.match(scale))) {
-                            step[i] = createStepping(el, ae[i], "scale(", ")");
-                            to[i] = to;
-
-                            // Skew
-
-                        } else if ((m = tmp.match(skew))) {
-                            step[i] = createStepping(el, ae[i], "skew(", "deg", ',', "deg)");
-                            to[i] = by(m[1], null);
-
-                            // Translate
-
-                        } else if ((m = tmp.match(translate))) {
-                            step[i] = createStepping(el, ae[i], "translate(", "px", ',', "px)");
-                            to[i] = by(m[1], null);
-                        }
+                        step[i] = pt.stepping;
+                        to[i] = pt.to;
 
                     } else {
 
