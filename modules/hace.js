@@ -23,12 +23,13 @@ hAzzle.extend({
 
     // Our ticker
 
-    tick: function () {
+  tick: function () {
         var hp = hAzzle.pipe,
            qfix,
             n;
 
         hp.raf = hAzzle.requestFrame.call(win, hAzzle.tick);
+		
         qfix = hp.raf > 1e12 !== hAzzle.pnow() > 1e12;
 
         if (qfix) {
@@ -37,7 +38,8 @@ hAzzle.extend({
 
 		} else {
 
-          // Integer milliseconds since unix epoch
+         // Integer milliseconds since unix epoch
+		  
          hp.now = hAzzle.pnow();
 
 		}
@@ -792,7 +794,7 @@ hAzzle.hACE.prototype = {
 
                 // Call the 'step' function
 
-                self.onStep.call(self, tick, self.endVal);
+                self.onStep.call(self, tick);
 
             } else if (!self.hasStarted) {
 

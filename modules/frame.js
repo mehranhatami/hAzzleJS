@@ -29,8 +29,6 @@ if (!hAzzle.rafOff) {
         top = win;
     }
 
-
-
     requestFrame = top.requestAnimationFrame;
     cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
 
