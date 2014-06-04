@@ -895,9 +895,20 @@ hAzzle.hACE.prototype = {
                      * before we execute this function.
                      *
                      */
+					 
 
-                    if (self.controller.q.length === 0) {
+                     /**
+					  * Mehran!
+					  *
+					  * There are delays in a couple of 'ms' before
+					  * the onEnd() are executed. That due to the
+					  * countdown of the queue.length.
+					  *
+					  * Try to fix this too!!
+					  *
+					  */
 
+                    if (!self.controller.q.length ) {
 
                         // Callback function
 
@@ -913,8 +924,9 @@ hAzzle.hACE.prototype = {
                             onEnd();
                         }
                     }
+            
+               self.controller.q.shift(); 
 
-                    self.controller.q.shift();
                 }
             }
         };
