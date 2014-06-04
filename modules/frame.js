@@ -46,61 +46,59 @@ if (!requestFrame) {
         win.mozCancelRequestAnimationFrame || null;
 }
 
+// This is when we expect a fall-back to setTimeout as it's much more fluid
 
-
-// This is when we expect a fall-back to setInterval as it's much more fluid
-
-if (!requestFrame || !cancelFrame) {
-    var last = 0,
-        id = 0,
-        queue = [],
-        frameDuration = 1000 / 60;
+if (!requestFrame) {
+    var _aq = [],
+        _process = [],
+        _irid = 0,
+        _iid;
 
     requestFrame = function (callback) {
-        if (queue.length === 0) {
-            var _now = hAzzle.pnow(),
-                next = Math.max(0, frameDuration - (_now - last));
 
-            last = next + _now;
+        _aq.push([++_irid, callback]);
 
-            // setInterval gives slowdown and crach in FireFox
+        if (!_iid) {
+            _iid = win.setInterval(function () {
+                if (_aq.length) {
+                    var time = hAzzle.pnow(),
+                        temp = _process;
+                    _process = _aq;
+                    _aq = temp;
 
-            win.setTimeout(function () {
-                var cp = queue.slice(0),
-                    i = 0,
-                    len = cp.length;
+                    while (_process.length) {
 
-                // Clear queue here to prevent
-                // callbacks from appending listeners
-                // to the current frame's queue
-
-                queue.length = 0;
-
-                for (; i < len; i++) {
-                    if (!cp[i].cancelled) {
-                        try {
-                            cp[i].callback(last);
-                        } catch (e) {}
+                        _process.shift()[1](time);
                     }
-                }
-            }, next);
+
+                } else {
+                    // don't continue the interval, if unnecessary
+                    win.clearInterval(_iid);
+                    _iid = undefined;
+                } // Estimating support for 60 frames per second
+            }, 1000 / 60);
         }
-        queue.push({
-            handle: ++id,
-            callback: callback,
-            cancelled: false
-        });
-        return id;
+
+        return _irid;
     };
+    /**
+     * Find the request ID and remove it
+     */
 
-    cancelFrame = function (handle) {
-        var i = 0,
-            len = queue.length;
-        for (; i < len; i++) {
-            if (queue[i].handle === handle) {
+    cancelFrame = function (rid) {
 
-                queue[i].cancelled = true;
-                // clearTimeout(queue[i]); // Need to be tested  !!
+        var i, j;
+
+        for (i = 0, j = _aq.length; i < j; i += 1) {
+            if (_aq[i][0] === rid) {
+                _aq.splice(i, 1);
+                return;
+            }
+        }
+        for (i = 0, j = _process.length; i < j; i += 1) {
+            if (_process[i][0] === rid) {
+                _process.splice(i, 1);
+                return;
             }
         }
     };
