@@ -25,18 +25,23 @@ hAzzle.extend({
 
     tick: function () {
         var hp = hAzzle.pipe,
+           qfix,
             n;
+
         hp.raf = hAzzle.requestFrame.call(win, hAzzle.tick);
-		
-		if (hAzzle.fixTs) {
-		  
-		  hp.now = hAzzle.fixTs;
-		
+        qfix = hp.raf > 1e12 !== hAzzle.pnow() > 1e12;
+
+        if (qfix) {
+
+          hp.now = hAzzle.fixTs;
+
 		} else {
-		
-		  hp.now = hAzzle.pnow();
+
+          // Integer milliseconds since unix epoch
+         hp.now = hAzzle.pnow();
+
 		}
-		
+
         hp.delta = hp.now - hp.then;
         if (hp.delta > hp.interval) {
             for (n in hp.hACEPipe) {

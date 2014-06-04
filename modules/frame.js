@@ -9,28 +9,11 @@ var win = this,
 
     // Use the best resolution timer that is currently available
 
-    perfNow = perf && (perf.now || 
-	perf.webkitNow || 
-	perf.msNow || 
-	perf.mozNow || 
-	perf.oNow);
-
-/*
-if (!win.performance.now){
-    
-    var nowOffset = Date.now();
- 
-    if (performance.timing && performance.timing.navigationStart){
-      nowOffset = performance.timing.navigationStart
-    }
- 
- 
-    win.performance.now = function now(){
-      return Date.now() - nowOffset;
-    }
- 
-  }
-*/
+    perfNow = perf && (perf.now ||
+        perf.webkitNow ||
+        perf.msNow ||
+        perf.mozNow ||
+        perf.oNow);
 
 // Test if we are within a foreign domain. Use raf from the top if possible.
 
@@ -52,7 +35,7 @@ if (!requestFrame) {
         win.webkitRequestAnimationFrame ||
         win.oRequestAnimationFrame ||
         win.msRequestAnimationFrame ||
-        win.mozRequestAnimationFrame;
+        win.mozRequestAnimationFrame || null;
 
     cancelFrame = win.cancelAnimationFrame ||
         win.cancelRequestAnimationFrame ||
@@ -60,8 +43,12 @@ if (!requestFrame) {
         win.webkitCancelRequestAnimationFrame ||
         win.mozCancelAnimationFrame ||
         win.oCancelAnimationFrame ||
-        win.mozCancelRequestAnimationFrame;
+        win.mozCancelRequestAnimationFrame || null;
 }
+
+
+
+// This is when we expect a fall-back to setInterval as it's much more fluid
 
 if (!requestFrame || !cancelFrame) {
     var last = 0,
@@ -75,6 +62,8 @@ if (!requestFrame || !cancelFrame) {
                 next = Math.max(0, frameDuration - (_now - last));
 
             last = next + _now;
+
+            // setInterval gives slowdown and crach in FireFox
 
             win.setTimeout(function () {
                 var cp = queue.slice(0),
@@ -110,22 +99,18 @@ if (!requestFrame || !cancelFrame) {
         for (; i < len; i++) {
             if (queue[i].handle === handle) {
                 queue[i].cancelled = true;
-                //	clearTimeout(queue[i]); // Need to be tested  !!
+                // clearTimeout(queue[i]); // Need to be tested  !!
             }
         }
     };
 }
-requestFrame(function(timestamp) {
-    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-    // if not, we have to do a timestamp fix on each frame
-    hAzzle.fixTs = timestamp > 1e12 !== hAzzle.pnow() > 1e12
-  })
+
 
 // Extend the hAzzle object
 
 hAzzle.extend({
-	
-	fixTs: false,
+
+    fixTs: false,
 
     pnow: perfNow ? function () {
         return perfNow.call(perf);
