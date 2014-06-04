@@ -54,11 +54,9 @@ var win = window,
 
   // Event and handlers we have fixed
   treated = {},
+  
   // Some prototype references we need
-  //substr = String.prototype.substr,
   slice = Array.prototype.slice,
-  //concat = Array.prototype.concat,
-  push = Array.prototype.push,
 
   special = {
     pointerenter: {
