@@ -98,6 +98,7 @@ if (!requestFrame || !cancelFrame) {
             len = queue.length;
         for (; i < len; i++) {
             if (queue[i].handle === handle) {
+
                 queue[i].cancelled = true;
                 // clearTimeout(queue[i]); // Need to be tested  !!
             }
@@ -110,7 +111,8 @@ if (!requestFrame || !cancelFrame) {
 
 hAzzle.extend({
 
-    fixTs: false,
+    // Windows performance now
+    // with fallback to normal timer
 
     pnow: perfNow ? function () {
         return perfNow.call(perf);
@@ -121,6 +123,13 @@ hAzzle.extend({
         }
         return hAzzle.now() - nowOffset;
     },
+
+    // RequestAnimationFrame
+
     requestFrame: requestFrame,
+
+    // CancelAnimationFrame
+
     cancelFrame: cancelFrame
+
 }, hAzzle);
