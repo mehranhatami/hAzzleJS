@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>hACE demo</title>
+		<style>
+		#dd {
+			width: 160px;
+			height: 160px;
+			margin: 5px;
+			float: left;
+			border:1px solid;
+			background:RED;
+		}
+		#nav {
+			margin-top:10px;
+		}
+		</style>
+		<script type="text/javascript" src="../../modules/hAzzle.js"></script>
+		<script type="text/javascript" src="../../modules/features.js"></script>
+		<script type="text/javascript" src="../../modules/selector.js"></script>
+		<script type="text/javascript" src="../../modules/traversing.js"></script>
+		<script type="text/javascript" src="../../modules/css.js"></script>
+		<script type="text/javascript" src="../../modules/classes.js"></script>
+		<script type="text/javascript" src="../../modules/manipulation.js"></script>
+		<!-- <script type="text/javascript" src="../../modules/showhide.js"></script> -->
+		<script type="text/javascript" src="../../modules/browser.js"></script>
+		<script type="text/javascript" src="../../modules/events.js"></script>
+		<script type="text/javascript" src="../../modules/removeable.js"></script>
+		<script type="text/javascript" src="../../modules/data.js"></script>
+		<script type="text/javascript" src="../../modules/clone.js"></script>
+		<script type="text/javascript" src="../../modules/frame.js"></script>
+		<script type="text/javascript" src="../../modules/hace.js"></script>
+		<script type="text/javascript" src="../../modules/easing.js"></script>
+		<script type="text/javascript" src="../../modules/fx.js"></script>
+	</head>
+	<body>
+		<div id="nav">
+			<button id="pause">Pause</button>
+			<button id="resume">Resume</button>
+			<button id="stop">Stop</button>
+			<button id="rewind">Rewind</button>
+			<button id="forward">Forward</button>
+			<button id="fadeIn">FadeIn</button>
+			<button id="fadeOut">FadeOut</button>
+		</div>
+		<div id="dd">hAce example demo !!</div>
+	</body>
+</html>
+<script>
+var mehran = new hAzzle.hACE()
+	.from(1)
+	.to(430)
+	.repeat(33)
+	.duration()
+	.ease(hAzzle.easing.easeOutBouncee)
+	//.delay(100)
+	.step(function(val) {
+			
+		document.getElementById('dd').style['marginLeft'] = val + 'px';
+			//	document.getElementById('dd').style['marginTop'] = val + 'px'
+			
+	})
+	.complete(function() {
+
+	})
+	.start()
+	.queue()
+	.from(1)
+	.to(430)
+	.repeat(33)
+	.duration()
+	.ease(hAzzle.easing.easeOutBouncee)
+	//.delay(100)
+	.step(function(val) {
+			
+		//	document.getElementById('dd').style['marginLeft'] = val + 'px'
+			document.getElementById('dd').style['marginTop'] = val + 'px'
+			
+	})
+	.complete(function() {
+	
+	}).start();
+		
+	hAzzle('#pause').click(function() {
+		mehran.pause();
+	});
+
+	hAzzle('#resume').click(function() {
+		mehran.resume();
+	});
+
+	hAzzle('#stop').click(function() {
+		mehran.stop();
+	});
+
+	hAzzle('#fadeIn').click(function() {
+		hAzzle("#dd").fadeIn();
+	});
+
+	hAzzle('#fadeOut').click(function() {
+		hAzzle("#dd").fadeOut();
+	});
+</script>
