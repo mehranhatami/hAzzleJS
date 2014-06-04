@@ -2,7 +2,6 @@
  * frame.js
  */
 var win = this,
-    thousand = 1000,
     perf = win.performance || {},
     top,
     requestFrame,
@@ -10,7 +9,28 @@ var win = this,
 
     // Use the best resolution timer that is currently available
 
-    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow);
+    perfNow = perf && (perf.now || 
+	perf.webkitNow || 
+	perf.msNow || 
+	perf.mozNow || 
+	perf.oNow);
+
+/*
+if (!win.performance.now){
+    
+    var nowOffset = Date.now();
+ 
+    if (performance.timing && performance.timing.navigationStart){
+      nowOffset = performance.timing.navigationStart
+    }
+ 
+ 
+    win.performance.now = function now(){
+      return Date.now() - nowOffset;
+    }
+ 
+  }
+*/
 
 // Test if we are within a foreign domain. Use raf from the top if possible.
 
@@ -47,7 +67,7 @@ if (!requestFrame || !cancelFrame) {
     var last = 0,
         id = 0,
         queue = [],
-        frameDuration = thousand / 60;
+        frameDuration = 1000 / 60;
 
     requestFrame = function (callback) {
         if (queue.length === 0) {
@@ -95,10 +115,17 @@ if (!requestFrame || !cancelFrame) {
         }
     };
 }
+requestFrame(function(timestamp) {
+    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+    // if not, we have to do a timestamp fix on each frame
+    hAzzle.fixTs = timestamp > 1e12 !== hAzzle.pnow() > 1e12
+  })
 
 // Extend the hAzzle object
 
 hAzzle.extend({
+	
+	fixTs: false,
 
     pnow: perfNow ? function () {
         return perfNow.call(perf);

@@ -27,7 +27,16 @@ hAzzle.extend({
         var hp = hAzzle.pipe,
             n;
         hp.raf = hAzzle.requestFrame.call(win, hAzzle.tick);
-        hp.now = hAzzle.pnow();
+		
+		if (hAzzle.fixTs) {
+		  
+		  hp.now = hAzzle.fixTs;
+		
+		} else {
+		
+		  hp.now = hAzzle.pnow();
+		}
+		
         hp.delta = hp.now - hp.then;
         if (hp.delta > hp.interval) {
             for (n in hp.hACEPipe) {
