@@ -655,7 +655,8 @@ hAzzle.hACE.prototype = {
 
     start: function () {
 
-        var self = this;
+        var self = this,
+            dd = "faen";
 
 
         if (!self.canStart) {
@@ -876,12 +877,25 @@ hAzzle.hACE.prototype = {
                      * be triggered twice, and if only two
                      * queued animations. Not working at all!!
                      *
+                     * Further update in my investigation regarding
+                     * this issue.
+                     *
+                     * It has to be added at the very end of the last
+                     * queue / animation chains, else it will become
+                     * an empty function.
+                     *
+                     * This also has to be fixed.
+                     *
+                     * I also belive we have to check for:
+                     *
+                     *  if(this.hasStarted === false) {}
+                     *
+                     * to make sure the last animation have stopped
+                     * before we execute this function.
+                     *
                      */
 
                     if (self.controller.q.length === 0) {
-
-                        // Call the onEnd function so we can clean up our mess
-
                         self.onEnd.call(self);
                     }
 
