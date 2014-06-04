@@ -2,109 +2,7 @@
  * hAzzle Animation Core engine ( hACE )
  */
 var win = this,
-    thousand = 1000,
-    perf = win.performance || {},
-    top,
-    requestFrame,
-    cancelFrame,
-
-	// Use the best resolution timer that is currently available
-
-    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow),
-    now = perfNow ? function () {
-        return perfNow.call(perf);
-    } : function () {
-		var nowOffset;
-		if(performance.timing && performance.timing.navigationStart) {
-		   nowOffset = performance.timing.navigationStart;
-		}
-		return hAzzle.now - nowOffset;
-    };
-
-   // Test if we are within a foreign domain. Use raf from the top if possible.
-    
-	try {
-		
-    // Accessing .name will throw SecurityError within a foreign domain.
-	
-     win.top.name;
-     top = win.top;
-    } catch (e) {
-     top = win;
-    }
-
-  requestFrame = top.requestAnimationFrame;
-  cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
-
- if (!requestFrame) {
-    requestFrame = win.requestAnimationFrame ||
-        win.webkitRequestAnimationFrame ||
-        win.oRequestAnimationFrame ||
-        win.msRequestAnimationFrame ||
-        win.mozRequestAnimationFrame;
-
-    cancelFrame = win.cancelAnimationFrame ||
-        win.cancelRequestAnimationFrame ||
-        win.webkitCancelAnimationFrame ||
-        win.webkitCancelRequestAnimationFrame ||
-        win.mozCancelAnimationFrame ||
-        win.oCancelAnimationFrame ||
-        win.mozCancelRequestAnimationFrame;
-}
-
-
-if (!requestFrame || !cancelFrame) {
-    var last = 0,
-        id = 0,
-        queue = [],
-        frameDuration = thousand / 60;
-
-    requestFrame = function (callback) {
-        if (queue.length === 0) {
-            var _now = now(),
-                next = Math.max(0, frameDuration - (_now - last));
-				
-                last = next + _now;
-
-            win.setTimeout(function () {
-                var cp = queue.slice(0),
-                    i = 0,
-                    len = cp.length;
-
-                // Clear queue here to prevent
-                // callbacks from appending listeners
-                // to the current frame's queue
-                
-				queue.length = 0;
-				
-                for (; i < len; i++) {
-                    if (!cp[i].cancelled) {
-                        try {
-                            cp[i].callback(last);
-                        } catch (e) {}
-                    }
-                }
-            }, next);
-        }
-        queue.push({
-            handle: ++id,
-            callback: callback,
-            cancelled: false
-        });
-        return id;
-    };
-
-    cancelFrame = function (handle) {
-        var i = 0,
-            len = queue.length;
-        for (; i < len; i++) {
-            if (queue[i].handle === handle) {
-                queue[i].cancelled = true;
-//				clearTimeout(queue[i]); // Need to be tested first !!
-            }
-        }
-    };
-}
+    thousand = 1000;
 
 // Extend the hAzzle Object
 
@@ -128,8 +26,8 @@ hAzzle.extend({
     tick: function () {
         var hp = hAzzle.pipe,
             n;
-        hp.raf = requestFrame.call(win, hAzzle.tick);
-        hp.now = now();
+        hp.raf = hAzzle.requestFrame.call(win, hAzzle.tick);
+        hp.now = hAzzle.pnow();
         hp.delta = hp.now - hp.then;
         if (hp.delta > hp.interval) {
             for (n in hp.hACEPipe) {
@@ -221,7 +119,7 @@ hAzzle.extend({
     hACEPipe: function () {
         var self = this;
         self.hACEPipe = {};
-        self.then = now();
+        self.then = hAzzle.pnow();
         self.now = 'undefined';
 
         // 'raf' are the returned value from the animation frame
@@ -311,13 +209,13 @@ hAzzle.hACEPipe.prototype = {
             hAzzle.tick();
         }
     },
-	
-    stop: function() {
-     var self = this;
-	 if (self.running) {
-          self.running = false;
-        cancelFrame.call(win, self.raf);
-      }
+
+    stop: function () {
+        var self = this;
+        if (self.running) {
+            self.running = false;
+            hAzzle.cancelFrame.call(win, self.raf);
+        }
     },
 
     /**
@@ -337,12 +235,13 @@ hAzzle.hACEPipe.prototype = {
      * This method cancels the requestAnimationFrame callback.
      * @return {hAzzle}
      *
+
      */
 
     pause: function () {
         var self = this;
         if (self.running) {
-            cancelFrame.call(win, self.raf);
+            hAzzle.cancelFrame.call(win, self.raf);
             self.running = false;
         }
         return this;
@@ -1037,9 +936,9 @@ hAzzle.hACE.prototype = {
      *   245 and not the name 'jiesa' to stop it.
      */
 
-    stop: function (gotoEnd) {
-		self.hasStarted = false;
-        return self;
+    stop: function () {
+        this.hasStarted = false;
+        return this;
     },
 
     /**
@@ -1157,7 +1056,7 @@ hAzzle.hACE.prototype = {
      */
 
     isPlaying: function () {
-        return self.hasStarted;
+        return this.hasStarted;
     },
 
     /**
