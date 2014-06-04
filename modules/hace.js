@@ -2,6 +2,11 @@
  * hAzzle Animation Core engine ( hACE )
  */
 var win = this,
+
+    // Function that will be run on end of each animation
+
+    messy = function () {},
+
     thousand = 1000;
 
 // Extend the hAzzle Object
@@ -297,7 +302,7 @@ hAzzle.hACEController.prototype = {
 
         var self = this,
             _hACE = new hAzzle.hACE(self),
-            _queue = self.q[self.q.length];
+            _queue = self.q[self.q.length - 1];
 
 
         if (!_queue || _queue && _queue.hasCompleted) {
@@ -896,7 +901,7 @@ hAzzle.hACE.prototype = {
                      */
 
                     if (self.controller.q.length === 0) {
-                        self.onEnd.call(self);
+                        messy.call(self);
                     }
 
                     self.controller.q.shift();
@@ -1116,7 +1121,8 @@ hAzzle.hACE.prototype = {
 
     end: function (callback) {
         if (typeof callback === "function") {
-            this.onEnd = callback;
+            //  self.onEnd = callback
+            messy = callback;
         }
         return this;
     }
