@@ -708,6 +708,10 @@ hAzzle.hACE.prototype = {
 
             for (val in self.endVal) {
 
+                if (!self.startVal.hasOwnProperty(val)) {
+                    self.startVal[val] = 0;
+                }
+
                 start = self.startVal[val];
                 end = self.endVal[val];
 
@@ -718,10 +722,7 @@ hAzzle.hACE.prototype = {
                     end = start + parseFloat(end, 10);
                 }
 
-                // Protect against non numeric properties.
-
                 if (typeof end === "number") {
-
                     self.differences[val] = end - start;
                 }
             }
@@ -894,20 +895,20 @@ hAzzle.hACE.prototype = {
                      * before we execute this function.
                      *
                      */
-					 
 
-                     /**
-					  * Mehran!
-					  *
-					  * There are delays in a couple of 'ms' before
-					  * the onEnd() are executed. That due to the
-					  * countdown of the queue.length.
-					  *
-					  * Try to fix this too!!
-					  *
-					  */
 
-                    if (!self.controller.q.length ) {
+                    /**
+                     * Mehran!
+                     *
+                     * There are delays in a couple of 'ms' before
+                     * the onEnd() are executed. That due to the
+                     * countdown of the queue.length.
+                     *
+                     * Try to fix this too!!
+                     *
+                     */
+
+                    if (!self.controller.q.length) {
 
                         // Callback function
 
@@ -923,8 +924,8 @@ hAzzle.hACE.prototype = {
                             onEnd();
                         }
                     }
-            
-               self.controller.q.shift(); 
+
+                    self.controller.q.shift();
 
                 }
             }
@@ -1141,6 +1142,7 @@ hAzzle.hACE.prototype = {
      */
 
     end: function (callback) {
+
         if (typeof callback === "function") {
             onEnd = callback;
         }
