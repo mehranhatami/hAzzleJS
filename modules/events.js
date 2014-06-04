@@ -54,11 +54,11 @@ var win = window,
 
   // Event and handlers we have fixed
   treated = {},
-
   // Some prototype references we need
   //substr = String.prototype.substr,
   slice = Array.prototype.slice,
   //concat = Array.prototype.concat,
+  push = Array.prototype.push,
 
   special = {
     pointerenter: {
@@ -84,8 +84,6 @@ var win = window,
   // Includes some event props shared by different events
   commonProps = 'attrChange attrName detail altKey bubbles cancelable ctrlKey currentTarget eventPhase metaKey relatedTarget shiftKey target timeStamp view which type getModifierState isTrusted relatedNode scrElement propertyName data origin source state'.split(' ');
 
-window._container = container;
-
 function check(evt) {
   var related = evt.relatedTarget;
   return !related ? related === null : related !== this && related.prefix !== 'xul' && !/document/.test(this.toString()) && !hAzzle.contains(related, this);
@@ -96,38 +94,9 @@ hAzzle.extend({
     common: function () {
       return commonProps;
     },
-    /**
-     * focusin, focusout
-     *
-     * General info:
-     *
-     * Interface: FocusEvent, Bubbles: Yes, Cancelable: No, Target: Element, Default Action: None
-     *
-     * Feature         Chrome  Firefox(Gecko)   Internet Explorer   Opera   Safari
-     * Basic support   (Yes)   No               (Yes)               (Yes)   (Yes)
-     *
-     * props:
-     * target, type, bubbles, cancelable, relatedTarget
-     *
-     * hAzzle's approach:
-     * mimic it in Firfox using blur event in capture mode
-     *
-     */
-    focusinout: function (evt, original) {
-      //in terms of props these events don't have any specific property
-      //BUT in Firefox we have to provide all the valid props
 
-
-      /*
-          target: event target receiving focus
-          type: The type of event
-          bubbles: Does the event normally bubble?
-          cancelable: Is it possible to cancel the event?
-          relatedTarget: event target losing focus (if any).
-      */
-
+    focusinout: function ( /*evt, original*/ ) {
       return commonProps;
-
     },
 
     keys: function (evt, original) {
@@ -161,8 +130,8 @@ hAzzle.extend({
   },
   Kernel: function (element, type, handler, original, namespaces, args) {
     var _special = special[type],
-      evt = this,
-      browserInfo = hAzzle.browser();
+      evt = this;
+
     // Only load the event once upon unload
     if (type === 'unload') {
       handler = hAzzle.Events.once(hAzzle.Events.removeListener, element, type, handler, original);
@@ -179,20 +148,11 @@ hAzzle.extend({
     evt.namespaces = namespaces;
 
     evt.eventType = type;
-    evt.useCapture = false;
-
-    //focusin, focusout
-    if (focusinoutRegEx.test(type)) {
-      if (browserInfo.browser == 'firefox' || (browserInfo.browser == 'opera' && browserInfo.mobile)) {
-        evt.eventType = (type == 'focusin') ? 'focus' : 'blur';
-        evt.useCapture = true;
-      }
-    }
-
     evt.target = element || doc;
     evt.handler = hAzzle.Events.wrappedHandler(element, handler, null, args);
   }
 }, hAzzle);
+
 
 hAzzle.Kernel.prototype = {
   inNamespaces: function (checkNamespaces) {
@@ -251,7 +211,6 @@ hAzzle.extend({
    * @param {Function} fn
    * @return {Object}
    */
-
   off: function (events, fn) {
     return this.each(function () {
       hAzzle.Events.off(this, events, fn);
@@ -314,7 +273,6 @@ hAzzle.extend({
  */
 
 hAzzle.cloneEvents = function (element, from, type) {
-
   var handlers = hAzzle.Events.getHandler(from, type, null, false),
     l = handlers.length,
     i = 0,
@@ -371,7 +329,6 @@ function Event(evt, element) {
 
     //leave focus and blur do their
     //} else if (focusRegEx.test(type)) {
-
     else if (focusinoutRegEx.test(type)) {
       fixHook = 'focusinout';
     } else if (touchEvent.test(type)) {
@@ -502,9 +459,7 @@ hAzzle.Events = {
         // One
         if (one === 1) {
 
-          // Mehran!  Why didn't you change this comment?  'handlet' should have been 'handler'
-
-          // Make a unique handlet that get removed after first time it's triggered
+          // Make a unique handler that get removed after first time it's triggered
           fn = hAzzle.Events.once(hAzzle.Events.off, el, events, fn, originalFn);
         }
         // Handle multiple events separated by a space
@@ -517,12 +472,17 @@ hAzzle.Events = {
           first = hAzzle.Events.putHandler(entry = new hAzzle.Kernel(el, types[i].replace(names, ''), fn, originalFn, types[i].replace(ns, '').split('.'), args, false));
           // Add root listener only if we're the first
           if (first) {
-            debugger;
-            el.addEventListener(entry.eventType, hAzzle.Events.rootListener, entry.useCapture);
+            hAzzle.Events.addRootListener(el, entry);
           }
         }
         return el;
       }
+  },
+
+  addRootListener: function (el, entry) {
+
+    el.addEventListener(entry.eventType, hAzzle.Events.rootListener, false);
+
   },
 
   // Detach an event or set of events from an element
@@ -621,7 +581,6 @@ hAzzle.Events = {
       for (; i < l; i++) {
         if ((!handler || type[i].original === handler) && type[i].inNamespaces(ns)) {
           hAzzle.Events.delHandler(type[i]);
-
           if (!removed[type[i].eventType]) {
             removed[type[i].eventType] = {
               t: type[i].eventType,
