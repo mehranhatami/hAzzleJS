@@ -4,8 +4,8 @@
 var win = this,
     perf = win.performance || {},
     top,
-    requestFrame,
-    cancelFrame,
+    requestFrame = false,
+    cancelFrame = false,
 
     // Use the best resolution timer that is currently available
 
@@ -15,37 +15,41 @@ var win = this,
         perf.mozNow ||
         perf.oNow);
 
-// Test if we are within a foreign domain. Use raf from the top if possible.
+if (!hAzzle.rafOff) {
 
-try {
+    // Test if we are within a foreign domain. Use raf from the top if possible.
 
-    // Accessing .name will throw SecurityError within a foreign domain.
+    try {
 
-    win.top.name;
-    top = win.top;
-} catch (e) {
-    top = win;
+        // Accessing .name will throw SecurityError within a foreign domain.
+
+        win.top.name;
+        top = win.top;
+    } catch (e) {
+        top = win;
+    }
+
+
+
+    requestFrame = top.requestAnimationFrame;
+    cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+
+    if (!requestFrame) {
+        requestFrame = win.requestAnimationFrame ||
+            win.webkitRequestAnimationFrame ||
+            win.oRequestAnimationFrame ||
+            win.msRequestAnimationFrame ||
+            win.mozRequestAnimationFrame || null;
+
+        cancelFrame = win.cancelAnimationFrame ||
+            win.cancelRequestAnimationFrame ||
+            win.webkitCancelAnimationFrame ||
+            win.webkitCancelRequestAnimationFrame ||
+            win.mozCancelAnimationFrame ||
+            win.oCancelAnimationFrame ||
+            win.mozCancelRequestAnimationFrame || null;
+    }
 }
-
-requestFrame = top.requestAnimationFrame;
-cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
-
-if (!requestFrame) {
-    requestFrame = win.requestAnimationFrame ||
-        win.webkitRequestAnimationFrame ||
-        win.oRequestAnimationFrame ||
-        win.msRequestAnimationFrame ||
-        win.mozRequestAnimationFrame || null;
-
-    cancelFrame = win.cancelAnimationFrame ||
-        win.cancelRequestAnimationFrame ||
-        win.webkitCancelAnimationFrame ||
-        win.webkitCancelRequestAnimationFrame ||
-        win.mozCancelAnimationFrame ||
-        win.oCancelAnimationFrame ||
-        win.mozCancelRequestAnimationFrame || null;
-}
-
 // This is when we expect a fall-back to setTimeout as it's much more fluid
 
 if (!requestFrame) {

@@ -190,6 +190,16 @@
     hAzzle.extend({
 
         /**
+         * Turn on / off RAF
+         *
+         * @property rafOff
+         * @type {Boolean}
+         * @default false
+         */
+
+        rafOff: false,
+
+        /**
          * Determine the type of object being tested.
          *
          * @param {Mixed} object
