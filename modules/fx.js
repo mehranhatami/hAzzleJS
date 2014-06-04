@@ -218,28 +218,31 @@ function createStepping(el, property, partOne, partTwo, partThree, partFour) {
 
 function cleanUp(el, restore) {
 
-    var style = el.style;
+    return (function () {
 
-    if (restore.display) {
+        var style = el.style;
 
-        // Reset the overflow
+        if (restore.display) {
 
-        if (restore.overflow) {
-            hAzzle.each(["", "X", "Y"], function (value, index) {
-                el.style["overflow" + value] = restore.overflow[index];
-            });
+            // Reset the overflow
+
+            if (restore.overflow !== null) {
+                style.overflow = restore.overflow[0];
+                style.overflowX = restore.overflow[1];
+                style.overflowY = restore.overflow[2];
+            }
+
+            // Hide the element if the "hide" operation was done
+
+            if (restore.hide) {
+
+                style.display = "none";
+            }
         }
 
-        // Reset the display
+        return false;
 
-        var old = hAzzle.data(el, "fxshow");
-
-        style.display = old ? old : restore.display;
-
-        if (hAzzle.getStyle(el, "display") == "none") {
-            style.display = "block";
-        }
-    }
+    });
 }
 
 
@@ -253,7 +256,7 @@ hAzzle.extend({
      */
 
     animate: function (opt, value, cb) {
-        //alert(callback)
+
         var iter = opt,
             v,
             tmp,
@@ -282,12 +285,12 @@ hAzzle.extend({
            hAzzle('#node').animate( {}, speed);
 		*/
 
-        if (typeof value === "number") {
+        if (typeof value !== "undefined") {
 
             duration = value;
         }
 
-        if (typeof cb === "function") {
+        if (value && typeof cb === "function") {
 
             callback = cb;
         }
@@ -301,6 +304,10 @@ hAzzle.extend({
             // Start hACE
 
             anim = new hAzzle.hACE();
+
+            // Allways zero out 'restore' for each iteration
+
+            restore = {};
 
             // Save it on the node
 
@@ -320,7 +327,6 @@ hAzzle.extend({
                 delete iter.easing;
             }
 
-
             // Callback
 
             if (iter.callback) {
@@ -328,19 +334,19 @@ hAzzle.extend({
                 delete iter.callback;
             }
 
-            // Allways zero out 'restore' for each iteration
-
-            restore = {};
-
             if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
 
-                // Backup 'overflow'
+                // Record all 3 overflow attributes because IE9-10 do not
+                // change the overflow attribute when overflowX and
+                // overflowY are set to the same value
 
                 restore.overflow = [style.overflow, style.overflowX, style.overflowY];
 
                 // Backup 'display' so we can restore it back to normal later on
 
                 restore.display = display = hAzzle.getStyle(el, 'display');
+
+                // Test default display if display is currently "none"
 
                 checkDisplay = display === 'none' ?
                     hAzzle.data(el, 'fxshow') || defaultDisplay(el.nodeName) : display;
@@ -352,7 +358,7 @@ hAzzle.extend({
 
             // Fix the overflow property
 
-            if (!restore.overflow) {
+            if (restore.overflow) {
                 style.overflow = 'hidden';
             }
 
@@ -432,6 +438,7 @@ hAzzle.extend({
                     } else {
 
                         from[i] = parseFloat(v);
+
                         to[i] = by(tmp, parseFloat(v));
 
 
@@ -451,10 +458,7 @@ hAzzle.extend({
                     .duration(duration)
                     .step(step[0])
                     .complete(callback)
-
-                // Restore current element after animation	
-
-                .end(cleanUp(el, restore))
+                    .end(cleanUp(el, restore))
                     .start();
 
             } else {
@@ -470,12 +474,17 @@ hAzzle.extend({
                             .ease(easing)
                             .duration(duration)
                             .step(step[b])
-                            .complete(callback) // Only run 'callback' once
-
-                        // Restore current element after animation
-
-                        .end(cleanUp(el, restore))
                             .start();
+
+                        if (b === step.length - 1) {
+
+                            anim.complete(callback); // Only run 'callback' once
+
+                            // Restore current element after animation
+
+                            anim.end(cleanUp(el, restore));
+
+                        }
 
                         // Series of animation on the same CSS node, 
                         // So we need to queue
@@ -488,10 +497,17 @@ hAzzle.extend({
                             .ease(easing)
                             .duration(duration)
                             .step(step[b])
-                            .start()
+                            .start();
 
+                        if (b === step.length - 1) {
 
-                        ;
+                            anim.complete(callback); // Only run 'callback' once
+
+                            // Restore current element after animation
+
+                            anim.end(cleanUp(el, restore));
+
+                        }
                     }
                 }
             }
