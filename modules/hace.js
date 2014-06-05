@@ -24,16 +24,9 @@ hAzzle.extend({
 
     fps: 60, // fps. This can be changed publicly. 
 
-    // String based duration aka jQuery style. This can be changed publicly.
+    // Default duration speed
 
-    speed: {
-        slow: 1300,
-        fast: 200,
-        quick: 50,
-        // Default speed
-        _default: 1150
-
-    },
+    _default: 1150,
 
     // Our ticker
 
@@ -101,7 +94,7 @@ hAzzle.extend({
         self.canStart = true;
         self.hasStarted = false;
         self.hasCompleted = false;
-        self.hACEDuration = hAzzle.speed._default;
+        self.hACEDuration = hAzzle._default;
         self.delayDuration = 0;
 
         /**
@@ -495,27 +488,9 @@ hAzzle.hACE.prototype = {
 
     duration: function (ms) {
 
-        /**
-         * To make this familiar with jQuery, hAzzle are
-         * supporting:
-         *
-         * - slow
-         * - fast
-         * - quick
-         *
-         * and
-         *
-         * _default as an fallback
-         *
-         */
+        if (typeof ms === "number") {
 
-        if (typeof ms === "string") {
-
-            this.hACEDuration = hAzzle.speed[ms] || hAzzle.speed._default;
-
-        } else if (typeof ms === "number") {
-
-            this.hACEDuration = ms || hAzzle.speed._default;
+            this.hACEDuration = ms || hAzzle._default;
         }
 
         return this;
@@ -796,15 +771,6 @@ hAzzle.hACE.prototype = {
                     }
                 }
 
-                /**
-                 * Avoid a negative 'tick' (e.g.: -3,324, -1,77 ), and set 'tick' to '0'
-                 */
-
-                if (typeof tick !== 'object' && tick < 0) {
-
-                    tick = 0;
-                }
-
                 // Call the 'step' function
 
                 self.onStep.call(self, tick);
@@ -1036,7 +1002,7 @@ hAzzle.hACE.prototype = {
 
     forward: function (count) {
         if (typeof count === "number") {
-            this.hACEDuration = this.hACEDuration / count || hAzzle.speed._default;
+            this.hACEDuration = this.hACEDuration / count || hAzzle._default;
         }
     },
 
@@ -1049,7 +1015,7 @@ hAzzle.hACE.prototype = {
 
     rewind: function (count) {
         if (typeof count === "number") {
-            this.hACEDuration = this.hACEDuration * count || hAzzle.speed._default;
+            this.hACEDuration = this.hACEDuration * count || hAzzle._default;
         }
     },
 
