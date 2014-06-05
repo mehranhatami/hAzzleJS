@@ -89,17 +89,19 @@ if (!requestFrame) {
 
     cancelFrame = function (rid) {
 
-        var i, j;
+        var i, sp = Array.prototype.splice, 
+		x = _aq.length,
+		y = _process.length;
 
-        for (i = 0, j = _aq.length; i < j; i += 1) {
+        for (; i < x; i += 1) {
             if (_aq[i][0] === rid) {
-                _aq.splice(i, 1);
+                _aq.sp(i, 1);
                 return;
             }
         }
-        for (i = 0, j = _process.length; i < j; i += 1) {
+        for (; i < y; i += 1) {
             if (_process[i][0] === rid) {
-                _process.splice(i, 1);
+                _process.sp(i, 1);
                 return;
             }
         }

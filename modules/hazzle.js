@@ -822,54 +822,6 @@
             }
             return matched;
         },
-        keys: function (obj) {
-
-            var keys = [],
-                k;
-
-            for (k in obj) {
-
-                keys.push(k);
-
-            }
-
-            if (typeof obj == 'function') {
-
-                return keys.filter(function (k) {
-
-                    if (new Function()[k]) {
-
-                        return false;
-
-                    } else {
-
-                        return true;
-                    }
-                });
-
-            } else {
-
-                return keys;
-            }
-        },
-
-        keysOwn: function (obj, noFunctions) {
-            var keys = [],
-                k;
-            if (obj.hasOwnProperty) {
-
-                for (k in obj) {
-
-                    if (obj.hasOwnProperty(k) && (!noFunctions || typeof obj[k] !== 'function')) {
-                        keys.push(k);
-                    }
-                }
-            } else {
-                keys = Object.keys(obj);
-            }
-            return keys;
-        },
-
         rand: function (x, y) {
             if (typeof x === 'undefined') {
                 y = +x;

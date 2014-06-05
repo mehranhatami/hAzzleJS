@@ -46,17 +46,17 @@ function parseTransform(el, style) {
     var values = {},
         m;
 
-    if (m = style.match(rotate)) {
+    if ( ( m = style.match(rotate) ) ) {
         values.to = by(m[1], null);
         values.stepping = createStepping(el, '', 'rotate');
     }
 
-    if (m = style.match(scale)) {
+    if ( ( m = style.match(scale) ) ) {
 
         values.to = by(m[1], null);
         values.stepping = createStepping(el, '', 'scale');
     }
-    if (m = style.match(skew)) {
+    if ( ( m = style.match(skew) ) ) {
 
         values.to = {
             x: by(m[1], null),
@@ -66,7 +66,7 @@ function parseTransform(el, style) {
         values.stepping = createStepping(el, '', 'skew');
     }
 
-    if (m = style.match(translate)) {
+    if ( ( m = style.match(translate) ) ) {
 
         values.to = {
             x: by(m[1], null),
@@ -77,7 +77,6 @@ function parseTransform(el, style) {
 	
     return values;
 }
-
 
 /**
  * Create animation stepping
@@ -118,17 +117,22 @@ function createStepping(el, property, cat) {
             style[prop] = 'scale(' + val + ')';
         } else if (cat === 'skew') {
 
-
             if (val.y === 0) {
 
-              style[prop] = 'skewX(' + val.x + 'deg)';
+              // skewX
+			  
+			  style[prop] = 'skewX(' + val.x + 'deg)';
 			  
             } else if (val.x === 0) {
 
-                style[prop] = 'skewY(' + val.y + 'deg)';
+                // skewY
+				
+				style[prop] = 'skewY(' + val.y + 'deg)';
 
             } else {
-
+                
+				// skew
+				
                 style[prop] = 'skew(' + val.x + 'deg,' + val.y + 'deg)';
             }
 
@@ -136,21 +140,24 @@ function createStepping(el, property, cat) {
         } else if (cat === 'translate') {
 
             if (val.y === 0) {
+            
+			// translateX
+            
+			style[prop] = 'translateX(' + val.x + 'px)';
 
-            style[prop] = 'translateX(' + val.x + 'px)';
-
-            } else if (val.x === 0) {
+            // translateY
+			
+			} else if (val.x === 0) {
 
                 style[prop] = 'translateY(' + val.y + 'px)';
 
-            } else {
+            // translate
+			
+			} else {
 
                 style[prop] = 'translate(' + val.x + 'px,' + val.y + 'px)';
             }
         } else 
-		
-		
-		
 
         /**
          * Special threatment for when we are hiding an element.
@@ -184,7 +191,7 @@ function createStepping(el, property, cat) {
 
             if (val === 0) {
 
-                style.display = 'none';
+              //  style.display = 'none';
             }
             /**
              * Special threatment for when we are showing an element.
@@ -379,6 +386,16 @@ hAzzle.extend({
                 delete iter.callback;
             }
 
+           if('hide' in iter) {
+		   alert("ddd");
+		       restore.hide = iter.hide;
+		   }
+
+           if('show' in iter) {
+		   
+		       restore.show = iter.show;
+		   }
+
             if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
 
                 // Record all 3 overflow attributes because IE9-10 do not
@@ -423,6 +440,9 @@ hAzzle.extend({
                  */
 
                 if (iter[ae[i]] === "hide") {
+                   
+				   restore.hide = 'true';
+
                     from[i] = 1;
                     to[i] = 0;
                     step[i] = createStepping(el, ae[i], 'hide');
