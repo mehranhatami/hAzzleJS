@@ -120,9 +120,9 @@ function createStepping(el, property, cat) {
             if (val.y === 0) {
 
               // skewX
-			  
-			  style[prop] = 'skewX(' + val.x + 'deg)';
-			  
+
+          style[prop] = 'skewX(' + val.x + 'deg)';
+
             } else if (val.x === 0) {
 
                 // skewY
@@ -387,16 +387,16 @@ hAzzle.extend({
             }
 
            if('hide' in iter) {
-		   alert("ddd");
-		       restore.hide = iter.hide;
-		   }
 
-           if('show' in iter) {
+             restore.hide = iter.hide;
+           }
 		   
-		       restore.show = iter.show;
-		   }
+           if('show' in iter) {
 
-            if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
+              restore.show = iter.show;
+           }
+
+           if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
 
                 // Record all 3 overflow attributes because IE9-10 do not
                 // change the overflow attribute when overflowX and
@@ -441,7 +441,7 @@ hAzzle.extend({
 
                 if (iter[ae[i]] === "hide") {
                    
-				   restore.hide = 'true';
+                restore.hide = 'true';
 
                     from[i] = 1;
                     to[i] = 0;
