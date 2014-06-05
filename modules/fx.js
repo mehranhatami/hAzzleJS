@@ -5,12 +5,12 @@
  * --------
  *
  *  CSS transform:
- *  
+ *
  * - rotate
  * - scale
  * - skew
  * - skewX
- * - skewY  
+ * - skewY
  * - translate
  * - translateX
  * - translateY
@@ -46,17 +46,17 @@ function parseTransform(el, style) {
     var values = {},
         m;
 
-    if ( ( m = style.match(rotate) ) ) {
+    if ((m = style.match(rotate))) {
         values.to = by(m[1], null);
         values.stepping = createStepping(el, '', 'rotate');
     }
 
-    if ( ( m = style.match(scale) ) ) {
+    if ((m = style.match(scale))) {
 
         values.to = by(m[1], null);
         values.stepping = createStepping(el, '', 'scale');
     }
-    if ( ( m = style.match(skew) ) ) {
+    if ((m = style.match(skew))) {
 
         values.to = {
             x: by(m[1], null),
@@ -66,7 +66,7 @@ function parseTransform(el, style) {
         values.stepping = createStepping(el, '', 'skew');
     }
 
-    if ( ( m = style.match(translate) ) ) {
+    if ((m = style.match(translate))) {
 
         values.to = {
             x: by(m[1], null),
@@ -74,7 +74,7 @@ function parseTransform(el, style) {
         };
         values.stepping = createStepping(el, '', 'translate');
     }
-	
+
     return values;
 }
 
@@ -117,47 +117,28 @@ function createStepping(el, property, cat) {
             style[prop] = 'scale(' + val + ')';
         } else if (cat === 'skew') {
 
-            if (val.y === 0) {
 
-              // skewX
+            if (val.y === 0 || val.x === 0) {
 
-          style[prop] = 'skewX(' + val.x + 'deg)';
-
-            } else if (val.x === 0) {
-
-                // skewY
-				
-				style[prop] = 'skewY(' + val.y + 'deg)';
+                style[prop] = 'skew' + (val.y === 0 ? 'X' : 'Y') + '(' + (val.y === 0 ? val.x : val.y) + 'deg)';
 
             } else {
-                
-				// skew
-				
                 style[prop] = 'skew(' + val.x + 'deg,' + val.y + 'deg)';
             }
 
 
         } else if (cat === 'translate') {
 
-            if (val.y === 0) {
-            
-			// translateX
-            
-			style[prop] = 'translateX(' + val.x + 'px)';
 
-            // translateY
-			
-			} else if (val.x === 0) {
+            if (val.y === 0 || val.x === 0) {
 
-                style[prop] = 'translateY(' + val.y + 'px)';
+                style[prop] = 'translate' + (val.y === 0 ? 'X' : 'Y') + '(' + (val.y === 0 ? val.x : val.y) + 'px)';
 
-            // translate
-			
-			} else {
-
+            } else {
                 style[prop] = 'translate(' + val.x + 'px,' + val.y + 'px)';
             }
-        } else 
+
+        } else
 
         /**
          * Special threatment for when we are hiding an element.
@@ -191,7 +172,7 @@ function createStepping(el, property, cat) {
 
             if (val === 0) {
 
-              //  style.display = 'none';
+                //  style.display = 'none';
             }
             /**
              * Special threatment for when we are showing an element.
@@ -386,17 +367,17 @@ hAzzle.extend({
                 delete iter.callback;
             }
 
-           if('hide' in iter) {
+            if ('hide' in iter) {
 
-             restore.hide = iter.hide;
-           }
-		   
-           if('show' in iter) {
+                restore.hide = iter.hide;
+            }
 
-              restore.show = iter.show;
-           }
+            if ('show' in iter) {
 
-           if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
+                restore.show = iter.show;
+            }
+
+            if (el.nodeType === 1 && ('height' in iter || 'width' in iter)) {
 
                 // Record all 3 overflow attributes because IE9-10 do not
                 // change the overflow attribute when overflowX and
@@ -440,8 +421,8 @@ hAzzle.extend({
                  */
 
                 if (iter[ae[i]] === "hide") {
-                   
-                restore.hide = 'true';
+
+                    restore.hide = 'true';
 
                     from[i] = 1;
                     to[i] = 0;
@@ -503,6 +484,7 @@ hAzzle.extend({
                     .complete(callback)
                     .end(cleanUp(el, restore))
                     .start();
+
 
             } else {
 
