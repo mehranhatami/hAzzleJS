@@ -95,30 +95,57 @@ hAzzle.fx.prototype = {
     transform: function (style) {
 
         var fx = this,
-            m;
+            m,
+            a,
+            to,
+            from;
 
         // Rotate
 
         if ((m = style.match(rotate))) {
             fx.category = 'rotate';
-            fx.custom(0, by(m[1], null));
+
+            to = by(m[1], null);
+
+            if ((a = fx.cur().match(rotate))) {
+                from = by(a[1], null);
+            } else {
+                from = 0;
+            }
         }
 
         // Scale
 
         if ((m = style.match(scale))) {
             fx.category = 'scale';
-            fx.custom(0, by(m[1], null));
+            to = by(m[1], null);
+
+            if ((a = fx.cur().match(scale))) {
+                from = by(a[1], null);
+            } else {
+                from = 0;
+            }
         }
 
         // Skew
 
         if ((m = style.match(skew))) {
             fx.category = 'skew';
+
             fx.custom(0, {
                 x: by(m[1], null),
                 y: by(m[3], null)
             });
+
+            if ((a = fx.cur().match(skew))) {
+                from = {
+                    x: by(a[1], null),
+                    y: by(a[3], null)
+                }
+            } else {
+                from = 0;
+
+            }
         }
 
         // Translate
@@ -129,7 +156,20 @@ hAzzle.fx.prototype = {
                 x: by(m[1], null),
                 y: by(m[3], null)
             });
+
+            if ((a = fx.cur().match(skew))) {
+                from = {
+                    x: by(a[1], null),
+                    y: by(a[3], null)
+                }
+            } else {
+                from = 0;
+
+            }
         }
+
+        fx.custom(from, to);
+
     },
 
     // Get the current size
@@ -148,7 +188,7 @@ hAzzle.fx.prototype = {
     },
 
     custom: function (from, to) {
-        //alert(from)
+
         var self = this;
 
         self.startVal = from;
@@ -394,7 +434,7 @@ hAzzle.fx.prototype = {
     },
 
     end: function () {
-        //alert(keys ( this.options ))
+
         var fx = this;
 
         if (fx.options.display !== null) {
