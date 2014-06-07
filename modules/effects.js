@@ -1,10 +1,10 @@
 /**
  * hAzzle animation - special effects
  */
-var cssExpand = ["Top", "Right", "Bottom", "Left"];
+hAzzle.cssExpand = ["Top", "Right", "Bottom", "Left"];
 
 
-function AnimProp(type, includeWidth) {
+hAzzle.AnimProp = function(type, includeWidth) {
     var which,
         i = 0,
         attrs = {
@@ -14,7 +14,7 @@ function AnimProp(type, includeWidth) {
     includeWidth = includeWidth ? 1 : 0;
 
     for (; i < 4; i += 2 - includeWidth) {
-        which = cssExpand[i];
+        which = hAzzle.cssExpand[i];
         attrs["margin" + which] = attrs["padding" + which] = type;
     }
 
@@ -22,7 +22,7 @@ function AnimProp(type, includeWidth) {
         attrs.opacity = attrs.width = type;
     }
     return attrs;
-}
+};
 
 hAzzle.extend({
 
@@ -96,14 +96,14 @@ hAzzle.extend({
     },
 
     slideUp: function (speed, callback, easing) {
-        return this.animate(AnimProp("hide"), speed, callback, easing);
+        return this.animate(hAzzle.AnimProp("hide"), speed, callback, easing);
     },
 
     slideDown: function (speed, callback, easing) {
-        return this.animate(AnimProp("show"), speed, callback, easing);
+        return this.animate(hAzzle.AnimProp("show"), speed, callback, easing);
     },
     slideToggle: function (speed, callback, easing) {
-        return this.animate(AnimProp("toggle"), speed, callback, easing);
+        return this.animate(hAzzle.AnimProp("toggle"), speed, callback, easing);
     },
     fadeToggle: function (speed, callback, easing) {
         return this.animate({

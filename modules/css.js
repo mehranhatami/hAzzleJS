@@ -70,22 +70,6 @@ var cssNormalTransform = {
 
 
 
-/**
- * Get CSS3 transition prefix
- */
-
-function getVendorPrefix() {
-    var el = doc.createElement("div"),
-        i = cssPrefixes.length;
-
-    while (i--) {
-        if (cssPrefixes[i] + "Transition" in el.style) {
-            return cssPrefixes[i];
-        }
-    }
-
-    return "transition" in el.style ? "" : false;
-}
 
 function actualDisplay(name, doc) {
 
@@ -150,30 +134,6 @@ function isHidden(elem, el) {
     return elem.style.display === 'none';
 }
 
-/**
- * Show an element
- *
- * @param {Object} elem
- * @return Object}
- *
- *
- * FIXME!! Need a lot of tests and fixes to work correctly everywhere
- *
- */
-
-function show(elem) {
-
-    var style = elem.style;
-
-    if (style.display === 'none') {
-
-        style.display = '';
-    }
-
-    if ((style.display === '' && hAzzle.getStyle(elem, 'display') === 'none') || !hAzzle.contains(elem.ownerDocument.documentElement, elem)) {
-        hAzzle.data(elem, 'display', defaultDisplay(elem.nodeName));
-    }
-}
 
 /**
  * Show / Hide an elements
@@ -442,7 +402,7 @@ hAzzle.extend({
 
         hAzzle(elem).css('height', value);
     },
-
+	
     /**
      * @param {number} y
      */
@@ -552,7 +512,7 @@ hAzzle.extend({
 
     show: function (speed, easing, callback) {
 		if ( speed || speed === 0 ) {
-			return this.animate( AnimProp("show"), speed, easing, callback);
+			return this.animate( hAzzle.AnimProp("show"), speed, easing, callback);
 		}
        return showHide( this, true );
     },
@@ -568,7 +528,7 @@ hAzzle.extend({
 
     hide: function (speed, easing, callback) {
 		if ( speed || speed === 0 ) {
-			return this.animate( AnimProp("hide"), speed, easing, callback);
+			return this.animate( hAzzle.AnimProp("hide"), speed, easing, callback);
 		} 
        return showHide( this );
     },
@@ -581,7 +541,7 @@ hAzzle.extend({
     toggle: function (state) {
       if ( typeof state === "boolean" ) {
 			return state ? this.show() : this.hide();
-	  }
+      }
 		return this.each(function() {
 			if ( isHidden( this ) ) {
 				hAzzle( this ).show();
@@ -708,8 +668,7 @@ hAzzle.extend({
 
     getStyle: function (elem, prop, computed) {
 
-        var ret,
-            value;
+        var ret;
 
         /* FireFox, Chrome/Safari, Opera and IE9+
          * ONLY supports 'getComputedStyle'
