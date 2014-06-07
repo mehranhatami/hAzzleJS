@@ -1,3 +1,11 @@
+/*
+ * UNDER DEVELOPMENT!!
+ *
+ * This is an ongoing project!!
+ *
+ ********************************/
+
+
 var rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
     scale = /scale\(((?:[+\-]=)?([\d\.]+))\)/,
     skew = /skew\(((?:[+\-]=)?([\-\d\.]+))deg, ?((?:[+\-]=)?([\-\d\.]+))deg\)/,
