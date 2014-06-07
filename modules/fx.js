@@ -104,14 +104,9 @@ hAzzle.fx.prototype = {
 
         if ((m = style.match(rotate))) {
             fx.category = 'rotate';
+           to = by(m[1], null);
 
-            to = by(m[1], null);
-
-            if ((a = fx.cur().match(rotate))) {
-                from = by(a[1], null);
-            } else {
                 from = 0;
-            }
         }
 
         // Scale
@@ -119,12 +114,7 @@ hAzzle.fx.prototype = {
         if ((m = style.match(scale))) {
             fx.category = 'scale';
             to = by(m[1], null);
-
-            if ((a = fx.cur().match(scale))) {
-                from = by(a[1], null);
-            } else {
-                from = 0;
-            }
+            from = 0;
         }
 
         // Skew
@@ -136,16 +126,7 @@ hAzzle.fx.prototype = {
                 x: by(m[1], null),
                 y: by(m[3], null)
             };
-
-            if ((a = fx.cur().match(skew))) {
-                from = {
-                    x: by(a[1], null),
-                    y: by(a[3], null)
-                }
-            } else {
                 from = 0;
-
-            }
         }
 
         // Translate
@@ -158,17 +139,12 @@ hAzzle.fx.prototype = {
                 y: by(m[3], null)
             };
 
-            if ((a = fx.cur().match(skew))) {
-                from = {
-                    x: by(a[1], null),
-                    y: by(a[3], null)
-                }
-            } else {
                 from = 0;
-
-            }
         }
 
+       // Temporary hack for cross-browser - I will deal with it later
+
+        fx.prop = hAzzle.features.transform();
         fx.custom(from, to);
 
     },
@@ -185,7 +161,8 @@ hAzzle.fx.prototype = {
         // Empty strings, null, undefined and "auto" are converted to 0,
         // complex values such as "rotate(1rad)" are returned as is,
         // simple values such as "10px" are parsed to Float.
-        return isNaN(parsed = parseFloat(r)) ? !r || r === "auto" ? 0 : r : parsed;
+       alert( r )
+	    return isNaN(parsed = parseFloat(r)) ? !r || r === "auto" ? 0 : r : parsed;
     },
 
     custom: function (from, to) {
