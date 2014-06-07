@@ -3,14 +3,17 @@
  */
  
 var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
-    rnumnonpx = new RegExp("^(" + pnum + ")(?!px)[a-z%]+$", "i");
-
-var win = this,
+    rnumnonpx = new RegExp("^(" + pnum + ")(?!px)[a-z%]+$", "i"),
+    win = this,
     doc = win.document;
+
+ /**
+  * If the browser suports the computedStyle, we go on...
+  */
 
 if (hAzzle.features.computedStyle) {
 
-var pixelPositionVal, boxSizingReliableVal,
+var pixelPositionVal, boxSizing,
     docElem = doc.documentElement,
     container = doc.createElement("div"),
     div = doc.createElement("div");
@@ -25,11 +28,42 @@ var pixelPositionVal, boxSizingReliableVal,
     var divStyle = win.getComputedStyle(div, null);
 
     pixelPositionVal = divStyle.top !== "1%";
-    boxSizingReliableVal = divStyle.width === "4px";
+    boxSizing = divStyle.width === "4px"
+	
+    hAzzle.boxSizing = divStyle.width === "4px";
 
     docElem.removeChild(container);
 
-    if (pixelPositionVal) {
+  // Extend the hAzzle object
+
+   hAzzle.extend({
+  
+   /**
+    * Check if the browser supports boxSizing
+	*
+	* @value (Boolean) True / false 
+	*
+	*/
+	
+   boxSizing: boxSizing,
+
+   /**
+    * Check if the browser supports  pixelPosition
+	*
+    * There is an error / bug in the getComputedStyle,
+	* so this are only an 'hack' for Webkit based
+	* browsers
+	*
+	* @value (Boolean) True / false 
+	*
+	*/
+   
+   pixelPosition: pixelPositionVal
+   
+   },hAzzle);
+
+
+    if (hAzzle.pixelPosition) {
 
         hAzzle.extend({
 

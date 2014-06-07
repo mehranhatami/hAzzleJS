@@ -527,11 +527,6 @@ hAzzle.extend({
                 parentOffset = offsetParent.offset();
             }
 
-            // parentOffset = /^(?:body|html)$/i.test(offsetParent[0].nodeName) ? { top: 0, left: 0 } : offsetParent.offset();
-
-            // Subtract element margins
-            // note: when an element has margin: auto the offsetLeft and marginLeft
-            // are the same in Safari causing offset.left to incorrectly be 0
             offset.top -= parseFloat(hAzzle(elem).css('margin-top')) || 0;
             offset.left -= parseFloat(hAzzle(elem).css('margin-left')) || 0;
 
@@ -584,10 +579,9 @@ hAzzle.extend({
      */
 
     toggle: function (state) {
-    if ( typeof state === "boolean" ) {
+      if ( typeof state === "boolean" ) {
 			return state ? this.show() : this.hide();
-		}
-
+	  }
 		return this.each(function() {
 			if ( isHidden( this ) ) {
 				hAzzle( this ).show();
@@ -725,14 +719,14 @@ hAzzle.extend({
          * http://caniuse.com/getcomputedstyle
          */
 
-        value = computed || getStyles(elem);
+        computed = computed || getStyles(elem);
 
-        if (value) {
+        if (computed) {
 
-            ret = value.getPropertyValue(prop) || value[prop];
+            ret = computed.getPropertyValue(prop) || computed[prop];
         }
 
-        if (value) {
+        if (computed) {
 
             if (ret === "" && !hAzzle.contains(elem.ownerDocument, prop)) {
 
