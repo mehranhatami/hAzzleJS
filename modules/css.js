@@ -13,58 +13,6 @@ var win = this,
 
     cssPrefixes = ["Webkit", "O", "Moz", "ms"],
 
-    cssProperties = {
-
-        'Webkit': function () {
-            return {
-                property: '-webkit-transition',
-                end: 'webkitTransitionEnd',
-                transform: 'WebkitTransform',
-                animation: 'WebkitAnimation'
-            };
-        },
-        'Moz': function () {
-            return {
-                property: '-moz-transition',
-                end: 'transitionend',
-                transform: 'MozTransform',
-                animation: 'MozAnimation'
-            };
-        },
-        'O': function () {
-            return {
-                property: '-o-transition',
-                end: 'oTransitionEnd otransitionend',
-                transform: 'OAnimation',
-                animation: 'WebkitAnimation'
-            };
-        },
-        'ms': function () {
-            return {
-                property: 'transition',
-                end: 'transitionend',
-                transform: 'msTransform',
-                animation: 'msAnimation'
-            };
-        },
-        'Khtml': function () {
-            return {
-                property: '-khtml-transition',
-                end: 'transitionend',
-                transform: 'transform',
-                animation: ''
-            };
-        },
-        '': function () {
-            return {
-                property: 'transition',
-                end: 'transitionend',
-                transform: 'transform',
-                animation: 'animation'
-            };
-        },
-    },
-
     getStyles = hAzzle.features.computedStyle ? function (el) {
 
         if (el && el.ownerDocument.defaultView.opener) {
@@ -265,24 +213,6 @@ function styleProperty(p) {
 
     return p ? hAzzle.camelize(p) : null;
 }
-
-
-hAzzle.extend({
-
-    unitless: {
-        lineHeight: 1,
-        zoom: 1,
-        zIndex: 1,
-        opacity: 1,
-        boxFlex: 1,
-        WebkitBoxFlex: 1,
-        MozBoxFlex: 1,
-        columns: 1,
-        fontWeight: 1,
-        overflow: 1
-    },
-
-}, hAzzle);
 
 hAzzle.extend({
 
@@ -637,6 +567,26 @@ hAzzle.extend({
 
 hAzzle.extend({
 
+    unitless: {
+        'lineHeight': 1,
+        'zoom': 1,
+        'zIndex': 1,
+        'opacity': 1,
+        'boxFlex': 1,
+        'WebkitBoxFlex': 1,
+        'MozBoxFlex': 1,
+        'columns': 1,
+        'fontWeight': 1,
+        'overflow': 1,
+        'fillOpacity': 1,
+        'flexGrow': 1,
+        'columnCount': 1,
+        'flexShrink': 1,
+        'order': 1,
+        'orphans': 1,
+        'widows': 1,
+    },
+
     /**
      * Yes, we are now supporting CSS hooks, but not
      * in the same way as jQuery.
@@ -823,10 +773,6 @@ hAzzle.extend({
         unit = hAzzle.units.unity[unit];
         return unit ? px / unit : px;
 
-    },
-
-    cssProperties: function () {
-        return cssProperties[getVendorPrefix()]();
     }
 
 }, hAzzle);
