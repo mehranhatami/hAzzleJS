@@ -1,13 +1,14 @@
 /*!
  * CSS
  */
-var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
-    rrelNum = new RegExp('^([+-])=(' + pnum + ')', 'i'),
-
-    win = this,
+var win = this,
     doc = win.document,
     html = doc.documentElement,
-    px = 'px',
+    pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
+    rrelNum = new RegExp('^([+-])=(' + pnum + ')', 'i'),
+    lrmp = /^(left$|right$|margin|padding)/,
+    reaf = /^(relative|absolute|fixed)$/,
+    topbot = /^(top|bottom)$/,
     elemdisplay = {},
 
     cssPrefixes = ["Webkit", "O", "Moz", "ms"],
@@ -66,11 +67,11 @@ var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
 
     getStyles = hAzzle.features.computedStyle ? function (el) {
 
-        if (el.ownerDocument.defaultView.opener) {
+        if (el && el.ownerDocument.defaultView.opener) {
             return el.ownerDocument.defaultView.getComputedStyle(el[0], null);
         }
 
-        return win.getComputedStyle(el, null);
+        return el && win.getComputedStyle(el, null);
 
     } : function (el) {
 
@@ -260,7 +261,6 @@ function styleProperty(p) {
     } else if (/^transform-?[Oo]rigin$/.test(p)) {
 
         p = hAzzle.features.transform + 'Origin';
-
     }
 
     return p ? hAzzle.camelize(p) : null;
@@ -294,29 +294,26 @@ hAzzle.extend({
      * @return {hAzzle|string}
      */
 
-    css: function (property, value) {
+    css: function (prop, value) {
 
-        var p, iter = property,
-
-            el;
+        var p, obj = prop;
 
         // is this a request for just getting a style?
-        if (typeof value === 'undefined' && typeof property === 'string') {
 
-            var val,
-			hooks,
-                origName = hAzzle.camelize(property);
+        if (value === undefined && typeof prop === 'string') {
+
+            var val, el,
+                hooks,
+                origName = hAzzle.camelize(prop);
 
             el = this[0];
+
+            // If no element, return
 
             if (!el) {
 
                 return null;
             }
-
-            // Make sure that we're working with the right name
-
-            value = cssProps[origName] || (cssProps[origName] = vendorPropName(el.style, origName));
 
             // Inspiration from jQuery
 
@@ -328,7 +325,7 @@ hAzzle.extend({
 
                 p = (el === doc) ? docu() : viewport();
 
-                return property === 'width' ? p.width : property === 'height' ? p.height : '';
+                return prop === 'width' ? p.width : prop === 'height' ? p.height : '';
             }
 
             // If a hook was provided get the computed value from there
@@ -351,25 +348,33 @@ hAzzle.extend({
                 val = cssNormalTransform[name];
             }
 
-            return (property = styleProperty(property)) ? val : '';
+            return (prop = styleProperty(prop)) ? val : '';
         }
 
-        if (typeof property === 'string') {
-            iter = {};
-            iter[property] = value;
+        /**
+         * If both prop and value are string values, we
+         * create an object out of it, so we can iterate
+         * through
+         */
+
+        if (typeof prop === 'string') {
+            obj = {};
+            obj[prop] = value;
         }
 
         function fn(el) {
 
-            for (var k in iter) {
+            for (var k in obj) {
 
-                if (iter.hasOwnProperty(k)) {
+                if (obj.hasOwnProperty(k)) {
 
-                    return hAzzle.style(el, k, iter[k]);
+                    return hAzzle.style(el, k, obj[k]);
                 }
 
             }
         }
+
+        // Loop through, and collect the result
 
         return this.each(fn);
     },
@@ -380,46 +385,37 @@ hAzzle.extend({
      * @return {hAzzle|number}
      */
 
-    offset: function (x, y) {
-        if (x && typeof x === 'object' && (typeof x.top === 'number' || typeof x.left === 'number')) {
-            return this.each(function (el) {
-                xy(el, x.left, x.top);
-            });
-        } else if (typeof x === 'number' || typeof y === 'number') {
-            return this.each(function (el) {
-                xy(el, x, y);
-            });
+    offset: function (options) {
+        if (arguments.length) {
+            return options === undefined ?
+                this :
+                this.each(function (el, i) {
+                    xy(el, options, i);
+                });
         }
-        if (!this[0]) {
 
-            return {
-                top: 0,
-                left: 0,
-                height: 0,
-                width: 0
-            };
-        }
         var el = this[0],
-            clientTop = html.clientTop,
-            clientLeft = html.clientLeft,
-            _win = hAzzle.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView,
-            scrollTop = _win.pageYOffset || html.scrollTop,
-            scrollLeft = _win.pageXOffset || html.scrollLeft,
             bcr = {
                 top: 0,
                 left: 0
             };
+
+        if (!hAzzle.contains(html, el)) {
+            return bcr;
+        }
 
         if (typeof el.getBoundingClientRect !== typeof undefined) {
 
             bcr = el.getBoundingClientRect();
         }
 
+        // We return all angeles of the 'offset'
+
         return {
-            top: bcr.top + scrollTop - clientTop,
-            left: bcr.left + scrollLeft - clientLeft,
-            right: bcr.right + scrollLeft - clientLeft,
-            bottom: bcr.bottom + scrollTop - clientTop,
+            top: bcr.top + win.pageYOffset - html.clientTop,
+            left: bcr.left + win.pageXOffset - html.clientLeft,
+            right: bcr.right + win.pageXOffset - html.clientLeft,
+            bottom: bcr.bottom + win.pageYOffset - html.clientTop,
             height: bcr.bottom - bcr.top,
             width: bcr.right - bcr.left
         };
@@ -661,10 +657,10 @@ hAzzle.extend({
 
     style: function (elem, name, value, extra) {
 
-      var type, p, hooks, ret;
+        var type, p, hooks, ret;
 
         // Don't set styles on text and comment nodes
-      
+
         if (!elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style) {
 
             return;
@@ -763,35 +759,70 @@ hAzzle.extend({
     },
 
     /**
-     * Not completed YET!!
+     * Converts one unit to another
      *
-     * Ongoing project........
+     * @param {Object} target
+     * @param {String} prop
+     * @param {String} returnUnit
      *
      */
 
-    units: function (val, start, unit) {
+    units: function (px, unit, elem, prop) {
 
-        var parts = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i.exec(val),
-            end;
+        var val, num;
 
-        if (parts) {
+        switch (unit) {
+        case "":
+        case "px":
+            return px; // Don't waste our time if there is no conversion to do.
+        case "em":
 
-            end = parseFloat(parts[2]);
-            unit = parts[3];
+            val = hAzzle.style(elem, "fontSize");
+            num = parseFloat(val);
 
-            if (unit !== 'px') {
-                console.log("Not supported YET!!");
+            prop = hAzzle.isNumeric(num) ? num || 0 : val;
+
+            return px / prop;
+
+        case "%":
+            if (lrmp.test(prop)) {
+                prop = "width";
+            } else if (topbot.test(prop)) {
+                prop = "height";
             }
+            elem = reaf.test(hAzzle.getStyle(elem, "position")) ?
+                elem.offsetParent : elem.parentNode;
+            if (elem) {
 
-            if (parts[1]) {
-                end = ((parts[1] === "-=" ? -1 : 1) * end) + start;
+                val = hAzzle.style(elem, prop);
+                num = num = parseFloat(val);
+
+                prop = hAzzle.isNumeric(num) ? num || 0 : val;
+
+                if (prop !== 0) {
+                    return px / prop * 100;
+                }
             }
-
-            return {
-                value: end,
-                unit: unit
-            };
+            return 0;
         }
+        // The first time we calculate how many pixels there is in 1 meter
+        // for calculate what is 1 inch/cm/mm/etc.
+        if (hAzzle.units.unity === undefined) {
+            var units = hAzzle.units.unity = {},
+                div = document.createElement("div");
+            div.style.width = "100cm";
+            document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+            units.mm = div.offsetWidth / 1000;
+            document.body.removeChild(div);
+            units.cm = units.mm * 10;
+            units.in = units.cm * 2.54;
+            units.pt = units.in * 1 / 72;
+            units.pc = units.pt * 12;
+        }
+        // If the unity specified is not recognized we return the value.
+        unit = hAzzle.units.unity[unit];
+        return unit ? px / unit : px;
+
     },
 
     cssProperties: function () {
@@ -803,42 +834,56 @@ hAzzle.extend({
 
 /**
  * sets an element to an explicit x/y position on the page
- * @param {Element} el
- * @param {?number} x
- * @param {?number} y
+ * @param {Element} element
+ * @param {Object/Number} options
+ * @param {Number} i
  */
-function xy(el, x, y) {
-    var elem = hAzzle(el),
-        style = elem.css('position'),
-        offset = elem.offset(),
-        rel = 'relative',
-        isRel = style === rel,
-        delta = [parseInt(elem.css('left'), 10), parseInt(elem.css('top'), 10)];
+function xy(elem, options, i) {
 
-    if (style === 'static') {
-        elem.css('position', rel);
-        style = rel;
+    var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+        position = hAzzle.getStyle(elem, "position"),
+        curElem = hAzzle(elem),
+        props = {};
+
+    // Set position first, in-case top/left are set even on static elem
+    if (position === "static") {
+        elem.style.position = "relative";
     }
 
-    if (isNaN(delta[0])) {
+    curOffset = curElem.offset();
 
-        delta[0] = isRel ? 0 : el.offsetLeft;
+    curCSSTop = hAzzle.getStyle(elem, "top");
+    curCSSLeft = hAzzle.getStyle(elem, "left");
+    calculatePosition = (position === "absolute" || position === "fixed") &&
+        hAzzle.inArray((curCSSTop + curCSSLeft), 'auto') > -1;
 
+    // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+    if (calculatePosition) {
+        curPosition = curElem.position();
+        curTop = curPosition.top;
+        curLeft = curPosition.left;
+
+    } else {
+        curTop = parseFloat(curCSSTop) || 0;
+        curLeft = parseFloat(curCSSLeft) || 0;
     }
 
-    if (isNaN(delta[1])) {
-
-        delta[1] = isRel ? 0 : el.offsetTop;
+    if (hAzzle.isFunction(options)) {
+        options = options.call(elem, i, curOffset);
     }
 
-    if (x !== null) {
-
-        el.style.left = x - offset.left + delta[0] + px;
+    if (options.top !== null) {
+        props.top = (options.top - curOffset.top) + curTop;
+    }
+    if (options.left !== null) {
+        props.left = (options.left - curOffset.left) + curLeft;
     }
 
-    if (y !== null) {
+    if ("using" in options) {
+        options.using.call(elem, props);
 
-        el.style.top = y - offset.top + delta[1] + px;
+    } else {
+        curElem.css(props);
     }
 }
 

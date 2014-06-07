@@ -169,7 +169,6 @@ hAzzle.fx.prototype = {
         // Empty strings, null, undefined and "auto" are converted to 0,
         // complex values such as "rotate(1rad)" are returned as is,
         // simple values such as "10px" are parsed to Float.
-       alert( r )
 	    return isNaN(parsed = parseFloat(r)) ? !r || r === "auto" ? 0 : r : parsed;
     },
 
