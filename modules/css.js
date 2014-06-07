@@ -176,24 +176,58 @@ function show(elem) {
 }
 
 /**
- * Hide an element
+ * Show / Hide an elements
  *
  * @param {Object} elem
- * @return Object}
+ * @param {Boolean} show
+ * @return {Object}
  */
 
-function hide(elem) {
-    if (!isHidden(elem)) {
-        var display = hAzzle.getStyle(elem, 'display');
-        if (display !== 'none') {
-            hAzzle.data(elem, 'display', display);
-        }
+function showHide( elements, show ) {
+	var display, elem, hidden,
+		values = [],
+		index = 0,
+		length = elements.length;
 
-        // Hide the element
+	for ( ; index < length; index++ ) {
+		elem = elements[ index ];
+		if ( !elem.style ) {
+			continue;
+		}
 
-        elem.style.display = 'none';
-    }
+		values[ index ] = hAzzle.data( elem, "olddisplay" );
+		display = elem.style.display;
+		if ( show ) {
+			if ( !values[ index ] && display === "none" ) {
+				elem.style.display = "";
+			}
+			if ( elem.style.display === "" && isHidden( elem ) ) {
+				values[ index ] = hAzzle.data( elem, "olddisplay", defaultDisplay(elem.nodeName) );
+			}
+		} else {
+			hidden = isHidden( elem );
+
+			if ( display !== "none" || !hidden ) {
+				hAzzle.data( elem, "olddisplay", hidden ? display : hAzzle.getStyle( elem, "display" ) );
+			}
+		}
+	}
+
+	// Set the display of most of the elements in a second loop
+	// to avoid the constant reflow
+	for ( index = 0; index < length; index++ ) {
+		elem = elements[ index ];
+		if ( !elem.style ) {
+			continue;
+		}
+		if ( !show || elem.style.display === "none" || elem.style.display === "" ) {
+			elem.style.display = show ? values[ index ] || "" : "none";
+		}
+	}
+
+	return elements;
 }
+
 
 /**
  * @param {string} p
@@ -515,25 +549,33 @@ hAzzle.extend({
     /**
      * Show elements in collection
      *
-     * @return {Object}
+     * @param {Number} speed
+     * @param {String} easing
+     * @param {Function} callback	 
+     * @return {hAzzle}
      */
 
-    show: function () {
-        return this.each(function () {
-            show(this);
-        });
+    show: function (speed, easing, callback) {
+		if ( speed || speed === 0 ) {
+			return this.animate( AnimProp("show"), speed, easing, callback);
+		}
+       return showHide( this, true );
     },
 
     /**
      * Hide elements in collection
      *
-     * @return {Object}
+     * @param {Number} speed
+     * @param {String} easing
+     * @param {Function} callback	 
+     * @return {hAzzle}
      */
 
-    hide: function () {
-        return this.each(function () {
-            hide(this);
-        });
+    hide: function (speed, easing, callback) {
+		if ( speed || speed === 0 ) {
+			return this.animate( AnimProp("hide"), speed, easing, callback);
+		} 
+       return showHide( this );
     },
 
     /**
@@ -542,23 +584,17 @@ hAzzle.extend({
      */
 
     toggle: function (state) {
+    if ( typeof state === "boolean" ) {
+			return state ? this.show() : this.hide();
+		}
 
-        var elem;
-
-        if (typeof state === 'boolean') {
-            return state ? this.show() : this.hide();
-        }
-
-        return this.each(function () {
-            elem = this;
-
-            if (isHidden(elem)) {
-                show(elem);
-            } else {
-                hide(elem);
-
-            }
-        });
+		return this.each(function() {
+			if ( isHidden( this ) ) {
+				hAzzle( this ).show();
+			} else {
+				hAzzle( this ).hide();
+			}
+		});
     }
 });
 
@@ -566,6 +602,9 @@ hAzzle.extend({
 // Let us extend the hAzzle Object a litle ...
 
 hAzzle.extend({
+
+// Properties that shouldn't have units behind e.g. 
+// zIndex:33px are not allowed
 
     unitless: {
         'lineHeight': 1,
