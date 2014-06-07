@@ -132,10 +132,10 @@ hAzzle.fx.prototype = {
         if ((m = style.match(skew))) {
             fx.category = 'skew';
 
-            fx.custom(0, {
+            to = {
                 x: by(m[1], null),
                 y: by(m[3], null)
-            });
+            };
 
             if ((a = fx.cur().match(skew))) {
                 from = {
@@ -152,10 +152,11 @@ hAzzle.fx.prototype = {
 
         if ((m = style.match(translate))) {
             fx.category = 'translate';
-            fx.custom(0, {
+
+            to = {
                 x: by(m[1], null),
                 y: by(m[3], null)
-            });
+            };
 
             if ((a = fx.cur().match(skew))) {
                 from = {
