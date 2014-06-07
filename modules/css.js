@@ -10,21 +10,6 @@ var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
     px = 'px',
     elemdisplay = {},
 
-    props = ['backgroundColor',
-        'borderBottomColor',
-        'borderLeftColor',
-        'borderRightColor',
-        'borderTopColor',
-        'borderColor',
-        'boxShadowColor',
-        'color',
-        'textShadowColor',
-        'columnRuleColor',
-        'outlineColor',
-        'textDecorationColor',
-        'textEmphasisColor'
-    ],
-
     cssPrefixes = ["Webkit", "O", "Moz", "ms"],
 
     cssProperties = {
@@ -76,8 +61,64 @@ var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
                 transform: 'transform',
                 animation: 'animation'
             };
+        },
+    },
+
+    getStyles = hAzzle.features.computedStyle ? function (el) {
+
+        if (el.ownerDocument.defaultView.opener) {
+            return el.ownerDocument.defaultView.getComputedStyle(el[0], null);
         }
+
+        return win.getComputedStyle(el, null);
+
+    } : function (el) {
+
+        /**
+         * We will never reach down here unless we are using some old
+         * mobile browsers. Anyways. After a few months when all
+         * vendors have upgraded their browsers - I guess we
+         * can remove this 'hack'
+         *
+         */
+
+        return el.style || el.currentStyle;
+    },
+
+    cssProps = {
+        // normalize float css property
+        "float": "cssFloat"
     };
+
+
+
+function vendorPropName(style, name) {
+
+    // shortcut for names that are not vendor prefixed
+    if (name in style) {
+        return name;
+    }
+
+    // check for vendor prefixed names
+    var capName = name[0].toUpperCase() + name.slice(1),
+        origName = name,
+        i = cssPrefixes.length;
+
+    while (i--) {
+        name = cssPrefixes[i] + capName;
+        if (name in style) {
+            return name;
+        }
+    }
+
+    return origName;
+}
+
+var cssNormalTransform = {
+    letterSpacing: "0",
+    fontWeight: "400"
+};
+
 
 
 /**
@@ -241,46 +282,9 @@ hAzzle.extend({
         overflow: 1
     },
 
-    getStyle: function (el, property) {
-
-        var value = null,
-            computed;
-
-        if (el.ownerDocument.defaultView.opener) {
-            computed = el.ownerDocument.defaultView.getComputedStyle(el, null);
-        } else {
-            computed = win.getComputedStyle(el, null);
-        }
-
-        if (computed) {
-
-            value = computed.getPropertyValue(property) || computed[property];
-
-            if (value === '' && !hAzzle.contains(el.ownerDocument, el)) {
-                value = el.style[property];
-            }
-        }
-        // Temporary hack for opacity
-        // Will be fixed soon
-
-        if (property === 'opacity') {
-
-            return value;
-
-        } else {
-
-            return el.style[value] || value;
-
-        }
-
-    }
-
 }, hAzzle);
 
 hAzzle.extend({
-
-
-
 
     /**
      * Set / get CSS style
@@ -293,35 +297,61 @@ hAzzle.extend({
     css: function (property, value) {
 
         var p, iter = property,
-            color,
-            type,
-            ret;
+
+            el;
 
         // is this a request for just getting a style?
         if (typeof value === 'undefined' && typeof property === 'string') {
 
-            value = this[0];
+            var val,
+			hooks,
+                origName = hAzzle.camelize(property);
 
-            if (!value) {
+            el = this[0];
+
+            if (!el) {
 
                 return null;
             }
 
-            if (property === 'opacity') {
+            // Make sure that we're working with the right name
 
-                return value.style.opacity;
-            }
+            value = cssProps[origName] || (cssProps[origName] = vendorPropName(el.style, origName));
+
+            // Inspiration from jQuery
+
+            hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
 
             // Short-cuts for document and window size
 
-            if (value === doc || value === win) {
+            if (el === doc || el === win) {
 
-                p = (value === doc) ? docu() : viewport();
+                p = (el === doc) ? docu() : viewport();
 
                 return property === 'width' ? p.width : property === 'height' ? p.height : '';
             }
 
-            return (property = styleProperty(property)) ? hAzzle.getStyle(value, property) : null;
+            // If a hook was provided get the computed value from there
+
+            if (hooks && "get" in hooks) {
+                val = hooks.get(el, true);
+            }
+
+            // Otherwise, if a way to get the computed value exists, use that
+
+            if (val === undefined) {
+
+                val = hAzzle.getStyle(el, value);
+            }
+
+            //convert "normal" to computed value
+
+            if (val === "normal" && name in cssNormalTransform) {
+
+                val = cssNormalTransform[name];
+            }
+
+            return (property = styleProperty(property)) ? val : '';
         }
 
         if (typeof property === 'string') {
@@ -329,49 +359,15 @@ hAzzle.extend({
             iter[property] = value;
         }
 
-        function fn(el, p, v) {
+        function fn(el) {
 
-            var k;
-
-            for (k in iter) {
+            for (var k in iter) {
 
                 if (iter.hasOwnProperty(k)) {
 
-                    v = iter[k];
-                    type = typeof v;
-
-                    // convert relative number strings
-
-                    if (typeof value === 'string' && (ret = rrelNum.exec(value))) {
-                        v = (ret[1] + 1) * ret[2] + parseFloat(hAzzle.getStyle(el, k));
-                        type = 'number';
-                    }
-
-                    // Make sure that null and NaN values aren't set.
-
-                    if (v === null || v !== v) {
-
-                        return;
-                    }
-
-                    if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
-
-                        el.style[hAzzle.camelize(k)] = 'inherit';
-                    }
-
-                    // If a number was passed in, add 'px' to the (except for certain CSS properties)
-
-                    if (type === 'number' && hAzzle.unitless[p]) {
-
-                        v += 'px';
-                    }
-
-                    // Camelize the name
-
-                    p = styleProperty(k);
-
-                    el.style[p] = hAzzle.setter(el, v);
+                    return hAzzle.style(el, k, iter[k]);
                 }
+
             }
         }
 
@@ -432,6 +428,7 @@ hAzzle.extend({
     width: function (value) {
 
         var orig, ret, elem = this[0];
+
         if (!elem) return '';
         if (hAzzle.isWindow(elem)) {
             return elem.document.documentElement.clientWidth;
@@ -539,6 +536,56 @@ hAzzle.extend({
         }));
     },
 
+    position: function () {
+
+        if (!this[0]) {
+            return null;
+        }
+
+        var offsetParent, offset,
+            parentOffset = {
+                top: 0,
+                left: 0
+            },
+            elem = this[0];
+
+        if (hAzzle.style(elem, "position") === "fixed") {
+            // we assume that getBoundingClientRect is available when computed position is fixed
+            offset = elem.getBoundingClientRect();
+
+        } else {
+
+            // Get *real* offsetParent
+
+            offsetParent = this.offsetParent();
+
+            // Get correct offsets
+
+            offset = this.offset();
+
+            if (!hAzzle.nodeName(offsetParent[0], "html")) {
+                parentOffset = offsetParent.offset();
+            }
+
+            // parentOffset = /^(?:body|html)$/i.test(offsetParent[0].nodeName) ? { top: 0, left: 0 } : offsetParent.offset();
+
+            // Subtract element margins
+            // note: when an element has margin: auto the offsetLeft and marginLeft
+            // are the same in Safari causing offset.left to incorrectly be 0
+            offset.top -= parseFloat(hAzzle(elem).css('margin-top')) || 0;
+            offset.left -= parseFloat(hAzzle(elem).css('margin-left')) || 0;
+
+            // Add offsetParent borders
+            parentOffset.top += parseFloat(hAzzle(offsetParent[0]).css('border-top-width')) || 0;
+            parentOffset.left += parseFloat(hAzzle(offsetParent[0]).css('border-left-width')) || 0;
+        }
+        // Subtract the two offsets
+        return {
+            top: offset.top - parentOffset.top,
+            left: offset.left - parentOffset.left
+        };
+    },
+
     /**
      * Show elements in collection
      *
@@ -595,6 +642,127 @@ hAzzle.extend({
 hAzzle.extend({
 
     /**
+     * Yes, we are now supporting CSS hooks, but not
+     * in the same way as jQuery.
+     */
+
+    cssHooks: {
+
+        opacity: {
+            get: function (el, computed) {
+
+                if (computed) {
+                    var ret = hAzzle.getStyle(el, "opacity");
+                    return ret === "" ? "1" : ret;
+                }
+            }
+        },
+    },
+
+    style: function (elem, name, value, extra) {
+
+      var type, p, hooks, ret;
+
+        // Don't set styles on text and comment nodes
+      
+        if (!elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style) {
+
+            return;
+        }
+
+        var style = elem.style;
+
+        // Check if we're setting a value
+
+        if (value !== undefined) {
+
+            type = typeof value;
+
+            // Camelize the name
+
+            p = styleProperty(name);
+
+            name = cssProps[p] || (cssProps[p] = vendorPropName(style, p));
+
+            // Props to jQuery
+
+            hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[p];
+
+            // convert relative number strings
+
+            if (typeof value === 'string' && (ret = rrelNum.exec(value))) {
+                value = (ret[1] + 1) * ret[2] + parseFloat(hAzzle.getStyle(elem, name));
+                type = 'number';
+            }
+
+
+            // Make sure that null and NaN values aren't set.
+
+            if (value === null || value !== value) {
+
+                return;
+            }
+
+            // If a number was passed in, add 'px' to the (except for certain CSS properties)
+
+            if (type === 'number' && !hAzzle.unitless[name]) {
+
+                value += 'px';
+            }
+
+            if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+
+                style[hAzzle.camelize(name)] = 'inherit';
+            }
+
+            // If a hook was provided, use that value, otherwise just set the specified value
+
+            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
+                style[p] = hAzzle.setter(elem, value);
+            }
+        } else {
+
+            return style[name];
+        }
+
+    },
+
+    getStyle: function (elem, prop, computed) {
+
+        var ret,
+            value;
+
+        /* FireFox, Chrome/Safari, Opera and IE9+
+         * ONLY supports 'getComputedStyle'
+         *
+         * Some mobile browsers don't support it yet
+         *
+         * http://caniuse.com/getcomputedstyle
+         */
+
+        value = computed || getStyles(elem);
+
+        if (value) {
+
+            ret = value.getPropertyValue(prop) || value[prop];
+        }
+
+        if (value) {
+
+            if (ret === "" && !hAzzle.contains(elem.ownerDocument, prop)) {
+
+                ret = hAzzle.style(elem, name);
+            }
+        }
+
+        return ret !== undefined ?
+            // Support: IE
+            // IE returns zIndex value as an integer.
+            ret + "" :
+            ret;
+    },
+
+    /**
      * Not completed YET!!
      *
      * Ongoing project........
@@ -604,8 +772,7 @@ hAzzle.extend({
     units: function (val, start, unit) {
 
         var parts = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i.exec(val),
-            end,
-            unit;
+            end;
 
         if (parts) {
 
@@ -623,7 +790,7 @@ hAzzle.extend({
             return {
                 value: end,
                 unit: unit
-            }
+            };
         }
     },
 
@@ -674,8 +841,6 @@ function xy(el, x, y) {
         el.style.top = y - offset.top + delta[1] + px;
     }
 }
-
-
 
 function docu() {
     var vp = viewport();

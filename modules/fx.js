@@ -61,7 +61,7 @@ hAzzle.fx.prototype = {
 
         // Remember where we started, so that we can go back to it later
 
-        this.options.orig[this.prop] = dataShow || hAzzle(this.elem).css(this.prop);
+        this.options.orig[this.prop] = dataShow || hAzzle.style(this.elem, this.prop);
 
         this.options.show = true;
 
@@ -82,7 +82,7 @@ hAzzle.fx.prototype = {
 
         // Remember where we started, so that we can go back to it later
 
-        this.options.orig[this.prop] = hAzzle.data(this.elem, "fxshow" + this.prop) || hAzzle(this.elem).css(this.prop);
+        this.options.orig[this.prop] = hAzzle.data(this.elem, "fxshow" + this.prop) || hAzzle.style(this.elem, this.prop);
         this.options.hide = true;
 
         // Begin the animation
@@ -632,16 +632,16 @@ hAzzle.extend({
         });
     },
     stop: function () {
-        hAzzle.data(this[0], "fx").stop();
+   //     hAzzle.data(this[0], "fx").stop();
     },
 
     pause: function () {
 
-        hAzzle.data(this[0], "fx").pause();
+     //   hAzzle.data(this[0], "fx").pause();
     },
 
     resume: function () {
 
-        hAzzle.data(this[0], "fx").resume();
+       // hAzzle.data(this[0], "fx").resume();
     }
 });

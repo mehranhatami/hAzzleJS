@@ -4,6 +4,7 @@
 var win = this,
     perf = win.performance || {},
     top,
+    hfr = hAzzle.features.supportRAF,
     requestFrame = false,
     cancelFrame = false,
 
@@ -15,7 +16,11 @@ var win = this,
         perf.mozNow ||
         perf.oNow);
 
-if (!hAzzle.rafOff) {
+/**
+ * If RAF are supported by the browser
+ */
+
+if (hfr) {
 
     // Test if we are within a foreign domain. Use raf from the top if possible.
 
@@ -33,15 +38,15 @@ if (!hAzzle.rafOff) {
     cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
 
     if (!requestFrame) {
-        requestFrame = win.requestAnimationFrame ||
-            win.webkitRequestAnimationFrame ||
+
+        // Vendor prefixed
+
+        requestFrame = wn.webkitRequestAnimationFrame ||
             win.oRequestAnimationFrame ||
             win.msRequestAnimationFrame ||
             win.mozRequestAnimationFrame || null;
 
-        cancelFrame = win.cancelAnimationFrame ||
-            win.cancelRequestAnimationFrame ||
-            win.webkitCancelAnimationFrame ||
+        cancelFrame = win.webkitCancelAnimationFrame ||
             win.webkitCancelRequestAnimationFrame ||
             win.mozCancelAnimationFrame ||
             win.oCancelAnimationFrame ||
@@ -50,7 +55,8 @@ if (!hAzzle.rafOff) {
 }
 // This is when we expect a fall-back to setTimeout as it's much more fluid
 
-if (!requestFrame) {
+if (!hfr) {
+
     var _aq = [],
         _process = [],
         _irid = 0,
@@ -89,9 +95,9 @@ if (!requestFrame) {
 
     cancelFrame = function (rid) {
 
-        var i, sp = Array.prototype.splice, 
-		x = _aq.length,
-		y = _process.length;
+        var i, sp = Array.prototype.splice,
+            x = _aq.length,
+            y = _process.length;
 
         for (; i < x; i += 1) {
             if (_aq[i][0] === rid) {
@@ -107,7 +113,6 @@ if (!requestFrame) {
         }
     };
 }
-
 
 // Extend the hAzzle object
 
