@@ -23,13 +23,10 @@
       select.disabled = true;
 
       optDisabled = !opt.disabled;
-
-      input = document.createElement("input");
-      input.value = "t";
-      input.type = "radio";
-
-      input.setAttribute('type', 'radio');
-      input.setAttribute('name', 't');
+	  
+	  input = document.createElement( "input" );
+	  input.value = "t";
+	  input.type = "radio";
 
       radioValue = input.value === "t";
 
