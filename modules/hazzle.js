@@ -69,7 +69,6 @@
             return new Core(selector, context);
         };
 
-
     // Init Core
 
     function Core(selector, context) {
@@ -241,10 +240,7 @@
             return true;
         },
         isNumeric: function (obj) {
-            // parseFloat NaNs numeric-cast false positives (null|true|false|'')
-            // ...but misinterprets leading-number strings, particularly hex literals ('0x...')
-            // subtraction forces infinities to NaN
-            return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
+            return !hAzzle.isArray(obj) && (obj - parseFloat( obj ) + 1) >= 0;
         },
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;

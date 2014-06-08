@@ -2,10 +2,10 @@
  * Fixes top / left computedStyle bugs in Webkit based browsers
  */
  
-var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
-    rnumnonpx = new RegExp("^(" + pnum + ")(?!px)[a-z%]+$", "i"),
-    win = this,
-    doc = win.document;
+var win = this,
+    doc = win.document,
+	pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
+    rnumnonpx = new RegExp("^(" + pnum + ")(?!px)[a-z%]+$", "i");
 
  /**
   * If the browser suports the computedStyle, we go on...
@@ -13,10 +13,14 @@ var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
 
 if (hAzzle.features.computedStyle) {
 
-var pixelPositionVal, boxSizing,
+var 
     docElem = doc.documentElement,
     container = doc.createElement("div"),
     div = doc.createElement("div");
+
+// Only if the 'div' have style property, we continue...
+
+if ( div.style ) {
 
     div.style.cssText =
         "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;" +
@@ -27,43 +31,12 @@ var pixelPositionVal, boxSizing,
 
     var divStyle = win.getComputedStyle(div, null);
 
-    pixelPositionVal = divStyle.top !== "1%";
-    boxSizing = divStyle.width === "4px"
-	
-    hAzzle.boxSizing = divStyle.width === "4px";
+    hAzzle.pixelPositionVal = divStyle.top === "1%";
+    hAzzle.boxSizingReliable = divStyle.width === "4px";
 
     docElem.removeChild(container);
 
-  // Extend the hAzzle object
-
-   hAzzle.extend({
-  
-   /**
-    * Check if the browser supports boxSizing
-	*
-	* @value (Boolean) True / false 
-	*
-	*/
-	
-   boxSizing: boxSizing,
-
-   /**
-    * Check if the browser supports  pixelPosition
-	*
-    * There is an error / bug in the getComputedStyle,
-	* so this are only an 'hack' for Webkit based
-	* browsers
-	*
-	* @value (Boolean) True / false 
-	*
-	*/
-   
-   pixelPosition: pixelPositionVal
-   
-   },hAzzle);
-
-
-    if (hAzzle.pixelPosition) {
+    if (! hAzzle.pixelPositionVal) {
 
         hAzzle.extend({
 
@@ -93,4 +66,5 @@ var pixelPositionVal, boxSizing,
             },
         }, hAzzle.cssHooks);
     }
+  }
 }
