@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Events error</title>
+<style>
+ p {
+color: green;
+}</style>
+
+<script type="text/javascript" src="../../modules/hAzzle.js"></script>
+
+<script type="text/javascript" src="../../modules/features.js"></script>
+
+<script type="text/javascript" src="../../modules/selector.js"></script>
+
+<script type="text/javascript" src="../../modules/traversing.js"></script>
+
+<script type="text/javascript" src="../../modules/css.js"></script>
+
+<script type="text/javascript" src="../../modules/classes.js"></script>
+
+<script type="text/javascript" src="../../modules/manipulation.js"></script>
+
+<script type="text/javascript" src="../../modules/browser.js"></script>
+
+<script type="text/javascript" src="../../modules/events.js"></script>
+
+<script type="text/javascript" src="../../modules/shims/focusinout.js"></script>
+
+<script type="text/javascript" src="../../modules/shims/topleft.js"></script>
+
+<script type="text/javascript" src="../../modules/removeable.js"></script>
+
+<script type="text/javascript" src="../../modules/data.js"></script>
+
+<script type="text/javascript" src="../../modules/clone.js"></script>
+
+<script type="text/javascript" src="../../modules/frame.js"></script>
+
+<script type="text/javascript" src="../../modules/hace.js"></script>
+
+<script type="text/javascript" src="../../modules/easing.js"></script>
+
+<script type="text/javascript" src="../../modules/fx.js"></script>
+
+<script type="text/javascript" src="../../modules/effects.js"></script>
+
+</head>
+<body>
+
+<p>Move the mouse over me and see the bugg happen.</p>
+<p class="myparagraph">Like this one or the one above.</p>
+
+</body>
+</html>
+
+
+<script>
+
+var $ = hAzzle;
+
+$( "p" )
+.on( "mouseenter", function() {
+// $( this ).css({
+// "background-color": "yellow",
+// "font-weight": "bolder"
+// });
+console.log('mouseenter');
+})
+.on( "mouseleave", function() {
+// var styles = {
+// backgroundColor : "#ddd",
+// fontWeight: ""
+// };
+// $( this ).css( styles );
+console.log('mouseleave');
+});</script>
+
