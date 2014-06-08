@@ -154,5 +154,3 @@
       };
 
   }();
-  
- alert (  hAzzle.features.noCloneChecked )
