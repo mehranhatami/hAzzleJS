@@ -33,15 +33,19 @@ var win = this,
 
         return el.style || el.currentStyle;
     },
+	
+	cssNormalTransform = {
+    
+	letterSpacing: "0",
+    fontWeight: "400"
+    
+	},
 
-    cssProps = {
-        // normalize float css property
-        "float": "cssFloat"
-    };
+    cssProps = {  };
 
 
 
-function vendorPropName(style, name) {
+function vendorPrefixed(style, name) {
 
     // shortcut for names that are not vendor prefixed
     if (name in style) {
@@ -62,14 +66,6 @@ function vendorPropName(style, name) {
 
     return origName;
 }
-
-var cssNormalTransform = {
-    letterSpacing: "0",
-    fontWeight: "400"
-};
-
-
-
 
 function actualDisplay(name, doc) {
 
@@ -228,7 +224,7 @@ hAzzle.extend({
 
             var val, el,
                 hooks,
-                origName = hAzzle.camelize(prop);
+                origName = styleProperty(prop);
 
             el = this[0];
 
@@ -272,7 +268,7 @@ hAzzle.extend({
                 val = cssNormalTransform[name];
             }
 
-            return (prop = styleProperty(prop)) ? val : '';
+            return val;
         }
 
         /**
@@ -621,7 +617,7 @@ hAzzle.extend({
 
             p = styleProperty(name);
 
-            name = cssProps[p] || (cssProps[p] = vendorPropName(style, p));
+            name = cssProps[p] || (cssProps[p] = vendorPrefixed(style, p));
 
             // Props to jQuery
 
