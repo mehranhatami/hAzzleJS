@@ -350,34 +350,6 @@ function Event(evt, element) {
 
 Event.prototype = {
 
-    preventDefault: function () {
-
-        var e = this.originalEvent;
-
-        this.isDefaultPrevented = function () {
-            return true;
-        };
-
-        if (e && e.preventDefault) {
-            e.preventDefault();
-        } else {
-            e.returnValue = false;
-        }
-
-    },
-    stopPropagation: function () {
-        var e = this.originalEvent;
-
-        this.isPropagationStopped = function () {
-            return true;
-        };
-
-        if (e && e.stopPropagation) {
-            e.stopPropagation();
-        } else {
-            e.cancelBubble = true;
-        }
-    },
     stop: function () {
         var e = this;
         e.preventDefault();
@@ -737,4 +709,30 @@ hAzzle.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mouseent
     hAzzle.Core[name] = function (data, fn) {
         return this.on(name, data, fn);
     };
+});
+
+
+/**
+ * PreventDefault() and stopPropagation()
+ */
+
+hAzzle.each(['preventDefault', 'stopPropagation'], function() {
+	
+ Event.prototype[name] = function() {
+
+      var e = this.originalEvent,
+       isd = (name === 'preventDefault') ? 'isDefaultPrevented' : 'isPropagationStopped',
+		rtv = (name === 'preventDefault') ? 'returnValue' : 'cancelBubble';
+
+        this[isd] = function () {
+            return true;
+        };
+
+        if (e && e.preventDefault) {
+            e[name]();
+        } else {
+            e[rtv] = (name === 'preventDefault') ? false : true;
+        }
+ };
+	
 });
