@@ -39,9 +39,7 @@ var win = this,
         letterSpacing: "0",
         fontWeight: "400"
 
-    },
-
-    cssProps = {};
+    };
 
 function vendorPrefixed(style, name) {
 
@@ -504,6 +502,12 @@ hAzzle.extend({
             }
         },
     },
+
+   /**
+    * Supports added into this object from hAzzle.features 
+	*/
+    
+	cssProps: {},
 
     style: function (elem, name, value, extra) {
 

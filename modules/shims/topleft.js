@@ -1,6 +1,6 @@
 /**
  * Fixes top / left computedStyle bugs in Webkit based browsers
- * The isue is that getComputedStyle returns percent when specified for top/left/bottom/right
+ * The issue are caused by the getComputedStyle. It returns the percent when specified for top/left/bottom/right
  */
  
 var win = this,
@@ -31,7 +31,12 @@ if ( div.style ) {
 
     var divStyle = win.getComputedStyle(div, null);
 
+  // Check if browser supports pixelposition (Webkit don't)
+  
     hAzzle.pixelPosition = divStyle.top === "1%";
+  
+    // Check if support boxSizing
+  
     hAzzle.boxSizing = divStyle.width === "4px";
 
     docElem.removeChild(container);

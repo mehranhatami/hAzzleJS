@@ -1,78 +1,127 @@
   /**
    * An function used to flag environments/features.
    */
-  var win = this,
-      doc = win.document;
+  var win = this;
 
   hAzzle.features = function () {
 
-      var input = doc.createElement('input'),
-          select = doc.createElement('select'),
-          opt = select.appendChild(doc.createElement('option')),
-          checkOn,
-          ncc,
-          dcl,
-          div = doc.createElement('div'),
-          fragment = doc.createDocumentFragment(),
-          dfdiv = fragment.appendChild(div),
-          mehran,
-          ccs,
-          clsp,
-          e = doc.createElement('p'),
-          style = e.style;
+      var checkOn,
+          optSelected,
+          optDisabled,
+          radioValue,
 
-      checkOn = input.value !== '';
+          input = document.createElement("input"),
+          select = document.createElement("select"),
+          opt = select.appendChild(document.createElement("option"));
+
+      input.type = "checkbox";
+
+      checkOn = input.value !== "";
+
+      optSelected = opt.selected;
 
       select.disabled = true;
 
+      optDisabled = !opt.disabled;
+
+      input = document.createElement("input");
+      input.value = "t";
+      input.type = "radio";
+
       input.setAttribute('type', 'radio');
-      input.setAttribute('checked', 'checked');
       input.setAttribute('name', 't');
 
-      div.classList.add('a', 'b');
+      radioValue = input.value === "t";
 
-      dfdiv.appendChild(input);
+      if (input.parentNode) {
+          input.parentNode.removeChild(input);
+      }
 
-      mehran = dfdiv.cloneNode(true).cloneNode(true).lastChild.checked;
+      if (select.parentNode) {
+          select.parentNode.removeChild(select);
+      }
 
-      // Make sure textarea (and checkbox) defaultValue is properly cloned
-      // Support: IE9-IE11+
+      if (opt.parentNode) {
+          opt.parentNode.removeChild(opt);
+      }
 
-      dfdiv.innerHTML = '<textarea>x</textarea>';
+      input = select = opt = null;
 
-      ccs = div.style.backgroundClip === 'content-box';
-      dcl = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-      ncc = !!dfdiv.cloneNode(true).lastChild.defaultValue;
+      var clsp,
+          e = document.createElement('p');
       clsp = !!e.classList;
-
-      // Remove from its parent by default
-
-      if (div.parentNode) {
-          div.parentNode.removeChild(div);
-      }
-
-      if (dfdiv.parentNode) {
-          dfdiv.parentNode.removeChild(dfdiv);
-      }
 
       if (e.parentNode) {
           e.parentNode.removeChild(e);
       }
 
-      // release memory in IE
+      e = null;
 
-      div = dfdiv = e = null;
+      var div = document.createElement('div'),
+          style = div.style,
+          boxShadow =
+          'boxShadow' in style ? 'boxShadow' :
+          'MozBoxShadow' in style ? 'MozBoxShadow' :
+          'WebkitBoxShadow' in style ? 'WebkitBoxShadow' :
+          'OBoxShadow' in style ? 'OBoxShadow' :
+          'msBoxShadow' in style ? 'msBoxShadow' :
+          false;
+
+      // Add to hAzzle.cssProps
+
+      if (boxShadow !== 'boxShadow') {
+          hAzzle.cssProps.boxShadow = boxShadow;
+      }
+
+      if (div.parentNode) {
+          div.parentNode.removeChild(div);
+      }
+
+      div = null;
+
+
+      var checkClone,
+          noCloneChecked,
+          fragment = document.createDocumentFragment(),
+          divv = fragment.appendChild(document.createElement("div")),
+          inp = document.createElement("input");
+
+      inp.setAttribute("type", "radio");
+      inp.setAttribute("checked", "checked");
+      inp.setAttribute("name", "t");
+
+      divv.appendChild(inp);
+
+      checkClone = divv.cloneNode(true).cloneNode(true).lastChild.checked;
+
+      divv.innerHTML = "<textarea>x</textarea>";
+      noCloneChecked = !!divv.cloneNode(true).lastChild.defaultValue;
+
+      if (inp.parentNode) {
+          inp.parentNode.removeChild(inp);
+      }
+
+      input = fragment = null;
+
+      var dcl, d = document.createElement('div');
+
+      d.classList.add('a', 'b');
+
+      dcl = /(^| )a( |$)/.test(d.className) && /(^| )b( |$)/.test(d.className);
+
+      if (d.parentNode) {
+          d.parentNode.removeChild(d);
+      }
+
+      d = null;
 
       return {
-          clearCloneStyle: ccs,
-          checkClone: mehran,
-          noCloneChecked: ncc,
           checkOn: checkOn,
-          optSelected: opt.selected,
-          optDisabled: !opt.disabled,
-          computedStyle: doc.defaultView && doc.defaultView.getComputedStyle,
-          supportRAF: !!win.requestAnimationFrame,
-          radioValue: input.name === 't',
+          optSelected: optSelected,
+          optDisabled: optDisabled,
+          radioValue: radioValue,
+
+          // CSS transform
 
           transform: function () {
               var props = ['transform', 'webkitTransform', 'MozTransform', 'OTransform', 'msTransform'],
@@ -84,8 +133,26 @@
                   }
               }
           },
-          classList: clsp,
+
+          // Check for classList support
+
+          clsp: clsp,
+
+          noCloneChecked: noCloneChecked,
+
+          checkClone: checkClone,
+
+          // Check if support computedStyle
+
+          computedStyle: document.defaultView && document.defaultView.getComputedStyle,
+
+          // Check if support RAF
+
+          supportRAF: !!win.requestAnimationFrame,
+
           sMa: dcl
       };
 
   }();
+  
+ alert (  hAzzle.features.noCloneChecked )
