@@ -59,6 +59,7 @@
 
       var div = document.createElement('div'),
           style = div.style,
+		  boxss = false,
           boxShadow =
           'boxShadow' in style ? 'boxShadow' :
           'MozBoxShadow' in style ? 'MozBoxShadow' :
@@ -71,6 +72,7 @@
 
       if (boxShadow !== 'boxShadow') {
           hAzzle.cssProps.boxShadow = boxShadow;
+		  boxss = true;
       }
 
       if (div.parentNode) {
@@ -172,7 +174,11 @@
 
           supportRAF: !!win.requestAnimationFrame,
 
-          sMa: dcl
+          sMa: dcl,
+
+		  // Check for boxShadow support
+
+		  boxShadow: boxss
       };
 
   }();
