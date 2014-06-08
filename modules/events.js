@@ -13,19 +13,18 @@
  * - Delegate handlers only called once
  * - Add support for Cordova 2.5 (WebKit)
  * - Prevent triggered image.load events from bubbling to window.load
- * - Fix blur()
- * - Fix focusout / focusIn for Firefox
  * - For cross-browser consistency, make sure we don't do click events on links
- * - Create 'bubbling' focus and blur events
  *
  * Good luck!
  *
  * Kenny
  *
  *****/
-var win = window,
-    doc = document || {},
+var win = this,
+    doc = win.document,
     root = doc.documentElement || {},
+
+    cache = [],
 
     // Cached handlers
     container = {},
@@ -404,10 +403,12 @@ Event.prototype = {
     }
 };
 hAzzle.Events = {
+
     add: function (el, events, selector, fn, one) {
         var originalFn, type, types, i, args, entry, first;
 
-        // Don't attach events to noData or text/comment nodes (allow plain objects tho)
+        // Don't attach events to noData or text/comment nodes
+
         if (el.nodeType === 3 || el.nodeType === 8 || !events) {
             return;
         }
@@ -432,49 +433,60 @@ hAzzle.Events = {
          *
          */
 
-        if (typeof selector === 'undefined' && typeof events === 'object')
+        if (selector === undefined && typeof events === 'object') {
+
             for (type in events) {
                 if (events.hasOwnProperty(type)) {
-
-                    // Mehran !  Note!!		events[type] are the function itself
-
                     hAzzle.Events.add.call(this, el, type, events[type]);
                 }
-
-            } else {
-
-                // Delegated event
-
-                if (typeof selector !== 'function') {
-                    originalFn = fn;
-                    args = slice.call(arguments, 4);
-                    fn = hAzzle.Events.delegate(selector, originalFn);
-                } else {
-                    args = slice.call(arguments, 3);
-                    fn = originalFn = selector;
-                }
-
-                // One
-                if (one === 1) {
-
-                    // Make a unique handler that get removed after first time it's triggered
-                    fn = hAzzle.Events.once(hAzzle.Events.off, el, events, fn, originalFn);
-                }
-                // Handle multiple events separated by a space
-
-                types = (events || '').match(specialsplit) || [''];
-
-                i = types.length;
-
-                while (i--) {
-                    first = hAzzle.Events.putHandler(entry = new hAzzle.Kernel(el, types[i].replace(names, ''), fn, originalFn, types[i].replace(ns, '').split('.'), args, false));
-                    // Add root listener only if we're the first
-                    if (first) {
-                        hAzzle.Events.addRootListener(el, entry);
-                    }
-                }
-                return el;
             }
+
+            return;
+        }
+
+        // Delegated event
+
+        if (typeof selector !== 'function') {
+            originalFn = fn;
+            args = slice.call(arguments, 4);
+            fn = hAzzle.Events.delegate(selector, originalFn);
+        } else {
+            args = slice.call(arguments, 3);
+            fn = originalFn = selector;
+        }
+
+        // One
+        if (one === 1) {
+
+            // Make a unique handler that get removed after first time it's triggered
+            fn = hAzzle.Events.once(hAzzle.Events.off, el, events, fn, originalFn);
+        }
+
+        // Handle multiple events separated by a space
+
+        types = (events || '').match(specialsplit) || [''];
+
+        i = types.length;
+
+        while (i--) {
+
+            first = hAzzle.Events.putHandler(entry = new hAzzle.Kernel(
+                el,
+                types[i].replace(names, ''),
+                fn, originalFn,
+                types[i].replace(ns, '').split('.'),
+                args,
+                false
+            ));
+
+            // Add root listener only if we're the first
+
+            if (first) {
+
+                hAzzle.Events.addRootListener(el, entry);
+            }
+        }
+        return el;
     },
 
     addRootListener: function (el, entry) {
@@ -532,10 +544,24 @@ hAzzle.Events = {
         return el;
     },
     findTarget: function (selector, target, root) {
-        if (root === win) {
-            root = doc;
+
+        // We can never find CSS nodes in the window itself
+        // so direct it back to document if root = window
+
+        root = (root === win) ? doc : root;
+
+        var i, matches;
+
+        if (cache[selector]) {
+
+            matches = cache[selector];
+
+        } else {
+
+            cache[selector] = hAzzle(selector, root);
+            matches = cache[selector];
         }
-        var i, matches = hAzzle(selector, root);
+
         for (; target !== root; target = target.parentNode || root) {
             if (matches !== null) {
                 for (i = matches.length; i--;) {
@@ -548,10 +574,13 @@ hAzzle.Events = {
     },
     delegate: function (selector, fn) {
         function handler(e) {
-            var cur = e.target;
-            if (cur.nodeType && (!e.button || e.type !== 'click')) {
+
+            var cur = e.target,
+                type = e.type;
+
+            if (cur.nodeType && (!e.button || type !== 'click')) {
                 // Don't process clicks on disabled elements
-                if (e.target.disabled !== true || e.type !== 'click') {
+                if (e.target.disabled !== true || type !== 'click') {
                     var m = null;
                     if (handler.__handlers) {
                         m = handler.__handlers.currentTarget;
@@ -560,6 +589,7 @@ hAzzle.Events = {
                         return fn.apply(m, arguments);
                     }
                 }
+
             }
         }
         handler.__handlers = {
@@ -567,35 +597,35 @@ hAzzle.Events = {
         };
         return handler;
     },
-removeListener: function (element, type, handler, ns) {
+    removeListener: function (element, type, handler, ns) {
 
-   type = type && type.replace(names, '');
-   
-  var  handlers = hAzzle.Events.getHandler(element, type, null, false),
-    removed = {},
-	i = 0, 
-	l= handlers.length;
+        type = type && type.replace(names, '');
 
-    // No point to continue if no event attached on the element
-    if (type) {
-      for (; i < l; i++) {
-        if ((!handler || handlers[i].original === handler) || handlers[i].inNamespaces(ns)) {
-          hAzzle.Events.delHandler(handlers[i]);
-          if (!removed[type[i].eventType]) {
-            removed[handlers[i].eventType] = {
-              t: handlers[i].eventType,
-              c: handlers[i].type
-            };
-          }
+        var handlers = hAzzle.Events.getHandler(element, type, null, false),
+            removed = {},
+            i = 0,
+            l = handlers.length;
+
+        // No point to continue if no event attached on the element
+        if (type) {
+            for (; i < l; i++) {
+                if ((!handler || handlers[i].original === handler) || handlers[i].inNamespaces(ns)) {
+                    hAzzle.Events.delHandler(handlers[i]);
+                    if (!removed[type[i].eventType]) {
+                        removed[handlers[i].eventType] = {
+                            t: handlers[i].eventType,
+                            c: handlers[i].type
+                        };
+                    }
+                }
+            }
+            for (i in removed) {
+                if (!hAzzle.Events.hasHandler(element, removed[i].t, null, false)) {
+                    element.removeEventListener(removed[i].t, hAzzle.Events.rootListener, false);
+                }
+            }
         }
-      }
-      for (i in removed) {
-        if (!hAzzle.Events.hasHandler(element, removed[i].t, null, false)) {
-          element.removeEventListener(removed[i].t, hAzzle.Events.rootListener, false);
-        }
-      }
-    }
-  },
+    },
 
     /***/
     once: function (rm, element, type, handler, callback) {
