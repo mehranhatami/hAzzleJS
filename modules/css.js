@@ -1,6 +1,7 @@
 /*!
  * CSS
  */
+ 
 var win = this,
     doc = win.document,
     html = doc.documentElement,
@@ -9,6 +10,7 @@ var win = this,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
     topbot = /^(top|bottom)$/,
+    iframe,
     elemdisplay = {},
 
     cssPrefixes = ["Webkit", "O", "Moz", "ms"],
@@ -72,14 +74,12 @@ function actualDisplay(name, doc) {
         display,
         elem = doc.createElement(name);
 
-    // Vanila solution is the best choice here
+    // Vanila solution is the fastest choice here
 
     docbody.appendChild(elem);
-
-    display = win.getDefaultComputedStyle && (style = win.getDefaultComputedStyle(elem)) ? style.display : hAzzle.getStyle(elem[0], 'display');
-
+    display = win.getDefaultComputedStyle && (style = win.getDefaultComputedStyle(elem[0])) ?
+        style.display : hAzzle(elem).css('display');
     docbody.removeChild(elem);
-
     return display;
 }
 
@@ -90,14 +90,16 @@ function defaultDisplay(nodeName) {
     var display = elemdisplay[nodeName];
 
     if (!display) {
+
         display = actualDisplay(nodeName, doc);
 
         // If the simple way fails, read from inside an iframe
+
         if (display === 'none' || !display) {
 
             // Use the already-created iframe if possible
 
-            var iframe = iframe || doc.documentElement.appendChild('<iframe frameborder="0" width="0" height="0"/>');
+            iframe = (iframe || doc.documentElement).appendChild('<iframe frameborder="0" width="0" height="0"/>');
 
             // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
             doc = iframe[0].contentDocument;
@@ -125,7 +127,7 @@ function defaultDisplay(nodeName) {
 
 function isHidden(elem, el) {
     elem = el || elem;
-    return elem.style.display === 'none';
+    return hAzzle.style(elem, 'display') === 'none' || !hAzzle.contains(elem.ownerDocument, elem);
 }
 
 
@@ -820,8 +822,9 @@ hAzzle.each(["margin", "padding"], function (hook) {
     };
 });
 
-
-
+/**
+ * Width and height
+ */
 
 hAzzle.each(['width', 'height'], function (name) {
 
@@ -829,7 +832,6 @@ hAzzle.each(['width', 'height'], function (name) {
         name.replace(/./, function (m) {
             return m[0].toUpperCase();
         });
-
 
     hAzzle.Core[name] = function (value) {
 
