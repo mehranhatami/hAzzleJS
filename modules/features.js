@@ -115,12 +115,34 @@
 
       d = null;
 
+
+      /**
+       * Cross-browser for transitions
+       */
+
+      var div = document.createElement('div'),
+          divStyle = div.style,
+          transition;
+
+      transition =
+          divStyle.MozTransition === '' ? 'MozTransition' :
+          (divStyle.msTransition === '' ? 'msTransition' :
+          (divStyle.WebkitTransition === '' ? 'WebkitTransition' :
+              (divStyle.OTransition === '' ? 'OTransition' :
+                  (divStyle.transition === '' ? 'Transition' :
+                      false))));
+
+      div = null;
+
       return {
           checkOn: checkOn,
           optSelected: optSelected,
           optDisabled: optDisabled,
           radioValue: radioValue,
 
+          // CSS transitions
+
+          transition: transition,
           // CSS transform
 
           transform: function () {

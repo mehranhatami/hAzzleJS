@@ -192,6 +192,10 @@ function styleProperty(p) {
 
         p = hAzzle.features.transform;
 
+    } else if (p === 'transition') {
+
+        p = hAzzle.features.transition
+
     } else if (/^transform-?[Oo]rigin$/.test(p)) {
 
         p = hAzzle.features.transform + 'Origin';
@@ -242,7 +246,7 @@ hAzzle.extend({
          */
 
         if (typeof prop === 'string') {
-			
+
             obj = {};
             obj[prop] = value;
         }
@@ -503,11 +507,11 @@ hAzzle.extend({
         },
     },
 
-   /**
-    * Supports added into this object from hAzzle.features 
-	*/
-    
-	cssProps: {},
+    /**
+     * Supports added into this object from hAzzle.features
+     */
+
+    cssProps: {},
 
     style: function (elem, name, value, extra) {
 
@@ -888,3 +892,37 @@ hAzzle.each(['width', 'height'], function (name) {
         hAzzle(elem).css(name, value);
     };
 });
+
+
+/**
+ * cssHook - CSS transitions
+ */
+
+if (hAzzle.features.transition !== "Transition") {
+
+    var pdt = "Property Duration TimingFunction".split(" "),
+        hft = hAzzle.features.transition;
+
+    hAzzle.cssHooks.transition = {
+        get: function (elem, computed) {
+            return hAzzle.map(pdt, function (prop, i) {
+                return hAzzle.getStyle(elem, hft + prop);
+            }).join(" ");
+        },
+        set: function (elem, value) {
+            elem.style[hft] = value;
+        }
+    };
+
+    hAzzle.each(pdt, function (i, prop) {
+        hAzzle.cssHooks["transition" + prop] = {
+            get: function (elem, computed) {
+                return hAzzle.getStyle(elem, hft + pdt);
+            },
+            set: function (elem, value) {
+                elem.style[hft + pdt] = value;
+            }
+        };
+    });
+
+}
