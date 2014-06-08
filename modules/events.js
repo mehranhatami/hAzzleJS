@@ -567,33 +567,36 @@ hAzzle.Events = {
         };
         return handler;
     },
-    removeListener: function (element, type, handler, ns) {
-        type = type && type.replace(names, '');
-        type = hAzzle.Events.getHandler(element, type, null, false);
-        var removed = {};
-        // No point to continue if no event attached on the element
-        if (type) {
-            var i = 0,
-                l = type.length;
+removeListener: function (element, type, handler, ns) {
 
-            for (; i < l; i++) {
-                if ((!handler || type[i].original === handler) && type[i].inNamespaces(ns)) {
-                    hAzzle.Events.delHandler(type[i]);
-                    if (!removed[type[i].eventType]) {
-                        removed[type[i].eventType] = {
-                            t: type[i].eventType,
-                            c: type[i].type
-                        };
-                    }
-                }
-            }
-            for (i in removed) {
-                if (!hAzzle.Events.hasHandler(element, removed[i].t, null, false)) {
-                    element.removeEventListener(removed[i].t, hAzzle.Events.rootListener, false);
-                }
-            }
+   type = type && type.replace(names, '');
+   
+  var  handlers = hAzzle.Events.getHandler(element, type, null, false),
+    removed = {},
+	i = 0, 
+	l= handlers.length;
+
+    // No point to continue if no event attached on the element
+    if (type) {
+      for (; i < l; i++) {
+        if ((!handler || handlers[i].original === handler) || handlers[i].inNamespaces(ns)) {
+          hAzzle.Events.delHandler(handlers[i]);
+          if (!removed[type[i].eventType]) {
+            removed[handlers[i].eventType] = {
+              t: handlers[i].eventType,
+              c: handlers[i].type
+            };
+          }
         }
-    },
+      }
+      for (i in removed) {
+        if (!hAzzle.Events.hasHandler(element, removed[i].t, null, false)) {
+          element.removeEventListener(removed[i].t, hAzzle.Events.rootListener, false);
+        }
+      }
+    }
+  },
+
     /***/
     once: function (rm, element, type, handler, callback) {
         return function () {
