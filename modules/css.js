@@ -297,12 +297,10 @@ hAzzle.extend({
         }
 
         function fn(el) {
-
             for (var k in obj) {
-
                 if (obj.hasOwnProperty(k)) {
-
-                    return hAzzle.style(el, k, obj[k]);
+					// No return  here!!
+                    hAzzle.style(el, k, obj[k]);
                 }
 
             }
