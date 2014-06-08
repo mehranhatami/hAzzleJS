@@ -194,7 +194,7 @@ function styleProperty(p) {
 
     } else if (p === 'transition') {
 
-        p = hAzzle.features.transition
+        p = hAzzle.features.transition;
 
     } else if (/^transform-?[Oo]rigin$/.test(p)) {
 
@@ -236,7 +236,7 @@ hAzzle.extend({
 
         if (value === undefined && typeof prop === 'string') {
 
-            return hAzzle.css(this[0], prop)
+            return hAzzle.css(this[0], prop);
         }
 
         /**
@@ -536,7 +536,7 @@ hAzzle.extend({
 
             p = styleProperty(name);
 
-            name = cssProps[p] || (cssProps[p] = vendorPrefixed(style, p));
+            name = hAzzle.cssProps[p] || (hAzzle.cssProps[p] = vendorPrefixed(style, p));
 
             // Props to jQuery
 
@@ -545,8 +545,7 @@ hAzzle.extend({
             // convert relative number strings
 
             if (typeof value === 'string' && (ret = numbs.exec(value))) {
-                value = parseFloat(hAzzle.getStyle(elem, name));
-                value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                value = hAzzle.units(parseFloat(hAzzle.getStyle(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = 'number';
             }
 
@@ -561,7 +560,6 @@ hAzzle.extend({
 
             if (type === 'number' && !hAzzle.unitless[name]) {
 
-                //                value += 'px';
                 value += ret && ret[3] ? ret[3] : "px";
             }
 
@@ -575,6 +573,7 @@ hAzzle.extend({
             if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
                 style[p] = hAzzle.setter(elem, value);
             }
+			
         } else {
 
             return style[name];
@@ -680,17 +679,7 @@ hAzzle.extend({
 
         if (unit === '' || unit === 'px') {
 
-            return px; // Don't waste our time if there is no conversion to do.
-        }
-
-        if (unit === 'em') {
-
-            val = hAzzle.getStyle(elem, "fontSize");
-            num = parseFloat(val);
-
-            prop = hAzzle.isNumeric(num) ? num || 0 : val;
-
-            return px / prop;
+            return px; // Return if already 'px' or blank
         }
 
         if (unit === '%') {
@@ -701,13 +690,17 @@ hAzzle.extend({
             } else if (topbot.test(prop)) {
 
                 prop = "height";
-
             }
 
-            elem = reaf.test(hAzzle.getStyle(elem, "position")) ?
-
-            elem.offsetParent : elem.parentNode;
-
+          if( reaf.test(hAzzle.getStyle(elem, "position")) ) {
+		  
+                elem = elem.offsetParent;
+				
+		  } else {
+		  
+		        elem = elem.parentNode;
+		  }
+		  
             if (elem) {
 
                 val = hAzzle.getStyle(elem, prop);
@@ -721,8 +714,17 @@ hAzzle.extend({
             }
             return 0;
         }
-        // The first time we calculate how many pixels there is in 1 meter
-        // for calculate what is 1 inch/cm/mm/etc.
+
+        if (unit === 'em') {
+
+            val = hAzzle.getStyle(elem, "fontSize");
+            num = parseFloat(val);
+
+            prop = hAzzle.isNumeric(num) ? num || 0 : val;
+
+            return px / prop;
+        }
+
         if (hAzzle.units.unity === undefined) {
 
             var units = hAzzle.units.unity = {},
