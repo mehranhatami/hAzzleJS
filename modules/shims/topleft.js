@@ -5,8 +5,7 @@
  
 var win = this,
     doc = win.document,
-	pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
-    rnumnonpx = new RegExp("^(" + pnum + ")(?!px)[a-z%]+$", "i");
+    pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i;
 
  /**
   * If the browser suports the computedStyle, we go on...
@@ -32,12 +31,12 @@ if ( div.style ) {
 
     var divStyle = win.getComputedStyle(div, null);
 
-    hAzzle.pixelPositionVal = divStyle.top === "1%";
-    hAzzle.boxSizingReliable = divStyle.width === "4px";
+    hAzzle.pixelPosition = divStyle.top === "1%";
+    hAzzle.boxSizing = divStyle.width === "4px";
 
     docElem.removeChild(container);
 
-    if (! hAzzle.pixelPositionVal) {
+    if (! hAzzle.pixelPosition) {
 
         hAzzle.extend({
 
@@ -47,7 +46,7 @@ if ( div.style ) {
                     if (computed) {
   
                         computed = hAzzle.getStyle(el, 'left');
-                        return rnumnonpx.test(computed) ?
+                        return pxchk.test(computed) ?
                             hAzzle(el).position().left + "px" :
                             computed;
                     }
@@ -58,7 +57,7 @@ if ( div.style ) {
                 get: function (el, computed) {
                     if (computed) {
                         computed = hAzzle.getStyle(el, 'top');
-                        return rnumnonpx.test(computed) ?
+                        return pxchk.test(computed) ?
                             hAzzle(el).position().top + "px" :
                             computed;
                     }
