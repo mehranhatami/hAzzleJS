@@ -1,5 +1,6 @@
 /**
  * Fixes top / left computedStyle bugs in Webkit based browsers
+ * The isue is that getComputedStyle returns percent when specified for top/left/bottom/right
  */
  
 var win = this,

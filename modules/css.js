@@ -33,17 +33,15 @@ var win = this,
 
         return el.style || el.currentStyle;
     },
-	
-	cssNormalTransform = {
-    
-	letterSpacing: "0",
-    fontWeight: "400"
-    
-	},
 
-    cssProps = {  };
+    cssNormalTransform = {
 
+        letterSpacing: "0",
+        fontWeight: "400"
 
+    },
+
+    cssProps = {};
 
 function vendorPrefixed(style, name) {
 
@@ -139,49 +137,49 @@ function isHidden(elem, el) {
  * @return {Object}
  */
 
-function showHide( elements, show ) {
-	var display, elem, hidden,
-		values = [],
-		index = 0,
-		length = elements.length;
+function showHide(elements, show) {
+    var display, elem, hidden,
+        values = [],
+        index = 0,
+        length = elements.length;
 
-	for ( ; index < length; index++ ) {
-		elem = elements[ index ];
-		if ( !elem.style ) {
-			continue;
-		}
+    for (; index < length; index++) {
+        elem = elements[index];
+        if (!elem.style) {
+            continue;
+        }
 
-		values[ index ] = hAzzle.data( elem, "olddisplay" );
-		display = elem.style.display;
-		if ( show ) {
-			if ( !values[ index ] && display === "none" ) {
-				elem.style.display = "";
-			}
-			if ( elem.style.display === "" && isHidden( elem ) ) {
-				values[ index ] = hAzzle.data( elem, "olddisplay", defaultDisplay(elem.nodeName) );
-			}
-		} else {
-			hidden = isHidden( elem );
+        values[index] = hAzzle.data(elem, "olddisplay");
+        display = elem.style.display;
+        if (show) {
+            if (!values[index] && display === "none") {
+                elem.style.display = "";
+            }
+            if (elem.style.display === "" && isHidden(elem)) {
+                values[index] = hAzzle.data(elem, "olddisplay", defaultDisplay(elem.nodeName));
+            }
+        } else {
+            hidden = isHidden(elem);
 
-			if ( display !== "none" || !hidden ) {
-				hAzzle.data( elem, "olddisplay", hidden ? display : hAzzle.getStyle( elem, "display" ) );
-			}
-		}
-	}
+            if (display !== "none" || !hidden) {
+                hAzzle.data(elem, "olddisplay", hidden ? display : hAzzle.getStyle(elem, "display"));
+            }
+        }
+    }
 
-	// Set the display of most of the elements in a second loop
-	// to avoid the constant reflow
-	for ( index = 0; index < length; index++ ) {
-		elem = elements[ index ];
-		if ( !elem.style ) {
-			continue;
-		}
-		if ( !show || elem.style.display === "none" || elem.style.display === "" ) {
-			elem.style.display = show ? values[ index ] || "" : "none";
-		}
-	}
+    // Set the display of most of the elements in a second loop
+    // to avoid the constant reflow
+    for (index = 0; index < length; index++) {
+        elem = elements[index];
+        if (!elem.style) {
+            continue;
+        }
+        if (!show || elem.style.display === "none" || elem.style.display === "") {
+            elem.style.display = show ? values[index] || "" : "none";
+        }
+    }
 
-	return elements;
+    return elements;
 }
 
 
@@ -217,6 +215,21 @@ hAzzle.extend({
     css: function (prop, value) {
 
         var p, obj = prop;
+
+        if (hAzzle.isArray(prop)) {
+            var map = {},
+                i = 0,
+                styles = getStyles(this[0]);
+
+            len = prop.length;
+
+            for (; i < len; i++) {
+
+                map[prop[i]] = hAzzle.getStyle(this[0], prop[i], styles);
+            }
+
+            return map;
+        }
 
         // is this a request for just getting a style?
 
@@ -326,6 +339,7 @@ hAzzle.extend({
 
         if (typeof el.getBoundingClientRect !== typeof undefined) {
 
+
             bcr = el.getBoundingClientRect();
         }
 
@@ -398,7 +412,7 @@ hAzzle.extend({
 
         hAzzle(elem).css('height', value);
     },
-	
+
     /**
      * @param {number} y
      */
@@ -502,15 +516,15 @@ hAzzle.extend({
      *
      * @param {Number} speed
      * @param {String} easing
-     * @param {Function} callback	 
+     * @param {Function} callback
      * @return {hAzzle}
      */
 
     show: function (speed, easing, callback) {
-		if ( speed || speed === 0 ) {
-			return this.animate( hAzzle.AnimProp("show"), speed, easing, callback);
-		}
-       return showHide( this, true );
+        if (speed || speed === 0) {
+            return this.animate(hAzzle.AnimProp("show"), speed, easing, callback);
+        }
+        return showHide(this, true);
     },
 
     /**
@@ -518,15 +532,15 @@ hAzzle.extend({
      *
      * @param {Number} speed
      * @param {String} easing
-     * @param {Function} callback	 
+     * @param {Function} callback
      * @return {hAzzle}
      */
 
     hide: function (speed, easing, callback) {
-		if ( speed || speed === 0 ) {
-			return this.animate( hAzzle.AnimProp("hide"), speed, easing, callback);
-		} 
-       return showHide( this );
+        if (speed || speed === 0) {
+            return this.animate(hAzzle.AnimProp("hide"), speed, easing, callback);
+        }
+        return showHide(this);
     },
 
     /**
@@ -535,16 +549,16 @@ hAzzle.extend({
      */
 
     toggle: function (state) {
-      if ( typeof state === "boolean" ) {
-			return state ? this.show() : this.hide();
-      }
-		return this.each(function() {
-			if ( isHidden( this ) ) {
-				hAzzle( this ).show();
-			} else {
-				hAzzle( this ).hide();
-			}
-		});
+        if (typeof state === "boolean") {
+            return state ? this.show() : this.hide();
+        }
+        return this.each(function () {
+            if (isHidden(this)) {
+                hAzzle(this).show();
+            } else {
+                hAzzle(this).hide();
+            }
+        });
     }
 });
 
@@ -553,8 +567,8 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-// Properties that shouldn't have units behind e.g. 
-// zIndex:33px are not allowed
+    // Properties that shouldn't have units behind e.g. 
+    // zIndex:33px are not allowed
 
     unitless: {
         'lineHeight': 1,
@@ -836,3 +850,28 @@ function viewport() {
         height: self.innerHeight
     };
 }
+
+
+// Margin and padding cssHooks
+
+hAzzle.each(["margin", "padding"], function (hook) {
+    hAzzle.cssHooks[hook] = {
+        get: function (elem, computed) {
+            return hAzzle.map(hAzzle.cssExpand, function (dir) {
+                return hAzzle.getStyle(elem, hook + dir);
+            }).join(" ");
+        },
+        set: function (elem, value) {
+            var parts = value.split(/\s/),
+                values = {
+                    "Top": parts[0],
+                    "Right": parts[1] || parts[0],
+                    "Bottom": parts[2] || parts[0],
+                    "Left": parts[3] || parts[1] || parts[0]
+                };
+            hAzzle.each(hAzzle.cssExpand, function (dir) {
+                elem.style[hook + dir] = values[dir];
+            });
+        }
+    };
+});
