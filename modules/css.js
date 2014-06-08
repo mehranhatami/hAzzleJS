@@ -926,3 +926,8 @@ if (hAzzle.features.transition !== "Transition") {
     });
 
 }
+
+
+  if (hAzzle.features.boxShadow !== 'boxShadow') {
+          hAzzle.cssProps.boxShadow = hAzzle.features.boxShadow;
+   }

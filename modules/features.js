@@ -59,7 +59,6 @@
 
       var div = document.createElement('div'),
           style = div.style,
-		  boxss = false,
           boxShadow =
           'boxShadow' in style ? 'boxShadow' :
           'MozBoxShadow' in style ? 'MozBoxShadow' :
@@ -69,11 +68,6 @@
           false;
 
       // Add to hAzzle.cssProps
-
-      if (boxShadow !== 'boxShadow') {
-          hAzzle.cssProps.boxShadow = boxShadow;
-		  boxss = true;
-      }
 
       if (div.parentNode) {
           div.parentNode.removeChild(div);
@@ -178,7 +172,7 @@
 
 		  // Check for boxShadow support
 
-		  boxShadow: boxss
+		  boxShadow: boxShadow
       };
 
   }();
