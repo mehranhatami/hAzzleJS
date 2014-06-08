@@ -1,12 +1,10 @@
 /*!
  * CSS
  */
- 
 var win = this,
     doc = win.document,
     html = doc.documentElement,
-    pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
-    rrelNum = new RegExp('^([+-])=(' + pnum + ')', 'i'),
+    numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
     topbot = /^(top|bottom)$/,
@@ -236,53 +234,7 @@ hAzzle.extend({
 
         if (value === undefined && typeof prop === 'string') {
 
-            var val, el,
-                hooks,
-                origName = styleProperty(prop);
-
-            el = this[0];
-
-            // If no element, return
-
-            if (!el) {
-
-                return null;
-            }
-
-            // Inspiration from jQuery
-
-            hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
-
-            // Short-cuts for document and window size
-
-            if (el === doc || el === win) {
-
-                p = (el === doc) ? docu() : viewport();
-
-                return prop === 'width' ? p.width : prop === 'height' ? p.height : '';
-            }
-
-            // If a hook was provided get the computed value from there
-
-            if (hooks && "get" in hooks) {
-                val = hooks.get(el, true);
-            }
-
-            // Otherwise, if a way to get the computed value exists, use that
-
-            if (val === undefined) {
-
-                val = hAzzle.getStyle(el, prop);
-            }
-
-            //convert "normal" to computed value
-
-            if (val === "normal" && name in cssNormalTransform) {
-
-                val = cssNormalTransform[name];
-            }
-
-            return val;
+            return hAzzle.css(this[0], prop)
         }
 
         /**
@@ -292,6 +244,7 @@ hAzzle.extend({
          */
 
         if (typeof prop === 'string') {
+			
             obj = {};
             obj[prop] = value;
         }
@@ -299,7 +252,7 @@ hAzzle.extend({
         function fn(el) {
             for (var k in obj) {
                 if (obj.hasOwnProperty(k)) {
-					// No return  here!!
+                    // No return  here!!
                     hAzzle.style(el, k, obj[k]);
                 }
 
@@ -583,11 +536,11 @@ hAzzle.extend({
 
             // convert relative number strings
 
-            if (typeof value === 'string' && (ret = rrelNum.exec(value))) {
-                value = (ret[1] + 1) * ret[2] + parseFloat(hAzzle.getStyle(elem, name));
+            if (typeof value === 'string' && (ret = numbs.exec(value))) {
+                value = parseFloat(hAzzle.getStyle(elem, name));
+                value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = 'number';
             }
-
 
             // Make sure that null and NaN values aren't set.
 
@@ -600,7 +553,8 @@ hAzzle.extend({
 
             if (type === 'number' && !hAzzle.unitless[name]) {
 
-                value += 'px';
+                //                value += 'px';
+                value += ret && ret[3] ? ret[3] : "px";
             }
 
             if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
@@ -654,6 +608,55 @@ hAzzle.extend({
             ret;
     },
 
+    css: function (el, prop, value) {
+
+        var val,
+            hooks,
+            origName = styleProperty(prop);
+
+        // If no element, return
+
+        if (!el) {
+
+            return null;
+        }
+
+        // Inspiration from jQuery
+
+        hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
+
+        // Short-cuts for document and window size
+
+        if (el === doc || el === win) {
+
+            p = (el === doc) ? docu() : viewport();
+
+            return prop === 'width' ? p.width : prop === 'height' ? p.height : '';
+        }
+
+        // If a hook was provided get the computed value from there
+
+        if (hooks && "get" in hooks) {
+            val = hooks.get(el, true);
+        }
+
+        // Otherwise, if a way to get the computed value exists, use that
+
+        if (val === undefined) {
+
+            val = hAzzle.getStyle(el, prop);
+        }
+
+        //convert "normal" to computed value
+
+        if (val === "normal" && name in cssNormalTransform) {
+
+            val = cssNormalTransform[name];
+        }
+
+        return val;
+    },
+
     /**
      * Converts one unit to another
      *
@@ -667,30 +670,39 @@ hAzzle.extend({
 
         var val, num;
 
-        switch (unit) {
-        case "":
-        case "px":
-            return px; // Don't waste our time if there is no conversion to do.
-        case "em":
+        if (unit === '' || unit === 'px') {
 
-            val = hAzzle.style(elem, "fontSize");
+            return px; // Don't waste our time if there is no conversion to do.
+        }
+
+        if (unit === 'em') {
+
+            val = hAzzle.getStyle(elem, "fontSize");
             num = parseFloat(val);
 
             prop = hAzzle.isNumeric(num) ? num || 0 : val;
 
             return px / prop;
+        }
 
-        case "%":
+        if (unit === '%') {
+
             if (lrmp.test(prop)) {
                 prop = "width";
+
             } else if (topbot.test(prop)) {
+
                 prop = "height";
+
             }
+
             elem = reaf.test(hAzzle.getStyle(elem, "position")) ?
-                elem.offsetParent : elem.parentNode;
+
+            elem.offsetParent : elem.parentNode;
+
             if (elem) {
 
-                val = hAzzle.style(elem, prop);
+                val = hAzzle.getStyle(elem, prop);
                 num = num = parseFloat(val);
 
                 prop = hAzzle.isNumeric(num) ? num || 0 : val;
@@ -704,21 +716,26 @@ hAzzle.extend({
         // The first time we calculate how many pixels there is in 1 meter
         // for calculate what is 1 inch/cm/mm/etc.
         if (hAzzle.units.unity === undefined) {
+
             var units = hAzzle.units.unity = {},
-                div = document.createElement("div");
+                div = doc.createElement("div");
+
             div.style.width = "100cm";
-            document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+
+            doc.body.appendChild(div);
             units.mm = div.offsetWidth / 1000;
-            document.body.removeChild(div);
+            doc.body.removeChild(div);
             units.cm = units.mm * 10;
             units.in = units.cm * 2.54;
             units.pt = units.in * 1 / 72;
             units.pc = units.pt * 12;
         }
-        // If the unity specified is not recognized we return the value.
-        unit = hAzzle.units.unity[unit];
-        return unit ? px / unit : px;
 
+        // If the unity specified is not recognized we return the value.
+
+        unit = hAzzle.units.unity[unit];
+
+        return unit ? px / unit : px;
     }
 
 }, hAzzle);
