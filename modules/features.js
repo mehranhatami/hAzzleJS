@@ -67,14 +67,11 @@
           'msBoxShadow' in style ? 'msBoxShadow' :
           false;
 
-      // Add to hAzzle.cssProps
-
       if (div.parentNode) {
           div.parentNode.removeChild(div);
       }
 
       div = null;
-
 
       var checkClone,
           noCloneChecked,
