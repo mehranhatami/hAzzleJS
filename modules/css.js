@@ -219,9 +219,8 @@ hAzzle.extend({
         if (hAzzle.isArray(prop)) {
             var map = {},
                 i = 0,
-                styles = getStyles(this[0]);
-
-            len = prop.length;
+                styles = getStyles(this[0]),
+                len = prop.length;
 
             for (; i < len; i++) {
 
@@ -340,6 +339,7 @@ hAzzle.extend({
         if (typeof el.getBoundingClientRect !== typeof undefined) {
 
 
+
             bcr = el.getBoundingClientRect();
         }
 
@@ -355,63 +355,7 @@ hAzzle.extend({
         };
     },
 
-    width: function (value) {
 
-        var orig, ret, elem = this[0];
-
-        if (!elem) return '';
-        if (hAzzle.isWindow(elem)) {
-            return elem.document.documentElement.clientWidth;
-        }
-
-        // Get document width or height
-        if (elem.nodeType === 9) {
-            return Math.max(
-                elem.documentElement.clientWidth,
-                elem.body.scrollWidth, elem.documentElement.scrollWidth,
-                elem.body.clientWidth, elem.documentElement.clientWidth);
-        }
-
-        // Get width or height on the element
-        if (value === undefined) {
-            orig = hAzzle.getStyle(elem, 'width');
-            ret = parseFloat(orig);
-            return hAzzle.IsNaN(ret) ? ret : orig;
-        }
-
-        // Set the width or height on the element
-
-        hAzzle(elem).css('width', value);
-
-    },
-
-    height: function (value) {
-
-        var orig, ret, elem = this[0];
-
-        if (hAzzle.isWindow(elem)) {
-            return elem.document.documentElement.clientHeight;
-        }
-
-        // Get document width or height
-        if (elem.nodeType === 9) {
-            return Math.max(
-                elem.documentElement.clientHeight,
-                elem.body.scrollHeight, elem.documentElement.scrollHeight,
-                elem.body.clientHeight, elem.documentElement.clientHeight);
-        }
-
-        // Get width or height on the element
-        if (value === undefined) {
-            orig = hAzzle.getStyle(elem, 'height');
-            ret = parseFloat(orig);
-            return hAzzle.IsNaN(ret) ? ret : orig;
-        }
-
-        // Set the width or height on the element
-
-        hAzzle(elem).css('height', value);
-    },
 
     /**
      * @param {number} y
@@ -856,7 +800,7 @@ function viewport() {
 
 hAzzle.each(["margin", "padding"], function (hook) {
     hAzzle.cssHooks[hook] = {
-        get: function (elem, computed) {
+        get: function (elem) {
             return hAzzle.map(hAzzle.cssExpand, function (dir) {
                 return hAzzle.getStyle(elem, hook + dir);
             }).join(" ");
@@ -873,5 +817,53 @@ hAzzle.each(["margin", "padding"], function (hook) {
                 elem.style[hook + dir] = values[dir];
             });
         }
+    };
+});
+
+
+
+
+hAzzle.each(['width', 'height'], function (name) {
+
+    var dimensionProperty =
+        name.replace(/./, function (m) {
+            return m[0].toUpperCase();
+        });
+
+
+    hAzzle.Core[name] = function (value) {
+
+        var orig,
+            ret,
+            elem = this[0];
+
+        if (!elem) {
+
+            return '';
+
+        }
+
+        if (hAzzle.isWindow(elem)) {
+
+            return elem.document.documentElement['client' + dimensionProperty];
+        }
+
+        // Get document width or height
+        if (elem.nodeType === 9) {
+            return Math.max(
+                elem.documentElement['client' + dimensionProperty],
+                elem.body['scroll' + dimensionProperty], elem.documentElement['scroll' + dimensionProperty],
+                elem.body['client' + dimensionProperty], elem.documentElement['client' + dimensionProperty]);
+        }
+
+        // Get width or height on the element
+        if (value === undefined) {
+            orig = hAzzle.getStyle(elem, name);
+            return hAzzle.IsNaN(ret) ? parseFloat(orig) : orig;
+        }
+
+        // Set the width or height on the element
+
+        hAzzle(elem).css(name, value);
     };
 });
