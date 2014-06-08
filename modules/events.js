@@ -119,7 +119,7 @@ hAzzle.extend({
             if (overOutRegex.test(type)) {
                 original.relatedTarget = evt.relatedTarget || evt[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
             }
-            return commonProps.concat('button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement dataTransfer fromElement'.split(' '));
+            return commonProps.concat('button buttons clientX clientY offsetX offsetY pageX pageY screenX screenY toElement dataTransfer fromElement '.split(' '));
         },
         touch: function () {
             return commonProps.concat('touches targetTouches changedTouches scale rotation'.split(' '));
@@ -619,12 +619,13 @@ hAzzle.Events = {
     },
     wrappedHandler: function (element, fn, condition, args) {
         function call(evt, eargs) {
-            return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
+            return fn.apply(element, args ? slice.call(eargs, evt ? 0 : 1).concat(args) : eargs);
         }
 
         function getTarget(evt, eventElement) {
             var target = fn.__handlers ? hAzzle.Events.findTarget(fn.__handlers.selector, evt.target, this) : eventElement;
-            fn.__handlers.currentTarget = target;
+            alert(target)
+            fn.__handlers = target;
             return target;
         }
         var handler = condition ? function (evt) {
@@ -716,13 +717,13 @@ hAzzle.each(['click', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mouseent
  * PreventDefault() and stopPropagation()
  */
 
-hAzzle.each(['preventDefault', 'stopPropagation'], function() {
-	
- Event.prototype[name] = function() {
+hAzzle.each(['preventDefault', 'stopPropagation'], function () {
 
-      var e = this.originalEvent,
-       isd = (name === 'preventDefault') ? 'isDefaultPrevented' : 'isPropagationStopped',
-		rtv = (name === 'preventDefault') ? 'returnValue' : 'cancelBubble';
+    Event.prototype[name] = function () {
+
+        var e = this.originalEvent,
+            isd = (name === 'preventDefault') ? 'isDefaultPrevented' : 'isPropagationStopped',
+            rtv = (name === 'preventDefault') ? 'returnValue' : 'cancelBubble';
 
         this[isd] = function () {
             return true;
@@ -733,6 +734,6 @@ hAzzle.each(['preventDefault', 'stopPropagation'], function() {
         } else {
             e[rtv] = (name === 'preventDefault') ? false : true;
         }
- };
-	
+    };
+
 });
