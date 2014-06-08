@@ -272,7 +272,7 @@ hAzzle.extend({
 
             if (val === undefined) {
 
-                val = hAzzle.getStyle(el, value);
+                val = hAzzle.getStyle(el, prop);
             }
 
             //convert "normal" to computed value
