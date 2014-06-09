@@ -99,8 +99,7 @@ var div = document.createElement('div'),
     prefix,
     property,
     x = hcPf.length,
-    j = hcPf.length,
-    tprop;
+    j = hcPf.length;
 
 function leadingUppercase(word) {
     return word.slice(0, 1).toUpperCase() + word.slice(1);
@@ -148,7 +147,7 @@ while (x--) {
                     );
                     elem.style[property] = value;
                 }
-            }
+            };
         }
     }
 }
@@ -388,9 +387,7 @@ if (hcS.boxShadow) {
     };
 }
 
-if (hcS.borderImage || hcS.boxReflect) {
-
-    hAzzle.each(['borderImage', 'boxReflect', 'boxShadow', 'boxSizing'], function (cpf) {
+hAzzle.each(['borderImage', 'boxReflect', 'boxShadow', 'boxSizing'], function (cpf) {
 
         if (hcS[cpf]) {
 
@@ -403,6 +400,4 @@ if (hcS.borderImage || hcS.boxReflect) {
                 }
             };
         }
-
     });
-}
