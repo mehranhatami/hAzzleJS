@@ -132,7 +132,7 @@ hcS.boxShadow =
     (divStyle.msBoxShadow === '' ? '-ms-box-shadow' :
     (divStyle.WebkitBoxShadow === '' ? '-webkit-box-shadow' :
         (divStyle.OBoxShadow === '' ? '-o-box-shadow' :
-            (divStyle.boxShadow === '' ? true :
+            (divStyle.boxShadow === '' ? 'box-shadow' :
                 false))));
 
 hcS.boxReflect =
