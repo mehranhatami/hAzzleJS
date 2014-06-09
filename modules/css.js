@@ -11,7 +11,7 @@ var win = this,
     iframe,
     elemdisplay = {},
 
-    cssPrefixes = ["Webkit", "O", "Moz", "ms"],
+    
 
     getStyles = hAzzle.features.computedStyle ? function (el) {
 
@@ -53,10 +53,10 @@ function vendorPrefixed(style, name) {
     // check for vendor prefixed names
     var capName = name[0].toUpperCase() + name.slice(1),
         origName = name,
-        i = cssPrefixes.length;
+        i = hAzzle.cssPrefixes.length;
 
     while (i--) {
-        name = cssPrefixes[i] + capName;
+        name = hAzzle.cssPrefixes[i] + capName;
         if (name in style) {
             return name;
         }
@@ -444,6 +444,8 @@ hAzzle.extend({
 // Let us extend the hAzzle Object a litle ...
 
 hAzzle.extend({
+	
+	cssPrefixes: ['Webkit', 'O', 'Moz', 'ms', 'Khtml'],
 
     // Properties that shouldn't have units behind e.g. 
     // zIndex:33px are not allowed

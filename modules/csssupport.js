@@ -34,24 +34,18 @@ var div = document.createElement('div'),
     divStyle = div.style,
     hcS = hAzzle.cssSupport,
     hcH = hAzzle.cssHooks,
-
+    hcPf = hAzzle.cssPrefixes,
     transformProperties = [
         'oTransform',
         'msTransform',
         'webkitTransform',
-        'MozTransform'
+        'MozTransform',
+		'transform'
     ],
     transitionProps = [
         'Property',
         'Duration',
         'TimingFunction'
-    ],
-
-    prefixes = [
-        "O",
-        "ms",
-        "Webkit",
-        "Moz"
     ],
 
     i = transformProperties.length,
@@ -104,8 +98,8 @@ var div = document.createElement('div'),
     ],
     prefix,
     property,
-    x = prefixes.length,
-    j = prefixes.length;
+    x = hcPf.length,
+    j = hcPf.length;
 
 function leadingUppercase(word) {
     return word.slice(0, 1).toUpperCase() + word.slice(1);
@@ -114,8 +108,8 @@ function leadingUppercase(word) {
 // Find the right prefix
 
 while (j--) {
-    if (prefixes[j] + leadingUppercase(properties[0]) in divStyle) {
-        prefix = prefixes[j];
+    if (hcPf[j] + leadingUppercase(properties[0]) in divStyle) {
+        prefix = hcPf[j];
         continue;
     }
 }
