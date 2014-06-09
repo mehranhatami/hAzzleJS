@@ -40,7 +40,7 @@ var div = document.createElement('div'),
         'msTransform',
         'webkitTransform',
         'MozTransform',
-		'transform'
+        'transform'
     ],
     transitionProps = [
         'Property',
@@ -99,7 +99,8 @@ var div = document.createElement('div'),
     prefix,
     property,
     x = hcPf.length,
-    j = hcPf.length;
+    j = hcPf.length,
+    tprop;
 
 function leadingUppercase(word) {
     return word.slice(0, 1).toUpperCase() + word.slice(1);
@@ -130,22 +131,25 @@ while (x--) {
         hAzzle.cssProps[properties[x]] = property;
 
         // MozTranform requires a complete hook because "px" is required in translate
-        property === "MozTransform" && (hAzzle.cssHooks[properties[x]] = {
-            get: function (elem, computed) {
-                return (computed ?
-                    // remove "px" from the computed matrix
-                    hAzzle.getStyle(elem, property).split("px").join("") :
-                    elem.style[property]
-                );
-            },
-            set: function (elem, value) {
-                // add "px" to matrixes
-                /matrix\([^)p]*\)/.test(value) && (
-                    value = value.replace(/matrix((?:[^,]*,){4})([^,]*),([^)]*)/, "matrix$1$2px,$3px")
-                );
-                elem.style[property] = value;
+        if (property === "MozTransform") {
+
+            hAzzle.cssHooks[properties[x]] = {
+                get: function (elem, computed) {
+                    return (computed ?
+                        // remove "px" from the computed matrix
+                        hAzzle.getStyle(elem, property).split("px").join("") :
+                        elem.style[property]
+                    );
+                },
+                set: function (elem, value) {
+                    // add "px" to matrixes
+                    /matrix\([^)p]*\)/.test(value) && (
+                        value = value.replace(/matrix((?:[^,]*,){4})([^,]*),([^)]*)/, "matrix$1$2px,$3px")
+                    );
+                    elem.style[property] = value;
+                }
             }
-        });
+        }
     }
 }
 
@@ -346,17 +350,6 @@ if (hcS.columnCount) {
     });
 }
 
-if (hcS.boxSizing) {
-
-    hcH.boxSizing = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.boxSizing);
-        },
-        set: function (elem, value) {
-            elem.style[hcS.boxSizing] = value;
-        }
-    };
-}
 
 
 function insert_into(string, value, index) {
@@ -367,16 +360,23 @@ function insert_into(string, value, index) {
 
 if (hcS.boxShadow) {
 
+
+
+    hAzzle.each(['boxShadowBlur', 'boxShadowSpread', 'boxShadowX', 'boxShadowY'], function (boxs) {
+        hcH[boxs] = {
+            get: function (elem) {
+                return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[3];
+            },
+            set: function (elem, value) {
+                elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 3);
+            }
+        };
+    });
+
+
+
     hAzzle.cssProps.boxShadow = hcS.boxShadow;
 
-    hcH.boxShadow = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.boxShadow);
-        },
-        set: function (elem, value) {
-            elem.style[hcS.boxShadow] = value;
-        }
-    };
 
     hcH.boxShadowColor = {
         get: function (elem) {
@@ -386,64 +386,23 @@ if (hcS.boxShadow) {
             elem.style[hcS.boxShadow] = value + " " + hAzzle.getStyle(elem, hcS.boxShadow).split(rParenWhitespace)[1];
         }
     };
-
-    hcH.boxShadowBlur = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[5];
-        },
-        set: function (elem, value) {
-            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 5);
-        }
-    };
-
-    hcH.boxShadowSpread = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[6];
-        },
-        set: function (elem, value) {
-            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 6);
-        }
-    };
-
-    hcH.boxShadowX = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[3];
-        },
-        set: function (elem, value) {
-            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 3);
-        }
-    };
-
-    hcH.boxShadowY = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[4];
-        },
-        set: function (elem, value) {
-            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 4);
-        }
-    };
-
-
 }
 
-if (hcS.borderImage) {
-    hcH.borderImage = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.borderImage);
-        },
-        set: function (elem, value) {
-            elem.style[hcS.borderImage] = value;
-        }
-    };
-}
+if (hcS.borderImage || hcS.boxReflect) {
 
-if (hcS.boxReflect) {
-    hcH.boxReflect = {
-        get: function (elem) {
-            return hAzzle.getStyle(elem, hcS.boxReflect);
-        },
-        set: function (elem, value) {
-            elem.style[hcS.boxReflect] = value;
+    hAzzle.each(['borderImage', 'boxReflect', 'boxShadow', 'boxSizing'], function (cpf) {
+
+        if (hcS[cpf]) {
+
+            hcH[cpf] = {
+                get: function (elem) {
+                    return hAzzle.getStyle(elem, hcS[cpf]);
+                },
+                set: function (elem, value) {
+                    elem.style[hcS[cpf]] = value;
+                }
+            };
         }
-    };
+
+    });
 }
