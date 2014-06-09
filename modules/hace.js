@@ -74,7 +74,6 @@ var win = this,
         self.startVal = 0;
         self.endVal = 0;
         self.differences = {};
-		self.container = {};
         self.canStart = true;
         self.hasStarted = false;
         self.hasCompleted = false;
