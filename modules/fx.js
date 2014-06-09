@@ -19,6 +19,44 @@ var rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
         _default: 450
     };
 
+function show(el, fx, prop) {
+
+    var dataShow = hAzzle.data(el, 'fxShow' + prop);
+
+    fx.options.orig[prop] = dataShow || hAzzle.style(el, prop);
+    fx.options.show = true;
+
+    // Begin the animation
+    // Make sure that we start at a small width/height to avoid any flash of content
+
+
+    if (typeof dataShow !== 'undefined') {
+        // This show is picking up where a previous hide or show left off
+
+        fx.startVal = fx.curCSS;
+        fx.endVal = dataShow;
+
+    } else {
+
+        fx.startVal = prop === "width" || prop === "height" ? 1 : 0;
+        fx.endVal = fx.curCSS;
+    }
+    fx.run(false);
+
+}
+
+function hide(el, fx, prop) {
+
+    // Remember where we started, so that we can go back to it later
+
+    fx.options.orig[prop] = hAzzle.data(el, "fxshow" + prop) || hAzzle.style(el, prop);
+    fx.options.hide = true;
+    fx.startVal = fx.curCSS;
+    fx.endVal = 0;
+    fx.run(false);
+}
+
+
 //convert(el, val, p)
 function convert(el, start, end) {
 
@@ -41,6 +79,9 @@ function convert(el, start, end) {
         return start;
     }
 }
+
+
+
 
 function parseTransform(style, base) {
     var values = {},
@@ -116,50 +157,6 @@ hAzzle.fx = function (elem, options, prop) {
 hAzzle.fx.prototype = {
 
     constructor: hAzzle.fx,
-
-    show: function () {
-
-        var dataShow = hAzzle.data(this.elem, 'fxShow' + this.prop);
-
-        // Remember where we started, so that we can go back to it later
-
-        this.options.orig[this.prop] = dataShow || hAzzle.style(this.elem, this.prop);
-
-        this.options.show = true;
-
-        // Begin the animation
-        // Make sure that we start at a small width/height to avoid any flash of content
-
-
-        if (typeof dataShow !== 'undefined') {
-            // This show is picking up where a previous hide or show left off
-
-            this.startVal = this.curCSS;
-            this.endVal = dataShow;
-
-        } else {
-
-            this.startVal = this.prop === "width" || this.prop === "height" ? 1 : 0;
-            this.endVal = this.curCSS;
-        }
-
-        this.run(false);
-    },
-
-    hide: function () {
-
-        // Remember where we started, so that we can go back to it later
-
-        this.options.orig[this.prop] = hAzzle.data(this.elem, "fxshow" + this.prop) || hAzzle.style(this.elem, this.prop);
-        this.options.hide = true;
-
-        this.startVal = this.curCSS;
-        this.endVal = 0;
-
-        // Begin the animation
-
-        this.run(false);
-    },
 
     // Start the animation
 
@@ -503,6 +500,9 @@ hAzzle.extend({
 
                 name = hAzzle.camelize(p);
 
+
+
+
                 if (p !== name) {
                     prop[name] = prop[p];
                     delete prop[p];
@@ -540,19 +540,47 @@ hAzzle.extend({
 
             for (p in prop) {
 
+                // Start an new hAzzle.fx
+
                 var fx = new hAzzle.fx(self, backup, p);
 
                 val = prop[p];
 
-                // Toggle, hide and show	
+                // if 'show'
 
-                if (val === 'toggle' || val === 'hide' || val === 'show') {
+                if (val === 'show') {
 
-                    fx[val === "toggle" ? hidden ? "show" : "hide" : val](prop);
+                    show(el, fx, p);
 
-                    // CSS transform	
+                    // if 'hide'
+
+                } else if (val === 'hide') {
+
+                    hide(el, fx, p);
+
+                    // if 'toggle'
+
+                } else if (val === 'toggle') {
+
+                    // If the CSS node are hidden, make
+                    // it visible
+
+                    if (hidden) {
+
+                        show(el, fx, p);
+
+                        // else... hide it!
+
+                    } else {
+
+                        hide(el, fx, p);
+                    }
 
                 } else {
+
+                    /**
+                     * Normal CSS animation.
+                     */
 
                     fx.startVal = fx.curCSS;
                     fx.endVal = (p === 'transform') ? parseTransform(val) : convert(el, val, p);
