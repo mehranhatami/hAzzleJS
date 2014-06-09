@@ -15,8 +15,12 @@ var win = this,
 
     getStyles = hAzzle.features.computedStyle ? function (el) {
 
-        if (el && el.ownerDocument.defaultView.opener) {
-            return el.ownerDocument.defaultView.getComputedStyle(el[0], null);
+        if (el) {
+			
+			if(el.ownerDocument && el.ownerDocument.defaultView.opener ) {
+            
+			   return el.ownerDocument.defaultView.getComputedStyle(el[0], null);
+			}
         }
 
         return el && win.getComputedStyle(el, null);
@@ -399,10 +403,9 @@ hAzzle.extend({
      */
 
     show: function (speed, easing, callback) {
-        if (speed || speed === 0) {
-            return this.animate(hAzzle.AnimProp("show"), speed, easing, callback);
-        }
-        return showHide(this, true);
+		return speed == null ?
+			showHide(this, true) :
+			this.animate(hAzzle.AnimProp("show"), speed, easing, callback);
     },
 
     /**
@@ -415,10 +418,9 @@ hAzzle.extend({
      */
 
     hide: function (speed, easing, callback) {
-        if (speed || speed === 0) {
-            return this.animate(hAzzle.AnimProp("hide"), speed, easing, callback);
-        }
-        return showHide(this);
+		return speed == null ?
+			showHide(this) :
+			this.animate(hAzzle.AnimProp("hide"), speed, easing, callback);
     },
 
     /**
@@ -427,6 +429,13 @@ hAzzle.extend({
      */
 
     toggle: function (state) {
+	
+	if(speed !== null || typeof speed !== "boolean") {
+
+		return this.animate( hAzzle.AnimProp( 'toggle', true ), speed, easing, callback );
+
+	} else {
+	
         if (typeof state === "boolean") {
             return state ? this.show() : this.hide();
         }
@@ -437,6 +446,7 @@ hAzzle.extend({
                 hAzzle(this).hide();
             }
         });
+	}
     }
 });
 
@@ -500,7 +510,7 @@ hAzzle.extend({
 
     cssSupport: {},
 
-    style: function (elem, name, value, extra) {
+    style: function (elem, name, value) {
 
         var type, p, hooks, ret;
 
@@ -631,7 +641,9 @@ hAzzle.extend({
         // If a hook was provided get the computed value from there
 
         if (hooks && "get" in hooks) {
+			
             val = hooks.get(el, true);
+			
         }
 
         // Otherwise, if a way to get the computed value exists, use that
