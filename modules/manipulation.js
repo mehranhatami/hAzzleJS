@@ -70,7 +70,9 @@ var win = this,
 
             var val = elem.getAttribute(name, 2);
 
-            return val !== null ? val : hAzzle.trim(hAzzle.getText(elem));
+            return val !== null ?
+                val :
+                hAzzle.trim(hAzzle.getText(elem));
         }
     },
 
@@ -130,6 +132,7 @@ hAzzle.extend({
      *
      * @param {String} name
      * @param {String|Object} value
+
      *
      * @return {Object|String}
      */
@@ -459,7 +462,6 @@ hAzzle.extend({
             ret = hooks[el.tagName] ? hooks[el.tagName](el) : el.value;
 
             return typeof ret === 'string' ? ret.replace(/\r\n/g, '') : ret === null ? '' : ret;
-
         }
     },
 

@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.63a
+ * Version: 0.7a
  * Released under the MIT License.
  *
- * Date: 2014-06-07
+ * Date: 2014-06-10
  */
 (function (window, undefined) {
 
@@ -240,7 +240,7 @@
             return true;
         },
         isNumeric: function (obj) {
-            return !hAzzle.isArray(obj) && (obj - parseFloat( obj ) + 1) >= 0;
+			return !hAzzle.isArray( obj ) && obj - parseFloat( obj ) >= 0;
         },
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
@@ -249,7 +249,7 @@
         isArray: Array.isArray,
 
         isWindow: function (obj) {
-            return obj !== null && obj === obj.window;
+            return obj && (obj !== null && obj === obj.window);
         },
         isDocument: function (obj) {
             return obj !== null && obj.nodeType === obj.DOCUMENT_NODE;
