@@ -2,7 +2,7 @@
 
 **hAzzle** aims to be the fastest JavaScript library, but still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
 
-**hAzzle** has much in common with jQuery / Zepto / Prototype, but is an independent library. It's still in a beta stage, but can easily be used in production.
+**hAzzle** support all modern browsers and features - such as HTML 5. It's build in CSS module supports CSS transform and other 'special' CSS properties.
 
 Browser compatiblity
 --------------------
