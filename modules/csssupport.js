@@ -26,6 +26,8 @@
  */
 var div = document.createElement('div'),
     divStyle = div.style,
+	hcS = hAzzle.cssSupport,
+    hcH = hAzzle.cssHooks,
     propertyName = 'transform',
 
     transformProperties = [
@@ -77,17 +79,17 @@ var div = document.createElement('div'),
 
 // Textshadow check
 
-hAzzle.cssSupport.textShadow = (divStyle.textShadow === '');
+hcS.textShadow = (divStyle.textShadow === '');
 
 // test different vendor prefixes of this property
 while (i--) {
     if (transformProperties[i] in divStyle) {
-        hAzzle.cssSupport[propertyName] = supportProperty = transformProperties[i];
+        hcS[propertyName] = supportProperty = transformProperties[i];
         continue;
     }
 }
 
-hAzzle.cssSupport.columnCount =
+hcS.columnCount =
     divStyle.MozColumnCount === '' ? 'MozColumnCount' :
     (divStyle.msColumnCount === '' ? 'msColumnCount' :
     (divStyle.WebkitColumnCount === '' ? 'WebkitColumnCount' :
@@ -95,7 +97,7 @@ hAzzle.cssSupport.columnCount =
             (divStyle.boxShadow === '' ? false :
                 false))));
 
-hAzzle.cssSupport.transition =
+hcS.transition =
     divStyle.MozTransition === '' ? 'MozTransition' :
     (divStyle.msTransition === '' ? 'msTransition' :
     (divStyle.WebkitTransition === '' ? 'WebkitTransition' :
@@ -109,7 +111,7 @@ hAzzle.cssSupport.transition =
  * have to develop that !!
  */
  
-hAzzle.cssSupport.animation =
+hcS.animation =
     divStyle.MozAnimation === '' ? 'MozAnimation' :
     (divStyle.msAnimation === '' ? 'msAnimation' :
     (divStyle.WebkitAnimation === '' ? 'WebkitAnimation' :
@@ -118,7 +120,7 @@ hAzzle.cssSupport.animation =
                 false))));
 
 
-hAzzle.cssSupport.boxSizing =
+hcS.boxSizing =
     divStyle.MozBoxSizing === '' ? 'MozBoxSizing' :
     (divStyle.msBoxSizing === '' ? 'msBoxSizing' :
     (divStyle.WebkitBoxSizing === '' ? 'WebkitBoxSizing' :
@@ -126,7 +128,7 @@ hAzzle.cssSupport.boxSizing =
             (divStyle.boxSizing === '' ? 'boxSizing' :
                 false))));
 
-hAzzle.cssSupport.boxShadow =
+hcS.boxShadow =
     divStyle.MozBoxShadow === '' ? 'MozBoxShadow' :
     (divStyle.msBoxShadow === '' ? 'msBoxShadow' :
     (divStyle.WebkitBoxShadow === '' ? 'WebkitBoxShadow' :
@@ -134,14 +136,14 @@ hAzzle.cssSupport.boxShadow =
             (divStyle.boxShadow === '' ? false :
                 false))));
 
-hAzzle.cssSupport.boxReflect =
+hcS.boxReflect =
     divStyle.boxReflect === '' ? 'boxReflect' :
     (divStyle.MozBoxReflect === '' ? 'MozBoxReflect' :
     (divStyle.WebkitBoxReflect === '' ? 'WebkitBoxReflect' :
         (divStyle.OBoxReflect === '' ? 'OBoxReflect' : false)));
 
 
-hAzzle.cssSupport.borderImage =
+hcS.borderImage =
     divStyle.borderImage === '' ? 'borderImage' :
     (divStyle.msBorderImage === '' ? 'msBorderImage' :
     (divStyle.MozBorderImage === '' ? 'MozBorderImage' :
@@ -150,7 +152,7 @@ hAzzle.cssSupport.borderImage =
 
 divStyle.cssText = cssLinear;
 
-hAzzle.cssSupport.linearGradient =
+hcS.linearGradient =
     rSupportLinearW3C.test(divStyle.backgroundImage) ? 'linear-gradient' :
     (rSupportLinearMoz.test(divStyle.backgroundImage) ? '-moz-linear-gradient' :
     (rSupportLinearWebkit.test(divStyle.backgroundImage) ? '-webkit-linear-gradient' :
@@ -159,7 +161,7 @@ hAzzle.cssSupport.linearGradient =
 
 divStyle.cssText = cssRadial;
 
-hAzzle.cssSupport.radialGradient =
+hcS.radialGradient =
     rSupportRadialW3C.test(divStyle.backgroundImage) ? 'radial-gradient' :
     (rSupportRadialMoz.test(divStyle.backgroundImage) ? '-moz-radial-gradient' :
     (rSupportRadialWebkit.test(divStyle.backgroundImage) ? '-webkit-radial-gradient' :
@@ -187,25 +189,25 @@ if (supportProperty && supportProperty != propertyName) {
  *
  */
 
-if (hAzzle.cssSupport.transition) {
-    hAzzle.cssHooks.transition = {
+if (hcS.transition) {
+    hcH.transition = {
         get: function (elem) {
             return hAzzle.map(transitionProps, function (transitionProps) {
                 return hAzzle.getStyle(elem, hAzzle.cssProps.transition + transitionProps);
             }).join(" ");
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.transition] = value;
+            elem.style[hcS.transition] = value;
         }
     };
 
     hAzzle.each(transitionProps, function (transitionProps) {
-        hAzzle.cssHooks["transition" + transitionProps] = {
+        hcH["transition" + transitionProps] = {
             get: function (elem) {
-                return hAzzle.getStyle(elem, hAzzle.cssSupport.transition + transitionProps);
+                return hAzzle.getStyle(elem, hcS.transition + transitionProps);
             },
             set: function (elem, value) {
-                elem.style[hAzzle.cssSupport.transition + transitionProps] = value;
+                elem.style[hcS.transition + transitionProps] = value;
             }
         };
     });
@@ -218,22 +220,22 @@ if (hAzzle.cssSupport.transition) {
 
 function linearSettings(value) {
     var parts = rLinearSettings.exec(value);
-    value = value.replace(new RegExp(parts[2], 'g'), hAzzle.cssSupport.linearGradient);
+    value = value.replace(new RegExp(parts[2], 'g'), hcS.linearGradient);
     return value;
 }
 
 function radialSettings(value) {
     var parts = rRadialSettings.exec(value);
-    value = value.replace(new RegExp(parts[2], 'g'), hAzzle.cssSupport.radialGradient);
+    value = value.replace(new RegExp(parts[2], 'g'), hcS.radialGradient);
     return value;
 }
 
 
-if (hAzzle.cssSupport.linearGradient && hAzzle.cssSupport.linearGradient !== "linear-gradient") {
+if (hcS.linearGradient && hcS.linearGradient !== "linear-gradient") {
 
     hAzzle.each(cssPropsArray, function (cssProps) {
 
-        hAzzle.cssHooks[cssProps] = {
+        hcH[cssProps] = {
 
             set: function (elem, value) {
 
@@ -250,12 +252,12 @@ if (hAzzle.cssSupport.linearGradient && hAzzle.cssSupport.linearGradient !== "li
     });
 
 }
-if (hAzzle.cssSupport.columnCount) {
+if (hcS.columnCount) {
 
     hAzzle.each(columnProps, function (columnProps) {
 
 
-        hAzzle.cssHooks['column' + columnProps] = {
+        hcH['column' + columnProps] = {
             get: function (elem) {
                 return hAzzle.getStyle(elem, getCssProperty(columnPrefix, columnProps));
             },
@@ -267,14 +269,14 @@ if (hAzzle.cssSupport.columnCount) {
     });
 }
 
-if (hAzzle.cssSupport.boxSizing) {
+if (hcS.boxSizing) {
 
-    hAzzle.cssHooks.boxSizing = {
+    hcH.boxSizing = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxSizing);
+            return hAzzle.getStyle(elem, hcS.boxSizing);
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxSizing] = value;
+            elem.style[hcS.boxSizing] = value;
         }
     };
 }
@@ -286,86 +288,87 @@ function insert_into(string, value, index) {
     return parts.join(" ");
 }
 
-if (hAzzle.cssSupport.boxShadow) {
+if (hcS.boxShadow) {
 
-    hAzzle.cssProps.boxShadow = hAzzle.cssSupport.boxShadow;
+    hAzzle.cssProps.boxShadow = hcS.boxShadow;
 
-    hAzzle.cssHooks.boxShadow = {
+    hcH.boxShadow = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow);
+            return hAzzle.getStyle(elem, hcS.boxShadow);
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxShadow] = value;
+            elem.style[hcS.boxShadow] = value;
         }
     };
 
-    hAzzle.cssHooks.boxShadowColor = {
+    hcH.boxShadowColor = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow).split(rParenWhitespace)[0] + ')';
+            return hAzzle.getStyle(elem, hcS.boxShadow).split(rParenWhitespace)[0] + ')';
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxShadow] = value + " " + hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow).split(rParenWhitespace)[1];
+            elem.style[hcS.boxShadow] = value + " " + hAzzle.getStyle(elem, hcS.boxShadow).split(rParenWhitespace)[1];
         }
     };
 
-    hAzzle.cssHooks.boxShadowBlur = {
+    hcH.boxShadowBlur = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow).split(rWhitespace)[5];
+            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[5];
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxShadow] = insert_into(hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow), value, 5);
+            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 5);
         }
     };
 
-    hAzzle.cssHooks.boxShadowSpread = {
+    hcH.boxShadowSpread = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow).split(rWhitespace)[6];
+            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[6];
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxShadow] = insert_into(hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow), value, 6);
+            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 6);
         }
     };
 
-    hAzzle.cssHooks.boxShadowX = {
+    hcH.boxShadowX = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow).split(rWhitespace)[3];
+            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[3];
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxShadow] = insert_into(hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow), value, 3);
+            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 3);
         }
     };
 
-    hAzzle.cssHooks.boxShadowY = {
+    hcH.boxShadowY = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow).split(rWhitespace)[4];
+            return hAzzle.getStyle(elem, hcS.boxShadow).split(rWhitespace)[4];
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxShadow] = insert_into(hAzzle.getStyle(elem, hAzzle.cssSupport.boxShadow), value, 4);
+            elem.style[hcS.boxShadow] = insert_into(hAzzle.getStyle(elem, hcS.boxShadow), value, 4);
         }
     };
 
 
 }
 
-if (hAzzle.cssSupport.borderImage) {
-    hAzzle.cssHooks.borderImage = {
+if (hcS.borderImage) {
+    hcH.borderImage = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.borderImage);
+            return hAzzle.getStyle(elem, hcS.borderImage);
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.borderImage] = value;
+            elem.style[hcS.borderImage] = value;
         }
     };
 }
 
-if (hAzzle.cssSupport.boxReflect) {
+if (hcS.boxReflect) {
 
-    hAzzle.cssHooks.boxReflect = {
+    hcH.boxReflect = {
         get: function (elem) {
-            return hAzzle.getStyle(elem, hAzzle.cssSupport.boxReflect);
+            return hAzzle.getStyle(elem, hcS.boxReflect);
         },
         set: function (elem, value) {
-            elem.style[hAzzle.cssSupport.boxReflect] = value;
+            elem.style[hcS.boxReflect] = value;
         }
     };
 }
+
