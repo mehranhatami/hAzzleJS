@@ -17,16 +17,16 @@
  * - linearGradient
  * - radialGradient
  * - columnCount
- * - boxSizing (boolean: true / false)
+ * - boxSizing
  * - boxShadow
  * - borderImage
- * - boxReflect (boolean: true / false)
- 
+ * - boxReflect
+ * - borderRadius
  *
- * There also exist cssHooks for all
- * CSS properties listed here.
+ * There also exist cssHooks for mostly all
+ * of the CSS properties listed here.
  *
- * cssSupport are plugin-friendly and can
+ * Note!! hAzzle.cssSupport are plugin-friendly and can
  * be extended.
  *
  */
@@ -99,7 +99,9 @@ var div = document.createElement('div'),
     prefix,
     property,
     x = hcPf.length,
-    j = hcPf.length;
+    j = hcPf.length,
+
+    dirs = "TopLeft TopRight BottomRight BottomLeft".split(" ");
 
 function leadingUppercase(word) {
     return word.slice(0, 1).toUpperCase() + word.slice(1);
@@ -183,7 +185,13 @@ hcS.transition =
             (divStyle.transition === '' ? 'Transition' :
                 false))));
 
-
+hcS.borderRadius =
+    divStyle.MozBorderRadius === '' ? 'MozBorderRadius' :
+    (divStyle.msBorderRadius === '' ? 'msBorderRadius' :
+    (divStyle.WebkitBorderRadius === '' ? 'WebkitBorderRadius' :
+        (divStyle.OBorderRadius === '' ? 'OBorderRadius' :
+            (divStyle.borderRadius === '' ? 'BorderRadius' :
+                false))));
 /*
  * Mehran!!
  *
@@ -249,6 +257,7 @@ hcS.radialGradient =
 
 
 // prevent IE memory leak
+
 div = divStyle = null;
 
 // Skip 'px' on transform property
@@ -291,12 +300,11 @@ if (hcS.transition) {
             }
         };
     });
-
 }
+
 /**
  * Add gradient to cssHooks
  */
-
 
 function linearSettings(value) {
     var parts = rLinearSettings.exec(value);
@@ -309,7 +317,6 @@ function radialSettings(value) {
     value = value.replace(new RegExp(parts[2], 'g'), hcS.radialGradient);
     return value;
 }
-
 
 if (hcS.linearGradient && hcS.linearGradient !== "linear-gradient") {
 
@@ -389,15 +396,52 @@ if (hcS.boxShadow) {
 
 hAzzle.each(['borderImage', 'boxReflect', 'boxShadow', 'boxSizing'], function (cpf) {
 
-        if (hcS[cpf]) {
+    if (hcS[cpf]) {
 
-            hcH[cpf] = {
-                get: function (elem) {
-                    return hAzzle.getStyle(elem, hcS[cpf]);
-                },
-                set: function (elem, value) {
-                    elem.style[hcS[cpf]] = value;
-                }
-            };
+        hcH[cpf] = {
+            get: function (elem) {
+                return hAzzle.getStyle(elem, hcS[cpf]);
+            },
+            set: function (elem, value) {
+                elem.style[hcS[cpf]] = value;
+            }
+        };
+    }
+});
+
+
+function borderCornerRadius(direction, prefix) {
+    prefix = prefix === undefined || prefix === '' ? 'border' : prefix + 'Border';
+    if (hcH.borderRadius && hcH.borderRadius == "MozBorderRadius") {
+        // e.g. MozBorderRadiusTopleft
+        return prefix + "Radius" + direction.charAt(0).toUpperCase() + direction.substr(1).toLowerCase();
+    } else {
+        // e.g. WebKitBorderTopLeftRadius, borderTopLeftRadius, etc
+        return prefix + direction + "Radius";
+    }
+}
+
+if (hcS.borderRadius) {
+    var vendor_prefix = hcS.borderRadius.replace('BorderRadius', '');
+    hAzzle.cssHooks.borderRadius = {
+        get: function (elem) {
+            return hAzzle.map(dirs, function (dir) {
+                return hAzzle.getStyle(elem, borderCornerRadius(dir, vendor_prefix));
+            }).join(" ");
+        },
+        set: function (elem, value) {
+            elem.style[borderCornerRadius('', vendor_prefix)] = value;
         }
+    };
+
+    hAzzle.each(dirs, function (dir) {
+        hAzzle.cssHooks["borderRadius" + dir] = {
+            get: function (elem) {
+                return hAzzle.getStyle(elem, borderCornerRadius(dir, vendor_prefix));
+            },
+            set: function (elem, value) {
+                elem.style[borderCornerRadius(dir, vendor_prefix)] = value;
+            }
+        };
     });
+}
