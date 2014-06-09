@@ -53,9 +53,7 @@ hAzzle.extend({
 
     _default: 1150,
 
-    // Our ticker
-
-
+    // hAce
 
     hACE: function (controller) {
 
@@ -129,6 +127,13 @@ hAzzle.extend({
      */
 
     hACEPipe: function () {
+
+        // Allow instantiation without the 'new' keyword
+
+        if (!(this instanceof hAzzle.hACEPipe)) {
+            return new hAzzle.hACEPipe();
+        }
+
         var self = this;
         self.hACEPipe = {};
         self.then = hAzzle.pnow();
@@ -173,7 +178,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     add: function (name, fn) {
-        if (typeof name === "string" && typeof fn === "function") {
+        if (typeof name === 'string' && typeof fn === 'function') {
             this.hACEPipe[name] = fn;
         }
         return this;
@@ -188,7 +193,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     remove: function (name) {
-        if (typeof name === "string") {
+        if (typeof name === 'string') {
             delete this.hACEPipe[name];
         }
         return this;
@@ -245,7 +250,7 @@ hAzzle.hACEPipe.prototype = {
      */
 
     has: function (name) {
-        return typeof name === "string" ? name in this.hACEPipe : "";
+        return typeof name === 'string' ? name in this.hACEPipe : "";
     },
 
     /**
@@ -286,7 +291,7 @@ hAzzle.hACEPipe.prototype = {
  * hACE will not run
  */
 
-hAzzle.pipe = new hAzzle.hACEPipe();
+hAzzle.pipe = hAzzle.hACEPipe();
 hAzzle.pipe.start();
 
 
@@ -403,7 +408,7 @@ hAzzle.hACE.prototype = {
 
     duration: function (ms) {
 
-        if (typeof ms === "number") {
+        if (typeof ms === 'number') {
 
             this.hACEDuration = ms || hAzzle._default;
         }
@@ -419,7 +424,7 @@ hAzzle.hACE.prototype = {
      */
 
     delay: function (amount) {
-        this.delayDuration = typeof amount === "number" ? amount : 1;
+        this.delayDuration = typeof amount === 'number' ? amount : 1;
         return this;
     },
 
@@ -432,7 +437,7 @@ hAzzle.hACE.prototype = {
      */
 
     repeat: function (times) {
-        this.repeatCount = typeof times === "number" ? times : 0;
+        this.repeatCount = typeof times === 'number' ? times : 0;
         return this;
     },
 
@@ -606,12 +611,12 @@ hAzzle.hACE.prototype = {
 
                 // Parses relative end values with start as base (e.g.: +10, -3)
 
-                if (typeof end === "string") {
+                if (typeof end === 'string') {
 
                     end = start + parseFloat(end, 10);
                 }
 
-                if (typeof end === "number") {
+                if (typeof end === 'number') {
                     self.differences[val] = end - start;
                 }
             }
@@ -623,16 +628,16 @@ hAzzle.hACE.prototype = {
 
             // Parses relative end values with start as base (e.g.: +10, -3)
 
-            if (typeof end === "string") {
+            if (typeof end === 'string') {
 
                 end = start + parseFloat(end, 10);
             }
 
             // Protect against non numeric properties.
 
-            if (typeof end === "number") {
+            if (typeof end === 'number') {
 
-                self.differences.mehran = end;
+                self.differences._hcsp = end;
             }
         }
 
@@ -657,9 +662,9 @@ hAzzle.hACE.prototype = {
 
                 ease = self.easing.call(hAzzle.easing, percent / self.hACEDuration);
 
-                if (self.differences.hasOwnProperty('mehran')) {
+                if (self.differences.hasOwnProperty('_hcsp')) {
 
-                    tick = self.startVal + (self.differences.mehran - self.startVal) * ease;
+                    tick = self.startVal + (self.differences._hcsp - self.startVal) * ease;
 
                 } else {
 
@@ -861,7 +866,7 @@ hAzzle.hACE.prototype = {
      */
 
     forward: function (count) {
-        if (typeof count === "number") {
+        if (typeof count === 'number') {
             this.hACEDuration = this.hACEDuration / count || hAzzle._default;
         }
     },
@@ -874,7 +879,7 @@ hAzzle.hACE.prototype = {
      */
 
     rewind: function (count) {
-        if (typeof count === "number") {
+        if (typeof count === 'number') {
             this.hACEDuration = this.hACEDuration * count || hAzzle._default;
         }
     },
