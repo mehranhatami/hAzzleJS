@@ -54,22 +54,6 @@
 
       e = null;
 
-      var div = document.createElement('div'),
-          style = div.style,
-          boxShadow =
-          'boxShadow' in style ? 'boxShadow' :
-          'MozBoxShadow' in style ? 'MozBoxShadow' :
-          'WebkitBoxShadow' in style ? 'WebkitBoxShadow' :
-          'OBoxShadow' in style ? 'OBoxShadow' :
-          'msBoxShadow' in style ? 'msBoxShadow' :
-          false;
-
-      if (div.parentNode) {
-          div.parentNode.removeChild(div);
-      }
-
-      div = null;
-
       var checkClone,
           noCloneChecked,
           fragment = document.createDocumentFragment(),
@@ -105,46 +89,11 @@
 
       d = null;
 
-
-      /**
-       * Cross-browser for transitions
-       */
-
-      var div = document.createElement('div'),
-          divStyle = div.style,
-          transition;
-
-      transition =
-          divStyle.MozTransition === '' ? 'MozTransition' :
-          (divStyle.msTransition === '' ? 'msTransition' :
-          (divStyle.WebkitTransition === '' ? 'WebkitTransition' :
-              (divStyle.OTransition === '' ? 'OTransition' :
-                  (divStyle.transition === '' ? 'Transition' :
-                      false))));
-
-      div = null;
-
       return {
           checkOn: checkOn,
           optSelected: optSelected,
           optDisabled: optDisabled,
           radioValue: radioValue,
-
-          // CSS transitions
-
-          transition: transition,
-          // CSS transform
-
-          transform: function () {
-              var props = ['transform', 'webkitTransform', 'MozTransform', 'OTransform', 'msTransform'],
-                  i;
-              for (i = 0; i < props.length; i++) {
-                  if (props[i] in style) {
-
-                      return props[i];
-                  }
-              }
-          },
 
           // Check for classList support
 
@@ -158,15 +107,8 @@
 
           computedStyle: document.defaultView && document.defaultView.getComputedStyle,
 
-          // Check if support RAF
-
-          supportRAF: !!win.requestAnimationFrame,
-
           sMa: dcl,
-
-		  // Check for boxShadow support
-
-		  boxShadow: boxShadow
+	
       };
 
   }();

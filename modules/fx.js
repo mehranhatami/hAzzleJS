@@ -152,7 +152,7 @@ hAzzle.fx.prototype = {
 
        // Temporary hack for cross-browser - I will deal with it later
 
-        fx.prop = hAzzle.features.transform();
+        fx.prop = hAzzle.cssSupport.transform;
         fx.custom(from, to);
 
     },

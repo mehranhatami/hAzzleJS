@@ -41,7 +41,7 @@ if (hfr) {
 
         // Vendor prefixed
 
-        requestFrame = wn.webkitRequestAnimationFrame ||
+        requestFrame = win.webkitRequestAnimationFrame ||
             win.oRequestAnimationFrame ||
             win.msRequestAnimationFrame ||
             win.mozRequestAnimationFrame || null;
@@ -55,7 +55,7 @@ if (hfr) {
 }
 // This is when we expect a fall-back to setTimeout as it's much more fluid
 
-if (!hfr) {
+if (!requestFrame) {
 
     var _aq = [],
         _process = [],
@@ -95,19 +95,19 @@ if (!hfr) {
 
     cancelFrame = function (rid) {
 
-        var i, sp = Array.prototype.splice,
+        var i,
             x = _aq.length,
             y = _process.length;
 
         for (; i < x; i += 1) {
             if (_aq[i][0] === rid) {
-                _aq.sp(i, 1);
+                _aq.Array.prototype.splice(i, 1);
                 return;
             }
         }
         for (; i < y; i += 1) {
             if (_process[i][0] === rid) {
-                _process.sp(i, 1);
+                _process.Array.prototype.splice(i, 1);
                 return;
             }
         }

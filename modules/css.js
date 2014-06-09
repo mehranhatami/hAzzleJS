@@ -34,10 +34,12 @@ var win = this,
         return el.style || el.currentStyle;
     },
 
+    // Has to be numbers, not strings
+
     cssNormalTransform = {
 
-        letterSpacing: "0",
-        fontWeight: "400"
+        letterSpacing: '0',
+        fontWeight: '400'
 
     };
 
@@ -180,30 +182,6 @@ function showHide(elements, show) {
     return elements;
 }
 
-
-/**
- * @param {string} p
- * @return {string}
- */
-
-function styleProperty(p) {
-
-    if (p === 'transform') {
-
-        p = hAzzle.features.transform;
-
-    } else if (p === 'transition') {
-
-        p = hAzzle.features.transition;
-
-    } else if (/^transform-?[Oo]rigin$/.test(p)) {
-
-        p = hAzzle.features.transform + 'Origin';
-    }
-
-    return p ? hAzzle.camelize(p) : null;
-}
-
 hAzzle.extend({
 
     /**
@@ -216,7 +194,7 @@ hAzzle.extend({
 
     css: function (prop, value) {
 
-        var p, obj = prop;
+        var obj = prop;
 
         if (hAzzle.isArray(prop)) {
             var map = {},
@@ -352,6 +330,7 @@ hAzzle.extend({
         } else {
 
             elem.scrollLeft = val;
+
         }
     },
 
@@ -470,23 +449,23 @@ hAzzle.extend({
     // zIndex:33px are not allowed
 
     unitless: {
-        'lineHeight': 1,
-        'zoom': 1,
-        'zIndex': 1,
-        'opacity': 1,
-        'boxFlex': 1,
-        'WebkitBoxFlex': 1,
-        'MozBoxFlex': 1,
-        'columns': 1,
-        'fontWeight': 1,
-        'overflow': 1,
-        'fillOpacity': 1,
-        'flexGrow': 1,
-        'columnCount': 1,
-        'flexShrink': 1,
-        'order': 1,
-        'orphans': 1,
-        'widows': 1,
+        'lineHeight': true,
+        'zoom': true,
+        'zIndex': true,
+        'opacity': true,
+        'boxFlex': true,
+        'WebkitBoxFlex': true,
+        'MozBoxFlex': true,
+        'columns': true,
+        'fontWeight': true,
+        'overflow': true,
+        'fillOpacity': true,
+        'flexGrow': true,
+        'columnCount': true,
+        'flexShrink': true,
+        'order': true,
+        'orphans': true,
+        'widows': true,
     },
 
     /**
@@ -508,10 +487,16 @@ hAzzle.extend({
     },
 
     /**
-     * Supports added into this object from hAzzle.features
+     * cssSupport.js OR plug-ins will fill this object with data
      */
 
     cssProps: {},
+
+    /**
+     * cssSupport.js OR plug-ins will fill this object with data
+     */
+
+    cssSupport: {},
 
     style: function (elem, name, value, extra) {
 
@@ -534,7 +519,7 @@ hAzzle.extend({
 
             // Camelize the name
 
-            p = styleProperty(name);
+            p = hAzzle.camelize(name);
 
             name = hAzzle.cssProps[p] || (hAzzle.cssProps[p] = vendorPrefixed(style, p));
 
@@ -573,7 +558,7 @@ hAzzle.extend({
             if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
                 style[p] = hAzzle.setter(elem, value);
             }
-			
+
         } else {
 
             return style[name];
@@ -609,17 +594,17 @@ hAzzle.extend({
         }
 
         return ret !== undefined ?
-            // Support: IE
-            // IE returns zIndex value as an integer.
+
             ret + "" :
             ret;
     },
 
-    css: function (el, prop, value) {
+    css: function (el, prop) {
 
         var val,
             hooks,
-            origName = styleProperty(prop);
+			p,
+            origName = hAzzle.camelize(prop);
 
         // If no element, return
 
@@ -692,15 +677,15 @@ hAzzle.extend({
                 prop = "height";
             }
 
-          if( reaf.test(hAzzle.getStyle(elem, "position")) ) {
-		  
+            if (reaf.test(hAzzle.getStyle(elem, "position"))) {
+
                 elem = elem.offsetParent;
-				
-		  } else {
-		  
-		        elem = elem.parentNode;
-		  }
-		  
+
+            } else {
+
+                elem = elem.parentNode;
+            }
+
             if (elem) {
 
                 val = hAzzle.getStyle(elem, prop);
@@ -894,42 +879,3 @@ hAzzle.each(['width', 'height'], function (name) {
         hAzzle(elem).css(name, value);
     };
 });
-
-
-/**
- * cssHook - CSS transitions
- */
-
-if (hAzzle.features.transition !== "Transition") {
-
-    var pdt = "Property Duration TimingFunction".split(" "),
-        hft = hAzzle.features.transition;
-
-    hAzzle.cssHooks.transition = {
-        get: function (elem, computed) {
-            return hAzzle.map(pdt, function (prop, i) {
-                return hAzzle.getStyle(elem, hft + prop);
-            }).join(" ");
-        },
-        set: function (elem, value) {
-            elem.style[hft] = value;
-        }
-    };
-
-    hAzzle.each(pdt, function (i, prop) {
-        hAzzle.cssHooks["transition" + prop] = {
-            get: function (elem, computed) {
-                return hAzzle.getStyle(elem, hft + pdt);
-            },
-            set: function (elem, value) {
-                elem.style[hft + pdt] = value;
-            }
-        };
-    });
-
-}
-
-
-  if (hAzzle.features.boxShadow !== 'boxShadow') {
-          hAzzle.cssProps.boxShadow = hAzzle.features.boxShadow;
-   }
