@@ -4,6 +4,7 @@
 var win = this,
     perf = win.performance || {},
     top,
+    splice = Array.prototype.splice,
     hfr = hAzzle.features.supportRAF,
     requestFrame = false,
     cancelFrame = false,
@@ -101,13 +102,13 @@ if (!requestFrame) {
 
         for (; i < x; i += 1) {
             if (_aq[i][0] === rid) {
-                _aq.Array.prototype.splice(i, 1);
+                _aq.splice(i, 1);
                 return;
             }
         }
         for (; i < y; i += 1) {
             if (_process[i][0] === rid) {
-                _process.Array.prototype.splice(i, 1);
+                _process.splice(i, 1);
                 return;
             }
         }
