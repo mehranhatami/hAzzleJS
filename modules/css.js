@@ -617,7 +617,7 @@ hAzzle.extend({
 
         // Inspiration from jQuery
 
-        hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
+        hooks = hAzzle.cssHooks[prop] || hAzzle.cssHooks[origName];
 
         // Short-cuts for document and window size
 
@@ -643,9 +643,9 @@ hAzzle.extend({
 
         //convert "normal" to computed value
 
-        if (val === "normal" && name in cssNormalTransform) {
+        if (val === "normal" && prop in cssNormalTransform) {
 
-            val = cssNormalTransform[name];
+            val = cssNormalTransform[prop];
         }
 
         return val;
