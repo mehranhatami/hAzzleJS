@@ -7,6 +7,7 @@
  *
  * - transform
  * - transition
+ * - animation
  * - textShadow
  * - linearGradient
  * - radialGradient
@@ -23,7 +24,6 @@
  * be extended.
  *
  */
-
 var div = document.createElement('div'),
     divStyle = div.style,
     propertyName = 'transform',
@@ -48,7 +48,7 @@ var div = document.createElement('div'),
 
 
     rLinear = /^(.*?)linear-gradient(.*?)$/i,
-	rRadial = /^(.*?)radial-gradient(.*?)$/i,
+    rRadial = /^(.*?)radial-gradient(.*?)$/i,
     rLinearSettings = /^(.*?)(:?linear-gradient)(\()(.*)(\))(.*?)$/i,
     rRadialSettings = /^(.*?)(:?radial-gradient)(\()(.*?)(\))(.*?)$/i,
     rSupportLinearW3C = /(^|\s)linear-gradient/,
@@ -64,7 +64,7 @@ var div = document.createElement('div'),
     rParenWhitespace = /\)\s/,
     cssProps = 'background backgroundImage listStyleImage',
     cssLinear = 'background:-moz-linear-gradient(red, blue);background:-webkit-linear-gradient(red, blue);background:-o-linear-gradient(red, blue);background:-ms-linear-gradient(red, blue);background:linear-gradient(red, blue);',
-      
+
     cssRadial = 'background-image: -moz-radial-gradient(circle, orange, red);background-image: -webkit-radial-gradient(circle, orange, red);background-image: -o-radial-gradient(circle,red, blue);background-image: radial-gradient(circle, orange, red);',
     cssPropsArray = cssProps.split(rWhitespace),
 
@@ -88,34 +88,50 @@ while (i--) {
 }
 
 hAzzle.cssSupport.columnCount =
-    divStyle.columnCount === '' ? 'columnCount' :
-    (divStyle.MozColumnCount === '' ? 'MozColumnCount' :
-    (divStyle.WebkitColumnCount === '' ? 'WebkitColumnCount' : false));
+    divStyle.MozColumnCount === '' ? 'MozColumnCount' :
+    (divStyle.msColumnCount === '' ? 'msColumnCount' :
+    (divStyle.WebkitColumnCount === '' ? 'WebkitColumnCount' :
+        (divStyle.OColumnCount === '' ? 'OColumnCount' :
+            (divStyle.boxShadow === '' ? false :
+                false))));
 
 hAzzle.cssSupport.transition =
     divStyle.MozTransition === '' ? 'MozTransition' :
-    (divStyle.MsTransition === '' ? 'msTransition' :
+    (divStyle.msTransition === '' ? 'msTransition' :
     (divStyle.WebkitTransition === '' ? 'WebkitTransition' :
         (divStyle.OTransition === '' ? 'OTransition' :
             (divStyle.transition === '' ? 'Transition' :
                 false))));
+/*
+ * Mehran!!
+ *
+ * There are no cssHooks for this properties. You
+ * have to develop that !!
+ */
+ 
+hAzzle.cssSupport.animation =
+    divStyle.MozAnimation === '' ? 'MozAnimation' :
+    (divStyle.msAnimation === '' ? 'msAnimation' :
+    (divStyle.WebkitAnimation === '' ? 'WebkitAnimation' :
+        (divStyle.OAnimation === '' ? 'OAnimation' :
+            (divStyle.animation === '' ? false :
+                false))));
+
 
 hAzzle.cssSupport.boxSizing =
     divStyle.MozBoxSizing === '' ? 'MozBoxSizing' :
-    (divStyle.MsBoxSizing === '' ? 'msBoxSizing' :
+    (divStyle.msBoxSizing === '' ? 'msBoxSizing' :
     (divStyle.WebkitBoxSizing === '' ? 'WebkitBoxSizing' :
         (divStyle.OBoxSizing === '' ? 'OBoxSizing' :
             (divStyle.boxSizing === '' ? 'boxSizing' :
                 false))));
 
-
-
 hAzzle.cssSupport.boxShadow =
     divStyle.MozBoxShadow === '' ? 'MozBoxShadow' :
-    (divStyle.MsBoxShadow === '' ? 'msBoxShadow' :
+    (divStyle.msBoxShadow === '' ? 'msBoxShadow' :
     (divStyle.WebkitBoxShadow === '' ? 'WebkitBoxShadow' :
         (divStyle.OBoxShadow === '' ? 'OBoxShadow' :
-            (divStyle.boxShadow === '' ? 'BoxShadow' :
+            (divStyle.boxShadow === '' ? false :
                 false))));
 
 hAzzle.cssSupport.boxReflect =
@@ -127,9 +143,10 @@ hAzzle.cssSupport.boxReflect =
 
 hAzzle.cssSupport.borderImage =
     divStyle.borderImage === '' ? 'borderImage' :
+    (divStyle.msBorderImage === '' ? 'msBorderImage' :
     (divStyle.MozBorderImage === '' ? 'MozBorderImage' :
     (divStyle.WebkitBorderImage === '' ? 'webkitBorderImage' :
-        (divStyle.OBorderImage === '' ? 'OBorderImage' : false)));
+        (divStyle.OBorderImage === '' ? 'OBorderImage' : false))));
 
 divStyle.cssText = cssLinear;
 
@@ -233,9 +250,10 @@ if (hAzzle.cssSupport.linearGradient && hAzzle.cssSupport.linearGradient !== "li
     });
 
 }
-if (hAzzle.cssSupport.columnCount && hAzzle.cssSupport.columnCount !== 'columnCount') {
+if (hAzzle.cssSupport.columnCount) {
 
     hAzzle.each(columnProps, function (columnProps) {
+
 
         hAzzle.cssHooks['column' + columnProps] = {
             get: function (elem) {
@@ -249,7 +267,7 @@ if (hAzzle.cssSupport.columnCount && hAzzle.cssSupport.columnCount !== 'columnCo
     });
 }
 
-if (hAzzle.cssSupport.boxSizing && hAzzle.cssSupport.boxSizing !== 'boxSizing') {
+if (hAzzle.cssSupport.boxSizing) {
 
     hAzzle.cssHooks.boxSizing = {
         get: function (elem) {
@@ -268,7 +286,7 @@ function insert_into(string, value, index) {
     return parts.join(" ");
 }
 
-if (hAzzle.cssSupport.boxShadow && hAzzle.cssSupport.boxShadow !== 'BoxShadow') {
+if (hAzzle.cssSupport.boxShadow) {
 
     hAzzle.cssProps.boxShadow = hAzzle.cssSupport.boxShadow;
 
@@ -329,7 +347,7 @@ if (hAzzle.cssSupport.boxShadow && hAzzle.cssSupport.boxShadow !== 'BoxShadow') 
 
 }
 
-if (hAzzle.cssSupport.borderImage && hAzzle.cssSupport.borderImage !== 'borderImage') {
+if (hAzzle.cssSupport.borderImage) {
     hAzzle.cssHooks.borderImage = {
         get: function (elem) {
             return hAzzle.getStyle(elem, hAzzle.cssSupport.borderImage);
@@ -340,7 +358,7 @@ if (hAzzle.cssSupport.borderImage && hAzzle.cssSupport.borderImage !== 'borderIm
     };
 }
 
-if (hAzzle.cssSupport.boxReflect && hAzzle.cssSupport.boxReflect !== 'boxReflect') {
+if (hAzzle.cssSupport.boxReflect) {
 
     hAzzle.cssHooks.boxReflect = {
         get: function (elem) {

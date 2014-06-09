@@ -54,22 +54,6 @@
 
       e = null;
 
-      var div = document.createElement('div'),
-          style = div.style,
-          boxShadow =
-          'boxShadow' in style ? 'boxShadow' :
-          'MozBoxShadow' in style ? 'MozBoxShadow' :
-          'WebkitBoxShadow' in style ? 'WebkitBoxShadow' :
-          'OBoxShadow' in style ? 'OBoxShadow' :
-          'msBoxShadow' in style ? 'msBoxShadow' :
-          false;
-
-      if (div.parentNode) {
-          div.parentNode.removeChild(div);
-      }
-
-      div = null;
-
       var checkClone,
           noCloneChecked,
           fragment = document.createDocumentFragment(),
@@ -130,9 +114,6 @@
 
           sMa: dcl,
 
-          // Check for boxShadow support
-
-          boxShadow: boxShadow
       };
 
   }();
