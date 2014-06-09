@@ -6,6 +6,11 @@
  * this properties:
  *
  * - transform
+ * - transformOrigin
+ * - transformStyle
+ * - perspective
+ * - perspectiveOrigin
+ * - backfaceVisibility
  * - transition
  * - animation
  * - textShadow
@@ -16,6 +21,7 @@
  * - boxShadow
  * - borderImage
  * - boxReflect (boolean: true / false)
+ 
  *
  * There also exist cssHooks for all
  * CSS properties listed here.
@@ -42,12 +48,12 @@ var div = document.createElement('div'),
     ],
 
     prefixes = [
-		"O",
-		"ms",
-		"Webkit",
-		"Moz"
-	],
-	
+        "O",
+        "ms",
+        "Webkit",
+        "Moz"
+    ],
+
     i = transformProperties.length,
 
     property,
@@ -55,13 +61,10 @@ var div = document.createElement('div'),
 
     // prefix-less property
 
-
     _transform = "transform",
     _transformOrigin = "transformOrigin",
     supportProperty,
     rWhitespace = /\s/,
-
-
     rLinear = /^(.*?)linear-gradient(.*?)$/i,
     rRadial = /^(.*?)radial-gradient(.*?)$/i,
     rLinearSettings = /^(.*?)(:?linear-gradient)(\()(.*)(\))(.*?)$/i,
@@ -86,70 +89,72 @@ var div = document.createElement('div'),
     column = 'Column',
     columnProps = 'Span Count Gap Width RuleColor RuleStyle RuleWidth'.split(rWhitespace),
     columnPrefix = divStyle.WebkitColumnGap === '' ? 'Webkit' : (divStyle.MozColumnGap === '' ? 'Moz' : ''),
-   
+
     getCssProperty = function (columnPrefix, columnProps) {
         return columnPrefix + ((columnPrefix === '') ? column.toLowerCase() : column) + columnProps;
 
-    }, properties = [
-		"transform",
-		"transformOrigin",
-		"transformStyle",
-		"perspective",
-		"perspectiveOrigin",
-		"backfaceVisibility"
-	],
-	prefix,
-	property,
-	x = prefixes.length,
-	j = prefixes.length;
-	
-	function leadingUppercase( word ) {
-	return word.slice(0,1).toUpperCase() + word.slice(1);
-    }
-	
-// Find the right prefix
-while ( j-- ) {
-	
-	if ( prefixes[j] + leadingUppercase( properties[0] ) in divStyle ) {
-		prefix = prefixes[j];
-		continue;
-	}
-}	
+    },
+    properties = [
+        "transform",
+        "transformOrigin",
+        "transformStyle",
+        "perspective",
+        "perspectiveOrigin",
+        "backfaceVisibility"
+    ],
+    prefix,
+    property,
+    x = prefixes.length,
+    j = prefixes.length;
 
+function leadingUppercase(word) {
+    return word.slice(0, 1).toUpperCase() + word.slice(1);
+}
+
+// Find the right prefix
+
+while (j--) {
+    if (prefixes[j] + leadingUppercase(properties[0]) in divStyle) {
+        prefix = prefixes[j];
+        continue;
+    }
+}
 
 // Build cssHooks for each property
-while ( x-- ) {
-	property = prefix + leadingUppercase( properties[x] );
 
-	if ( property in divStyle ) {
+while (x--) {
+    property = prefix + leadingUppercase(properties[x]);
 
-		// px isn't the default unit of this property
-		hAzzle.unitless[ properties[x] ] = true;
+    if (property in divStyle) {
 
-		// populate cssProps
-		hAzzle.cssProps[ properties[x] ] = property;
+        // px isn't the default unit of this property
 
-		// MozTranform requires a complete hook because "px" is required in translate
-		property === "MozTransform" && (hAzzle.cssHooks[ properties[x] ] = {
-			get: function( elem, computed ) {
-				return (computed ?
-					// remove "px" from the computed matrix
-					hAzzle.getStyle( elem, property ).split("px").join(""):
-					elem.style[property]
-				);
-			},
-			set: function( elem, value ) {
-				// add "px" to matrices
-				/matrix\([^)p]*\)/.test(value) && (
-					value = value.replace(/matrix((?:[^,]*,){4})([^,]*),([^)]*)/, "matrix$1$2px,$3px")
-				);
-				elem.style[property] = value;
-			}
-		});
+        hAzzle.unitless[properties[x]] = true;
 
-	}  /**/
+        // populate cssProps
+
+        hAzzle.cssProps[properties[x]] = property;
+
+        // MozTranform requires a complete hook because "px" is required in translate
+        property === "MozTransform" && (hAzzle.cssHooks[properties[x]] = {
+            get: function (elem, computed) {
+                return (computed ?
+                    // remove "px" from the computed matrix
+                    hAzzle.getStyle(elem, property).split("px").join("") :
+                    elem.style[property]
+                );
+            },
+            set: function (elem, value) {
+                // add "px" to matrixes
+                /matrix\([^)p]*\)/.test(value) && (
+                    value = value.replace(/matrix((?:[^,]*,){4})([^,]*),([^)]*)/, "matrix$1$2px,$3px")
+                );
+                elem.style[property] = value;
+            }
+        });
+    }
 }
-	
+
 
 // Textshadow check
 
@@ -180,8 +185,8 @@ hcS.transition =
         (divStyle.OTransition === '' ? 'OTransition' :
             (divStyle.transition === '' ? 'Transition' :
                 false))));
-				
-				
+
+
 /*
  * Mehran!!
  *
@@ -255,7 +260,7 @@ hAzzle.unitless[_transform] = hAzzle.unitless[_transformOrigin] = true;
 
 // Add to cssProps
 
-if (supportProperty && supportProperty != _transform) {
+if (supportProperty && supportProperty !== _transform) {
     hAzzle.cssProps[_transform] = supportProperty;
     hAzzle.cssProps[_transformOrigin] = supportProperty + "Origin";
 }
