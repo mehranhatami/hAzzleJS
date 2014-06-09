@@ -130,27 +130,6 @@ while (x--) {
         // populate cssProps
 
         hAzzle.cssProps[properties[x]] = property;
-
-        // MozTranform requires a complete hook because "px" is required in translate
-        if (property === "MozTransform") {
-
-            hAzzle.cssHooks[properties[x]] = {
-                get: function (elem, computed) {
-                    return (computed ?
-                        // remove "px" from the computed matrix
-                        hAzzle.getStyle(elem, property).split("px").join("") :
-                        elem.style[property]
-                    );
-                },
-                set: function (elem, value) {
-                    // add "px" to matrixes
-                    /matrix\([^)p]*\)/.test(value) && (
-                        value = value.replace(/matrix((?:[^,]*,){4})([^,]*),([^)]*)/, "matrix$1$2px,$3px")
-                    );
-                    elem.style[property] = value;
-                }
-            };
-        }
     }
 }
 

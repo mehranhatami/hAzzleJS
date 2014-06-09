@@ -4,18 +4,68 @@
  * This is an ongoing project!!
  *
  ********************************/
-
-
 var rotate = /rotate\(((?:[+\-]=)?([\-\d\.]+))deg\)/,
     scale = /scale\(((?:[+\-]=)?([\d\.]+))\)/,
     skew = /skew\(((?:[+\-]=)?([\-\d\.]+))deg, ?((?:[+\-]=)?([\-\d\.]+))deg\)/,
     translate = /translate\(((?:[+\-]=)?([\-\d\.]+))px, ?((?:[+\-]=)?([\-\d\.]+))px\)/,
+    numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+
+
+
     speeds = {
         slow: 1600,
         fast: 85,
         // Default speed
         _default: 450
     };
+
+//convert(el, val, p)
+function convert(el, start, end) {
+
+    var ret,
+        value;
+
+    if (typeof start === 'string' && (ret = numbs.exec(start))) {
+
+        value = hAzzle.units(parseFloat(hAzzle.css(el, end)), ret[3], el, start) + (ret[1] + 1) * ret[2];
+
+        if (!hAzzle.unitless[end]) {
+
+            value += ret && ret[3] ? ret[3] : "px";
+        }
+
+        return value;
+
+    } else {
+
+        return start;
+    }
+}
+
+function parseTransform(style, base) {
+    var values = {},
+        m;
+    if (m = style.match(rotate)) values.rotate = by(m[1], null);
+    if (m = style.match(scale)) values.scale = by(m[1], base ? base.scale : null);
+    if (m = style.match(skew)) {
+        values.skewx = by(m[1], base ? base.skewx : null);
+        values.skewy = by(m[3], base ? base.skewy : null);
+    }
+    if (m = style.match(translate)) {
+        values.translatex = by(m[1], base ? base.translatex : null);
+        values.translatey = by(m[3], base ? base.translatey : null);
+    }
+    return values;
+}
+
+function formatTransform(v) {
+    var s = '';
+    if ('rotate' in v) s += 'rotate(' + v.rotate + 'deg) ';
+    if ('scale' in v) s += 'scale(' + v.scale + ') ';
+    if ('translatex' in v) s += 'translate(' + v.translatex + 'px,' + v.translatey + 'px) ';
+    if ('skewx' in v) s += 'skew(' + v.skewx + 'deg,' + v.skewy + 'deg)';
+    return s;
+}
 
 // Convert relative numbers to px
 
@@ -52,6 +102,10 @@ hAzzle.fx = function (elem, options, prop) {
 
     self.prop = prop;
 
+    // Current CSS style for the animated property
+
+    self.curCSS = parseFloat(hAzzle.getStyle(self.elem, self.prop));
+
     self.category = "";
 
     self.unit = this.unit || (hAzzle.unitless[this.prop] ? "" : "px");
@@ -76,14 +130,20 @@ hAzzle.fx.prototype = {
         // Begin the animation
         // Make sure that we start at a small width/height to avoid any flash of content
 
+
         if (typeof dataShow !== 'undefined') {
             // This show is picking up where a previous hide or show left off
-            this.custom(this.cur(), dataShow);
+
+            this.startVal = this.curCSS;
+            this.endVal = dataShow;
 
         } else {
 
-            this.custom(this.prop === "width" || this.prop === "height" ? 1 : 0, this.cur());
+            this.startVal = this.prop === "width" || this.prop === "height" ? 1 : 0;
+            this.endVal = this.curCSS;
         }
+
+        this.run(false);
     },
 
     hide: function () {
@@ -93,95 +153,15 @@ hAzzle.fx.prototype = {
         this.options.orig[this.prop] = hAzzle.data(this.elem, "fxshow" + this.prop) || hAzzle.style(this.elem, this.prop);
         this.options.hide = true;
 
+        this.startVal = this.curCSS;
+        this.endVal = 0;
+
         // Begin the animation
 
-        this.custom(this.cur(), 0);
+        this.run(false);
     },
 
-    // CSS transform
-
-    transform: function (style) {
-
-        var fx = this,
-            m,
-            a,
-            to,
-            from;
-
-        // Rotate
-
-        if ((m = style.match(rotate))) {
-            fx.category = 'rotate';
-           to = by(m[1], null);
-
-                from = 0;
-        }
-
-        // Scale
-
-        if ((m = style.match(scale))) {
-            fx.category = 'scale';
-            to = by(m[1], null);
-            from = 0;
-        }
-
-        // Skew
-
-        if ((m = style.match(skew))) {
-            fx.category = 'skew';
-
-            to = {
-                x: by(m[1], null),
-                y: by(m[3], null)
-            };
-                from = 0;
-        }
-
-        // Translate
-
-        if ((m = style.match(translate))) {
-            fx.category = 'translate';
-
-            to = {
-                x: by(m[1], null),
-                y: by(m[3], null)
-            };
-
-                from = 0;
-        }
-
-       // Temporary hack for cross-browser - I will deal with it later
-
-        fx.prop = hAzzle.cssSupport.transform;
-        fx.custom(from, to);
-
-    },
-
-    // Get the current size
-
-    cur: function () {
-        if (this.elem[this.prop] !== null && (!this.elem.style || this.elem.style[this.prop] === null)) {
-            return this.elem[this.prop];
-        }
-
-        var parsed,
-            r = hAzzle.getStyle(this.elem, this.prop);
-        // Empty strings, null, undefined and "auto" are converted to 0,
-        // complex values such as "rotate(1rad)" are returned as is,
-        // simple values such as "10px" are parsed to Float.
-	    return isNaN(parsed = parseFloat(r)) ? !r || r === "auto" ? 0 : r : parsed;
-    },
-
-    custom: function (from, to) {
-
-        var self = this;
-
-        self.startVal = from;
-        self.endVal = to;
-
-        self.run(false);
-
-    },
+    // Start the animation
 
     run: function (onEnd) {
 
@@ -379,43 +359,8 @@ hAzzle.fx.prototype = {
             fx.elem.style.display = "block";
         }
 
-        if (fx.category === 'rotate') {
-
-            fx.elem.style[fx.prop] = 'rotate(' + tick + 'deg)';
-
-        } else if (fx.category === 'scale') {
-
-            fx.elem.style[fx.prop] = 'scale(' + tick + ')';
-
-        } else if (fx.category === 'skew') {
-
-            if (tick.y === 0 || tick.x === 0) {
-
-                fx.elem.style[fx.prop] = 'skew' + (tick.y === 0 ? 'X' : 'Y') + '(' + (tick.y === 0 ? tick.x : tick.y) + 'deg)';
-
-            } else {
-
-                fx.elem.style[fx.prop] = 'skew(' + tick.x + 'deg,' + tick.y + 'deg)';
-            }
-
-        } else if (fx.category === 'translate') {
-
-
-            if (tick.y === 0 || tick.x === 0) {
-
-                fx.elem.style[fx.prop] = 'translate' + (tick.y === 0 ? 'X' : 'Y') + '(' + (tick.y === 0 ? tick.x : tick.y) + 'px)';
-
-            } else {
-
-                fx.elem.style[fx.prop] = 'translate(' + tick.x + 'px,' + tick.y + 'px)';
-            }
-
-        } else {
-
-            fx.elem.style[fx.prop] = tick + fx.unit;
-
-        }
-
+        fx.prop == 'transform' ? fx.elem.style[hAzzle.cssSupport.transform] = formatTransform(tick) :
+            hAzzle.style(fx.elem, fx.prop, tick);
     },
 
     end: function () {
@@ -426,7 +371,11 @@ hAzzle.fx.prototype = {
 
             // Reset the overflow
 
+
             if (fx.options.overflow) {
+
+
+
                 fx.elem.style.overflow = fx.options.overflow[0];
                 fx.elem.style.overflowX = fx.options.overflow[1];
                 fx.elem.style.overflowY = fx.options.overflow[2];
@@ -445,7 +394,7 @@ hAzzle.fx.prototype = {
 
             for (var p in fx.options.curAnim) {
 
-                hAzzle(fx.elem).css(p, fx.options.orig[p]);
+                hAzzle.style(fx.elem, p, fx.options.orig[p]);
                 hAzzle.removeData(fx.elem, "fxshow" + p, true);
                 hAzzle.removeData(fx.elem, "toggle" + p, true);
             }
@@ -585,6 +534,7 @@ hAzzle.extend({
             }
 
             if (backup.overflow !== null) {
+
                 this.style.overflow = "hidden";
             }
 
@@ -602,30 +552,14 @@ hAzzle.extend({
 
                     // CSS transform	
 
-                } else if (p === 'transform') {
-
-                    fx.transform(val);
-
-                    // Normal CSS animation
-
                 } else {
 
-                    fx.custom(fx.cur(), by(val, fx.cur()), "");
+                    fx.startVal = fx.curCSS;
+                    fx.endVal = (p === 'transform') ? parseTransform(val) : convert(el, val, p);
+                    fx.run(false);
+
                 }
             }
         });
-    },
-    stop: function () {
-   //     hAzzle.data(this[0], "fx").stop();
-    },
-
-    pause: function () {
-
-     //   hAzzle.data(this[0], "fx").pause();
-    },
-
-    resume: function () {
-
-       // hAzzle.data(this[0], "fx").resume();
     }
 });
