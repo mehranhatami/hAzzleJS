@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.7a
+ * Version: 0.6.3a
  * Released under the MIT License.
  *
  * Date: 2014-06-10
@@ -240,7 +240,7 @@
             return true;
         },
         isNumeric: function (obj) {
-			return !hAzzle.isArray( obj ) && obj - parseFloat( obj ) >= 0;
+            return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
         },
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
@@ -761,31 +761,6 @@
                 }
                 return result;
             };
-        },
-
-        /**
-         * Returns a standard or browser-prefixed methods (moz, webkit, ms, o) if found.
-         */
-
-        prefix: function (key, obj) {
-            var result, upcased = key[0].toUpperCase() + key.slice(1),
-                prefix, prefixes = [
-                    'moz',
-                    'webkit',
-                    'ms',
-                    'o'
-                ];
-            obj = obj || window;
-            result = obj[key];
-            if (result) {
-                return result;
-            }
-            while ((prefix = prefixes.shift())) {
-                if ((result = obj[prefix + upcased])) {
-                    break;
-                }
-            }
-            return result;
         },
 
         /**
