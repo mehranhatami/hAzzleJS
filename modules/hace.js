@@ -4,7 +4,48 @@
 var win = this,
     thousand = 1000;
 
-  hAzzle.extend({
+/**
+ * Our 'ticker'
+ * No point in having it in the globale scope
+ */
+
+function tick() {
+    var hp = hAzzle.pipe,
+        qfix,
+        n;
+
+    hp.raf = hAzzle.requestFrame.call(win, tick);
+
+    qfix = hp.raf > 1e12 !== hAzzle.pnow() > 1e12;
+
+    if (qfix) {
+
+        hp.now = qfix;
+
+    } else {
+
+        // Integer milliseconds since unix epoch
+
+        hp.now = hAzzle.pnow();
+    }
+
+    hp.delta = hp.now - hp.then;
+    if (hp.delta > hp.interval) {
+        for (n in hp.hACEPipe) {
+            if (hp.hACEPipe.hasOwnProperty(n)) {
+                hp.hACEPipe[n]( /* Sending delta value back to the caller function */ hp.delta);
+            }
+        }
+        hp.then = hp.now - (hp.delta % hp.interval);
+    }
+
+    // Set to undefined to avoid leaks
+
+    hp.now = undefined;
+}
+
+
+hAzzle.extend({
 
     fps: 60, // fps. This can be changed publicly. 
 
@@ -14,41 +55,7 @@ var win = this,
 
     // Our ticker
 
-    tick: function () {
-        var hp = hAzzle.pipe,
-            qfix,
-            n;
 
-        hp.raf = hAzzle.requestFrame.call(win, hAzzle.tick);
-
-        qfix = hp.raf > 1e12 !== hAzzle.pnow() > 1e12;
-
-        if (qfix) {
-
-            hp.now = qfix;
-
-        } else {
-
-            // Integer milliseconds since unix epoch
-
-            hp.now = hAzzle.pnow();
-
-        }
-
-        hp.delta = hp.now - hp.then;
-        if (hp.delta > hp.interval) {
-            for (n in hp.hACEPipe) {
-                if (hp.hACEPipe.hasOwnProperty(n)) {
-                    hp.hACEPipe[n](hp.delta);
-                }
-            }
-            hp.then = hp.now - (hp.delta % hp.interval);
-        }
-
-        // Set to undefined to avoid leaks
-
-        hp.now = undefined;
-    },
 
     hACE: function (controller) {
 
@@ -125,21 +132,21 @@ var win = this,
         var self = this;
         self.hACEPipe = {};
         self.then = hAzzle.pnow();
-        self.now = 'undefined';
+        self.now = undefined;
 
         // 'raf' are the returned value from the animation frame
 
-        self.raf = 'undefined';
+        self.raf = undefined;
 
-        // 'delta' are only used inside hAzzle.tick()
+        // 'delta' are only used inside tick()
 
-        self.delta = 'undefined';
+        self.delta = undefined;
 
         // The framerate at which hAzzle updates.
 
         self.interval = thousand / hAzzle.fps;
 
-        self.running = self.hasNative = false;
+        self.running = false;
     },
 
     hACEController: function () {
@@ -166,9 +173,10 @@ hAzzle.hACEPipe.prototype = {
      */
 
     add: function (name, fn) {
-    if (typeof name === "string" && typeof fn === "function") {
-          this.hACEPipe[name] = fn;
-       }
+        if (typeof name === "string" && typeof fn === "function") {
+            this.hACEPipe[name] = fn;
+        }
+        return this;
     },
 
     /**
@@ -183,6 +191,7 @@ hAzzle.hACEPipe.prototype = {
         if (typeof name === "string") {
             delete this.hACEPipe[name];
         }
+        return this;
     },
 
     /**
@@ -211,7 +220,11 @@ hAzzle.hACEPipe.prototype = {
 
             // Start the animation
 
-            hAzzle.tick();
+            tick();
+
+            // Mark it as started
+
+            this.running = true;
         }
     },
 
@@ -262,6 +275,7 @@ hAzzle.hACEPipe.prototype = {
 
     setFPS: function (fps) {
         this.interval = thousand / fps || hAzzle.fps;
+        return this;
     }
 };
 
@@ -307,7 +321,7 @@ hAzzle.hACEController.prototype = {
 
         return _hACE;
     }
- };
+};
 
 /**
  * Prototype for hACE
@@ -425,7 +439,7 @@ hAzzle.hACE.prototype = {
     /**
      * Easing
      *
-     * @param {String / Function} callback 
+     * @param {String / Function} callback
      * @return {hAzzle}
      */
 
