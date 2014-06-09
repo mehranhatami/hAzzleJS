@@ -26,17 +26,14 @@
  */
 var div = document.createElement('div'),
     divStyle = div.style,
-	hcS = hAzzle.cssSupport,
+    hcS = hAzzle.cssSupport,
     hcH = hAzzle.cssHooks,
-    propertyName = 'transform',
 
     transformProperties = [
         'oTransform',
         'msTransform',
         'webkitTransform',
-        'MozTransform',
-        // prefix-less property
-        propertyName
+        'MozTransform'
     ],
     transitionProps = [
         'Property',
@@ -45,6 +42,13 @@ var div = document.createElement('div'),
     ],
 
     i = transformProperties.length,
+    supportProperty,
+
+    // prefix-less property
+
+
+    _transform = "transform",
+    _transformOrigin = "transformOrigin",
     supportProperty,
     rWhitespace = /\s/,
 
@@ -84,10 +88,12 @@ hcS.textShadow = (divStyle.textShadow === '');
 // test different vendor prefixes of this property
 while (i--) {
     if (transformProperties[i] in divStyle) {
-        hcS[propertyName] = supportProperty = transformProperties[i];
+        hcS[_transform] = supportProperty = transformProperties[i];
+        hcS[_transformOrigin] = supportProperty + "Origin";
         continue;
     }
 }
+
 
 hcS.columnCount =
     divStyle.MozColumnCount === '' ? 'MozColumnCount' :
@@ -110,7 +116,7 @@ hcS.transition =
  * There are no cssHooks for this properties. You
  * have to develop that !!
  */
- 
+
 hcS.animation =
     divStyle.MozAnimation === '' ? 'MozAnimation' :
     (divStyle.msAnimation === '' ? 'msAnimation' :
@@ -146,8 +152,8 @@ hcS.borderImage =
     divStyle.borderImage === '' ? 'borderImage' :
     (divStyle.msBorderImage === '' ? 'msBorderImage' :
     (divStyle.MozBorderImage === '' ? 'MozBorderImage' :
-    (divStyle.WebkitBorderImage === '' ? 'webkitBorderImage' :
-        (divStyle.OBorderImage === '' ? 'OBorderImage' : false))));
+        (divStyle.WebkitBorderImage === '' ? 'webkitBorderImage' :
+            (divStyle.OBorderImage === '' ? 'OBorderImage' : false))));
 
 divStyle.cssText = cssLinear;
 
@@ -173,12 +179,13 @@ div = divStyle = null;
 
 // Skip 'px' on transform property
 
-hAzzle.unitless[propertyName] = true;
+hAzzle.unitless[_transform] = hAzzle.unitless[_transformOrigin] = true;
 
 // Add to cssProps
 
-if (supportProperty && supportProperty != propertyName) {
-    hAzzle.cssProps[propertyName] = supportProperty;
+if (supportProperty && supportProperty != _transform) {
+    hAzzle.cssProps[_transform] = supportProperty;
+    hAzzle.cssProps[_transformOrigin] = supportProperty + "Origin";
 }
 
 /**
@@ -288,7 +295,7 @@ function insert_into(string, value, index) {
 }
 
 if (hcS.boxShadow) {
-		
+
     hAzzle.cssProps.boxShadow = hcS.boxShadow;
 
     hcH.boxShadow = {
@@ -369,4 +376,3 @@ if (hcS.boxReflect) {
         }
     };
 }
-
