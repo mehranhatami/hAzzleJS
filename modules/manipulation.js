@@ -23,11 +23,6 @@ var win = this,
         base: ['_', '', 0, 1]
     },
 
-    special = {
-        'for': 'htmlFor',
-        'class': 'className'
-    },
-
     hooks = {
 
         'SELECT': function (elem) {
@@ -222,7 +217,7 @@ hAzzle.extend({
 
                 while ((name = attrNames[i++])) {
 
-                    propName = special[name] || name;
+                    propName = hAzzle.propFix[name] || name;
 
                     if (getBooleanAttrName(el, name)) {
 
@@ -344,9 +339,9 @@ hAzzle.extend({
         return typeof name === 'object' ? this.each(function (el) {
             var a;
             for (a in name) {
-                property(el, a, name[a]);
+                hAzzle.prop(el, a, name[a]);
             }
-        }) : typeof value === 'undefined' ? el && el[special[name] || name] : property(this[0], name, value);
+        }) : typeof value === 'undefined' ? el && el[hAzzle.propFix[name] || name] : property(this[0], name, value);
     },
 
     /**
@@ -369,7 +364,7 @@ hAzzle.extend({
 
     removeProp: function (name) {
         return this.each(function () {
-            delete this[special[name] || name];
+            delete this[hAzzle.propFix[name] || name];
         });
     },
 
@@ -590,6 +585,7 @@ hAzzle.extend({
                         // We don't allow text nodes
                         if (node.nodeType !== 3) {
                             el.insertBefore(i, first);
+
                         }
                     });
                 }
@@ -825,51 +821,67 @@ function injectHTML(target, node, fn, rev) {
 }
 
 
+hAzzle.propHooks = {
 
-
-function property(elem, name, value) {
-
-    var ret, hooks, notxml,
-        nType = elem.nodeType,
-        phooks = {
-            tabIndex: {
-                get: function (elem) {
-                    return elem.hasAttribute('tabindex') || /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ? elem.tabIndex : -1;
-                }
-            }
-        };
-
-    // Support: IE9+
-
-    if (!hAzzle.features.optSelected) {
-        phooks.selected = {
-            get: function (elem) {
-                var parent = elem.parentNode;
-                if (parent && parent.parentNode) {
-                    parent.parentNode.selectedIndex;
-                }
-                return null;
-            }
-        };
-    }
-
-    // don't get/set properties on text, comment and attribute nodes
-    if (!elem || nType === 3 || nType === 8 || nType === 2) {
-        return;
-    }
-
-    notxml = nType !== 1 || (elem.ownerDocument || elem).documentElement.nodeName === 'HTML';
-
-    if (notxml) {
-        hooks = phooks[special[name] || name];
-    }
-
-    if (typeof value !== 'undefined') {
-
-        return hooks && 'set' in hooks && typeof (ret = hooks.set(elem, value, name)) !== 'undefined' ? ret : (elem[name] = value);
-
-    } else {
-
-        return hooks && 'get' in hooks && (ret = hooks.get(elem, name)) !== null ? ret : elem[name];
+    tabIndex: {
+        get: function (elem) {
+            return elem.hasAttribute('tabindex') ||
+                /^(?:input|select|textarea|button)$/i.test(elem.nodeName) ||
+                elem.href ? elem.tabIndex : -1;
+        }
     }
 }
+
+// Support: IE9+
+
+if (!hAzzle.features.optSelected) {
+    hAzzle.propHooks.selected = {
+        get: function (elem) {
+            var parent = elem.parentNode;
+            if (parent && parent.parentNode) {
+                parent.parentNode.selectedIndex;
+            }
+            return null;
+        }
+    };
+}
+
+hAzzle.extend({
+
+    propFix: {
+        'for': 'htmlFor',
+        'class': 'className'
+    },
+    
+	// Props to jQuery
+	
+    prop: function (elem, name, value) {
+
+        var ret, hooks, notxml,
+            nType = elem.nodeType;
+
+        // don't get/set properties on text, comment and attribute nodes
+        if (!elem || nType === 2 || nType === 3 || nType === 8) {
+            return;
+        }
+
+        notxml = nType !== 1 || (elem.ownerDocument || elem).documentElement.nodeName === 'HTML';
+
+        if (notxml) {
+            // Fix name and attach hooks
+            name = hAzzle.propFix[name] || name;
+            hooks = hAzzle.propHooks[name];
+        }
+
+        if (typeof value !== 'undefined') {
+
+            return hooks && 'set' in hooks && (ret = hooks.set(elem, value, name)) !== undefined ? ret : (elem[name] = value);
+
+        } else {
+
+            return hooks && "get" in hooks && (ret = hooks.get(elem, name)) !== null ?
+                ret :
+                elem[name];
+        }
+    }
+}, hAzzle)

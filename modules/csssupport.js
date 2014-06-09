@@ -41,8 +41,17 @@ var div = document.createElement('div'),
         'TimingFunction'
     ],
 
+    prefixes = [
+		"O",
+		"ms",
+		"Webkit",
+		"Moz"
+	],
+	
     i = transformProperties.length,
-    supportProperty,
+
+    property,
+
 
     // prefix-less property
 
@@ -77,9 +86,70 @@ var div = document.createElement('div'),
     column = 'Column',
     columnProps = 'Span Count Gap Width RuleColor RuleStyle RuleWidth'.split(rWhitespace),
     columnPrefix = divStyle.WebkitColumnGap === '' ? 'Webkit' : (divStyle.MozColumnGap === '' ? 'Moz' : ''),
+   
     getCssProperty = function (columnPrefix, columnProps) {
         return columnPrefix + ((columnPrefix === '') ? column.toLowerCase() : column) + columnProps;
-    };
+
+    }, properties = [
+		"transform",
+		"transformOrigin",
+		"transformStyle",
+		"perspective",
+		"perspectiveOrigin",
+		"backfaceVisibility"
+	],
+	prefix,
+	property,
+	x = prefixes.length,
+	j = prefixes.length;
+	
+	function leadingUppercase( word ) {
+	return word.slice(0,1).toUpperCase() + word.slice(1);
+    }
+	
+// Find the right prefix
+while ( j-- ) {
+	
+	if ( prefixes[j] + leadingUppercase( properties[0] ) in divStyle ) {
+		prefix = prefixes[j];
+		continue;
+	}
+}	
+
+
+// Build cssHooks for each property
+while ( x-- ) {
+	property = prefix + leadingUppercase( properties[x] );
+
+	if ( property in divStyle ) {
+
+		// px isn't the default unit of this property
+		hAzzle.unitless[ properties[x] ] = true;
+
+		// populate cssProps
+		hAzzle.cssProps[ properties[x] ] = property;
+
+		// MozTranform requires a complete hook because "px" is required in translate
+		property === "MozTransform" && (hAzzle.cssHooks[ properties[x] ] = {
+			get: function( elem, computed ) {
+				return (computed ?
+					// remove "px" from the computed matrix
+					hAzzle.getStyle( elem, property ).split("px").join(""):
+					elem.style[property]
+				);
+			},
+			set: function( elem, value ) {
+				// add "px" to matrices
+				/matrix\([^)p]*\)/.test(value) && (
+					value = value.replace(/matrix((?:[^,]*,){4})([^,]*),([^)]*)/, "matrix$1$2px,$3px")
+				);
+				elem.style[property] = value;
+			}
+		});
+
+	}  /**/
+}
+	
 
 // Textshadow check
 
@@ -110,6 +180,8 @@ hcS.transition =
         (divStyle.OTransition === '' ? 'OTransition' :
             (divStyle.transition === '' ? 'Transition' :
                 false))));
+				
+				
 /*
  * Mehran!!
  *
