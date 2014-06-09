@@ -2,25 +2,9 @@
  * hAzzle Animation Core engine ( hACE )
  */
 var win = this,
-    thousand = 1000,
+    thousand = 1000;
 
-    /**
-     * Callback function that will be run after all animations have
-     * been completed.
-     */
-
-    onCallback = hAzzle.noop(),
-
-    /**
-     * Function that will be run after all animations have
-     * been completed.
-     */
-
-    onEnd = hAzzle.noop();
-
-// Extend the hAzzle Object
-
-hAzzle.extend({
+  hAzzle.extend({
 
     fps: 60, // fps. This can be changed publicly. 
 
@@ -88,9 +72,9 @@ hAzzle.extend({
 
         self.controller = controller || new hAzzle.hACEController();
         self.startVal = 0;
-
         self.endVal = 0;
         self.differences = {};
+		self.container = {};
         self.canStart = true;
         self.hasStarted = false;
         self.hasCompleted = false;
@@ -183,9 +167,9 @@ hAzzle.hACEPipe.prototype = {
      */
 
     add: function (name, fn) {
-        if (typeof name === "string" && typeof fn === "function") {
-            this.hACEPipe[name] = fn;
-        }
+    if (typeof name === "string" && typeof fn === "function") {
+          this.hACEPipe[name] = fn;
+       }
     },
 
     /**
@@ -323,90 +307,8 @@ hAzzle.hACEController.prototype = {
         self.q.push(_hACE);
 
         return _hACE;
-    },
-
-    /**
-
-
-     * Mehran!!
-     *
-     * Experimental attempt.
-     *
-     * Here is what I think of how to
-     * grab things from queue by name
-     * or number
-     *
-     *   NOT WORKING OR IN USE!!!!
-     *
-     */
-
-    queueIterate: function (name) {
-
-        var self = this,
-            _hACE = new hAzzle.hACE(self),
-            _queue;
-
-        if (typeof name === 'string') {
-
-            _queue = self.q[name];
-
-        } else if (typeof name === 'number') {
-
-            _queue = self.q[name];
-        }
-
-        if (_queue) {
-
-            _queue.shift();
-
-            if (_queue.length) {
-
-            } else {
-
-            }
-
-        }
-        return this;
-    },
-
-    queueShift: function (name) {
-        return this.q[typeof name === 'string' || typeof name === 'number' ? name : ''].shift();
-    },
-
-    queueUnShift: function (name) {
-        return this.q[typeof name === 'string' || typeof name === 'number' ? name : ''].unshift();
-    },
-
-    // Empty the animation queue
-
-    queueEmpty: function (name) {
-
-        // If number, delete from queue by name
-
-        if (typeof name === 'string') {
-
-            delete this.q[name];
-
-            // If number, delete from queue by number
-        } else if (typeof name === 'number') {
-
-            delete this.q[name];
-
-            // If no name, empty the queue		
-
-        } else {
-            this.q = [];
-        }
-        return this;
-    },
-
-    // Return the length of the queue
-    queueLength: function () {
-
-        return this.q.length;
     }
-
-};
+ };
 
 /**
  * Prototype for hACE
@@ -474,7 +376,7 @@ hAzzle.hACE.prototype = {
 
         } else {
 
-            this.endVal = properties;
+            this.endVal = properties || 0;
         }
         return this;
     },
@@ -522,7 +424,6 @@ hAzzle.hACE.prototype = {
     },
 
     /**
-
      * Easing
      *
      * @param {String / Function} callback 
@@ -669,7 +570,7 @@ hAzzle.hACE.prototype = {
             start,
             end,
             stepDuration = thousand / hAzzle.fps,
-            steps = self.hACEDuration / stepDuration || 0;
+            steps = self.hACEDuration / stepDuration;
 
         if (typeof self.endVal === 'object') {
 
@@ -724,7 +625,7 @@ hAzzle.hACE.prototype = {
 
         self.hasStarted = true;
 
-        // Animation have stopped. Deal with it !!
+        // Each step of an animation
 
         self.stopIt = function () {
 
@@ -835,60 +736,6 @@ hAzzle.hACE.prototype = {
                     if (self.andThen !== null) {
 
                         self.andThen.call(self);
-                    }
-
-                    /**
-                     * Mehran!
-                     *
-                     * onEnd() function that will be executed
-                     * after all animations in the queue are
-                     * finished.
-                     *
-                     * Just make sure this really happend, and
-                     * there is no problems.
-                     *
-                     * Update: june 4 - 2014.
-                     *
-                     * There are issues. It has to be added at the very end
-                     * of the last queue / animation chain. I'm not really
-                     * sure that is happening.
-                     *
-                     * I also belive we have to check for:
-                     *
-                     *  if(this.hasStarted === false) {}
-                     *
-                     * to make sure the last animation have stopped
-                     * before we execute this function.
-                     *
-                     */
-
-
-                    /**
-                     * Mehran!
-                     *
-                     * There are delays in a couple of 'ms' before
-                     * the onEnd() are executed. That due to the
-                     * countdown of the queue.length.
-                     *
-                     * Try to fix this too!!
-                     *
-                     */
-
-                    if (!self.controller.q.length) {
-
-                        // Callback function
-
-                        if (onCallback) {
-
-                            onCallback();
-                        }
-
-                        // Cleanup function
-
-                        if (onEnd) {
-
-                            onEnd();
-                        }
                     }
 
                     self.controller.q.shift();
@@ -1097,37 +944,6 @@ hAzzle.hACE.prototype = {
 
     queue: function () {
         return this.controller.queue();
-    },
-
-    /**
-     * Function to be executed after all
-     * animations have been ended
-     *
-     * @param {Function} callback
-     * @return {hAzzle}
-     */
-
-    end: function (callback) {
-
-        if (typeof callback === "function") {
-            onEnd = callback;
-        }
-        return this;
-    },
-
-    /**
-     * Callback function that will be executed
-     * after all animations have been ended
-     *
-     * @param {Function} callback
-     * @return {hAzzle}
-     */
-
-    callback: function (callback) {
-        if (typeof callback === "function") {
-            onCallback = callback;
-        }
-        return this;
     }
 
 };
