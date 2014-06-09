@@ -94,7 +94,7 @@ hcS.columnCount =
     (divStyle.msColumnCount === '' ? 'msColumnCount' :
     (divStyle.WebkitColumnCount === '' ? 'WebkitColumnCount' :
         (divStyle.OColumnCount === '' ? 'OColumnCount' :
-            (divStyle.boxShadow === '' ? false :
+            (divStyle.columnCount === '' ? false :
                 false))));
 
 hcS.transition =
@@ -119,7 +119,6 @@ hcS.animation =
             (divStyle.animation === '' ? false :
                 false))));
 
-
 hcS.boxSizing =
     divStyle.MozBoxSizing === '' ? 'MozBoxSizing' :
     (divStyle.msBoxSizing === '' ? 'msBoxSizing' :
@@ -129,11 +128,11 @@ hcS.boxSizing =
                 false))));
 
 hcS.boxShadow =
-    divStyle.MozBoxShadow === '' ? 'MozBoxShadow' :
-    (divStyle.msBoxShadow === '' ? 'msBoxShadow' :
-    (divStyle.WebkitBoxShadow === '' ? 'WebkitBoxShadow' :
-        (divStyle.OBoxShadow === '' ? 'OBoxShadow' :
-            (divStyle.boxShadow === '' ? false :
+    divStyle.MozBoxShadow === '' ? '-moz-box-shadow' :
+    (divStyle.msBoxShadow === '' ? '-ms-box-shadow' :
+    (divStyle.WebkitBoxShadow === '' ? '-webkit-box-shadow' :
+        (divStyle.OBoxShadow === '' ? '-o-box-shadow' :
+            (divStyle.boxShadow === '' ? true :
                 false))));
 
 hcS.boxReflect =
@@ -289,7 +288,7 @@ function insert_into(string, value, index) {
 }
 
 if (hcS.boxShadow) {
-
+		
     hAzzle.cssProps.boxShadow = hcS.boxShadow;
 
     hcH.boxShadow = {
@@ -361,7 +360,6 @@ if (hcS.borderImage) {
 }
 
 if (hcS.boxReflect) {
-
     hcH.boxReflect = {
         get: function (elem) {
             return hAzzle.getStyle(elem, hcS.boxReflect);
