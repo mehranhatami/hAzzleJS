@@ -1,25 +1,6 @@
 /*!
  * Event handler
- *
- * Mehran!
- *
- * Important!
- *
- * - Avoid non-left-click bubbling in Firefox
- * - Make sure everything is working with iFrame
- * - Fix the delegation problem as mentioned before. Clone the DOM tree etc as I wrote in an email
- * - For delegated events, try to put nodes in an array as illustrated in an email to you
- * - Fix all comments with your name
- * - Delegate handlers only called once
- * - Add support for Cordova 2.5 (WebKit)
- * - Prevent triggered image.load events from bubbling to window.load
- * - For cross-browser consistency, make sure we don't do click events on links
- *
- * Good luck!
- *
- * Kenny
- *
- *****/
+*/
 var win = this,
     doc = win.document,
     root = doc.documentElement || {},

@@ -4,6 +4,7 @@
 var win = this,
     doc = win.document,
     docElem = doc.documentElement,
+    own = ({}).hasOwnProperty,
     numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
@@ -67,27 +68,8 @@ var win = this,
 
     };
 
-function vendorPrefixed(style, name) {
 
-    // shortcut for names that are not vendor prefixed
-    if (name in style) {
-        return name;
-    }
 
-    // check for vendor prefixed names
-    var capName = name[0].toUpperCase() + name.slice(1),
-        origName = name,
-        i = hAzzle.cssPrefixes.length;
-
-    while (i--) {
-        name = hAzzle.cssPrefixes[i] + capName;
-        if (name in style) {
-            return name;
-        }
-    }
-
-    return origName;
-}
 
 function actualDisplay(name, doc) {
 
@@ -140,6 +122,28 @@ function defaultDisplay(nodeName) {
     }
 
     return display;
+}
+
+function vendorPrefixed(style, name) {
+
+    // shortcut for names that are not vendor prefixed
+    if (name in style) {
+        return name;
+    }
+
+    // check for vendor prefixed names
+    var capName = name[0].toUpperCase() + name.slice(1),
+        origName = name,
+        i = hAzzle.cssPrefixes.length;
+
+    while (i--) {
+        name = hAzzle.cssPrefixes[i] + capName;
+        if (name in style) {
+            return name;
+        }
+    }
+
+    return origName;
 }
 
 /**
@@ -254,13 +258,17 @@ hAzzle.extend({
         }
 
         function fn(el) {
-			var k;
+            var k;
             for (k in obj) {
-                if (obj.hasOwnProperty(k)) {
-                    // No return  here!!
+
+                // Check if the 'obj' has its own property
+
+                if (own.call(obj, k)) {
+
+                    // Get only the style for the element
+
                     hAzzle.style(el, k, obj[k]);
                 }
-
             }
         }
 
@@ -468,7 +476,9 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-    cssPrefixes: ['Webkit', 'Moz', 'O', 'ms', 'Khtml'],
+    // Various supports...
+
+    cssPrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
     // Properties that shouldn't have units behind e.g. 
     // zIndex:33px are not allowed
@@ -487,6 +497,7 @@ hAzzle.extend({
         'fillOpacity': true,
         'flexGrow': true,
         'columnCount': true,
+
         'flexShrink': true,
         'order': true,
         'orphans': true,
@@ -555,10 +566,10 @@ hAzzle.extend({
 
             // convert relative number strings
 
-            if (type === 'string' &&  (ret = numbs.exec(value))) {
+            if (type === 'string' && (ret = numbs.exec(value))) {
 
-                    value = hAzzle.units(removeUnits(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
-                    type = 'number';
+                value = hAzzle.units(removeUnits(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                type = 'number';
             }
 
             // Make sure that null and NaN values aren't set.
@@ -593,13 +604,13 @@ hAzzle.extend({
     },
 
     /*
-	 * Set CSS rules on DOM nodes
-	 *
-	 * It also converts CSS-style (e.g. box-sizing) to
-	 * camelCase
-	 */
-	 
-	css: function (el, prop) {
+     * Set CSS rules on DOM nodes
+     *
+     * It also converts CSS-style (e.g. box-sizing) to
+     * camelCase
+     */
+
+    css: function (el, prop) {
 
         var val,
             hooks,

@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
- * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
+ * Copyright (c) 2014 Kenny Flashlight
  * Version: 0.6.5
  * Released under the MIT License.
  *
- * Date: 2014-06-10
+ * Date: 2014-06-12
  */
 (function (window, undefined) {
 
@@ -219,7 +219,16 @@
         },
 
         is: function (kind, obj) {
-            return hAzzle.inArray(kind, this.type(obj)) >= 0;
+
+            if (hAzzle.isArray(kind)) {
+
+                return hAzzle.inArray(kind, this.type(obj)) >= 0;
+
+            }
+
+            // Return a boolean if typeof obj is exactly type.
+
+            return typeof obj === kind;
         },
 
         /**
@@ -437,6 +446,13 @@
             return node;
         },
 
+        // Convert camelCase to  CSS-style
+        // e.g. boxSizing -> box-sizing
+
+        decamelize: function (str) {
+            return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase().replace(/^ms-/, '-ms-') : str;
+        },
+
         /**
          *  Convert dashed to camelCase
          *
@@ -446,21 +462,10 @@
 
         camelize: function (str) {
 
-            // Convert CSS-style to camelCase 
-            // e.g. box-sizing -> boxSizing
-
-            if (str.indexOf('-') != -1) {
-                return str.replace(/([a-z])-([a-z])/g, function (str, m1, m2) {
-                    return m1 + m2.toUpperCase();
-                }).replace(/^-/, '');
-            }
-     
-	      // else camelCase the normal way
             return str.replace(/-(.)/g, function (m, m1) {
                 return m1.toUpperCase();
             });
         },
-
 
         arrayLike: function (o) {
             return (typeof o === 'object' && isFinite(o.length));
