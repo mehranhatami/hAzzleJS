@@ -11,23 +11,20 @@ var win = this,
     iframe,
     elemdisplay = {},
 
-
     /**
-     * Remove units such e.g. 'pc, 'px', '%' from values
+     * Remove units ( e.g. 'pc, 'px', '%') from values
      * This is an faster alternative then parseFloat
      */
 
     removeUnits = function (target) {
 
-        var unit = target.slice(-2);
-
         if (target.slice(-1) === '%') {
 
             return target.replace('%', '');
 
-        } else if (hAzzle.inArray(["px", "%", "in", "cm", "mm", "pt", "pc", "em"], unit) >= 0) {
+        } else if (hAzzle.inArray(["px", "%", "in", "cm", "mm", "pt", "pc", "em"], target.slice(-2)) >= 0) {
 
-            return target.replace(unit, '');
+            return target.replace(target.slice(-2), '');
 
             // Fallback to parseFloat just in case
         } else {
@@ -257,7 +254,8 @@ hAzzle.extend({
         }
 
         function fn(el) {
-            for (var k in obj) {
+			var k;
+            for (k in obj) {
                 if (obj.hasOwnProperty(k)) {
                     // No return  here!!
                     hAzzle.style(el, k, obj[k]);
@@ -470,7 +468,7 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-    cssPrefixes: ['Webkit', 'O', 'Moz', 'ms', 'Khtml'],
+    cssPrefixes: ['Webkit', 'Moz', 'O', 'ms', 'Khtml'],
 
     // Properties that shouldn't have units behind e.g. 
     // zIndex:33px are not allowed
@@ -594,7 +592,14 @@ hAzzle.extend({
         }
     },
 
-    css: function (el, prop) {
+    /*
+	 * Set CSS rules on DOM nodes
+	 *
+	 * It also converts CSS-style (e.g. box-sizing) to
+	 * camelCase
+	 */
+	 
+	css: function (el, prop) {
 
         var val,
             hooks,

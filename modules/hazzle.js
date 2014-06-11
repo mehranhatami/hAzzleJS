@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.6.3a
+ * Version: 0.6.5
  * Released under the MIT License.
  *
  * Date: 2014-06-10
@@ -100,7 +100,7 @@
 
         // The current version of hAzzle being used
 
-        hAzzle: '0.6.1',
+        hAzzle: '0.7',
 
         /**
          * Returns a new array with the result of calling callback on each element of the array
@@ -438,13 +438,24 @@
         },
 
         /**
-         *  Convert dashed to camelCase; used by the css and data modules
+         *  Convert dashed to camelCase
          *
          * @param {string} str
          * @return {string}
          */
 
         camelize: function (str) {
+
+            // Convert CSS-style to camelCase 
+            // e.g. box-sizing -> boxSizing
+
+            if (str.indexOf('-') != -1) {
+                return str.replace(/([a-z])-([a-z])/g, function (str, m1, m2) {
+                    return m1 + m2.toUpperCase();
+                }).replace(/^-/, '');
+            }
+     
+	      // else camelCase the normal way
             return str.replace(/-(.)/g, function (m, m1) {
                 return m1.toUpperCase();
             });
@@ -496,11 +507,12 @@
          */
 
         inArray: function (array, value, index) {
+
             var i = (index || 0),
                 m = array.length;
-
             for (; i < m; i++) {
                 if (array[i] === value) {
+
                     return i;
                 }
             }
