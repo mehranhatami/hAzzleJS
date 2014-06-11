@@ -3,7 +3,7 @@
  */
 var win = this,
     doc = win.document,
-    html = doc.documentElement,
+    docElem = doc.documentElement,
     numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
@@ -11,16 +11,39 @@ var win = this,
     iframe,
     elemdisplay = {},
 
-    
+
+    /**
+     * Remove units such e.g. 'pc, 'px', '%' from values
+     * This is an faster alternative then parseFloat
+     */
+
+    removeUnits = function (target) {
+
+        var unit = target.slice(-2);
+
+        if (target.slice(-1) === '%') {
+
+            return target.replace('%', '');
+
+        } else if (hAzzle.inArray(["px", "%", "in", "cm", "mm", "pt", "pc", "em"], unit) >= 0) {
+
+            return target.replace(unit, '');
+
+            // Fallback to parseFloat just in case
+        } else {
+
+            return parseFloat(target);
+        }
+    },
 
     getStyles = hAzzle.features.computedStyle ? function (el) {
 
         if (el) {
-			
-			if(el.ownerDocument && el.ownerDocument.defaultView.opener ) {
-            
-			   return el.ownerDocument.defaultView.getComputedStyle(el[0], null);
-			}
+
+            if (el.ownerDocument && el.ownerDocument.defaultView.opener) {
+
+                return el.ownerDocument.defaultView.getComputedStyle(el[0], null);
+            }
         }
 
         return el && win.getComputedStyle(el, null);
@@ -166,7 +189,7 @@ function showHide(elements, show) {
             hidden = isHidden(elem);
 
             if (display !== "none" || !hidden) {
-                hAzzle.data(elem, "olddisplay", hidden ? display : hAzzle.getStyle(elem, "display"));
+                hAzzle.data(elem, "olddisplay", hidden ? display : hAzzle.css(elem, "display"));
             }
         }
     }
@@ -208,7 +231,7 @@ hAzzle.extend({
 
             for (; i < len; i++) {
 
-                map[prop[i]] = hAzzle.getStyle(this[0], prop[i], styles);
+                map[prop[i]] = curCSS(this[0], prop[i], styles);
             }
 
             return map;
@@ -269,7 +292,7 @@ hAzzle.extend({
                 left: 0
             };
 
-        if (!hAzzle.contains(html, el)) {
+        if (!hAzzle.contains(docElem, el)) {
             return bcr;
         }
 
@@ -283,10 +306,10 @@ hAzzle.extend({
         // We return all angeles of the 'offset'
 
         return {
-            top: bcr.top + win.pageYOffset - html.clientTop,
-            left: bcr.left + win.pageXOffset - html.clientLeft,
-            right: bcr.right + win.pageXOffset - html.clientLeft,
-            bottom: bcr.bottom + win.pageYOffset - html.clientTop,
+            top: bcr.top + win.pageYOffset - docElem.clientTop,
+            left: bcr.left + win.pageXOffset - docElem.clientLeft,
+            right: bcr.right + win.pageXOffset - docElem.clientLeft,
+            bottom: bcr.bottom + win.pageYOffset - docElem.clientTop,
             height: bcr.bottom - bcr.top,
             width: bcr.right - bcr.left
         };
@@ -340,9 +363,10 @@ hAzzle.extend({
 
     offsetParent: function () {
         return hAzzle(this.map(function (el) {
-            var op = el.offsetParent || doc.documentElement;
-            while (op && (!hAzzle.nodeName(op, 'html') && hAzzle.getStyle(op, 'position') === 'static')) {
-                op = op.offsetParent || doc.documentElement;
+            var docElem = doc.documentElement,
+                op = el.offsetParent || docElem;
+            while (op && (!hAzzle.nodeName(op, 'html') && hAzzle.css(op, 'position') === 'static')) {
+                op = op.offsetParent || docElem;
             }
             return op;
         }));
@@ -362,7 +386,9 @@ hAzzle.extend({
             elem = this[0];
 
         if (hAzzle.style(elem, "position") === "fixed") {
+
             // we assume that getBoundingClientRect is available when computed position is fixed
+
             offset = elem.getBoundingClientRect();
 
         } else {
@@ -402,10 +428,8 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    show: function (speed, easing, callback) {
-		return speed == null ?
-			showHide(this, true) :
-			this.animate(hAzzle.AnimProp("show"), speed, easing, callback);
+    show: function () {
+        return showHide(this, true);
     },
 
     /**
@@ -417,10 +441,8 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    hide: function (speed, easing, callback) {
-		return speed == null ?
-			showHide(this) :
-			this.animate(hAzzle.AnimProp("hide"), speed, easing, callback);
+    hide: function () {
+        return showHide(this);
     },
 
     /**
@@ -429,13 +451,7 @@ hAzzle.extend({
      */
 
     toggle: function (state) {
-	
-	if(speed !== null || typeof speed !== "boolean") {
 
-		return this.animate( hAzzle.AnimProp( 'toggle', true ), speed, easing, callback );
-
-	} else {
-	
         if (typeof state === "boolean") {
             return state ? this.show() : this.hide();
         }
@@ -446,7 +462,6 @@ hAzzle.extend({
                 hAzzle(this).hide();
             }
         });
-	}
     }
 });
 
@@ -454,8 +469,8 @@ hAzzle.extend({
 // Let us extend the hAzzle Object a litle ...
 
 hAzzle.extend({
-	
-	cssPrefixes: ['Webkit', 'O', 'Moz', 'ms', 'Khtml'],
+
+    cssPrefixes: ['Webkit', 'O', 'Moz', 'ms', 'Khtml'],
 
     // Properties that shouldn't have units behind e.g. 
     // zIndex:33px are not allowed
@@ -481,8 +496,9 @@ hAzzle.extend({
     },
 
     /**
-     * Yes, we are now supporting CSS hooks, but not
-     * in the same way as jQuery.
+     * Yes, we are now supporting CSS hooks
+     * Some cssHooks are injected from the
+     * cssSupport.js module
      */
 
     cssHooks: {
@@ -491,7 +507,7 @@ hAzzle.extend({
             get: function (el, computed) {
 
                 if (computed) {
-                    var ret = hAzzle.getStyle(el, "opacity");
+                    var ret = hAzzle.css(el, "opacity");
                     return ret === "" ? "1" : ret;
                 }
             }
@@ -541,9 +557,10 @@ hAzzle.extend({
 
             // convert relative number strings
 
-            if (typeof value === 'string' && (ret = numbs.exec(value))) {
-                value = hAzzle.units(parseFloat(hAzzle.getStyle(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
-                type = 'number';
+            if (type === 'string' &&  (ret = numbs.exec(value))) {
+
+                    value = hAzzle.units(removeUnits(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    type = 'number';
             }
 
             // Make sure that null and NaN values aren't set.
@@ -567,7 +584,7 @@ hAzzle.extend({
 
             // If a hook was provided, use that value, otherwise just set the specified value
 
-            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value, extra)) !== undefined) {
+            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value)) !== undefined) {
                 style[p] = hAzzle.setter(elem, value);
             }
 
@@ -575,47 +592,12 @@ hAzzle.extend({
 
             return style[name];
         }
-
-    },
-
-    getStyle: function (elem, prop, computed) {
-
-        var ret;
-
-        /* FireFox, Chrome/Safari, Opera and IE9+
-         * ONLY supports 'getComputedStyle'
-         *
-         * Some mobile browsers don't support it yet
-         *
-         * http://caniuse.com/getcomputedstyle
-         */
-
-        computed = computed || getStyles(elem);
-
-        if (computed) {
-
-            ret = computed.getPropertyValue(prop) || computed[prop];
-        }
-
-        if (computed) {
-
-            if (ret === "" && !hAzzle.contains(elem.ownerDocument, prop)) {
-
-                ret = hAzzle.style(elem, name);
-            }
-        }
-
-        return ret !== undefined ?
-
-            ret + "" :
-            ret;
     },
 
     css: function (el, prop) {
 
         var val,
             hooks,
-			p,
             origName = hAzzle.camelize(prop);
 
         // If no element, return
@@ -629,28 +611,19 @@ hAzzle.extend({
 
         hooks = hAzzle.cssHooks[prop] || hAzzle.cssHooks[origName];
 
-        // Short-cuts for document and window size
-
-        if (el === doc || el === win) {
-
-            p = (el === doc) ? docu() : viewport();
-
-            return prop === 'width' ? p.width : prop === 'height' ? p.height : '';
-        }
-
         // If a hook was provided get the computed value from there
 
         if (hooks && "get" in hooks) {
-			
+
             val = hooks.get(el, true);
-			
+
         }
 
         // Otherwise, if a way to get the computed value exists, use that
 
         if (val === undefined) {
 
-            val = hAzzle.getStyle(el, prop);
+            val = curCSS(el, prop);
         }
 
         //convert "normal" to computed value
@@ -691,7 +664,7 @@ hAzzle.extend({
                 prop = "height";
             }
 
-            if (reaf.test(hAzzle.getStyle(elem, "position"))) {
+            if (reaf.test(hAzzle.css(elem, "position"))) {
 
                 elem = elem.offsetParent;
 
@@ -702,12 +675,13 @@ hAzzle.extend({
 
             if (elem) {
 
-                val = hAzzle.getStyle(elem, prop);
-                num = num = parseFloat(val);
+                val = hAzzle.css(elem, prop);
+                num = num = removeUnits(val);
 
                 prop = hAzzle.isNumeric(num) ? num || 0 : val;
 
                 if (prop !== 0) {
+
                     return px / prop * 100;
                 }
             }
@@ -716,8 +690,8 @@ hAzzle.extend({
 
         if (unit === 'em') {
 
-            val = hAzzle.getStyle(elem, "fontSize");
-            num = parseFloat(val);
+            val = hAzzle.css(elem, "fontSize");
+            num = removeUnits(val);
 
             prop = hAzzle.isNumeric(num) ? num || 0 : val;
 
@@ -759,7 +733,7 @@ hAzzle.extend({
 function xy(elem, options, i) {
 
     var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-        position = hAzzle.getStyle(elem, "position"),
+        position = hAzzle.css(elem, "position"),
         curElem = hAzzle(elem),
         props = {};
 
@@ -770,8 +744,8 @@ function xy(elem, options, i) {
 
     curOffset = curElem.offset();
 
-    curCSSTop = hAzzle.getStyle(elem, "top");
-    curCSSLeft = hAzzle.getStyle(elem, "left");
+    curCSSTop = hAzzle.css(elem, "top");
+    curCSSLeft = hAzzle.css(elem, "left");
     calculatePosition = (position === "absolute" || position === "fixed") &&
         hAzzle.inArray((curCSSTop + curCSSLeft), 'auto') > -1;
 
@@ -805,30 +779,13 @@ function xy(elem, options, i) {
     }
 }
 
-function docu() {
-    var vp = viewport();
-    return {
-        width: Math.max(doc.body.scrollWidth, html.scrollWidth, vp.width),
-        height: Math.max(doc.body.scrollHeight, html.scrollHeight, vp.height)
-    };
-}
-
-function viewport() {
-    var self = this;
-    return {
-        width: self.innerWidth,
-        height: self.innerHeight
-    };
-}
-
-
 // Margin and padding cssHooks
 
 hAzzle.each(["margin", "padding"], function (hook) {
     hAzzle.cssHooks[hook] = {
         get: function (elem) {
             return hAzzle.map(hAzzle.cssExpand, function (dir) {
-                return hAzzle.getStyle(elem, hook + dir);
+                return hAzzle.css(elem, hook + dir);
             }).join(" ");
         },
         set: function (elem, value) {
@@ -884,7 +841,7 @@ hAzzle.each(['width', 'height'], function (name) {
 
         // Get width or height on the element
         if (value === undefined) {
-            orig = hAzzle.getStyle(elem, name);
+            orig = hAzzle.css(elem, name);
             return hAzzle.IsNaN(ret) ? parseFloat(orig) : orig;
         }
 
@@ -893,3 +850,39 @@ hAzzle.each(['width', 'height'], function (name) {
         hAzzle(elem).css(name, value);
     };
 });
+
+
+
+
+function curCSS(elem, prop, computed) {
+
+    var ret;
+
+    /* FireFox, Chrome/Safari, Opera and IE9+
+     * ONLY supports 'getComputedStyle'
+     *
+     * Some mobile browsers don't support it yet
+     *
+     * http://caniuse.com/getcomputedstyle
+     */
+
+    computed = computed || getStyles(elem);
+
+    if (computed) {
+
+        ret = computed.getPropertyValue(prop) || computed[prop];
+    }
+
+    if (computed) {
+
+        if (ret === "" && !hAzzle.contains(elem.ownerDocument, prop)) {
+
+            ret = hAzzle.style(elem, name);
+        }
+    }
+
+    return ret !== undefined ?
+
+        ret + "" :
+        ret;
+}
