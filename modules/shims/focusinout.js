@@ -14,7 +14,7 @@ if (needsFocusShim) {
         };
     for (yy in focio) {
 
-        hAzzle.event.special[yy] = {
+        hAzzle.eventHooks[yy] = {
 
             simulate: function (el, type) {
 
