@@ -838,14 +838,9 @@
      * Check if an element contains another element
      */
 
-    hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
-        var adown = a.nodeType === 9 ? a.documentElement : a,
-            bup = b && b.parentNode;
-        return a === bup || !!(bup && bup.nodeType === 1 && (
-            adown.contains ?
-            adown.contains(bup) :
-            a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-        ));
+    hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (element, container) {
+       return container.compareDocumentPosition && (container.compareDocumentPosition(element) & 16) === 16
+	   
     } : function (a, b) {
         if (b) {
             while ((b = b.parentNode)) {
