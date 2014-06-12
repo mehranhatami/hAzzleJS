@@ -6,52 +6,45 @@ var win = this,
 
 if (needsFocusShim) {
 
-    var focusinoutRegEx = /^(?:focusin|focusout)$/,
-        push = Array.prototype.push,
-        addRootListener = hAzzle.Events.addRootListener;
+    //if (!hAzzle.features.focusinBubbles) {
+    var yy,
+        focio = {
+            'focusin': 'focus',
+            'focusout': 'blur',
+        };
+    for (yy in focio) {
 
-    hAzzle.extend({
-        addRootListener: function (el, entry) {
+        hAzzle.event.special[yy] = {
 
-            if (focusinoutRegEx.test(entry.type)) {
+            simulate: function (el, type) {
 
-                //focusin, focusout
-                entry.focusEventType = (entry.type == 'focusin') ? 'focus' : 'blur';
-
-                this.observeFocusinout(el, entry);
-
-            }
-
-            addRootListener(el, entry);
-        },
-        getFocusables: function (el /*, entry*/ ) {
-            var focusables = hAzzle(el).find('input'),
-                selects = hAzzle(el).find('select');
-
-            if (selects.length) {
-                push.apply(focusables, selects);
-            }
-
-            return focusables;
-        },
-
-        observeFocusinout: function (el, entry) {
-            if (focusinoutRegEx.test(entry.type)) {
-
-                var focusables = this.getFocusables(el, entry),
-                    elfocus,
+                var elfocus,
                     key,
-                    cback = (function (entry) {
+                    focusEventType = (type == 'focusin') ? 'focus' : 'blur',
+                    focusables = (function (el) {
+
+                        var focusables = hAzzle(el).find('input'),
+                            selects = hAzzle(el).find('select');
+
+                        if (selects.length) {
+                            push.apply(focusables, selects);
+                        }
+
+                        return focusables;
+                    })(el),
+                    cback = (function (type) {
                         return function () {
-                            hAzzle(this).trigger(entry.type);
+                            if (this === document.activeElement) {
+                                hAzzle(this).trigger(type);
+                            }
                         };
-                    })(entry),
+                    })(type),
 
                     i = -1,
 
                     length = focusables.length;
 
-                key = '__' + entry.focusEventType + 'Handled__';
+                key = '__' + focusEventType + 'Handled__';
 
                 while (++i < length) {
 
@@ -61,39 +54,11 @@ if (needsFocusShim) {
 
                         elfocus[key] = true;
 
-                        elfocus.addEventListener(entry.focusEventType, cback, true);
+                        elfocus.addEventListener(focusEventType, cback, true);
 
                     }
                 }
             }
         }
-    }, hAzzle.Events);
-}
-
-
-hAzzle.extend({
-    focusinout: function (evt, original) {
-        //in terms of props these events don't have any specific property
-        //BUT in Firefox we have to provide all the valid props
-
-
-        /*
-          target: event target receiving focus
-          type: The type of event
-          bubbles: Does the event normally bubble?
-          cancelable: Is it possible to cancel the event?
-          relatedTarget: event target losing focus (if any).
-      */
-
-        original.target = evt.target;
-        original.type = evt.type;
-        original.bubbles = evt.bubbles;
-        original.cancelable = evt.cancelable;
-
-        //TODO mehran: find a way to set the relatedTarget
-        //original.relatedTarget = evt.relatedTarget;
-
-        return hAzzle.commonProps;
-
     }
-}, hAzzle.eventHooks);
+}
