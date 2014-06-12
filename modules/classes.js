@@ -16,18 +16,19 @@ hAzzle.extend({
      */
 
     addClass: function (value) {
-        var finalValue, classes, i, len = this.length;
-        if (hAzzle.isFunction(value)) {
+
+        var finalValue, classes;
+        if (typeof value === 'function') {
             return this.each(function (i) {
                 hAzzle(this).addClass(value.call(this, i, this.className));
             });
         }
+
         if (value && typeof value === "string") {
 
             classes = (value || '').match(whitespaceRegex) || [];
 
-            for (; i < len; i++) {
-                var elem = this[i];
+            this.each(function (elem) {
 
                 if (elem.nodeType === 1) {
                     var c, cl;
@@ -58,14 +59,14 @@ hAzzle.extend({
                             }
 
                             // only assign if different to avoid unneeded rendering.
-                            finalValue = hAzzle.trim(cur);
+                            finalValue = hAzzle.trim(className);
                             if (elem.className !== finalValue) {
                                 elem.className = finalValue;
                             }
                         }
                     }
                 }
-            }
+            });
         }
 
         return this;

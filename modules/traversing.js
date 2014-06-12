@@ -68,7 +68,7 @@ function collect(el, fn) {
     return hAzzle(ret);
 }
 
-function getDOMLocation(selector, index) {
+function getIndex(selector, index) {
 
     if (typeof selector === "undefined" && typeof index !== "number") {
 
@@ -94,7 +94,7 @@ function traversing(el, property, selector, index, expression) {
 
     // Find our position in the DOM tree
 
-    index = getDOMLocation(selector, index);
+    index = getIndex(selector, index);
 
     var i,
         isString,
@@ -115,7 +115,7 @@ function traversing(el, property, selector, index, expression) {
 
         while (el && (index === null || i >= 0) && el.nodeType < 11) {
 
-            if (el.nodeType === 1 && (!expression || expression === true || filtered(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
+            if (el.nodeType === 1 && (!expression || expression === true || expression(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
 
                 if (index === null && property !== 'nextSibling' && property !== 'parentNode') {
 
@@ -268,7 +268,7 @@ hAzzle.extend({
 
         // Locate where we are in the DOM tree
 
-        index = getDOMLocation(selector, index);
+        index = getIndex(selector, index);
 
         return collect(this, function (el) {
 
@@ -564,7 +564,7 @@ hAzzle.extend({
      */
 
     get: function (index) {
-        return index ? this[eqIndex(this.length, index, 0)] : this;
+        return this[eqIndex(this.length, index, 0)];
     },
 
 

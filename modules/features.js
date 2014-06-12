@@ -56,6 +56,7 @@
 
       var checkClone,
           noCloneChecked,
+		  clsp,
           fragment = document.createDocumentFragment(),
           divv = fragment.appendChild(document.createElement("div")),
           inp = document.createElement("input");
@@ -80,6 +81,8 @@
       var dcl, d = document.createElement('div');
 
       d.classList.add('a', 'b');
+      
+	  clsp = !! d.classList;
 
       dcl = /(^| )a( |$)/.test(d.className) && /(^| )b( |$)/.test(d.className);
 
@@ -111,9 +114,9 @@
           // Check if support RAF
 
           supportRAF: !!win.requestAnimationFrame,
+		  classList: clsp,
 
           sMa: dcl,
-
       };
 
   }();
