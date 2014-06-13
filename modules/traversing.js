@@ -5,20 +5,6 @@ var emptyArray = [],
     slice = emptyArray.slice,
     push = emptyArray.push;
 
-
-// Filter for siblings
-
-function siblingsFilter(elem) {
-    switch (elem.nodeName.toUpperCase()) {
-    case 'DIV':
-        return true;
-    case 'SPAN':
-        return true;
-    default:
-        return false;
-    }
-}
-
 /**
  * Traversing method helper for prevNext, prevAll, nextAll, nextUntil etc
  *
@@ -70,13 +56,17 @@ function collect(el, fn) {
 
 function getIndex(selector, index) {
 
-    if (typeof selector === "undefined" && typeof index !== "number") {
+    var type = typeof index;
+
+    if (selector === undefined && type !== "number") {
 
         return 0;
+
     } else if (typeof selector === "number") {
 
         return selector;
-    } else if (typeof index === "number") {
+
+    } else if (type === "number") {
 
         return index;
 
@@ -242,22 +232,6 @@ hAzzle.extend({
         return this.indexOf(hAzzle(selector)[0]);
     },
 
-    adjacent: function (selector) {
-        var expressions = slice.call(arguments, 1).join(', '),
-            siblings = this.siblings(selector),
-            results = [],
-            i = 0,
-            sibling;
-
-        for (; sibling = siblings[i]; i++) {
-            if (hAzzle.select(sibling, null, null, expressions)) {
-                results.push(sibling);
-            }
-        }
-
-        return hAzzle(results);
-    },
-
 
     /**
      * Returns element's first descendant (or the Nth descendant, if index is specified)
@@ -303,16 +277,13 @@ hAzzle.extend({
      */
 
     parent: function (selector) {
-
         var parent,
             matched = hAzzle.map(this, function (elem) {
-
                 if ((parent = elem.parentNode)) {
-
-                    // Always skip document fragments
-
-                    return parent.nodeType !== 11 ? parent : null;
-
+                    if (parent.nodeType !== 11) {
+                        return parent;
+                    }
+                    return null;
                 }
             });
 
@@ -393,7 +364,6 @@ hAzzle.extend({
 
     next: function (selector, index) {
         return traversing(this, 'nextSibling', selector, index);
-
     },
 
     nextAll: function () {
@@ -469,43 +439,38 @@ hAzzle.extend({
         });
     },
 
-    PreviousSiblings: function (selector, index, filter) {
-        var self = this,
-            arr = slice.call(this, 0),
+    /**
+     * Get all siblings - previousSibling and nextSibling
+     */
+
+    siblingsAll: function () {
+
+        var p, r = [],
             i = 0,
-            l = arr.length;
+            l = this.length;
 
         for (; i < l; i++) {
 
-            while (arr[i].nodeType !== 1) {
-                if (!filter || siblingsFilter(arr[i])) {
-                    arr[i] = arr[i].previousSibling;
+            p = this[i];
+
+            while (p = p.previousSibling) {
+
+                if (p.nodeType == 1) {
+
+                    r.push(p);
+                }
+            }
+            p = this[i];
+
+            while (p = p.nextSibling) {
+
+                if (p.nodeType == 1) {
+
+                    r.push(p);
                 }
             }
         }
-        return traversing(arr, 'previousSibling', selector || '*', index, function (el, i) {
-            return el !== self[i];
-        });
-    },
-
-    NextSiblings: function (selector, index, filter) {
-        var self = this,
-            arr = slice.call(this, 0),
-            i = 0,
-            l = arr.length;
-
-        for (; i < l; i++) {
-            while (arr[i].nodeType !== 1) {
-
-                if (!filter || siblingsFilter(arr[i])) {
-                    arr[i] = arr[i].nextSibling;
-                }
-            }
-        }
-
-        return traversing(arr, 'nextSibling', selector || '*', index, function (el, i) {
-            return el !== self[i];
-        });
+        return hAzzle(r);
     },
 
     /**
@@ -650,6 +615,22 @@ hAzzle.extend({
         return false;
     },
 
+    and: function (s) {
+
+        var plus = hAzzle(s),
+            i = this.length,
+            j = 0,
+            l = this.length + plus.length;
+
+        for (; i < l; i++, j++) {
+
+            this[i] = plus[j];
+        }
+
+        this.length += plus.length;
+
+        return this;
+    },
 
     /**
      * Adds one element to the set of matched elements.

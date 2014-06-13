@@ -4,7 +4,7 @@
  * Version: 0.6.5
  * Released under the MIT License.
  *
- * Date: 2014-06-12
+ * Date: 2014-06-14
  */
 (function (window, undefined) {
 
@@ -839,7 +839,8 @@
      */
 
     hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (element, container) {
-       return container.compareDocumentPosition && (container.compareDocumentPosition(element) & 16) === 16
+       
+	   return container.compareDocumentPosition && (container.compareDocumentPosition(element) & 16) === 16
 	   
     } : function (a, b) {
         if (b) {

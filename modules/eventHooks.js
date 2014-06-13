@@ -62,8 +62,12 @@ for (xx in moupo) {
     // End of loop	 
 }
 
-
-
+hAzzle.eventHooks['focus'] = {
+    delegateType: 'focusIn';
+}
+hAzzle.eventHooks['blur'] = {
+    delegateType: 'focusout';
+}
 
 var win = this,
     hAzzle = win.hAzzle,
