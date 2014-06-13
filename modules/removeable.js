@@ -1,5 +1,5 @@
 /*!
- * Removeable
+ * Removeable.js
  */
 /**
  * removes the data associated with an element
@@ -20,27 +20,22 @@ hAzzle.extend({
 
     remove: function (selector) {
 
-        var elem,
-
-            // Filters the set of matched elements to be removed.
-
-            elems = selector ? hAzzle.select(selector, null, null, this) : this,
+        // Filters the set of matched elements to be removed.
+       
+	    var elem = selector ? hAzzle.select(selector, null, null, this) : this,
             i = 0;
 
-        for (;
-            (elem = elems[i]) !== null; i++) {
+        hAzzle.each(elem, function (el) {
 
-            if (elem.nodeType === 1) {
-
-                hAzzle.removeData(elem);
-                hAzzle.event.removeEvent(elem);
-
+            if (el.nodeType === 1) {
+                hAzzle.removeData(el);
+                hAzzle.event.removeEvent(el);
             }
 
-            if (elem.parentNode) {
-                elem.parentNode.removeChild(elem);
+            if (el.parentNode) {
+                el.parentNode.removeChild(el);
             }
-        }
+        });
 
         return this;
     },
