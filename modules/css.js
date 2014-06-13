@@ -68,22 +68,24 @@ var win = this,
 
     };
 
-
-
-
 function actualDisplay(name, doc) {
 
-    var style,
-        docbody = doc.body,
+    var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
         display,
-        elem = doc.createElement(name);
+        gDfCS = win.getDefaultComputedStyle,
+        style = gDfCS && gDfCS(elem[0]);
 
-    // Vanila solution is the fastest choice here
+    if (style) {
 
-    docbody.appendChild(elem);
-    display = win.getDefaultComputedStyle && (style = win.getDefaultComputedStyle(elem[0])) ?
-        style.display : hAzzle(elem).css('display');
-    docbody.removeChild(elem);
+        display = style.display;
+
+    } else {
+
+        display = hAzzle.css(elem[0], "display");
+    }
+
+    elem.detach();
+
     return display;
 }
 
@@ -497,6 +499,7 @@ hAzzle.extend({
         'fillOpacity': true,
         'flexGrow': true,
         'columnCount': true,
+
 
         'flexShrink': true,
         'order': true,
