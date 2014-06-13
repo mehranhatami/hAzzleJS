@@ -453,7 +453,7 @@ hAzzle.extend({
 
             p = this[i];
 
-            while (p = p.previousSibling) {
+            while ((p = p.previousSibling)) {
 
                 if (p.nodeType == 1) {
 
@@ -462,7 +462,7 @@ hAzzle.extend({
             }
             p = this[i];
 
-            while (p = p.nextSibling) {
+            while ((p = p.nextSibling)) {
 
                 if (p.nodeType == 1) {
 
