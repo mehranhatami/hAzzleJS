@@ -1,6 +1,6 @@
 var win = this,
     evwhite = (/\S+/g),
-    mouseEvent = /^(?:mouse|pointer|contextmenu)|click/, 
+    mouseEvent = /^(?:mouse|pointer|contextmenu)|click/,
     keyEvent = /^key/,
     namespaceRegex = /^([^\.]*(?=\..*)\.|.*)/,
     nameRegex = /(\..*)/,
@@ -10,9 +10,9 @@ var win = this,
 
     slice = Array.prototype.slice;
 
-   function returnTrue() {
+function returnTrue() {
     return true;
-  }
+}
 
 hAzzle.event = {
 
@@ -163,6 +163,7 @@ hAzzle.event = {
 
             // Add roothandler if we're the first
 
+
             if (first) {
 
                 type = entry.eventType;
@@ -312,7 +313,7 @@ hAzzle.event = {
         for (; i < l; i++) {
             if (handlers[i].original) {
                 args = [element, handlers[i].type];
-                if (core = handlers[i].handler.__hAzzle) {
+                if ( (core = handlers[i].handler.__hAzzle)) {
 
                     args.push(hAzzle.selector);
                 }
@@ -506,39 +507,43 @@ hAzzle.Event = function (event, element) {
     if (!arguments.length) {
         return;
     }
+	
     event = event || ((element.ownerDocument || element.document || element).parentWindow || win).event;
-
-    this.originalEvent = event;
 
     if (!event) {
 
         return;
     }
 
-    var type = event.type,
+    var self = this,
+	    type = event.type,
         target = event.target || event.srcElement,
-        i, p, props, fixer;
+        i, p, props, cleaned;
+    
+	self.originalEvent = event;
+    self.target = target && target.nodeType === 3 ? target.parentNode : target;
 
-    this.target = target && target.nodeType === 3 ? target.parentNode : target;
+    cleaned = self.fixHook[type];
 
-    fixer = this.fixHook[type];
-
-    if (!fixer) {
-        this.fixHook[type] = fixer =
-            mouseEvent.test(type) ? this.mouseHooks :
-            keyEvent.test(type) ? this.keyHooks :
+    if (!cleaned) {
+        self.fixHook[type] = cleaned =
+            mouseEvent.test(type) ? self.mouseHooks :
+            keyEvent.test(type) ? self.keyHooks :
             this.common;
     }
 
-    props = fixer(event, this, type);
-    props = props ? this.props.concat(props) : this.props;
+    props = cleaned(event, self, type);
+    props = props ? self.props.concat(props) : self.props;
 
     for (i = props.length; i--;) {
 
-        if (!((p = props[i]) in this) && p in event) this[p] = event[p];
+        if (!((p = props[i]) in self) && p in event) {
+			
+			self[p] = event[p]; 
+		}
     }
 
-    return this;
+    return self;
 };
 
 
@@ -558,26 +563,26 @@ hAzzle.Event.prototype = {
         return this.props;
     },
 
-    keyHooks: function (event, newEvent) {
-        newEvent.keyCode = event.keyCode || event.which;
+    keyHooks: function (evt, original) {
+        original.keyCode = evt.keyCode || evt.which;
         return 'char charCode key keyCode keyIdentifier keyLocation location'.split(' ');
     },
 
-    mouseHooks: function (event, newEvent, type) {
-        newEvent.rightClick = event.which === 3 || event.button === 2;
-        newEvent.pos = {
+    mouseHooks: function (evt, original, type) {
+        original.rightClick = evt.which === 3 || evt.button === 2;
+        original.pos = {
             x: 0,
             y: 0
         };
-        if (event.pageX || event.pageY) {
-            newEvent.clientX = event.pageX;
-            newEvent.clientY = event.pageY;
-        } else if (event.clientX || event.clientY) {
-            newEvent.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft;
-            newEvent.clientY = event.clientY + doc.body.scrollTop + root.scrollTop;
+        if (evt.pageX || evt.pageY) {
+            original.clientX = evt.pageX;
+            original.clientY = evt.pageY;
+        } else if (evt.clientX || evt.clientY) {
+            original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
+            original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
         }
         if (overOutRegex.test(type)) {
-            newEvent.relatedTarget = event.relatedTarget || event[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
+            original.relatedTarget = evt.relatedTarget || evt[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
         }
 
         return 'button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' ');
@@ -629,6 +634,7 @@ hAzzle.Event.prototype = {
 
         this.isImmediatePropagationStopped = returnTrue;
     },
+
     isImmediatePropagationStopped: function () {
 
         var toE = this.originalEvent;
@@ -638,9 +644,8 @@ hAzzle.Event.prototype = {
             return toE.isImmediatePropagationStopped();
         }
     },
+
     clone: function (currentTarget) {
-        //TODO: this is ripe for optimisation, new events are *expensive*
-        // improving this will speed up delegated events
         var ne = hAzzle.Event(this, this.element);
         ne.currentTarget = currentTarget;
         return ne;
@@ -776,7 +781,7 @@ Registry.prototype = {
 function rootListener(evt, type) {
 
     // Todo!  Add RAF support 
-	
+
     var listeners = hAzzle.event.get(this, type || evt.type, null, false),
         l = listeners.length,
         i = 0;
@@ -842,8 +847,8 @@ function delegate(selector, fn) {
                 }
             }
         },
-		
-		// Todo!  Add RAF support 
+
+        // Todo!  Add RAF support 
 
         handler = function (e) {
 
@@ -970,7 +975,7 @@ hAzzle.extend({
             while (i--) {
                 type = types[i].replace(nameRegex, '');
 
-                if (names = types[i].replace(namespaceRegex, '')) {
+                if ((names = types[i].replace(namespaceRegex, ''))) {
 
                     names = names.split('.');
                 }
@@ -981,7 +986,7 @@ hAzzle.extend({
                     // We could have used 'liveTarget' here
 
                     var evt = doc.createEvent('HTMLEvents');
-                    evt['initEvent'](type, true, true, win, 1);
+                    evt.initEvent(type, true, true, win, 1);
                     elem.dispatchEvent(evt);
 
                 } else {
@@ -1025,7 +1030,6 @@ var shortcuts = ('blur focus focusin focusout load resize scroll unload click db
 while (i--) {
     // Handle event binding
     hAzzle.Core[shortcuts[i]] = function (data, fn) {
-
         return arguments.length > 0 ?
             this.on(shortcuts[i], data, fn) :
             this.trigger(shortcuts[i]);
