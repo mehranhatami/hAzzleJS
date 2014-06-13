@@ -658,7 +658,7 @@ function Registry(element, type, handler, original, namespaces, args, root) {
         hooks = hAzzle.eventHooks[type];
 
     if (hooks && ("specialEvents" in hooks)) {
-        handler = reg.wrappedHandler(element, handler, hooks.specialEvents.handler, args);
+        handler = reg.twistedBrain(element, handler, hooks.specialEvents.handler, args);
         type = hooks.specialEvents.name || type;
     }
 
@@ -679,13 +679,13 @@ function Registry(element, type, handler, original, namespaces, args, root) {
 
     reg.addEventListener = !!this.target.addEventListener;
     reg.root = root;
-    reg.handler = reg.wrappedHandler(element, handler, null, args);
+    reg.handler = reg.twistedBrain(element, handler, null, args);
 }
 
 
 Registry.prototype = {
 
-    wrappedHandler: function (element, fn, condition, args) {
+    twistedBrain: function (element, fn, condition, args) {
         var call = function (event, eargs) {
                 return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
             },
@@ -775,6 +775,8 @@ Registry.prototype = {
 
 function rootListener(evt, type) {
 
+    // Todo!  Add RAF support 
+	
     var listeners = hAzzle.event.get(this, type || evt.type, null, false),
         l = listeners.length,
         i = 0;
@@ -840,6 +842,8 @@ function delegate(selector, fn) {
                 }
             }
         },
+		
+		// Todo!  Add RAF support 
 
         handler = function (e) {
 
