@@ -8,7 +8,7 @@
  */
 function clearData(el) {
     hAzzle.removeData(el);
-    hAzzle.Events.off(el);
+    hAzzle.event.removeEvent(el);
 }
 
 hAzzle.extend({
