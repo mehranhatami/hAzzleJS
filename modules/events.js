@@ -164,6 +164,9 @@ hAzzle.event = {
             // Add roothandler if we're the first
 
 
+
+
+
             if (first) {
 
                 type = entry.eventType;
@@ -313,7 +316,7 @@ hAzzle.event = {
         for (; i < l; i++) {
             if (handlers[i].original) {
                 args = [element, handlers[i].type];
-                if ( (core = handlers[i].handler.__hAzzle)) {
+                if ((core = handlers[i].handler.__hAzzle)) {
 
                     args.push(hAzzle.selector);
                 }
@@ -492,6 +495,7 @@ hAzzle.event = {
  * Contains different eventHooks
  * See the eventhooks.js module
  * for further information
+
  */
 
 hAzzle.eventHooks = {};
@@ -507,7 +511,7 @@ hAzzle.Event = function (event, element) {
     if (!arguments.length) {
         return;
     }
-	
+
     event = event || ((element.ownerDocument || element.document || element).parentWindow || win).event;
 
     if (!event) {
@@ -516,11 +520,11 @@ hAzzle.Event = function (event, element) {
     }
 
     var self = this,
-	    type = event.type,
+        type = event.type,
         target = event.target || event.srcElement,
         i, p, props, cleaned;
-    
-	self.originalEvent = event;
+
+    self.originalEvent = event;
     self.target = target && target.nodeType === 3 ? target.parentNode : target;
 
     cleaned = self.fixHook[type];
@@ -538,9 +542,9 @@ hAzzle.Event = function (event, element) {
     for (i = props.length; i--;) {
 
         if (!((p = props[i]) in self) && p in event) {
-			
-			self[p] = event[p]; 
-		}
+
+            self[p] = event[p];
+        }
     }
 
     return self;
@@ -618,10 +622,15 @@ hAzzle.Event.prototype = {
             e.cancelBubble = true;
         }
     },
+
+    // Set a "stopped" property so that a custom event can be inspected
+
     stop: function () {
+
+        this.stopped = true;
         this.preventDefault();
         this.stopPropagation();
-        this.stopped = true;
+
     },
 
     stopImmediatePropagation: function () {
@@ -827,22 +836,44 @@ function rootListener(evt, type) {
  *
  *
  */
+function findElement(selectors, root) {
+
+    // We can never find CSS nodes in the window itself
+    // so direct it back to document if root = window
+
+    if (root === win) {
+
+        root = doc;
+
+    } else {
+
+        root = root;
+    }
+
+    if (!selectors || selectors === null) {
+
+        return root;
+    }
+
+    if (typeof selectors === 'string') {
+
+    } else {
+
+        return hAzzle(selectors, root);
+
+    }
+
+    return selectors;
+}
 
 function delegate(selector, fn) {
     var findTarget = function (target, root) {
-
-            // We can never find CSS nodes in the window itself
-            // so direct it back to document if root = window
-
-            root = (root === win) ? doc : root;
-
-            var i, array = typeof selector === 'string' ? hAzzle(selector, root) : selector;
+            var array = findElement(selector, root),
+                i = array.length;
             for (; target && target !== root; target = target.parentNode) {
-                for (i = array.length; i--;) {
+                while (i--) {
                     if (array[i] === target) {
-
                         return target;
-
                     }
                 }
             }
@@ -878,9 +909,6 @@ function delegate(selector, fn) {
     };
     return handler;
 }
-
-
-
 
 /**
  *
@@ -962,6 +990,7 @@ hAzzle.extend({
             if (elem.nodeType === 3 || elem.nodeType === 8) {
                 return;
             }
+            if (!type) return false;
 
             // focus/blur morphs to focusin/out; ensure we're not firing them right now
             if (/^(?:focusinfocus|focusoutblur)$/.test(type + hAzzle.event.triggered)) {
@@ -985,9 +1014,21 @@ hAzzle.extend({
                     // Create a Event object that modifies `target` property.
                     // We could have used 'liveTarget' here
 
-                    var evt = doc.createEvent('HTMLEvents');
-                    evt.initEvent(type, true, true, win, 1);
-                    elem.dispatchEvent(evt);
+                    var event = doc.createEvent('HTMLEvents');
+
+                    if (type) {
+
+                        event.initEvent(type, true, true, win, 1);
+                    }
+
+                    // In the W3C system, all calls to document.fire should treat
+                    // document.documentElement as the target
+
+                    if (elem.nodeType === 9) {
+                        elem = elem.documentElement;
+                        elem.dispatchEvent(event);
+                    }
+
 
                 } else {
                     // non-native event, either because of a namespace, arguments or a non DOM element
