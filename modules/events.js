@@ -1,8 +1,10 @@
 var win = this,
-    hAzzle = win.hAzzle,
+    doc = win.document || {},
+    docElem = doc.documentElement,
     evwhite = (/\S+/g),
-    mouseEvent = /^(?:mouse|pointer|contextmenu)|click/,
+    mouseEvent = /^click|mouse(?!(.*wheel|scroll))|menu|pointer|contextmenu|drag|drop/i,
     keyEvent = /^key/,
+    focusinoutEvent = /^(?:focusin|focusout)$/,
     namespaceRegex = /^([^\.]*(?=\..*)\.|.*)/,
     nameRegex = /(\..*)/,
     textEvent = /^text/i,
@@ -10,9 +12,8 @@ var win = this,
     touchEvent = /^touch|^gesture/i,
     messageEvent = /^message$/i,
     popstateEvent = /^popstate$/i,
+    overOut = /over|out/,
     cache = [],
-    doc = win.document || {},
-
     slice = Array.prototype.slice;
 
 function returnTrue() {
@@ -592,46 +593,60 @@ hAzzle.event = {
     // Return all common properties
 
     common: function () {
-        return this.props;
+        return hAzzle.event.props;
     },
 
-    keyHooks: function (evt, original) {
+    keyHooks: function (event, original) {
 
-        // Add which for key events
-        if (event.which === null) {
-            event.which = original.charCode !== null ? original.charCode : original.keyCode;
-        }
+        original.keyCode = event.keyCode || event.which;
 
         return 'char charCode key keyCode keyIdentifier keyLocation location'.split(' ');
     },
 
-    mouseHooks: function (event, original) {
+    focusinout: function (evt, original) {
+        //in terms of props these events don't have any specific property
+        //BUT in Firefox we have to provide all the valid props
 
-        var eventDoc, doc, body,
-            button = original.button;
 
-        // Add which for click: 1 === left; 2 === middle; 3 === right
-        // Note: button is not normalized, so don't use it
-        if (!event.which && button !== undefined) {
-            event.which = (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
+        /*
+          target: event target receiving focus
+          type: The type of event
+          bubbles: Does the event normally bubble?
+          cancelable: Is it possible to cancel the event?
+          relatedTarget: event target losing focus (if any).
+      */
+
+        original.target = evt.target;
+        original.type = evt.type;
+        original.bubbles = evt.bubbles;
+        original.cancelable = evt.cancelable;
+
+        //TODO mehran: find a way to set the relatedTarget
+        //original.relatedTarget = evt.relatedTarget;
+
+        return hAzzle.event.props;
+
+    },
+
+    mouseHooks: function (event, original, type) {
+
+        original.rightClick = event.which === 3 || event.button === 2;
+        original.pos = {
+            x: 0,
+            y: 0
+        };
+		
+        if (event.pageX || event.pageY) {
+            original.clientX = event.pageX;
+            original.clientY = event.pageY;
+        } else if (event.clientX || event.clientY) {
+            original.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft;
+            original.clientY = event.clientY + doc.body.scrollTop + root.scrollTop;
+        }
+        if (overOut.test(type)) {
+            original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
         }
 
-
-
-        // Calculate pageX/Y if missing and clientX/Y available
-        if (event.pageX === null && original.clientX !== null) {
-            eventDoc = event.target.ownerDocument || document;
-            doc = eventDoc.documentElement;
-            body = eventDoc.body;
-
-            event.pageX = original.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
-            event.pageY = original.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) - (doc && doc.clientTop || body && body.clientTop || 0);
-        }
-
-
-
-
-        //console.log(original)
         return 'button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' ');
     },
 
@@ -692,13 +707,15 @@ hAzzle.Event = function (event, element) {
     self.originalEvent = event;
     self.target = target && target.nodeType === 3 ? target.parentNode : target;
 
-
     cleaned = hAzzle.event.fixHook[type];
 
     if (!cleaned) {
+
         hAzzle.event.fixHook[type] = cleaned =
 
-        // mouse
+        // focusIn / focusOut
+
+      //        focusinoutEvent.test(type) ? hAzzle.event.focusinout :
 
         mouseEvent.test(type) ? hAzzle.event.mouseHooks :
 
@@ -732,7 +749,8 @@ hAzzle.Event = function (event, element) {
     }
 
     props = cleaned(event, self);
-    props = props ? hAzzle.event.props.concat(props) : hAzzle.event.props;
+
+    props = hAzzle.event.props;
 
     for (i = props.length; i--;) {
 
@@ -742,6 +760,7 @@ hAzzle.Event = function (event, element) {
     return self;
 };
 
+/* =========================== EVENT PROPAGATION ========================== */
 
 hAzzle.Event.prototype = {
 
@@ -856,15 +875,16 @@ Registry.prototype = {
                 return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
             },
 
+            // Get correct target for delegated events
+
             getTarget = function (evt, eventElement) {
                 var target = fn.__hAzzle ? findTarget(fn.__hAzzle.selector, evt.target, this) : eventElement;
                 fn.__hAzzle.currentTarget = target;
                 return target;
-
-                //     return fn.__hAzzle ? fn.__hAzzle.ft(event.target, element) : eventElement;
             },
+
             handler = condition ? function (event) {
-                var target = getTarget(event, this); // delegated event
+                var target = getTarget(event, this);
                 if (condition.apply(target, arguments)) {
                     if (event) {
 
@@ -877,7 +897,7 @@ Registry.prototype = {
 
                 if (fn.__hAzzle) {
 
-                    event = event.clone(getTarget(event)); // delegated event, fix the fix
+                    event = event.clone(getTarget(event));
                 }
 
                 return call(event, arguments);
@@ -930,11 +950,7 @@ Registry.prototype = {
     }
 };
 
-
-/**************************************
- * Functions that shall NOT be
- * exposed to the public API
- **************************************/
+/* =========================== PRIVATE FUNCTIONS ========================== */
 
 /**
  * Root listener
@@ -991,15 +1007,17 @@ function rootListener(evt, type) {
  *
  */
 
-function findTarget(selector, target, root) {
+function findTarget(selector, target, elem) {
+
+    elem = elem || docElem;
 
     // We can never find CSS nodes in the window itself
-    // so direct it back to document if root = window
+    // so direct it back to document if elem = window
 
-    root = (root === win) ? doc : root;
+    elem = (elem === win) ? docElem : elem;
 
-    var i, matches = cache[selector] ? cache[selector] : cache[selector] = hAzzle(selector, root);
-    for (; target !== root; target = target.parentNode || root) {
+    var i, matches = cache[selector] ? cache[selector] : cache[selector] = hAzzle(selector, elem);
+    for (; target !== elem; target = target.parentNode || elem) {
         if (matches !== null) {
 
             // Note!! if you use an while-loop here, you are sending
