@@ -2,47 +2,34 @@
  * Checks for support for matchesSelector, with
  * fallback to QSA
  */
-
 var win = this,
-    doc = win.document;
+    doc = win.document,
+    proto = Element.prototype,
+    mS;
 
-// Faster then an loop to get vendor prefixed version
+/**
+ * Vendor function.
+ */
 
-var matchesMethod = (function () {
-	
-	var proto = Element.prototype,
-	prefixes = ['webkit', 'moz', 'ms', 'o'],
-	i = prefixes.length,
-	prefix,
-	method;
-	
-    // check un-prefixed
-    if (proto.matchesSelector) {
-        return 'matchesSelector';
-    }
-    // check vendor prefixes
-    while (i--) {
-        prefix = prefixes[i];
-        method = prefix + 'MatchesSelector';
-        if (proto[method]) {
-            return method;
-        }
-    }
-})();
+var mS = proto.matches || proto.webkitMatchesSelector || proto.mozMatchesSelector || proto.msMatchesSelector || proto.oMatchesSelector;
 
-
-// Check for matches
+/**
+ * Check for matches
+ */
 
 function match(elem, selector) {
-    return elem[matchesMethod](selector);
+
+    return mS.call(elem, selector);
 }
 
-// append to fragment
+/**
+ * Append to fragment
+ */
 
 function checkParent(elem) {
 
     // not needed if already has parent
-	
+
     if (elem.parentNode) {
         return;
     }
@@ -86,7 +73,9 @@ function query(elem, selector) {
     return false;
 }
 
-// Check if there is an match with the child nodes
+/**
+ *  Check if there is an match with the child nodes
+ */
 
 function matchChild(elem, selector) {
 
@@ -94,10 +83,11 @@ function matchChild(elem, selector) {
     return match(elem, selector);
 }
 
-// Expand matchesSelector to the global
-// hAzzle object
+/** Expand matchesSelector to the global
+ *  hAzzle object
+ */
 
-if (matchesMethod) {
+if (mS) {
 
     // IE9 supports matchesSelector, but doesn't work on orphaned elems
     // check for that
