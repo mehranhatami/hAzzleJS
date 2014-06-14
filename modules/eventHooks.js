@@ -7,6 +7,7 @@
  *
  * - simulation
  * - special event types
+ * - delegateType
  *
  * For event types:
  * ----------------
@@ -26,11 +27,22 @@
  *
  *  }
  *
+ * Delegated type:
+ * ---------------
  *
- * It's included two hooks here that you can
- * learn from !! :)
+ *  eventHook [ { OLD EVENT TYPE NAME } ] = { 
+ *   delegateType: { { NEW EVENT TYPE NAME } }
+ *  }
+ *
+ *
+ * 'delegateType' are used within event delegation. Say
+ * you want mouseenter to work, 
+ * you then change mouseenter tobecome mouseover with
+ * the eventHook
  *
  */
+ 
+ 
 /**
  *
  * Note!!
@@ -63,10 +75,13 @@ for (xx in moupo) {
 }
 
 hAzzle.eventHooks['focus'] = {
-    delegateType: 'focusIn';
+    delegateType: 'focusIn'
+}
+hAzzle.eventHooks['mouseenter'] = {
+    delegateType: 'mouseover'
 }
 hAzzle.eventHooks['blur'] = {
-    delegateType: 'focusout';
+    delegateType: 'focusout'
 }
 
 var win = this,

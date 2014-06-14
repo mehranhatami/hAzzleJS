@@ -1,9 +1,15 @@
 var win = this,
+    hAzzle = win.hAzzle,
     evwhite = (/\S+/g),
     mouseEvent = /^(?:mouse|pointer|contextmenu)|click/,
     keyEvent = /^key/,
     namespaceRegex = /^([^\.]*(?=\..*)\.|.*)/,
     nameRegex = /(\..*)/,
+    textEvent = /^text/i,
+    mouseWheelEvent = /mouse.*(wheel|scroll)/i,
+    touchEvent = /^touch|^gesture/i,
+    messageEvent = /^message$/i,
+    popstateEvent = /^popstate$/i,
     overOutRegex = /over|out/,
     cache = [],
     doc = win.document || {},
@@ -105,7 +111,6 @@ hAzzle.event = {
         // Event delegation
 
         if (typeof selector !== 'function') {
-            // delegated event
             originalFn = fn;
             args = slice.call(arguments, 4);
             fn = delegate(selector, originalFn);
@@ -140,7 +145,24 @@ hAzzle.event = {
                 continue;
             }
 
-            // If event delegation, check for eventHooks
+            /* If event delegation, check for eventHooks
+
+             Note !! This is important. For us to get 'mouseenter'
+             to work on delegated events, we use 'hooks'.
+             'mouseenter' will then become 'mouseover' and work
+             right out of the box.
+
+             A possible problem can occur when we are going to delete
+             the delegated events. We have to turn it back to normal
+             event type before removing it. 
+			 
+             It can be done if we are using an hook for this inside
+             the function for removing delegated events, and not inside
+             the main function itself. This for better performance.
+
+             Keep that in mind !!
+			 
+			 */
 
             var hooks = hAzzle.eventHooks[type] || {};
 
@@ -163,8 +185,6 @@ hAzzle.event = {
             ));
 
             // Add roothandler if we're the first
-
-
 
             if (first) {
 
@@ -370,8 +390,9 @@ hAzzle.event = {
                  *
                  */
 
-                evt = new win.Event(type);
-                cur.dispatchEvent(evt);
+                evt = doc.createEvent('HTMLEvents');
+                evt.initEvent(type, true, true, win, 1);
+                elem.dispatchEvent(evt);
 
             } else {
 
@@ -400,7 +421,6 @@ hAzzle.event = {
             }
         }
     },
-
 
     /**
      * Detach an event or set of events from an element
@@ -562,15 +582,74 @@ hAzzle.event = {
         }
 
         return entries;
+    },
+    fixHook: {},
+
+    // Common properties for all event types
+
+    props: ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget detail ' +
+        'eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget ' +
+        'shiftKey srcElement target timeStamp type view which propertyName').split(' '),
+
+    // Return all common properties
+
+    common: function () {
+        return this.props;
+    },
+
+    keyHooks: function (evt, original) {
+        original.keyCode = evt.keyCode || evt.which;
+        return 'char charCode key keyCode keyIdentifier keyLocation location'.split(' ');
+    },
+
+    mouseHooks: function (evt, original, type) {
+
+        original.rightClick = evt.which === 3 || evt.button === 2;
+        original.pos = {
+            x: 0,
+            y: 0
+        };
+        if (evt.pageX || evt.pageY) {
+            original.clientX = evt.pageX;
+            original.clientY = evt.pageY;
+        } else if (evt.clientX || evt.clientY) {
+            original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
+            original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
+        }
+        if (overOutRegex.test(type)) {
+            original.relatedTarget = evt.relatedTarget || evt[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
+        }
+        //console.log(original)
+        return 'button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' ');
+    },
+
+    textHooks: function () {
+
+        return 'data';
+    },
+
+    mouseWheelHooks: function () {
+
+        return ('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ ' +
+            'axis button buttons clientX clientY dataTransfer ' +
+            'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ');
+    },
+
+    touchHooks: function () {
+
+        return 'touches targetTouches changedTouches scale rotation'.split(' ');
+    },
+
+    messageHooks: function () {
+
+        return 'data origin source'.split(' ');
+    },
+
+    popstateHooks: function () {
+
+        return 'state';
     }
 };
-
-/*
- * Contains different eventHooks
- * See the eventhooks.js module
- * for further information
-
- */
 
 hAzzle.eventHooks = {};
 
@@ -601,24 +680,51 @@ hAzzle.Event = function (event, element) {
     self.originalEvent = event;
     self.target = target && target.nodeType === 3 ? target.parentNode : target;
 
-    cleaned = self.fixHook[type];
+
+    cleaned = hAzzle.event.fixHook[type];
 
     if (!cleaned) {
-        self.fixHook[type] = cleaned =
-            mouseEvent.test(type) ? self.mouseHooks :
-            keyEvent.test(type) ? self.keyHooks :
-            this.common;
+        hAzzle.event.fixHook[type] = cleaned =
+
+        // mouse
+
+        mouseEvent.test(type) ? hAzzle.event.mouseHooks :
+
+        // keys
+
+        keyEvent.test(type) ? hAzzle.event.keyHooks :
+
+        // text
+
+        textEvent.test(type) ? hAzzle.event.textHooks :
+
+        // mouseWheel
+
+        mouseWheelEvent.test(type) ? hAzzle.event.mouseWheelHooks :
+
+        // touch and gestures
+
+        touchEvent.test(type) ? hAzzle.event.touchHooks :
+
+        // popstate
+
+        popstateEvent.test(type) ? hAzzle.event.popstateHooks :
+
+        // messages
+
+        messageEvent.test(type) ? hAzzle.event.messageHooks :
+
+        // common
+
+        hAzzle.event.common;
     }
 
     props = cleaned(event, self, type);
-    props = props ? self.props.concat(props) : self.props;
+    props = props ? hAzzle.event.props.concat(props) : hAzzle.event.props;
 
     for (i = props.length; i--;) {
 
-        if (!((p = props[i]) in self) && p in event) {
-
-            self[p] = event[p];
-        }
+        if (!((p = props[i]) in this) && p in event) this[p] = event[p];
     }
 
     return self;
@@ -626,45 +732,6 @@ hAzzle.Event = function (event, element) {
 
 
 hAzzle.Event.prototype = {
-
-    fixHook: {},
-
-    // Common properties for all event types
-
-    props: 'altKey  attrChange attrName bubbles cancelable ctrlKey currentTarget detail eventPhase' +
-        'getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey srcElement target' +
-        'timeStamp type view which propertyName'.split(' '),
-
-    // Return all common properties
-
-    common: function () {
-        return this.props;
-    },
-
-    keyHooks: function (evt, original) {
-        original.keyCode = evt.keyCode || evt.which;
-        return 'char charCode key keyCode keyIdentifier keyLocation location'.split(' ');
-    },
-
-    mouseHooks: function (evt, original, type) {
-        original.rightClick = evt.which === 3 || evt.button === 2;
-        original.pos = {
-            x: 0,
-            y: 0
-        };
-        if (evt.pageX || evt.pageY) {
-            original.clientX = evt.pageX;
-            original.clientY = evt.pageY;
-        } else if (evt.clientX || evt.clientY) {
-            original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
-            original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
-        }
-        if (overOutRegex.test(type)) {
-            original.relatedTarget = evt.relatedTarget || evt[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
-        }
-
-        return 'button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' ');
-    },
 
     preventDefault: function () {
 
@@ -700,7 +767,6 @@ hAzzle.Event.prototype = {
     // Set a "stopped" property so that a custom event can be inspected
 
     stop: function () {
-
         this.stopped = true;
         this.preventDefault();
         this.stopPropagation();
@@ -717,7 +783,6 @@ hAzzle.Event.prototype = {
 
         this.isImmediatePropagationStopped = returnTrue;
     },
-
     isImmediatePropagationStopped: function () {
 
         var toE = this.originalEvent;
@@ -727,8 +792,9 @@ hAzzle.Event.prototype = {
             return toE.isImmediatePropagationStopped();
         }
     },
-
     clone: function (currentTarget) {
+        //TODO: this is ripe for optimisation, new events are *expensive*
+        // improving this will speed up delegated events
         var ne = hAzzle.Event(this, this.element);
         ne.currentTarget = currentTarget;
         return ne;
@@ -777,6 +843,7 @@ Registry.prototype = {
         var call = function (event, eargs) {
                 return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
             },
+
             getTarget = function (evt, eventElement) {
                 var target = fn.__hAzzle ? findTarget(fn.__hAzzle.selector, evt.target, this) : eventElement;
                 fn.__hAzzle.currentTarget = target;
@@ -867,8 +934,6 @@ Registry.prototype = {
 
 function rootListener(evt, type) {
 
-    // Todo!  Add RAF support 
-
     var listeners = hAzzle.event.get(this, type || evt.type, null, false),
         l = listeners.length,
         i = 0;
@@ -912,7 +977,6 @@ function rootListener(evt, type) {
  *
  * hAzzle(document).on('click', hAzzle('p'), function(e) {}
  *
- *
  */
 
 function findTarget(selector, target, root) {
@@ -922,21 +986,13 @@ function findTarget(selector, target, root) {
 
     root = (root === win) ? doc : root;
 
-    var i, matches;
-
-    if (cache[selector]) {
-
-        matches = cache[selector];
-
-    } else {
-
-        cache[selector] = hAzzle(selector, root);
-        matches = cache[selector];
-    }
-
-
+    var i, matches = cache[selector] ? cache[selector] : cache[selector] = hAzzle(selector, root);
     for (; target !== root; target = target.parentNode || root) {
         if (matches !== null) {
+
+            // Note!! if you use an while-loop here, you are sending
+            // Firefox into infinity with huge crach
+
             for (i = matches.length; i--;) {
                 if (matches[i] === target) {
                     return target;
@@ -983,17 +1039,6 @@ function delegate(selector, fn) {
 
     return handler;
 }
-
-/**
- *
- * Extend the hAzzle Core
- *
- * on() and off() main functions are inside
- * hAzzle.event, so they can be run
- * direcly from the hAzzle object.
- *
- */
-
 
 hAzzle.extend({
 
@@ -1079,7 +1124,10 @@ hAzzle.extend({
 });
 
 
-var shortcuts = ('blur focus focusin focusout load resize scroll unload click dblclick ' + 'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' + 'change select submit keydown keypress keyup error contextmenu').split(' '),
+var shortcuts = ('blur focus focusin focusout load resize scroll unload click dblclick ' +
+        'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
+        'change select submit keydown keypress keyup error contextmenu').split(' '),
+
     i = shortcuts.length;
 
 while (i--) {
