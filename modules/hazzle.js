@@ -1,6 +1,6 @@
 /*!
  * hAzzle.js
- * Copyright (c) 2014 Kenny Flashlight
+ * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
  * Version: 0.6.7
  * Released under the MIT License.
  *

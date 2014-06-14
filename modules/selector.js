@@ -8,6 +8,10 @@
  * Do NOT use 'call' on 
  *
  * hAzzle.MatchesSelector()
+ *
+ * QSA shouldn't be used on XML docs, so 
+ * check for that in this module
+ *
  */
 
 var
