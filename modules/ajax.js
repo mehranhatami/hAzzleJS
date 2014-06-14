@@ -15,8 +15,10 @@
  **************************/
 var win = this,
     doc = win.document,
-
-    ajaxLocation,
+    
+	// Document location
+    
+	ajaxLocation = location.href,
 
     rbracket = /\[\]$/,
     r20 = /%20/g,
@@ -74,15 +76,6 @@ var win = this,
 // IE may throw an exception when accessing
 // a field from window.location if document.domain has been set
 
-try {
-    ajaxLocation = location.href;
-} catch (e) {
-    // Use the href attribute of an A element
-    // since IE will modify it given document.location
-    ajaxLocation = document.createElement('a');
-    ajaxLocation.href = '';
-    ajaxLocation = ajaxLocation.href;
-}
 
 function getCorrectResponse(header) {
 

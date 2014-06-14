@@ -284,7 +284,7 @@ hAzzle.extend({
                 }
 
                 // Toggle whole class name
-            } else if (type === typeof undefined || type === 'boolean') {
+            } else if (value === undefined || type === "boolean") {
                 if (this.className) {
                     // store className if set
                     hAzzle.data(this, '__className__', this.className);
