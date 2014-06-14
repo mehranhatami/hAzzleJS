@@ -10,10 +10,8 @@ var win = this,
     touchEvent = /^touch|^gesture/i,
     messageEvent = /^message$/i,
     popstateEvent = /^popstate$/i,
-    overOutRegex = /over|out/,
     cache = [],
     doc = win.document || {},
-    root = doc.documentElement || {},
 
     slice = Array.prototype.slice;
 
@@ -598,27 +596,41 @@ hAzzle.event = {
     },
 
     keyHooks: function (evt, original) {
-        original.keyCode = evt.keyCode || evt.which;
+
+        // Add which for key events
+        if (event.which === null) {
+            event.which = original.charCode !== null ? original.charCode : original.keyCode;
+        }
+
         return 'char charCode key keyCode keyIdentifier keyLocation location'.split(' ');
     },
 
-    mouseHooks: function (evt, original, type) {
+    mouseHooks: function (event, original) {
 
-        original.rightClick = evt.which === 3 || evt.button === 2;
-        original.pos = {
-            x: 0,
-            y: 0
-        };
-        if (evt.pageX || evt.pageY) {
-            original.clientX = evt.pageX;
-            original.clientY = evt.pageY;
-        } else if (evt.clientX || evt.clientY) {
-            original.clientX = evt.clientX + doc.body.scrollLeft + root.scrollLeft;
-            original.clientY = evt.clientY + doc.body.scrollTop + root.scrollTop;
+        var eventDoc, doc, body,
+            button = original.button;
+
+        // Add which for click: 1 === left; 2 === middle; 3 === right
+        // Note: button is not normalized, so don't use it
+        if (!event.which && button !== undefined) {
+            event.which = (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
         }
-        if (overOutRegex.test(type)) {
-            original.relatedTarget = evt.relatedTarget || evt[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
+
+
+
+        // Calculate pageX/Y if missing and clientX/Y available
+        if (event.pageX === null && original.clientX !== null) {
+            eventDoc = event.target.ownerDocument || document;
+            doc = eventDoc.documentElement;
+            body = eventDoc.body;
+
+            event.pageX = original.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
+            event.pageY = original.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) - (doc && doc.clientTop || body && body.clientTop || 0);
         }
+
+
+
+
         //console.log(original)
         return 'button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' ');
     },
@@ -719,7 +731,7 @@ hAzzle.Event = function (event, element) {
         hAzzle.event.common;
     }
 
-    props = cleaned(event, self, type);
+    props = cleaned(event, self);
     props = props ? hAzzle.event.props.concat(props) : hAzzle.event.props;
 
     for (i = props.length; i--;) {
@@ -1118,11 +1130,9 @@ hAzzle.extend({
     cloneEvents: function (cloneElem, type) {
         return this.each(function (el) {
             hAzzle.event.clone(el, cloneElem, type);
-
         });
     }
 });
-
 
 var shortcuts = ('blur focus focusin focusout load resize scroll unload click dblclick ' +
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
