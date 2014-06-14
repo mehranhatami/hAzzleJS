@@ -5,6 +5,7 @@ var win = this,
     namespaceRegex = /^([^\.]*(?=\..*)\.|.*)/,
     nameRegex = /(\..*)/,
     overOutRegex = /over|out/,
+    cache = [],
     doc = win.document || {},
     root = doc.documentElement || {},
 
@@ -162,8 +163,6 @@ hAzzle.event = {
             ));
 
             // Add roothandler if we're the first
-
-
 
 
 
@@ -327,6 +326,81 @@ hAzzle.event = {
         }
         return element;
     },
+
+    trigger: function (elem, type, args) {
+
+        var cur, types = type.split(' '),
+            i = types.length,
+            j = 0,
+            l, call, evt, names, handlers;
+
+        cur = elem || doc;
+
+        // Don't do events on text and comment nodes
+
+        if (elem.nodeType === 3 || elem.nodeType === 8 || !type) {
+
+            return;
+        }
+
+        while (i--) {
+
+            type = types[i].replace(nameRegex, '');
+
+            if ((names = types[i].replace(namespaceRegex, ''))) {
+
+                names = names.split('.');
+            }
+
+            if (!names && !args) {
+
+                /**
+                 * Create custom events.
+                 *
+                 * These events can be listened by hAzzle via `on`,
+                 * and by pure javascript via `addEventListener`
+                 *
+                 * Examples:
+                 *
+                 * hAzzle('p').on('customEvent', handler);
+                 *
+                 * hAzzle('p').trigger('customEvent');
+                 *
+                 * window.document.addEventListener("customEvent", handler);
+                 *
+                 */
+
+                evt = new win.Event(type);
+                cur.dispatchEvent(evt);
+
+            } else {
+
+                // non-native event, either because of a namespace, arguments or a non DOM element
+                // iterate over all listeners and manually 'fire'
+
+                handlers = hAzzle.event.get(cur, type, null, false);
+
+                evt = hAzzle.Event(null, cur);
+
+                evt.type = type;
+
+                call = args ? 'apply' : 'call';
+
+                args = args ? [evt].concat(args) : evt;
+
+                l = handlers.length;
+
+                for (; j < l; j++) {
+
+                    if (handlers[j].inNamespaces(names)) {
+
+                        handlers[j].handler.apply(cur, args);
+                    }
+                }
+            }
+        }
+    },
+
 
     /**
      * Detach an event or set of events from an element
@@ -703,11 +777,15 @@ Registry.prototype = {
         var call = function (event, eargs) {
                 return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
             },
-            findTarget = function (event, eventElement) {
-                return fn.__hAzzle ? fn.__hAzzle.ft(event.target, element) : eventElement;
+            getTarget = function (evt, eventElement) {
+                var target = fn.__hAzzle ? findTarget(fn.__hAzzle.selector, evt.target, this) : eventElement;
+                fn.__hAzzle.currentTarget = target;
+                return target;
+
+                //     return fn.__hAzzle ? fn.__hAzzle.ft(event.target, element) : eventElement;
             },
             handler = condition ? function (event) {
-                var target = findTarget(event, this); // delegated event
+                var target = getTarget(event, this); // delegated event
                 if (condition.apply(target, arguments)) {
                     if (event) {
 
@@ -720,7 +798,7 @@ Registry.prototype = {
 
                 if (fn.__hAzzle) {
 
-                    event = event.clone(findTarget(event)); // delegated event, fix the fix
+                    event = event.clone(getTarget(event)); // delegated event, fix the fix
                 }
 
                 return call(event, arguments);
@@ -836,77 +914,73 @@ function rootListener(evt, type) {
  *
  *
  */
-function findElement(selectors, root) {
+
+function findTarget(selector, target, root) {
 
     // We can never find CSS nodes in the window itself
     // so direct it back to document if root = window
 
-    if (root === win) {
+    root = (root === win) ? doc : root;
 
-        root = doc;
+    var i, matches;
 
-    } else {
+    if (cache[selector]) {
 
-        root = root;
-    }
-
-    if (!selectors || selectors === null) {
-
-        return root;
-    }
-
-    if (typeof selectors === 'string') {
+        matches = cache[selector];
 
     } else {
 
-        return hAzzle(selectors, root);
-
+        cache[selector] = hAzzle(selector, root);
+        matches = cache[selector];
     }
 
-    return selectors;
+
+    for (; target !== root; target = target.parentNode || root) {
+        if (matches !== null) {
+            for (i = matches.length; i--;) {
+                if (matches[i] === target) {
+                    return target;
+                }
+            }
+        }
+    }
 }
 
 function delegate(selector, fn) {
-    var findTarget = function (target, root) {
-            var array = findElement(selector, root),
-                i = array.length;
-            for (; target && target !== root; target = target.parentNode) {
-                while (i--) {
-                    if (array[i] === target) {
-                        return target;
-                    }
+
+    // Todo!  Add RAF support 
+
+    function handler(e) {
+
+        var cur = e.target,
+            type = e.type;
+
+        if (cur.nodeType && (!e.button || type !== 'click')) {
+
+            // Don't process clicks on disabled elements
+
+            if (e.target.disabled !== true || type !== 'click') {
+
+                var m = null;
+
+                if (handler.__hAzzle) {
+                    m = handler.__hAzzle.currentTarget;
+                }
+                if (m) {
+
+                    return fn.apply(m, arguments);
                 }
             }
-        },
-
-        // Todo!  Add RAF support 
-
-        handler = function (e) {
-
-            var cur = e.target,
-                type = e.type;
-
-            if (cur.nodeType && (!e.button || type !== 'click')) {
-                // Don't process clicks on disabled elements
-                if (e.target.disabled !== true || type !== 'click') {
-
-                    var match = findTarget(cur, this);
-
-                    if (match) {
-
-                        return fn.apply(match, arguments);
-                    }
-                }
-            }
-        };
+        }
+    }
 
     handler.__hAzzle = {
-        ft: findTarget,
 
         // Don't conflict with Object.prototype properties
 
         selector: selector + ' '
     };
+
     return handler;
 }
 
@@ -958,6 +1032,20 @@ hAzzle.extend({
         });
     },
 
+    /**
+     * Trigger specific event for element collection
+     *
+     * @param {String} type
+     * @return {hAzzle}
+     */
+
+    trigger: function (type, args) {
+
+        return this.each(function (el) {
+            hAzzle.event.trigger(el, type, args);
+        });
+    },
+
     hover: function (fnOver, fnOut) {
         return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
     },
@@ -971,80 +1059,6 @@ hAzzle.extend({
     blur: function () {
         return this.each(function (el) {
             return el.blur();
-        });
-    },
-
-    /**
-     * Trigger specific event for element collection
-     *
-     * @param {String} type
-     * @return {hAzzle}
-     */
-
-    trigger: function (type, args) {
-
-        return this.each(function (elem) {
-
-            // Don't do events on text and comment nodes
-
-            if (elem.nodeType === 3 || elem.nodeType === 8) {
-                return;
-            }
-            if (!type) return false;
-
-            // focus/blur morphs to focusin/out; ensure we're not firing them right now
-            if (/^(?:focusinfocus|focusoutblur)$/.test(type + hAzzle.event.triggered)) {
-                return;
-            }
-
-            var types = type.split(' '),
-                i = types.length,
-                j, l, call, event, names, handlers;
-
-            while (i--) {
-                type = types[i].replace(nameRegex, '');
-
-                if ((names = types[i].replace(namespaceRegex, ''))) {
-
-                    names = names.split('.');
-                }
-
-                if (!names && !args) {
-
-                    // Create a Event object that modifies `target` property.
-                    // We could have used 'liveTarget' here
-
-                    var event = doc.createEvent('HTMLEvents');
-
-                    if (type) {
-
-                        event.initEvent(type, true, true, win, 1);
-                    }
-
-                    // In the W3C system, all calls to document.fire should treat
-                    // document.documentElement as the target
-
-                    if (elem.nodeType === 9) {
-                        elem = elem.documentElement;
-                        elem.dispatchEvent(event);
-                    }
-
-
-                } else {
-                    // non-native event, either because of a namespace, arguments or a non DOM element
-                    // iterate over all listeners and manually 'fire'
-                    handlers = hAzzle.event.get(elem, type, null, false);
-                    event = hAzzle.Event(null, elem);
-                    event.type = type;
-                    call = args ? 'apply' : 'call';
-                    args = args ? [event].concat(args) : event;
-                    for (j = 0, l = handlers.length; j < l; j++) {
-                        if (handlers[j].inNamespaces(names)) {
-                            handlers[j].handler.apply(elem, args);
-                        }
-                    }
-                }
-            }
         });
     },
 
