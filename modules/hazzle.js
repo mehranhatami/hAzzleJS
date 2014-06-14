@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 0.6.5
+ * Version: 0.6.7
  * Released under the MIT License.
  *
- * Date: 2014-06-14
+ * Date: 2014-06-15
  */
 (function (window, undefined) {
 
@@ -28,13 +28,8 @@
         /*
          * Holds javascript natives
          */
+
         natives = {},
-
-        // DOM ready related
-
-        readyList = [],
-        readyFired = false,
-        readyEventHandlersInstalled = false,
 
         /**
          * Prototype references.
@@ -67,7 +62,13 @@
 
         hAzzle = function (selector, context) {
             return new Core(selector, context);
-        };
+        },
+
+        readyList = [],
+        readyFired = false,
+        readyEventHandlersInstalled = false;
+
+
 
     // Init Core
 
@@ -97,10 +98,6 @@
      */
 
     hAzzle.Core = Core.prototype = {
-
-        // The current version of hAzzle being used
-
-        hAzzle: '0.7',
 
         /**
          * Returns a new array with the result of calling callback on each element of the array
@@ -172,9 +169,11 @@
      * Extend the contents of two objects
      */
 
-    hAzzle.extend = function (destination, source) {
-
-        for (var property in destination) {
+    hAzzle.extend = function () {
+        var destination = arguments[0],
+            source = arguments[1],
+            property;
+        for (property in destination) {
             // Objects only
             if (destination[property] && destination[property].constructor && typeof destination[property] === 'object') {
                 (source || Core.prototype)[property] = destination[property] || {};
@@ -202,10 +201,12 @@
             }
 
             if (typeof obj === 'undefined') {
+
                 return 'undefined';
             }
 
             if (typeof obj === 'object') {
+
                 return 'object';
             }
 
@@ -223,7 +224,6 @@
             if (hAzzle.isArray(kind)) {
 
                 return hAzzle.inArray(kind, this.type(obj)) >= 0;
-
             }
 
             // Return a boolean if typeof obj is exactly type.
@@ -378,6 +378,7 @@
             var ind, i = 0,
                 l = ar.length;
             for (; i < l; i++) {
+
                 if (args) {
 
                     ind = ar.length - i - 1;
@@ -389,6 +390,7 @@
                 callback.call(scope || ar[ind], ar[ind], ind, ar);
             }
             return ar;
+
         },
 
         /**
@@ -420,25 +422,40 @@
         some: function (ar, fn, scope) {
             var i = 0,
                 j = ar.length;
+
             for (; i < j; ++i) {
+
                 if (fn.call(scope || null, ar[i], i, ar)) {
+
                     return true;
                 }
             }
+
             return false;
         },
+
         normalize: function (node, clone) {
-            var i, l, ret;
+            var i = 0,
+                l = node.length,
+                ret;
+
             if (typeof node === 'string') {
+
                 return hAzzle.create(node);
             }
+
             if (hAzzle.isNode(node)) {
+
                 node = [node];
             }
+
             if (clone) {
+
                 ret = [];
+
                 // don't change original array
-                for (i = 0, l = node.length; i < l; i++) {
+
+                for (; i < l; i++) {
                     ret[i] = hAzzle.cloneNode(node[i]);
                 }
                 return ret;
@@ -469,15 +486,6 @@
 
         arrayLike: function (o) {
             return (typeof o === 'object' && isFinite(o.length));
-        },
-
-        /**
-         * @param {string} s
-         * @return {string}
-         */
-
-        decamelize: function (str) {
-            return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
         },
 
         /**
@@ -639,6 +647,7 @@
                 i = first.length;
 
             for (; j < len; j++) {
+
                 first[i++] = second[j];
             }
 
@@ -669,6 +678,7 @@
         },
 
         // Nothing
+
         noop: function () {},
 
         /**
@@ -680,10 +690,13 @@
          */
 
         filter: function (obj, predicate, context) {
+
             var results = [];
+
             if (obj === null) {
                 return results;
             }
+
             hAzzle.each(obj, function (value, index, list) {
                 if (predicate.call(context, value, index, list)) {
                     results.push(value);
@@ -736,48 +749,20 @@
         // Invoke a method (with arguments) on every item in a collection.
 
         invoke: function (obj, method) {
-            var args = slice.call(arguments, 2),
-                isFunc = typeof method === 'function';
+
+            var args = slice.call(arguments, 2);
+
             return hAzzle.map(obj, function (value) {
-                return (isFunc ? method : value[method]).apply(value, args);
+
+                if (typeof method === 'function') {
+
+                    return method.apply(value, args);
+
+                } else {
+
+                    return value[method].apply(value, args);
+                }
             });
-        },
-
-        /**
-         * Throttle through a function
-         */
-
-        throttle: function (func, wait, options) {
-            var context, args, result, timeout = null,
-                previous = 0;
-            if (!options) {
-                options = options = {};
-            }
-            var later = function () {
-                previous = options.leading === false ? 0 : hAzzle.now();
-                timeout = null;
-                result = func.apply(context, args);
-                context = args = null;
-            };
-            return function () {
-                var now = hAzzle.now();
-                if (!previous && options.leading === false) {
-                    previous = now;
-                }
-                var remaining = wait - (now - previous);
-                context = this;
-                args = arguments;
-                if (remaining <= 0) {
-                    clearTimeout(timeout);
-                    timeout = null;
-                    previous = now;
-                    result = func.apply(context, args);
-                    context = args = null;
-                } else if (!timeout && options.trailing !== false) {
-                    timeout = setTimeout(later, remaining);
-                }
-                return result;
-            };
         },
 
         /**
@@ -839,9 +824,9 @@
      */
 
     hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (element, container) {
-       
-	   return container.compareDocumentPosition && (container.compareDocumentPosition(element) & 16) === 16
-	   
+
+        return container.compareDocumentPosition && (container.compareDocumentPosition(element) & 16) === 16;
+
     } : function (a, b) {
         if (b) {
             while ((b = b.parentNode)) {

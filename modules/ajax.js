@@ -71,8 +71,6 @@ var win = this,
         return hAzzle.param(hAzzle.serializeArray.apply(null, arguments));
     };
 
-
-
 // IE may throw an exception when accessing
 // a field from window.location if document.domain has been set
 
@@ -312,8 +310,8 @@ ajax.prototype = {
             } else {
 
                 throw new Error('Browser does not support cross-origin requests');
-
             }
+
         } else {
 
             try {
