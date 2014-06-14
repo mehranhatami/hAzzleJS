@@ -121,7 +121,16 @@ function cSFH(html) {
 
 hAzzle.extend({
 
-    /**
+    
+	exact: function (el, attribute) {
+      return el.getAttribute(attribute, 2);
+    },
+	
+	setChecked: function (el, value) {
+      el.checked = !!value;
+    },
+	
+	/**
      * Get attribute from element
      * Set attribute to element collection
      *
@@ -618,7 +627,7 @@ hAzzle.extend({
         }, 1);
     },
 
-    /**
+	/**
      * @param {hAzzle|string|Element|Array} node
      * @return {hAzzle}
      */

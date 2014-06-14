@@ -34,7 +34,7 @@ var win = this,
         }
     },
 
-    getStyles = hAzzle.features.computedStyle ? function (el) {
+    getComputedStyle = hAzzle.features.computedStyle ? function (el) {
 
         if (el) {
 
@@ -229,7 +229,7 @@ hAzzle.extend({
         if (hAzzle.isArray(prop)) {
             var map = {},
                 i = 0,
-                styles = getStyles(this[0]),
+                styles = getComputedStyle(this[0]),
                 len = prop.length;
 
             for (; i < len; i++) {
@@ -885,7 +885,7 @@ function curCSS(elem, prop, computed) {
      * http://caniuse.com/getcomputedstyle
      */
 
-    computed = computed || getStyles(elem);
+    computed = computed || getComputedStyle(elem);
 
     if (computed) {
 
