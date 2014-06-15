@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.6.7
+ * Version: 0.6.7a
  * Released under the MIT License.
  *
- * Date: 2014-06-15
+ * Date: 2014-06-16
  */
 (function (window, undefined) {
 
@@ -540,11 +540,10 @@
             if (toString.call(elems) === '[object String]') {
 
                 for (i in elems) {
-                    if (elems.hasOwnProperty(i)) {
-                        value = callback(elems[i], i, arg);
-                        if (value !== null) {
-                            ret.push(value);
-                        }
+
+                    value = callback(elems[i], i, arg);
+                    if (value !== null) {
+                        ret.push(value);
                     }
                 }
             } else {
@@ -592,21 +591,33 @@
 
         getText: function (elem) {
             var node, ret = '',
-                i = 0;
-            if (!elem.nodeType) {
+                i = 0,
+                nodetype = elem.nodeType;
+            if (!nodeType) {
                 // If no nodeType, this is expected to be an array
+
+
+                while ((node = elem[i++])) {
+                    // Do not traverse comment nodes
+                    ret += getText(node);
+                }
+
                 for (;
                     (node = elem[i++]);) {
                     ret += hAzzle.getText(node);
                 }
-            } else if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
+            } else if (nodeType === 1 || nodeType === 9 || nodeType === 11) {
+
                 if (typeof elem.textContent === 'string') {
                     return elem.textContent;
+
+                } else {
+                    for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+                        ret += hAzzle.getText(elem);
+                    }
+
                 }
-                for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-                    ret += hAzzle.getText(elem);
-                }
-            } else if (elem.nodeType === 3 || elem.nodeType === 4) {
+            } else if (nodeType === 3 || elem.nodeType === 4) {
                 return elem.nodeValue;
             }
             return ret;
@@ -660,21 +671,23 @@
          * Finds the elements of an array which satisfy a filter function.
          */
 
-        grep: function (elems, callback, inv, args) {
-            var ret = [],
-                retVal,
+        grep: function (elems, callback, invert) {
+            var callbackInverse,
+                matches = [],
                 i = 0,
-                length = elems.length;
-            inv = !!inv;
+                length = elems.length,
+                callbackExpect = !invert;
+
+            // Go through the array, only saving the items
+            // that pass the validator function
             for (; i < length; i++) {
-                if (i in elems) { // check existance
-                    retVal = !!callback.call(args, elems[i], i); // set callback this
-                    if (inv !== retVal) {
-                        ret.push(elems[i]);
-                    }
+                callbackInverse = !callback(elems[i], i);
+                if (callbackInverse !== callbackExpect) {
+                    matches.push(elems[i]);
                 }
             }
-            return ret;
+
+            return matches;
         },
 
         // Nothing
@@ -823,7 +836,7 @@
      * Check if an element contains another element
      */
 
-   hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
+    hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
         var adown = a.nodeType === 9 ? a.documentElement : a,
             bup = b && b.parentNode;
         return a === bup || !!(bup && bup.nodeType === 1 && (

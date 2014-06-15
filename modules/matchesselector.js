@@ -5,22 +5,11 @@
 var win = this,
     doc = win.document,
     proto = Element.prototype,
-    mS;
-
-/**
- * Vendor function.
- */
-
-var mS = proto.matches || proto.webkitMatchesSelector || proto.mozMatchesSelector || proto.msMatchesSelector || proto.oMatchesSelector;
-
-/**
- * Check for matches
- */
-
-function match(elem, selector) {
-
-    return mS.call(elem, selector);
-}
+    mS = proto.matches ||
+    proto.webkitMatchesSelector ||
+    proto.mozMatchesSelector ||
+    proto.msMatchesSelector ||
+    proto.oMatchesSelector;
 
 /**
  * Append to fragment
@@ -39,74 +28,61 @@ function checkParent(elem) {
     fragment.appendChild(elem);
 }
 
-/**
- * We have to fall back to QSA if
- * matchesSelector not supported e.g ie 9
- */
+// IE9 supports matchesSelector, but doesn't work on orphaned elems
+// check for that
 
-function query(elem, selector) {
-
-    // append to fragment if no parent
-
-    checkParent(elem);
-
-    // match elem with all selected elems of parent
-
-    var elems = elem.parentNode.querySelectorAll(selector),
-        i = 0,
-        len = elems.length;
-
-    // Do a quick loop
-
-    for (; i < len; i++) {
-
-        // return true if match
-
-        if (elems[i] === elem) {
-
-            return true;
-
-        }
-    }
-
-    // otherwise return false
-    return false;
-}
-
-/**
- *  Check if there is an match with the child nodes
- */
-
-function matchChild(elem, selector) {
-
-    checkParent(elem);
-    return match(elem, selector);
-}
+hAzzle.supportsOrphans = assert(function (div) {
+    return mS.call(div, 'div');
+});
 
 /** Expand matchesSelector to the global
  *  hAzzle object
  */
 
-if (mS) {
+hAzzle.matchesSelector = function (elem, selector) {
 
-    // IE9 supports matchesSelector, but doesn't work on orphaned elems
-    // check for that
-    var div = doc.createElement('div'),
+    // If matchesSelector support
 
-        supportsOrphans = match(div, 'div');
+    if (mS) {
 
-    hAzzle.matchesSelector = supportsOrphans ? match : matchChild;
+        // disconnected nodes are said to be in a document fragment in IE 9
 
-    if (div.parentNode) {
-        div.parentNode.removeChild(div);
+        if (hAzzle.supportsOrphans || elem.doc && elem.doc.nodeType !== 11) {
+
+            return mS.call(elem, selector);
+
+        } else {
+
+            checkParent(elem);
+            return mS.call(elem, selector);
+        }
+
+    } else {
+
+        // append to fragment if no parent
+
+        checkParent(elem);
+
+        // match elem with all selected elems of parent
+
+        var elems = elem.parentNode.querySelectorAll(selector),
+            i = 0,
+            len = elems.length;
+
+        // Do a quick loop
+
+        for (; i < len; i++) {
+
+            // return true if match
+
+            if (elems[i] === elem) {
+
+                return true;
+
+            }
+        }
+
+        // otherwise return false
+        return false;
     }
-
-    // Avoid memory leak
-
-    div = null;
-
-} else {
-
-    // QSA
-    hAzzle.matchesSelector = query;
-}
+};
