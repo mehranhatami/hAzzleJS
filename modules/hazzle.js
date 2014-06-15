@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.6.7a
+ * Version: 0.7.1a
  * Released under the MIT License.
  *
  * Date: 2014-06-16
@@ -17,9 +17,6 @@
 
     var win = window,
         doc = win.document,
-        docElem = doc.documentElement,
-
-        ntest = /^[^{]+\{\s*\[native \w/,
 
         // Establish the object that gets returned to break out of a loop iteration.
 
@@ -593,20 +590,20 @@
             var node, ret = '',
                 i = 0,
                 nodetype = elem.nodeType;
-            if (!nodeType) {
+            if (!nodetype) {
                 // If no nodeType, this is expected to be an array
 
 
                 while ((node = elem[i++])) {
                     // Do not traverse comment nodes
-                    ret += getText(node);
+                    ret += hAzzle.getText(node);
                 }
 
                 for (;
                     (node = elem[i++]);) {
                     ret += hAzzle.getText(node);
                 }
-            } else if (nodeType === 1 || nodeType === 9 || nodeType === 11) {
+            } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
 
                 if (typeof elem.textContent === 'string') {
                     return elem.textContent;
@@ -617,7 +614,7 @@
                     }
 
                 }
-            } else if (nodeType === 3 || elem.nodeType === 4) {
+            } else if (nodetype === 3 || nodetype === 4) {
                 return elem.nodeValue;
             }
             return ret;
@@ -831,30 +828,6 @@
             readyList = [];
         }
     }
-
-    /**
-     * Check if an element contains another element
-     */
-
-    hAzzle.contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
-        var adown = a.nodeType === 9 ? a.documentElement : a,
-            bup = b && b.parentNode;
-        return a === bup || !!(bup && bup.nodeType === 1 && (
-            adown.contains ?
-            adown.contains(bup) :
-            a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-        ));
-    } : function (a, b) {
-        if (b) {
-            while ((b = b.parentNode)) {
-                if (b === a) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    };
-
 
     // Populate the native list
     hAzzle.each('Boolean Number String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {

@@ -29,9 +29,15 @@ function Core(selector, context, results, seed) {
 
     if (!seed) {
 
-        results = context.querySelectorAll(selector);
-
-        // Seed
+        try {
+          
+		  results = context.querySelectorAll(selector);
+        
+		// Die silently
+		
+		} catch(e){}
+        
+		// Seed
 
     } else {
 
