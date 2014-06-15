@@ -63,7 +63,7 @@
  hAzzle.eventHooks[a] = {
 
         specalEvents: {
-            name: moupo[b],
+            name: b,
             handler: function (event) {
 
                 var related = event.relatedTarget,
