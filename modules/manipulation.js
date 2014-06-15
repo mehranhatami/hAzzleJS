@@ -121,16 +121,12 @@ function cSFH(html) {
 
 hAzzle.extend({
 
-    
-	exact: function (el, attribute) {
-      return el.getAttribute(attribute, 2);
+
+    exact: function (el, attribute) {
+        return el.getAttribute(attribute, 2);
     },
-	
-	setChecked: function (el, value) {
-      el.checked = !!value;
-    },
-	
-	/**
+
+    /**
      * Get attribute from element
      * Set attribute to element collection
      *
@@ -627,7 +623,7 @@ hAzzle.extend({
         }, 1);
     },
 
-	/**
+    /**
      * @param {hAzzle|string|Element|Array} node
      * @return {hAzzle}
      */
@@ -861,9 +857,9 @@ hAzzle.extend({
         'for': 'htmlFor',
         'class': 'className'
     },
-    
-	// Props to jQuery
-	
+
+    // Props to jQuery
+
     prop: function (elem, name, value) {
 
         var ret, hooks, notxml,
@@ -874,7 +870,7 @@ hAzzle.extend({
             return;
         }
 
-        notxml = nType !== 1 || (elem.ownerDocument || elem).documentElement.nodeName === 'HTML';
+        notxml = nType !== 1 || !!hAzzle.isXML(elem.ownerDocument || elem);
 
         if (notxml) {
             // Fix name and attach hooks

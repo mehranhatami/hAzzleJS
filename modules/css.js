@@ -3,7 +3,7 @@
  */
 var win = this,
     doc = win.document,
-    docElem = doc.documentElement,
+    docElem = hAzzle.docElem,
 
 	// Instance methods
 

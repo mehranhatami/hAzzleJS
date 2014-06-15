@@ -184,6 +184,12 @@
 
     hAzzle.extend({
 
+        // documentElement after adjustments
+        // Note! This can / will be owerwritten 
+        // by document.js module
+
+        docElem: doc.documentElement,
+
         /**
          * Determine the type of object being tested.
          *
@@ -319,6 +325,7 @@
                 return result;
             }
             hAzzle.each(obj, function (value, index, list) {
+
                 if (!(result = result && predicate.call(context, value, index, list))) {
                     return breaker;
                 }

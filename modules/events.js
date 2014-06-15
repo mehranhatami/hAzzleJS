@@ -1,6 +1,10 @@
 var win = this,
     doc = win.document || {},
-    docElem = doc.documentElement,
+
+    // Make sure we allways are on the correct document
+    
+	docElem = hAzzle.docElem,
+
     evwhite = (/\S+/g),
     mouseEvent = /^click|mouse(?!(.*wheel|scroll))|menu|pointer|contextmenu|drag|drop/i,
     keyEvent = /^key/,
