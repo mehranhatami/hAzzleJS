@@ -27,7 +27,7 @@ var contains,
 
         if (doc === document || doc.nodeType !== 9 || !doc.documentElement) {
             return document;
-        }
+         }
 
         // Set our document
 
@@ -39,7 +39,7 @@ var contains,
 
         // Checks if this is an XML or HTML doc
 
-        hAzzle.documentIsHTML = !hAzzle.isXML(doc);
+        hAzzle.documentIsHTML = !!hAzzle.isXML(doc);
 
         // Quick iFrame check
 

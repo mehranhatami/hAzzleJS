@@ -185,10 +185,16 @@
     hAzzle.extend({
 
         // documentElement after adjustments
-        // Note! This can / will be owerwritten 
+        // Note! This can / will be overwritten 
         // by document.js module
 
         docElem: doc.documentElement,
+		
+		// Tells if the document are XML or HTML
+		// Always set to false, but can be
+		// overwritten by document.js module
+		
+		documentIsHTML: false,
 
         /**
          * Determine the type of object being tested.
