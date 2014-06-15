@@ -16,8 +16,9 @@
 
 var
     win = window,
-    doc = win.document,
-    docElem = window.document.documentElement,
+    doc = document,
+    winDoc = win.document,
+    docElem = hAzzle.docElem,
     idclasstag = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
     whitespace = "[\\x20\\t\\r\\n\\f]",
     rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g");
@@ -69,6 +70,11 @@ hAzzle.extend({
             bool, // Boolean for filter function
             elem, m, nodeType,
             i = 0;
+alert('*');
+	   if ( ( context ? context.ownerDocument || context : winDoc ) !== doc ) {
+		      
+			  setDocument( context );
+	    }
 
         results = results || [];
         context = context || doc;

@@ -34,10 +34,10 @@ var contains,
         document = doc;
 
         // Set correct documentElement for hAzzle to use
-		
+
         docElem = hAzzle.docElem = doc.documentElement;
 
-        // Support tests
+        // Checks if this is an XML or HTML doc
 
         hAzzle.documentIsHTML = !hAzzle.isXML(doc);
 
@@ -52,28 +52,10 @@ var contains,
                     setDocument();
 
                 }, false);
-
-            } 
+            }
         }
 
-        contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
-            var adown = a.nodeType === 9 ? a.documentElement : a,
-                bup = b && b.parentNode;
-            return a === bup || !!(bup && bup.nodeType === 1 && (
-                adown.contains ?
-                adown.contains(bup) :
-                a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-            ));
-        } : function (a, b) {
-            if (b) {
-                while ((b = b.parentNode)) {
-                    if (b === a) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        };
+       
 
         // Return the document
 
@@ -84,7 +66,44 @@ var contains,
 
 /**
  * Check if an element contains another element
+ *
+ * docElem are called from here, because at this point it can have been
+ * overwritten by setDocument()
+ *
  */
+
+var docElem = hAzzle.docElem,
+    contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
+
+            var adown,
+                bup = b && b.parentNode;
+
+            if (a.nodeType === 9) {
+
+                adown = a.documentElement;
+
+            } else {
+
+                adown = a;
+            }
+
+            return a === bup || !!(bup && bup.nodeType === 1 && (
+                adown.contains ?
+                adown.contains(bup) :
+                a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+            ));
+        } : function (a, b) {
+
+            if (b) {
+                while ((b = b.parentNode)) {
+                    if (b === a) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
 
 hAzzle.contains = function (context, elem) {
     // Set document vars if needed
@@ -93,6 +112,7 @@ hAzzle.contains = function (context, elem) {
     }
     return contains(context, elem);
 };
+
 
 
 // Initialize against the default document
