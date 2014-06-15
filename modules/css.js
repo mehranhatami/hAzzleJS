@@ -5,7 +5,7 @@ var win = this,
     doc = win.document,
     docElem = hAzzle.docElem,
 
-	// Instance methods
+    // Instance methods
 
     own = ({}).hasOwnProperty,
 
@@ -544,69 +544,62 @@ hAzzle.extend({
 
     style: function (elem, name, value) {
 
-        var type, p, hooks, ret;
-
-        // Don't set styles on text and comment nodes
-
-        if (!elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style) {
-
-            return;
-        }
-
-        var style = elem.style;
-
         // Check if we're setting a value
 
         if (value !== undefined) {
 
-            type = typeof value;
+            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8) && style) {
 
-            // Camelize the name
+                var type = typeof value,
+                    p, hooks, ret, style = elem.style;
 
-            p = hAzzle.camelize(name);
+                // Camelize the name
 
-            name = hAzzle.cssProps[p] || (hAzzle.cssProps[p] = vendorPrefixed(style, p));
+                p = hAzzle.camelize(name);
 
-            // Props to jQuery
+                name = hAzzle.cssProps[p] || (hAzzle.cssProps[p] = vendorPrefixed(style, p));
 
-            hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[p];
+                // Props to jQuery
 
-            // convert relative number strings
+                hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[p];
 
-            if (type === 'string' && (ret = numbs.exec(value))) {
+                // convert relative number strings
 
-                value = hAzzle.units(removeUnits(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
-                type = 'number';
-            }
+                if (type === 'string' && (ret = numbs.exec(value))) {
 
-            // Make sure that null and NaN values aren't set.
+                    value = hAzzle.units(removeUnits(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    type = 'number';
+                }
 
-            if (value === null || value !== value) {
+                // Make sure that null and NaN values aren't set.
 
-                return;
-            }
+                if (value === null || value !== value) {
 
-            // If a number was passed in, add 'px' to the (except for certain CSS properties)
+                    return;
+                }
 
-            if (type === 'number' && !hAzzle.unitless[name]) {
+                // If a number was passed in, add 'px' to the (except for certain CSS properties)
 
-                value += ret && ret[3] ? ret[3] : "px";
-            }
+                if (type === 'number' && !hAzzle.unitless[name]) {
 
-            if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+                    value += ret && ret[3] ? ret[3] : "px";
+                }
 
-                style[hAzzle.camelize(name)] = 'inherit';
-            }
+                if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
 
-            // If a hook was provided, use that value, otherwise just set the specified value
+                    style[hAzzle.camelize(name)] = 'inherit';
+                }
 
-            if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value)) !== undefined) {
-                style[p] = hAzzle.setter(elem, value);
+                // If a hook was provided, use that value, otherwise just set the specified value
+
+                if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value)) !== undefined) {
+                    style[p] = hAzzle.setter(elem, value);
+                }
             }
 
         } else {
 
-            return style[name];
+            return elem && style[name];
         }
     },
 
