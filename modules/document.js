@@ -25,7 +25,7 @@ var contains,
 
         // If no document and documentElement is available, return
 
-        if (doc === document || doc.nodeType !== 9 || !doc.documentElement) {
+        if (doc === document || doc.nodeType !== 9 || !hAzzle.docElem) {
             return document;
          }
 

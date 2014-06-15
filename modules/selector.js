@@ -70,7 +70,7 @@ hAzzle.extend({
             bool, // Boolean for filter function
             elem, m, nodeType,
             i = 0;
-alert('*');
+
 	   if ( ( context ? context.ownerDocument || context : winDoc ) !== doc ) {
 		      
 			  setDocument( context );
