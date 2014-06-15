@@ -1,6 +1,18 @@
 /**
- * Set correct doc type for hAzzle
+ * Set correct document for hAzzle
+ *
+ * This will give us some new global hAzzle functions:
+ *
+ * - hAzzle.setDocument();
+ *
+ * - hAzzle.documentIsHTML ( boolean - true / false )
+ *
+ * - hAzzle.sortOrder
+ *
+ * - hAzzle.contains
+ *
  */
+ 
 var docElem,
     contains,
     winDoc = window.document,
@@ -8,53 +20,53 @@ var docElem,
     setDocument,
     ntest = /^[^{]+\{\s*\[native \w/,
     sortInput,
-   
-   // We have to change this to hAzzle.inArray() after
-   // some extra checks
+
+    // We have to change this to hAzzle.inArray() after
+    // some extra checks
 
     indexOf = Array.prototype.indexOf,
-	
-    sortOrder = function (a, b) {
-        if (a === b) {
-            hasDuplicate = true;
-        }
-        return 0;
-    },
-    
-	// Set our main document
-    
-	setDocument = hAzzle.setDocument = function (node) {
+
+    sortOrder,
+
+    // Set our main document
+
+    setDocument = hAzzle.setDocument = function (node) {
 
         var doc = node ? node.ownerDocument || node : winDoc,
             parent = doc.defaultView;
 
-     // If no document and documentElement is available, return
-        if (doc === document || doc.nodeType !== 9 || !doc.documentElement) {
+        // If no document and documentElement is available, return
+        
+		if (doc === document || doc.nodeType !== 9 || !doc.documentElement) {
               return document;
-          }
+         }
 
         // Set our document
 
         document = doc;
         docElem = doc.documentElement;
 
+        // Support tests
+
+        hAzzle.documentIsHTML = !hAzzle.isXML(doc);
+
         // Quick iFrame check
 
         if (parent && parent !== parent.top) {
 
             if (parent.addEventListener) {
-				
+
                 parent.addEventListener("unload", function () {
-                
-				    setDocument();
-               
-			    }, false);
-				
+
+                    setDocument();
+
+                }, false);
+
             } else if (parent.attachEvent) {
-				
+
                 parent.attachEvent("onunload", function () {
-                
-				    setDocument();
+
+                    setDocument();
                 });
             }
         }
@@ -83,18 +95,19 @@ var docElem,
         sortOrder = ntest.test(docElem.compareDocumentPosition) ? function (a, b) {
 
                 // Flag for duplicate removal
-				
+
                 if (a === b) {
+
                     hasDuplicate = true;
                     return 0;
                 }
 
                 // Sort on method existence if only one input has compareDocumentPosition
-               
-			    var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-				
+
+                var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+
                 if (compare) {
-					
+
                     return compare;
                 }
 
@@ -107,11 +120,11 @@ var docElem,
 
                     // Choose the first element that is related to our preferred document
                     if (a === doc || a.ownerDocument === winDoc && contains(winDoc, a)) {
-						
+
                         return -1;
                     }
                     if (b === doc || b.ownerDocument === winDoc && contains(winDoc, b)) {
-						
+
                         return 1;
                     }
 
@@ -177,18 +190,16 @@ var docElem,
                     0;
             };
 
-
         return doc;
     };
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
-hAzzle.sortOrder = sortOrder;
-
 /**
  * Check if an element contains another element
  */
 
+hAzzle.sortOrder = sortOrder;
 hAzzle.contains = function (context, elem) {
     // Set document vars if needed
     if ((context.ownerDocument || context) !== document) {
@@ -197,8 +208,6 @@ hAzzle.contains = function (context, elem) {
     return contains(context, elem);
 };
 
-
-
 function siblingCheck(a, b) {
     var cur = b && a,
         diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
@@ -206,7 +215,7 @@ function siblingCheck(a, b) {
         (~a.sourceIndex || 1 << 31);
 
     // Use IE sourceIndex if available on both nodes
-	
+
     if (diff) {
         return diff;
     }
