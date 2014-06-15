@@ -53,13 +53,7 @@ var contains,
 
                 }, false);
 
-            } else if (parent.attachEvent) {
-
-                parent.attachEvent("onunload", function () {
-
-                    setDocument();
-                });
-            }
+            } 
         }
 
         contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
