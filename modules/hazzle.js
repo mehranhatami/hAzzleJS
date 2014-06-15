@@ -41,6 +41,7 @@
         slice = ArrayProto.slice,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
+        keys = Object.keys,
         trim = String.prototype.trim,
 
         /*
@@ -118,6 +119,19 @@
         },
 
         /**
+		 * Loop through objects
+		 *
+         * @param {function} fn
+         * @param {Object} obj
+         * @return {hAzzle}
+         */
+
+        forOwn: function (fn, obj) {
+            return hAzzle.forOwn(this, fn, obj);
+        },
+
+
+        /**
          * @param {function} fn
          * @param {Object} obj
          * @return {hAzzle}
@@ -189,12 +203,12 @@
         // by document.js module
 
         docElem: doc.documentElement,
-		
-		// Tells if the document are XML or HTML
-		// Always set to false, but can be
-		// overwritten by document.js module
-		
-		documentIsHTML: false,
+
+        // Tells if the document are XML or HTML
+        // Always set to false, but can be
+        // overwritten by document.js module
+
+        documentIsHTML: false,
 
         /**
          * Determine the type of object being tested.
@@ -621,6 +635,8 @@
                 if (typeof elem.textContent === 'string') {
                     return elem.textContent;
 
+
+
                 } else {
                     for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
                         ret += hAzzle.getText(elem);
@@ -814,6 +830,16 @@
                 x = 0;
             }
             return Math.rand(x, y);
+        },
+
+        // Loop through Objects
+
+        forOwn: function (obj, fn, arg) {
+            hAzzle.each(keys(obj), function (key) {
+                fn.call(arg, key, obj[key]);
+            });
+
+            return arg;
         }
 
     }, hAzzle);

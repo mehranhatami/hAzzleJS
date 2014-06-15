@@ -41,7 +41,8 @@
  * the eventHook
  *
  */
- 
+
+ // Mehran!! You can use forOwn() function here now
  
 /**
  *
@@ -51,18 +52,18 @@
  * the hAzzle.each() fixed
  *
  */
-var xx,
-    moupo = {
+
+ hAzzle.forOwn({
         'pointerenter': 'pointerover',
         'pointerleave': 'pointerout',
         'mouseenter': 'mouseover',
         'mouseleave': 'mouseout',
-    };
-for (xx in moupo) {
-    hAzzle.eventHooks[xx] = {
+    }, function(a, b) {
+		
+ hAzzle.eventHooks[a] = {
 
         specalEvents: {
-            name: moupo[xx],
+            name: moupo[b],
             handler: function (event) {
 
                 var related = event.relatedTarget,
@@ -70,9 +71,10 @@ for (xx in moupo) {
                 return !related ? related === null : (related !== target && !hAzzle.contains(related, target));
             }
         }
-    };
-    // End of loop	 
-}
+	}
+});
+
+
 
 hAzzle.eventHooks['focus'] = {
     delegateType: 'focusIn'

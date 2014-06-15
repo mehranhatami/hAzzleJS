@@ -1,7 +1,7 @@
 var win = this,
     doc = win.document || {},
 
-    // Make sure we allways are on the correct document
+    // Make sure we always are on the correct document
     
 	docElem = hAzzle.docElem,
 
@@ -1155,18 +1155,16 @@ hAzzle.extend({
         });
     }
 });
-
-var shortcuts = ('blur focus focusin focusout load resize scroll unload click dblclick ' +
+hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
-        'change select submit keydown keypress keyup error contextmenu').split(' '),
-
-    i = shortcuts.length;
-
-while (i--) {
-    // Handle event binding
-    hAzzle.Core[shortcuts[i]] = function (data, fn) {
+        'change select submit keydown keypress keyup error contextmenu').split(' '), function(evt) {
+			
+			
+    hAzzle.Core[evt] = function (delegate, fn) {
         return arguments.length > 0 ?
-            this.on(shortcuts[i], data, fn) :
-            this.trigger(shortcuts[i]);
+            this.on(evt, delegate,  fn) :
+            this.trigger(evt);
     };
-}
+			
+			
+			});

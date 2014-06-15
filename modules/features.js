@@ -137,7 +137,7 @@
 		   mS: proto.matches ||
                proto.webkitMatchesSelector ||
                proto.mozMatchesSelector ||
-               proto.msMatchesSelector ||
+             //  proto.msMatchesSelector || - QSA faster in Internet Explorer
                proto.oMatchesSelector
       };
 
