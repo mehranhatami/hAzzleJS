@@ -1,4 +1,4 @@
-  /**
+ /**
    * An function used to flag environments/features.
    */
   var win = this;
@@ -6,13 +6,14 @@
   hAzzle.features = function () {
 
       var checkOn,
+          doc = document,
           optSelected,
           optDisabled,
           radioValue,
 
-          input = document.createElement("input"),
-          select = document.createElement("select"),
-          opt = select.appendChild(document.createElement("option"));
+          input = doc.createElement("input"),
+          select = doc.createElement("select"),
+          opt = select.appendChild(doc.createElement("option"));
 
       input.type = "checkbox";
 
@@ -24,7 +25,7 @@
 
       optDisabled = !opt.disabled;
 
-      input = document.createElement("input");
+      input = doc.createElement("input");
       input.value = "t";
       input.type = "radio";
 
@@ -45,7 +46,7 @@
       input = select = opt = null;
 
       var clsp,
-          e = document.createElement('p');
+          e = doc.createElement('p');
       clsp = !!e.classList;
 
       if (e.parentNode) {
@@ -56,10 +57,9 @@
 
       var checkClone,
           noCloneChecked,
-		  clsp,
-          fragment = document.createDocumentFragment(),
-          divv = fragment.appendChild(document.createElement("div")),
-          inp = document.createElement("input");
+          fragment = doc.createDocumentFragment(),
+          divv = fragment.appendChild(doc.createElement("div")),
+          inp = doc.createElement("input");
 
       inp.setAttribute("type", "radio");
       inp.setAttribute("checked", "checked");
@@ -78,11 +78,9 @@
 
       input = fragment = null;
 
-      var dcl, d = document.createElement('div');
+      var dcl, d = doc.createElement('div');
 
       d.classList.add('a', 'b');
-      
-	  clsp = !! d.classList;
 
       dcl = /(^| )a( |$)/.test(d.className) && /(^| )b( |$)/.test(d.className);
 
@@ -91,7 +89,6 @@
       }
 
       d = null;
-
 
       return {
           checkOn: checkOn,
@@ -109,14 +106,48 @@
 
           // Check if support computedStyle
 
-          computedStyle: document.defaultView && document.defaultView.getComputedStyle,
+          computedStyle: doc.defaultView && doc.defaultView.getComputedStyle,
 
           // Check if support RAF
 
           supportRAF: !!win.requestAnimationFrame,
-		  classList: clsp,
+
+          classList: clsp,
 
           sMa: dcl,
+
+          // Check if getElementsByClassName are supported 
+
+          gEBCN: assert(function (div) {
+              div.innerHTML = "<div class='a'></div><div class='a i'></div>";
+			  div.firstChild.className = "i";
+		     return div.getElementsByClassName("i").length === 2;
+          }),
+
+          // Check if getElementById returns elements by name (IE 9)
+
+          gEBI: assert(function (div) {
+              var sid = "hAzzle" + -(new Date());
+              doc.documentElement.appendChild(div).id = sid;
+              return !doc.getElementsByName || !doc.getElementsByName(sid).length;
+          }),
       };
 
   }();
+
+  function assert(fn) {
+      var div = document.createElement("div");
+
+      try {
+          return !!fn(div);
+      } catch (e) {
+          return false;
+      } finally {
+          // Remove from its parent by default
+          if (div.parentNode) {
+              div.parentNode.removeChild(div);
+          }
+          // release memory in IE
+          div = null;
+      }
+  }
