@@ -563,6 +563,7 @@ hAzzle.extend({
 
     not: function (selector) {
         return hAzzle.filter(this, function (elem) {
+		// Call our matchesselector.js module directly
             return !hAzzle.matches(selector, elem);
         });
     },

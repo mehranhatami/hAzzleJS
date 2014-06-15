@@ -1,15 +1,19 @@
 /**
  * Checks for support for matchesSelector, with
  * fallback to QSA
+ *
+ * Note! All browsers supports matchesSelector
+ * so this 'shim' are only for IE9.
+ *
+ * QSA can be buggy, but no in IE9, and we are
+ * not using QSA in the selector engine, so we
+ * avoid any problems.
  */
 var win = this,
     doc = win.document,
-    proto = Element.prototype,
-    mS = proto.matches ||
-    proto.webkitMatchesSelector ||
-    proto.mozMatchesSelector ||
-    proto.msMatchesSelector ||
-    proto.oMatchesSelector;
+    orphans,
+    quotes = /=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g,
+    mS = hAzzle.features.mS;
 
 /**
  * Append to fragment
@@ -31,23 +35,33 @@ function checkParent(elem) {
 // IE9 supports matchesSelector, but doesn't work on orphaned elems
 // check for that
 
-hAzzle.supportsOrphans = assert(function (div) {
+orphans = hAzzle.supportsOrphans = assert(function (div) {
     return mS.call(div, 'div');
 });
 
-/** Expand matchesSelector to the global
+
+/** Expand matchesSelector / QSA to the global
  *  hAzzle object
  */
 
 hAzzle.matchesSelector = function (elem, selector) {
 
+    // Set document vars if needed
+
+    if ((elem.ownerDocument || elem) !== document) {
+
+        hAzzle.setDocument(elem);
+    }
+
+    selector = selector.replace(quotes, "='$1']");
+
     // If matchesSelector support
 
-    if (mS) {
+    if (mS && !!hAzzle.isXML(elem)) {
 
         // disconnected nodes are said to be in a document fragment in IE 9
 
-        if (hAzzle.supportsOrphans || elem.doc && elem.doc.nodeType !== 11) {
+        if (orphans || elem.doc && elem.doc.nodeType !== 11) {
 
             return mS.call(elem, selector);
 

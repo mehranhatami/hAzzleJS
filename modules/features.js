@@ -10,7 +10,7 @@
           optSelected,
           optDisabled,
           radioValue,
-
+          proto = Element.prototype,
           input = doc.createElement("input"),
           select = doc.createElement("select"),
           opt = select.appendChild(doc.createElement("option"));
@@ -131,10 +131,18 @@
               doc.documentElement.appendChild(div).id = sid;
               return !doc.getElementsByName || !doc.getElementsByName(sid).length;
           }),
+		  
+		  // MatchesSelector
+		  // Use un-prefixed if we can
+		   mS: proto.matches ||
+               proto.webkitMatchesSelector ||
+               proto.mozMatchesSelector ||
+               proto.msMatchesSelector ||
+               proto.oMatchesSelector
       };
 
   }();
-
+  
   function assert(fn) {
       var div = document.createElement("div");
 
@@ -151,3 +159,4 @@
           div = null;
       }
   }
+  
