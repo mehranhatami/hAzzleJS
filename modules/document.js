@@ -10,6 +10,7 @@
  * - hAzzle.contains
  *
  */
+
 var contains,
     docElem,
     winDoc = window.document,
@@ -26,6 +27,7 @@ var contains,
         // If no document and documentElement is available, return
 
         if (doc === document || doc.nodeType !== 9 || !hAzzle.docElem) {
+			
             return document;
          }
 
@@ -38,9 +40,13 @@ var contains,
         docElem = hAzzle.docElem = doc.documentElement;
 
         // Checks if this is an XML or HTML doc
-
-        hAzzle.documentIsHTML = !!hAzzle.isXML(doc);
-
+		// If XML doc, set to false, else keep it's original value
+        
+		if( hAzzle.isXML(doc) ) {
+			
+		   hAzzle.documentIsHTML = false;
+		}
+        
         // Quick iFrame check
 
         if (parent && parent !== parent.top) {

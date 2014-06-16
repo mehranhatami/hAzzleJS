@@ -458,35 +458,6 @@
             return false;
         },
 
-        normalize: function (node, clone) {
-            var i = 0,
-                l = node.length,
-                ret;
-
-            if (typeof node === 'string') {
-
-                return hAzzle.create(node);
-            }
-
-            if (hAzzle.isNode(node)) {
-
-                node = [node];
-            }
-
-            if (clone) {
-
-                ret = [];
-
-                // don't change original array
-
-                for (; i < l; i++) {
-                    ret[i] = hAzzle.cloneNode(node[i]);
-                }
-                return ret;
-            }
-            return node;
-        },
-
         // Convert camelCase to  CSS-style
         // e.g. boxSizing -> box-sizing
 

@@ -26,7 +26,7 @@ var win = this,
     hooks = {
 
         'SELECT': function (elem) {
-
+            // selectbox has special case
             var option,
                 options = elem.options,
                 index = elem.selectedIndex,
@@ -493,7 +493,7 @@ hAzzle.extend({
         }
 
         var append = function (el, i) {
-            hAzzle.each(hAzzle.normalize(value, i), function (node) {
+            hAzzle.each(hAzzle.stabilizeHTML(value, i), function (node) {
                 el.appendChild(node);
             });
         };
@@ -557,19 +557,30 @@ hAzzle.extend({
      * @param {hAzzle|string|Element|Array} node
      * @return {hAzzle}
      */
-
-    append: function (node) {
-        return typeof node === 'string' && !hAzzle.isXML(this[0]) ?
-            this.each(function () {
-                iAh(this, 'beforeend', node);
+	 
+	 
+	 append: function (node) {
+        var target, ntype;
+        return typeof node === 'string' && !hAzzle.documentIsHTML ?
+            this.each(function (el) {
+                iAh(el, 'beforeend', node);
             }) : this.each(function (el, i) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    hAzzle.each(hAzzle.normalize(node, i), function (i) {
-                        // We don't allow text nodes
+                ntype = el.nodeType;
+                if (ntype === 1 || ntype === 9 || ntype === 11) {
+                    var target = hAzzle.stabilizeHTML(node, i);
+                    if (target.length === 1) {
                         if (node.nodeType !== 3) {
-                            el.appendChild(i);
+                            el.appendChild(target[0]);
                         }
-                    });
+                    } else {
+                        hAzzle.each(target, function (i) {
+                            // We don't allow text nodes
+                            if (node.nodeType !== 3) {
+                                el.appendChild(i);
+                            }
+                        });
+
+                    }
                 }
             });
     },
@@ -580,19 +591,27 @@ hAzzle.extend({
      */
 
     prepend: function (node) {
-        return typeof node === 'string' && !hAzzle.isXML(this[0]) ?
-            this.each(function () {
-                iAh(this, 'afterbegin', node);
+        var target, ntype;
+        return typeof node === 'string' && !hAzzle.documentIsHTML ?
+            this.each(function (el) {
+                iAh(el, 'afterbegin', node);
             }) : this.each(function (el, i) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    var first = el.firstChild;
-                    hAzzle.each(hAzzle.normalize(node, i), function (i) {
-                        // We don't allow text nodes
+                ntype = el.nodeType;
+                if (ntype === 1 || ntype === 9 || ntype === 11) {
+                    var target = hAzzle.stabilizeHTML(node, i);
+                    if (target.length === 1) {
                         if (node.nodeType !== 3) {
-                            el.insertBefore(i, first);
-
+                            el.insertBefore(target[0], el.firstChild);
                         }
-                    });
+                    } else {
+                        hAzzle.each(target, function (i) {
+                            // We don't allow text nodes
+                            if (node.nodeType !== 3) {
+                                el.insertBefore(i, el.firstChild);
+                            }
+                        });
+
+                    }
                 }
             });
     },
@@ -604,7 +623,7 @@ hAzzle.extend({
      */
 
     appendTo: function (node) {
-        injectHTML.call(this, node, this, function (t, el) {
+      return injectHTML.call(this, node, this, function (t, el) {
             t.appendChild(el);
         }, 1);
         return this;
@@ -629,11 +648,11 @@ hAzzle.extend({
      */
 
     before: function (node) {
-        return typeof node === 'string' && !hAzzle.isXML(this[0]) ?
+        return typeof node === 'string' && hAzzle.documentIsHTML ?
             this.each(function () {
                 iAh(this, 'beforebegin', node);
             }) : this.each(function (el, i) {
-                hAzzle.each(hAzzle.normalize(node, i), function (i) {
+                hAzzle.each(hAzzle.stabilizeHTML(node, i), function (i) {
                     el.parentNode.insertBefore(i, el);
                 });
             });
@@ -646,11 +665,11 @@ hAzzle.extend({
      */
 
     after: function (node) {
-        return typeof node === 'string' && !hAzzle.isXML(this[0]) ?
+        return typeof node === 'string' && hAzzle.documentIsHTML ?
             this.each(function () {
                 iAh(this, 'afterend', node);
             }) : this.each(function (el, i) {
-                hAzzle.each(hAzzle.normalize(node, i), function (i) {
+                hAzzle.each(hAzzle.stabilizeHTML(node, i), function (i) {
                     el.parentNode.insertBefore(i, el.nextSibling);
                 }, null, 1);
             });
@@ -698,160 +717,30 @@ hAzzle.extend({
      */
 
     replaceWith: function (node) {
-        hAzzle(hAzzle.normalize(node)).insertAfter(this);
+        var node = arguments[0];
+        // Make the changes, replacing each context element with the new content
+
+        hAzzle(hAzzle.stabilizeHTML(node, true)).insertAfter(this);
+
         return this.remove();
     }
 
 });
 
-/**
- * Create HTML
- *
- *  @param {string} html
- *  @param {string} context
- *  @return {hAzzle}
- *
- * 'context' are just an extra parameter so
- * we can create html on CSS nodes as well
- * as document.
- *
- */
-
-hAzzle.create = function (html, context) {
-
-    // Prevent XSS vulnerability
-
-    var tag,
-        defaultContext = typeof doc.implementation.createHTMLDocument === "function" ?
-        doc.implementation.createHTMLDocument() :
-        doc;
-
-    context = context || defaultContext;
-
-    if (html !== '' && typeof html === 'string') {
-
-        // Create script tags
-
-        if (simpleScriptTagRe.test(html)) {
-            return [cSFH(html)];
-        }
-
-        // Single tag
-
-        if ((tag = html.match(singleTag))) {
-
-            return [context.createElement(tag[1])];
-        }
-
-        var el = context.createElement('div'),
-            els = [],
-            p = tag ? htmlMap[tag[1].toLowerCase()] : null,
-            dep = p ? p[2] + 1 : 1,
-            ns = p && p[3],
-            pn = 'parentNode';
-
-        el.innerHTML = p ? (p[0] + html + p[1]) : html;
-
-        while (dep--) {
-
-            if (el.firstChild) {
-
-                el = el.firstChild;
-            }
-        }
-
-        if (ns && el && el.nodeType !== 1) {
-
-            el = el.nextSibling;
-        }
-
-        do {
-
-            if (!tag || el.nodeType == 1) {
-
-                els.push(el);
-            }
-
-        } while ((el = el.nextSibling));
-
-        hAzzle.each(els, function (el) {
-
-            if (el[pn]) {
-                el[pn].removeChild(el);
-            }
-        });
-
-        return els;
-
-    } else {
-
-        return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
-    }
-
-};
-
-
-function injectHTML(target, node, fn, rev) {
-
-    var i = 0,
-        r = [],
-
-        // Try to avoid XSS if we can
-
-        nodes = typeof target === 'string' && target.charAt(0) === '<' &&
-        target[target.length - 1] === ">" &&
-        target.length >= 3 ? target : hAzzle(target);
-
-    // normalize each node in case it's still a string and we need to create nodes on the fly
-
-    hAzzle.each(hAzzle.normalize(nodes), function (t, j) {
-
-        hAzzle.each(node, function (el) {
-
-            fn(t, r[i++] = j > 0 ? hAzzle.cloneNode(node, el) : el);
-
-        }, null, rev);
-
-    }, this, rev);
-
-    node.length = i;
-
-    hAzzle.each(r, function (e) {
-
-        node[--i] = e;
-
-    }, null, !rev);
-
-    return node;
-}
-
-
-hAzzle.propHooks = {
-
-    tabIndex: {
-        get: function (elem) {
-            return elem.hasAttribute('tabindex') ||
-                /^(?:input|select|textarea|button)$/i.test(elem.nodeName) ||
-                elem.href ? elem.tabIndex : -1;
-        }
-    }
-}
-
-// Support: IE9+
-
-if (!hAzzle.features.optSelected) {
-    hAzzle.propHooks.selected = {
-        get: function (elem) {
-            var parent = elem.parentNode;
-            if (parent && parent.parentNode) {
-                parent.parentNode.selectedIndex;
-            }
-            return null;
-        }
-    };
-}
+// Extend the globale hAzzle Object
 
 hAzzle.extend({
+
+    propHooks: {
+
+        tabIndex: {
+            get: function (elem) {
+                return elem.hasAttribute('tabindex') ||
+                    /^(?:input|select|textarea|button)$/i.test(elem.nodeName) ||
+                    elem.href ? elem.tabIndex : -1;
+            }
+        }
+    },
 
     propFix: {
         'for': 'htmlFor',
@@ -888,5 +777,194 @@ hAzzle.extend({
                 ret :
                 elem[name];
         }
+    },
+
+    stabilizeHTML: function (node, clone) {
+        var i = 0,
+            l = node.length,
+            ret;
+
+        if (typeof node === 'string') {
+
+            return hAzzle.create(node);
+        }
+
+        if (hAzzle.isNode(node)) {
+
+            node = [node];
+        }
+
+        if (clone) {
+
+            ret = [];
+
+            // don't change original array
+
+            for (; i < l; i++) {
+                ret[i] = hAzzle.cloneNode(node[i]);
+            }
+
+            return ret;
+        }
+        return node;
+    },
+
+    /**
+     * Create HTML
+     *
+     *  @param {string} html
+     *  @param {string} context
+     *  @return {hAzzle}
+     *
+     * 'context' are just an extra parameter so
+     * we can create html on CSS nodes as well
+     * as document.
+     *
+     */
+
+    create: function (html, context) {
+
+        // Prevent XSS vulnerability
+
+        var tag,
+            defaultContext = typeof doc.implementation.createHTMLDocument === "function" ?
+            doc.implementation.createHTMLDocument() :
+            doc;
+
+        context = context || defaultContext;
+
+        if (html !== '' && typeof html === 'string') {
+
+            // Create script tags
+
+            if (simpleScriptTagRe.test(html)) {
+                return [cSFH(html)];
+            }
+
+            // Single tag
+
+            if ((tag = html.match(singleTag))) {
+
+                return [context.createElement(tag[1])];
+            }
+
+            var el = context.createElement('div'),
+                els = [],
+                p = tag ? htmlMap[tag[1].toLowerCase()] : null,
+                dep = p ? p[2] + 1 : 1,
+                ns = p && p[3],
+                pn = 'parentNode';
+
+            if (p) {
+
+                el.innerHTML = (p[0] + html + p[1]);
+
+            } else {
+
+                el.innerHTML = html;
+
+            }
+
+
+            while (dep--) {
+
+                if (el.firstChild) {
+
+                    el = el.firstChild;
+                }
+            }
+
+            if (ns && el && el.nodeType !== 1) {
+
+                el = el.nextSibling;
+            }
+
+            do {
+
+                if (!tag || el.nodeType == 1) {
+
+                    els.push(el);
+                }
+
+            } while ((el = el.nextSibling));
+
+            hAzzle.each(els, function (el) {
+
+                if (el[pn]) {
+                    el[pn].removeChild(el);
+                }
+            });
+
+            return els;
+
+        } else {
+
+            return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
+        }
     }
-}, hAzzle)
+}, hAzzle);
+
+
+function injectHTML(target, node, fn, rev) {
+
+    var i = 0,
+        r = [],
+        nodes, stabilized;
+
+    if (typeof target === 'string' && target.charAt(0) === '<' &&
+        target[target.length - 1] === ">" &&
+        target.length >= 3) {
+
+        nodes = target;
+
+    } else {
+
+        nodes = hAzzle(target);
+    }
+
+    stabilized = hAzzle.stabilizeHTML(nodes);
+
+    // normalize each node in case it's still a string and we need to create nodes on the fly
+
+    hAzzle.each(stabilized, function (t, j) {
+
+        hAzzle.each(node, function (el) {
+
+            if (j > 0) {
+
+                fn(t, r[i++] = hAzzle.cloneNode(node, el));
+
+            } else {
+
+                fn(t, r[i++] = el);
+            }
+
+        }, null, rev);
+
+    }, this, rev);
+
+    node.length = i;
+
+    hAzzle.each(r, function (e) {
+
+        node[--i] = e;
+
+    }, null, !rev);
+
+    return node;
+}
+
+
+// Support: IE9+
+
+if (!hAzzle.features.optSelected) {
+    hAzzle.propHooks.selected = {
+        get: function (elem) {
+            var parent = elem.parentNode;
+            if (parent && parent.parentNode) {
+                parent.parentNode.selectedIndex;
+            }
+            return null;
+        }
+    };
+}
