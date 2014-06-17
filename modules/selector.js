@@ -1,4 +1,8 @@
 /*!
+ * Selector
+ */
+
+/*!
  * hAzzle Selector Engine (hSE)
  *
  * Note! This module depends on the 
@@ -24,73 +28,35 @@ var
     rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g");
 
 
-rnative = /^[^{]+\{\s*\[native \w/;
-
-function Core(selector, context, results, seed) {
-
-    if (!seed) {
-
-        try {
-          
-		  results = context.querySelectorAll(selector);
-        
-		// Die silently
-		
-		} catch(e){}
-        
-		// Seed
-
-    } else {
-
-        while ((elem = seed[i++])) {
-
-            bool = hAzzle.matchesSelector(elem, selector);
-
-            if (bool) {
-
-                results.push(elem);
-            }
-        }
-    }
-
-    return slice.call(results);
-}
-
 hAzzle.extend({
 
+    expr: {},
+  
     matches: function (selector, context) {
 
         return selector === '*' || hAzzle.matchesSelector(context, selector);
 
     },
 
-    select: function (selector, context, results, seed) {
+  select: function (selector, context, results, seed) {
+    var match,
+      bool, // Boolean for filter function
+      elem, m, nodeType,
+	  elem,
+      i = 0;
 
-        var match,
-            bool, // Boolean for filter function
-            elem, m, nodeType,
-            i = 0;
+    results = results || [];
+    context = context || doc;
 
-	   if ( ( context ? context.ownerDocument || context : winDoc ) !== doc ) {
-		      
-			  setDocument( context );
-	    }
+    if (hAzzle.documentIsHTML && !seed) {
 
-        results = results || [];
-        context = context || doc;
+      // Shortcuts
 
-        // Early return if context is not an element or document
-        if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+      if ((match = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/.exec(selector))) {
 
-            return [];
-        }
+        // #id
 
-        // Shortcuts
-
-        if ((match = idclasstag.exec(selector))) {
-
-            // #id
-            if ((m = match[1])) {
+        if ((m = match[1])) {
 
                 if (nodeType === 9) {
                     elem = context.getElementById(m);
@@ -102,8 +68,10 @@ hAzzle.extend({
                             return results;
                         }
                     } else {
+						
                         return results;
                     }
+					
                 } else {
                     // Context is not a document
                     if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
@@ -112,26 +80,40 @@ hAzzle.extend({
                         return results;
                     }
                 }
+          // .class	
 
-                // .class	
+        } else if ((m = match[2])) {
 
-            } else if ((m = match[2])) {
+          push.apply(results, context.getElementsByClassName(m));
+          return results;
 
-                push.apply(results, context.getElementsByClassName(m));
-                return results;
+          // tag
 
-                // tag
+        } else if ((m = match[3])) {
 
-            } else if ((m = match[3])) {
-
-                push.apply(results, context.getElementsByTagName(selector));
-                return results;
-            }
+          push.apply(results, context.getElementsByTagName(selector));
+          return results;
         }
+      }
 
-        // All others
+      results = context.querySelectorAll(selector);
 
-        return Core(selector.replace(rtrim, "$1"), context, results, seed);
+      // Seed
+
+    } else {
+
+      while ((elem = seed[i++])) {
+
+        bool = hAzzle.matchesSelector(elem, selector);
+
+        if (bool) {
+          results.push(elem);
+        }
+      }
     }
 
+    return slice.call(results);
+
+
+  }
 }, hAzzle);

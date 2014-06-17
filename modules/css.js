@@ -4,11 +4,6 @@
 var win = this,
     doc = win.document,
     docElem = hAzzle.docElem,
-
-    // Instance methods
-
-    own = ({}).hasOwnProperty,
-
     numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
@@ -231,6 +226,7 @@ hAzzle.extend({
         var obj = prop;
 
         if (hAzzle.isArray(prop)) {
+
             var map = {},
                 i = 0,
                 styles = getStyle(this[0]),
@@ -263,24 +259,13 @@ hAzzle.extend({
             obj[prop] = value;
         }
 
-        function fn(el) {
-            var k;
-            for (k in obj) {
-
-                // Check if the 'obj' has its own property
-
-                if (own.call(obj, k)) {
-
-                    // Get only the style for the element
-
-                    hAzzle.style(el, k, obj[k]);
-                }
-            }
-        }
-
         // Loop through, and collect the result
 
-        return this.each(fn);
+        return this.each(function (el) {
+            hAzzle.forOwn(obj, function (key, value) {
+                hAzzle.style(el, key, value);
+            });
+        });
     },
 
     /**
@@ -325,52 +310,6 @@ hAzzle.extend({
             height: bcr.bottom - bcr.top,
             width: bcr.right - bcr.left
         };
-    },
-
-
-
-    /**
-     * @param {number} y
-     */
-
-    scrollTop: function (val) {
-
-        var elem = this[0],
-            win = hAzzle.isWindow(elem) ? elem : elem.nodeType === 9 && elem.defaultView;
-
-        if (typeof val === 'undefined') {
-
-            return val ? val.pageYOffset : elem.scrollTop;
-        }
-        if (win) {
-            win.scrollTo(window.scrollTop);
-        } else {
-            elem.scrollTop = val;
-        }
-    },
-
-    /**
-     * @param {number} val
-     */
-
-    scrollLeft: function (val) {
-        var elem = this[0],
-            win = hAzzle.isWindow(elem) ? elem : elem.nodeType === 9 && elem.defaultView;
-
-        if (typeof val === 'undefined') {
-
-            return val ? val.pageXOffset : elem.scrollLeft;
-        }
-
-        if (win) {
-
-            win.scrollTo(window.scrollLeft);
-
-        } else {
-
-            elem.scrollLeft = val;
-
-        }
     },
 
     offsetParent: function () {
@@ -548,7 +487,7 @@ hAzzle.extend({
 
         if (value !== undefined) {
 
-            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8) && style) {
+            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
 
                 var type = typeof value,
                     p, hooks, ret, style = elem.style;
@@ -593,13 +532,13 @@ hAzzle.extend({
                 // If a hook was provided, use that value, otherwise just set the specified value
 
                 if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value)) !== undefined) {
-                    style[p] = hAzzle.setter(elem, value);
+                    style[p] = value;
                 }
             }
 
         } else {
 
-            return elem && style[name];
+            return elem && elem.style[name];
         }
     },
 
@@ -870,17 +809,9 @@ hAzzle.each(['width', 'height'], function (name) {
 
 
 
-function curCSS(elem, prop, computed) {
+var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
 
     var ret;
-
-    /* FireFox, Chrome/Safari, Opera and IE9+
-     * ONLY supports 'getComputedStyle'
-     *
-     * Some mobile browsers don't support it yet
-     *
-     * http://caniuse.com/getcomputedstyle
-     */
 
     computed = computed || getStyle(elem);
 
@@ -901,4 +832,49 @@ function curCSS(elem, prop, computed) {
 
         ret + "" :
         ret;
-}
+};
+
+
+
+
+// scrollTop and scrollLeft functions
+hAzzle.forOwn({
+    scrollLeft: "pageXOffset",
+    scrollTop: "pageYOffset"
+}, function (method, prop) {
+    var top = "pageYOffset" === prop;
+
+    hAzzle.Core[method] = function (val) {
+        var elem = this[0],
+            win;
+
+        if (hAzzle.isWindow(elem)) {
+
+            win = elem;
+			
+        } else {
+
+            if (elem.nodeType === 9) {
+
+                win = elem.defaultView;
+            }
+        }
+
+        if (val === undefined) {
+
+            return win ? win[prop] : elem[method];
+        }
+
+        if (win) {
+
+            win.scrollTo(!top ? val : window.pageXOffset,
+                top ? val : window.pageYOffset
+            );
+
+        } else {
+
+            elem[method] = val;
+
+        }
+    };
+});

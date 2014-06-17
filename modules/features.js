@@ -142,7 +142,7 @@
       };
 
   }();
-  
+
   function assert(fn) {
       var div = document.createElement("div");
 

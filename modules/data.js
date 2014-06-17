@@ -38,10 +38,13 @@ hAzzle.extend({
         if (elem.nodeType === 1 || elem.nodeType === 9 || !elem.hasOwnProperty('nodeType')) {
 
             if (!elem instanceof hAzzle) {
+				
                 elem = hAzzle(elem);
             }
-
-            var id = hAzzle.getUID(elem);
+           
+		   // get / create unique ID for this element
+           
+		    var id = hAzzle.getUID(elem);
 
             // Nothing to do if there are no data stored on the elem itself
 
@@ -54,8 +57,11 @@ hAzzle.extend({
                 } else {
 
                     if (hAzzle._data[id]) {
+						
                         delete hAzzle._data[id][key];
+						
                     } else {
+						
                         hAzzle._data[id] = null;
                     }
                 }
@@ -68,12 +74,14 @@ hAzzle.extend({
 
         if (elem.nodeType === 1 || elem.nodeType === 9 || !elem.hasOwnProperty('nodeType')) {
 
-            var id = hAzzle._data[hAzzle.getUID(elem)];
+            var pid, 
+			   id = hAzzle._data[hAzzle.getUID(elem)];
 
             // Create and unique ID for this elem
 
             if (!id && elem.nodeType) {
-                var pid = hAzzle.getUID(elem);
+                
+				pid = hAzzle.getUID(elem);
                 id = hAzzle._data[pid] = {};
             }
 
