@@ -786,7 +786,7 @@
 
         // This one has to be fast...
 
-        setter: function (elems, key, value, exec, fn) {
+        setter: function (elems, fn, key, value, exec) {
 
             var len = elems.length,
                 k,

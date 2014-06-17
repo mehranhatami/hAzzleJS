@@ -78,7 +78,7 @@ hAzzle.extend({
      */
 
     attr: function (name, value) {
-        return hAzzle.setter(this, name, value, true, hAzzle.attr);
+        return hAzzle.setter(this, hAzzle.attr, name, value, true);
     },
 
     /**
@@ -153,24 +153,7 @@ hAzzle.extend({
      */
 
     prop: function (name, value) {
-        var el = this[0];
-        // Sets many values
-        if (hAzzle.type(name) === 'object') {
-            return this.each(function (el) {
-                hAzzle.forOwn(name, function (key, value) {
-                    hAzzle.prop(el, key, value);
-                });
-            });
-        }
-
-        if (arguments.length === 1) {
-
-            return el[hAzzle.propFix[name] || name];
-
-        }
-
-        return this.prop(el, name, value);
-
+        return hAzzle.setter(this, hAzzle.prop, name, value, true);
     },
 
     /**
@@ -847,8 +830,6 @@ hAzzle.extend({
 
                 el.innerHTML = (p[0] + html + p[1]);
 
-
-
             } else {
 
                 el.innerHTML = html;
@@ -932,52 +913,53 @@ function stabilizeHTML(node, clone) {
 
 function injectHTML(target, node, fn, rev) {
 
-    var i = 0,
-        r = [],
-        nodes, stabilized;
+        var i = 0,
+            r = [],
+            nodes, stabilized;
 
-    if (isString(target) && target.charAt(0) === '<' &&
-        target[target.length - 1] === ">" &&
-        target.length >= 3) {
+        if (isString(target) && target.charAt(0) === '<' &&
+            target[target.length - 1] === ">" &&
+            target.length >= 3) {
 
-        nodes = target;
+            nodes = target;
 
-    } else {
+        } else {
 
-        nodes = hAzzle(target);
+            nodes = hAzzle(target);
+        }
+
+        stabilized = stabilizeHTML(nodes);
+
+        // normalize each node in case it's still a string and we need to create nodes on the fly
+
+        hAzzle.each(stabilized, function (t, j) {
+
+            hAzzle.each(node, function (el) {
+
+                if (j > 0) {
+
+                    fn(t, r[i++] = hAzzle.cloneNode(node, el));
+
+                } else {
+
+                    fn(t, r[i++] = el);
+                }
+
+            }, null, rev);
+
+        }, this, rev);
+
+        node.length = i;
+
+        hAzzle.each(r, function (e) {
+
+            node[--i] = e;
+
+        }, null, !rev);
+
+        return node;
     }
-
-    stabilized = stabilizeHTML(nodes);
-
-    // normalize each node in case it's still a string and we need to create nodes on the fly
-
-    hAzzle.each(stabilized, function (t, j) {
-
-        hAzzle.each(node, function (el) {
-
-            if (j > 0) {
-
-                fn(t, r[i++] = hAzzle.cloneNode(node, el));
-
-            } else {
-
-                fn(t, r[i++] = el);
-            }
-
-        }, null, rev);
-
-    }, this, rev);
-
-    node.length = i;
-
-    hAzzle.each(r, function (e) {
-
-        node[--i] = e;
-
-    }, null, !rev);
-
-    return node;
-}
+    /* =========================== INTERNAL ========================== */
 
 
 // Support: IE9+
@@ -1029,5 +1011,3 @@ hAzzle.each(('multiple selected checked disabled readOnly required async autofoc
 hAzzle.each('input select option textarea button form details'.split(' '), function (value) {
     boolElem[value.toUpperCase()] = true;
 });
-
-
