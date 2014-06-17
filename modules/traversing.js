@@ -3,163 +3,13 @@
  */
 var arr = [],
     slice = arr.slice,
-    push = arr.push;
+    push = arr.push,
+    indexOf = arr.indexOf,
+	
+	isFunction = hAzzle.isFunction,
+	isString = hAzzle.isString;
 
-/**
- * Traversing method helper for prevNext, prevAll, nextAll, nextUntil etc
- *
- * @param {Array} arr
- * @param {String} dir
- * @param {string} until
- * @param {String} selector
- *
- * @return {Object}
- *
- */
-function doomed(arr, dir, until, selector) {
-
-    var matched = hAzzle.map(arr, function (elem, i, until) {
-        return hAzzle.nodes(elem, dir, until);
-    }, until);
-
-
-    if (selector && typeof selector === "string") {
-        matched = hAzzle.select(selector, null, null, matched);
-    }
-
-    if (this.length > 1) {
-        hAzzle.unique(matched);
-        matched.reverse();
-    }
-
-    return hAzzle(matched);
-}
-
-/*
- * Collect elements
- */
-
-function collect(el, fn) {
-    var ret = [],
-        res, i = 0,
-        j, l = el.length,
-        l2;
-    while (i < l) {
-        j = 0;
-        l2 = (res = fn(el[i], i++)).length;
-        while (j < l2) {
-            ret.push(res[j++]);
-        }
-    }
-    return hAzzle(ret);
-}
-
-function getIndex(selector, index) {
-
-    var type = typeof index;
-
-    if (selector === undefined && type !== "number") {
-
-        return 0;
-
-    } else if (typeof selector === "number") {
-
-        return selector;
-
-    } else if (type === "number") {
-
-        return index;
-
-    } else {
-
-        return null;
-    }
-}
-
-/**
- * Traverse multiple DOM elements
- */
-
-function traversing(el, property, selector, index, expression) {
-
-    // Find our position in the DOM tree
-
-    index = getIndex(selector, index);
-
-    var i,
-        isString,
-        ret = [];
-
-    return collect(el, function (el, elind) {
-
-        i = index || 0;
-        isString = typeof selector === "string" ? selector : '*';
-
-
-        if (!expression) {
-
-            el = el[property];
-        }
-
-        // Always skip document fragments
-
-        while (el && (index === null || i >= 0) && el.nodeType < 11) {
-
-            if (el.nodeType === 1 && (!expression || expression === true || expression(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
-
-                if (index === null && property !== 'nextSibling' && property !== 'parentNode') {
-
-                    ret.unshift(el);
-
-                } else {
-
-                    ret.push(el);
-                }
-            }
-
-            el = el[property];
-        }
-
-        return ret;
-    });
-}
-
-
-/**
- * Given an index & length, return a 'fixed' index, fixes non-numbers & neative indexes
- */
-
-function eqIndex(length, index, def) {
-
-    if (index < 0) {
-		
-        index = length + index;
-    }
-
-    if (index < 0 || index >= length) {
-        return null;
-    }
-    return !index && index !== 0 ? def : index;
-}
-
-/**
- * Filter function, for use by filter(), is() & not()
- */
-
-function filtered(callback) {
-    var to;
-    return callback.nodeType === 1 ? function (el) {
-        return el === callback;
-    } : (to = typeof callback) === 'function' ? function (el, i) {
-        return callback.call(el, i);
-    } : to === 'string' && callback.length ? function (el) {
-        return hAzzle.matches(callback, el);
-    } : function () {
-        return false;
-    };
-}
-
-// Extend hAzzle
+// Extend the Core
 
 hAzzle.extend({
 
@@ -171,7 +21,6 @@ hAzzle.extend({
         return slice.call(this);
     },
 
-
     /**
      * Find the first matched element by css selector
      *
@@ -181,22 +30,30 @@ hAzzle.extend({
      */
 
     find: function (selector) {
-        var i = 0,
+        var i,
             len = this.length,
             ret = [],
             self = this;
 
         // String
 
-        if (typeof selector === "string") {
+        if (isString(selector)) {
 
-            for (; i < len; i++) {
+         // Loop through all elements, and check for match
+		 
+		   for (; i < len; i++) {
+				
                 hAzzle.select(selector, self[i], ret);
-            }
+           }
 
-            // Make sure that the results are unique
+		    // If more then one element, make sure they are unique
 
-            return hAzzle(len > 1 ? hAzzle.unique(ret) : ret);
+           if( len > 1 ) {
+		   
+		      ret = hAzzle.unique(ret); 
+		   } 
+
+            return hAzzle(ret);
 
         } else { // Object
 
@@ -220,17 +77,20 @@ hAzzle.extend({
     index: function (selector) {
 
         // No argument, return index in parent
+
         if (!selector) {
+
             return (this[0] && this[0].parentNode) ? this.parent().children().indexOf(this[0]) : -1;
         }
 
         // index in selector
 
         if (typeof selector === "string") {
-            return Array.prototype.indexOf.call(hAzzle(selector), this[0]);
+			alert(selector)
+            return indexOf.call(hAzzle(selector), this[0]);
         }
 
-        return this.indexOf(hAzzle(selector)[0]);
+	 return this.indexOf( selector[0]);
     },
 
 
@@ -241,7 +101,7 @@ hAzzle.extend({
 
     down: function (selector, index) {
 
-        // Locate where we are in the DOM tree
+        // Try to figure out where in DOM we are
 
         index = getIndex(selector, index);
 
@@ -298,9 +158,17 @@ hAzzle.extend({
         return hAzzle(matched);
     },
 
+   /**
+    * Parents
+    */
+   
     parents: function () {
         return this.up.apply(this, arguments.length ? arguments : ['*']);
     },
+
+   /**
+    * ParentsUntil
+    */
 
     parentsUntil: function (until, selector) {
         return doomed(this, "parentNode", until, selector);
@@ -316,20 +184,20 @@ hAzzle.extend({
      */
 
     closest: function (selector, index) {
-        if (typeof selector === 'number') {
-            index = selector;
+       if (typeof selector === 'number') {
+       
+	        index = selector;
             selector = '*';
-        } else {
-            index = 0;
-        }
+       
+	    } else {
+       
+	        index = 0;
+       
+	    }
         return traversing(this, 'parentNode', selector, index, true);
     },
 
-
-
     /**
-
-
      * Get the immediately preceding sibling of each element
      * OR Nth preceding siblings of each element, if index is specified
      *
@@ -351,8 +219,6 @@ hAzzle.extend({
     prevUntil: function (until, selector) {
         return doomed(this, "previousSibling", until, selector);
     },
-
-
 
     /**
      * Get the immediately following sibling of each element
@@ -672,3 +538,162 @@ hAzzle.extend({
     concat: arr.concat,
     indexOf: arr.indexOf
 });
+
+
+
+/* =========================== PRIVATE FUNCTIONS ========================== */
+
+
+/**
+ * Traversing method helper for prevNext, prevAll, nextAll, nextUntil etc
+ *
+ * @param {Array} arr
+ * @param {String} dir
+ * @param {string} until
+ * @param {String} selector
+ *
+ * @return {Object}
+ *
+ */
+function doomed(arr, dir, until, selector) {
+
+    var matched = hAzzle.map(arr, function (elem, i, until) {
+        return hAzzle.nodes(elem, dir, until);
+    }, until);
+
+
+    if (selector && typeof selector === "string") {
+        matched = hAzzle.select(selector, null, null, matched);
+    }
+
+    if (this.length > 1) {
+        hAzzle.unique(matched);
+        matched.reverse();
+    }
+
+    return hAzzle(matched);
+}
+
+/*
+ * Collect elements
+ */
+
+function collect(el, fn) {
+    var ret = [],
+        res, i = 0,
+        j, l = el.length,
+        l2;
+    while (i < l) {
+        j = 0;
+        l2 = (res = fn(el[i], i++)).length;
+        while (j < l2) {
+            ret.push(res[j++]);
+        }
+    }
+    return hAzzle(ret);
+}
+
+function getIndex(selector, index) {
+
+    var type = typeof index;
+
+    if (selector === undefined && type !== "number") {
+
+        return 0;
+
+    } else if (typeof selector === "number") {
+
+        return selector;
+
+    } else if (type === "number") {
+
+        return index;
+
+    } else {
+
+        return null;
+    }
+}
+
+/**
+ * Traverse multiple DOM elements
+ */
+
+function traversing(el, property, selector, index, expression) {
+
+    // Find our position in the DOM tree
+
+    index = getIndex(selector, index);
+
+    var i,
+        isString,
+        ret = [];
+
+    return collect(el, function (el, elind) {
+
+        i = index || 0;
+        isString = typeof selector === "string" ? selector : '*';
+
+
+        if (!expression) {
+
+            el = el[property];
+        }
+
+        // Always skip document fragments
+
+        while (el && (index === null || i >= 0) && el.nodeType < 11) {
+
+            if (el.nodeType === 1 && (!expression || expression === true || expression(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
+
+                if (index === null && property !== 'nextSibling' && property !== 'parentNode') {
+
+                    ret.unshift(el);
+
+                } else {
+
+                    ret.push(el);
+                }
+            }
+
+            el = el[property];
+        }
+
+        return ret;
+    });
+}
+
+
+/**
+ * Given an index & length, return a 'fixed' index, fixes non-numbers & neative indexes
+ */
+
+function eqIndex(length, index, def) {
+
+    if (index < 0) {
+		
+        index = length + index;
+    }
+
+    if (index < 0 || index >= length) {
+        return null;
+    }
+    return !index && index !== 0 ? def : index;
+}
+
+/**
+ * Filter function, for use by filter(), is() & not()
+ */
+
+function filtered(callback) {
+    var to;
+    return callback.nodeType === 1 ? function (el) {
+        return el === callback;
+    } : (to = typeof callback) === 'function' ? function (el, i) {
+        return callback.call(el, i);
+    } : to === 'string' && callback.length ? function (el) {
+        return hAzzle.matches(callback, el);
+    } : function () {
+        return false;
+    };
+}
