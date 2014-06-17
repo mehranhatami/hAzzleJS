@@ -4,8 +4,9 @@
  * Version: 0.8a
  * Released under the MIT License.
  *
- * Date: 2014-06-18
+ * Date: 2014-06-19
  */
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -58,17 +59,15 @@
             }
         },
 
+        // The ready event handler
+
+        DOMContentLoaded = false,
+
         // Define a local copy of hAzzle
 
         hAzzle = function (selector, context) {
             return new Core(selector, context);
-        },
-
-        readyList = [],
-        readyFired = false,
-        readyEventHandlersInstalled = false;
-
-
+        };
 
     // Init Core
 
@@ -93,9 +92,7 @@
         }
     }
 
-    /**
-     * hAzzle prototype
-     */
+/* =========================== CORE FUNCTIONS ========================== */
 
     hAzzle.Core = Core.prototype = {
 
@@ -200,15 +197,29 @@
 
         // documentElement after adjustments
         // Note! This can / will be overwritten 
-        // by document.js module
+        // by the document.js module
 
         docElem: doc.documentElement,
 
         // Tells if the document are XML or HTML
-        // Always set to false, but can be
-        // overwritten by document.js module
+        // Set to true as default, but it can be
+        // overwritten by the document.js module
 
         documentIsHTML: true,
+		
+        /** 
+         * Return current time
+         */
+
+        now: Date.now,
+
+        /**
+         * Error function
+         */
+
+        error: function (msg) {
+            throw new Error(msg);
+        },
 
         /**
          * Determine the type of object being tested.
@@ -241,6 +252,8 @@
 
             return typeof obj;
         },
+
+/* =========================== 'IS' FUNCTIONS ========================== */		
 
         is: function (kind, obj) {
 
@@ -294,12 +307,11 @@
             return true;
         },
         isNumeric: function (obj) {
-            return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
+          return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
         },
         isBlank: function (str) {
-            return hAzzle.trim(str).length === 0;
+          return hAzzle.trim(str).length === 0;
         },
-
         isArray: Array.isArray,
 
         isWindow: function (obj) {
@@ -333,20 +345,8 @@
                 'htmlformcontrolscollection'
             ], obj);
         },
-
-        /** 
-         * Return current time
-         */
-
-        now: Date.now,
-
-        /**
-         * Error function
-         */
-
-        error: function (msg) {
-            throw new Error(msg);
-        },
+		
+/* =========================== PUBLIC FUNCTIONS ========================== */				
 
         // Keep the identity function around for default iterators.
 
@@ -724,47 +724,6 @@
             return hAzzle(results);
         },
 
-        /**
-         * DOM ready
-         */
-
-        ready: function (callback, context) {
-
-            // context are are optional, but document by default
-
-            context = context || doc;
-
-            if (readyFired) {
-                setTimeout(function () {
-                    callback(context);
-                }, 1);
-                return;
-            } else {
-
-                // add the function and context to the list
-
-                readyList.push({
-                    fn: callback,
-                    ctx: context
-                });
-            }
-            // if document already ready to go, schedule the ready function to run
-            if (doc.readyState === 'complete') {
-
-                setTimeout(ready, 1);
-
-            } else if (!readyEventHandlersInstalled) {
-
-                // otherwise if we don't have event handlers installed, install them
-
-                doc.addEventListener('DOMContentLoaded', ready, false);
-                // backup is window load event
-                window.addEventListener('load', ready, false);
-
-                readyEventHandlersInstalled = true;
-            }
-        },
-
         // Invoke a method (with arguments) on every item in a collection.
 
         invoke: function (obj, method) {
@@ -828,29 +787,76 @@
 
     }, hAzzle);
 
+/* =========================== DOCUMENT READY FUNCTIONS ========================== */		
+
+    hAzzle.extend({
+
+        /**
+         * DOM ready
+         * Execute a callback for every element in the matched set.
+         */
+
+        readyList: [],
+        readyFired: false,
+
+        ready: function (fn) {
+
+            if (hAzzle.readyFired) {
+                setTimeout(function () {
+                    fn(document);
+                }, 1);
+                return;
+            } else {
+
+                // add the function and context to the list
+
+                hAzzle.readyList.push(fn);
+            }
+
+            // if document already ready to go, schedule the ready function to run
+            if (doc.readyState === 'complete') {
+
+                setTimeout(ready, 1);
+
+            } else if (!DOMContentLoaded) {
+
+                // otherwise if we don't have event handlers installed, install them
+
+                doc.addEventListener('DOMContentLoaded', ready, false);
+                // backup is window load event
+                window.addEventListener('load', ready, false);
+
+                DOMContentLoaded = true;
+            }
+        }
+
+    }, hAzzle);
+
+
+
 
     // call this when the document is ready
     // this function protects itself against being called more than once
 
     function ready() {
 
-        if (!readyFired) {
-            // this must be set to true before we start calling callbacks
-            readyFired = true;
-            for (var i = 0; i < readyList.length; i++) {
-                // if a callback here happens to add new ready handlers,
-                // the docReady() function will see that it already fired
-                // and will schedule the callback to run right after
-                // this event loop finishes so all handlers will still execute
-                // in order and no new ones will be added to the readyList
-                // while we are processing the list
+        var i = 0,
+            l = hAzzle.readyList.length;
 
-                readyList[i].fn.call(window, readyList[i].ctx);
+        if (!hAzzle.readyFired) {
+            // this must be set to true before we start calling callbacks
+            hAzzle.readyFired = true;
+
+            for (; i < l; i++) {
+
+                hAzzle.readyList[i].call(window, document);
             }
             // allow any closures held by these functions to free
-            readyList = [];
+            hAzzle.readyList = [];
         }
     }
+
+/* =========================== INTERNAL ========================== */			
 
     // Populate the native list
     hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {
