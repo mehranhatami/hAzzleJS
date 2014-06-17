@@ -78,16 +78,7 @@ hAzzle.extend({
      */
 
     attr: function (name, value) {
-
-        // Note! We need to do it like this, and not
-        // use 'this.each()'. If we do, we get
-        //returned an [Object Object]
-
-        var self = this,
-            i = self.length;
-        while (i--) {
-            return hAzzle.attr(self[i], name, value);
-        }
+        return hAzzle.setter(this, name, value, true, hAzzle.attr);
     },
 
     /**
@@ -697,6 +688,9 @@ hAzzle.extend({
 
         var hooks, ret,
             nType = elem.nodeType;
+        if (!name) {
+            return;
+        }
 
         // don't get/set attributes on text, comment and attribute nodes
 
@@ -744,7 +738,7 @@ hAzzle.extend({
                         return value;
 
                     } else {
-
+                        //alert('adf')
                         elem.setAttribute(name, value + "");
                         return value;
 
@@ -759,6 +753,10 @@ hAzzle.extend({
 
                 ret = elem.getAttribute(name, 2);
                 // Non-existent attributes return null, we normalize to undefined
+
+
+                //alert(ret)
+
                 return ret === null ?
                     undefined :
                     ret;
@@ -1031,3 +1029,5 @@ hAzzle.each(('multiple selected checked disabled readOnly required async autofoc
 hAzzle.each('input select option textarea button form details'.split(' '), function (value) {
     boolElem[value.toUpperCase()] = true;
 });
+
+

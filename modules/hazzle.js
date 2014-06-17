@@ -6,7 +6,6 @@
  *
  * Date: 2014-06-19
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -92,7 +91,7 @@
         }
     }
 
-/* =========================== CORE FUNCTIONS ========================== */
+    /* =========================== CORE FUNCTIONS ========================== */
 
     hAzzle.Core = Core.prototype = {
 
@@ -206,7 +205,7 @@
         // overwritten by the document.js module
 
         documentIsHTML: true,
-		
+
         /** 
          * Return current time
          */
@@ -253,7 +252,7 @@
             return typeof obj;
         },
 
-/* =========================== 'IS' FUNCTIONS ========================== */		
+        /* =========================== 'IS' FUNCTIONS ========================== */
 
         is: function (kind, obj) {
 
@@ -307,10 +306,10 @@
             return true;
         },
         isNumeric: function (obj) {
-          return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
+            return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
         },
         isBlank: function (str) {
-          return hAzzle.trim(str).length === 0;
+            return hAzzle.trim(str).length === 0;
         },
         isArray: Array.isArray,
 
@@ -345,8 +344,8 @@
                 'htmlformcontrolscollection'
             ], obj);
         },
-		
-/* =========================== PUBLIC FUNCTIONS ========================== */				
+
+        /* =========================== PUBLIC FUNCTIONS ========================== */
 
         // Keep the identity function around for default iterators.
 
@@ -783,11 +782,51 @@
                     fn.call(arg, i, obj[i]);
                 }
             }
+        },
+
+        // This one has to be fast...
+
+        setter: function (elems, key, value, exec, fn) {
+
+            var len = elems.length,
+                k,
+                i = 0;
+
+            // Setting many attributes
+            if (hAzzle.type(key) === "object") {
+
+                for (k in key) {
+
+                    hAzzle.setter(elems, k, key[k], exec, fn);
+                }
+
+                // Return the elements
+
+                return elems;
+            }
+
+            // No value 
+
+            if (value !== undefined) {
+
+                if (typeof value === 'function') {
+
+                    for (; i < len; i++) {
+
+                        fn(elems[i], key, value.call(elems[i], i, fn(elems[i], key)));
+                    }
+
+                    // Return the elements
+                    return elems;
+                }
+            }
+            // Getting an attribute
+            return len ? fn(elems[0], key) : undefined;
         }
 
     }, hAzzle);
 
-/* =========================== DOCUMENT READY FUNCTIONS ========================== */		
+    /* =========================== DOCUMENT READY FUNCTIONS ========================== */
 
     hAzzle.extend({
 
@@ -832,9 +871,6 @@
 
     }, hAzzle);
 
-
-
-
     // call this when the document is ready
     // this function protects itself against being called more than once
 
@@ -856,7 +892,7 @@
         }
     }
 
-/* =========================== INTERNAL ========================== */			
+    /* =========================== INTERNAL ========================== */
 
     // Populate the native list
     hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {
