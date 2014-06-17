@@ -1,15 +1,22 @@
 /*!
  * Removeable.js
  */
+
+hAzzle.extend({ 
+
 /**
  * removes the data associated with an element
  * @param {Element} el
  * @return {hAzzle}
  */
-function clearData(el) {
+
+  clearData: function(el) {
     hAzzle.removeData(el);
     hAzzle.event.removeEvent(el);
-}
+ },
+
+}, hAzzle);
+
 
 hAzzle.extend({
 
@@ -22,8 +29,7 @@ hAzzle.extend({
 
         // Filters the set of matched elements to be removed.
        
-	    var elem = selector ? hAzzle.select(selector, null, null, this) : this,
-            i = 0;
+	    var elem = selector ? hAzzle.select(selector, null, null, this) : this;
 
         hAzzle.each(elem, function (el) {
 
@@ -53,7 +59,7 @@ hAzzle.extend({
 
                 // Prevent memory leaks
 
-                hAzzle.deepEach(el.childNodes, clearData);
+                hAzzle.deepEach(el.childNodes, hAzzle.clearData);
 
                 while (el.firstChild) {
 
@@ -63,7 +69,11 @@ hAzzle.extend({
         });
     },
 
-    detach: function (selector) {
+    /**
+     * @return {hAzzle}
+     */
+
+	detach: function (selector) {
         return this.remove(selector, true);
     }
 });
