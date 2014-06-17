@@ -26,13 +26,13 @@ var win = this,
         option: ['<select multiple="multiple">', '</select>', 1],
         base: ['_', '', 0, 1]
     },
-    
-	// Boolean attributes
-    
-	boolAttr = {},
+
+    // Boolean attributes
+
+    boolAttr = {},
 
     // Boolean elements
-	
+
     boolElem = {};
 
 // Support: IE 9
@@ -42,10 +42,10 @@ htmlMap.tbody = htmlMap.tfoot = htmlMap.colgroup = htmlMap.caption = htmlMap.the
 htmlMap.th = htmlMap.td;
 
 hAzzle.extend({
-    
-	// Exact
-    
-	exact: function (el, attribute) {
+
+    // Exact
+
+    exact: function (el, attribute) {
         return el.getAttribute(attribute, 2);
     },
 
@@ -89,7 +89,7 @@ hAzzle.extend({
 
     /**
      * Toggle attributes
-	 *
+     *
      * @param{String} attr
      * @param{Boolean} toggle
      * @return {hAzzle}
@@ -101,13 +101,13 @@ hAzzle.extend({
 
             return this;
         }
-        
-		// Only 'attr'
-        
-		if (args === 1) {
+
+        // Only 'attr'
+
+        if (toggle === undefined) {
 
             return this.each(function () {
-                hAzzle(this)[ hAzzle(this).attr(attr) ? 'removeAttr' : 'attr'](attr, attr);
+                hAzzle(this)[hAzzle(this).attr(attr) ? 'removeAttr' : 'attr'](attr, attr);
             });
         }
 
@@ -267,7 +267,7 @@ hAzzle.extend({
 
             return this.each(function (el, i) {
                 var self = hAzzle(el);
-				// Call the same function again
+                // Call the same function again
                 self.html(value.call(el, i, self.html()));
             });
         }
@@ -327,18 +327,18 @@ hAzzle.extend({
      */
     append: function (node) {
         return this.each(function (el, i) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    hAzzle.each(stabilizeHTML(node, i), function (i) {
-                        // We don't allow text nodes
-                        if (node.nodeType !== 3) {
-                           try {
-                               el.appendChild(i);
-                         }  // Die silently
-                           catch(e) {}
-                        }
-                    });
-                }
-            });
+            if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
+                hAzzle.each(stabilizeHTML(node, i), function (i) {
+                    // We don't allow text nodes
+                    if (node.nodeType !== 3) {
+                        try {
+                            el.appendChild(i);
+                        } // Die silently
+                        catch (e) {}
+                    }
+                });
+            }
+        });
     },
 
     /**
@@ -348,18 +348,18 @@ hAzzle.extend({
 
     prepend: function (node) {
         return this.each(function (el, i) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    hAzzle.each(stabilizeHTML(node, i), function (i) {
-                        // We don't allow text nodes
-                        if (node.nodeType !== 3) {
-                          try {
-                              el.insertBefore(i, el.firstChild);
-                          }  // Die silently
-                          catch(e) {}
-                        }
-                    });
-                }
-            });
+            if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
+                hAzzle.each(stabilizeHTML(node, i), function (i) {
+                    // We don't allow text nodes
+                    if (node.nodeType !== 3) {
+                        try {
+                            el.insertBefore(i, el.firstChild);
+                        } // Die silently
+                        catch (e) {}
+                    }
+                });
+            }
+        });
     },
 
     /**
@@ -371,10 +371,10 @@ hAzzle.extend({
 
     appendTo: function (node) {
         return injectHTML.call(this, node, this, function (t, el) {
-			try {
-            t.appendChild(el);
-			}  // Die silently
-			catch(e) {}
+            try {
+                t.appendChild(el);
+            } // Die silently
+            catch (e) {}
         }, 1);
     },
 
@@ -387,10 +387,10 @@ hAzzle.extend({
 
     prependTo: function (node) {
         return injectHTML.call(this, node, this, function (t, el) {
-		try {
-           t.insertBefore(el, t.firstChild);
-			}  // Die silently
-			catch(e) {}
+            try {
+                t.insertBefore(el, t.firstChild);
+            } // Die silently
+            catch (e) {}
         }, 1);
     },
 
@@ -401,13 +401,13 @@ hAzzle.extend({
 
     before: function (node) {
         return this.each(function (el, i) {
-                hAzzle.each(stabilizeHTML(node, i), function (i) {
-			try {
-               el.parentNode.insertBefore(i, el);
-			}  // Die silently
-			catch(e) {}
-                });
+            hAzzle.each(stabilizeHTML(node, i), function (i) {
+                try {
+                    el.parentNode.insertBefore(i, el);
+                } // Die silently
+                catch (e) {}
             });
+        });
     },
 
     /**
@@ -417,13 +417,13 @@ hAzzle.extend({
 
     after: function (node) {
         return this.each(function (el, i) {
-                hAzzle.each(stabilizeHTML(node, i), function (i) {
-			try {
-              el.parentNode.insertBefore(i, el.nextSibling);
-			}  // Die silently
-			catch(e) {}
-                }, null, 1);
-            });
+            hAzzle.each(stabilizeHTML(node, i), function (i) {
+                try {
+                    el.parentNode.insertBefore(i, el.nextSibling);
+                } // Die silently
+                catch (e) {}
+            }, null, 1);
+        });
     },
 
 
@@ -435,10 +435,10 @@ hAzzle.extend({
 
     insertBefore: function (node) {
         injectHTML.call(this, node, this, function (t, el) {
-		try {
-            t.parentNode.insertBefore(el, t);
-			}  // Die silently
-			catch(e) {}
+            try {
+                t.parentNode.insertBefore(el, t);
+            } // Die silently
+            catch (e) {}
         });
         return this;
     },
@@ -452,20 +452,20 @@ hAzzle.extend({
 
     insertAfter: function (node) {
         injectHTML.call(this, node, this, function (t, el) {
-        var sibling = t.nextSibling;
+            var sibling = t.nextSibling;
 
-		try {
+            try {
 
-            if (sibling) {
+                if (sibling) {
 
-                t.parentNode.insertBefore(el, sibling);
+                    t.parentNode.insertBefore(el, sibling);
 
-            } else {
+                } else {
 
-                t.parentNode.appendChild(el);
-            }
-		}  // Die silently
-			catch(e) {}
+                    t.parentNode.appendChild(el);
+                }
+            } // Die silently
+            catch (e) {}
         }, 1);
 
         return this;
@@ -782,12 +782,12 @@ hAzzle.extend({
      * we can create html on CSS nodes as well
      * as document.
      *
-	 * LEFT TO DO!!
-	 *
-	 * - use of documentFragment
+     * LEFT TO DO!!
      *
-	 * - Add an similar function to jQuery's keepScript
-	 *
+     * - use of documentFragment
+     *
+     * - Add an similar function to jQuery's keepScript
+     *
      */
 
     create: function (html, context) {
@@ -795,8 +795,7 @@ hAzzle.extend({
         // Prevent XSS vulnerability
 
         var tag,
-		    scriptTag,
-			matches,
+            matches,
             defaultContext = isFunction(doc.implementation.createHTMLDocument) ?
             doc.implementation.createHTMLDocument() :
             doc;
@@ -806,19 +805,19 @@ hAzzle.extend({
         if (html !== '' && isString(html)) {
 
             /**
-			 * Create script tags
-			 *
-			 * Example:
-			 *
-			 * hAzzle.create('<script src="test">');
-			 *
-			 * @return {src}
-			 */
+             * Create script tags
+             *
+             * Example:
+             *
+             * hAzzle.create('<script src="test">');
+             *
+             * @return {src}
+             */
 
-         if (simpleScriptTagRe.test(html)) {
-             matches = html.match(simpleScriptTagRe);
-	            doc.createElement('script').src = matches[1];
-               return [ doc.createElement('script') ];
+            if (simpleScriptTagRe.test(html)) {
+                matches = html.match(simpleScriptTagRe);
+                doc.createElement('script').src = matches[1];
+                return [doc.createElement('script')];
             }
 
             // Single tag
