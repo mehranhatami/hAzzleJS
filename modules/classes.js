@@ -1,12 +1,7 @@
 // Classes
-
 var csp = hAzzle.features.classList,
-    sMa = hAzzle.features.sMa, // Multiple arguments
+    sMa = hAzzle.features.sMa, // Multiple argumens
     classCache = {},
-
-    isFunction = hAzzle.isFunction,
-    isString = hAzzle.isString,
-
     indexOf = Array.prototype.indexOf,
     rclass = /[\t\r\n\f]/g,
     whitespaceRegex = /\S+/g;
@@ -23,13 +18,13 @@ hAzzle.extend({
     addClass: function (value) {
 
         var finalValue, classes;
-        if (isFunction(value)) {
+        if (typeof value === 'function') {
             return this.each(function (i) {
                 hAzzle(this).addClass(value.call(this, i, this.className));
             });
         }
 
-        if (value && isString(value)) {
+        if (value && typeof value === "string") {
 
             classes = (value || '').match(whitespaceRegex) || [];
 
@@ -92,7 +87,7 @@ hAzzle.extend({
 
         // Function
 
-        return isFunction(value) ?
+        return typeof value === 'function' ?
             this.each(function (j) {
                 hAzzle(this).removeClass(value.call(this, j, this.className));
             }) : this.each(function () {
@@ -122,12 +117,12 @@ hAzzle.extend({
                         } else {
                             value = value.trim().split(/\s+/);
 
+
                             var name;
 
                             classes = ' ' + element.className + ' ';
 
                             while ((name = value.shift())) {
-
                                 if (name.indexOf('*') !== -1) {
 
                                     name = name in classCache ?
@@ -162,17 +157,16 @@ hAzzle.extend({
 
         var i = 0,
             className = ' ' + value + ' ',
-            self = this,
-            l = self.length;
+            l = this.length;
         for (; i < l; i++) {
             if (csp) {
-                if (self[i].nodeType === 1) {
-                    if (self[i].classList.contains(value)) {
+                if (this[i].nodeType === 1) {
+                    if (this[i].classList.contains(value)) {
                         return true;
                     }
                 }
             } else {
-                if (self[i].nodeType === 1 && (' ' + self[i].className + ' ').replace(rclass, ' ').indexOf(className) >= 0) {
+                if (this[i].nodeType === 1 && (' ' + this[i].className + ' ').replace(rclass, ' ').indexOf(className) >= 0) {
                     return true;
                 }
             }
@@ -202,6 +196,26 @@ hAzzle.extend({
     },
 
     /**
+     * Add class that will be removed after 'duration' milliseconds
+     * @param {String} clas
+     * @param {Number} duration
+     *
+     *  Mehran!! Fix this function, and clear the timeout!!!
+     *           Else we get an ugly memory leak !!
+     *
+     */
+    tempClass: function (clas, duration) {
+        var el;
+        return this.each(function () {
+            el = hAzzle(this);
+            el.addClass(clas);
+            setTimeout((function () {
+                el.removeClass(clas);
+            }), duration);
+        });
+    },
+
+    /**
      * Toggle class(es) on element
      *
      * @param {String} value
@@ -209,7 +223,7 @@ hAzzle.extend({
      * @return {Boolean}
      */
 
-        toggleClass: function (value, state) {
+    toggleClass: function (value, state) {
 
         var type = typeof value;
 

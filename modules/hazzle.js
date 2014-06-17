@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.8a
+ * Version: 0.7.1a
  * Released under the MIT License.
  *
- * Date: 2014-06-18
+ * Date: 2014-06-16
  */
 (function (window, undefined) {
 
@@ -22,8 +22,6 @@
 
         breaker = {},
 
-        own = ({}).hasOwnProperty,
-
         /*
          * Holds javascript natives
          */
@@ -40,10 +38,10 @@
          * Save a reference to some core methods
          */
 
-        indexOf = ArrayProto.indexOf,
         slice = ArrayProto.slice,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
+        keys = Object.keys,
         trim = String.prototype.trim,
 
         /*
@@ -121,8 +119,8 @@
         },
 
         /**
-         * Loop through objects
-         *
+		 * Loop through objects
+		 *
          * @param {function} fn
          * @param {Object} obj
          * @return {hAzzle}
@@ -163,15 +161,17 @@
             var m = [],
                 n, i = 0,
                 self = this,
-                l = self.length;
-
-            for (; i < l; i++) {
-
+                len = self.length;
+            for (; i < len; i++) {
                 n = callback.call(self, self[i], i);
-
-                func ? (func(n) && m.push(n)) : m.push(n);
+                if (func) {
+                    if (func(n)) {
+                        m.push(n);
+                    }
+                } else {
+                    m.push(n);
+                }
             }
-
             return m;
         }
     };
@@ -208,7 +208,7 @@
         // Always set to false, but can be
         // overwritten by document.js module
 
-        documentIsHTML: true,
+        documentIsHTML: false,
 
         /**
          * Determine the type of object being tested.
@@ -262,30 +262,8 @@
             return str === null || !str.length || ignoreWhitespace && /^\s*$/.test(str);
         },
         isObject: function (obj) {
-
-            /*
-             * Unlike `typeof` in JavaScript, `null`s are not
-             * considered to be objects.
-             */
-            return obj !== null && typeof obj === 'object';
+            return obj === Object(obj);
         },
-
-        isNumber: function (value) {
-
-            return typeof value === 'number';
-
-        },
-
-        isString: function (value) {
-
-            return typeof value === 'string';
-        },
-
-        isFunction: function (value) {
-
-            return typeof value === 'function';
-        },
-
         isEmptyObject: function (obj) {
             var name;
             for (name in obj) {
@@ -303,7 +281,7 @@
         isArray: Array.isArray,
 
         isWindow: function (obj) {
-            return obj && obj.document && obj.location && obj.alert && obj.setInterval;
+            return obj && (obj !== null && obj === obj.window);
         },
         isDocument: function (obj) {
             return obj !== null && obj.nodeType === obj.DOCUMENT_NODE;
@@ -314,11 +292,11 @@
         isBoolean: function (value) {
             return value === true || value === false;
         },
-        isDefined: function (value) {
-            return typeof value !== 'undefined';
+        isDefined: function (o) {
+            return o !== void 0;
         },
-        isUndefined: function (value) {
-            return typeof value === 'undefined';
+        isUndefined: function (o) {
+            return o === void 0;
         },
         IsNaN: function (val) {
             return typeof val === 'number' && val !== +val;
@@ -395,6 +373,22 @@
         },
 
         /**
+         * this allows method calling for setting values
+         *
+         * @example
+         * hAzzle(elements).css('color', function (el) {
+         *   return el.getAttribute('data-original-color')
+         * })
+         *
+         * @param {Element} el
+         * @param {function (Element)|string}
+         * @return {string}
+         */
+        setter: function setter(el, v) {
+            return typeof v == 'function' ? v.call(el, el) : v;
+        },
+
+        /**
          * Run callback for each element in the collection
          * @param {hAzzle|Array} ar
          * @param {function(Object, number, (hAzzle|Array))} fn
@@ -446,7 +440,7 @@
          * @param {hAzzle|Array} ar
          * @param {function(Object, number, (hAzzle|Array))} fn
          * @param {Object=} scope
-         * @return {boolean||nothing}
+         * @return {boolean}
          */
 
         some: function (ar, fn, scope) {
@@ -516,9 +510,6 @@
             return a;
         },
 
-        indexOf: function (elem, arr, i) {
-            return arr === null ? -1 : indexOf.call(arr, elem, i);
-        },
         /**
          * Check if an element exist in an array
          */
@@ -815,15 +806,11 @@
         // Loop through Objects
 
         forOwn: function (obj, fn, arg) {
-            var i = 0;
+            hAzzle.each(keys(obj), function (key) {
+                fn.call(arg, key, obj[key]);
+            });
 
-            for (i in obj) {
-
-                if (own.call(obj, i)) {
-
-                    fn.call(arg, i, obj[i]);
-                }
-            }
+            return arg;
         }
 
     }, hAzzle);
@@ -853,14 +840,14 @@
     }
 
     // Populate the native list
-    hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {
+    hAzzle.each('Boolean Number String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {
         natives['[object ' + name + ']'] = name.toLowerCase();
     });
 
     // Add some isType methods
-    hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments'], function (name) {
+    hAzzle.each(['Number', 'String', 'Function', 'File', 'Blob', 'RegExp', 'Data', 'Arguments'], function (name) {
         hAzzle['is' + name] = function (o) {
-            return toString.call(o) === '[object ' + name + ']';
+            return toString.call(o) === '[object Number]';
         };
     });
 
