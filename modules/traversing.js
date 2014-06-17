@@ -1,9 +1,9 @@
 /*!
  * DOM traversing
  */
-var emptyArray = [],
-    slice = emptyArray.slice,
-    push = emptyArray.push;
+var arr = [],
+    slice = arr.slice,
+    push = arr.push;
 
 /**
  * Traversing method helper for prevNext, prevAll, nextAll, nextUntil etc
@@ -132,6 +132,7 @@ function traversing(el, property, selector, index, expression) {
 function eqIndex(length, index, def) {
 
     if (index < 0) {
+		
         index = length + index;
     }
 
@@ -664,10 +665,10 @@ hAzzle.extend({
 
     // Internal usage only
 
-    push: emptyArray.push,
-    sort: emptyArray.sort,
-    splice: emptyArray.splice,
-    reverse: emptyArray.reverse,
-    concat: emptyArray.concat,
-    indexOf: emptyArray.indexOf
+    push: arr.push,
+    sort: arr.sort,
+    splice: arr.splice,
+    reverse: arr.reverse,
+    concat: arr.concat,
+    indexOf: arr.indexOf
 });
