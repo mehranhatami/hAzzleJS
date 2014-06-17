@@ -598,7 +598,7 @@ hAzzle.extend({
 
                     option = options[i];
 
-                    if ((option.selected = hAzzle.inArray(option.value, values) >= 0)) {
+                    if ((option.selected = hAzzle.indexOf(option.value, values) >= 0)) {
 
                         optionSet = true;
                     }
@@ -742,7 +742,7 @@ hAzzle.extend({
 
     prop: function (elem, name, value) {
 
-        var ret, hooks
+        var ret, hooks,
             nType = elem.nodeType;
 
         // don't get/set properties on text, comment and attribute nodes

@@ -42,6 +42,7 @@
 
         indexOf = ArrayProto.indexOf,
         slice = ArrayProto.slice,
+        push = ArrayProto.push,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
         trim = String.prototype.trim,
@@ -740,6 +741,23 @@
                     return value[method].apply(value, args);
                 }
             });
+        },
+
+        makeArray: function (arr, results) {
+            var type,
+                ret = results || [];
+
+            if (arr !== null) {
+                type = hAzzle.type(arr);
+
+                if (arr.length === null || type === "string" || type === "function" || type === "regexp" || hAzzle.isWindow(arr)) {
+                    push.call(ret, arr);
+                } else {
+                    hAzzle.merge(ret, arr);
+                }
+            }
+
+            return ret;
         },
 
         /**
