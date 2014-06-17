@@ -135,6 +135,7 @@ hAzzle.extend({
      */
 
     prop: function (name, value) {
+		
         return hAzzle.setter(this, hAzzle.prop, name, value, true);
     },
 
@@ -713,7 +714,7 @@ hAzzle.extend({
                         return value;
 
                     } else {
-                        //alert('adf')
+
                         elem.setAttribute(name, value + "");
                         return value;
 
@@ -727,10 +728,8 @@ hAzzle.extend({
             } else {
 
                 ret = elem.getAttribute(name, 2);
+
                 // Non-existent attributes return null, we normalize to undefined
-
-
-                //alert(ret)
 
                 return ret === null ?
                     undefined :
@@ -743,7 +742,7 @@ hAzzle.extend({
 
     prop: function (elem, name, value) {
 
-        var ret, hooks, notxml,
+        var ret, hooks
             nType = elem.nodeType;
 
         // don't get/set properties on text, comment and attribute nodes
@@ -751,9 +750,8 @@ hAzzle.extend({
             return;
         }
 
-        notxml = nType !== 1 || !!hAzzle.isXML(elem.ownerDocument || elem);
+        if (nType !== 1 || hAzzle.documentIsHTML) {
 
-        if (notxml) {
             // Fix name and attach hooks
             name = hAzzle.propFix[name] || name;
             hooks = hAzzle.propHooks[name];
@@ -761,7 +759,9 @@ hAzzle.extend({
 
         if (typeof value !== 'undefined') {
 
-            return hooks && 'set' in hooks && (ret = hooks.set(elem, value, name)) !== undefined ? ret : (elem[name] = value);
+			return hooks && "set" in hooks && (ret = hooks.set( elem, value, name )) !== undefined ?
+				ret :
+				( elem[ name ] = value );
 
         } else {
 

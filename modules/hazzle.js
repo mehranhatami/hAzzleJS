@@ -797,17 +797,16 @@
 
                 for (k in key) {
 
-                    hAzzle.setter(elems, k, key[k], exec, fn);
+                    hAzzle.setter(elems, fn, k, key[k], exec);
                 }
 
                 // Return the elements
 
                 return elems;
-            }
 
-            // No value 
+                // No value 
 
-            if (value !== undefined) {
+            } else if (value !== undefined) {
 
                 if (typeof value === 'function') {
 
@@ -817,11 +816,27 @@
                     }
 
                     // Return the elements
+
+                    return elems;
+                }
+
+
+                // Getting an attribute
+
+                if (fn) {
+
+                    for (; i < len; i++) {
+
+                        fn(elems[i], key, value);
+                    }
+
+                    // Return the elements
+
                     return elems;
                 }
             }
-            // Getting an attribute
-            return len ? fn(elems[0], key) : undefined;
+
+            return fn(elems[0], key);
         }
 
     }, hAzzle);
