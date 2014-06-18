@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.8a
+ * Version: 0.8b
  * Released under the MIT License.
  *
  * Date: 2014-06-19
@@ -17,12 +17,6 @@
 
     var win = window,
         doc = win.document,
-
-        // Establish the object that gets returned to break out of a loop iteration.
-
-        breaker = {},
-
-        own = ({}).hasOwnProperty,
 
         /*
          * Holds javascript natives
@@ -41,7 +35,6 @@
          */
 
         indexOf = ArrayProto.indexOf,
-        slice = ArrayProto.slice,
         push = ArrayProto.push,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
@@ -687,7 +680,8 @@
                 l = k.length;
 
             for (; i < l; i++) {
-                fn.call(arg, k[i], obj[k[i]])
+				
+                fn.call(arg, k[i], obj[k[i]]);
             }
         },
 
