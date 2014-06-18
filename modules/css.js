@@ -11,27 +11,7 @@ var win = this,
     iframe,
     elemdisplay = {},
 
-    /**
-     * Remove units ( e.g. 'pc, 'px', '%') from values
-     * This is an faster alternative then parseFloat
-     */
-
-    removeUnits = function (target) {
-
-        if (target.slice(-1) === '%') {
-
-            return target.replace('%', '');
-
-        } else if (hAzzle.inArray(["px", "%", "in", "cm", "mm", "pt", "pc", "em"], target.slice(-2)) >= 0) {
-
-            return target.replace(target.slice(-2), '');
-
-            // Fallback to parseFloat just in case
-        } else {
-
-            return parseFloat(target);
-        }
-    },
+    cssPrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
     getStyle = hAzzle.features.computedStyle ? function (el) {
 
@@ -43,7 +23,7 @@ var win = this,
             }
         }
 
-        return el && win.getComputedStyle(el, null);
+        return el && window.getComputedStyle(el, null);
 
     } : function (el) {
 
@@ -127,18 +107,18 @@ function defaultDisplay(nodeName) {
 
 function vendorPrefixed(style, name) {
 
-    // shortcut for names that are not vendor prefixed
+    // Shortcut for names that are not vendor prefixed
     if (name in style) {
         return name;
     }
 
-    // check for vendor prefixed names
+    // Check for vendor prefixed names
     var capName = name[0].toUpperCase() + name.slice(1),
         origName = name,
-        i = hAzzle.cssPrefixes.length;
+        i = cssPrefixes.length;
 
     while (i--) {
-        name = hAzzle.cssPrefixes[i] + capName;
+        name = cssPrefixes[i] + capName;
         if (name in style) {
             return name;
         }
@@ -421,10 +401,6 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-    // Various supports...
-
-    cssPrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
-
     // Properties that shouldn't have units behind e.g. 
     // zIndex:33px are not allowed
 
@@ -506,7 +482,7 @@ hAzzle.extend({
 
                 if (type === 'string' && (ret = numbs.exec(value))) {
 
-                    value = hAzzle.units(removeUnits(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    value = hAzzle.units(parseFloat(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                     type = 'number';
                 }
 
@@ -631,7 +607,7 @@ hAzzle.extend({
             if (elem) {
 
                 val = hAzzle.css(elem, prop);
-                num = num = removeUnits(val);
+                num = num = parseFloat(val);
 
                 prop = hAzzle.isNumeric(num) ? num || 0 : val;
 
@@ -646,7 +622,7 @@ hAzzle.extend({
         if (unit === 'em') {
 
             val = hAzzle.css(elem, "fontSize");
-            num = removeUnits(val);
+            num = parseFloat(val);
 
             prop = hAzzle.isNumeric(num) ? num || 0 : val;
 
@@ -851,7 +827,7 @@ hAzzle.forOwn({
         if (hAzzle.isWindow(elem)) {
 
             win = elem;
-			
+
         } else {
 
             if (elem.nodeType === 9) {
