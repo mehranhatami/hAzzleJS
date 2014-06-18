@@ -45,6 +45,7 @@
         push = ArrayProto.push,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
+        keys = Object.keys,
         trim = String.prototype.trim,
 
         /*
@@ -403,10 +404,11 @@
          * @return {hAzzle|Array}
          */
 
-        each: function (ar, callback, scope, args) {
+        each: function (ar, callback, fn, args) {
 
             var ind, i = 0,
                 l = ar.length;
+
             for (; i < l; i++) {
 
                 if (args) {
@@ -417,7 +419,7 @@
 
                     ind = i;
                 }
-                callback.call(scope || ar[ind], ar[ind], ind, ar);
+                callback.call(fn || ar[ind], ar[ind], ind, ar);
             }
             return ar;
 
@@ -717,12 +719,15 @@
             }
 
             hAzzle.each(obj, function (value, index, list) {
+
                 if (predicate.call(context, value, index, list)) {
+
                     results.push(value);
                 }
             });
             return hAzzle(results);
         },
+
 
         // Invoke a method (with arguments) on every item in a collection.
 
@@ -760,6 +765,7 @@
             return ret;
         },
 
+
         rand: function (x, y) {
             if (typeof x === 'undefined') {
                 y = +x;
@@ -769,16 +775,16 @@
         },
 
         // Loop through Objects
+        // Note ! A for-in loop won't guarantee property iteration order and they'll iterate over anything added to the Array.prototype
 
         forOwn: function (obj, fn, arg) {
-            var i = 0;
 
-            for (i in obj) {
+            var i = 0,
+                k = keys(obj),
+                l = k.length;
 
-                if (own.call(obj, i)) {
-
-                    fn.call(arg, i, obj[i]);
-                }
+            for (; i < l; i++) {
+                fn.call(arg, k[i], obj[k[i]])
             }
         },
 
