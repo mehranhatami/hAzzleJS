@@ -43,12 +43,6 @@ htmlMap.th = htmlMap.td;
 
 hAzzle.extend({
 
-    // Exact
-
-    exact: function (el, attribute) {
-        return el.getAttribute(attribute, 2);
-    },
-
     /**
      * Get / set attribute value
      *

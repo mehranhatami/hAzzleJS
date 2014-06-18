@@ -349,52 +349,6 @@
 
         /* =========================== PUBLIC FUNCTIONS ========================== */
 
-        // Keep the identity function around for default iterators.
-
-        identity: function (value) {
-            return value;
-        },
-
-        /**
-         * Determine whether all of the elements match a truth test.
-         */
-
-        every: function (obj, predicate, context) {
-
-            predicate = predicate || hAzzle.identity;
-
-            var result = true;
-            if (obj === null) {
-                return result;
-            }
-            hAzzle.each(obj, function (value, index, list) {
-
-                if (!(result = result && predicate.call(context, value, index, list))) {
-                    return breaker;
-                }
-            });
-            return !!result;
-        },
-
-        /**
-         *  Determine if at least one element in the object matches a truth test.
-         */
-
-        any: function (obj, predicate, context) {
-
-            predicate = predicate || hAzzle.identity;
-            var result = false;
-            if (obj === null) {
-                return result;
-            }
-            hAzzle.each(obj, function (value, index, list) {
-                if (result || (result = predicate.call(context, value, index, list))) {
-                    return breaker;
-                }
-            });
-            return !!result;
-        },
-
         /**
          * Run callback for each element in the collection
          * @param {hAzzle|Array} ar
@@ -442,28 +396,6 @@
                 }
             }
             return ar;
-        },
-
-        /**
-         * @param {hAzzle|Array} ar
-         * @param {function(Object, number, (hAzzle|Array))} fn
-         * @param {Object=} scope
-         * @return {boolean||nothing}
-         */
-
-        some: function (ar, fn, scope) {
-            var i = 0,
-                j = ar.length;
-
-            for (; i < j; ++i) {
-
-                if (fn.call(scope || null, ar[i], i, ar)) {
-
-                    return true;
-                }
-            }
-
-            return false;
         },
 
         // Convert camelCase to  CSS-style
@@ -728,26 +660,6 @@
             return hAzzle(results);
         },
 
-
-        // Invoke a method (with arguments) on every item in a collection.
-
-        invoke: function (obj, method) {
-
-            var args = slice.call(arguments, 2);
-
-            return hAzzle.map(obj, function (value) {
-
-                if (typeof method === 'function') {
-
-                    return method.apply(value, args);
-
-                } else {
-
-                    return value[method].apply(value, args);
-                }
-            });
-        },
-
         makeArray: function (arr, results) {
             var type,
                 ret = results || [];
@@ -763,15 +675,6 @@
             }
 
             return ret;
-        },
-
-
-        rand: function (x, y) {
-            if (typeof x === 'undefined') {
-                y = +x;
-                x = 0;
-            }
-            return Math.rand(x, y);
         },
 
         // Loop through Objects
