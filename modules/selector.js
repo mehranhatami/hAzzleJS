@@ -79,20 +79,23 @@ hAzzle.extend({
 
       // Everything else
 
-      results = context.querySelectorAll(selector);
+     try {
+		results = context.querySelectorAll(selector); 
+		 } catch(e) {}
+	  
 
       // Seed
 
     } else {
 
-      while ((elem = seed[i++])) {
-
-        bool = hAzzle.matchesSelector(elem, selector);
-
-        if (bool) {
-          results.push(elem);
+        var i = 0,
+		    l = seed.length;
+		
+		for (; i < l; i++) { 
+        if (hAzzle.matchesSelector(seed[i], selector) ) {
+          results.push(seed[i]);
         }
-      }
+	   }
     }
 
     return slice.call(results);

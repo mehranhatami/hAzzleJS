@@ -585,9 +585,7 @@ function getNth(el, property, selector, index, fn) {
 
         // Don't run this loop if this is an document fragment
 
-        if (el.nodeType !== 11) {
-
-            while (el && (index === null || i >= 0)) {
+            while (el && (index === null || i >= 0) && el.nodeType !== 11) {
 
                 if (el.nodeType === 1) {
 
@@ -605,7 +603,6 @@ function getNth(el, property, selector, index, fn) {
                 }
                 el = el[property];
             }
-        }
 
         return ret;
 
