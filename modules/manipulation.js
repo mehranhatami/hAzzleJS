@@ -405,39 +405,6 @@ hAzzle.extend({
         }, 1);
     },
 
-    /**
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-
-    before: function (node) {
-        var i = 0,
-            l;
-        return this.each(function (el, i) {
-            node = stabilizeHTML(node, i);
-            l = node.length;
-            for (; i < l; i++) {
-                el.parentNode.insertBefore(node[i], el);
-            }
-        });
-    },
-
-    /**
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-
-    after: function (node) {
-        var i = 0,
-            l;
-        return this.each(function (el, i) {
-            node = stabilizeHTML(node, i);
-            l = node.length;
-            for (; i < l; i++) {
-                el.parentNode.insertBefore(node[i], el.nextSibling);
-            }
-        });
-    },
 
 
     /**
@@ -1044,4 +1011,26 @@ hAzzle.each(('multiple selected checked disabled readOnly required async autofoc
 
 hAzzle.each('input select option textarea button form details'.split(' '), function (value) {
     boolElem[value.toUpperCase()] = true;
+});
+
+/*
+ * Before and after
+ */
+
+hAzzle.forOwn({
+    before: '',
+    after: 'nextSibling'
+}, function (key, value) {
+    hAzzle.Core[key] = function (node) {
+        var i = 0, l;
+        return this.each(function (el, i) {
+            node = stabilizeHTML(node, i);
+            l = node.length;
+            for (; i < l; i++) {
+                if (el.parentNode) {
+                    el.parentNode.insertBefore(node[i], el[value]);
+                }
+            }
+        });
+    }
 });

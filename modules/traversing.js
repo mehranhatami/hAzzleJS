@@ -5,9 +5,20 @@ var arr = [],
     slice = arr.slice,
     push = arr.push,
     indexOf = arr.indexOf,
-	
-	isFunction = hAzzle.isFunction,
-	isString = hAzzle.isString;
+
+    isString = hAzzle.isString,
+
+    rparentsprev = /^(?:parents|prev(?:Until|All))/,
+
+    // Methods guaranteed to produce a unique set when starting from a unique set
+
+    guaranteedUnique = {
+        children: true,
+        contents: true,
+        next: true,
+        prev: true
+    };
+
 
 // Extend the Core
 
@@ -39,19 +50,19 @@ hAzzle.extend({
 
         if (isString(selector)) {
 
-         // Loop through all elements, and check for match
-		 
-		   for (; i < len; i++) {
-				
+            // Loop through all elements, and check for match
+
+            for (; i < len; i++) {
+
                 hAzzle.select(selector, self[i], ret);
-           }
+            }
 
-		    // If more then one element, make sure they are unique
+            // If more then one element, make sure they are unique
 
-           if( len > 1 ) {
-		   
-		      ret = hAzzle.unique(ret); 
-		   } 
+            if (len > 1) {
+
+                ret = hAzzle.unique(ret);
+            }
 
             return hAzzle(ret);
 
@@ -86,11 +97,11 @@ hAzzle.extend({
         // index in selector
 
         if (typeof selector === "string") {
-			alert(selector)
+            alert(selector)
             return indexOf.call(hAzzle(selector), this[0]);
         }
 
-	 return this.indexOf( selector[0]);
+        return this.indexOf(selector[0]);
     },
 
 
@@ -130,48 +141,11 @@ hAzzle.extend({
     },
 
     /**
-     * Get immediate parents of each element in the collection.
-     * If CSS selector is given, filter results to include only ones matching the selector.
-     *
-     * @param {String} selector
-     * @return {hAzzle}
+     * Parents
      */
 
-    parent: function (selector) {
-        var parent,
-            matched = hAzzle.map(this, function (elem) {
-                if ((parent = elem.parentNode)) {
-                    if (parent.nodeType !== 11) {
-                        return parent;
-                    }
-                    return null;
-                }
-            });
-
-        if (selector && typeof selector === "string") {
-            matched = hAzzle.select(selector, null, null, matched);
-        }
-        if (this.length > 1) {
-
-            hAzzle.unique(matched);
-        }
-        return hAzzle(matched);
-    },
-
-   /**
-    * Parents
-    */
-   
     parents: function () {
         return this.up.apply(this, arguments.length ? arguments : ['*']);
-    },
-
-   /**
-    * ParentsUntil
-    */
-
-    parentsUntil: function (until, selector) {
-        return doomed(this, "parentNode", until, selector);
     },
 
     /**
@@ -184,16 +158,16 @@ hAzzle.extend({
      */
 
     closest: function (selector, index) {
-       if (typeof selector === 'number') {
-       
-	        index = selector;
+        if (typeof selector === 'number') {
+
+            index = selector;
             selector = '*';
-       
-	    } else {
-       
-	        index = 0;
-       
-	    }
+
+        } else {
+
+            index = 0;
+
+        }
         return traversing(this, 'parentNode', selector, index, true);
     },
 
@@ -211,15 +185,6 @@ hAzzle.extend({
 
     },
 
-    prevAll: function () {
-        return doomed(this, "previousSibling");
-    },
-
-
-    prevUntil: function (until, selector) {
-        return doomed(this, "previousSibling", until, selector);
-    },
-
     /**
      * Get the immediately following sibling of each element
      * OR Nth following siblings of each element, if index is specified
@@ -232,18 +197,6 @@ hAzzle.extend({
     next: function (selector, index) {
         return traversing(this, 'nextSibling', selector, index);
     },
-
-    nextAll: function () {
-        return doomed(this, "nextSibling");
-    },
-
-    nextUntil: function (until, selector) {
-        return doomed(this, "nextSibling", until, selector);
-    },
-
-    /**
-     * Returns everything but the first entry of the array
-     */
 
     tail: function (index) {
         return this.slice(index === null ? 1 : index);
@@ -430,7 +383,7 @@ hAzzle.extend({
 
     not: function (selector) {
         return hAzzle.filter(this, function (elem) {
-		// Call our matchesselector.js module directly
+            // Call our matchesselector.js module directly
             return !hAzzle.matches(selector, elem);
         });
     },
@@ -543,37 +496,6 @@ hAzzle.extend({
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
-
-/**
- * Traversing method helper for prevNext, prevAll, nextAll, nextUntil etc
- *
- * @param {Array} arr
- * @param {String} dir
- * @param {string} until
- * @param {String} selector
- *
- * @return {Object}
- *
- */
-function doomed(arr, dir, until, selector) {
-
-    var matched = hAzzle.map(arr, function (elem, i, until) {
-        return hAzzle.nodes(elem, dir, until);
-    }, until);
-
-
-    if (selector && typeof selector === "string") {
-        matched = hAzzle.select(selector, null, null, matched);
-    }
-
-    if (this.length > 1) {
-        hAzzle.unique(matched);
-        matched.reverse();
-    }
-
-    return hAzzle(matched);
-}
-
 /*
  * Collect elements
  */
@@ -671,7 +593,7 @@ function traversing(el, property, selector, index, expression) {
 function eqIndex(length, index, def) {
 
     if (index < 0) {
-		
+
         index = length + index;
     }
 
@@ -697,3 +619,72 @@ function filtered(callback) {
         return false;
     };
 }
+
+hAzzle.dir = function (elem, dir, until) {
+    var matched = [],
+        truncate = until !== undefined;
+
+    while ((elem = elem[dir]) && elem.nodeType !== 9) {
+        if (elem.nodeType === 1) {
+            if (truncate && hAzzle(elem).is(until)) {
+                break;
+            }
+            matched.push(elem);
+        }
+    }
+    return matched;
+}
+
+
+hAzzle.forOwn({
+    parent: function (elem) {
+        var parent = elem.parentNode;
+        return parent && parent.nodeType !== 11 ? parent : null;
+    },
+    nextUntil: function (elem, i, until) {
+        return hAzzle.dir(elem, "nextSibling", until);
+    },
+    parentsUntil: function (elem, i, until) {
+        return hAzzle.dir(elem, "parentNode", until);
+    },
+
+    nextAll: function (elem) {
+        return hAzzle.dir(elem, "nextSibling");
+    },
+    prevAll: function (elem) {
+        return hAzzle.dir(elem, "previousSibling");
+    },
+    nextUntil: function (elem, i, until) {
+        return hAzzle.dir(elem, "nextSibling", until);
+    },
+    prevUntil: function (elem, i, until) {
+        return hAzzle.dir(elem, "previousSibling", until);
+    },
+
+}, function (name, fn) {
+    hAzzle.Core[name] = function (until, selector) {
+        var matched = hAzzle.map(this, fn, until);
+
+        if (name.slice(-5) !== "Until") {
+            selector = until;
+        }
+
+        if (selector && typeof selector === "string") {
+            matched = hAzzle.select(selector, null, null, matched);
+        }
+
+        if (this.length > 1) {
+            // Remove duplicates
+            if (!guaranteedUnique[name]) {
+                hAzzle.unique(matched);
+            }
+
+            // Reverse order for parents* and prev-derivatives
+            if (rparentsprev.test(name)) {
+                matched.reverse();
+            }
+        }
+
+        return hAzzle(matched);
+    }
+});

@@ -760,26 +760,6 @@
             return ret;
         },
 
-        /**
-         * DOM traversing
-         */
-
-        nodes: function (el, dir, /*INTERNAL */ until) {
-
-            var matched = [];
-
-            while ((el = el[dir]) && el.nodeType !== 9) {
-                if (el.nodeType === 1) {
-                    if (until) {
-                        if (hAzzle(el).is(until || '')) {
-                            break;
-                        }
-                    }
-                    matched.push(el);
-                }
-            }
-            return matched;
-        },
         rand: function (x, y) {
             if (typeof x === 'undefined') {
                 y = +x;
