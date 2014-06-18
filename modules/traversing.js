@@ -14,10 +14,6 @@ var arr = [],
     nextNode = 'nextSibling',
     prevNode = 'previousSibling',
     parentNode = 'parentNode',
-    //    firstElement = 'firstElementChild',
-    //    nextElement  = 'nextElementSibling',
-    //   prevElement  = 'previousElementSibling';
-
 
     rparentsprev = /^(?:parents|prev(?:Until|All))/,
 
@@ -128,15 +124,16 @@ hAzzle.extend({
 
         return collect(this, function (el) {
 
-            var f = hAzzle.select(typeof selector === 'string' ? selector : '*', el);
+            var node = isString(selector) ? selector : '*',
+                obj = hAzzle.select(node, el);
 
             if (index === null) {
 
-                return f;
+                return obj;
 
             } else {
 
-                return [f[index]] || [];
+                return [obj[index]] || [];
 
             }
         });
@@ -147,7 +144,7 @@ hAzzle.extend({
      */
 
     up: function (selector, index) {
-        return getNTH(this, parentNode, selector, index);
+        return selector === null ? parent() : getNth(this, parentNode, selector, index);
     },
 
     /**
@@ -178,7 +175,7 @@ hAzzle.extend({
             index = 0;
 
         }
-        return getNTH(this, parentNode, selector, index, true);
+        return getNth(this, parentNode, selector, index, true);
     },
 
     /**
@@ -191,9 +188,11 @@ hAzzle.extend({
      */
 
     prev: function (selector, index) {
-        return getNTH(this, prevNode, selector, index);
+        return getNth(this, prevNode, selector, index);
 
     },
+
+    previous: this.prev,
 
     /**
      * Get the immediately following sibling of each element
@@ -205,7 +204,7 @@ hAzzle.extend({
      */
 
     next: function (selector, index) {
-        return getNTH(this, nextNode, selector, index);
+        return getNth(this, nextNode, selector, index);
     },
 
     tail: function (index) {
@@ -264,7 +263,7 @@ hAzzle.extend({
             }
         }
 
-        return getNTH(arr, nextNode, selector || '*', index, function (el, i) {
+        return getNth(arr, nextNode, selector || '*', index, function (el, i) {
             return el !== self[i];
         });
     },
@@ -314,7 +313,7 @@ hAzzle.extend({
 
     children: function (selector, index) {
         var self = this;
-        return getNTH(self.down.call(self), nextNode, selector || '*', index, true);
+        return getNth(self.down.call(self), nextNode, selector || '*', index, true);
 
 
     },
@@ -515,18 +514,18 @@ function collect(el, fn) {
     var ret = [],
         res,
         b = 0,
-        e = 0,
+        e,
         len = el.length,
         f;
 
     for (; b < len;) {
         res = fn(el[b], b++);
+        e = 0;
         f = res.length;
         for (; e < f;) {
             ret.push(res[e++]);
         }
     }
-
     return hAzzle(ret);
 }
 
@@ -556,7 +555,7 @@ function getIndex(selector, index) {
  * Traverse multiple DOM elements
  */
 
-function getNTH(el, property, selector, index, fn) {
+function getNth(el, property, selector, index, fn) {
 
     // Find our position in the DOM tree
 
@@ -569,7 +568,7 @@ function getNTH(el, property, selector, index, fn) {
     return collect(el, function (el, elind) {
 
         i = index || 0;
-        isString = typeof selector === "string" ? selector : '*';
+        isString = typeof selector === 'string' ? selector : '*';
 
 
         if (!fn) {
@@ -650,13 +649,11 @@ hAzzle.dir = function (elem, dir, until) {
     return matched;
 };
 
+
 hAzzle.forOwn({
     parent: function (elem) {
         var parent = elem[parentNode];
         return parent && parent.nodeType !== 11 ? parent : null;
-    },
-    nextUntil: function (elem, i, until) {
-        return hAzzle.dir(elem, nextNode, until);
     },
     parentsUntil: function (elem, i, until) {
         return hAzzle.dir(elem, parentNode, until);
@@ -667,6 +664,9 @@ hAzzle.forOwn({
     },
     prevAll: function (elem) {
         return hAzzle.dir(elem, prevNode);
+    },
+    nextUntil: function (elem, i, until) {
+        return hAzzle.dir(elem, nextNode, until);
     },
     prevUntil: function (elem, i, until) {
         return hAzzle.dir(elem, prevNode, until);
