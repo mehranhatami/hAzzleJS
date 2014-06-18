@@ -2,84 +2,65 @@
  * Selector
  */
 
-/*!
- * hAzzle Selector Engine (hSE)
- *
- * Note! This module depends on the 
- * MatchesSelector.js module for
- * cross-browser compability.
- *
- * Do NOT use 'call' on 
- *
- * hAzzle.MatchesSelector()
- *
- * QSA shouldn't be used on XML docs, so 
- * check for that in this module
- *
- */
-
 var
-    win = window,
-    doc = document,
-    winDoc = win.document,
-    docElem = hAzzle.docElem,
-    idclasstag = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-    whitespace = "[\\x20\\t\\r\\n\\f]",
-    rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g");
+win = this,
+  doc = win.document,
+  html = win.document.documentElement;
 
 
 hAzzle.extend({
 
-    expr: {},
-  
-    matches: function (selector, context) {
+  matches: function (selector, context) {
 
-        return selector === '*' || hAzzle.matchesSelector(context, selector);
+    return selector === '*' || hAzzle.matchesSelector(context, selector);
 
-    },
-
+  },
   select: function (selector, context, results, seed) {
     var match,
       bool, // Boolean for filter function
       elem, m, nodeType,
-	  elem,
       i = 0;
 
     results = results || [];
     context = context || doc;
 
-    if (hAzzle.documentIsHTML && !seed) {
+    // Bad and quick fix
+
+    if (selector === "window") return [win];
+
+    // Same basic safeguard as Sizzle
+    if (!selector || typeof selector !== "string") {
+
+      return results;
+    }
+
+    // Early return if context is not an element or document
+    if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+
+      return [];
+    }
+
+    if (!seed) {
 
       // Shortcuts
 
       if ((match = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/.exec(selector))) {
 
         // #id
-
         if ((m = match[1])) {
 
-                if (nodeType === 9) {
-                    elem = context.getElementById(m);
+          elem = context.getElementById(m);
 
-                    if (elem && elem.parentNode) {
+          if (elem && elem.parentNode) {
 
-                        if (elem.id === m) {
-                            results.push(elem);
-                            return results;
-                        }
-                    } else {
-						
-                        return results;
-                    }
-					
-                } else {
-                    // Context is not a document
-                    if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
-                        hAzzle.contains(context, elem) && elem.id === m) {
-                        results.push(elem);
-                        return results;
-                    }
-                }
+            if (elem.id === m) {
+              results.push(elem);
+              return results;
+            }
+          } else {
+            return results;
+          }
+
           // .class	
 
         } else if ((m = match[2])) {
@@ -95,6 +76,8 @@ hAzzle.extend({
           return results;
         }
       }
+
+      // Everything else
 
       results = context.querySelectorAll(selector);
 

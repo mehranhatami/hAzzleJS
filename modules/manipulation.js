@@ -97,33 +97,43 @@ hAzzle.extend({
 
     toggleAttr: function (attr, toggle) {
 
-        if (toggle === undefined) {
+        var self = this,
+            args = arguments.length;
 
-            return this;
-        }
+        // Do nothing if no params provided: (ie fail safely)
+        if (args === 0) {
 
-        // Only 'attr'
+            return self;
 
-        if (toggle === undefined) {
+            // When toggle arg not provided, add attribute where not present, remove it where prosent:
+        } else if (args === 1) {
 
-            return this.each(function () {
-                hAzzle(this)[hAzzle(this).attr(attr) ? 'removeAttr' : 'attr'](attr, attr);
-            });
-        }
+            return self.each(function (el) {
 
-        // Apply it to each element when toggle is a function
+                hAzzle(el)[hAzzle(el).attr(attr) ? 'removeAttr' : 'addAttr'](attr, attr);
 
-        if (isFunction(toggle)) {
-
-            return this.each(function () {
-
-                hAzzle(this)[toggle.call(this) ? 'attr' : 'removeAttr'](attr, attr);
             });
 
-            // Add attr if toggle is true, remove attr if toggle is false:
-        }
+            // Otherwise when both attr & toggle arguments have been provided:
+        } else {
 
-        return this[toggle ? 'attr' : 'removeAttr'](attr, attr);
+            // When toggle is a function, apply it to each element:
+            if (isFunction(toggle)) {
+
+                return self.each(function (el) {
+
+                    hAzzle(el)[toggle.call(el) ? 'addAttr' : 'removeAttr'](attr, attr);
+
+                });
+
+                // Or add attr if toggle is true, remove attr if toggle is false:
+            } else {
+
+                return self[toggle ? 'addAttr' : 'removeAttr'](attr, attr);
+
+            }
+
+        }
     },
 
     /**
@@ -135,7 +145,7 @@ hAzzle.extend({
      */
 
     prop: function (name, value) {
-		
+
         return hAzzle.setter(this, hAzzle.prop, name, value, true);
     },
 
@@ -401,13 +411,14 @@ hAzzle.extend({
      */
 
     before: function (node) {
+        var i = 0,
+            l;
         return this.each(function (el, i) {
-            hAzzle.each(stabilizeHTML(node, i), function (i) {
-                try {
-                    el.parentNode.insertBefore(i, el);
-                } // Die silently
-                catch (e) {}
-            });
+            node = stabilizeHTML(node, i);
+            l = node.length;
+            for (; i < l; i++) {
+                el.parentNode.insertBefore(node[i], el);
+            }
         });
     },
 
@@ -417,13 +428,14 @@ hAzzle.extend({
      */
 
     after: function (node) {
+        var i = 0,
+            l;
         return this.each(function (el, i) {
-            hAzzle.each(stabilizeHTML(node, i), function (i) {
-                try {
-                    el.parentNode.insertBefore(i, el.nextSibling);
-                } // Die silently
-                catch (e) {}
-            }, null, 1);
+            node = stabilizeHTML(node, i);
+            l = node.length;
+            for (; i < l; i++) {
+                el.parentNode.insertBefore(node[i], el.nextSibling);
+            }
         });
     },
 
@@ -470,6 +482,7 @@ hAzzle.extend({
         }, 1);
 
         return this;
+
     },
 
     /**
@@ -759,9 +772,9 @@ hAzzle.extend({
 
         if (typeof value !== 'undefined') {
 
-			return hooks && "set" in hooks && (ret = hooks.set( elem, value, name )) !== undefined ?
-				ret :
-				( elem[ name ] = value );
+            return hooks && "set" in hooks && (ret = hooks.set(elem, value, name)) !== undefined ?
+                ret :
+                (elem[name] = value);
 
         } else {
 
@@ -965,6 +978,7 @@ function injectHTML(target, node, fn, rev) {
 
             }, null, rev);
 
+
         }, this, rev);
 
         node.length = i;
@@ -1000,9 +1014,9 @@ hAzzle.each(['radio', 'checkbox'], function () {
     hAzzle.valHooks[this] = {
         set: function (elem, value) {
             if (hAzzle.isArray(value)) {
-				if(hAzzle.indexOf(hAzzle(elem).val(), value) >= 0) {
-				return elem.checked;
-				}
+                if (hAzzle.indexOf(hAzzle(elem).val(), value) >= 0) {
+                    return elem.checked;
+                }
             }
         }
     };
