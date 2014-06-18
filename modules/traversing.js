@@ -165,6 +165,7 @@ hAzzle.extend({
      */
 
     closest: function (selector, index) {
+
         if (typeof selector === 'number') {
 
             index = selector;
@@ -172,7 +173,7 @@ hAzzle.extend({
 
         } else {
 
-            index = 0;
+            index = index || 0;
 
         }
         return getNth(this, parentNode, selector, index, true);
@@ -192,7 +193,13 @@ hAzzle.extend({
 
     },
 
-    previous: this.prev,
+    // Some people are most used to 'previous' then 'prev, so
+    // we are going to make them happy
+
+    previous: function () {
+        return this.prev(this.arguments);
+    },
+
 
     /**
      * Get the immediately following sibling of each element
@@ -576,26 +583,32 @@ function getNth(el, property, selector, index, fn) {
             el = el[property];
         }
 
-        // Always skip document fragments
+        // Don't run this loop if this is an document fragment
 
-        while (el && (index === null || i >= 0) && el.nodeType < 11) {
+        if (el.nodeType !== 11) {
 
-            if (el.nodeType === 1 && (!fn || fn === true || fn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
+            while (el && (index === null || i >= 0)) {
 
-                if (index === null && property !== nextNode && property !== parentNode) {
+                if (el.nodeType === 1) {
 
-                    ret.unshift(el);
+                    if ((!fn || fn === true || fn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
 
-                } else {
+                        if (index === null && property !== nextNode && property !== parentNode) {
 
-                    ret.push(el);
+                            ret.unshift(el);
+
+                        } else {
+
+                            ret.push(el);
+                        }
+                    }
                 }
+                el = el[property];
             }
-
-            el = el[property];
         }
 
         return ret;
+
     });
 }
 
@@ -676,11 +689,11 @@ hAzzle.forOwn({
     hAzzle.Core[name] = function (until, selector) {
         var matched = hAzzle.map(this, fn, until);
 
-        if (name.slice(-5) !== "Until") {
+        if (name.slice(-5) !== 'Until') {
             selector = until;
         }
 
-        if (selector && typeof selector === "string") {
+        if (selector && isString(selector)) {
             matched = hAzzle.select(selector, null, null, matched);
         }
 
