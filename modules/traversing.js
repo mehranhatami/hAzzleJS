@@ -48,7 +48,7 @@ hAzzle.extend({
      */
 
     find: function (selector) {
-        var i,
+        var i = 0,
             len = this.length,
             ret = [],
             self = this;
