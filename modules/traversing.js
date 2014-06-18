@@ -8,6 +8,17 @@ var arr = [],
 
     isString = hAzzle.isString,
 
+    // support W3C ElementTraversal interface
+
+    firstNode = 'firstChild',
+    nextNode = 'nextSibling',
+    prevNode = 'previousSibling',
+    parentNode = 'parentNode',
+    //    firstElement = 'firstElementChild',
+    //    nextElement  = 'nextElementSibling',
+    //   prevElement  = 'previousElementSibling';
+
+
     rparentsprev = /^(?:parents|prev(?:Until|All))/,
 
     // Methods guaranteed to produce a unique set when starting from a unique set
@@ -91,13 +102,12 @@ hAzzle.extend({
 
         if (!selector) {
 
-            return (this[0] && this[0].parentNode) ? this.parent().children().indexOf(this[0]) : -1;
+            return (this[0] && this[0][parentNode]) ? this.parent().children().indexOf(this[0]) : -1;
         }
 
         // index in selector
 
         if (typeof selector === "string") {
-            alert(selector)
             return indexOf.call(hAzzle(selector), this[0]);
         }
 
@@ -137,7 +147,7 @@ hAzzle.extend({
      */
 
     up: function (selector, index) {
-        return traversing(this, 'parentNode', selector, index);
+        return getNTH(this, parentNode, selector, index);
     },
 
     /**
@@ -168,7 +178,7 @@ hAzzle.extend({
             index = 0;
 
         }
-        return traversing(this, 'parentNode', selector, index, true);
+        return getNTH(this, parentNode, selector, index, true);
     },
 
     /**
@@ -181,7 +191,7 @@ hAzzle.extend({
      */
 
     prev: function (selector, index) {
-        return traversing(this, 'previousSibling', selector, index);
+        return getNTH(this, prevNode, selector, index);
 
     },
 
@@ -195,7 +205,7 @@ hAzzle.extend({
      */
 
     next: function (selector, index) {
-        return traversing(this, 'nextSibling', selector, index);
+        return getNTH(this, nextNode, selector, index);
     },
 
     tail: function (index) {
@@ -248,13 +258,13 @@ hAzzle.extend({
             l = arr.length;
 
         for (; i < l; i++) {
-            arr[i] = arr[i].parentNode.firstChild;
+            arr[i] = arr[i][parentNode][firstNode];
             while (arr[i].nodeType !== 1) {
-                arr[i] = arr[i].nextSibling;
+                arr[i] = arr[i][nextNode];
             }
         }
 
-        return traversing(arr, 'nextSibling', selector || '*', index, function (el, i) {
+        return getNTH(arr, nextNode, selector || '*', index, function (el, i) {
             return el !== self[i];
         });
     },
@@ -273,7 +283,7 @@ hAzzle.extend({
 
             p = this[i];
 
-            while ((p = p.previousSibling)) {
+            while ((p = p[prevNode])) {
 
                 if (p.nodeType == 1) {
 
@@ -282,7 +292,7 @@ hAzzle.extend({
             }
             p = this[i];
 
-            while ((p = p.nextSibling)) {
+            while ((p = p[nextNode])) {
 
                 if (p.nodeType == 1) {
 
@@ -304,7 +314,7 @@ hAzzle.extend({
 
     children: function (selector, index) {
         var self = this;
-        return traversing(self.down.call(self), 'nextSibling', selector || '*', index, true);
+        return getNTH(self.down.call(self), nextNode, selector || '*', index, true);
 
 
     },
@@ -501,17 +511,22 @@ hAzzle.extend({
  */
 
 function collect(el, fn) {
+
     var ret = [],
-        res, i = 0,
-        j, l = el.length,
-        l2;
-    while (i < l) {
-        j = 0;
-        l2 = (res = fn(el[i], i++)).length;
-        while (j < l2) {
-            ret.push(res[j++]);
+        res,
+        b = 0,
+        e = 0,
+        len = el.length,
+        f;
+
+    for (; b < len;) {
+        res = fn(el[b], b++);
+        f = res.length;
+        for (; e < f;) {
+            ret.push(res[e++]);
         }
     }
+
     return hAzzle(ret);
 }
 
@@ -541,7 +556,7 @@ function getIndex(selector, index) {
  * Traverse multiple DOM elements
  */
 
-function traversing(el, property, selector, index, expression) {
+function getNTH(el, property, selector, index, fn) {
 
     // Find our position in the DOM tree
 
@@ -557,7 +572,7 @@ function traversing(el, property, selector, index, expression) {
         isString = typeof selector === "string" ? selector : '*';
 
 
-        if (!expression) {
+        if (!fn) {
 
             el = el[property];
         }
@@ -566,9 +581,9 @@ function traversing(el, property, selector, index, expression) {
 
         while (el && (index === null || i >= 0) && el.nodeType < 11) {
 
-            if (el.nodeType === 1 && (!expression || expression === true || expression(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
+            if (el.nodeType === 1 && (!fn || fn === true || fn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
 
-                if (index === null && property !== 'nextSibling' && property !== 'parentNode') {
+                if (index === null && property !== nextNode && property !== parentNode) {
 
                     ret.unshift(el);
 
@@ -633,32 +648,28 @@ hAzzle.dir = function (elem, dir, until) {
         }
     }
     return matched;
-}
-
+};
 
 hAzzle.forOwn({
     parent: function (elem) {
-        var parent = elem.parentNode;
+        var parent = elem[parentNode];
         return parent && parent.nodeType !== 11 ? parent : null;
     },
     nextUntil: function (elem, i, until) {
-        return hAzzle.dir(elem, "nextSibling", until);
+        return hAzzle.dir(elem, nextNode, until);
     },
     parentsUntil: function (elem, i, until) {
-        return hAzzle.dir(elem, "parentNode", until);
+        return hAzzle.dir(elem, parentNode, until);
     },
 
     nextAll: function (elem) {
-        return hAzzle.dir(elem, "nextSibling");
+        return hAzzle.dir(elem, nextNode);
     },
     prevAll: function (elem) {
-        return hAzzle.dir(elem, "previousSibling");
-    },
-    nextUntil: function (elem, i, until) {
-        return hAzzle.dir(elem, "nextSibling", until);
+        return hAzzle.dir(elem, prevNode);
     },
     prevUntil: function (elem, i, until) {
-        return hAzzle.dir(elem, "previousSibling", until);
+        return hAzzle.dir(elem, prevNode, until);
     },
 
 }, function (name, fn) {
@@ -686,5 +697,5 @@ hAzzle.forOwn({
         }
 
         return hAzzle(matched);
-    }
+    };
 });
