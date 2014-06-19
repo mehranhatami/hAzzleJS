@@ -24,6 +24,8 @@
 
         natives = {},
 
+        breaker = {},
+
         /**
          * Prototype references.
          */
@@ -39,7 +41,7 @@
         slice = ArrayProto.slice,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
-        keys = Object.keys,
+        Okeys = Object.keys,
         trim = String.prototype.trim,
 
         /*
@@ -126,8 +128,8 @@
     hAzzle.Core = Core.prototype = {
 
         // The default length of a hAzzle object is 0
-		
-		length: 0,
+
+        length: 0,
         /**
          * Returns a new array with the result of calling callback on each element of the array
          * @param {function} fn
@@ -217,6 +219,8 @@
             }
         }
     };
+
+
 
     hAzzle.extend({
 
@@ -332,7 +336,7 @@
             return true;
         },
         isNumeric: function (obj) {
-            return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
+            return !hAzzle.isArray(obj) && (obj - parseFloat( obj ) + 1) >= 0;
 
         },
         isBlank: function (str) {
@@ -341,7 +345,7 @@
         isArray: Array.isArray,
 
         isWindow: function (obj) {
-            return obj && obj.document && obj.location && obj.alert && obj.setInterval;
+            return obj != null && obj === obj.window;
         },
         isDocument: function (obj) {
             return obj !== null && obj.nodeType === obj.DOCUMENT_NODE;
@@ -500,7 +504,7 @@
                 length = elems.length,
                 ret = [];
             // Go through the array, translating each of the items to their new values
-            if (toString.call(elems) === '[object String]') {
+            if (hAzzle.type(elems) === 'object') {
 
                 for (i in elems) {
 
@@ -706,16 +710,25 @@
         // Loop through Objects
         // Note ! A for-in loop won't guarantee property iteration order and they'll iterate over anything added to the Array.prototype
 
-        forOwn: function (obj, fn, arg) {
+        forOwn: function (obj, iterator, context) {
 
-            var i = 0,
-                k = keys(obj),
-                l = k.length;
+            if (obj == null) {
+
+                return obj;
+            }
+
+            var keys = Okeys(obj),
+                i = 0,
+                l = keys.length;
 
             for (; i < l; i++) {
 
-                fn.call(arg, k[i], obj[k[i]]);
+                if (iterator.call(context, obj[keys[i]], keys[i], obj) === breaker) {
+
+                    return;
+                }
             }
+            return obj;
         },
 
         // This one has to be fast...

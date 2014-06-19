@@ -682,7 +682,8 @@ hAzzle.forOwn({
         return hAzzle.dir(elem, prevNode, until);
     },
 
-}, function (name, fn) {
+}, function (fn, name) {
+	
     hAzzle.Core[name] = function (until, selector) {
         var matched = hAzzle.map(this, fn, until);
 

@@ -1014,7 +1014,7 @@ hAzzle.each('input select option textarea button form details'.split(' '), funct
 hAzzle.forOwn({
     before: '',
     after: 'nextSibling'
-}, function (key, value) {
+}, function (value, key) {
     hAzzle.Core[key] = function (node) {
         var i = 0, l;
         return this.each(function (el, i) {
