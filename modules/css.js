@@ -117,7 +117,6 @@ function isHidden(elem, el) {
     return hAzzle.style(elem, 'display') === 'none' || !hAzzle.contains(elem.ownerDocument, elem);
 }
 
-
 /**
  * Show / Hide an elements
  *
@@ -130,10 +129,11 @@ function showHide(elements, show) {
     var display, elem, hidden,
         values = [],
         index = 0,
-        length = elements.length;
+        len = elements.length;
 
-    for (; index < length; index++) {
+    for (; index < len; index++) {
         elem = elements[index];
+
         if (!elem.style) {
             continue;
         }
@@ -158,7 +158,7 @@ function showHide(elements, show) {
 
     // Set the display of most of the elements in a second loop
     // to avoid the constant reflow
-    for (index = 0; index < length; index++) {
+    for (index = 0; index < len; index++) {
         elem = elements[index];
         if (!elem.style) {
             continue;
@@ -229,9 +229,11 @@ hAzzle.extend({
     },
 
     /**
+	 * Calculates offset of the current element
+	 *
      * @param {number=} x
      * @param {number=} y
-     * @return {hAzzle|number}
+     * @return {object}
      */
 
     offset: function (options) {
@@ -250,12 +252,11 @@ hAzzle.extend({
             };
 
         if (!hAzzle.contains(docElem, el)) {
+			
             return bcr;
         }
 
         if (typeof el.getBoundingClientRect !== typeof undefined) {
-
-
 
             bcr = el.getBoundingClientRect();
         }
@@ -422,16 +423,16 @@ hAzzle.extend({
                     style = elem.style,
                     ret,
                     hooks = hAzzle.cssHooks[name],
-                    hook = hAzzle.cssStyles.set[name];
+                    CSS = hAzzle.cssStyles.set[name];
 
                 if (value === null) {
 
                     value = "";
                 }
 
-                if (hook) {
+                if (CSS) {
 
-                    hook(style, value, elem);
+                    CSS(style, value, elem);
 
                 } else {
 
@@ -465,7 +466,6 @@ hAzzle.extend({
 
             return elem && elem.style[name];
         }
-
     },
 
     /*
@@ -474,7 +474,7 @@ hAzzle.extend({
 
     css: function (el, prop) {
 
-        var val, style, hook, computed, hpp;
+        var val, style, CSS, hooks, computed, hpp;
 
         // If element, continue...
 
@@ -482,27 +482,20 @@ hAzzle.extend({
 
             style = el.style;
 
-            hook = hAzzle.cssStyles.get[prop];
-            val = hook ? hook(style) : style[prop];
-
-            /**
-             * camelizing and all other CSS transforming have been
-             * done with the 'cssStyle' at this point. If not,
-             * we get correct element from the elements style property.
-             */
+            CSS = hAzzle.cssStyles.get[prop];
+            val = CSS ? CSS(style) : style[prop];
 
             hooks = hAzzle.cssHooks[prop];
 
             if (hooks && 'get' in hooks) {
 
                 val = hooks.get(el, true);
-
             }
 
             if (!computed && val === undefined) {
 
                 style = curCSS(el);
-                val = hook ? hook(style) : style[prop];
+                val = CSS ? CSS(style) : style[prop];
 
                 computed = true;
             }
@@ -700,8 +693,8 @@ var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
 hAzzle.each(["margin", "padding"], function (hook) {
     hAzzle.cssHooks[hook] = {
         get: function (elem) {
-            return hAzzle.map(hAzzle.cssExpand, function (dir) {
-                return hAzzle.css(elem, hook + dir);
+            return hAzzle.map(directions, function (dir) {
+                return hAzzle.curCSS(elem, hook + dir);
             }).join(" ");
         },
         set: function (elem, value) {
@@ -712,7 +705,7 @@ hAzzle.each(["margin", "padding"], function (hook) {
                     "Bottom": parts[2] || parts[0],
                     "Left": parts[3] || parts[1] || parts[0]
                 };
-            hAzzle.each(hAzzle.cssExpand, function (dir) {
+            hAzzle.each(directions, function (dir) {
                 elem.style[hook + dir] = values[dir];
             });
         }
@@ -848,6 +841,8 @@ hAzzle.each(props, function (nameProps) {
         styleProps = styleProps[0].toLowerCase() + styleProps.substr(1);
     }
 
+    if (styleProps !== nameProps) {
+
         hAzzle.cssStyles.get[unprefixedName] = function (style) {
             return style[styleProps];
         };
@@ -876,6 +871,7 @@ hAzzle.each(props, function (nameProps) {
 
             style["cssText" in style ? styleProps : nameProps] = value;
         };
+    }
 });
 
 // Exclude the following css properties from adding px
