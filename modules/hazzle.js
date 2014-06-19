@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.8b
+ * Version: 0.8c
  * Released under the MIT License.
  *
- * Date: 2014-06-19
+ * Date: 2014-06-20
  */
 (function (window, undefined) {
 
@@ -36,6 +36,7 @@
 
         indexOf = ArrayProto.indexOf,
         push = ArrayProto.push,
+        slice = ArrayProto.slice,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
         keys = Object.keys,
@@ -63,26 +64,60 @@
             return new Core(selector, context);
         };
 
-    // Init Core
+    /**
+     * Init Core
+     *
+     * All checks are done here, so we don't have to check
+     * for all this in the selector engine. That will give
+     * us better performance
+     */
 
     function Core(selector, context) {
 
-        this.length = 0;
+        // Selector look-up
 
-        if (selector) {
+        if (typeof selector === 'string') {
 
-            // Domready
+            selector = hAzzle.select(selector, context);
 
-            if (typeof selector === 'function') {
-                return hAzzle.ready(selector);
-            }
-            selector = typeof selector === 'string' ? hAzzle.select(selector, context) : hAzzle.unique(!selector.nodeType &&
-                typeof selector.length !== 'undefined' ?
-                selector : [selector]);
-            var i = this.length = selector.length;
-            while (i--) {
-                this[i] = selector[i];
-            }
+            // Document Ready
+
+        } else if (typeof selector === 'function') {
+
+            return hAzzle.ready(selector);
+
+            // Array
+
+        } else if (hAzzle.isArray(selector)) {
+
+            selector = hAzzle.unique(selector.filter(hAzzle.isElement));
+
+            // Nodelist
+
+        } else if (hAzzle.isNodeList(selector)) {
+
+            selector = slice.call(selector).filter(hAzzle.isElement);
+
+            // nodeTypes
+
+        } else if (hAzzle.isElement(selector)) {
+
+            selector = [selector];
+
+            // Object
+
+        } else if (hAzzle.isObject(selector)) {
+
+            selector = [selector];
+
+        } else {
+
+            selector = [];
+        }
+
+        var i = this.length = selector.length;
+        while (i--) {
+            this[i] = selector[i];
         }
     }
 
@@ -90,6 +125,9 @@
 
     hAzzle.Core = Core.prototype = {
 
+        // The default length of a hAzzle object is 0
+		
+		length: 0,
         /**
          * Returns a new array with the result of calling callback on each element of the array
          * @param {function} fn
@@ -105,12 +143,6 @@
             }
         },
 
-        twin: function (callback) {
-            return hAzzle(hAzzle.map(this, function (elem, i) {
-                return callback.call(elem, i, elem);
-            }));
-        },
-
         /**
          * Loop through objects
          *
@@ -122,7 +154,6 @@
         forOwn: function (fn, obj) {
             return hAzzle.forOwn(this, fn, obj);
         },
-
 
         /**
          * @param {function} fn
@@ -302,6 +333,7 @@
         },
         isNumeric: function (obj) {
             return !hAzzle.isArray(obj) && obj - parseFloat(obj) >= 0;
+
         },
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
@@ -329,8 +361,8 @@
         IsNaN: function (val) {
             return typeof val === 'number' && val !== +val;
         },
-        isElement: function (o) {
-            return o && o.nodeType === 1 || o.nodeType === 9;
+        isElement: function (elem) {
+            return elem && (elem.nodeType === 1 || elem.nodeType === 9);
         },
         isNodeList: function (obj) {
             return obj && hAzzle.is([
@@ -670,6 +702,7 @@
             return ret;
         },
 
+
         // Loop through Objects
         // Note ! A for-in loop won't guarantee property iteration order and they'll iterate over anything added to the Array.prototype
 
@@ -680,7 +713,7 @@
                 l = k.length;
 
             for (; i < l; i++) {
-				
+
                 fn.call(arg, k[i], obj[k[i]]);
             }
         },
@@ -750,6 +783,8 @@
          * DOM ready
          * Execute a callback for every element in the matched set.
          */
+
+
 
         readyList: [],
         readyFired: false,

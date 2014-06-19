@@ -24,23 +24,7 @@ hAzzle.extend({
     results = results || [];
     context = context || doc;
 
-    // Bad and quick fix
-
-    if (selector === "window") return [win];
-
-    // Same basic safeguard as Sizzle
-    if (!selector || typeof selector !== "string") {
-
-      return results;
-    }
-
-    // Early return if context is not an element or document
-    if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
-
-      return [];
-    }
-
-    if (!seed) {
+    if (!seed && hAzzle.documentIsHTML) {
 
       // Shortcuts
 
