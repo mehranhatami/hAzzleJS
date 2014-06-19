@@ -15,12 +15,12 @@ var win = this,
     directions = ["Top", "Right", "Bottom", "Left"],
     computed,
     props,
-   
-   cssNormalTransform = {
-	
-		letterSpacing: "0",
-		fontWeight: "400"
-	}
+
+    cssNormalTransform = {
+
+        letterSpacing: "0",
+        fontWeight: "400"
+    },
 
     elemdisplay = {},
 
@@ -380,7 +380,7 @@ hAzzle.extend({
 // Let us extend the hAzzle Object a litle ...
 
 hAzzle.extend({
-	
+
     cssStyles: {
 
         // Get properties
@@ -391,31 +391,6 @@ hAzzle.extend({
 
         set: {}
 
-    },
-
-    // Properties that shouldn't have units behind e.g. 
-    // zIndex:33px are not allowed
-
-    unitless: {
-        'lineHeight': true,
-        'zoom': true,
-        'zIndex': true,
-        'opacity': true,
-        'boxFlex': true,
-        'WebkitBoxFlex': true,
-        'MozBoxFlex': true,
-        'columns': true,
-        'fontWeight': true,
-        'overflow': true,
-        'fillOpacity': true,
-        'flexGrow': true,
-        'columnCount': true,
-
-
-        'flexShrink': true,
-        'order': true,
-        'orphans': true,
-        'widows': true,
     },
 
     /**
@@ -523,16 +498,16 @@ hAzzle.extend({
             val = hook ? hook(style) : style[prop];
 
             /**
-			 * camelizing and all other CSS transforming have been
-			 * done with the 'cssStyle' at this point. If not, 
-			 * we get correct element from the elements style property.
-			 */
-			 
-	        hooks = hAzzle.cssHooks[prop];
+             * camelizing and all other CSS transforming have been
+             * done with the 'cssStyle' at this point. If not,
+             * we get correct element from the elements style property.
+             */
 
-	        if (hooks && 'get' in hooks) {
+            hooks = hAzzle.cssHooks[prop];
 
-            val = hooks.get(el, true);
+            if (hooks && 'get' in hooks) {
+
+                val = hooks.get(el, true);
 
             }
 
@@ -543,16 +518,16 @@ hAzzle.extend({
 
                 computed = true;
             }
-          
-		    // Convert "normal" to computed value
 
-            if ( val === 'normal' && name in cssNormalTransform ) {
-			
-			val = cssNormalTransform[ name ];
-		    
-			}
-            
-			return val;
+            // Convert "normal" to computed value
+
+            if (val === 'normal' && name in cssNormalTransform) {
+
+                val = cssNormalTransform[name];
+
+            }
+
+            return val;
         }
     },
 
@@ -860,7 +835,6 @@ if (computed.length) {
 
 } else {
 
-
     props = hAzzle.map(computed, function (key) {
 
         return key.replace(reCamel, function (str) {
@@ -871,27 +845,27 @@ if (computed.length) {
 }
 
 
-// Add to the cssHook
+// Add to the hAzzle.cssStyles object
 
-hAzzle.each(props, function (propName) {
+hAzzle.each(props, function (nameProps) {
 
-    var prefix = propName[0] === "-" ? propName.substr(1, propName.indexOf("-", 1) - 1) : null,
-        unprefixedName = prefix ? propName.substr(prefix.length + 2) : propName,
-        stylePropName = propName.replace(reDash, function (str) {
+    var prefix = nameProps[0] === "-" ? nameProps.substr(1, nameProps.indexOf("-", 1) - 1) : null,
+        unprefixedName = prefix ? nameProps.substr(prefix.length + 2) : nameProps,
+        styleProps = nameProps.replace(reDash, function (str) {
             return str[1].toUpperCase();
         });
 
     // most of browsers starts vendor specific props in lowercase
 
-    if (!(stylePropName in computed)) {
+    if (!(styleProps in computed)) {
 
-        stylePropName = stylePropName[0].toLowerCase() + stylePropName.substr(1);
+        styleProps = styleProps[0].toLowerCase() + styleProps.substr(1);
     }
 
-    if (stylePropName !== propName) {
+    if (styleProps !== nameProps) {
 
         hAzzle.cssStyles.get[unprefixedName] = function (style) {
-            return style[stylePropName];
+            return style[styleProps];
         };
 
         hAzzle.cssStyles.set[unprefixedName] = function (style, value, /* optional */ elem) {
@@ -916,26 +890,24 @@ hAzzle.each(props, function (propName) {
 
             // use cssText property to determine DOM.importStyles call
 
-            style["cssText" in style ? stylePropName : propName] = value;
+            style["cssText" in style ? styleProps : nameProps] = value;
         };
     }
 });
-
-
 
 // Exclude the following css properties from adding px
 
 hAzzle.each(('opacity box-flex webkit-box-flex moz-box-flex columns overflow flex-grow column-count flex-shrink ' +
     'order orphans windows float fill-opacity font-weight line-height ' +
-    'z-index zoom').split(" "), function (propName) {
+    'z-index zoom').split(" "), function (nameProps) {
 
-    var stylePropName = propName.replace(reDash, function (str) {
+    var styleProps = nameProps.replace(reDash, function (str) {
         return str[1].toUpperCase();
     });
 
-    hAzzle.cssStyles.set[propName] = function (style, value) {
+    hAzzle.cssStyles.set[nameProps] = function (style, value) {
 
-        style["cssText" in style ? stylePropName : propName] = value.toString();
+        style["cssText" in style ? styleProps : nameProps] = value.toString();
     };
 });
 
@@ -960,6 +932,7 @@ hAzzle.forOwn({
 }, function (props, key) {
 
     hAzzle.cssStyles.get[key] = function (style) {
+		
         var result = [],
             hasEmptyStyleValue = function (prop, index) {
 
