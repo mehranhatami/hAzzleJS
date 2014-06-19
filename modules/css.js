@@ -412,18 +412,6 @@ hAzzle.extend({
         },
     },
 
-    /**
-     * cssSupport.js OR plug-ins will fill this object with data
-     */
-
-    cssProps: {},
-
-    /**
-     * cssSupport.js OR plug-ins will fill this object with data
-     */
-
-    cssSupport: {},
-
     style: function (elem, name, value) {
 
         if (value !== undefined) {
@@ -841,9 +829,7 @@ if (computed.length) {
             return "-" + str.toLowerCase();
         });
     });
-
 }
-
 
 // Add to the hAzzle.cssStyles object
 
@@ -861,8 +847,6 @@ hAzzle.each(props, function (nameProps) {
 
         styleProps = styleProps[0].toLowerCase() + styleProps.substr(1);
     }
-
-    if (styleProps !== nameProps) {
 
         hAzzle.cssStyles.get[unprefixedName] = function (style) {
             return style[styleProps];
@@ -892,7 +876,6 @@ hAzzle.each(props, function (nameProps) {
 
             style["cssText" in style ? styleProps : nameProps] = value;
         };
-    }
 });
 
 // Exclude the following css properties from adding px
