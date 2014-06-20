@@ -78,50 +78,53 @@
 
         // Selector look-up
 
-        if (typeof selector === 'string') {
+        if (selector) {
 
-            selector = hAzzle.select(selector, context);
+            if (typeof selector === 'string') {
 
-            // Document Ready
+                selector = hAzzle.select(selector, context);
 
-        } else if (typeof selector === 'function') {
+                // Document Ready
 
-            return hAzzle.ready(selector);
+            } else if (typeof selector === 'function') {
 
-            // Array
+                return hAzzle.ready(selector);
 
-        } else if (hAzzle.isArray(selector)) {
+                // Array
 
-            selector = hAzzle.unique(selector.filter(hAzzle.isElement));
+            } else if (hAzzle.isArray(selector)) {
 
-            // Nodelist
+                selector = hAzzle.unique(selector.filter(hAzzle.isElement));
 
-        } else if (hAzzle.isNodeList(selector)) {
+                // Nodelist
 
-            selector = slice.call(selector).filter(hAzzle.isElement);
+            } else if (hAzzle.isNodeList(selector)) {
 
-            // nodeTypes
+                selector = slice.call(selector).filter(hAzzle.isElement);
 
-        } else if (hAzzle.isElement(selector)) {
+                // nodeTypes
 
-            selector = [selector];
+            } else if (hAzzle.isElement(selector)) {
 
-            // Object
+                selector = [selector];
 
-        } else if (hAzzle.isObject(selector)) {
+                // Object	
 
-            selector = [selector];
+            } else {
+                selector = hAzzle.unique(!selector.nodeType &&
+                    typeof selector.length !== 'undefined' ?
+                    selector : [selector]);
+            }
 
-        } else {
 
-            selector = [];
+            var i = this.length = selector.length;
+
+            while (i--) {
+                this[i] = selector[i];
+            }
+
         }
 
-        var i = this.length = selector.length;
-
-        while (i--) {
-            this[i] = selector[i];
-        }
     }
 
     /* =========================== CORE FUNCTIONS ========================== */
@@ -308,7 +311,7 @@
         isEmpty: function (str, ignoreWhitespace) {
             return str === null || !str.length || ignoreWhitespace && /^\s*$/.test(str);
         },
-		
+
         isObject: function (obj) {
 
             /*
@@ -488,7 +491,7 @@
         indexOf: function (elem, arr, i) {
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
-		
+
         /**
          * Check if an element exist in an array
          */
@@ -510,10 +513,10 @@
             var value, i = 0,
                 length = elems.length,
                 ret = [];
-				
+
             // Go through the array, translating each of the items to their new values
-            
-			if (hAzzle.type(elems) === 'object') {
+
+            if (hAzzle.type(elems) === 'object') {
 
                 for (i in elems) {
 
@@ -672,6 +675,7 @@
                     results.push(value);
                 }
             });
+
             return hAzzle(results);
         },
 

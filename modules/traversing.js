@@ -368,21 +368,8 @@ hAzzle.extend({
         return this[eqIndex(this.length, index, 0)];
     },
 
-
-    slice: function (start, end) {
-        var e = end,
-            l = this.length,
-            arr = [];
-        start = eqIndex(l, Math.max(-this.length, start), 0);
-        e = eqIndex(end < 0 ? l : l + 1, end, l);
-        end = e === null || e > l ? end < 0 ? 0 : l : e;
-
-        while (start !== null && start < end) {
-
-            arr.push(this[start++]);
-        }
-
-        return hAzzle(arr);
+    slice: function () {
+        return hAzzle(slice.apply(this, arguments));
     },
 
     filter: function (callback) {
@@ -585,24 +572,24 @@ function getNth(el, property, selector, index, fn) {
 
         // Don't run this loop if this is an document fragment
 
-            while (el && (index === null || i >= 0) && el.nodeType !== 11) {
+        while (el && (index === null || i >= 0) && el.nodeType !== 11) {
 
-                if (el.nodeType === 1) {
+            if (el.nodeType === 1) {
 
-                    if ((!fn || fn === true || fn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
+                if ((!fn || fn === true || fn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
 
-                        if (index === null && property !== nextNode && property !== parentNode) {
+                    if (index === null && property !== nextNode && property !== parentNode) {
 
-                            ret.unshift(el);
+                        ret.unshift(el);
 
-                        } else {
+                    } else {
 
-                            ret.push(el);
-                        }
+                        ret.push(el);
                     }
                 }
-                el = el[property];
             }
+            el = el[property];
+        }
 
         return ret;
 
@@ -683,7 +670,7 @@ hAzzle.forOwn({
     },
 
 }, function (fn, name) {
-	
+
     hAzzle.Core[name] = function (until, selector) {
         var matched = hAzzle.map(this, fn, until);
 
