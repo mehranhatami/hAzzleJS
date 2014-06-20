@@ -15,6 +15,71 @@ var win = this,
     computed,
     props,
 
+    /*!
+     * Holds an array with all CSS unitless attributes
+     *
+     * TODO!!
+     *
+     * Make sure this list are correct, and contains all
+     * unitless attributes
+     *
+     */
+    unitless = [
+
+        'opacity',
+        'box-flex',
+        'webkit-box-flex',
+        'moz-box-flex',
+        'columns',
+        'overflow',
+        'flexGrow',
+        'flexShrink',
+        'order',
+        'orphans',
+        'widows',
+        'float',
+        'fillOpacity',
+        'font-weight',
+        'line-height',
+        'columnCount',
+        'zoom',
+        'zIndex',
+        'fontWeight',
+        'fillOpacity',
+        'lineHeight',
+        'fontWeight',
+        'flexShrink',
+        'flexGrow',
+        'fillOpacity',
+        'counter-increment',
+        'volume',
+        'stress',
+        'pitch-range',
+        'richness',
+        'font',
+        'table-layout',
+        'white-space',
+        'visibility',
+        'background-color',
+        'text-alignborder-color',
+        'word-break',
+        'word-spacing',
+        'word-wrap',
+        'writing-mode',
+        'pause',
+        'font-size-adjust',
+        'list-style',
+        'background-position',
+        'transform',
+        'background ',
+        'backgroundImage',
+        'font-size-adjust',
+        'font-stretch',
+        'font-style',
+        'font-variant',
+        'font-weight'
+    ],
+
     cssNormalTransform = {
 
         letterSpacing: '0',
@@ -205,7 +270,8 @@ hAzzle.extend({
 
     css: function (prop, value) {
 
-        var obj = prop, el = this[0];
+        var obj = prop,
+            el = this[0];
 
         if (hAzzle.isArray(prop)) {
 
@@ -898,7 +964,7 @@ hAzzle.each(props, function (nameProps) {
 // Exclude the css attribues inside the unitless.js module 
 // from adding px
 
-hAzzle.each(hAzzle.unitless, function (nameProps) {
+hAzzle.each(unitless, function (nameProps) {
     var styleProps = nameProps.replace(reDash, function (str) {
         return str[1].toUpperCase();
     });
