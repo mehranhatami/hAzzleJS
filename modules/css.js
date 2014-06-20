@@ -205,18 +205,18 @@ hAzzle.extend({
 
     css: function (prop, value) {
 
-        var obj = prop;
+        var obj = prop, el = this[0];
 
         if (hAzzle.isArray(prop)) {
 
             var map = {},
                 i = 0,
-                styles = getStyle(this[0]),
+                styles = getStyle(el),
                 len = prop.length;
 
             for (; i < len; i++) {
 
-                map[prop[i]] = curCSS(this[0], prop[i], styles);
+                map[prop[i]] = curCSS(el, prop[i], styles);
             }
 
             return map;
@@ -226,7 +226,7 @@ hAzzle.extend({
 
         if (value === undefined && typeof prop === 'string') {
 
-            return hAzzle.css(this[0], prop);
+            return hAzzle.css(el, prop);
         }
 
         /**
@@ -258,12 +258,12 @@ hAzzle.extend({
      * @return {object}
      */
 
-    offset: function (options) {
+    offset: function (opts) {
         if (arguments.length) {
-            return options === undefined ?
+            return opts === undefined ?
                 this :
                 this.each(function (el, i) {
-                    xy(el, options, i);
+                    xy(el, opts, i);
                 });
         }
 
@@ -635,7 +635,7 @@ function relativeCalculation(elem, name, ret) {
  * @param {Object/Number} options
  * @param {Number} i
  */
-function xy(elem, options, i) {
+function xy(elem, opts, i) {
 
     var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
         position = hAzzle.css(elem, 'position'),
@@ -665,19 +665,19 @@ function xy(elem, options, i) {
         curLeft = parseFloat(curCSSLeft) || 0;
     }
 
-    if (hAzzle.isFunction(options)) {
-        options = options.call(elem, i, curOffset);
+    if (hAzzle.isFunction(opts)) {
+        opts = opts.call(elem, i, curOffset);
     }
 
-    if (options.top !== null) {
-        props.top = (options.top - curOffset.top) + curTop;
+    if (opts.top !== null) {
+        props.top = (opts.top - curOffset.top) + curTop;
     }
-    if (options.left !== null) {
-        props.left = (options.left - curOffset.left) + curLeft;
+    if (opts.left !== null) {
+        props.left = (opts.left - curOffset.left) + curLeft;
     }
 
-    if ('using' in options) {
-        options.using.call(elem, props);
+    if ('using' in opts) {
+        opts.using.call(elem, props);
 
     } else {
         curElem.css(props);
