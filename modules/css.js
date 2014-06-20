@@ -9,89 +9,15 @@ var win = this,
     reaf = /^(relative|absolute|fixed)$/,
     topbot = /^(top|bottom)$/,
     iframe,
-    styleProps,
-    pfx,
-    unprefixedName,
-    reDash = /\-./g,
-    reCamel = /[A-Z]/g,
     directions = ['Top', 'Right', 'Bottom', 'Left'],
-    computed,
-    props,
-
-    /*!
-     * Holds an array with all CSS unitless attributes
-     *
-     * TODO!!
-     *
-     * Make sure this list are correct, and contains all
-     * unitless attributes
-     *
-     */
-    unitless = [
-
-        'opacity',
-        'box-flex',
-        'webkit-box-flex',
-        'moz-box-flex',
-        'columns',
-        'overflow',
-        'flexGrow',
-        'flexShrink',
-        'order',
-        'orphans',
-        'widows',
-        'float',
-        'fillOpacity',
-        'font-weight',
-        'line-height',
-        'columnCount',
-        'zoom',
-        'zIndex',
-        'fontWeight',
-        'fillOpacity',
-        'lineHeight',
-        'fontWeight',
-        'flexShrink',
-        'flexGrow',
-        'fillOpacity',
-        'counter-increment',
-        'volume',
-        'stress',
-        'pitch-range',
-        'richness',
-        'font',
-        'table-layout',
-        'white-space',
-        'visibility',
-        'background-color',
-        'text-alignborder-color',
-        'word-break',
-        'word-spacing',
-        'word-wrap',
-        'writing-mode',
-        'pause',
-        'font-size-adjust',
-        'list-style',
-        'background-position',
-        'transform',
-        'background ',
-        'backgroundImage',
-        'font-size-adjust',
-        'font-stretch',
-        'font-style',
-        'font-variant',
-        'font-weight'
-    ],
-
-    cssNormalTransform = {
-
-        letterSpacing: '0',
-        fontWeight: '400'
-    },
-
     elemdisplay = {},
 
-    getStyle = hAzzle.features.computedStyle ? function (el) {
+    /**
+     * Remove units ( e.g. 'pc, 'px', '%') from values
+     * This is an faster alternative then parseFloat
+     */
+
+    getStyles = hAzzle.features.computedStyle ? function (el) {
 
         if (el) {
 
@@ -101,7 +27,7 @@ var win = this,
             }
         }
 
-        return el && window.getComputedStyle(el, null);
+        return el && win.getComputedStyle(el, null);
 
     } : function (el) {
 
@@ -114,6 +40,15 @@ var win = this,
          */
 
         return el.style || el.currentStyle;
+    },
+
+    // Has to be numbers, not strings
+
+    cssNormalTransform = {
+
+        letterSpacing: '0',
+        fontWeight: '400'
+
     };
 
 function actualDisplay(name, doc) {
@@ -174,6 +109,28 @@ function defaultDisplay(nodeName) {
     return display;
 }
 
+function vendorPrefixed(style, name) {
+
+    // shortcut for names that are not vendor prefixed
+    if (name in style) {
+        return name;
+    }
+
+    // check for vendor prefixed names
+    var capName = name[0].toUpperCase() + name.slice(1),
+        origName = name,
+        i = hAzzle.cssPrefixes.length;
+
+    while (i--) {
+        name = hAzzle.cssPrefixes[i] + capName;
+        if (name in style) {
+            return name;
+        }
+    }
+
+    return origName;
+}
+
 /**
  * Check if an element is hidden
  *  @return {Boolean}
@@ -183,6 +140,7 @@ function isHidden(elem, el) {
     elem = el || elem;
     return hAzzle.style(elem, 'display') === 'none' || !hAzzle.contains(elem.ownerDocument, elem);
 }
+
 
 /**
  * Show / Hide an elements
@@ -196,11 +154,10 @@ function showHide(elements, show) {
     var display, elem, hidden,
         values = [],
         index = 0,
-        len = elements.length;
+        length = elements.length;
 
-    for (; index < len; index++) {
+    for (; index < length; index++) {
         elem = elements[index];
-
         if (!elem.style) {
             continue;
         }
@@ -225,7 +182,7 @@ function showHide(elements, show) {
 
     // Set the display of most of the elements in a second loop
     // to avoid the constant reflow
-    for (index = 0; index < len; index++) {
+    for (index = 0; index < length; index++) {
         elem = elements[index];
         if (!elem.style) {
             continue;
@@ -240,29 +197,6 @@ function showHide(elements, show) {
 
 hAzzle.extend({
 
-    zIndex: function (zIndex) {
-        if (zIndex !== undefined) {
-            return this.css('zIndex', zIndex);
-        }
-
-        if (this.length) {
-            var elem = hAzzle(this[0]),
-                position, value;
-            while (elem.length && elem[0] !== document) {
-                position = elem.css('position');
-                if (position === 'absolute' || position === 'relative' || position === 'fixed') {
-                    value = parseInt(elem.css('zIndex'), 10);
-                    if (!isNaN(value) && value !== 0) {
-                        return value;
-                    }
-                }
-                elem = elem.parent();
-            }
-        }
-
-        return 0;
-    },
-
     /**
      * Set / get CSS style
      *
@@ -273,14 +207,13 @@ hAzzle.extend({
 
     css: function (prop, value) {
 
-        var obj = prop,
-            el = this[0];
+        var obj = prop, el = this[0];
 
         if (hAzzle.isArray(prop)) {
 
             var map = {},
                 i = 0,
-                styles = getStyle(el),
+                styles = getStyles(el),
                 len = prop.length;
 
             for (; i < len; i++) {
@@ -313,26 +246,24 @@ hAzzle.extend({
         // Loop through, and collect the result
 
         return this.each(function (el) {
-            hAzzle.forOwn(obj, function (value, key) {
+            hAzzle.forOwn(obj, function (key, value) {
                 hAzzle.style(el, key, value);
             });
         });
     },
 
     /**
-     * Calculates offset of the current element
-     *
      * @param {number=} x
      * @param {number=} y
-     * @return {object}
+     * @return {hAzzle|number}
      */
 
-    offset: function (opts) {
+    offset: function (options) {
         if (arguments.length) {
-            return opts === undefined ?
+            return options === undefined ?
                 this :
                 this.each(function (el, i) {
-                    xy(el, opts, i);
+                    xy(el, options, i);
                 });
         }
 
@@ -343,11 +274,12 @@ hAzzle.extend({
             };
 
         if (!hAzzle.contains(docElem, el)) {
-
             return bcr;
         }
 
         if (typeof el.getBoundingClientRect !== typeof undefined) {
+
+
 
             bcr = el.getBoundingClientRect();
         }
@@ -473,16 +405,33 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-    cssStyles: {
+    // Various supports...
 
-        // Get properties
+    cssPrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
-        get: {},
+    // Properties that shouldn't have units behind e.g. 
+    // zIndex:33px are not allowed
 
-        // Set properties
+    unitless: {
+        'lineHeight': true,
+        'zoom': true,
+        'zIndex': true,
+        'opacity': true,
+        'boxFlex': true,
+        'WebkitBoxFlex': true,
+        'MozBoxFlex': true,
+        'columns': true,
+        'fontWeight': true,
+        'overflow': true,
+        'fillOpacity': true,
+        'flexGrow': true,
+        'columnCount': true,
 
-        set: {}
 
+        'flexShrink': true,
+        'order': true,
+        'orphans': true,
+        'widows': true,
     },
 
     /**
@@ -504,53 +453,70 @@ hAzzle.extend({
         },
     },
 
+    /**
+     * cssSupport.js OR plug-ins will fill this object with data
+     */
+
+    cssProps: {},
+
+    /**
+     * cssSupport.js OR plug-ins will fill this object with data
+     */
+
+    cssSupport: {},
+
     style: function (elem, name, value) {
+
+        // Check if we're setting a value
 
         if (value !== undefined) {
 
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
 
                 var type = typeof value,
-                    style = elem.style,
-                    ret,
-                    hooks = hAzzle.cssHooks[name],
-                    CSS = hAzzle.cssStyles.set[name];
+                    p, hooks, ret, style = elem.style;
 
-                if (value === null) {
+                // Camelize the name
 
-                    value = '';
+                p = hAzzle.camelize(name);
+
+                name = hAzzle.cssProps[p] || (hAzzle.cssProps[p] = vendorPrefixed(style, p));
+
+                // Props to jQuery
+
+                hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[p];
+
+                // convert relative number strings
+
+                if (type === 'string' && (ret = numbs.exec(value))) {
+
+                    value = hAzzle.units(parseFloat(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    type = 'number';
                 }
 
-                if (CSS) {
+                // Make sure that null and NaN values aren't set.
 
-                    CSS(style, value, elem);
+                if (value === null || value !== value) {
 
-                } else {
+                    return;
+                }
 
-                    if (type === 'string' && (ret = numbs.exec(value))) {
+                // If a number was passed in, add 'px' to the (except for certain CSS properties)
 
-                        value = relativeCalculation(elem, name, ret);
-                        type = 'number';
-                    }
+                if (type === 'number' && !hAzzle.unitless[name]) {
 
-                    // Make sure that null and NaN values aren't set.
+                    value += ret && ret[3] ? ret[3] : 'px';
+                }
 
-                    if (type === 'number') {
+                if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
 
-                        value += ret && ret[3] ? ret[3] : 'px';
-                    }
+                    style[hAzzle.camelize(name)] = 'inherit';
+                }
 
-                    if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+                // If a hook was provided, use that value, otherwise just set the specified value
 
-                        style[hAzzle.camelize(name)] = 'inherit';
-                    }
-
-                    // If a hook was provided, use that value, otherwise just set the specified value
-
-                    if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
-
-                        style[name] = value;
-                    }
+                if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
+                    style[p] = value;
                 }
             }
 
@@ -562,46 +528,51 @@ hAzzle.extend({
 
     /*
      * Set CSS rules on DOM nodes
+     *
+     * It also converts CSS-style (e.g. box-sizing) to
+     * camelCase
      */
 
     css: function (el, prop) {
 
-        var val, style, CSS, hooks, computed;
+        var val,
+            hooks,
+            origName = hAzzle.camelize(prop);
 
-        // If element, continue...
+        // If no element, return
 
-        if (el) {
+        if (!el) {
 
-            style = el.style;
-
-            CSS = hAzzle.cssStyles.get[prop];
-            val = CSS ? CSS(style) : style[prop];
-
-            hooks = hAzzle.cssHooks[prop];
-
-            if (hooks && 'get' in hooks) {
-
-                val = hooks.get(el, true);
-            }
-
-            if (!computed && val === undefined) {
-
-                style = curCSS(el);
-                val = CSS ? CSS(style) : style[prop];
-
-                computed = true;
-            }
-
-            // Convert 'normal' to computed value
-
-            if (val === 'normal' && name in cssNormalTransform) {
-
-                val = cssNormalTransform[name];
-
-            }
-
-            return val;
+            return null;
         }
+
+        // Inspiration from jQuery
+
+        hooks = hAzzle.cssHooks[prop] || hAzzle.cssHooks[origName];
+
+        // If a hook was provided get the computed value from there
+
+        if (hooks && 'get' in hooks) {
+
+            val = hooks.get(el, true);
+
+        }
+
+        // Otherwise, if a way to get the computed value exists, use that
+
+        if (val === undefined) {
+
+            val = curCSS(el, prop);
+        }
+
+        //convert 'normal' to computed value
+
+        if (val === 'normal' && prop in cssNormalTransform) {
+
+            val = cssNormalTransform[prop];
+        }
+
+        return val;
     },
 
     /**
@@ -691,12 +662,6 @@ hAzzle.extend({
 
 }, hAzzle);
 
-/* =========================== PRIVATE FUNCTIONS ========================== */
-
-
-function relativeCalculation(elem, name, ret) {
-    return hAzzle.units(parseFloat(curCSS(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
-}
 
 /**
  * sets an element to an explicit x/y position on the page
@@ -704,7 +669,7 @@ function relativeCalculation(elem, name, ret) {
  * @param {Object/Number} options
  * @param {Number} i
  */
-function xy(elem, opts, i) {
+function xy(elem, options, i) {
 
     var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
         position = hAzzle.css(elem, 'position'),
@@ -734,51 +699,24 @@ function xy(elem, opts, i) {
         curLeft = parseFloat(curCSSLeft) || 0;
     }
 
-    if (hAzzle.isFunction(opts)) {
-        opts = opts.call(elem, i, curOffset);
+    if (hAzzle.isFunction(options)) {
+        options = options.call(elem, i, curOffset);
     }
 
-    if (opts.top !== null) {
-        props.top = (opts.top - curOffset.top) + curTop;
+    if (options.top !== null) {
+        props.top = (options.top - curOffset.top) + curTop;
     }
-    if (opts.left !== null) {
-        props.left = (opts.left - curOffset.left) + curLeft;
+    if (options.left !== null) {
+        props.left = (options.left - curOffset.left) + curLeft;
     }
 
-    if ('using' in opts) {
-        opts.using.call(elem, props);
+    if ('using' in options) {
+        options.using.call(elem, props);
 
     } else {
         curElem.css(props);
     }
 }
-
-var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
-
-    var ret;
-
-    computed = computed || getStyle(elem);
-
-    if (computed) {
-
-        ret = computed.getPropertyValue(prop) || computed[prop];
-    }
-
-    if (computed) {
-
-        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
-
-            ret = hAzzle.style(elem, name);
-        }
-    }
-
-    return ret !== undefined ?
-
-        ret + '' :
-        ret;
-};
-
-/* =========================== INTERNAL ========================== */
 
 // Margin and padding cssHooks
 
@@ -786,7 +724,7 @@ hAzzle.each(['margin', 'padding'], function (hook) {
     hAzzle.cssHooks[hook] = {
         get: function (elem) {
             return hAzzle.map(directions, function (dir) {
-                return hAzzle.curCSS(elem, hook + dir);
+                return hAzzle.css(elem, hook + dir);
             }).join(' ');
         },
         set: function (elem, value) {
@@ -824,6 +762,7 @@ hAzzle.each(['width', 'height'], function (name) {
         if (!elem) {
 
             return '';
+
         }
 
         if (hAzzle.isWindow(elem)) {
@@ -832,7 +771,6 @@ hAzzle.each(['width', 'height'], function (name) {
         }
 
         // Get document width or height
-
         if (elem.nodeType === 9) {
             return Math.max(
                 elem.documentElement['client' + dimensionProperty],
@@ -852,8 +790,38 @@ hAzzle.each(['width', 'height'], function (name) {
     };
 });
 
-// scrollTop and scrollLeft functions
 
+
+
+var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
+
+    var ret;
+
+    computed = computed || getStyles(elem);
+
+    if (computed) {
+
+        ret = computed.getPropertyValue(prop) || computed[prop];
+    }
+
+    if (computed) {
+
+        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
+
+            ret = hAzzle.style(elem, name);
+        }
+    }
+
+    return ret !== undefined ?
+
+        ret + '' :
+        ret;
+};
+
+
+
+
+// scrollTop and scrollLeft functions
 hAzzle.forOwn({
     scrollLeft: 'pageXOffset',
     scrollTop: 'pageYOffset'
@@ -867,7 +835,7 @@ hAzzle.forOwn({
         if (hAzzle.isWindow(elem)) {
 
             win = elem;
-
+			
         } else {
 
             if (elem.nodeType === 9) {
@@ -884,164 +852,13 @@ hAzzle.forOwn({
         if (win) {
 
             win.scrollTo(!top ? val : window.pageXOffset,
-                top ? val : window.pageYOffset);
+                top ? val : window.pageYOffset
+            );
 
         } else {
 
             elem[method] = val;
 
-        }
-    };
-});
-
-// Get all computed values 
-
-computed = getStyle(hAzzle.docElem);
-
-
-// In Opera CSSStyleDeclaration objects returned by 'getComputeStyle' have length 0
-
-if (computed.length) {
-
-    props = slice.call(computed, 0);
-
-} else {
-
-    props = hAzzle.map(computed, function (key) {
-
-        return key.replace(reCamel, function (str) {
-            return '-' + str.toLowerCase();
-        });
-    });
-}
-
-// Add to the hAzzle.cssStyles object
-
-hAzzle.each(props, function (nameProps) {
-       pfx = nameProps[0] === '-' ? nameProps.substr(1, nameProps.indexOf('-', 1) - 1) : null;
-       unprefixedName = pfx ? nameProps.substr(pfx.length + 2) : nameProps;
-		
-        styleProps = nameProps.replace(reDash, function (str) {
-            return str[1].toUpperCase();
-        });
-
-    // most of browsers starts vendor specific props in lowercase
-
-    if (!(styleProps in computed)) {
-
-        styleProps = styleProps[0].toLowerCase() + styleProps.substr(1);
-    }
-
-    if (styleProps !== nameProps) {
-
-        hAzzle.cssStyles.get[unprefixedName] = function (style) {
-            return style[styleProps];
-        };
-
-        hAzzle.cssStyles.set[unprefixedName] = function (style, value, /* optional */ elem) {
-
-            var ret,
-                type = typeof value;
-
-            if (type === 'string' && (ret = numbs.exec(value))) {
-
-                value = relativeCalculation(elem, name, ret);
-                type = 'number';
-            }
-
-            if (type === 'number') {
-
-                value += ret && ret[3] ? ret[3] : 'px';
-
-            } else {
-
-                value = value.toString();
-            }
-
-            // use cssText property to determine DOM.importStyles call
-
-            style['cssText' in style ? styleProps : nameProps] = value;
-        };
-    }
-});
-
-// Exclude the css attribues inside the unitless.js module 
-// from adding px
-
-hAzzle.each(unitless, function (nameProps) {
-     styleProps = nameProps.replace(reDash, function (str) {
-        return str[1].toUpperCase();
-    });
-
-    hAzzle.cssStyles.set[nameProps] = function (style, value) {
-        style['cssText' in style ? styleProps : nameProps] = value;
-    };
-});
-
-// normalize property shortcuts
-
-hAzzle.forOwn({
-    font: ['fontStyle', 'fontSize', '/', 'lineHeight', 'fontFamily'],
-    padding: hAzzle.map(directions, function (dir) {
-        return 'padding' + dir;
-    }),
-    margin: hAzzle.map(directions, function (dir) {
-        return 'margin' + dir;
-    }),
-    'border-width': hAzzle.map(directions, function (dir) {
-        return 'border' + dir + 'Width';
-    }),
-    'border-style': hAzzle.map(directions, function (dir) {
-        return 'border' + dir + 'Style';
-    })
-
-}, function (props, key) {
-
-    hAzzle.cssStyles.get[key] = function (style) {
-
-        var result = [],
-            hasEmptyStyleValue = function (prop, index) {
-
-                result.push(prop === '/' ? prop : style[prop]);
-
-                return !result[index];
-            };
-
-        return props.some(hasEmptyStyleValue) ? '' : result.join(' ');
-    };
-
-    hAzzle.cssStyles.set[key] = function (style, value, /* optional */ elem) {
-
-        if (value && 'cssText' in style) {
-
-            // normalize setting complex property across browsers
-
-            style.cssText += ';' + key + ':' + value;
-
-        } else {
-
-            var ret,
-                type = typeof value;
-
-            hAzzle.each(props, function (name) {
-
-                if (type === 'string' && (ret = numbs.exec(value))) {
-
-                    value = relativeCalculation(elem, name, ret);
-                    type = 'number';
-                }
-
-                if (type === 'number') {
-
-                    value += ret && ret[3] ? ret[3] : 'px';
-
-                } else {
-
-                    value = value.toString();
-                }
-
-                style[name] = value;
-            });
         }
     };
 });
