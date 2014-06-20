@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.8c
+ * Version: 0.8d
  * Released under the MIT License.
  *
- * Date: 2014-06-20
+ * Date: 2014-06-21
  */
 (function (window, undefined) {
 
@@ -118,6 +118,7 @@
         }
 
         var i = this.length = selector.length;
+
         while (i--) {
             this[i] = selector[i];
         }
@@ -197,6 +198,12 @@
             }
 
             return m;
+        },
+
+        ready: function (fn) {
+            if (typeof fn === 'function') {
+                return hAzzle.ready(fn);
+            }
         }
     };
 
@@ -219,8 +226,6 @@
             }
         }
     };
-
-
 
     hAzzle.extend({
 
@@ -303,6 +308,7 @@
         isEmpty: function (str, ignoreWhitespace) {
             return str === null || !str.length || ignoreWhitespace && /^\s*$/.test(str);
         },
+		
         isObject: function (obj) {
 
             /*
@@ -336,7 +342,7 @@
             return true;
         },
         isNumeric: function (obj) {
-            return !hAzzle.isArray(obj) && (obj - parseFloat( obj ) + 1) >= 0;
+            return !hAzzle.isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
 
         },
         isBlank: function (str) {
@@ -431,7 +437,7 @@
         // e.g. boxSizing -> box-sizing
 
         decamelize: function (str) {
-            return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase().replace(/^ms-/, '-ms-') : str;
+            return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
         },
 
         /**
@@ -482,6 +488,7 @@
         indexOf: function (elem, arr, i) {
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
+		
         /**
          * Check if an element exist in an array
          */
@@ -503,8 +510,10 @@
             var value, i = 0,
                 length = elems.length,
                 ret = [];
+				
             // Go through the array, translating each of the items to their new values
-            if (hAzzle.type(elems) === 'object') {
+            
+			if (hAzzle.type(elems) === 'object') {
 
                 for (i in elems) {
 
@@ -634,29 +643,6 @@
             first.length = i;
 
             return first;
-        },
-
-        /*
-         * Finds the elements of an array which satisfy a filter function.
-         */
-
-        grep: function (elems, callback, invert) {
-            var callbackInverse,
-                matches = [],
-                i = 0,
-                length = elems.length,
-                callbackExpect = !invert;
-
-            // Go through the array, only saving the items
-            // that pass the validator function
-            for (; i < length; i++) {
-                callbackInverse = !callback(elems[i], i);
-                if (callbackInverse !== callbackExpect) {
-                    matches.push(elems[i]);
-                }
-            }
-
-            return matches;
         },
 
         // Nothing
@@ -796,8 +782,6 @@
          * DOM ready
          * Execute a callback for every element in the matched set.
          */
-
-
 
         readyList: [],
         readyFired: false,

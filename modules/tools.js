@@ -24,6 +24,29 @@ hAzzle.extend({
         }
         return Math.rand(x, y);
     },
+	
+	  /*
+       * Finds the elements of an array which satisfy a filter function.
+       */
+
+        grep: function (elems, callback, invert) {
+            var callbackInverse,
+                matches = [],
+                i = 0,
+                length = elems.length,
+                callbackExpect = !invert;
+
+            // Go through the array, only saving the items
+            // that pass the validator function
+            for (; i < length; i++) {
+                callbackInverse = !callback(elems[i], i);
+                if (callbackInverse !== callbackExpect) {
+                    matches.push(elems[i]);
+                }
+            }
+
+            return matches;
+        },
 
     // Invoke a method (with arguments) on every item in a collection.
 
