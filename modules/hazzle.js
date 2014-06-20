@@ -509,18 +509,18 @@
             return -1;
         },
 
-        map: function (elems, callback, arg) {
+        map: function (elem, callback, arg) {
             var value, i = 0,
-                length = elems.length,
+                length = elem.length,
                 ret = [];
 
             // Go through the array, translating each of the items to their new values
 
-            if (hAzzle.type(elems) === 'object') {
+            if (hAzzle.type(elem) === 'object') {
 
-                for (i in elems) {
+                for (i in elem) {
 
-                    value = callback(elems[i], i, arg);
+                    value = callback(elem[i], i, arg);
                     if (value !== null) {
                         ret.push(value);
                     }
@@ -528,7 +528,7 @@
             } else {
 
                 for (; i < length; i++) {
-                    value = callback(elems[i], i, arg);
+                    value = callback(elem[i], i, arg);
                     if (value !== null) {
                         ret.push(value);
                     }

@@ -2,8 +2,10 @@
  * A handfull Usefull function for the hAzzle Object
  */
 /* =========================== PUBLIC FUNCTIONS ========================== */
+
 var slice = Array.prototype.slice,
     breaker = {};
+
 hAzzle.extend({
 
 
@@ -30,17 +32,17 @@ hAzzle.extend({
        */
 
         grep: function (elems, callback, invert) {
-            var callbackInverse,
+            var cbi,
                 matches = [],
                 i = 0,
-                length = elems.length,
-                callbackExpect = !invert;
+                l = elems.length,
+                cbE = !invert;
 
             // Go through the array, only saving the items
             // that pass the validator function
-            for (; i < length; i++) {
-                callbackInverse = !callback(elems[i], i);
-                if (callbackInverse !== callbackExpect) {
+            for (; i < l; i++) {
+                cbi = !callback(elems[i], i);
+                if (cbi !== cbE) {
                     matches.push(elems[i]);
                 }
             }
