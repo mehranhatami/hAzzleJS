@@ -354,7 +354,7 @@
         isArray: Array.isArray,
 
         isWindow: function (obj) {
-            return obj != null && obj === obj.window;
+            return obj !== null && obj === obj.window;
         },
         isDocument: function (obj) {
             return obj !== null && obj.nodeType === obj.DOCUMENT_NODE;
@@ -702,7 +702,7 @@
 
         forOwn: function (obj, iterator, context) {
 
-            if (obj == null) {
+            if (obj === null) {
 
                 return obj;
             }

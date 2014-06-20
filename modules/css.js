@@ -9,6 +9,9 @@ var win = this,
     reaf = /^(relative|absolute|fixed)$/,
     topbot = /^(top|bottom)$/,
     iframe,
+    styleProps,
+    pfx,
+    unprefixedName,
     reDash = /\-./g,
     reCamel = /[A-Z]/g,
     directions = ['Top', 'Right', 'Bottom', 'Left'],
@@ -881,8 +884,7 @@ hAzzle.forOwn({
         if (win) {
 
             win.scrollTo(!top ? val : window.pageXOffset,
-                top ? val : window.pageYOffset
-            );
+                top ? val : window.pageYOffset);
 
         } else {
 
@@ -895,6 +897,7 @@ hAzzle.forOwn({
 // Get all computed values 
 
 computed = getStyle(hAzzle.docElem);
+
 
 // In Opera CSSStyleDeclaration objects returned by 'getComputeStyle' have length 0
 
@@ -915,8 +918,9 @@ if (computed.length) {
 // Add to the hAzzle.cssStyles object
 
 hAzzle.each(props, function (nameProps) {
-    var pfx = nameProps[0] === '-' ? nameProps.substr(1, nameProps.indexOf('-', 1) - 1) : null,
-        unprefixedName = pfx ? nameProps.substr(pfx.length + 2) : nameProps,
+       pfx = nameProps[0] === '-' ? nameProps.substr(1, nameProps.indexOf('-', 1) - 1) : null;
+       unprefixedName = pfx ? nameProps.substr(pfx.length + 2) : nameProps;
+		
         styleProps = nameProps.replace(reDash, function (str) {
             return str[1].toUpperCase();
         });
@@ -965,7 +969,7 @@ hAzzle.each(props, function (nameProps) {
 // from adding px
 
 hAzzle.each(unitless, function (nameProps) {
-    var styleProps = nameProps.replace(reDash, function (str) {
+     styleProps = nameProps.replace(reDash, function (str) {
         return str[1].toUpperCase();
     });
 
