@@ -8,18 +8,17 @@ var win = this,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
     topbot = /^(top|bottom)$/,
-    pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     iframe,
     reDash = /\-./g,
     reCamel = /[A-Z]/g,
-    directions = ["Top", "Right", "Bottom", "Left"],
+    directions = ['Top', 'Right', 'Bottom', 'Left'],
     computed,
     props,
 
     cssNormalTransform = {
 
-        letterSpacing: "0",
-        fontWeight: "400"
+        letterSpacing: '0',
+        fontWeight: '400'
     },
 
     elemdisplay = {},
@@ -62,7 +61,7 @@ function actualDisplay(name, doc) {
 
     } else {
 
-        display = hAzzle.css(elem[0], "display");
+        display = hAzzle.css(elem[0], 'display');
     }
 
     elem.detach();
@@ -138,20 +137,20 @@ function showHide(elements, show) {
             continue;
         }
 
-        values[index] = hAzzle.data(elem, "olddisplay");
+        values[index] = hAzzle.data(elem, 'olddisplay');
         display = elem.style.display;
         if (show) {
-            if (!values[index] && display === "none") {
-                elem.style.display = "";
+            if (!values[index] && display === 'none') {
+                elem.style.display = '';
             }
-            if (elem.style.display === "" && isHidden(elem)) {
-                values[index] = hAzzle.data(elem, "olddisplay", defaultDisplay(elem.nodeName));
+            if (elem.style.display === '' && isHidden(elem)) {
+                values[index] = hAzzle.data(elem, 'olddisplay', defaultDisplay(elem.nodeName));
             }
         } else {
             hidden = isHidden(elem);
 
-            if (display !== "none" || !hidden) {
-                hAzzle.data(elem, "olddisplay", hidden ? display : hAzzle.css(elem, "display"));
+            if (display !== 'none' || !hidden) {
+                hAzzle.data(elem, 'olddisplay', hidden ? display : hAzzle.css(elem, 'display'));
             }
         }
     }
@@ -163,8 +162,8 @@ function showHide(elements, show) {
         if (!elem.style) {
             continue;
         }
-        if (!show || elem.style.display === "none" || elem.style.display === "") {
-            elem.style.display = show ? values[index] || "" : "none";
+        if (!show || elem.style.display === 'none' || elem.style.display === '') {
+            elem.style.display = show ? values[index] || '' : 'none';
         }
     }
 
@@ -172,6 +171,29 @@ function showHide(elements, show) {
 }
 
 hAzzle.extend({
+
+    zIndex: function (zIndex) {
+        if (zIndex !== undefined) {
+            return this.css('zIndex', zIndex);
+        }
+
+        if (this.length) {
+            var elem = hAzzle(this[0]),
+                position, value;
+            while (elem.length && elem[0] !== document) {
+                position = elem.css('position');
+                if (position === 'absolute' || position === 'relative' || position === 'fixed') {
+                    value = parseInt(elem.css('zIndex'), 10);
+                    if (!isNaN(value) && value !== 0) {
+                        return value;
+                    }
+                }
+                elem = elem.parent();
+            }
+        }
+
+        return 0;
+    },
 
     /**
      * Set / get CSS style
@@ -229,8 +251,8 @@ hAzzle.extend({
     },
 
     /**
-	 * Calculates offset of the current element
-	 *
+     * Calculates offset of the current element
+     *
      * @param {number=} x
      * @param {number=} y
      * @return {object}
@@ -252,7 +274,7 @@ hAzzle.extend({
             };
 
         if (!hAzzle.contains(docElem, el)) {
-			
+
             return bcr;
         }
 
@@ -297,7 +319,7 @@ hAzzle.extend({
             },
             elem = this[0];
 
-        if (hAzzle.style(elem, "position") === "fixed") {
+        if (hAzzle.style(elem, 'position') === 'fixed') {
 
             // we assume that getBoundingClientRect is available when computed position is fixed
 
@@ -313,7 +335,7 @@ hAzzle.extend({
 
             offset = this.offset();
 
-            if (!hAzzle.nodeName(offsetParent[0], "html")) {
+            if (!hAzzle.nodeName(offsetParent[0], 'html')) {
                 parentOffset = offsetParent.offset();
             }
 
@@ -364,7 +386,7 @@ hAzzle.extend({
 
     toggle: function (state) {
 
-        if (typeof state === "boolean") {
+        if (typeof state === 'boolean') {
             return state ? this.show() : this.hide();
         }
         return this.each(function () {
@@ -406,8 +428,8 @@ hAzzle.extend({
             get: function (el, computed) {
 
                 if (computed) {
-                    var ret = hAzzle.css(el, "opacity");
-                    return ret === "" ? "1" : ret;
+                    var ret = hAzzle.css(el, 'opacity');
+                    return ret === '' ? '1' : ret;
                 }
             }
         },
@@ -427,7 +449,7 @@ hAzzle.extend({
 
                 if (value === null) {
 
-                    value = "";
+                    value = '';
                 }
 
                 if (CSS) {
@@ -446,7 +468,7 @@ hAzzle.extend({
 
                     if (type === 'number') {
 
-                        value += ret && ret[3] ? ret[3] : "px";
+                        value += ret && ret[3] ? ret[3] : 'px';
                     }
 
                     if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
@@ -456,7 +478,8 @@ hAzzle.extend({
 
                     // If a hook was provided, use that value, otherwise just set the specified value
 
-                    if (!hooks || !("set" in hooks) || (value = hooks.set(elem, value)) !== undefined) {
+                    if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
+
                         style[name] = value;
                     }
                 }
@@ -474,7 +497,7 @@ hAzzle.extend({
 
     css: function (el, prop) {
 
-        var val, style, CSS, hooks, computed, hpp;
+        var val, style, CSS, hooks, computed;
 
         // If element, continue...
 
@@ -500,7 +523,7 @@ hAzzle.extend({
                 computed = true;
             }
 
-            // Convert "normal" to computed value
+            // Convert 'normal' to computed value
 
             if (val === 'normal' && name in cssNormalTransform) {
 
@@ -533,14 +556,14 @@ hAzzle.extend({
         if (unit === '%') {
 
             if (lrmp.test(prop)) {
-                prop = "width";
+                prop = 'width';
 
             } else if (topbot.test(prop)) {
 
-                prop = "height";
+                prop = 'height';
             }
 
-            if (reaf.test(hAzzle.css(elem, "position"))) {
+            if (reaf.test(hAzzle.css(elem, 'position'))) {
 
                 elem = elem.offsetParent;
 
@@ -566,7 +589,7 @@ hAzzle.extend({
 
         if (unit === 'em') {
 
-            val = hAzzle.css(elem, "fontSize");
+            val = hAzzle.css(elem, 'fontSize');
             num = parseFloat(val);
 
             prop = hAzzle.isNumeric(num) ? num || 0 : val;
@@ -577,9 +600,9 @@ hAzzle.extend({
         if (hAzzle.units.unity === undefined) {
 
             var units = hAzzle.units.unity = {},
-                div = doc.createElement("div");
+                div = doc.createElement('div');
 
-            div.style.width = "100cm";
+            div.style.width = '100cm';
 
             doc.body.appendChild(div);
             units.mm = div.offsetWidth / 1000;
@@ -615,20 +638,20 @@ function relativeCalculation(elem, name, ret) {
 function xy(elem, options, i) {
 
     var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-        position = hAzzle.css(elem, "position"),
+        position = hAzzle.css(elem, 'position'),
         curElem = hAzzle(elem),
         props = {};
 
     // Set position first, in-case top/left are set even on static elem
-    if (position === "static") {
-        elem.style.position = "relative";
+    if (position === 'static') {
+        elem.style.position = 'relative';
     }
 
     curOffset = curElem.offset();
 
-    curCSSTop = hAzzle.css(elem, "top");
-    curCSSLeft = hAzzle.css(elem, "left");
-    calculatePosition = (position === "absolute" || position === "fixed") &&
+    curCSSTop = hAzzle.css(elem, 'top');
+    curCSSLeft = hAzzle.css(elem, 'left');
+    calculatePosition = (position === 'absolute' || position === 'fixed') &&
         hAzzle.inArray((curCSSTop + curCSSLeft), 'auto') > -1;
 
     // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
@@ -653,7 +676,7 @@ function xy(elem, options, i) {
         props.left = (options.left - curOffset.left) + curLeft;
     }
 
-    if ("using" in options) {
+    if ('using' in options) {
         options.using.call(elem, props);
 
     } else {
@@ -674,7 +697,7 @@ var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
 
     if (computed) {
 
-        if (ret === "" && !hAzzle.contains(elem.ownerDocument, prop)) {
+        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
 
             ret = hAzzle.style(elem, name);
         }
@@ -682,7 +705,7 @@ var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
 
     return ret !== undefined ?
 
-        ret + "" :
+        ret + '' :
         ret;
 };
 
@@ -690,20 +713,20 @@ var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
 
 // Margin and padding cssHooks
 
-hAzzle.each(["margin", "padding"], function (hook) {
+hAzzle.each(['margin', 'padding'], function (hook) {
     hAzzle.cssHooks[hook] = {
         get: function (elem) {
             return hAzzle.map(directions, function (dir) {
                 return hAzzle.curCSS(elem, hook + dir);
-            }).join(" ");
+            }).join(' ');
         },
         set: function (elem, value) {
             var parts = value.split(/\s/),
                 values = {
-                    "Top": parts[0],
-                    "Right": parts[1] || parts[0],
-                    "Bottom": parts[2] || parts[0],
-                    "Left": parts[3] || parts[1] || parts[0]
+                    'Top': parts[0],
+                    'Right': parts[1] || parts[0],
+                    'Bottom': parts[2] || parts[0],
+                    'Left': parts[3] || parts[1] || parts[0]
                 };
             hAzzle.each(directions, function (dir) {
                 elem.style[hook + dir] = values[dir];
@@ -763,10 +786,10 @@ hAzzle.each(['width', 'height'], function (name) {
 // scrollTop and scrollLeft functions
 
 hAzzle.forOwn({
-    scrollLeft: "pageXOffset",
-    scrollTop: "pageYOffset"
+    scrollLeft: 'pageXOffset',
+    scrollTop: 'pageYOffset'
 }, function (prop, method) {
-    var top = "pageYOffset" === prop;
+    var top = 'pageYOffset' === prop;
 
     hAzzle.Core[method] = function (val) {
         var elem = this[0],
@@ -803,7 +826,6 @@ hAzzle.forOwn({
     };
 });
 
-
 // Get all computed values 
 
 computed = getStyle(hAzzle.docElem);
@@ -819,7 +841,7 @@ if (computed.length) {
     props = hAzzle.map(computed, function (key) {
 
         return key.replace(reCamel, function (str) {
-            return "-" + str.toLowerCase();
+            return '-' + str.toLowerCase();
         });
     });
 }
@@ -827,9 +849,8 @@ if (computed.length) {
 // Add to the hAzzle.cssStyles object
 
 hAzzle.each(props, function (nameProps) {
-
-    var prefix = nameProps[0] === "-" ? nameProps.substr(1, nameProps.indexOf("-", 1) - 1) : null,
-        unprefixedName = prefix ? nameProps.substr(prefix.length + 2) : nameProps,
+    var pfx = nameProps[0] === '-' ? nameProps.substr(1, nameProps.indexOf('-', 1) - 1) : null,
+        unprefixedName = pfx ? nameProps.substr(pfx.length + 2) : nameProps,
         styleProps = nameProps.replace(reDash, function (str) {
             return str[1].toUpperCase();
         });
@@ -860,7 +881,7 @@ hAzzle.each(props, function (nameProps) {
 
             if (type === 'number') {
 
-                value += ret && ret[3] ? ret[3] : "px";
+                value += ret && ret[3] ? ret[3] : 'px';
 
             } else {
 
@@ -869,67 +890,63 @@ hAzzle.each(props, function (nameProps) {
 
             // use cssText property to determine DOM.importStyles call
 
-            style["cssText" in style ? styleProps : nameProps] = value;
+            style['cssText' in style ? styleProps : nameProps] = value;
         };
     }
 });
 
-// Exclude the following css properties from adding px
+// Exclude the css attribues inside the unitless.js module 
+// from adding px
 
-hAzzle.each(('opacity box-flex webkit-box-flex moz-box-flex columns overflow flex-grow column-count flex-shrink ' +
-    'order orphans windows float fill-opacity font-weight line-height ' +
-    'z-index zoom').split(" "), function (nameProps) {
-
+hAzzle.each(hAzzle.unitless, function (nameProps) {
     var styleProps = nameProps.replace(reDash, function (str) {
         return str[1].toUpperCase();
     });
 
     hAzzle.cssStyles.set[nameProps] = function (style, value) {
-
-        style["cssText" in style ? styleProps : nameProps] = value.toString();
+        style['cssText' in style ? styleProps : nameProps] = value;
     };
 });
-
 
 // normalize property shortcuts
 
 hAzzle.forOwn({
-    font: ["fontStyle", "fontSize", "/", "lineHeight", "fontFamily"],
-    padding: directions.map(function (dir) {
-        return "padding" + dir;
+    font: ['fontStyle', 'fontSize', '/', 'lineHeight', 'fontFamily'],
+    padding: hAzzle.map(directions, function (dir) {
+        return 'padding' + dir;
     }),
-    margin: directions.map(function (dir) {
-        return "margin" + dir;
+    margin: hAzzle.map(directions, function (dir) {
+        return 'margin' + dir;
     }),
-    "border-width": directions.map(function (dir) {
-        return "border" + dir + "Width";
+    'border-width': hAzzle.map(directions, function (dir) {
+        return 'border' + dir + 'Width';
     }),
-    "border-style": directions.map(function (dir) {
-        return "border" + dir + "Style";
+    'border-style': hAzzle.map(directions, function (dir) {
+        return 'border' + dir + 'Style';
     })
 
 }, function (props, key) {
 
     hAzzle.cssStyles.get[key] = function (style) {
-		
+
         var result = [],
             hasEmptyStyleValue = function (prop, index) {
 
-                result.push(prop === "/" ? prop : style[prop]);
+                result.push(prop === '/' ? prop : style[prop]);
 
                 return !result[index];
             };
 
-        return props.some(hasEmptyStyleValue) ? "" : result.join(" ");
+        return props.some(hasEmptyStyleValue) ? '' : result.join(' ');
     };
 
-    hAzzle.cssStyles.set[key] = function (style, value, elem) {
+    hAzzle.cssStyles.set[key] = function (style, value, /* optional */ elem) {
 
-        if (value && "cssText" in style) {
+        if (value && 'cssText' in style) {
 
             // normalize setting complex property across browsers
 
-            style.cssText += ";" + key + ":" + value;
+            style.cssText += ';' + key + ':' + value;
 
         } else {
 
@@ -946,7 +963,7 @@ hAzzle.forOwn({
 
                 if (type === 'number') {
 
-                    value += ret && ret[3] ? ret[3] : "px";
+                    value += ret && ret[3] ? ret[3] : 'px';
 
                 } else {
 
