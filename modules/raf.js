@@ -9,7 +9,7 @@
  *
  * - hAzzle.fixTick
  *
- * - hAzzle.nativeRAF = native
+ * - hAzzle.nativeRAF
  *
  */
 var win = this,
