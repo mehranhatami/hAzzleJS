@@ -1,9 +1,6 @@
 /**
  * RAF
  *
- *
- * Contains:
- *
  * - hAzzle.requestFrame
  *
  * - hAzzle.cancelFrame
@@ -13,19 +10,21 @@
  * - hAzzle.fixTick
  *
  */
-var top = window.top.name ? window.top : window,
+ 
+var win = this,
+    
+	// Deal with foreign domains
+	
+    top = win.top.name ? win.top : win,
+
     requestFrame = top.requestAnimationFrame,
     cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame,
     perf = top.performance && top.performance.now ? top.performance : {},
-    fixTick,
+    fixTick = false,
 
     // Use the best resolution timer that is currently available
 
-    perfNow = perf && (perf.now ||
-        perf.webkitNow ||
-        perf.msNow ||
-        perf.mozNow ||
-        perf.oNow);
+    perfNow = perf && (perf.now || perf.webkitNow ||perf.msNow || perf.mozNow || perf.oNow);
 
 
 // If no native RequestAnimationFrame, grab a vendor prefixed one
@@ -60,11 +59,15 @@ if (requestFrame) {
     };
 
     requestFrame(function (tick) {
+		
+     // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+     // if not, we have to do a timestamp fix on each frame		
 
         fixTick = hAzzle.fixTick = tick > 1e12 != perf > 1e12;
     });
 
 }
+
 
 /* =========================== FALLBACK FOR IE 9 ========================== */
 
@@ -80,7 +83,7 @@ if (!requestFrame) {
         _aq.push([++_irid, callback]);
 
         if (!_iid) {
-            _iid = window.setInterval(function () {
+            _iid = win.setInterval(function () {
                 if (_aq.length) {
                     var time = hAzzle.pnow(),
                         temp = _process;
@@ -94,7 +97,7 @@ if (!requestFrame) {
 
                 } else {
                     // don't continue the interval, if unnecessary
-                    window.clearInterval(_iid);
+                    win.clearInterval(_iid);
                     _iid = undefined;
                 } // Estimating support for 60 frames per second
             }, 1000 / 60);
@@ -127,7 +130,8 @@ if (!requestFrame) {
     };
 }
 
-// Throw the last function to the globale hAzzle Object
+  // Throw the last of the functions
+  // to the globale hAzzle Object
 
 hAzzle.requestFrame = requestFrame;
 hAzzle.cancelFrame = cancelFrame;
