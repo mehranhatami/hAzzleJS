@@ -46,18 +46,6 @@ if (!requestFrame) {
 
 if (requestFrame) {
 
-    // Expose performance.now to the globale hAzzle Object
-
-    hAzzle.pnow = perfNow ? function () {
-        return perfNow.call(perf);
-    } : function () {
-        var nowOffset;
-        if (perf.timing && perf.timing.navigationStart) {
-            nowOffset = perf.timing.navigationStart;
-        }
-        return hAzzle.now() - nowOffset;
-    };
-
     requestFrame(function (tick) {
 		
      // feature-detect if rAF and now() are of the same scale (epoch or high-res),
@@ -68,6 +56,22 @@ if (requestFrame) {
 
 }
 
+
+ // Expose performance.now to the globale hAzzle Object
+
+    hAzzle.pnow = perfNow ? function () {
+        return perfNow.call(perf);
+    } : function () {
+		
+		// polyfill for IE 9 and browsers who don't
+		// support performance.now
+		
+        var nowOffset;
+        if (perf.timing && perf.timing.navigationStart) {
+            nowOffset = perf.timing.navigationStart;
+        }
+        return hAzzle.now() - nowOffset;
+    };
 
 /* =========================== FALLBACK FOR IE 9 ========================== */
 
@@ -85,6 +89,9 @@ if (!requestFrame) {
         if (!_iid) {
             _iid = win.setInterval(function () {
                 if (_aq.length) {
+
+					// Use performance.now polyfill
+
                     var time = hAzzle.pnow(),
                         temp = _process;
                     _process = _aq;
@@ -99,8 +106,8 @@ if (!requestFrame) {
                     // don't continue the interval, if unnecessary
                     win.clearInterval(_iid);
                     _iid = undefined;
-                } // Estimating support for 60 frames per second
-            }, 1000 / 60);
+                } // Estimating support for 50 frames per second
+            }, 1000 / 50);
         }
 
         return _irid;
