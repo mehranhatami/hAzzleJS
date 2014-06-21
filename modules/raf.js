@@ -71,10 +71,12 @@ hAzzle.pnow = perfNow ? function () {
     // polyfill for IE 9 and browsers who don't
     // support performance.now
 
-    var nowOffset;
-    if (perf.timing && perf.timing.navigationStart) {
-        nowOffset = perf.timing.navigationStart;
+    var nowOffset = hAzzle.now();
+	
+     if (performance.timing && performance.timing.navigationStart){
+      nowOffset = performance.timing.navigationStart
     }
+	
     return hAzzle.now() - nowOffset;
 };
 
