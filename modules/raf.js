@@ -26,6 +26,9 @@ var win = this,
 
     perfNow = perf && (perf.now || perf.webkitNow ||perf.msNow || perf.mozNow || perf.oNow);
 
+    // Set as true as default
+	
+    hAzzle.nativeRAF = true;
 
 // If no native RequestAnimationFrame, grab a vendor prefixed one
 
@@ -42,6 +45,11 @@ if (!requestFrame) {
         top.oCancelAnimationFrame ||
         top.mozCancelRequestAnimationFrame ||
         null;
+	
+	// No-native, set to false to
+	// prevent iOS 6 bugs
+		
+     hAzzle.nativeRAF = false;
 }
 
 if (requestFrame) {
@@ -76,6 +84,11 @@ if (requestFrame) {
 /* =========================== FALLBACK FOR IE 9 ========================== */
 
 if (!requestFrame) {
+	
+	// No-native, set to false to
+	// prevent iOS 6 bugs
+		
+     hAzzle.nativeRAF = false;
 
     var _aq = [],
         _process = [],
