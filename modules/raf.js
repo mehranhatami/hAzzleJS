@@ -14,50 +14,50 @@
  */
 var win = this,
 
-    // Deal with foreign domains
+  // Deal with foreign domains
 
-    top = win.top.name ? win.top : win,
+  top = win.top.name ? win.top : win,
+  performance = win.performance,
+  requestFrame = top.requestAnimationFrame,
+  cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame,
+  perf = top.performance && top.performance.now ? top.performance : {},
+  native = true,
+  fixTick = false,
 
-    requestFrame = top.requestAnimationFrame,
-    cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame,
-    perf = top.performance && top.performance.now ? top.performance : {},
-    native = true,
-    fixTick = false,
+  // Use the best resolution timer that is currently available
 
-    // Use the best resolution timer that is currently available
-
-    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow);
+  perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow);
 
 // If no native RequestAnimationFrame, grab a vendor prefixed one
 
 if (!requestFrame) {
 
-    requestFrame = top.mozRequestAnimationFrame ||
-        top.oRequestAnimationFrame ||
-        top.msRequestAnimationFrame ||
-        null;
+  requestFrame = top.mozRequestAnimationFrame ||
+    top.oRequestAnimationFrame ||
+    top.msRequestAnimationFrame ||
+    null;
 
-    cancelFrame = top.webkitCancelAnimationFrame ||
-        top.webkitCancelRequestAnimationFrame ||
-        top.mozCancelAnimationFrame ||
-        top.oCancelAnimationFrame ||
-        top.mozCancelRequestAnimationFrame ||
-        null;
+  cancelFrame = top.webkitCancelAnimationFrame ||
+    top.webkitCancelRequestAnimationFrame ||
+    top.mozCancelAnimationFrame ||
+    top.oCancelAnimationFrame ||
+    top.mozCancelRequestAnimationFrame ||
+    null;
 
-    // Vendor prefixed rAF, so set to false
+  // Vendor prefixed rAF, so set to false
 
-    native = false;
+  native = false;
 }
 
 if (requestFrame) {
 
-    requestFrame(function (tick) {
+  requestFrame(function (tick) {
 
-        // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-        // if not, we have to do a timestamp fix on each frame		
+    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+    // if not, we have to do a timestamp fix on each frame		
 
-        fixTick = hAzzle.fixTick = tick > 1e12 != perf > 1e12;
-    });
+    fixTick = hAzzle.fixTick = tick > 1e12 != perf > 1e12;
+  });
 
 }
 
@@ -65,88 +65,107 @@ if (requestFrame) {
 // Expose performance.now to the globale hAzzle Object
 
 hAzzle.pnow = perfNow ? function () {
-    return perfNow.call(perf);
+  return perfNow.call(perf);
 } : function () {
 
-    // polyfill for IE 9 and browsers who don't
-    // support performance.now
+  // polyfill for IE 9 and browsers who don't
+  // support performance.now
 
-    var nowOffset = hAzzle.now();
-	
-     if (performance.timing && performance.timing.navigationStart){
-      nowOffset = performance.timing.navigationStart
-    }
-	
-    return hAzzle.now() - nowOffset;
+  var nowOffset = hAzzle.now();
+
+  if (performance.timing && performance.timing.navigationStart) {
+    nowOffset = performance.timing.navigationStart
+  }
+
+  return hAzzle.now() - nowOffset;
 };
 
 /* =========================== FALLBACK FOR IE 9 ========================== */
 
 if (!requestFrame) {
 
-    // No rAF, so set to false
+  // No rAF, so set to false
 
-    native = false;
+  native = false;
 
-    var _aq = [],
-        _process = [],
-        _irid = 0,
-        _iid;
+  var _aq = [],
+    _process = [],
+    _irid = 0,
+    _iid;
 
-    requestFrame = function (callback) {
+  requestFrame = function (callback) {
 
-        _aq.push([++_irid, callback]);
+    _aq.push([++_irid, callback]);
 
-        if (!_iid) {
-            _iid = win.setInterval(function () {
-                if (_aq.length) {
+    if (!_iid) {
+      _iid = win.setInterval(function () {
+        if (_aq.length) {
 
-                    // Use performance.now polyfill
+          // Use performance.now polyfill
 
-                    var time = hAzzle.pnow(),
-                        temp = _process;
-                    _process = _aq;
-                    _aq = temp;
+          var time = hAzzle.pnow(),
+            temp = _process;
+          _process = _aq;
+          _aq = temp;
 
-                    while (_process.length) {
+          while (_process.length) {
 
-                        _process.shift()[1](time);
-                    }
+            _process.shift()[1](time);
+          }
 
-                } else {
-                    // don't continue the interval, if unnecessary
-                    win.clearInterval(_iid);
-                    _iid = undefined;
-                } // Estimating support for 50 frames per second
-            }, 1000 / 50);
-        }
+        } else {
+          // don't continue the interval, if unnecessary
+          win.clearInterval(_iid);
+          _iid = undefined;
+        } // Estimating support for 50 frames per second
+      }, 1000 / 50);
+    }
 
-        return _irid;
+    return _irid;
+  };
+
+  /**
+   * Find the request ID and remove it
+   */
+
+  cancelFrame = function (rid) {
+
+    var i,
+      x = _aq.length,
+      y = _process.length;
+
+    for (; i < x; i += 1) {
+      if (_aq[i][0] === rid) {
+        _aq.splice(i, 1);
+        return;
+      }
+    }
+    for (; i < y; i += 1) {
+      if (_process[i][0] === rid) {
+        _process.splice(i, 1);
+        return;
+      }
+    }
+  };
+}
+
+function safeRAF(callback) {
+
+  var rafCallback = (function (callback) {
+
+    return function (tick) {
+
+      if (hAzzle.fixTick) {
+        tick = hAzzle.pnow();
+      }
+
+      callback(tick);
+
     };
 
-    /**
-     * Find the request ID and remove it
-     */
+  })(callback);
 
-    cancelFrame = function (rid) {
-
-        var i,
-            x = _aq.length,
-            y = _process.length;
-
-        for (; i < x; i += 1) {
-            if (_aq[i][0] === rid) {
-                _aq.splice(i, 1);
-                return;
-            }
-        }
-        for (; i < y; i += 1) {
-            if (_process[i][0] === rid) {
-                _process.splice(i, 1);
-                return;
-            }
-        }
-    };
+  requestFrame(rafCallback);
 }
 
 // Throw the last of the functions
@@ -154,7 +173,7 @@ if (!requestFrame) {
 
 hAzzle.requestFrame = requestFrame;
 hAzzle.cancelFrame = cancelFrame;
-
+hAzzle.safeRAF = safeRAF;
 /**
  * Boolean true/false if we support
  * native rAF or not. Used to
