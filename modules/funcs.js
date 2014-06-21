@@ -9,6 +9,19 @@ var slice = Array.prototype.slice,
     breaker = {};
 
 hAzzle.extend({
+    
+	/**
+	 * Simple function for copy one object over
+	 * to another object
+	 */
+	 
+    shallowCopy: function(target, src) {
+       hAzzle.forOwn(src, function (prop) {
+       target[prop] = src[prop];
+    });
+
+    return targetObj;
+  },
 
     pluck: function (array, property) {
             return array.map(function (item) {
