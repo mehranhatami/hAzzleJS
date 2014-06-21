@@ -59,7 +59,7 @@ hAzzle.event = {
   addEvent: function (elem, events, selector, fn, /* internal */ one) {
 
     var originalFn, type, types, i, args, entry, first,
-      namespaces, evto;
+      namespaces;
 
     // Don't attach events to text/comment nodes 
 
@@ -109,20 +109,29 @@ hAzzle.event = {
 
     if (typeof events === 'object') {
 
+      //move out 'call' and 'apply' from loops
+      var addEventCall = (function (thisArg, events, elem) {
+        return function (type) {
+          var evto = events[type];
+
+          if (typeof evto === 'object') {
+
+            hAzzle.event.addEvent.call(thisArg, elem, type, evto.delegate, evto.func);
+
+          } else {
+
+            hAzzle.event.addEvent.call(thisArg, elem, type, events[type]);
+          }
+        };
+
+      })(this, events, elem);
+
       for (type in events) {
 
         if (events.hasOwnProperty(type)) {
 
-          evto = events[type];
+          addEventCall(type);
 
-          if (typeof evto === 'object') {
-
-            hAzzle.event.addEvent.call(this, elem, type, evto.delegate, evto.func);
-
-          } else {
-
-            hAzzle.event.addEvent.call(this, elem, type, events[type]);
-          }
         }
       }
 
@@ -1023,12 +1032,20 @@ function triggerListeners(evt, listeners, thisArg) {
   var l = listeners.length,
     i = 0;
 
+  var notifyListener = (function (evt, listeners, thisArg) {
+    return function (i) {
+
+      if (!listeners[i].removed) {
+
+        listeners[i].handler.call(thisArg, evt);
+
+      }
+
+    };
+  })(evt, listeners, thisArg);
+
   for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
-
-    if (!listeners[i].removed) {
-
-      listeners[i].handler.call(thisArg, evt);
-    }
+    notifyListener(i);
   }
 
   ticking = false;
