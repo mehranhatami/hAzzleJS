@@ -3,7 +3,7 @@
   "description": "",
   "version": "1.6.1-BETA",
   "devDependencies": {
-    "karma": "~0.10.1",
+    "karma": "*",
     "karma-mocha": "~0.1.0",
     "karma-chrome-launcher": "~0.1.0",
     "karma-ie-launcher": "~0.1.1",
