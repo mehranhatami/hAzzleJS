@@ -4,7 +4,7 @@
  * Version: 0.8d
  * Released under the MIT License.
  *
- * Date: 2014-06-21
+ * Date: 2014-06-22
  */
 (function (window, undefined) {
 
@@ -18,11 +18,15 @@
     var win = window,
         doc = win.document,
 
-        /*
+        /**
          * Holds javascript natives
          */
 
         natives = {},
+
+        /**
+         * Helper to break out of loops
+         */
 
         breaker = {},
 
@@ -43,6 +47,10 @@
         toString = Object.prototype.toString,
         Okeys = Object.keys,
         trim = String.prototype.trim,
+
+        iews = /^\s*$/,
+        trwl = /^\s\s*/,
+        trwr = /\s\s*$/,
 
         /*
          * Unique ID
@@ -70,8 +78,7 @@
      * Init Core
      *
      * All checks are done here, so we don't have to check
-     * for all this in the selector engine. That will give
-     * us better performance
+     * for all this in the selector engine.
      */
 
     function Core(selector, context) {
@@ -134,6 +141,7 @@
         // The default length of a hAzzle object is 0
 
         length: 0,
+
         /**
          * Returns a new array with the result of calling callback on each element of the array
          * @param {function} fn
@@ -158,6 +166,7 @@
          */
 
         forOwn: function (fn, obj) {
+
             return hAzzle.forOwn(this, fn, obj);
         },
 
@@ -168,6 +177,7 @@
          */
 
         each: function (fn, obj) {
+
             return hAzzle.each(this, fn, obj);
         },
 
@@ -178,6 +188,7 @@
          */
 
         deepEach: function (fn, obj) {
+
             return hAzzle.deepEach(this, fn, obj);
         },
 
@@ -309,31 +320,23 @@
          */
 
         isEmpty: function (str, ignoreWhitespace) {
-            return str === null || !str.length || ignoreWhitespace && /^\s*$/.test(str);
+
+            return str === null || !str.length || ignoreWhitespace && iews.test(str);
         },
 
         isObject: function (obj) {
-
-            /*
-             * Unlike `typeof` in JavaScript, `null`s are not
-             * considered to be objects.
-             */
             return obj !== null && typeof obj === 'object';
         },
 
         isNumber: function (value) {
-
             return typeof value === 'number';
-
         },
 
         isString: function (value) {
-
             return typeof value === 'string';
         },
 
         isFunction: function (value) {
-
             return typeof value === 'function';
         },
 
@@ -351,32 +354,41 @@
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
         },
+
         isArray: Array.isArray,
 
         isWindow: function (obj) {
             return obj !== null && obj === obj.window;
         },
+
         isDocument: function (obj) {
             return obj !== null && obj.nodeType === obj.DOCUMENT_NODE;
         },
+
         isNull: function (obj) {
             return obj === null;
         },
+
         isBoolean: function (value) {
             return value === true || value === false;
         },
+
         isDefined: function (value) {
             return typeof value !== 'undefined';
         },
+
         isUndefined: function (value) {
             return typeof value === 'undefined';
         },
+
         IsNaN: function (val) {
             return typeof val === 'number' && val !== +val;
         },
+
         isElement: function (elem) {
             return elem && (elem.nodeType === 1 || elem.nodeType === 9);
         },
+
         isNodeList: function (obj) {
             return obj && hAzzle.is([
                 'nodelist',
@@ -521,6 +533,7 @@
                 for (i in elem) {
 
                     value = callback(elem[i], i, arg);
+
                     if (value !== null) {
                         ret.push(value);
                     }
@@ -544,24 +557,17 @@
          * @param{String} str
          * @return{String}
          *
-         * String.prototype.trim() are only supported in IE9+ Standard mode,
-         * so we need a fallback solution for that
+         * String.prototype.trim() are only supported in IE9+ Standard mode.
          */
 
         trim: trim ? function (text) {
             return text === null ? '' : trim.call(text);
         } : function (text) {
-            return text === null ? '' : text.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+            return text === null ? '' : text.replace(trwl, '').replace(trwr, '');
         },
 
         isNode: function (node) {
             return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 11);
-        },
-
-        pluck: function (array, property) {
-            return array.map(function (item) {
-                return item[property];
-            });
         },
 
         /**
@@ -571,36 +577,38 @@
         getText: function (elem) {
             var node, ret = '',
                 i = 0,
+                l = elem.length,
                 nodetype = elem.nodeType;
+
             if (!nodetype) {
-                // If no nodeType, this is expected to be an array
 
+                for (; i < l; i++) {
 
-                while ((node = elem[i++])) {
+                    node = elem[i++];
+
                     // Do not traverse comment nodes
                     ret += hAzzle.getText(node);
                 }
 
-                for (;
-                    (node = elem[i++]);) {
-                    ret += hAzzle.getText(node);
-                }
             } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
 
                 if (typeof elem.textContent === 'string') {
+
                     return elem.textContent;
 
-
-
                 } else {
+
                     for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+
                         ret += hAzzle.getText(elem);
                     }
 
                 }
             } else if (nodetype === 3 || nodetype === 4) {
+
                 return elem.nodeValue;
             }
+
             return ret;
         },
 
@@ -614,7 +622,12 @@
          */
 
         getUID: function (el) {
-            return el && (el.hAzzle_id || (el.hAzzle_id = uid.next()));
+
+            if (el) {
+
+                return (el.hAzzle_id || (el.hAzzle_id = uid.next()));
+
+            }
         },
 
         /**
@@ -622,7 +635,8 @@
          */
 
         isXML: function (elem) {
-            return elem && (elem.ownerDocument || elem).documentElement.nodeName !== 'HTML';
+            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
+            return documentElement ? documentElement.nodeName !== "HTML" : false;
         },
 
         /**
@@ -649,6 +663,7 @@
         },
 
         // Nothing
+
 
         noop: function () {},
 
@@ -696,9 +711,9 @@
             return ret;
         },
 
-
         // Loop through Objects
-        // Note ! A for-in loop won't guarantee property iteration order and they'll iterate over anything added to the Array.prototype
+        // Note ! A for-in loop won't guarantee property iteration order and
+        // they'll iterate over anything added to the Array.prototype
 
         forOwn: function (obj, iterator, context) {
 

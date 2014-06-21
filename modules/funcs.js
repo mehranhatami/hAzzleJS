@@ -1,6 +1,8 @@
 /**
- * A handfull Usefull function for the hAzzle Object
+ * A handfull Usefull functions for the hAzzle Object
  */
+ 
+ 
 /* =========================== PUBLIC FUNCTIONS ========================== */
 
 var slice = Array.prototype.slice,
@@ -8,6 +10,11 @@ var slice = Array.prototype.slice,
 
 hAzzle.extend({
 
+    pluck: function (array, property) {
+            return array.map(function (item) {
+                return item[property];
+            });
+    },
 
     // Exact
 
