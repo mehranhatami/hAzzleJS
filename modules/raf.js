@@ -9,26 +9,24 @@
  *
  * - hAzzle.fixTick
  *
+ * - hAzzle.nativeRAF = native
+ *
  */
- 
 var win = this,
-    
-	// Deal with foreign domains
-	
+
+    // Deal with foreign domains
+
     top = win.top.name ? win.top : win,
 
     requestFrame = top.requestAnimationFrame,
     cancelFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame,
     perf = top.performance && top.performance.now ? top.performance : {},
+    native = true,
     fixTick = false,
 
     // Use the best resolution timer that is currently available
 
-    perfNow = perf && (perf.now || perf.webkitNow ||perf.msNow || perf.mozNow || perf.oNow);
-
-    // Set as true as default
-	
-    hAzzle.nativeRAF = true;
+    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow);
 
 // If no native RequestAnimationFrame, grab a vendor prefixed one
 
@@ -45,19 +43,18 @@ if (!requestFrame) {
         top.oCancelAnimationFrame ||
         top.mozCancelRequestAnimationFrame ||
         null;
-	
-	// No-native, set to false to
-	// prevent iOS 6 bugs
-		
-     hAzzle.nativeRAF = false;
+
+    // Vendor prefixed rAF, so set to false
+
+    native = false;
 }
 
 if (requestFrame) {
 
     requestFrame(function (tick) {
-		
-     // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-     // if not, we have to do a timestamp fix on each frame		
+
+        // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+        // if not, we have to do a timestamp fix on each frame		
 
         fixTick = hAzzle.fixTick = tick > 1e12 != perf > 1e12;
     });
@@ -65,30 +62,29 @@ if (requestFrame) {
 }
 
 
- // Expose performance.now to the globale hAzzle Object
+// Expose performance.now to the globale hAzzle Object
 
-    hAzzle.pnow = perfNow ? function () {
-        return perfNow.call(perf);
-    } : function () {
-		
-		// polyfill for IE 9 and browsers who don't
-		// support performance.now
-		
-        var nowOffset;
-        if (perf.timing && perf.timing.navigationStart) {
-            nowOffset = perf.timing.navigationStart;
-        }
-        return hAzzle.now() - nowOffset;
-    };
+hAzzle.pnow = perfNow ? function () {
+    return perfNow.call(perf);
+} : function () {
+
+    // polyfill for IE 9 and browsers who don't
+    // support performance.now
+
+    var nowOffset;
+    if (perf.timing && perf.timing.navigationStart) {
+        nowOffset = perf.timing.navigationStart;
+    }
+    return hAzzle.now() - nowOffset;
+};
 
 /* =========================== FALLBACK FOR IE 9 ========================== */
 
 if (!requestFrame) {
-	
-	// No-native, set to false to
-	// prevent iOS 6 bugs
-		
-     hAzzle.nativeRAF = false;
+
+    // No rAF, so set to false
+
+    native = false;
 
     var _aq = [],
         _process = [],
@@ -103,7 +99,7 @@ if (!requestFrame) {
             _iid = win.setInterval(function () {
                 if (_aq.length) {
 
-					// Use performance.now polyfill
+                    // Use performance.now polyfill
 
                     var time = hAzzle.pnow(),
                         temp = _process;
@@ -125,6 +121,7 @@ if (!requestFrame) {
 
         return _irid;
     };
+
     /**
      * Find the request ID and remove it
      */
@@ -150,8 +147,17 @@ if (!requestFrame) {
     };
 }
 
-  // Throw the last of the functions
-  // to the globale hAzzle Object
+// Throw the last of the functions
+// to the globale hAzzle Object
 
 hAzzle.requestFrame = requestFrame;
 hAzzle.cancelFrame = cancelFrame;
+
+/**
+ * Boolean true/false if we support
+ * native rAF or not. Used to
+ * avoid iOS6 bugs e.g.
+ *
+ */
+
+hAzzle.nativeRAF = native;
