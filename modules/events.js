@@ -163,7 +163,11 @@ hAzzle.event = {
 
     // Handle multiple events separated by a space
 
-    types = (events || "").match(evwhite) || [""];
+    types = typeof events === 'string' && (events || "").match(evwhite) || [""];
+	
+	if(! types) {
+	return;
+	}
 
     // special case for one(), wrap in a self-removing handler
 
@@ -245,7 +249,10 @@ hAzzle.event = {
       }
     }
 
-    hAzzle.event.global[entry.eventType] = true;
+   if(entry) {
+		  
+      hAzzle.event.global[entry.eventType] = true;
+   }
   },
 
   once: function (rm, element, type, fn, originalFn) {
