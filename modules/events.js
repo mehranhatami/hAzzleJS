@@ -1035,7 +1035,7 @@ function triggerListeners(evt, listeners, thisArg) {
 
   var notifyListener = (function (evt, listeners, thisArg) {
     return function (i) {
-alert(thisArg);
+
       if (!listeners[i].removed) {
 
         listeners[i].handler.call(thisArg, evt);
