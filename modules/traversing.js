@@ -26,7 +26,6 @@ var arr = [],
         prev: true
     };
 
-
 // Extend the Core
 
 hAzzle.extend({
@@ -170,18 +169,8 @@ hAzzle.extend({
      */
 
     closest: function (selector, index) {
-
-        if (typeof selector === 'number') {
-
-            index = selector;
-            selector = '*';
-
-        } else {
-
-            index = index || 0;
-
-        }
-        return getNth(this, parentNode, selector, index, true);
+        typeof selector === 'number' ? (index = selector, selector = "*") : index = index || 0;
+        return getNth(this, parentNode, a, b, !0)
     },
 
     /**
@@ -244,40 +233,6 @@ hAzzle.extend({
         return getNth(arr, nextNode, selector || '*', index, function (el, i) {
             return el !== self[i];
         });
-    },
-
-    /**
-     * Get all siblings - previousSibling and nextSibling
-     */
-
-    siblingsAll: function () {
-
-        var p, r = [],
-            i = 0,
-            l = this.length;
-
-        for (; i < l; i++) {
-
-            p = this[i];
-
-            while ((p = p[prevNode])) {
-
-                if (p.nodeType == 1) {
-
-                    r.push(p);
-                }
-            }
-            p = this[i];
-
-            while ((p = p[nextNode])) {
-
-                if (p.nodeType == 1) {
-
-                    r.push(p);
-                }
-            }
-        }
-        return hAzzle(r);
     },
 
     /**
@@ -354,7 +309,6 @@ hAzzle.extend({
 
     not: function (selector) {
         return hAzzle.filter(this, function (elem) {
-            // Call our matchesselector.js module directly
             return !hAzzle.matches(selector, elem);
         });
     },
@@ -462,8 +416,6 @@ hAzzle.extend({
     concat: arr.concat,
     indexOf: arr.indexOf
 });
-
-
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
