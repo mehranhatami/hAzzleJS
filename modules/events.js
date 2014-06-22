@@ -1067,20 +1067,45 @@ function rafCallHandler(evt, listeners, thisArg) {
   
     ticking = true;
 
+  /**
+   * NEVER trigger the event, trigger
+   * the callback is the whole point!!
+   *
+   * SEE THIS LINK:
+   *
+   * http://www.html5rocks.com/en/tutorials/speed/animations/#debouncing-mouse-events
+   *
+   *
+   */
+
     var rafId,
 	    callback = (function (e, list, that) {
 
       return function (tick) {
-
+		console.log(tick)
         triggerListeners(e, list, that);
 
       };
 
     })(evt, listeners, thisArg);
+   
+   /**
+    *  Mehran!
+	*
+	* First I do here, is to always cancel
+	* the existing rAF before we do a
+	* a new update.
+	*
+	*/
+
+  // There is an bug in raf.js so I had to do 
+  // this short-cut. You fix raf.js error?
+	
+	window.cancelAnimationFrame(rafId);
 
    // get the frame id, so we can cancel
    // with hAzzle.cancelFrame
-   
+
      rafId = safeRAF(callback);
   }
 }
