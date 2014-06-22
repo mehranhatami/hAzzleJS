@@ -20,6 +20,8 @@ var win = this,
     cache = [],
     slice = Array.prototype.slice,
 
+    MutationObserver = win.MutationObserver || win.WebKitMutationObserver,
+
     isObject = hAzzle.isObject,
     isString = hAzzle.isString,
     isFunction = hAzzle.isFunction,
@@ -711,8 +713,8 @@ hAzzle.event = {
             original.clientX = event.pageX;
             original.clientY = event.pageY;
         } else if (event.clientX || event.clientY) {
-            original.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft;
-            original.clientY = event.clientY + doc.body.scrollTop + root.scrollTop;
+            original.clientX = event.clientX + doc.body.scrollLeft + docElem.scrollLeft;
+            original.clientY = event.clientY + doc.body.scrollTop + docElem.scrollTop;
         }
         if (overOut.test(type)) {
             original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
@@ -1262,6 +1264,54 @@ function delegate(selector, fn) {
     return handler;
 }
 
+
+
+
+var processSelectorResult = function (el, fn) {
+    if (hAzzle(el).data('whenlive_processed')) {
+        return false;
+    }
+    if (!hAzzle(el).is(':visible')) {
+        return false;
+    }
+    fn(el);
+    hAzzle(el).data('whenlive_processed', true);
+    return true;
+};
+
+var checkElements = function (container) {
+    if (!container) {
+        container = document.documentElement;
+    }
+    for (var ek in hAzzle.LiveElements) {
+        if (hAzzle.LiveElements[ek].selector) {
+            // We're looking for elements with a specified class
+            hAzzle(hAzzle.LiveElements[ek].selector, container).each(function (el) {
+                processSelectorResult(el, hAzzle.LiveElements[ek].fn);
+            });
+        } else {
+            // We're looking for specific elements
+            if (hAzzle.contains(container, hAzzle.LiveElements[ek].elem[0]) || container === hAzzle.LiveElements[ek].elem[0]) {
+                // The element exists within the DOM
+                if (hAzzle.LiveElements[ek].options.visibility) {
+                    // User has requested that we also check for visibility.
+                    if (hAzzle.LiveElements[ek].elem.is(':visible')) {
+                        // It's visible.
+                        hAzzle.LiveElements[ek].fn.call(hAzzle.LiveElements[ek].elem);
+                        hAzzle.LiveElements.splice(ek, 1);
+                    }
+                } else {
+                    hAzzle.LiveElements[ek].fn.call(hAzzle.LiveElements[ek].elem);
+                    hAzzle.LiveElements.splice(ek, 1);
+                }
+            }
+        }
+    }
+};
+
+
+
+
 hAzzle.extend({
 
     /**
@@ -1341,8 +1391,145 @@ hAzzle.extend({
         return this.each(function (el) {
             hAzzle.event.clone(el, cloneElem, type);
         });
+    },
+
+    /**
+     * Track the DOM tree 'live' for one or more element
+     *
+     * @param {Object} options
+     * @param {Functions} fn
+     * @return {hAzzle}
+     */
+
+    live: function (opts, fn) {
+
+        var self = this;
+
+        if (isFunction(opts)) {
+            fn = opts;
+            opts = {};
+        } else if (!isObject(opts)) {
+            opts = {};
+        }
+
+        if (typeof opts.visibility !== 'boolean') {
+            opts.visibility = true;
+        }
+
+        if (!isFunction(fn)) {
+            return;
+        }
+
+        if (!hAzzle.LiveElements) {
+            hAzzle.LiveElements = [];
+        }
+
+        if (!hAzzle.whenLiveInit) {
+
+            hAzzle.whenLiveInit = true;
+
+            if (MutationObserver) {
+
+                var mutation,
+                    ni = 0,
+                    mi = 0,
+                    node,
+                    observer = new MutationObserver(function (mutations) {
+                        for (; mi < mutations.length; mi++) {
+                            mutation = mutations[mi];
+                            checkElements(mutation.target);
+                            if (hAzzle.LiveElements.length && mutation.addedNodes !== null) {
+                                for (; ni < mutation.addedNodes.length; ni++) {
+                                    node = mutation.addedNodes[ni];
+                                    checkElements(node);
+                                }
+                            }
+                        }
+                    });
+                observer.observe(document, {
+                    'childList': true,
+                    'subtree': true,
+                    'attributes': true
+                });
+
+            } else {
+
+                hAzzle.whenLiveLoop = function () {
+                    checkElements();
+                    if (hAzzle.LiveElements.length > 0) {
+                        hAzzle.safeRAF(hAzzle.whenLiveLoop);
+                    }
+                };
+
+            }
+
+        }
+
+        if (this.selector) {
+
+            // We're watching for any elements that match the specified selector
+
+            // Process any existing matches
+            hAzzle(this.selector).filter(':visible').each(function (el) {
+                processSelectorResult(el, fn);
+            });
+
+            // Watch for future matches
+            hAzzle.LiveElements.push({
+                'elem': null,
+                'selector': this.selector,
+                'fn': fn,
+                'opts': opts
+            });
+            if (!MutationObserver) {
+                if (hAzzle.LiveElements.length === 1) {
+                    safeRAF(hAzzle.whenLiveLoop);
+                }
+            }
+
+        } else {
+
+            // We're watching for a specific element
+
+            if (hAzzle.contains(document.documentElement, this[0])) {
+                // The element exists within the DOM
+                if (opts.visibility) {
+                    if (hAzzle(this).is(':visible')) {
+                        fn();
+                    } else {
+                        hAzzle.LiveElements.push({
+                            'elem': self,
+                            'selector': null,
+                            'fn': fn,
+                            'options': opts
+                        });
+                        if (!MutationObserver) {
+                            if (hAzzle.LiveElements.length === 1) {
+                                safeRAF(hAzzle.whenLiveLoop);
+                            }
+                        }
+                    }
+                } else {
+                    fn();
+                }
+            } else {
+                // The element is outside of the DOM
+                hAzzle.LiveElements.push({
+                    'elem': self,
+                    'selector': null,
+                    'fn': fn,
+                    'options': opts
+                });
+                if (!MutationObserver) {
+                    if (hAzzle.LiveElements.length === 1) {
+                        safeRAF(hAzzle.whenLiveLoop);
+                    }
+                }
+            }
+        }
     }
 });
+
 hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
     'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
     'change select submit keydown keypress keyup error contextmenu').split(' '), function (evt) {
@@ -1353,6 +1540,4 @@ hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblcli
             this.on(evt, delegate, fn) :
             this.trigger(evt);
     };
-
-
 });

@@ -57,7 +57,7 @@ hAzzle.matchesSelector = function (elem, selector) {
 
     // If matchesSelector support
 
-    if (mS && !!hAzzle.isXML(elem)) {
+    if (mS  && hAzzle.documentIsHTML) {
 
         // disconnected nodes are said to be in a document fragment in IE 9
 
