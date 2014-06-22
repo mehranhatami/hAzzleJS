@@ -21,19 +21,31 @@ var win = this,
   slice = Array.prototype.slice,
 
   frameEvents = {
+    'mouseover': 1,
     'mousemove': 1,
     'mouseenter': 1,
     'mouseleave': 1,
     'mousewheel': 1,
+    'mouseout': 1,
+    'mousedown': 1,
+    'mouseup': 1,
+	'contextmenu':1,
     'drag': 1,
     'drop': 1,
+    'dropenter': 1,
+    'dragstart': 1,
+    'dragend': 1,
+    'dragover': 1,
+    'dropleave': 1,
     'focus': 1,
     'unfocus': 1,
     'touch': 1,
     'pointer': 1,
     'scroll': 1,
     'resize': 1,
-    'release': 1
+    'release': 1,
+	'gesturechange':1,
+	'gestureend':1
   },
   ticking = false,
   safeRAF = hAzzle.safeRAF;
@@ -1000,8 +1012,10 @@ function rootListener(evt, type) {
   if (type) {
     evt.type = type;
   }
+  
 
   if (frameEvents[evt.type]) {
+
     rafCallHandler(evt, listeners, this);
   } else {
     triggerListeners(evt, listeners, this);
@@ -1009,13 +1023,41 @@ function rootListener(evt, type) {
 
 }
 
-function rafCallHandler(evt, listeners, thisArg) {
+/**
+ *  Mehran!!
+ *
+ * I did a little change here. As you see, I added
+ * 'rafId'. This 'rafId' hold the rAF ID fromt the
+ * window.
+ *
+ * This is the value you have to use when you
+ * remove event handler and use
+ * cancelFrame ( rafId ).
+ *
+ * Else we got an memory leak and bugs !!
+ *
+ * How you are going to add this id to the
+ * elements event handler? Hmmm..
+ *
+ * You need to figure that out, but don't
+ * forget that there can be multiple handlers
+ * on each element. 
+ *
+ * So you can't save the id on the elem itself, 
+ * only inside the handler !!
+ *
+ * So when you remove the handler, you check if
+ * RAF have been used, and grab id and cancel
+ *
+ */
 
+function rafCallHandler(evt, listeners, thisArg) {
   if (!ticking) {
 
     ticking = true;
 
-    var callback = (function (e, list, that) {
+    var rafId,
+	    callback = (function (e, list, that) {
 
       return function (tick) {
 
@@ -1025,7 +1067,7 @@ function rafCallHandler(evt, listeners, thisArg) {
 
     })(evt, listeners, thisArg);
 
-    safeRAF(callback);
+     rafId = safeRAF(callback);
   }
 }
 
