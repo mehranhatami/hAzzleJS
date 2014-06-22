@@ -110,10 +110,13 @@ hAzzle.extend({
         return this.indexOf(selector[0]);
     },
 
-
     /**
-     * Returns element's first descendant (or the Nth descendant, if index is specified)
-     * that matches expression.
+     * Returns element's first descendant (or the Nth descendant, if
+     * index is specified) that matches expression.
+     *
+     * @param {string} selector
+     * @param {number} index
+     * @return {hAzzle}
      */
 
     down: function (selector, index) {
@@ -122,10 +125,12 @@ hAzzle.extend({
 
         index = getIndex(selector, index);
 
+        var node = isString(selector) ? selector : '*',
+            obj;
+
         return collect(this, function (el) {
 
-            var node = isString(selector) ? selector : '*',
-                obj = hAzzle.select(node, el);
+            obj = hAzzle.select(node, el);
 
             if (index === null) {
 
@@ -214,40 +219,6 @@ hAzzle.extend({
         return getNth(this, nextNode, selector, index);
     },
 
-    tail: function (index) {
-        return this.slice(index === null ? 1 : index);
-    },
-
-    /**
-     * Return an sequense of elements from the 'elems stack', plucked
-     * by the given numbers
-     *
-     * Example:
-     *
-     * hAzzle('p').collection([1,6, 9])
-     *
-     * Outputs elem 1,6, 9 from the stack
-     *
-     * @param {array} count
-     * @return {object}
-     *
-     */
-
-    collection: function (count) {
-
-        if (!hAzzle.isArray(count)) {
-            return [];
-        }
-
-        var holder = [],
-            i = count.length;
-        while (i--) {
-            holder.push(this[count[i]]);
-        }
-
-        return hAzzle(holder) || this;
-    },
-
     /**
      * Collects all of element's siblings and returns them as an Array of elements
      * OR collect Nth siblings, if index is specified
@@ -319,10 +290,7 @@ hAzzle.extend({
      */
 
     children: function (selector, index) {
-        var self = this;
-        return getNth(self.down.call(self), nextNode, selector || '*', index, true);
-
-
+        return getNth(self.down.call(this), nextNode, selector || '*', index, true);
     },
 
     /**
