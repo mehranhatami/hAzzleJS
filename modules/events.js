@@ -1082,7 +1082,7 @@ function rafCallHandler(evt, listeners, thisArg) {
 	    callback = (function (e, list, that) {
 
       return function (tick) {
-		console.log(tick)
+
         triggerListeners(e, list, that);
 
       };
