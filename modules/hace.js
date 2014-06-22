@@ -3,49 +3,21 @@
  */
 var thousand = 1000;
 
-// Extend the globale hAzzle Core
+// hACE
 
-hAzzle.extend({
+hAzzle.hACE = function (init, options) {
 
-    createHook: function (core, filterName) {
+    var self = this;
+    self.currentState = init || {};
+    self.configured = false;
 
-        var filters = hAzzle.hACE.prototype.extensions,
-            args = core.filterArgs;
+    if (options !== undefined) {
 
-        each(filters, function (name) {
-
-            if (typeof filters[name][filterName] !== 'undefined') {
-                filters[name][filterName].apply(core, args);
-            }
-        });
-
-    },
-
-    // hACE
-
-    hACE: function (init, options) {
-
-        var self = this;
-        self.currentState = init || {};
-        self.configured = false;
-
-        if (options !== undefined) {
-
-            // Configure hACE
-            self.adjust(options);
-        }
+        // Configure hACE
+        self.adjust(options);
     }
+};
 
-}, hAzzle);
-
-
-// Default duration
-
-hAzzle.hACE.fps = 60;
-
-// Default framelength
-
-hAzzle.hACE.frameLength = thousand / hAzzle.hACE.fps;
 
 // hACE prototype
 
@@ -94,8 +66,8 @@ hAzzle.hACE.prototype = {
 
             // Default duration
 
-            hAzzle.hACE.fps = config.fps || 60;
-
+            self.fps = config.fps || 60;
+        self.frameLength = thousand / self.fps;
         self.pausedAtTime = null;
         self.start = config.start || hAzzle.noop;
         self.step = config.step || hAzzle.noop;
@@ -160,7 +132,7 @@ hAzzle.hACE.prototype = {
         self.isPaused = false;
         self.isRunning = true;
         self.toH = function () {
-			
+
             self.tick();
         };
 
@@ -180,7 +152,7 @@ hAzzle.hACE.prototype = {
 
         if (self.isPlaying() && !self.isEnded) {
 
-            self.frameId = hAzzle.safeRAF(self.toH, hAzzle.hACE.frameLength);
+            self.frameId = hAzzle.safeRAF(self.toH, self.frameLength);
 
             // Create hook
 
@@ -215,6 +187,7 @@ hAzzle.hACE.prototype = {
 
         if (gotoEnd) {
 
+
             shallowCopy(self.currentState, self.targetState);
             hAzzle.createHook(self, 'afterEnd');
             self.finish.call(self, self.currentState);
@@ -240,6 +213,21 @@ hAzzle.hACE.prototype = {
     extensions: {}
 };
 
+/* =========================== GLOBAL FUNCTIONS ========================== */
+
+hAzzle.createHook = function (core, filterName) {
+
+    var filters = hAzzle.hACE.prototype.extensions,
+        args = core.filterArgs;
+
+    each(filters, function (name) {
+
+        if (typeof filters[name][filterName] !== 'undefined') {
+            filters[name][filterName].apply(core, args);
+        }
+    });
+
+};
 
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
@@ -295,8 +283,6 @@ function props(forPosition, currentState, originalState, targetState,
 function calculate(start, end, easingFunc, position) {
     return start + (end - start) * easingFunc(position);
 }
-
-
 
 function createEasing(from, easing) {
     var easeObj = {};
