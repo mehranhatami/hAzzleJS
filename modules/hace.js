@@ -1,10 +1,7 @@
 /**
  * hAzzle Animation Core engine ( hACE )
  */
-var thousand = 1000,
-    toH_endTime,
-    toH_currentTime,
-    toH_isEnded;
+var thousand = 1000;
 
 // Extend the globale hAzzle Core
 
@@ -54,10 +51,10 @@ hAzzle.hACE.frameLength = thousand / hAzzle.hACE.fps;
 
 hAzzle.hACE.prototype = {
 
-   /**
-    * Start hAce
-	*/
-	
+    /**
+     * Start hAce
+     */
+
     start: function (options) {
 
         var self = this;
@@ -109,6 +106,12 @@ hAzzle.hACE.prototype = {
         self.targetState = config.to || self.get();
         self.timestamp = hAzzle.pnow();
 
+        self.frameId = null;
+
+        self.endTime = null;
+        self.currentTime = null;
+        self.isEnded = null;
+
         // Aliases used below
         var currentState = self.currentState,
             targetState = self.targetState;
@@ -157,9 +160,8 @@ hAzzle.hACE.prototype = {
         self.isPaused = false;
         self.isRunning = true;
         self.toH = function () {
-            toH(self, self.timestamp, self.duration, self.currentState,
-                self.originalState, self.targetState, self.easing, self.step,
-                hAzzle.requestFrame);
+			
+            self.tick();
         };
 
         self.toH();
@@ -168,15 +170,51 @@ hAzzle.hACE.prototype = {
 
     },
 
+    tick: function () {
+
+        var self = this;
+
+        self.endTime = self.timestamp + self.duration;
+        self.currentTime = Math.min(hAzzle.pnow(), self.endTime);
+        self.isEnded = self.currentTime >= self.endTime;
+
+        if (self.isPlaying() && !self.isEnded) {
+
+            self.frameId = hAzzle.safeRAF(self.toH, hAzzle.hACE.frameLength);
+
+            // Create hook
+
+            hAzzle.createHook(self, 'before');
+
+            props(self.currentTime, self.currentState, self.originalState, self.targetState, self.duration, self.timestamp, self.easing);
+
+            hAzzle.createHook(self, 'after');
+
+            self.step(self.currentState);
+
+            // Animation have stopped
+
+        } else if (self.isEnded) {
+
+            self.step(self.targetState);
+
+            self.stop(true);
+        }
+    },
     stop: function (gotoEnd) {
 
         var self = this;
         self.isRunning = false;
         self.isPaused = false;
+
+        // Need to kill RAF here
+
+        cancelFrame(self.frameId);
+
         self.toH = hAzzle.noop;
 
         if (gotoEnd) {
-			
+
             shallowCopy(self.currentState, self.targetState);
             hAzzle.createHook(self, 'afterEnd');
             self.finish.call(self, self.currentState);
@@ -258,36 +296,7 @@ function calculate(start, end, easingFunc, position) {
     return start + (end - start) * easingFunc(position);
 }
 
-function toH(core, timestamp, duration, currentState,
-    originalState, targetState, easing, step, schedule) {
 
-    toH_endTime = timestamp + duration;
-    toH_currentTime = Math.min(hAzzle.pnow(), toH_endTime);
-    toH_isEnded = toH_currentTime >= toH_endTime;
-
-    if (core.isPlaying() && !toH_isEnded) {
-
-          schedule(core.toH, hAzzle.hACE.frameLength);
-
-        // Create hook
-
-        hAzzle.createHook(core, 'before');
-
-        props(toH_currentTime, currentState, originalState, targetState, duration, timestamp, easing);
-
-        hAzzle.createHook(core, 'after');
-
-        step(currentState);
-
-        // Animation have stopped
-
-    } else if (toH_isEnded) {
-
-        step(targetState);
-
-        core.stop(true);
-    }
-}
 
 function createEasing(from, easing) {
     var easeObj = {};
