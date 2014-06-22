@@ -1119,6 +1119,13 @@ function triggerListeners(evt, listeners, thisArg) {
 
       if (!listeners[i].removed) {
 
+/**
+ * Mehran !!
+ *
+ * The rAF should be moved here so you activate the handler 
+ * only with rAF and not set listeners :)
+ *
+ */
         listeners[i].handler.call(thisArg, evt);
 
       }
