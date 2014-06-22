@@ -290,7 +290,7 @@ hAzzle.extend({
      */
 
     children: function (selector, index) {
-        return getNth(self.down.call(this), nextNode, selector || '*', index, true);
+        return getNth(this.down.call(this), nextNode, selector || '*', index, true);
     },
 
     /**
