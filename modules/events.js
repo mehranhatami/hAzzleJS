@@ -498,6 +498,7 @@ hAzzle.event = {
 	  rAF = [],
       i = 0,
       j,
+	  x,
       l = handlers.length;
 
     for (; i < l; i++) {
@@ -517,19 +518,17 @@ hAzzle.event = {
         }
       }
     }
+	
+ // Cancel rAF if any		
+
+	for(x in rAF) {
+      cancelFrame(rAF[x]);
+	}
 
     // Remove the root listener if this is the last one
 
     for (j in removed) {
       if (!hAzzle.event.has(elem, removed[j], null, false)) {
-		 
-         // Cancel rAF if any
-		 
-		 if( rAF[j] ) {
-		    
-			cancelFrame(rAF[j])
-		 }
-		 
         elem.removeEventListener(removed[j], rootListener, false);
       }
     }
