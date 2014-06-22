@@ -170,7 +170,7 @@ hAzzle.extend({
 
     closest: function (selector, index) {
         typeof selector === 'number' ? (index = selector, selector = "*") : index = index || 0;
-        return getNth(this, parentNode, a, b, !0)
+        return getNth(this, parentNode, selector, index, true)
     },
 
     /**
