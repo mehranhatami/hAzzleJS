@@ -120,8 +120,6 @@ hAzzle.extend({
 
     down: function (selector, index) {
 
-        // Try to figure out where in DOM we are
-
         index = getIndex(selector, index);
 
         var node = isString(selector) ? selector : '*',
@@ -142,6 +140,7 @@ hAzzle.extend({
             }
         });
     },
+
     /**
      * Returns element's first ancestor (or the Nth ancestor, if index is specified)
      * that matches expression
@@ -186,14 +185,6 @@ hAzzle.extend({
         return getNth(this, prevNode, selector, index);
 
     },
-
-    // Some people are most used to 'previous' then 'prev, so
-    // we are going to make them happy
-
-    previous: function () {
-        return this.prev(this.arguments);
-    },
-
 
     /**
      * Get the immediately following sibling of each element
@@ -359,23 +350,6 @@ hAzzle.extend({
             }
         }
         return false;
-    },
-
-    and: function (s) {
-
-        var plus = hAzzle(s),
-            i = this.length,
-            j = 0,
-            l = this.length + plus.length;
-
-        for (; i < l; i++, j++) {
-
-            this[i] = plus[j];
-        }
-
-        this.length += plus.length;
-
-        return this;
     },
 
     /**
