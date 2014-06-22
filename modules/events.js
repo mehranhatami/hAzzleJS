@@ -1265,42 +1265,55 @@ function delegate(selector, fn) {
 }
 
 
-
-
-var processSelectorResult = function (el, fn) {
-    if (hAzzle(el).data('whenlive_processed')) {
+function processSelectorResult(el, fn) {
+    alert("dd")
+    if (!hAzzle.data(el, 'live_processed')) {
         return false;
     }
-    if (!hAzzle(el).is(':visible')) {
+    if (!isHidden(hAzzle(el)[0])) {
         return false;
     }
     fn(el);
-    hAzzle(el).data('whenlive_processed', true);
+    hAzzle(el).data('live_processed', true);
     return true;
 };
 
-var checkElements = function (container) {
+function checkElements(container) {
+
     if (!container) {
-        container = document.documentElement;
+
+        container = docElem;
+
     }
-    for (var ek in hAzzle.LiveElements) {
+
+    var ek;
+
+    for (ek in hAzzle.LiveElements) {
+
         if (hAzzle.LiveElements[ek].selector) {
-            // We're looking for elements with a specified class
+
+
             hAzzle(hAzzle.LiveElements[ek].selector, container).each(function (el) {
+
                 processSelectorResult(el, hAzzle.LiveElements[ek].fn);
             });
+
         } else {
-            // We're looking for specific elements
+
+
             if (hAzzle.contains(container, hAzzle.LiveElements[ek].elem[0]) || container === hAzzle.LiveElements[ek].elem[0]) {
-                // The element exists within the DOM
+
+
                 if (hAzzle.LiveElements[ek].options.visibility) {
-                    // User has requested that we also check for visibility.
-                    if (hAzzle.LiveElements[ek].elem.is(':visible')) {
-                        // It's visible.
+
+                    if (!isHidden(hAzzle.LiveElements[ek].elem[0])) {
+
                         hAzzle.LiveElements[ek].fn.call(hAzzle.LiveElements[ek].elem);
                         hAzzle.LiveElements.splice(ek, 1);
                     }
+
                 } else {
+
                     hAzzle.LiveElements[ek].fn.call(hAzzle.LiveElements[ek].elem);
                     hAzzle.LiveElements.splice(ek, 1);
                 }
@@ -1394,7 +1407,7 @@ hAzzle.extend({
     },
 
     /**
-     * Track the DOM tree 'live' for one or more element
+     * Track the DOM tree 'live' for one or more elements
      *
      * @param {Object} options
      * @param {Functions} fn
@@ -1406,21 +1419,27 @@ hAzzle.extend({
         var self = this;
 
         if (isFunction(opts)) {
+
             fn = opts;
             opts = {};
+
         } else if (!isObject(opts)) {
+
             opts = {};
         }
 
         if (typeof opts.visibility !== 'boolean') {
+
             opts.visibility = true;
         }
 
         if (!isFunction(fn)) {
+
             return;
         }
 
         if (!hAzzle.LiveElements) {
+
             hAzzle.LiveElements = [];
         }
 
@@ -1446,6 +1465,7 @@ hAzzle.extend({
                             }
                         }
                     });
+
                 observer.observe(document, {
                     'childList': true,
                     'subtree': true,
@@ -1468,8 +1488,8 @@ hAzzle.extend({
         if (this.selector) {
 
             // We're watching for any elements that match the specified selector
-
             // Process any existing matches
+
             hAzzle(this.selector).filter(':visible').each(function (el) {
                 processSelectorResult(el, fn);
             });
@@ -1481,8 +1501,11 @@ hAzzle.extend({
                 'fn': fn,
                 'opts': opts
             });
+
             if (!MutationObserver) {
+
                 if (hAzzle.LiveElements.length === 1) {
+
                     safeRAF(hAzzle.whenLiveLoop);
                 }
             }
@@ -1491,25 +1514,30 @@ hAzzle.extend({
 
             // We're watching for a specific element
 
-            if (hAzzle.contains(document.documentElement, this[0])) {
+            if (hAzzle.contains(docElem, this[0])) {
                 // The element exists within the DOM
                 if (opts.visibility) {
-                    if (hAzzle(this).is(':visible')) {
+                    if (!isHidden(hAzzle(this)[0])) {
                         fn();
                     } else {
+
                         hAzzle.LiveElements.push({
                             'elem': self,
                             'selector': null,
                             'fn': fn,
                             'options': opts
                         });
+
                         if (!MutationObserver) {
+
                             if (hAzzle.LiveElements.length === 1) {
+
                                 safeRAF(hAzzle.whenLiveLoop);
                             }
                         }
                     }
                 } else {
+
                     fn();
                 }
             } else {
