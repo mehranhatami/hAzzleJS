@@ -78,11 +78,14 @@ hAzzle.pnow = perfNow ? function () {
 
     return hAzzle.now() - nowOffset;
 
-    /**
+  
+};
+
+  /**
      * ONLY!! activate this function if we are dealing with
      * rAF.
      */
-
+if (requestFrame) {
     function safeRAF(callback) {
 
         var rafCallback = (function (callback) {
@@ -96,15 +99,17 @@ hAzzle.pnow = perfNow ? function () {
                 callback(tick);
             };
         })(callback);
-
-        requestFrame(rafCallback);
+    
+	 // Need return value her, so we get the frame ID 
+     // in return
+	 
+      return requestFrame(rafCallback);
     }
 
     // Expose to the global hAzzle Object
 
     hAzzle.safeRAF = safeRAF;
-
-};
+}
 
 /* =========================== FALLBACK FOR IE 9 ========================== */
 
