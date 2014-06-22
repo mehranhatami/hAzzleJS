@@ -20,6 +20,10 @@ var win = this,
   cache = [],
   slice = Array.prototype.slice,
 
+ isObject = hAzzle.isObject,
+ isString = hAzzle.isString,
+ isFunction = hAzzle.isFunction, 
+ 
   frameEvents = {
     'mouseover': 1,
     'mousemove': 1,
@@ -98,7 +102,7 @@ hAzzle.event = {
      * Multiple events
      * ---------------
      *
-     *  hAzzle('p'.on(element, {
+     *  hAzzle('p'.on({
      *
      *         click: function (e) {},
      *         mouseover: function (e) {},
@@ -108,7 +112,7 @@ hAzzle.event = {
      * Multiple events - event delegation:
      * -----------------------------------
      *
-     *  hAzzle( "body" ).on({
+     *  hAzzle( 'body' ).on({
      *
      *   click: {
      *
@@ -119,14 +123,15 @@ hAzzle.event = {
      *
      */
 
-    if (typeof events === 'object') {
+    if (isObject(events)) {
 
       //move out 'call' and 'apply' from loops
+	  
       var addEventCall = (function (thisArg, events, elem) {
         return function (type) {
           var evto = events[type];
 
-          if (typeof evto === 'object') {
+          if (isObject(evto)) {
 
             hAzzle.event.addEvent.call(thisArg, elem, type, evto.delegate, evto.func);
 
@@ -152,7 +157,7 @@ hAzzle.event = {
 
     // Event delegation
 
-    if (typeof selector !== 'function') {
+    if ( ! isFunction(selector) ) {
       originalFn = fn;
       args = slice.call(arguments, 4);
       fn = delegate(selector, originalFn);
@@ -163,7 +168,7 @@ hAzzle.event = {
 
     // Handle multiple events separated by a space
 
-    types = typeof events === 'string' && (events || "").match(evwhite) || [""];
+    types = isString(events) && (events || '').match(evwhite) || [''];
 	
 	if(! types) {
 	return;
@@ -212,7 +217,7 @@ hAzzle.event = {
 
       var hooks = hAzzle.eventHooks[type] || {};
 
-      if (hooks && ("delegateType" in hooks)) {
+      if (hooks && ('delegateType' in hooks)) {
         type = selector ? hooks.delegateType : type;
       }
 
@@ -237,11 +242,11 @@ hAzzle.event = {
         type = entry.eventType;
 
         // Trigger eventHooks if any
-        // e.g. support for "bubbling" focus and blur events
+        // e.g. support for 'bubbling' focus and blur events
 
         hooks = hAzzle.eventHooks[type];
 
-        if (hooks && ("simulate" in hooks)) {
+        if (hooks && ('simulate' in hooks)) {
           hooks.simulate(elem, type);
         }
 
@@ -291,7 +296,7 @@ hAzzle.event = {
       return;
     }
 
-    if (selector === false || typeof selector === "function") {
+    if (selector === false || isFunction(selector)) {
       // ( types [, fn] )
       fn = selector;
       selector = undefined;
@@ -300,11 +305,11 @@ hAzzle.event = {
     // hAzzle.inArray() are faster then native indexOf, and this
     // has to be fast
 
-    if (typeof evt === 'string' && hAzzle.inArray(evt, ' ') > 0) {
+    if (isString(evt) && hAzzle.inArray(evt, ' ') > 0) {
 
       // Handle multiple events separated by a space
 
-      evt = (evt || "").match(evwhite) || [""];
+      evt = (evt || '').match(evwhite) || [''];
 
       i = evt.length;
 
@@ -318,35 +323,35 @@ hAzzle.event = {
 
     // Check for namespace
 
-    if (typeof evt === 'string') {
+    if (isString(evt)) {
 
       type = evt.replace(nameRegex, '');
     }
 
     if (type) {
 
-      // Checks if any "type" need special threatment
+      // Checks if any 'type' need special threatment
       // e.g. mouseenter and mouseleave
 
       var hooks = hAzzle.eventHooks[type];
 
-      if (hooks && ("specialEvents" in hooks)) {
+      if (hooks && ('specialEvents' in hooks)) {
         type = hooks.specialEvents.name || type;
       }
     }
 
-    if (!evt || typeof evt === 'string') {
+    if (!evt || isString(evt)) {
 
       // namespace
 
-      if ((namespaces = typeof evt === 'string' && evt.replace(namespaceRegex, ''))) {
+      if ((namespaces = isString(evt) && evt.replace(namespaceRegex, ''))) {
 
         namespaces = namespaces.split('.').sort();
       }
 
       hAzzle.event.remove(elem, type, fn, namespaces, selector);
 
-    } else if (typeof evt === 'function') {
+    } else if (isFunction(ev)) {
 
       // removeEvent(el, fn)
 
@@ -435,7 +440,7 @@ hAzzle.event = {
          *
          * hAzzle('p').trigger('customEvent');
          *
-         * window.document.addEventListener("customEvent", handler);
+         * window.document.addEventListener('customEvent', handler);
          *
          */
 
@@ -861,7 +866,7 @@ hAzzle.Event.prototype = {
     }
   },
 
-  // Set a "stopped" property so that a custom event can be inspected
+  // Set a 'stopped' property so that a custom event can be inspected
 
   stop: function () {
     this.stopped = true;
@@ -902,13 +907,13 @@ hAzzle.Event.prototype = {
 
 function Registry(element, type, handler, original, namespaces, args, root) {
 
-  // Checks if any "type" need special threatment
+  // Checks if any 'type' need special threatment
   // e.g. mouseenter and mouseleave
 
   var reg = this,
     hooks = hAzzle.eventHooks[type];
 
-  if (hooks && ("specialEvents" in hooks)) {
+  if (hooks && ('specialEvents' in hooks)) {
     handler = reg.twistedBrain(element, handler, hooks.specialEvents.handler, args);
     type = hooks.specialEvents.name || type;
   }

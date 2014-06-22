@@ -1,13 +1,14 @@
 /** 
  * Data
  */
+ 
 var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
 
 // Extend the hAzzle object
 
 hAzzle.extend({
 
-    _data: {},
+    _cache: {},
 
     /**
      * Check if an element contains data
@@ -18,13 +19,7 @@ hAzzle.extend({
      */
 
     hasData: function (elem) {
-        if (elem.nodeType) {
-            if (hAzzle._data[hAzzle.getUID(elem)]) {
-                return true;
-            } else {
-                return false;
-            }
-        }
+        return elem.nodeType && hAzzle._cache[hAzzle.getUID(elem)] ? true : false;
     },
     /**
      * Remove data from an element
@@ -35,34 +30,35 @@ hAzzle.extend({
      */
 
     removeData: function (elem, key) {
-        if (elem.nodeType === 1 || elem.nodeType === 9 || !elem.hasOwnProperty('nodeType')) {
+
+        if (_validate(elem)) {
 
             if (!elem instanceof hAzzle) {
-				
+
                 elem = hAzzle(elem);
             }
-           
-		   // get / create unique ID for this element
-           
-		    var id = hAzzle.getUID(elem);
+
+            // get / create unique ID for this element
+
+            var id = hAzzle.getUID(elem);
 
             // Nothing to do if there are no data stored on the elem itself
 
-            if (hAzzle._data[id]) {
+            if (hAzzle._cache[id]) {
 
                 if (typeof key === 'undefined' && elem.nodeType === 1) {
 
-                    hAzzle._data[id] = {};
+                    hAzzle._cache[id] = {};
 
                 } else {
 
-                    if (hAzzle._data[id]) {
-						
-                        delete hAzzle._data[id][key];
-						
+                    if (hAzzle._cache[id]) {
+
+                        delete hAzzle._cache[id][key];
+
                     } else {
-						
-                        hAzzle._data[id] = null;
+
+                        hAzzle._cache[id] = null;
                     }
                 }
 
@@ -72,17 +68,17 @@ hAzzle.extend({
 
     data: function (elem, key, value) {
 
-        if (elem.nodeType === 1 || elem.nodeType === 9 || !elem.hasOwnProperty('nodeType')) {
+        if (_validate(elem)) {
 
-            var pid, 
-			   id = hAzzle._data[hAzzle.getUID(elem)];
+            var pid,
+                id = hAzzle._cache[hAzzle.getUID(elem)];
 
             // Create and unique ID for this elem
 
             if (!id && elem.nodeType) {
-                
-				pid = hAzzle.getUID(elem);
-                id = hAzzle._data[pid] = {};
+
+                pid = hAzzle.getUID(elem);
+                id = hAzzle._cache[pid] = {};
             }
 
             // Return all data on the element
@@ -220,3 +216,13 @@ hAzzle.extend({
     }
 
 });
+
+
+/* =========================== INTERNAL ========================== */
+
+function _validate(elem) {
+    if (elem.nodeType === 1 || elem.nodeType === 9 || !elem.hasOwnProperty('nodeType')) {
+        return true;
+    }
+    return false;
+}
