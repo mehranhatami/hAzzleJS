@@ -495,6 +495,7 @@ hAzzle.event = {
     var type = types && types.replace(nameRegex, ''),
       handlers = hAzzle.event.get(elem, type, null, false),
       removed = [],
+	  rAF = [],
       i = 0,
       j,
       l = handlers.length;
@@ -504,6 +505,14 @@ hAzzle.event = {
       if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
         hAzzle.event.del(handlers[i]);
         if (!removed[handlers[i].type]) {
+		
+		/* Mehran!!
+		 *
+		 * I don't think this will work correctly
+		 * Just control and check this
+		 */
+		
+		  rAF[handlers[i].rafId] = handlers[i].rafId;
           removed[handlers[i].type] = handlers[i].type;
         }
       }
@@ -513,6 +522,14 @@ hAzzle.event = {
 
     for (j in removed) {
       if (!hAzzle.event.has(elem, removed[j], null, false)) {
+		 
+         // Cancel rAF if any
+		 
+		 if( rAF[j] ) {
+		    
+			cancelFrame(rAF[j])
+		 }
+		 
         elem.removeEventListener(removed[j], rootListener, false);
       }
     }
@@ -1090,7 +1107,7 @@ function rafCallHandler(evt, listeners, thisArg) {
 
       return function (tick) {
 
-        triggerListeners(e, list, that);
+        triggerListeners(e, list, that, rafId);
 
       };
 
@@ -1108,7 +1125,7 @@ function rafCallHandler(evt, listeners, thisArg) {
   // There is an bug in raf.js so I had to do 
   // this short-cut. You fix raf.js error?
 	
-	window.cancelAnimationFrame(rafId);
+	 cancelFrame(rafId);
 
    // get the frame id, so we can cancel
    // with hAzzle.cancelFrame
@@ -1117,11 +1134,11 @@ function rafCallHandler(evt, listeners, thisArg) {
   }
 }
 
-function triggerListeners(evt, listeners, thisArg) {
+function triggerListeners(evt, listeners, thisArg, rafId) {
   var l = listeners.length,
     i = 0;
 
-  var notifyListener = (function (evt, listeners, thisArg) {
+  var notifyListener = (function (evt, listeners, thisArg, rafId) {
     return function (i) {
 
       if (!listeners[i].removed) {
@@ -1133,12 +1150,13 @@ function triggerListeners(evt, listeners, thisArg) {
  * only with rAF and not set listeners :)
  *
  */
+        listeners[i].rafId = rafId;
         listeners[i].handler.call(thisArg, evt);
 
       }
 
     };
-  })(evt, listeners, thisArg);
+  })(evt, listeners, thisArg, rafId);
 
   for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
     notifyListener(i);
