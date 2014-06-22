@@ -1010,6 +1010,7 @@ function rootListener(evt, type) {
 }
 
 function rafCallHandler(evt, listeners, thisArg) {
+
   if (!ticking) {
 
     ticking = true;
@@ -1034,7 +1035,7 @@ function triggerListeners(evt, listeners, thisArg) {
 
   var notifyListener = (function (evt, listeners, thisArg) {
     return function (i) {
-
+alert(thisArg);
       if (!listeners[i].removed) {
 
         listeners[i].handler.call(thisArg, evt);
