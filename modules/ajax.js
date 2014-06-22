@@ -1,18 +1,3 @@
-/**
- *   IMPORTANT
- *
- * - Add queing. And option to stop requests that take to long time. This has to
- *   be in AjaxSettings / options. Say after 20 ms, cancel if no success
- *
- *  - Option to send BLOB files
- *
- * - Full Async support
- *
- * - Multiple requests at the same time. Each request should be queued, and executed one by one.
- *   For the queue it should be options like stop, cancel, pause and resume.
- *
- * - Pause an Ajax request
- **************************/
 var win = this,
     doc = win.document,
     
