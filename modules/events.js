@@ -225,7 +225,7 @@ hAzzle.event = {
 
             namespaces = types[i].replace(namespaceRegex, '').split('.').sort();
 
-            first = hAzzle.event.put(entry = new Registry(
+            first = hAzzle.event.register(entry = new Registry(
                 elem,
                 type,
                 fn,
@@ -509,7 +509,7 @@ hAzzle.event = {
         for (; i < l; i++) {
 
             if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                hAzzle.event.del(handlers[i]);
+                hAzzle.event.unregister(handlers[i]);
                 if (!removed[handlers[i].type]) {
 
                     /* Mehran!!
@@ -604,8 +604,10 @@ hAzzle.event = {
         });
         return entries;
     },
-
-    put: function (entry) {
+   
+   // Add an event to the element's event registry.
+   
+    register: function (entry) {
         var has = !entry.root && !this.has(entry.element, entry.type, null, false),
             key;
 
@@ -622,8 +624,10 @@ hAzzle.event = {
 
         return has;
     },
-
-    del: function (entry) {
+   
+   // Remove an event from the element's event registry.
+   
+    unregister: function (entry) {
 
         var self = this;
 
@@ -955,9 +959,12 @@ Registry.prototype = {
             },
 
             handler = condition ? function (event) {
+				
                 var target = getTarget(event, this);
-                if (condition.apply(target, arguments)) {
-                    if (event) {
+                
+				if (condition.apply(target, arguments)) {
+                
+				    if (event) {
 
                         event.currentTarget = target;
                     }

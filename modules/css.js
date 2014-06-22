@@ -246,7 +246,7 @@ hAzzle.extend({
         // Loop through, and collect the result
 
         return this.each(function (el) {
-            hAzzle.forOwn(obj, function (key, value) {
+            hAzzle.forOwn(obj, function (value, key) {
                 hAzzle.style(el, key, value);
             });
         });
