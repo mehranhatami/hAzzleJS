@@ -998,6 +998,9 @@ Registry.prototype = {
 /**
  * Root listener
  *
+ * A 'rootlistener' are attached to each DOM event that we need to listen to, only once
+ * per event type per DOM element
+ *
  * @param {String} evt
  * @param {String} type
  * @return {hAzzle}
@@ -1052,8 +1055,16 @@ function rootListener(evt, type) {
  */
 
 function rafCallHandler(evt, listeners, thisArg) {
+
   if (!ticking) {
 
+  // This has no effect, will allways be triggered
+  // and always be true on the element where the
+  // event handler are attached.
+  //
+  // Just remove this  if (!ticking) {} and see 
+  // yourself. Same as before
+  
     ticking = true;
 
     var rafId,
@@ -1067,6 +1078,9 @@ function rafCallHandler(evt, listeners, thisArg) {
 
     })(evt, listeners, thisArg);
 
+   // get the frame id, so we can cancel
+   // with hAzzle.cancelFrame
+   
      rafId = safeRAF(callback);
   }
 }
