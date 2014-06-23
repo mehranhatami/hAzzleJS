@@ -66,7 +66,7 @@ hAzzle.extend({
      try {
 		results = context.querySelectorAll(selector); 
 		 } catch(e) {}
-	  
+
 
       // Seed
 
@@ -74,7 +74,7 @@ hAzzle.extend({
 
         var i = 0,
 		    l = seed.length;
-		
+
 		for (; i < l; i++) { 
         if (hAzzle.matchesSelector(seed[i], selector) ) {
           results.push(seed[i]);
