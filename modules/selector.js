@@ -1,10 +1,15 @@
-var doc = document,
+var 
+    win = this,
+	
+	doc = win.document,
 
     cache = [],
 
     regCache = {},
 
     i,
+
+    expando = "hAzzle_" + hAzzle.now(),
 
     slice = Array.prototype.slice,
 
@@ -250,7 +255,7 @@ var Expr = {
             return el === el.activeElement;
         },
         'focus': function (el) {
-            return el === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
+            return el === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
         },
 
         'hover': function (el) {
@@ -258,7 +263,7 @@ var Expr = {
         },
 
         'target': function (el) {
-            var hash = window.location && window.location.hash;
+            var hash = win.location && win.location.hash;
             return hash && hash.slice(1) === el.id;
         },
         'lang': function (el, lang) {
@@ -356,21 +361,21 @@ var Expr = {
             return !el.required;
         },
         'links-here': function (el) {
-            return el + '' === window.location + '';
+            return el + '' === win.location + '';
         },
         'any-link': function (el) {
             return typeof el.href === 'string';
         },
 
         'local-link': function (el, val) {
-            if (el.nodeName) return el.href && el.host === window.location.host;
+            if (el.nodeName) return el.href && el.host === win.location.host;
 
             var param = +el + 1;
 
             return function (el) {
                 if (!el.href) return;
 
-                var url = window.location + '',
+                var url = win.location + '',
                     href = el + '';
 
                 return truncateUrl(url, param) === truncateUrl(href, param);
@@ -547,8 +552,8 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
     noCache = noCache || !!context;
 
     // clean context with document
-
-    context = context || doc;
+    
+	context = prepareContext(context);
 
     if (!selector || typeof selector !== 'string') {
 
@@ -588,7 +593,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
         } else if ((_match = m[3])) {
 
-            if (!!doc.getElementsByClassName && context.getElementsByClassName) {
+            if (!!doc.getElementsByClassName) {
 
                 set = context.getElementsByClassName(_match);
             }
@@ -684,6 +689,17 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
+ function prepareContext(ctx) {
+	 
+	 var _doc = ctx ? ctx.ownerDocument || ctx : doc;
+
+	// If no document and documentElement is available, return
+	if ( _doc === document || _doc.nodeType !== 9 || !_doc.documentElement ) {
+		return document;
+	}
+	
+	hAzzle.setDocument();
+ }
 
 /**
  * Check for attribute match
@@ -792,7 +808,6 @@ function mergeArray(arr, res) {
     return arr;
 }
 
-
 /**
  * Reusable regex for searching classnames and others regex
  */
@@ -869,7 +884,6 @@ function fnPseudo(sel, elem, tag, n) {
     return nodes ? nodes : [];
 }
 
-
 // combinators processing function [E > F]
 
 function fnCombinator(elem, parts) {
@@ -942,7 +956,6 @@ function truncateUrl(url, num) {
         .join('/');
 }
 
-
 /* =========================== INTERNAL ========================== */
 
 /**
@@ -1004,14 +1017,21 @@ hAzzle.match = function (selector, seed) {
     return slice.call(results);
 };
 
-// hAzzle.find
+/**
+ *
+ * hAzzle.find
+ *
+ * To-do! Add match with pseudo selectors
+ *
+ */
+
 
 hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
 
     var quickMatch = findExpr.exec(selector),
         elements, old, nid;
 
-    context = context || document;
+    context = context || doc;
 
     if (quickMatch) {
 
@@ -1034,9 +1054,9 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
     } else {
 
         old = true;
-        nid = "hAzzle_" + hAzzle.now();
+        nid = expando;
 
-        if (context !== document) {
+        if (context !== doc) {
 
             if ((old = context.getAttribute("id"))) {
 
@@ -1072,7 +1092,7 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
  */
 
 hAzzle.findAll = function (selector, context) {
-    return this.find(selector, context || document, true);
+    return this.find(selector, context || doc, true);
 };
 
 
