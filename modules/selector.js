@@ -29,6 +29,8 @@ var doc = document,
 
     rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
 
+    rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
+
     findExpr = !!doc.getElementsByClassName ? /^(?:(\w+)|\.([\w\-]+))$/ : /^(?:(\w+))$/,
 
     sibling = /[\x20\t\r\n\f]*[+~>]/,
@@ -406,11 +408,13 @@ var Expr = {
 
                 if ((!id || elm.id === id) &&
                     (!cls || cls.test(elm.className)) &&
-                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](elm, attr, val)))) &&
+                    (!attr || (attrMatch(eql, el, attr, val))) &&
                     (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
+
                     if (last) {
                         elm.unq = 1;
                     }
+
                     tmpNodes.push(elm);
                 }
             }
@@ -435,17 +439,20 @@ var Expr = {
 
                 elm = els[i];
 
-                if (elm.parentNode == el && (!id || elm.id === id) &&
-                    (!cls || cls.test(elm.className)) &&
-                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](elm, attr, val)))) &&
-                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
+                if (elm) {
 
-                    if (last) {
+                    if (elm.parentNode === el && (!id || elm.id === id) &&
+                        (!cls || cls.test(elm.className)) &&
+                        (!attr || ((attrMatch(eql, elm, attr, val)))) &&
+                        (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
 
-                        el.unq = 1;
+                        if (last) {
+
+                            elm.unq = 1;
+                        }
+
+                        tmpNodes.push(elm);
                     }
-
-                    tmpNodes.push(elm);
                 }
             }
         },
@@ -456,7 +463,7 @@ var Expr = {
                 if (el && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
                     (!id || el.id === id) &&
                     (!cls || cls.test(el.className)) &&
-                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](el, attr, val)))) &&
+                    (!attr || (attrMatch(eql, el, attr, val))) &&
                     (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu) && !el.unq) {
                     if (last) {
                         el.unq = 1;
@@ -473,7 +480,7 @@ var Expr = {
                 if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
                     (!id || el.id === id) &&
                     (!cls || cls.test(el.className)) &&
-                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](el, attr, val)))) &&
+                    (!attr || (attrMatch(eql, el, attr, val))) &&
                     (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu)) {
                     if (last) {
                         el.unq = 1;
@@ -940,7 +947,10 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
     var quickMatch = findExpr.exec(selector),
         elements, old, nid;
 
+    context = context || document;
+
     if (quickMatch) {
+
         if (quickMatch[1]) {
             // speed-up: "TAG"
             elements = context.getElementsByTagName(selector);
@@ -953,7 +963,7 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
 
     } else {
         old = true;
-        nid = "DOM" + hAzzle.now();
+        nid = "hAzzle_" + hAzzle.now();
 
         if (context !== document) {
             if ((old = context.getAttribute("id"))) {
@@ -981,19 +991,64 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
 
 /**
  * Find all matched elements by css selector
- * @memberOf module:find
- * @param  {String} selector css selector
- * @return {$Element} matched elements
+ * @param  {String} selector
+ * @param  {Object/String} context
+ * @return {hAzzle}
  */
+
 hAzzle.findAll = function (selector, context) {
     return this.find(selector, context || document, true);
 };
 
+
+/**
+ * hAzzle matches
+ *
+ * Todo! Add match check against pseudo
+ *
+ */
+
 hAzzle.matches = function (selector, context) {
 
+    if (typeof selector !== "string") {
 
-    //alert ( selector === '*' || hAzzle.matchesSelector(context, selector) )
+        return null;
+    }
 
-    return selector === '*' || hAzzle.matchesSelector(context, selector);
+    var quick = rquickIs.exec(selector),
+        result, found, test;
 
-}
+    if (quick) {
+        //   0  1    2   3          4
+        // [ _, tag, id, attribute, class ]
+        if (quick[1]) {
+
+            quick[1] = quick[1].toLowerCase();
+        }
+
+        if (quick[3]) {
+
+            quick[3] = quick[3].split("=");
+        }
+
+        if (quick[4]) {
+
+            quick[4] = " " + quick[4] + " ";
+        }
+    }
+    if (quick) {
+
+        result = (
+            (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
+            (!quick[2] || context.id === quick[2]) &&
+            (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
+            (!quick[4] || (" " + context.className + " ").indexOf(quick[4]) >= 0)
+        );
+
+    } else {
+
+        result = hAzzle.matchesSelector(context, selector);
+    }
+
+    return result;
+};
