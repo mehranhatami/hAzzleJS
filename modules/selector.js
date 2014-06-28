@@ -57,8 +57,6 @@ var
 
     langidentifier = new RegExp('^' + identifier + '$'),
 
-    oldSelector,
-
     whitespace = "[\\x20\\t\\r\\n\\f]",
 
     runescape = new RegExp("\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig"),
@@ -541,12 +539,11 @@ var Expr = {
 
 hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
-    oldSelector = selector.match(oddeven) ?
-        hAzzle.trim(selector).replace(even, '(2n)').replace(odd, '(2n+1)') : hAzzle.trim(selector);
+    selector = hAzzle.trim(selector);	
 
-    if (cache[oldSelector] && !noCache && !context) {
+    if (cache[selector] && !noCache && !context) {
 
-        return cache[oldSelector];
+        return cache[selector];
     }
    
     doc = hAzzle.setDocument(context);
@@ -564,7 +561,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     // Remove spaces around '['  and ']' of attributes
 
-    selector = oldSelector.replace(/['"]/g, "").replace(/(\[)\s+/g, "$1").replace(/\s+(\])/g, "$1")
+    selector = selector.replace(/['"]/g, "").replace(/(\[)\s+/g, "$1").replace(/\s+(\])/g, "$1")
         // remove spaces to the 'left' and 'right' of operator inside of attributes
         .replace(/(\[[^\] ]+)\s+/g, "$1").replace(/\s+([^ \[]+\])/g, "$1")
         // remove spaces around '(' of pseudos
@@ -608,7 +605,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
             set = hAzzle.makeArray(context.getElementsByTagName(m[2]));
         }
 
-        return !noCache ? cache[oldSelector] = set : set;
+        return !noCache ? cache[selector] = set : set;
 
         // Everything else
 
@@ -1130,8 +1127,9 @@ hAzzle.extend({
 
 
     for (; i < l; i++) {
+		
         if (hAzzle.matchesSelector(context[i], selector)) {
-            results.push(context[i]);
+            result.push(context[i]);
         }
     }
 
