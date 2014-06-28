@@ -65,7 +65,7 @@ var Expr = {
 
     /* =========================== PSEUDO SELECTORS ========================== */
 
-    pseudo: {
+    pseudos: {
 
         root: function (el) {
             return el === hAzzle.docElem;
@@ -210,7 +210,7 @@ var Expr = {
         },
 
         'parent': function (el) {
-            return !Expr.pseudo['empty'](el);
+            return !Expr.pseudos['empty'](el);
         },
 
         'empty': function (el) {
@@ -327,42 +327,6 @@ var Expr = {
                 el.type === 'text' &&
                 ((attr = el.getAttribute('type')) === null || attr.toLowerCase() === 'text');
         },
-        'radio': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return name === 'input' && el.type === 'radio';
-        },
-        'checkbox': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return name === 'input' && el.type === 'checkbox';
-        },
-        'file': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return name === 'input' && el.type === 'file';
-        },
-        'password': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return name === 'input' && el.type === 'password';
-        },
-
-        'submit': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return (name === 'input' || name === 'button') && 'submit' === el.type;
-        },
-
-        'image': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return name === 'input' && el.type === 'image';
-        },
-
-        'reset': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return (name === 'input' || name === 'button') && 'reset' === el.type;
-        },
-
-        'button': function (el) {
-            var name = el.nodeName.toLowerCase();
-            return (name === 'input' || name === 'button') && 'button' === el.type;
-        },
 
         /**
          * Extra pseudos - same as in jQuery / Sizzle
@@ -416,7 +380,7 @@ var Expr = {
         " ": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
 
 
-            if (pseu && !Expr.pseudo[pseu]) {
+            if (pseu && !Expr.pseudos[pseu]) {
 
                 hAzzle.error(pseu);
             }
@@ -433,7 +397,7 @@ var Expr = {
                 if ((!id || elm.id === id) &&
                     (!cls || cls.test(elm.className)) &&
                     (!attr || (Expr.attr[eql] && (Expr.attr[eql](elm, attr, val)))) &&
-                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
+                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
                     if (last) {
                         elm.unq = 1;
                     }
@@ -446,7 +410,7 @@ var Expr = {
 
         ">": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
 
-            if (pseu && !Expr.pseudo[pseu]) {
+            if (pseu && !Expr.pseudos[pseu]) {
 
                 hAzzle.error(pseu);
             }
@@ -463,7 +427,7 @@ var Expr = {
                 if (elm.parentNode == el && (!id || elm.id === id) &&
                     (!cls || cls.test(elm.className)) &&
                     (!attr || (Expr.attr[eql] && (Expr.attr[eql](elm, attr, val)))) &&
-                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
+                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
 
                     if (last) {
 
@@ -476,13 +440,13 @@ var Expr = {
         },
 
         "+": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
-            if (pseu && !Expr.pseudo[pseu]) hAzzle.error(pseu);
+            if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
             while ((el = el.nextSibling) && el.nodeType !== 1) {
                 if (el && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
                     (!id || el.id === id) &&
                     (!cls || cls.test(el.className)) &&
                     (!attr || (Expr.attr[eql] && (Expr.attr[eql](el, attr, val)))) &&
-                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](el, nth, h) : !pseu) && !el.unq) {
+                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu) && !el.unq) {
                     if (last) {
                         el.unq = 1;
                     }
@@ -493,13 +457,13 @@ var Expr = {
         },
 
         "~": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
-            if (pseu && !Expr.pseudo[pseu]) hAzzle.error(pseu);
+            if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
             while ((el = el.nextSibling) && !el.unq) {
                 if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
                     (!id || el.id === id) &&
                     (!cls || cls.test(el.className)) &&
                     (!attr || (Expr.attr[eql] && (Expr.attr[eql](el, attr, val)))) &&
-                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](el, nth, h) : !pseu)) {
+                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu)) {
                     if (last) {
                         el.unq = 1;
                     }
@@ -821,7 +785,7 @@ function fnPseudo(sel, root, tag, n) {
         el, j = 0,
         l,
         cnt,
-        fnP = Expr.pseudo[sel];
+        fnP = Expr.pseudos[sel];
 
     cnt = l = els.length;
 
@@ -903,6 +867,39 @@ function fnCombinator(elem, parts) {
     }
     return nodes;
 }
+
+/* =========================== INTERNAL ========================== */
+
+/**
+ * Returns a function to use in pseudos for input types
+ * @param {String} type
+ */
+function createInputPseudo( type ) {
+	return function( elem ) {
+		var name = elem.nodeName.toLowerCase();
+		return name === "input" && elem.type === type;
+	};
+}
+
+/**
+ * Returns a function to use in pseudos for buttons
+ * @param {String} type
+ */
+function createButtonPseudo( type ) {
+	return function( elem ) {
+		var name = elem.nodeName.toLowerCase();
+		return (name === "input" || name === "button") && elem.type === type;
+	};
+}
+
+// Add button/input type pseudos
+for ( i in { radio: true, checkbox: true, file: true, password: true, image: true } ) {
+	Expr.pseudos[ i ] = createInputPseudo( i );
+}
+for ( i in { submit: true, reset: true } ) {
+	Expr.pseudos[ i ] = createButtonPseudo( i );
+}
+
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 

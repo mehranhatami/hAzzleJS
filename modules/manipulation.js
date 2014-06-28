@@ -958,6 +958,7 @@ function injectHTML(target, node, fn, rev) {
 
         return node;
     }
+   
     /* =========================== INTERNAL ========================== */
 
 
