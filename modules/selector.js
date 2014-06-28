@@ -1,4 +1,3 @@
-
 var doc = document,
 
     cache = [],
@@ -17,15 +16,15 @@ var doc = document,
     pheader = /^h\d$/i,
 
     grpl = /(\([^)]*)\+/,
-	
+
     grpm = /(\[[^\]]+)~/,
-    
+
     grpr = /(~|>|\+)/,
-    
+
     grw = /\s+/,
-	
+
     rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
-	
+
     aTag = /^(\w+|\*)\[/,
     attrM = /\[[^\[]+\]/g,
     attrT = /^[^\s>+~:]+\[((?:[\w\-])+)([~^$*|!]?=)?([\w\- ]+)?\]*[^\w\s>+~:]+$/,
@@ -62,675 +61,455 @@ var doc = document,
             String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
     };
 
+var Expr = {
 
-// Main functions
+    /* =========================== PSEUDO SELECTORS ========================== */
 
-var main = {
+    pseudo: {
 
+        root: function (el) {
+            return el === hAzzle.docElem;
+        },
 
+        nthChild: function (el, n, t) {
+            var x = n[0],
+                y = n[1];
+
+            if (x === 1 && y === 0) {
+                return true;
+            }
+
+            if (!el.nIdx) {
+                var node = el.parentNode.firstChild,
+                    cnt = 0,
+                    html = el.nodeName.toLowerCase() !== 'html';
+                for (; node; node = node.nextSibling) {
+                    if (!t ? node.nodeType == 1 && html : node.nodeType === 1 && node.nodeName == el.nodeName && html)
+                        node.nIdx = ++cnt;
+                }
+            }
+
+            var dif = el.nIdx - y;
+
+            if (x === 0) {
+                return (dif === 0);
+            } else {
+                return (dif % x === 0 && dif / x >= 0);
+            }
+        },
+
+        'nth-child': function (el, n) {
+            return this.nthChild(el, n);
+        },
+
+        'nth-of-type': function (el, n) {
+            return this.nthChild(el, n, true);
+        },
+
+        nthLastChild: function (el, n, t) {
+            var node = el,
+                html,
+                x = n[0],
+                y = n[1];
+
+            if (x === 1 && y === 0) {
+                return true;
+            }
+
+            var par = el.parentNode;
+            if (par && !el.nIdxL) {
+                var cnt = 0;
+                node = par.lastChild;
+                html = el.nodeName.toLowerCase() !== 'html';
+                do {
+                    if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html)
+                        node.nIdxL = ++cnt;
+                } while (node = node.previousSibling);
+            }
+
+            var dif = el.nIdxL - y;
+
+            if (x === 0) {
+                return (dif === 0);
+            } else {
+                return (dif % x === 0 && dif / x >= 0);
+            }
+        },
+
+        'nth-last-child': function (el, n) {
+            return this.nthLastChild(el, n);
+        },
+
+        'nth-last-of-type': function (el, n) {
+            return this.nthLastChild(el, n, true);
+        },
+
+        'child': function (el, typ, t) {
+            if (!el.nIdxC) {
+                var node, cnt = 0,
+                    last, html = el.nodeName.toLowerCase() !== 'html';
+                for (node = el.parentNode.firstChild; node; node = node.nextSibling) {
+                    if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
+                        last = node;
+                        node.nIdxC = ++cnt;
+                    }
+                }
+
+                if (last) {
+
+                    last.IsLast = true;
+                }
+
+                if (cnt === 1) {
+
+                    last.IsOnly = true;
+                }
+            }
+
+            if (typ === 'first') {
+
+                var pos = el.nIdxC;
+
+            } else if (typ === 'last') {
+
+                return !!el.IsLast;
+
+            } else if (typ === 'only') {
+
+                return !!el.IsOnly;
+            }
+        },
+
+        'first-child': function (el) {
+            return this.child(el, 'first');
+        },
+
+        'last-child': function (el) {
+            return this.child(el, 'last');
+        },
+
+        'only-child': function (el) {
+            return this.child(el, 'only');
+        },
+
+        'first-of-type': function (el) {
+            return this.child(el, 'first', true);
+        },
+
+        'last-of-type': function (el) {
+            return this.child(el, 'last', true);
+        },
+
+        'only-of-type': function (el) {
+            return this.child(el, 'only', true);
+        },
+
+        'contains': function (el, text) {
+            text = text.replace(runescape, funescape);
+            return (el.textContent || el.innerText || hAzzle.getText(el)).indexOf(text) > -1;
+        },
+
+        'parent': function (el) {
+            return !Expr.pseudo['empty'](el);
+        },
+
+        'empty': function (el) {
+            // http://www.w3.org/TR/selectors/#empty-pseudo
+            // :empty is negated by element (1) or content nodes (text: 3; cdata: 4; entity ref: 5),
+            //   but not by others (comment: 8; processing instruction: 7; etc.)
+            // nodeType < 6 works because attributes (2) do not appear as children
+            for (el = el.firstChild; el; el = el.nextSibling) {
+                if (el.nodeType < 6) {
+                    return false;
+                }
+            }
+
+            return true;
+        },
+
+        'link': function (el) {
+            return el.nodeName.toLowerCase() === 'a' && el.href;
+        },
+
+        'visited': function (el) {
+            return el.nodeName.toLowerCase() === 'a' && el.href && el.visited;
+        },
+
+        'active': function (el) {
+            return el === el.activeElement;
+        },
+        'focus': function (el) {
+            return el === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
+        },
+
+        'hover': function (el) {
+            return el === el.hoverElement;
+        },
+
+        'target': function (el) {
+            var hash = window.location && window.location.hash;
+            return hash && hash.slice(1) === el.id;
+        },
+        'lang': function (el, lang) {
+            // lang value must be a valid identifier
+            if (!langidentifier.test(lang || '')) {
+                hAzzle.error('unsupported lang: ' + lang);
+            }
+            lang = lang.replace(runescape, funescape).toLowerCase();
+
+            var elemLang;
+
+            do {
+                if ((elemLang = hAzzle.documentIsHTML ?
+                    el.lang :
+                    el.getAttribute('xml:lang') || el.getAttribute('lang'))) {
+
+                    elemLang = elemLang.toLowerCase();
+                    return elemLang === lang || hAzzle.indexOf(elemLang, lang + '-') === 0;
+                }
+            } while ((el = el.parentNode) && el.nodeType === 1);
+            return false;
+        },
+        'enabled': function (el) {
+            return el.disabled === false;
+        },
+
+        'disabled': function (el) {
+            return el.disabled === true;
+        },
+
+        'checked': function (el) {
+            // In CSS3, :checked should return both checked and selected elements
+            // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+            var nodeName = el.nodeName.toLowerCase();
+            return (nodeName === 'input' && !!el.checked) || (nodeName === 'option' && !!el.selected);
+        },
+
+        'selected': function (el) {
+            // Accessing this property makes selected-by-default
+            // options in Safari work properly
+            if (el.parentNode) {
+                el.parentNode.selectedIndex;
+            }
+            return el.selected === true;
+        },
+
+        'not': function (el, n) {
+            var not = n,
+                j = 0,
+                l = not.length;
+            while (l--) {
+                if (not[j] === el) {
+                    return false;
+                }
+                j++;
+            }
+            return true;
+        },
+
+        'has': function (el, selector) {
+            return hAzzle.select(selector, el).length > 0;
+        },
+
+        'header': function (el) {
+
+            return pheader.test(el.nodeName);
+        },
+
+        'input': function (el) {
+
+            return pinput.test(el.nodeName);
+        },
+
+        'text': function (el) {
+            var attr;
+            return el.nodeName.toLowerCase() === 'input' &&
+                el.type === 'text' &&
+                ((attr = el.getAttribute('type')) === null || attr.toLowerCase() === 'text');
+        },
+        'radio': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return name === 'input' && el.type === 'radio';
+        },
+        'checkbox': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return name === 'input' && el.type === 'checkbox';
+        },
+        'file': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return name === 'input' && el.type === 'file';
+        },
+        'password': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return name === 'input' && el.type === 'password';
+        },
+
+        'submit': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return (name === 'input' || name === 'button') && 'submit' === el.type;
+        },
+
+        'image': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return name === 'input' && el.type === 'image';
+        },
+
+        'reset': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return (name === 'input' || name === 'button') && 'reset' === el.type;
+        },
+
+        'button': function (el) {
+            var name = el.nodeName.toLowerCase();
+            return (name === 'input' || name === 'button') && 'button' === el.type;
+        },
 
         /**
-         * Reusable regex for searching classnames and others regex
+         * Extra pseudos - same as in jQuery / Sizzle
          */
 
-        getClsReg: function (c) {
-            // check to see if regular expression already exists
-            var re = regCache[c];
-            if (!re) {
-                re = new RegExp(c);
-                regCache[c] = re;
-            }
-            return re;
+        'first': function (el, n, i) {
+
+            return i === 0;
         },
 
+        'last': function (el, n, i, len) {
 
-        getPseuNth: function (root, typ, nth, nthrun) {
-
-            if (typ === "not") {
-
-                return hAzzle.select(nth, root, false, nthrun);
-
-            } else {
-
-                if (nthChild.test(":" + typ)) {
-
-                    return main.getNth(nth);
-
-                } else {
-
-                    return nth;
-                }
-            }
+            return i === len - 1;
         },
 
-        getNth: function (s) {
-            var m = [],
-                rg;
-            s = s.replace(/\%/, "+");
-            rg = nthBrck.exec(!/\D/.test(s) && "0n+" + s || s);
-            // calculate the numbers (first)n+(last) including if they are negative
-            m[0] = (rg[1] + (rg[2] || 1)) - 0;
-            m[1] = rg[3] - 0;
-            return m;
+        'odd': function (el, n, i) {
+
+            return (i + 1) % 2 === 0;
         },
 
+        'even': function (el, n, i) {
 
-
-        fnPseudo: function (sel, root, tag, n) {
-
-            tag = tag || "*";
-
-            var nodes = [],
-                els = root.getElementsByTagName(tag), 
-				el, j = 0,
-                l, 
-				cnt, 
-				fnP = selectors.pseudo[sel];
-
-            cnt = l = els.length;
-
-            while (cnt--) {
-				
-                el = els[j];
-                
-				if (fnP(el, n, j, l)) {
-                
-				    nodes.push(el);
-                }
-                
-				j++;
-            }
-			
-            return nodes ? nodes : [];
+            return (i + 1) % 2 === 1;
         },
-        // combinators processing function [E > F]
-        fnCombinator: function (root, parts) {
-            //alert(parts)
-            var combt, nodes = [],
-                tag, id, cls, attr, eql, pseu, tmpNodes, last, nth, el,
-                pl = parts.length,
-                part,
-                m,
-                val,
-                mnth,
-                j,
-                nl,
-                i = 0;
 
-            combt = combt || " ";
-            // is cleanded up with DOM root 
-            nodes = [root];
+        'lt': function (el, n, i) {
 
-            while (part = parts[i++]) {
-                // test for combinators [" ", ">", "+", "~"]
-                if (!combTest.test(part)) {
+            return i < n - 0;
+        },
 
-                    // match part selector;
-                    m = SimpComb.exec(part);
+        'gt': function (el, n, i) {
 
-                    // get all required matches from exec:
-                    // tag, id, class, attribute, value, pseudo
-                    tag = m[1] || "*";
-                    id = m[2];
-                    cls = m[3] ? main.getClsReg("(?:^|\\s+)" + m[3] + "(?:\\s+|$)") : "";
-                    attr = m[4];
-                    eql = m[5] || "";
-                    val = m[6];
-                    pseu = m[7];
-                    mnth = m[8];
-                    // for nth-childs pseudo
+            return i > n - 0;
+        },
 
-                    nth = main.getPseuNth(root, pseu, mnth);
-                    //		alert(nth)
-                    tmpNodes = [];
-                    j = 0;
-                    // if we need to mark node with unq
-                    last = i == pl;
-                    nl = nodes.length;
+        'nth': function (el, n, i) {
 
-                    while (nl--) {
+            return n - 0 === i;
+        },
 
-                        el = nodes[j];
+        'eq': function (el, n, i) {
 
-                         selectors.comb[combt](el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, j);
-                          break;
-
-                        j++;
-                    }
-                    // put selected nodes in temp nodes' set
-                    nodes = tmpNodes;
-                    combt = " ";
-                } else {
-                    // switch ancestor ( , > , ~ , +)
-                    combt = part;
-                }
-            }
-            return nodes;
+            return n - 0 === i;
         }
     },
-    // selectors core
-    selectors = {
-       
-        /* =========================== PSEUDO SELECTORS ========================== */
 
-        pseudo: {
+    /* =========================== DIRECTIVES ========================== */
 
-            root: function (el) {
-                return el === hAzzle.docElem;
-            },
+    comb: {
 
-            nthChild: function (el, n, t) {
-                var x = n[0],
-                    y = n[1];
+        " ": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
 
-                if (x === 1 && y === 0) {
-                    return true;
-                }
 
-                if (!el.nIdx) {
-                    var node = el.parentNode.firstChild,
-                        cnt = 0,
-                        html = el.nodeName.toLowerCase() !== 'html';
-                    for (; node; node = node.nextSibling) {
-                        if (!t ? node.nodeType == 1 && html : node.nodeType === 1 && node.nodeName == el.nodeName && html)
-                            node.nIdx = ++cnt;
+            if (pseu && !Expr.pseudo[pseu]) {
+
+                hAzzle.error(pseu);
+            }
+
+            var els = el.getElementsByTagName(tag),
+                i = 0,
+                l = els.length,
+                elm;
+
+            for (; i < l; i++) {
+
+                elm = els[i];
+
+                if ((!id || elm.id === id) &&
+                    (!cls || cls.test(elm.className)) &&
+                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](elm, attr, val)))) &&
+                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
+                    if (last) {
+                        elm.unq = 1;
                     }
+                    tmpNodes.push(elm);
                 }
+            }
+        },
 
-                var dif = el.nIdx - y;
+        // Direct children
 
-                if (x === 0) {
-                    return (dif === 0);
-                } else {
-                    return (dif % x === 0 && dif / x >= 0);
-                }
-            },
+        ">": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
 
-            'nth-child': function (el, n) {
-                return this.nthChild(el, n);
-            },
+            if (pseu && !Expr.pseudo[pseu]) {
 
-            'nth-of-type': function (el, n) {
-                return this.nthChild(el, n, true);
-            },
+                hAzzle.error(pseu);
+            }
 
-            nthLastChild: function (el, n, t) {
-                var node = el,
-                    html,
-                    x = n[0],
-                    y = n[1];
+            var els = el.getElementsByTagName(tag),
+                i = 0,
+                l = els.length,
+                elm;
 
-                if (x === 1 && y === 0) {
-                    return true;
-                }
+            for (; i < l; i++) {
 
-                var par = el.parentNode;
-                if (par && !el.nIdxL) {
-                    var cnt = 0;
-                    node = par.lastChild;
-                    html = el.nodeName.toLowerCase() !== 'html';
-                    do {
-                        if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html)
-                            node.nIdxL = ++cnt;
-                    } while (node = node.previousSibling);
-                }
+                elm = els[i];
 
-                var dif = el.nIdxL - y;
-
-                if (x === 0) {
-                    return (dif === 0);
-                } else {
-                    return (dif % x === 0 && dif / x >= 0);
-                }
-            },
-
-            'nth-last-child': function (el, n) {
-                return this.nthLastChild(el, n);
-            },
-
-            'nth-last-of-type': function (el, n) {
-                return this.nthLastChild(el, n, true);
-            },
-
-            'child': function (el, typ, t) {
-                if (!el.nIdxC) {
-                    var node, cnt = 0,
-                        last, html = el.nodeName.toLowerCase() !== 'html';
-                    for (node = el.parentNode.firstChild; node; node = node.nextSibling) {
-                        if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
-                            last = node;
-                            node.nIdxC = ++cnt;
-                        }
-                    }
+                if (elm.parentNode == el && (!id || elm.id === id) &&
+                    (!cls || cls.test(elm.className)) &&
+                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](elm, attr, val)))) &&
+                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
 
                     if (last) {
 
-                        last.IsLast = true;
+                        el.unq = 1;
                     }
 
-                    if (cnt === 1) {
-
-                        last.IsOnly = true;
-                    }
+                    tmpNodes.push(el);
                 }
-
-                if (typ === 'first') {
-
-                    var pos = el.nIdxC;
-
-                } else if (typ === 'last') {
-
-                    return !!el.IsLast;
-
-                } else if (typ === 'only') {
-
-                    return !!el.IsOnly;
-                }
-            },
-
-            'first-child': function (el) {
-                return this.child(el, 'first');
-            },
-
-            'last-child': function (el) {
-                return this.child(el, 'last');
-            },
-
-            'only-child': function (el) {
-                return this.child(el, 'only');
-            },
-
-            'first-of-type': function (el) {
-                return this.child(el, 'first', true);
-            },
-
-            'last-of-type': function (el) {
-                return this.child(el, 'last', true);
-            },
-
-            'only-of-type': function (el) {
-                return this.child(el, 'only', true);
-            },
-
-            'contains': function (el, text) {
-                text = text.replace(runescape, funescape);
-                return (el.textContent || el.innerText || hAzzle.getText(el)).indexOf(text) > -1;
-            },
-
-            'parent': function (el) {
-                return !selectors.pseudo['empty'](el);
-            },
-
-            'empty': function (el) {
-                // http://www.w3.org/TR/selectors/#empty-pseudo
-                // :empty is negated by element (1) or content nodes (text: 3; cdata: 4; entity ref: 5),
-                //   but not by others (comment: 8; processing instruction: 7; etc.)
-                // nodeType < 6 works because attributes (2) do not appear as children
-                for (el = el.firstChild; el; el = el.nextSibling) {
-                    if (el.nodeType < 6) {
-                        return false;
-                    }
-                }
-
-                return true;
-            },
-
-            'link': function (el) {
-                return el.nodeName.toLowerCase() === 'a' && el.href;
-            },
-
-            'visited': function (el) {
-                return el.nodeName.toLowerCase() === 'a' && el.href && el.visited;
-            },
-
-            'active': function (el) {
-                return el === el.activeElement;
-            },
-            'focus': function (el) {
-                return el === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
-            },
-
-            'hover': function (el) {
-                return el === el.hoverElement;
-            },
-
-            'target': function (el) {
-                var hash = window.location && window.location.hash;
-                return hash && hash.slice(1) === el.id;
-            },
-            'lang': function (el, lang) {
-                // lang value must be a valid identifier
-                if (!langidentifier.test(lang || '')) {
-                    hAzzle.error('unsupported lang: ' + lang);
-                }
-                lang = lang.replace(runescape, funescape).toLowerCase();
-
-                var elemLang;
-
-                do {
-                    if ((elemLang = hAzzle.documentIsHTML ?
-                        el.lang :
-                        el.getAttribute('xml:lang') || el.getAttribute('lang'))) {
-
-                        elemLang = elemLang.toLowerCase();
-                        return elemLang === lang || hAzzle.indexOf(elemLang, lang + '-') === 0;
-                    }
-                } while ((el = el.parentNode) && el.nodeType === 1);
-                return false;
-            },
-            'enabled': function (el) {
-                return el.disabled === false;
-            },
-
-            'disabled': function (el) {
-                return el.disabled === true;
-            },
-
-            'checked': function (el) {
-                // In CSS3, :checked should return both checked and selected elements
-                // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-                var nodeName = el.nodeName.toLowerCase();
-                return (nodeName === 'input' && !!el.checked) || (nodeName === 'option' && !!el.selected);
-            },
-
-            'selected': function (el) {
-                // Accessing this property makes selected-by-default
-                // options in Safari work properly
-                if (el.parentNode) {
-                    el.parentNode.selectedIndex;
-                }
-                return el.selected === true;
-            },
-
-            'not': function (el, n) {
-                var not = n,
-                    j = 0,
-                    l = not.length;
-                while (l--) {
-                    if (not[j] === el) {
-                        return false;
-                    }
-                    j++;
-                }
-                return true;
-            },
-
-            'has': function (el, selector) {
-                return hAzzle.select(selector, el).length > 0;
-            },
-
-            'header': function (el) {
-
-                return pheader.test(el.nodeName);
-            },
-
-            'input': function (el) {
-
-                return pinput.test(el.nodeName);
-            },
-
-            'text': function (el) {
-                var attr;
-                return el.nodeName.toLowerCase() === 'input' &&
-                    el.type === 'text' &&
-                    ((attr = el.getAttribute('type')) === null || attr.toLowerCase() === 'text');
-            },
-            'radio': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return name === 'input' && el.type === 'radio';
-            },
-            'checkbox': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return name === 'input' && el.type === 'checkbox';
-            },
-            'file': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return name === 'input' && el.type === 'file';
-            },
-            'password': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return name === 'input' && el.type === 'password';
-            },
-
-            'submit': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return (name === 'input' || name === 'button') && 'submit' === el.type;
-            },
-
-            'image': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return name === 'input' && el.type === 'image';
-            },
-
-            'reset': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return (name === 'input' || name === 'button') && 'reset' === el.type;
-            },
-
-            'button': function (el) {
-                var name = el.nodeName.toLowerCase();
-                return (name === 'input' || name === 'button') && 'button' === el.type;
-            },
-
-            /**
-             * Extra pseudos - same as in jQuery / Sizzle
-             */
-
-            'first': function (el, n, i) {
-
-                return i === 0;
-            },
-
-            'last': function (el, n, i, len) {
-
-                return i === len - 1;
-            },
-
-            'odd': function (el, n, i) {
-
-                return (i + 1) % 2 === 0;
-            },
-
-            'even': function (el, n, i) {
-
-                return (i + 1) % 2 === 1;
-            },
-
-            'lt': function (el, n, i) {
-
-                return i < n - 0;
-            },
-
-            'gt': function (el, n, i) {
-
-                return i > n - 0;
-            },
-
-            'nth': function (el, n, i) {
-
-                return n - 0 === i;
-            },
-
-            'eq': function (el, n, i) {
-
-                return n - 0 === i;
             }
         },
 
-        /* =========================== DIRECTIVES ========================== */
-
-        comb: {
-
-            " ": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
-             
-			 
-			   if (pseu && !selectors.pseudo[pseu]) {
-
-                    hAzzle.error(pseu);
-                }
-
-                var els = el.getElementsByTagName(tag),
-                    i = 0,
-                    l = els.length,
-                    elm;
-
-                for (; i < l; i++) {
-
-                    elm = els[i]
-
-                    if ((!id || elm.id === id) &&
-                        (!cls || cls.test(elm.className)) &&
-                        (!attr || (selectors.attr[eql] && (selectors.attr[eql](elm, attr, val)))) &&
-                        (selectors.pseudo[pseu] ? selectors.pseudo[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
-                        if (last) {
-                            elm.unq = 1;
-                        }
-                        tmpNodes.push(elm);
-                    }
-                }
-            },
-
-            // Direct children
-
-            ">": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
-
-                if (pseu && !selectors.pseudo[pseu]) {
-
-                    hAzzle.error(pseu);
-                }
-
-                var els = el.getElementsByTagName(tag),
-                    i = 0,
-                    l = els.length,
-                    elm;
-
-                for (; i < l; i++) {
-
-                    elm = els[i]
-
-                    if (elm.parentNode == el && (!id || elm.id === id) &&
-                        (!cls || cls.test(elm.className)) &&
-                        (!attr || (selectors.attr[eql] && (selectors.attr[eql](elm, attr, val)))) &&
-                        (selectors.pseudo[pseu] ? selectors.pseudo[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
-
-                        if (last) {
-
-                            el.unq = 1;
-                        }
-
-                        tmpNodes.push(el);
-                    }
-                }
-            },
-
-            "+": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
-                if (pseu && !selectors.pseudo[pseu]) hAzzle.error(pseu);
-                while ((el = el.nextSibling) && el.nodeType !== 1) {
+        "+": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
+            if (pseu && !Expr.pseudo[pseu]) hAzzle.error(pseu);
+            while ((el = el.nextSibling) && el.nodeType !== 1) {
                 if (el && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
                     (!id || el.id === id) &&
                     (!cls || cls.test(el.className)) &&
-                    (!attr || (selectors.attr[eql] && (selectors.attr[eql](el, attr, val)))) &&
-                    (selectors.pseudo[pseu] ? selectors.pseudo[pseu](el, nth, h) : !pseu) && !el.unq) {
+                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](el, attr, val)))) &&
+                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](el, nth, h) : !pseu) && !el.unq) {
                     if (last) {
                         el.unq = 1;
                     }
                     tmpNodes.push(el);
                 }
-			  }
-            },
 
-            "~": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
-                if (pseu && !selectors.pseudo[pseu]) hAzzle.error(pseu);
-                while ((el = el.nextSibling) && !el.unq) {
-                    if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
-                        (!id || el.id === id) &&
-                        (!cls || cls.test(el.className)) &&
-                        (!attr || (selectors.attr[eql] && (selectors.attr[eql](el, attr, val)))) &&
-                        (selectors.pseudo[pseu] ? selectors.pseudo[pseu](el, nth, h) : !pseu)) {
-                        if (last) {
-                            el.unq = 1;
-                        }
-                        tmpNodes.push(el);
+            }
+        },
+
+        "~": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
+            if (pseu && !Expr.pseudo[pseu]) hAzzle.error(pseu);
+            while ((el = el.nextSibling) && !el.unq) {
+                if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
+                    (!id || el.id === id) &&
+                    (!cls || cls.test(el.className)) &&
+                    (!attr || (Expr.attr[eql] && (Expr.attr[eql](el, attr, val)))) &&
+                    (Expr.pseudo[pseu] ? Expr.pseudo[pseu](el, nth, h) : !pseu)) {
+                    if (last) {
+                        el.unq = 1;
                     }
+                    tmpNodes.push(el);
                 }
             }
         }
-    };
-
-// hAzzle.find 
-
-// Temporary solution!
-
-hAzzle.find = function (selector, context, results, seed) {
-    var match,
-      bool, // Boolean for filter function
-      elem, m, nodeType,
-      i = 0;
-
-    results = results || [];
-    context = context || doc;
-
-    if (!seed && hAzzle.documentIsHTML) {
-
-      // Shortcuts
-
-      if ((match = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/.exec(selector))) {
-
-        // #id
-        if ((m = match[1])) {
-
-          elem = context.getElementById(m);
-
-          if (elem && elem.parentNode) {
-
-            if (elem.id === m) {
-              results.push(elem);
-              return results;
-            }
-          } else {
-            return results;
-          }
-
-          // .class	
-
-        } else if ((m = match[2])) {
-
-          push.apply(results, context.getElementsByClassName(m));
-          return results;
-
-          // tag
-
-        } else if ((m = match[3])) {
-
-          push.apply(results, context.getElementsByTagName(selector));
-          return results;
-        }
-      }
-
-      // Everything else
-
-     try {
-		results = context.querySelectorAll(selector); 
-		 } catch(e) {}
-
-
-      // Seed
-
-    } else {
-
-        var i = 0,
-		    l = seed.length;
-
-		for (; i < l; i++) { 
-        if (hAzzle.matchesSelector(seed[i], selector) ) {
-          results.push(seed[i]);
-        }
-	   }
     }
+};
 
-    return slice.call(results);
-
-}
 
 // hAzzle.select
 
@@ -765,7 +544,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     var m, _match, set;
 
-   // qucik selection - only ID, CLASS TAG, and ATTR for the very first occurence
+    // qucik selection - only ID, CLASS TAG, and ATTR for the very first occurence
     if ((m = rquickExpr.exec(selector)) !== null) {
 
         if (_match = m[1]) {
@@ -784,15 +563,15 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
                 }
 
             }
-			
+
         } else if ((_match = m[3])) {
 
             if (!!doc.getElementsByClassName && context.getElementsByClassName) {
-				
+
                 set = context.getElementsByClassName(_match);
             }
 
-        // Tags
+            // Tags
 
         } else if (m[2]) {
 
@@ -801,7 +580,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
         return !noCache ? cache[oldSelector] = set : set;
 
-    // Everything else
+        // Everything else
 
     } else {
 
@@ -824,50 +603,51 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
                 m[1] = nthrun;
             }
 
-            var nm = main.getPseuNth(context, m[2], m[3], m[1]);
+            var nm = getPseuNth(context, m[2], m[3], m[1]);
 
-            set = main.fnPseudo(m[2], context, m[1], nm);
+            set = fnPseudo(m[2], context, m[1], nm);
 
-           // Directives and combinators
-		   
+            // Directives and combinators
+
         } else {
 
             // split groups of selectors separated by commas.
 
-            var grps = selector.split(grpSplit), 
-			    grp, 
-			
-			    // group length
-				
-				gl = grps.length, 
-				
-				// if we need to concat several groups
-				
-				gconcat = !!(gl - 1), 
-				nodes, 
-				parts = [],
+            var grps = selector.split(grpSplit),
+                grp,
+
+                // group length
+
+                gl = grps.length,
+
+                // if we need to concat several groups
+
+                gconcat = !!(gl - 1),
+                nodes,
+                parts = [],
                 i = 0;
 
             while (gl--) {
-				
+
                 grp = grps[i];
-				
+
                 if (!(nodes = cache[grp]) || noCache) {
 
-				    parts = grp.replace(grpl, '$1%').replace(grpm, '$1&').replace(grpr, ' $1 ').split(grw);
-                    nodes = main.fnCombinator(context, parts);
+
+                    parts = grp.replace(grpl, '$1%').replace(grpm, '$1&').replace(grpr, ' $1 ').split(grw);
+                    nodes = fnCombinator(context, parts);
                 }
 
                 if (gconcat) {
-					
+
                     // if res isn't an array - create new one
-					
+
                     set = mergeArray(nodes, set);
-            
-			    } else {
-					
+
+                } else {
+
                     // inialize res with nodes
-					
+
                     set = nodes;
                 }
                 i++;
@@ -990,3 +770,209 @@ function mergeArray(arr, res) {
     }
     return arr;
 }
+
+
+/**
+ * Reusable regex for searching classnames and others regex
+ */
+
+function getClsReg(c) {
+    // check to see if regular expression already exists
+    var re = regCache[c];
+    if (!re) {
+        re = new RegExp(c);
+        regCache[c] = re;
+    }
+    return re;
+}
+
+function getPseuNth(root, typ, nth, nthrun) {
+
+    if (typ === "not") {
+
+        return hAzzle.select(nth, root, false, nthrun);
+
+    } else {
+
+        if (nthChild.test(":" + typ)) {
+
+            var m = [],
+                rg;
+            nth = nth.replace(/\%/, "+");
+            rg = nthBrck.exec(!/\D/.test(nth) && "0n+" + nth || s);
+            // calculate the numbers (first)n+(last) including if they are negative
+            m[0] = (rg[1] + (rg[2] || 1)) - 0;
+            m[1] = rg[3] - 0;
+            return m;
+
+        } else {
+
+            return nth;
+        }
+    }
+}
+
+function fnPseudo(sel, root, tag, n) {
+
+    tag = tag || "*";
+
+    var nodes = [],
+        els = root.getElementsByTagName(tag),
+        el, j = 0,
+        l,
+        cnt,
+        fnP = Expr.pseudo[sel];
+
+    cnt = l = els.length;
+
+    while (cnt--) {
+
+        el = els[j];
+
+        if (fnP(el, n, j, l)) {
+
+            nodes.push(el);
+        }
+
+        j++;
+    }
+
+    return nodes ? nodes : [];
+}
+
+
+// combinators processing function [E > F]
+function fnCombinator(elem, parts) {
+    //alert(parts)
+    var combt, nodes = [],
+        tag, id, cls, attr, eql, pseu, tmpNodes, last, nth, el,
+        pl = parts.length,
+        part,
+        m,
+        val,
+        mnth,
+        j,
+        nl,
+        i = 0;
+
+    combt = combt || " ";
+    // is cleanded up with DOM root 
+    nodes = [elem];
+
+    while (part = parts[i++]) {
+        // test for combinators [" ", ">", "+", "~"]
+        if (!combTest.test(part)) {
+
+            // match part selector;
+            m = SimpComb.exec(part);
+
+            // get all required matches from exec:
+            // tag, id, class, attribute, value, pseudo
+            tag = m[1] || "*";
+            id = m[2];
+            cls = m[3] ? getClsReg("(?:^|\\s+)" + m[3] + "(?:\\s+|$)") : "";
+            attr = m[4];
+            eql = m[5] || "";
+            val = m[6];
+            pseu = m[7];
+            mnth = m[8];
+            // for nth-childs pseudo
+
+            nth = getPseuNth(elem, pseu, mnth);
+            //		alert(nth)
+            tmpNodes = [];
+            j = 0;
+            // if we need to mark node with unq
+            last = i == pl;
+            nl = nodes.length;
+
+            while (nl--) {
+
+                el = nodes[j];
+
+                Expr.comb[combt](el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, j);
+                j++;
+            }
+            // put selected nodes in temp nodes' set
+            nodes = tmpNodes;
+            combt = " ";
+        } else {
+            // switch ancestor ( , > , ~ , +)
+            combt = part;
+        }
+    }
+    return nodes;
+}
+
+/* =========================== GLOBAL FUNCTIONS ========================== */
+
+// hAzzle.find 
+
+hAzzle.find = function (selector, context, results, seed) {
+    var match,
+        elem, m,
+        i = 0;
+
+    results = results || [];
+    context = context || doc;
+
+    if (!seed && hAzzle.documentIsHTML) {
+
+        // Shortcuts
+
+        if ((match = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/.exec(selector))) {
+
+            // #id
+            if ((m = match[1])) {
+
+                elem = context.getElementById(m);
+
+                if (elem && elem.parentNode) {
+
+                    if (elem.id === m) {
+                        results.push(elem);
+                        return results;
+                    }
+                } else {
+                    return results;
+                }
+
+                // .class	
+
+            } else if ((m = match[2])) {
+
+                push.apply(results, context.getElementsByClassName(m));
+                return results;
+
+                // tag
+
+            } else if ((m = match[3])) {
+
+                push.apply(results, context.getElementsByTagName(selector));
+                return results;
+            }
+        }
+
+        // Everything else
+
+        try {
+            results = context.querySelectorAll(selector);
+        } catch (e) {}
+
+
+        // Seed
+
+    } else {
+
+        var l = seed.length;
+        i = 0;
+        for (; i < l; i++) {
+            if (hAzzle.matchesSelector(seed[i], selector)) {
+                results.push(seed[i]);
+            }
+        }
+    }
+
+    return slice.call(results);
+
+};
