@@ -13,12 +13,6 @@ var
 
     slice = Array.prototype.slice,
 
-    even = /\(\s*even\s*\)/gi,
-
-    odd = /\(\s*odd\s*\)/gi,
-
-    oddeven = /:(even|odd)/,
-
     pinput = /^(?:input|select|textarea|button)$/i,
 
     pheader = /^h\d$/i,
@@ -295,6 +289,7 @@ var Expr = {
         'checked': function (el) {
             // In CSS3, :checked should return both checked and selected elements
             // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+
             var nodeName = el.nodeName.toLowerCase();
             return (nodeName === 'input' && !!el.checked) || (nodeName === 'option' && !!el.selected);
         },
@@ -309,6 +304,7 @@ var Expr = {
         },
 
         'not': function (el, n) {
+
             var not = n,
                 j = 0,
                 l = not.length;
@@ -620,7 +616,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
             set = findAttr(selector, context, tag);
 
-            // Pseudos
+            // Nth
 
         } else if ((m = pseudoNH.exec(selector)) !== null || nthrun) {
 
