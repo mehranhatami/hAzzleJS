@@ -339,6 +339,44 @@ var Expr = {
         },
 
         /**
+         * A few CSS4 pseudo selectors
+         */
+
+        'in-range': function (el) {
+            return el.value > el.min && el.value <= el.max;
+        },
+        ':out-of-range': function (el) {
+            return !Expr.pseudos['in-range'](el);
+        },
+        'required': function (el) {
+            return !!el.required;
+        },
+        'optional': function (el) {
+            return !el.required;
+        },
+        'links-here': function (el) {
+            return el + '' === window.location + '';
+        },
+        'any-link': function (el) {
+            return typeof el.href === 'string';
+        },
+
+        'local-link': function (el, val) {
+            if (el.nodeName) return el.href && el.host === window.location.host;
+
+            var param = +el + 1;
+
+            return function (el) {
+                if (!el.href) return;
+
+                var url = window.location + '',
+                    href = el + '';
+
+                return truncateUrl(url, param) === truncateUrl(href, param);
+            };
+        },
+
+        /**
          * Extra pseudos - same as in jQuery / Sizzle
          */
 
@@ -879,6 +917,25 @@ function fnCombinator(elem, parts) {
     return nodes;
 }
 
+
+/**
+ * Truncate given url
+ *
+ * @param {String} url
+ * @param {String} num
+ *
+ * @return {Object}
+ */
+
+function truncateUrl(url, num) {
+    return url
+        .replace(/^(?:\w+:\/\/|\/+)/, '')
+        .replace(/(?:\/+|\/*#.*?)$/, '')
+        .split('/', num)
+        .join('/');
+}
+
+
 /* =========================== INTERNAL ========================== */
 
 /**
@@ -952,23 +1009,34 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
     if (quickMatch) {
 
         if (quickMatch[1]) {
+
             // speed-up: "TAG"
             elements = context.getElementsByTagName(selector);
+
         } else {
+
             // speed-up: ".CLASS"
             elements = context.getElementsByClassName(quickMatch[2]);
         }
 
-        if (elements && !all) elements = elements[0];
+        if (elements && !all) {
+
+            elements = elements[0];
+        }
 
     } else {
+
         old = true;
         nid = "hAzzle_" + hAzzle.now();
 
         if (context !== document) {
+
             if ((old = context.getAttribute("id"))) {
+
                 nid = old.replace(rescape, "\\$&");
+
             } else {
+
                 context.setAttribute("id", nid);
             }
 
