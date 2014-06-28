@@ -570,7 +570,7 @@ hAzzle.forOwn({
         }
 
         if (selector && isString(selector)) {
-            matched = hAzzle.match(selector, matched);
+            matched = hAzzle.matches(selector, matched);
         }
 
         if (this.length > 1) {
@@ -588,3 +588,6 @@ hAzzle.forOwn({
         return hAzzle(matched);
     };
 });
+
+
+

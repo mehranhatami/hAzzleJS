@@ -548,12 +548,14 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
         return cache[oldSelector];
     }
-
+   
+    doc = hAzzle.setDocument(context);
+ 
     noCache = noCache || !!context;
 
     // clean context with document
-    
-	context = prepareContext(context);
+
+    context = context || document;
 
     if (!selector || typeof selector !== 'string') {
 
@@ -572,7 +574,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     // qucik selection - only ID, CLASS TAG, and ATTR for the very first occurence
 
-    if ((m = rquickExpr.exec(selector)) !== null) {
+    if (hAzzle.documentIsHTML && (m = rquickExpr.exec(selector)) !== null) {
 
         if (_match = m[1]) {
 
@@ -688,18 +690,6 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 };
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
-
- function prepareContext(ctx) {
-	 
-	 var _doc = ctx ? ctx.ownerDocument || ctx : doc;
-
-	// If no document and documentElement is available, return
-	if ( _doc === document || _doc.nodeType !== 9 || !_doc.documentElement ) {
-		return document;
-	}
-	
-	hAzzle.setDocument();
- }
 
 /**
  * Check for attribute match
@@ -1000,37 +990,27 @@ for (i in {
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
-// hAzzle.match
 
-hAzzle.match = function (selector, seed) {
-
-    var i = 0,
-        results = [],
-        l = seed.length;
-
-    for (; i < l; i++) {
-        if (hAzzle.matchesSelector(seed[i], selector)) {
-            results.push(seed[i]);
-        }
-    }
-
-    return slice.call(results);
-};
+hAzzle.extend({
+	
 
 /**
  *
- * hAzzle.find
+ * 'Internal ' hAzzle.find function
+ *
+ * Only for find() function.
  *
  * To-do! Add match with pseudo selectors
  *
  */
 
-
-hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
+   find: function (selector, context, /*INTERNAL*/ all) {
 
     var quickMatch = findExpr.exec(selector),
         elements, old, nid;
-
+    
+	 doc = hAzzle.setDocument(context);
+	
     context = context || doc;
 
     if (quickMatch) {
@@ -1081,7 +1061,7 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
     }
 
     return elements;
-};
+},
 
 
 /**
@@ -1091,9 +1071,9 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
  * @return {hAzzle}
  */
 
-hAzzle.findAll = function (selector, context) {
+ findAll: function (selector, context) {
     return this.find(selector, context || doc, true);
-};
+},
 
 
 /**
@@ -1107,7 +1087,7 @@ hAzzle.findAll = function (selector, context) {
  *
  */
 
-hAzzle.matches = function (selector, context) {
+ matches: function (selector, context) {
 
     if (typeof selector !== "string") {
 
@@ -1115,7 +1095,9 @@ hAzzle.matches = function (selector, context) {
     }
 
     var quick = rquickIs.exec(selector),
-        result;
+	   i = 0,
+       l = context.length,
+        result = [];
 
     if (quick) {
         //   0  1    2   3          4
@@ -1135,7 +1117,7 @@ hAzzle.matches = function (selector, context) {
             quick[4] = " " + quick[4] + " ";
         }
     }
-    if (quick) {
+    if (quick && context.nodeName) {
 
         result = (
             (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
@@ -1146,8 +1128,18 @@ hAzzle.matches = function (selector, context) {
 
     } else {
 
-        result = hAzzle.matchesSelector(context, selector);
+
+    for (; i < l; i++) {
+        if (hAzzle.matchesSelector(context[i], selector)) {
+            results.push(context[i]);
+        }
+    }
+
     }
 
     return result;
-};
+}	
+
+
+}, hAzzle);
+
