@@ -60,7 +60,7 @@ hAzzle.extend({
 
             for (; i < len; i++) {
 
-                hAzzle.select(selector, self[i], ret);
+                hAzzle.find(selector, self[i], ret);
             }
 
             // If more then one element, make sure they are unique
@@ -365,10 +365,6 @@ hAzzle.extend({
         return this;
     },
 
-    size: function () {
-        return this.length;
-    },
-
     contents: function () {
 
         var matched = hAzzle.map(this, function (elem) {
@@ -390,6 +386,7 @@ hAzzle.extend({
     concat: arr.concat,
     indexOf: arr.indexOf
 });
+
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
@@ -573,7 +570,7 @@ hAzzle.forOwn({
         }
 
         if (selector && isString(selector)) {
-            matched = hAzzle.select(selector, null, null, matched);
+            matched = hAzzle.find(selector, null, null, matched);
         }
 
         if (this.length > 1) {

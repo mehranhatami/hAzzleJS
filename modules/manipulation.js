@@ -636,8 +636,14 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
 
+   // Set document vars if needed
+	if ( ( elem.ownerDocument || elem ) !== document ) {
+		setDocument( elem );
+	}
+
         var hooks, ret,
             nType = elem.nodeType;
+
         if (!name) {
             return;
         }
