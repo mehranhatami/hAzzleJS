@@ -9,6 +9,7 @@ var doc = document,
     slice = Array.prototype.slice,
 
     even = /\(\s*even\s*\)/gi,
+
     odd = /\(\s*odd\s*\)/gi,
 
     oddeven = /:(even|odd)/,
@@ -380,44 +381,44 @@ var Expr = {
          * Extra pseudos - same as in jQuery / Sizzle
          */
 
-        'first': function (el, n, i) {
+        'first': function (el, matchIndexes, argument) {
 
-            return i === 0;
+            return argument === 0;
         },
 
-        'last': function (el, n, i, len) {
+        'last': function (el, matchIndexes, argument, len) {
 
-            return i === len - 1;
+            return argument === len - 1;
         },
 
-        'odd': function (el, n, i) {
+        'odd': function (el, matchIndexes, argument) {
 
-            return (i + 1) % 2 === 0;
+            return (argument + 1) % 2 === 0;
         },
 
-        'even': function (el, n, i) {
+        'even': function (el, matchIndexes, argument) {
 
-            return (i + 1) % 2 === 1;
+            return (argument + 1) % 2 === 1;
         },
 
-        'lt': function (el, n, i) {
+        'lt': function (el, matchIndexes, argument) {
 
-            return i < n - 0;
+            return argument < matchIndexes - 0;
         },
 
-        'gt': function (el, n, i) {
+        'gt': function (el, matchIndexes, argument) {
 
-            return i > n - 0;
+            return argument > matchIndexes - 0;
         },
 
-        'nth': function (el, n, i) {
+        'nth': function (el, matchIndexes, argument) {
 
-            return n - 0 === i;
+            return matchIndexes - 0 === argument;
         },
 
-        'eq': function (el, n, i) {
+        'eq': function (el, matchIndexes, argument) {
+            return argument < 0 ? argument + length : matchIndexes - 0 === argument;
 
-            return n - 0 === i;
         }
     },
 
@@ -565,6 +566,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
     var m, _match, set;
 
     // qucik selection - only ID, CLASS TAG, and ATTR for the very first occurence
+
     if ((m = rquickExpr.exec(selector)) !== null) {
 
         if (_match = m[1]) {
@@ -605,7 +607,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     } else {
 
-        // attribute
+        // attributes
 
         if (attrT.test(selector)) {
 
@@ -614,7 +616,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
             set = findAttr(selector, context, tag);
 
-            // Pseudo
+            // Pseudos
 
         } else if ((m = pseudoNH.exec(selector)) !== null || nthrun) {
 
@@ -624,9 +626,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
                 m[1] = nthrun;
             }
 
-            var nm = getPseuNth(context, m[2], m[3], m[1]);
-
-            set = fnPseudo(m[2], context, m[1], nm);
+            set = fnPseudo(m[2], context, m[1], getPseuNth(context, m[2], m[3], m[1]));
 
             // Directives and combinators
 
@@ -807,11 +807,17 @@ function getClsReg(c) {
     return re;
 }
 
-function getPseuNth(root, typ, nth, nthrun) {
+/**
+ * Get Nth pseudo selectors
+ */
+
+function getPseuNth(elem, typ, nth, nthrun) {
+
+    // Quick lookup for 'not'
 
     if (typ === "not") {
 
-        return hAzzle.select(nth, root, false, nthrun);
+        return hAzzle.select(nth, elem, false, nthrun);
 
     } else {
 
@@ -821,7 +827,9 @@ function getPseuNth(root, typ, nth, nthrun) {
                 rg;
             nth = nth.replace(/\%/, "+");
             rg = nthBrck.exec(!/\D/.test(nth) && "0n+" + nth || nth);
+
             // calculate the numbers (first)n+(last) including if they are negative
+
             m[0] = (rg[1] + (rg[2] || 1)) - 0;
             m[1] = rg[3] - 0;
             return m;
@@ -833,12 +841,12 @@ function getPseuNth(root, typ, nth, nthrun) {
     }
 }
 
-function fnPseudo(sel, root, tag, n) {
+function fnPseudo(sel, elem, tag, n) {
 
     tag = tag || "*";
 
     var nodes = [],
-        els = root.getElementsByTagName(tag),
+        els = elem.getElementsByTagName(tag),
         el, j = 0,
         l,
         cnt,
@@ -863,6 +871,7 @@ function fnPseudo(sel, root, tag, n) {
 
 
 // combinators processing function [E > F]
+
 function fnCombinator(elem, parts) {
 
     var combt, nodes = [],
@@ -870,8 +879,6 @@ function fnCombinator(elem, parts) {
         pl = parts.length,
         part,
         m,
-
-
         j,
         nl,
         i = 0;
@@ -1072,7 +1079,11 @@ hAzzle.findAll = function (selector, context) {
 /**
  * hAzzle matches
  *
- * Todo! Add match check against pseudo
+ * Todo! 
+ *
+ * Mehran!!
+ *
+ * Add match check against pseudos
  *
  */
 
@@ -1084,7 +1095,7 @@ hAzzle.matches = function (selector, context) {
     }
 
     var quick = rquickIs.exec(selector),
-        result, found, test;
+        result;
 
     if (quick) {
         //   0  1    2   3          4
