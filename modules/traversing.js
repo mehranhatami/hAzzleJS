@@ -60,7 +60,7 @@ hAzzle.extend({
 
             for (; i < len; i++) {
 
-                hAzzle.find(selector, self[i], ret);
+              ret.push( hAzzle.find(selector, self[i], false) );
             }
 
             // If more then one element, make sure they are unique
@@ -570,7 +570,7 @@ hAzzle.forOwn({
         }
 
         if (selector && isString(selector)) {
-            matched = hAzzle.find(selector, null, null, matched);
+            matched = hAzzle.match(selector, matched);
         }
 
         if (this.length > 1) {

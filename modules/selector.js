@@ -4,6 +4,8 @@ var doc = document,
 
     regCache = {},
 
+    i,
+
     slice = Array.prototype.slice,
 
     even = /\(\s*even\s*\)/gi,
@@ -23,7 +25,13 @@ var doc = document,
 
     grw = /\s+/,
 
+    rescape = /'|\\/g,
+
     rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
+
+    findExpr = !!doc.getElementsByClassName ? /^(?:(\w+)|\.([\w\-]+))$/ : /^(?:(\w+))$/,
+
+    sibling = /[\x20\t\r\n\f]*[+~>]/,
 
     aTag = /^(\w+|\*)\[/,
     attrM = /\[[^\[]+\]/g,
@@ -375,6 +383,8 @@ var Expr = {
 
     /* =========================== DIRECTIVES ========================== */
 
+    // TODO !! Directives / comb need to be fixed ASAP
+
     comb: {
 
         " ": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
@@ -415,6 +425,7 @@ var Expr = {
                 hAzzle.error(pseu);
             }
 
+
             var els = el.getElementsByTagName(tag),
                 i = 0,
                 l = els.length,
@@ -434,7 +445,7 @@ var Expr = {
                         el.unq = 1;
                     }
 
-                    tmpNodes.push(el);
+                    tmpNodes.push(elm);
                 }
             }
         },
@@ -534,6 +545,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
                 set = context.getElementsByClassName(_match);
             }
+
 
             // Tags
 
@@ -763,7 +775,7 @@ function getPseuNth(root, typ, nth, nthrun) {
             var m = [],
                 rg;
             nth = nth.replace(/\%/, "+");
-            rg = nthBrck.exec(!/\D/.test(nth) && "0n+" + nth || s);
+            rg = nthBrck.exec(!/\D/.test(nth) && "0n+" + nth || nth);
             // calculate the numbers (first)n+(last) including if they are negative
             m[0] = (rg[1] + (rg[2] || 1)) - 0;
             m[1] = rg[3] - 0;
@@ -807,14 +819,14 @@ function fnPseudo(sel, root, tag, n) {
 
 // combinators processing function [E > F]
 function fnCombinator(elem, parts) {
-    //alert(parts)
+
     var combt, nodes = [],
-        tag, id, cls, attr, eql, pseu, tmpNodes, last, nth, el,
+        tmpNodes, last, nth, el,
         pl = parts.length,
         part,
         m,
-        val,
-        mnth,
+
+
         j,
         nl,
         i = 0;
@@ -830,36 +842,28 @@ function fnCombinator(elem, parts) {
             // match part selector;
             m = SimpComb.exec(part);
 
-            // get all required matches from exec:
-            // tag, id, class, attribute, value, pseudo
-            tag = m[1] || "*";
-            id = m[2];
-            cls = m[3] ? getClsReg("(?:^|\\s+)" + m[3] + "(?:\\s+|$)") : "";
-            attr = m[4];
-            eql = m[5] || "";
-            val = m[6];
-            pseu = m[7];
-            mnth = m[8];
-            // for nth-childs pseudo
+            if (m) {
+                // for nth-childs pseudo
 
-            nth = getPseuNth(elem, pseu, mnth);
-            //		alert(nth)
-            tmpNodes = [];
-            j = 0;
-            // if we need to mark node with unq
-            last = i == pl;
-            nl = nodes.length;
+                nth = getPseuNth(elem, m[7], m[8]);
+                //		alert(nth)
+                tmpNodes = [];
+                j = 0;
+                // if we need to mark node with unq
+                last = i == pl;
+                nl = nodes.length;
 
-            while (nl--) {
+                while (nl--) {
 
-                el = nodes[j];
+                    el = nodes[j];
 
-                Expr.comb[combt](el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, j);
-                j++;
+                    Expr.comb[combt](el, m[1] || "*", m[2], m[3] ? getClsReg("(?:^|\\s+)" + m[3] + "(?:\\s+|$)") : "", m[4], m[5] || "", m[6], m[7], nth, last, tmpNodes, j);
+                    j++;
+                }
+                // put selected nodes in temp nodes' set
+                nodes = tmpNodes;
+                combt = " ";
             }
-            // put selected nodes in temp nodes' set
-            nodes = tmpNodes;
-            combt = " ";
         } else {
             // switch ancestor ( , > , ~ , +)
             combt = part;
@@ -874,102 +878,122 @@ function fnCombinator(elem, parts) {
  * Returns a function to use in pseudos for input types
  * @param {String} type
  */
-function createInputPseudo( type ) {
-	return function( elem ) {
-		var name = elem.nodeName.toLowerCase();
-		return name === "input" && elem.type === type;
-	};
+function createInputPseudo(type) {
+    return function (elem) {
+        var name = elem.nodeName.toLowerCase();
+        return name === "input" && elem.type === type;
+    };
 }
 
 /**
  * Returns a function to use in pseudos for buttons
  * @param {String} type
  */
-function createButtonPseudo( type ) {
-	return function( elem ) {
-		var name = elem.nodeName.toLowerCase();
-		return (name === "input" || name === "button") && elem.type === type;
-	};
+function createButtonPseudo(type) {
+    return function (elem) {
+        var name = elem.nodeName.toLowerCase();
+        return (name === "input" || name === "button") && elem.type === type;
+    };
 }
 
 // Add button/input type pseudos
-for ( i in { radio: true, checkbox: true, file: true, password: true, image: true } ) {
-	Expr.pseudos[ i ] = createInputPseudo( i );
+for (i in {
+    radio: true,
+    checkbox: true,
+    file: true,
+    password: true,
+    image: true
+}) {
+    Expr.pseudos[i] = createInputPseudo(i);
 }
-for ( i in { submit: true, reset: true } ) {
-	Expr.pseudos[ i ] = createButtonPseudo( i );
+for (i in {
+    submit: true,
+    reset: true
+}) {
+    Expr.pseudos[i] = createButtonPseudo(i);
 }
 
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
-// hAzzle.find 
+// hAzzle.match
 
-hAzzle.find = function (selector, context, results, seed) {
-    var match,
-        elem, m,
-        i = 0;
+hAzzle.match = function (selector, seed) {
 
-    results = results || [];
-    context = context || doc;
+    var i = 0,
+        results = [],
+        l = seed.length;
 
-    if (!seed && hAzzle.documentIsHTML) {
-
-        // Shortcuts
-
-        if ((match = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/.exec(selector))) {
-
-            // #id
-            if ((m = match[1])) {
-
-                elem = context.getElementById(m);
-
-                if (elem && elem.parentNode) {
-
-                    if (elem.id === m) {
-                        results.push(elem);
-                        return results;
-                    }
-                } else {
-                    return results;
-                }
-
-                // .class	
-
-            } else if ((m = match[2])) {
-
-                push.apply(results, context.getElementsByClassName(m));
-                return results;
-
-                // tag
-
-            } else if ((m = match[3])) {
-
-                push.apply(results, context.getElementsByTagName(selector));
-                return results;
-            }
-        }
-
-        // Everything else
-
-        try {
-            results = context.querySelectorAll(selector);
-        } catch (e) {}
-
-
-        // Seed
-
-    } else {
-
-        var l = seed.length;
-        i = 0;
-        for (; i < l; i++) {
-            if (hAzzle.matchesSelector(seed[i], selector)) {
-                results.push(seed[i]);
-            }
+    for (; i < l; i++) {
+        if (hAzzle.matchesSelector(seed[i], selector)) {
+            results.push(seed[i]);
         }
     }
 
     return slice.call(results);
-
 };
+
+// hAzzle.find
+
+hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
+
+    var quickMatch = findExpr.exec(selector),
+        elements, old, nid;
+
+    if (quickMatch) {
+        if (quickMatch[1]) {
+            // speed-up: "TAG"
+            elements = context.getElementsByTagName(selector);
+        } else {
+            // speed-up: ".CLASS"
+            elements = context.getElementsByClassName(quickMatch[2]);
+        }
+
+        if (elements && !all) elements = elements[0];
+
+    } else {
+        old = true;
+        nid = "DOM" + hAzzle.now();
+
+        if (context !== document) {
+            if ((old = context.getAttribute("id"))) {
+                nid = old.replace(rescape, "\\$&");
+            } else {
+                context.setAttribute("id", nid);
+            }
+
+            nid = "[id='" + nid + "'] ";
+
+            context = sibling.test(selector) ? context.parentNode : context;
+            selector = nid + selector.split(",").join("," + nid);
+        }
+
+        try {
+            elements = context[all ? "querySelectorAll" : "querySelector"](selector);
+        } finally {
+            if (!old) context.removeAttribute("id");
+        }
+    }
+
+    return elements;
+};
+
+
+/**
+ * Find all matched elements by css selector
+ * @memberOf module:find
+ * @param  {String} selector css selector
+ * @return {$Element} matched elements
+ */
+hAzzle.findAll = function (selector, context) {
+    return this.find(selector, context || document, true);
+};
+
+hAzzle.matches = function (selector, context) {
+
+
+    //alert ( selector === '*' || hAzzle.matchesSelector(context, selector) )
+
+    return selector === '*' || hAzzle.matchesSelector(context, selector);
+
+}
