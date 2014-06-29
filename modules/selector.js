@@ -913,10 +913,6 @@ function parseNth(elem, typ, nth, nthrun) {
 
     } else {
 
-        // Remove whitespace
-
-        nth = nth.replace(grw, '');
-
         // For even and odd nth-last-child selectors
         // Faster alternative then regEx
 
@@ -928,7 +924,7 @@ function parseNth(elem, typ, nth, nthrun) {
 
             nth = '2n+1';
 
-        } else if (!~nth.iOf('n')) {
+        } else if (nth && !~nth.iOf('n')) {
 
             nth = '0n' + nth;
         }
@@ -1200,7 +1196,7 @@ hAzzle.extend({
                     (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
                     (!quick[2] || context.id === quick[2]) &&
                     (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-                    (!quick[4] || (' ' + context.className + ' ').iOf(quick[4]) >= 0)
+                    (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
                 );
 
                 // Fallback to hAzzle.matchesSelector
