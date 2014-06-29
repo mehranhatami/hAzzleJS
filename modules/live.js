@@ -78,7 +78,7 @@ function checkElements(container) {
      * @return {hAzzle}
      */
 
-hAzzle.Core.prototype['live'] = function (opts, fn) {
+hAzzle.Core['live'] = function (opts, fn) {
 
         var self = this;
 
