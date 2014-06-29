@@ -502,7 +502,7 @@ var
                 return matchIndexes - 0 === argument;
             },
 
-            'eq': function (el, n, i) {
+             'eq': function (el, n, i) {
 
                 return n - 0 === i;
             }
@@ -620,7 +620,7 @@ var
 
 // hAzzle.select
 
-hAzzle.select = function (selector, context, noCache, loop, nthrun, /* INTERNAL */ caching) {
+hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     selector = hAzzle.trim(selector);
 
@@ -695,12 +695,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun, /* INTERNAL 
             set = hAzzle.makeArray(context.getElementsByTagName(m[2]));
         }
 
-        if (!caching) {
-            return set;
-        } else {
-            return !noCache ? cache[selector] = set : set;
-        }
-
+        return !noCache ? cache[selector] = set : set;
 
         // Everything else
 
@@ -755,7 +750,6 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun, /* INTERNAL 
 
                     parts = grp.replace(grpl, '$1%').replace(grpm, '$1&').replace(grpr, ' $1 ').split(grw);
                     nodes = fnCombinator(context, parts);
-
                 }
 
                 if (gconcat) {
@@ -779,13 +773,11 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun, /* INTERNAL 
         }
     }
 
-    if (!caching) {
-        return set;
-    } else {
-        return !noCache ? cache[selector] = set : set;
-    }
+    // No caching down here - dangerous !!
 
-
+    // Mehran! Find another way to cache down here!!
+	
+     return set;
 };
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
@@ -938,7 +930,7 @@ function parseNth(elem, typ, nth, nthrun) {
             nth = '2n+1';
 
         }
-
+		
         if (nthChild.test(':' + typ)) {
 
             var m = [],
@@ -1018,7 +1010,7 @@ function fnCombinator(elem, parts) {
                 // for nth-childs pseudo
 
                 nth = parseNth(elem, m[7], m[8]);
-
+                //		alert(nth)
                 tmpNodes = [];
                 j = 0;
                 // if we need to mark node with unq
@@ -1165,12 +1157,6 @@ hAzzle.extend({
      *
      */
 
-    matchess: function (selector, context) {
-
-        return selector === '*' || hAzzle.matchesSelector(context, selector);
-
-    },
-
 
     matches: function (selector, context) {
 
@@ -1203,49 +1189,44 @@ hAzzle.extend({
             }
         }
 
-        // Always make sure we have a nodeName
+            // Always make sure we have a nodeName
 
-        if (quick && context.nodeName) {
+            if (quick && context.nodeName) {
 
-            result = (
-                (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
-                (!quick[2] || context.id === quick[2]) &&
-                (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-                (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
-            );
+                result = (
+                    (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
+                    (!quick[2] || context.id === quick[2]) &&
+                    (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
+                    (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
+                );
 
-            // Fallback to hAzzle.matchesSelector
+                // Fallback to hAzzle.matchesSelector
 
-        } else {
+            } else {
 
-            // Do a quick look-up if no array-context
-            //
-            // matchesSelector can't be run on XML docs,
-            // but we are solving this inside the 
-            // matchesSelector.js module
+                // Do a quick look-up if no array-context
+                //
+                // matchesSelector can't be run on XML docs,
+                // but we are solving this inside the 
+                // matchesSelector.js module
 
-            if (!l) {
+                if (!l) {
 
-                return hAzzle.matchesSelector(context, selector);
-            }
-
-            // loop through
-
-            for (; i < l; i++) {
-
-                if (hAzzle.matchesSelector(context[i], selector)) {
-
-                    result.push(context[i]);
+                    return hAzzle.matchesSelector(context, selector);
                 }
-            }
+
+                // loop through
+
+                for (; i < l; i++) {
+
+                    if (hAzzle.matchesSelector(context[i], selector)) {
+
+                        result.push(context[i]);
+                    }
+                }
         }
 
         return result;
-    },
-    matches: function (selector, context) {
-
-        return selector === '*' || hAzzle.matchesSelector(context, selector);
-
     }
 
 }, hAzzle);
