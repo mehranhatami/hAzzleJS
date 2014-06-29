@@ -578,8 +578,8 @@ hAzzle.forOwn({
 }, function (fn, name) {
 
     hAzzle.Core[name] = function (until, selector) {
-        var matched = hAzzle.map(this, fn, until);
 
+        var matched = hAzzle.map(this, fn, until);
 
         if (name.slice(-5) !== 'Until') {
             selector = until;
@@ -592,11 +592,13 @@ hAzzle.forOwn({
         if (this.length > 1) {
             // Remove duplicates
             if (!guaranteedUnique[name]) {
+				
                 hAzzle.unique(matched);
             }
 
             // Reverse order for parents* and prev-derivatives
             if (rparentsprev.test(name)) {
+				
                 matched.reverse();
             }
         }

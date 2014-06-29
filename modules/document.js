@@ -61,8 +61,6 @@ var contains,
             }
         }
 
-       
-
         // Return the document
 
         return doc;
@@ -118,8 +116,6 @@ hAzzle.contains = function (context, elem) {
     }
     return contains(context, elem);
 };
-
-
 
 // Initialize against the default document
 
