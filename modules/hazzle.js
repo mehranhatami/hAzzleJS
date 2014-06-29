@@ -119,6 +119,7 @@
                 // Object	
 
             } else {
+				
                 selector = hAzzle.unique(!selector.nodeType &&
                     typeof selector.length !== 'undefined' ?
                     selector : [selector]);
@@ -130,9 +131,7 @@
             while (i--) {
                 this[i] = selector[i];
             }
-
         }
-
     }
 
     /* =========================== CORE FUNCTIONS ========================== */

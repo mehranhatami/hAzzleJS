@@ -105,7 +105,6 @@ hAzzle.extend({
             return self.each(function (el) {
 
                 hAzzle(el)[hAzzle(el).attr(attr) ? 'removeAttr' : 'addAttr'](attr, attr);
-
             });
 
             // Otherwise when both attr & toggle arguments have been provided:
@@ -124,9 +123,7 @@ hAzzle.extend({
             } else {
 
                 return self[toggle ? 'addAttr' : 'removeAttr'](attr, attr);
-
             }
-
         }
     },
 
@@ -151,7 +148,6 @@ hAzzle.extend({
         return this.each(function (el) {
             return el.prop(prop, !el.prop(prop));
         });
-
     },
 
     /*
