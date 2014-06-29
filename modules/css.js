@@ -418,25 +418,28 @@ hAzzle.extend({
     // zIndex:33px are not allowed
 
     unitless: {
-        'lineHeight': true,
-        'zoom': true,
-        'zIndex': true,
-        'opacity': true,
-        'boxFlex': true,
-        'WebkitBoxFlex': true,
-        'MozBoxFlex': true,
-        'columns': true,
-        'fontWeight': true,
-        'overflow': true,
-        'fillOpacity': true,
-        'flexGrow': true,
-        'columnCount': true,
-
-
-        'flexShrink': true,
-        'order': true,
-        'orphans': true,
-        'widows': true,
+        'lineHeight': 1,
+        'zoom': 1,
+        'zIndex': 1,
+        'opacity': 1,
+        'boxFlex': 1,
+        'WebkitBoxFlex': 1,
+        'MozBoxFlex': 1,
+        'columns': 1,
+        'counterReset': 1,	
+        'counterIncrement': 1,	
+        'fontWeight': 1,
+        'float': 1,
+        'volume': 1,	
+        'stress': 1,			
+        'overflow': 1,
+        'fillOpacity': 1,
+        'flexGrow': 1,
+        'columnCount': 1,
+        'flexShrink': 1,
+        'order': 1,
+        'orphans': 1,
+        'widows': 1,
     },
 
     /**
@@ -458,17 +461,10 @@ hAzzle.extend({
         },
     },
 
-    /**
-     * cssSupport.js OR plug-ins will fill this object with data
-     */
-
-    cssProps: {},
-
-    /**
-     * cssSupport.js OR plug-ins will fill this object with data
-     */
-
-    cssSupport: {},
+    cssProps: {
+		
+		"float": "cssFloat"
+	},
 
     style: function (elem, name, value) {
 
@@ -849,9 +845,7 @@ hAzzle.each(['width', 'height'], function (name) {
 
     hAzzle.Core[name] = function (value) {
 
-        var orig,
-            ret,
-            elem = this[0],
+        var elem = this[0],
 			_doc = elem.documentElement;
 
         if (!elem) {
