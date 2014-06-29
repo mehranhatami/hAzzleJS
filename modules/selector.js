@@ -23,7 +23,7 @@ var
 
     grpr = /(~|>|\+)/,
 
-    grw = /\s+/,
+    grw = /\s+/g,
 
     rescape = /'|\\/g,
 
@@ -70,493 +70,547 @@ var
             String.fromCharCode(high + 0x10000) :
             // Supplemental Plane codepoint (surrogate pair)
             String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
-    };
-
-var Expr = {
-
-    /* =========================== PSEUDO SELECTORS ========================== */
-
-    pseudos: {
-
-        'root': function (el) {
-            return el === hAzzle.docElem;
-        },
-
-        /**
-         * Collect nth-childs
-         *
-         * @param{Object} el
-         * @param{Number / Float} n
-         * @param{Boolean} t
-         *
-         */
-
-        'nthChild': function (el, num, bool) {
-
-            var x = num[0],
-                y = num[1];
-
-            if (x === 1 && y === 0) {
-
-                return true;
-            }
-
-            if (!el.nIdx) {
-
-                var node = el.parentNode.firstChild,
-                    cnt = 0,
-                    html = el.nodeName.toLowerCase() !== 'html';
-
-                for (; node; node = node.nextSibling) {
-
-                    if (bool ? node.nodeType === 1 && node.nodeName == el.nodeName && html : node.nodeType == 1 && html) {
-
-                        node.nIdx = ++cnt;
-                    }
-                }
-            }
-
-            var dif = el.nIdx - y;
-
-            if (x === 0) {
-
-                return (dif === 0);
-
-            } else {
-
-                return (dif % x === 0 && dif / x >= 0);
-            }
-        },
-
-        'nth-child': function (el, n) {
-            return this.nthChild(el, n, false);
-        },
-
-        'nth-of-type': function (el, n) {
-            return this.nthChild(el, n, true);
-        },
-
-        'nthLastChild': function (el, num, bool) {
-            var node = el,
-                par = el.parentNode,
-                html,
-                x = num[0],
-                y = num[1];
-
-            if (x === 1 && y === 0) {
-
-                return true;
-            }
-
-            if (par && !el.nIdxL) {
-                var cnt = 0;
-                node = par.lastChild;
-                html = el.nodeName.toLowerCase() !== 'html';
-
-                do {
-
-                    if (!bool ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
-
-                        node.nIdxL = ++cnt;
-                    }
-
-                } while ((node = node.previousSibling));
-            }
-
-            var dif = el.nIdxL - y;
-
-            if (x === 0) {
-                return (dif === 0);
-            } else {
-                return (dif % x === 0 && dif / x >= 0);
-            }
-        },
-
-        'nth-last-child': function (el, n) {
-            return this.nthLastChild(el, n);
-        },
-
-        'nth-last-of-type': function (el, n) {
-            return this.nthLastChild(el, n, true);
-        },
-
-        'child': function (el, typ, t) {
-            if (!el.nIdxC) {
-                var node, cnt = 0,
-                    last, html = el.nodeName.toLowerCase() !== 'html';
-                for (node = el.parentNode.firstChild; node; node = node.nextSibling) {
-                    if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
-                        last = node;
-                        node.nIdxC = ++cnt;
-                    }
-                }
-
-                if (last) {
-
-                    last.IsLast = true;
-                }
-
-                if (cnt === 1) {
-
-                    last.IsOnly = true;
-                }
-            }
-
-            if (typ === 'first') {
-
-                var pos = el.nIdxC;
-
-            } else if (typ === 'last') {
-
-                return !!el.IsLast;
-
-            } else if (typ === 'only') {
-
-                return !!el.IsOnly;
-            }
-        },
-
-        'first-child': function (el) {
-            return this.child(el, 'first');
-        },
-
-        'last-child': function (el) {
-            return this.child(el, 'last');
-        },
-
-        'only-child': function (el) {
-            return this.child(el, 'only');
-        },
-
-        'first-of-type': function (el) {
-            return this.child(el, 'first', true);
-        },
-
-        'last-of-type': function (el) {
-            return this.child(el, 'last', true);
-        },
-
-        'only-of-type': function (el) {
-            return this.child(el, 'only', true);
-        },
-
-        'contains': function (el, text) {
-            text = text.replace(runescape, funescape);
-            return (el.textContent || el.innerText || hAzzle.getText(el)).indexOf(text) > -1;
-        },
-
-        'parent': function (el) {
-            return !Expr.pseudos['empty'](el);
-        },
-
-        'empty': function (el) {
-            // http://www.w3.org/TR/selectors/#empty-pseudo
-            // :empty is negated by element (1) or content nodes (text: 3; cdata: 4; entity ref: 5),
-            //   but not by others (comment: 8; processing instruction: 7; etc.)
-            // nodeType < 6 works because attributes (2) do not appear as children
-            for (el = el.firstChild; el; el = el.nextSibling) {
-                if (el.nodeType < 6) {
-                    return false;
-                }
-            }
-
-            return true;
-        },
-
-        'link': function (el) {
-            return el.nodeName.toLowerCase() === 'a' && el.href;
-        },
-
-        'visited': function (el) {
-            return el.nodeName.toLowerCase() === 'a' && el.href && el.visited;
-        },
-
-        'active': function (el) {
-            return el === el.activeElement;
-        },
-        'focus': function (el) {
-            return el === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
-        },
-
-        'hover': function (el) {
-            return el === el.hoverElement;
-        },
-
-        'target': function (el) {
-            var hash = win.location && win.location.hash;
-            return hash && hash.slice(1) === el.id;
-        },
-        'lang': function (el, lang) {
-            // lang value must be a valid identifier
-            if (!langidentifier.test(lang || '')) {
-                hAzzle.error('unsupported lang: ' + lang);
-            }
-            lang = lang.replace(runescape, funescape).toLowerCase();
-
-            var elemLang;
-
-            do {
-                if ((elemLang = hAzzle.documentIsHTML ?
-                    el.lang :
-                    el.getAttribute('xml:lang') || el.getAttribute('lang'))) {
-
-                    elemLang = elemLang.toLowerCase();
-                    return elemLang === lang || hAzzle.indexOf(elemLang, lang + '-') === 0;
-                }
-            } while ((el = el.parentNode) && el.nodeType === 1);
-            return false;
-        },
-        'enabled': function (el) {
-            return el.disabled === false;
-        },
-
-        'disabled': function (el) {
-            return el.disabled === true;
-        },
-
-        'checked': function (el) {
-            // In CSS3, :checked should return both checked and selected elements
-            // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-
-            var nodeName = el.nodeName.toLowerCase();
-            return (nodeName === 'input' && !!el.checked) || (nodeName === 'option' && !!el.selected);
-        },
-
-        'selected': function (el) {
-            // Accessing this property makes selected-by-default
-            // options in Safari work properly
-            if (el.parentNode) {
-                el.parentNode.selectedIndex;
-            }
-            return el.selected === true;
-        },
-
-        'not': function (el, n) {
-
-            var not = n,
-                j = 0,
-                l = not.length;
-            while (l--) {
-                if (not[j] === el) {
-                    return false;
-                }
-                j++;
-            }
-            return true;
-        },
-
-        'has': function (el, selector) {
-            return hAzzle.select(selector, el).length > 0;
-        },
-
-        'header': function (el) {
-
-            return pheader.test(el.nodeName);
-        },
-
-        'input': function (el) {
-
-            return pinput.test(el.nodeName);
-        },
-
-        'text': function (el) {
-            var attr;
-            return el.nodeName.toLowerCase() === 'input' &&
-                el.type === 'text' &&
-                ((attr = el.getAttribute('type')) === null || attr.toLowerCase() === 'text');
-        },
-
-        /**
-         * A few CSS4 pseudo selectors
-         */
-
-        'in-range': function (el) {
-            return el.value > el.min && el.value <= el.max;
-        },
-        ':out-of-range': function (el) {
-            return !Expr.pseudos['in-range'](el);
-        },
-        'required': function (el) {
-            return !!el.required;
-        },
-        'optional': function (el) {
-            return !el.required;
-        },
-        'links-here': function (el) {
-            return el + '' === win.location + '';
-        },
-        'any-link': function (el) {
-            return typeof el.href === 'string';
-        },
-
-        'local-link': function (el, val) {
-            if (el.nodeName) return el.href && el.host === win.location.host;
-
-            var param = +el + 1;
-
-            return function (el) {
-                if (!el.href) return;
-
-                var url = win.location + '',
-                    href = el + '';
-
-                return truncateUrl(url, param) === truncateUrl(href, param);
-            };
-        },
-
-        /**
-         * Extra pseudos - same as in jQuery / Sizzle
-         */
-
-        'first': function (el, matchIndexes, argument) {
-
-            return argument === 0;
-        },
-
-        'last': function (el, matchIndexes, argument, len) {
-
-            return argument === len - 1;
-        },
-
-        'odd': function (el, matchIndexes, argument) {
-
-            return (argument + 1) % 2 === 0;
-        },
-
-        'even': function (el, matchIndexes, argument) {
-
-            return (argument + 1) % 2 === 1;
-        },
-
-        'lt': function (el, matchIndexes, argument) {
-
-            return argument < matchIndexes - 0;
-        },
-
-        'gt': function (el, matchIndexes, argument) {
-
-            return argument > matchIndexes - 0;
-        },
-
-        'nth': function (el, matchIndexes, argument) {
-
-            return matchIndexes - 0 === argument;
-        },
-
-        'eq': function (el, matchIndexes, argument) {
-            return argument < 0 ? argument + length : matchIndexes - 0 === argument;
-
-        }
     },
 
-    /* =========================== DIRECTIVES ========================== */
+    // Faster alternative till native indexOf
 
-    // TODO !! Directives / comb need to be fixed ASAP
-
-    comb: {
-
-        ' ': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
-
-
-            if (pseu && !Expr.pseudos[pseu]) {
-
-                hAzzle.error(pseu);
+    iOf = (function () {
+        return function (obj, item) {
+            var i = this.length;
+            while (i--) {
+                if (this[i] === item) return i;
             }
+            return -1;
+        };
+    })(),
 
-            var els = el.getElementsByTagName(tag),
-                i = 0,
-                l = els.length,
-                elm;
 
-            for (; i < l; i++) {
+    Expr = {
 
-                elm = els[i];
+        /* =========================== PSEUDO SELECTORS ========================== */
 
-                if ((!id || elm.id === id) &&
-                    (!cls || cls.test(elm.className)) &&
-                    (!attr || (attrMatch(eql, el, attr, val))) &&
-                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
+        pseudos: {
 
-                    if (last) {
-                        elm.unq = 1;
+            'root': function (el) {
+                return el === hAzzle.docElem;
+            },
+
+            /**
+             * Collect nth-childs
+             *
+             * @param{Object} el
+             * @param{Number / Float} n
+             * @param{Boolean} t
+             *
+             */
+
+            'nthChild': function (el, num, bool) {
+
+                var x = num[0],
+                    y = num[1];
+
+                if (x === 1 && y === 0) {
+
+                    return true;
+                }
+
+                if (!el.nIdx) {
+
+                    var node = el.parentNode.firstChild,
+                        cnt = 0,
+                        html = el.nodeName.toLowerCase() !== 'html';
+
+                    for (; node; node = node.nextSibling) {
+
+                        if (bool ? node.nodeType === 1 && node.nodeName == el.nodeName && html : node.nodeType == 1 && html) {
+
+                            node.nIdx = ++cnt;
+                        }
+                    }
+                }
+
+                var dif = el.nIdx - y;
+
+                if (x === 0) {
+
+                    return (dif === 0);
+
+                } else {
+
+                    return (dif % x === 0 && dif / x >= 0);
+                }
+            },
+
+            'nth-child': function (el, n) {
+                return this.nthChild(el, n, false);
+            },
+
+            'nth-of-type': function (el, n) {
+                return this.nthChild(el, n, true);
+            },
+
+            'nthLastChild': function (el, num, bool) {
+                var node = el,
+                    par = el.parentNode,
+                    html,
+                    x = num[0],
+                    y = num[1];
+
+                if (x === 1 && y === 0) {
+
+                    return true;
+                }
+
+                if (par && !el.nIdxL) {
+                    var cnt = 0;
+                    node = par.lastChild;
+                    html = el.nodeName.toLowerCase() !== 'html';
+
+                    do {
+
+                        if (!bool ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
+
+                            node.nIdxL = ++cnt;
+                        }
+
+                    } while ((node = node.previousSibling));
+                }
+
+                var dif = el.nIdxL - y;
+
+                if (x === 0) {
+                    return (dif === 0);
+                } else {
+                    return (dif % x === 0 && dif / x >= 0);
+                }
+            },
+
+            'nth-last-child': function (el, n) {
+                return this.nthLastChild(el, n);
+            },
+
+            'nth-last-of-type': function (el, n) {
+                return this.nthLastChild(el, n, true);
+            },
+
+            'child': function (el, typ, t) {
+                if (!el.nIdxC) {
+                    var node, cnt = 0,
+                        last, html = el.nodeName.toLowerCase() !== 'html';
+                    for (node = el.parentNode.firstChild; node; node = node.nextSibling) {
+                        if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
+                            last = node;
+                            node.nIdxC = ++cnt;
+                        }
                     }
 
-                    tmpNodes.push(elm);
+                    if (last) {
+
+                        last.IsLast = true;
+                    }
+
+                    if (cnt === 1) {
+
+                        last.IsOnly = true;
+                    }
                 }
+
+                if (typ === 'first') {
+
+                    var pos = el.nIdxC;
+
+                } else if (typ === 'last') {
+
+                    return !!el.IsLast;
+
+                } else if (typ === 'only') {
+
+                    return !!el.IsOnly;
+                }
+            },
+
+            'first-child': function (el) {
+                return this.child(el, 'first');
+            },
+
+            'last-child': function (el) {
+                return this.child(el, 'last');
+            },
+
+            'only-child': function (el) {
+                return this.child(el, 'only');
+            },
+
+            'first-of-type': function (el) {
+                return this.child(el, 'first', true);
+            },
+
+            'last-of-type': function (el) {
+                return this.child(el, 'last', true);
+            },
+
+            'only-of-type': function (el) {
+                return this.child(el, 'only', true);
+            },
+
+            'contains': function (el, text) {
+                text = text.replace(runescape, funescape);
+                return (el.textContent || el.innerText || hAzzle.getText(el)).iOf(text) > -1;
+            },
+
+            'parent': function (el) {
+                return !Expr.pseudos.empty(el);
+            },
+
+            'empty': function (el) {
+                // http://www.w3.org/TR/selectors/#empty-pseudo
+                // :empty is negated by element (1) or content nodes (text: 3; cdata: 4; entity ref: 5),
+                //   but not by others (comment: 8; processing instruction: 7; etc.)
+                // nodeType < 6 works because attributes (2) do not appear as children
+                for (el = el.firstChild; el; el = el.nextSibling) {
+                    if (el.nodeType < 6) {
+                        return false;
+                    }
+                }
+
+                return true;
+            },
+
+            'link': function (el) {
+                return el.nodeName.toLowerCase() === 'a' && el.href;
+            },
+
+            'visited': function (el) {
+                return el.nodeName.toLowerCase() === 'a' && el.href && el.visited;
+            },
+
+            'active': function (el) {
+                return el === el.activeElement;
+            },
+            'focus': function (el) {
+                return el === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
+            },
+
+            'hover': function (el) {
+                return el === el.hoverElement;
+            },
+
+            'target': function (el) {
+                var hash = win.location && win.location.hash;
+                return hash && hash.slice(1) === el.id;
+            },
+            'lang': function (el, lang) {
+                // lang value must be a valid identifier
+                if (!langidentifier.test(lang || '')) {
+                    hAzzle.error('unsupported lang: ' + lang);
+                }
+                lang = lang.replace(runescape, funescape).toLowerCase();
+
+                var elemLang;
+
+                do {
+                    if ((elemLang = hAzzle.documentIsHTML ?
+                        el.lang :
+                        el.getAttribute('xml:lang') || el.getAttribute('lang'))) {
+
+                        elemLang = elemLang.toLowerCase();
+                        return elemLang === lang || iOf(elemLang, lang + '-') === 0;
+                    }
+                } while ((el = el.parentNode) && el.nodeType === 1);
+                return false;
+            },
+            'enabled': function (el) {
+                return el.disabled === false;
+            },
+
+            'disabled': function (el) {
+                return el.disabled === true;
+            },
+
+            'checked': function (el) {
+                // In CSS3, :checked should return both checked and selected elements
+                // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+
+                var nodeName = el.nodeName.toLowerCase();
+                return (nodeName === 'input' && !!el.checked) || (nodeName === 'option' && !!el.selected);
+            },
+
+            'selected': function (el) {
+                // Accessing this property makes selected-by-default
+                // options in Safari work properly
+                if (el.parentNode) {
+                    el.parentNode.selectedIndex;
+                }
+                return el.selected === true;
+            },
+
+            'not': function (el, n) {
+
+                var not = n,
+                    j = 0,
+                    l = not.length;
+                while (l--) {
+                    if (not[j] === el) {
+                        return false;
+                    }
+                    j++;
+                }
+                return true;
+            },
+
+            'has': function (el, selector) {
+                return hAzzle.select(selector, el).length > 0;
+            },
+
+            'header': function (el) {
+
+                return pheader.test(el.nodeName);
+            },
+
+            'input': function (el) {
+
+                return pinput.test(el.nodeName);
+            },
+
+            'text': function (el) {
+                var attr;
+                return el.nodeName.toLowerCase() === 'input' &&
+                    el.type === 'text' &&
+                    ((attr = el.getAttribute('type')) === null || attr.toLowerCase() === 'text');
+            },
+
+            /**
+             * A few CSS4 pseudo selectors
+             */
+
+            'in-range': function (el) {
+                return el.value > el.min && el.value <= el.max;
+            },
+            ':out-of-range': function (el) {
+                return !Expr.pseudos['in-range'](el);
+            },
+            'required': function (el) {
+                return !!el.required;
+            },
+            'optional': function (el) {
+                return !el.required;
+            },
+            'links-here': function (el) {
+                return el + '' === win.location + '';
+            },
+            'any-link': function (el) {
+                return typeof el.href === 'string';
+            },
+
+            'local-link': function (el, val) {
+                if (el.nodeName) return el.href && el.host === win.location.host;
+
+                var param = +el + 1;
+
+                return function (el) {
+                    if (!el.href) return;
+
+                    var url = win.location + '',
+                        href = el + '';
+
+                    return truncateUrl(url, param) === truncateUrl(href, param);
+                };
+            },
+
+            'dir': function (param) {
+                return function (el) {
+                    while (el) {
+                        if (el.dir) return el.dir === param;
+                        el = el.parentNode;
+                    }
+                };
+            },
+            'scope': function (el, con) {
+                var context = con || el.ownerDocument;
+                if (context.nodeType === 9) {
+                    return el === context.documentElement;
+                }
+                return el === context;
+            },
+
+            'default': function (el) {
+                return !!el.defaultSelected;
+            },
+            'valid': function (el) {
+                return el.willValidate || (el.validity && el.validity.valid);
+            },
+            'invalid': function (el) {
+                return !Expr.pseudos.valid(el);
+            },
+
+            'read-only': function (el) {
+                if (el.readOnly) return true;
+
+                var attr = el.getAttribute('contenteditable'),
+                    prop = el.contentEditable,
+                    name = el.nodeName.toLowerCase();
+
+                name = name !== 'input' && name !== 'textarea';
+
+                return (name || el.disabled) && attr === null && prop !== 'true';
+            },
+            'read-write': function (el) {
+                return !Expr.pseudos['read-only'](el);
+            },
+
+            /**
+             * Extra pseudos - same as in jQuery / Sizzle
+             */
+
+            'first': function (el, matchIndexes, argument) {
+
+                return argument === 0;
+            },
+
+            'last': function (el, matchIndexes, argument, len) {
+
+                return argument === len - 1;
+            },
+
+            'odd': function (el, matchIndexes, argument) {
+
+                return (argument + 1) % 2 === 0;
+            },
+
+            'even': function (el, matchIndexes, argument) {
+
+                return (argument + 1) % 2 === 1;
+            },
+
+            'lt': function (el, matchIndexes, argument) {
+
+                return argument < matchIndexes - 0;
+            },
+
+            'gt': function (el, matchIndexes, argument) {
+
+                return argument > matchIndexes - 0;
+            },
+
+            'nth': function (el, matchIndexes, argument) {
+
+                return matchIndexes - 0 === argument;
+            },
+
+            'eq': function (el, matchIndexes, argument) {
+                return argument < 0 ? argument + length : matchIndexes - 0 === argument;
+
             }
         },
 
-        // Direct children
+        /* =========================== DIRECTIVES ========================== */
 
-        '>': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
+        // TODO !! Directives / comb need to be fixed ASAP
 
-            if (pseu && !Expr.pseudos[pseu]) {
+        comb: {
 
-                hAzzle.error(pseu);
-            }
+            ' ': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
 
 
-            var els = el.getElementsByTagName(tag),
-                i = 0,
-                l = els.length,
-                elm;
+                if (pseu && !Expr.pseudos[pseu]) {
 
-            for (; i < l; i++) {
+                    hAzzle.error(pseu);
+                }
 
-                elm = els[i];
+                var els = el.getElementsByTagName(tag),
+                    i = 0,
+                    l = els.length,
+                    elm;
 
-                if (elm) {
+                for (; i < l; i++) {
 
-                    if (elm.parentNode === el && (!id || elm.id === id) &&
+                    elm = els[i];
+
+                    if ((!id || elm.id === id) &&
                         (!cls || cls.test(elm.className)) &&
-                        (!attr || ((attrMatch(eql, elm, attr, val)))) &&
+                        (!attr || (attrMatch(eql, el, attr, val))) &&
                         (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
 
                         if (last) {
-
                             elm.unq = 1;
                         }
 
                         tmpNodes.push(elm);
                     }
                 }
-            }
-        },
+            },
 
-        '+': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
-            if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
-            while ((el = el.nextSibling) && el.nodeType !== 1) {
-                if (el && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') &&
-                    (!id || el.id === id) &&
-                    (!cls || cls.test(el.className)) &&
-                    (!attr || (attrMatch(eql, el, attr, val))) &&
-                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu) && !el.unq) {
-                    if (last) {
-                        el.unq = 1;
-                    }
-                    tmpNodes.push(el);
+            // Direct children
+
+            '>': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
+
+                if (pseu && !Expr.pseudos[pseu]) {
+
+                    hAzzle.error(pseu);
                 }
 
-            }
-        },
 
-        '~': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
-            if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
-            while ((el = el.nextSibling) && !el.unq) {
-                if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') &&
-                    (!id || el.id === id) &&
-                    (!cls || cls.test(el.className)) &&
-                    (!attr || (attrMatch(eql, el, attr, val))) &&
-                    (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu)) {
-                    if (last) {
-                        el.unq = 1;
+                var els = el.getElementsByTagName(tag),
+                    i = 0,
+                    l = els.length,
+                    elm;
+
+                for (; i < l; i++) {
+
+                    elm = els[i];
+
+                    if (elm) {
+
+                        if (elm.parentNode === el && (!id || elm.id === id) &&
+                            (!cls || cls.test(elm.className)) &&
+                            (!attr || ((attrMatch(eql, elm, attr, val)))) &&
+                            (Expr.pseudos[pseu] ? Expr.pseudos[pseu](elm, nth, i, l) : !pseu) && !elm.unq) {
+
+                            if (last) {
+
+                                elm.unq = 1;
+                            }
+
+                            tmpNodes.push(elm);
+                        }
                     }
-                    tmpNodes.push(el);
+                }
+            },
+
+            '+': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
+                if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
+                while ((el = el.nextSibling) && el.nodeType !== 1) {
+                    if (el && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') &&
+                        (!id || el.id === id) &&
+                        (!cls || cls.test(el.className)) &&
+                        (!attr || (attrMatch(eql, el, attr, val))) &&
+                        (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu) && !el.unq) {
+                        if (last) {
+                            el.unq = 1;
+                        }
+                        tmpNodes.push(el);
+                    }
+
+                }
+            },
+
+            '~': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
+                if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
+                while ((el = el.nextSibling) && !el.unq) {
+                    if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') &&
+                        (!id || el.id === id) &&
+                        (!cls || cls.test(el.className)) &&
+                        (!attr || (attrMatch(eql, el, attr, val))) &&
+                        (Expr.pseudos[pseu] ? Expr.pseudos[pseu](el, nth, h) : !pseu)) {
+                        if (last) {
+                            el.unq = 1;
+                        }
+                        tmpNodes.push(el);
+                    }
                 }
             }
         }
-    }
-};
+    };
 
 
 // hAzzle.select
@@ -654,7 +708,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
                 m[1] = nthrun;
             }
 
-            set = fnPseudo(m[2], context, m[1], getPseuNth(context, m[2], m[3], m[1]));
+            set = fnPseudo(m[2], context, m[1], parseNth(context, m[2], m[3], m[1]));
 
             // Directives and combinators
 
@@ -681,7 +735,6 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
                 grp = grps[i];
 
                 if (!(nodes = cache[grp]) || noCache) {
-
 
                     parts = grp.replace(grpl, '$1%').replace(grpm, '$1&').replace(grpr, ' $1 ').split(grw);
                     nodes = fnCombinator(context, parts);
@@ -712,18 +765,6 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
-// Faster alternative till native indexOf
-
-var indexOf = (function () {
-    return function (obj, item) {
-        var i = this.length;
-        while (i--) {
-            if (this[i] === item) return i;
-        }
-        return -1;
-    };
-})();
-
 /**
  * Check for attribute match
  *
@@ -751,10 +792,10 @@ function attrMatch(operator, el, attr, check) {
 
     return operator === '=' ? val === check :
         operator === '!=' ? val !== check :
-        operator === '^=' ? check && val.indexOf(check) === 0 :
-        operator === '*=' ? check && val.indexOf(check) > -1 :
+        operator === '^=' ? check && val.iOf(check) === 0 :
+        operator === '*=' ? check && val.iOf(check) > -1 :
         operator === '$=' ? check && val.slice(-check.length) === check :
-        operator === '~=' ? (' ' + val + ' ').indexOf(check) > -1 :
+        operator === '~=' ? (' ' + val + ' ').iOf(check) > -1 :
         operator === '|=' ? val === check || val.slice(0, check.length + 1) === check + '-' :
         false;
 }
@@ -850,7 +891,7 @@ function getClsReg(c) {
  *
  */
 
-function getPseuNth(elem, typ, nth, nthrun) {
+function parseNth(elem, typ, nth, nthrun) {
 
     // Quick lookup for 'not'
 
@@ -860,17 +901,24 @@ function getPseuNth(elem, typ, nth, nthrun) {
 
     } else {
 
+        // Remove whitespace
+
+        nth = nth.replace(grw, '')
+
         // For even and odd nth-last-child selectors
         // Faster alternative then regEx
 
         if (nth === 'even') {
 
-            nth = '2n';
-        }
+            nth = '2n+0';
 
-        if (nth === 'odd') {
+        } else if (nth === 'odd') {
 
             nth = '2n+1';
+
+        } else if (!~nth.iOf('n')) {
+
+            nth = '0n' + nth;
         }
 
         if (nthChild.test(':' + typ)) {
@@ -951,7 +999,7 @@ function fnCombinator(elem, parts) {
 
                 // for nth-childs pseudo
 
-                nth = getPseuNth(elem, m[7], m[8]);
+                nth = parseNth(elem, m[7], m[8]);
                 //		alert(nth)
                 tmpNodes = [];
                 j = 0;
@@ -1140,7 +1188,7 @@ hAzzle.extend({
                     (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
                     (!quick[2] || context.id === quick[2]) &&
                     (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-                    (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
+                    (!quick[4] || (' ' + context.className + ' ').iOf(quick[4]) >= 0)
                 );
 
                 // Fallback to hAzzle.matchesSelector
