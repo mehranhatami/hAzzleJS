@@ -1,9 +1,24 @@
+/**
+ *   IMPORTANT
+ *
+ * - Add queing. And option to stop requests that take to long time. This has to
+ *   be in AjaxSettings / options. Say after 20 ms, cancel if no success
+ *
+ *  - Option to send BLOB files
+ *
+ * - Full Async support
+ *
+ * - Multiple requests at the same time. Each request should be queued, and executed one by one.
+ *   For the queue it should be options like stop, cancel, pause and resume.
+ *
+ * - Pause an Ajax request
+ **************************/
 var win = this,
     doc = win.document,
-    
-	// Document location
-    
-	ajaxLocation = location.href,
+
+    // Document location
+
+    ajaxLocation = location.href,
 
     rbracket = /\[\]$/,
     r20 = /%20/g,
@@ -57,6 +72,160 @@ var win = this,
     serializeQueryString = function () {
         return hAzzle.param(hAzzle.serializeArray.apply(null, arguments));
     };
+
+
+hAzzle.extend({
+
+    ajaxSettings: {
+        url: ajaxLocation,
+        // Default type of request
+        type: 'GET',
+        // Callback that is executed before request
+        beforeSend: hAzzle.noop(),
+        // Callback that is executed if the request succeeds
+        success: hAzzle.noop(),
+        // Callback that is executed the the server drops error
+        error: hAzzle.noop(),
+        // Callback that is executed on request complete (both: error and success)
+        complete: hAzzle.noop(),
+        // Default timeout
+        timeout: 0,
+        // async
+        async: true,
+    },
+
+    serializeArray: function () {
+
+        var arr = [];
+
+        eachFormElement.apply(function (name, value) {
+            arr.push({
+                name: name,
+                value: value
+            });
+        }, arguments);
+
+        return arr;
+    },
+
+    serialize: function () {
+
+        if (arguments.length === 0) {
+            return '';
+        }
+
+        var opt, fn, args = Array.prototype.slice.call(arguments, 0);
+
+        opt = args.pop();
+        //TODO Kenny: check the new code does the exact same thing
+        //opt && opt.nodeType && args.push(opt) && (opt = null);
+        //opt && (opt = opt.dataType);
+        if (opt) {
+            if (opt.nodeType) {
+                args.push(opt);
+                opt = null;
+            } else {
+                opt = opt.dataType;
+            }
+        }
+
+        if (opt === 'map') {
+
+            fn = serializeHash;
+
+        } else if (opt === 'array') {
+
+            fn = hAzzle.serializeArray;
+
+        } else {
+
+            fn = serializeQueryString;
+        }
+
+        return fn.apply(null, args);
+    },
+
+    // Serialize an array of form elements or a set of
+    // key/values into a query string
+    param: function (options, trad) {
+        var prefix, i, traditional = trad || false,
+            s = [],
+            enc = encodeURIComponent,
+            add = function (key, value) {
+                // If value is a function, invoke it and return its value
+                value = ('function' === typeof value) ? value() : (value === null ? '' : value);
+                s[s.length] = enc(key) + '=' + enc(value);
+            };
+
+        // If an array was passed in, assume that it is an array of form elements.
+
+        if (hAzzle.isArray(options)) {
+
+            for (i = 0; options && i < options.length; i++) {
+                // Serialize the form elements		
+                add(options[i].name, options[i].value);
+            }
+        } else {
+
+            for (prefix in options) {
+                if (options.hasOwnProperty(prefix)) {
+                    buildParams(prefix, options[prefix], traditional, add);
+                }
+            }
+        }
+
+        // Return the resulting serialization
+        return s.join('&').replace(r20, '+');
+    },
+
+
+
+    getcallbackPrefix: function () {
+        return callbackPrefix;
+    },
+
+    ajaxSetup: function (options) {
+        options = options || {};
+        for (var k in options) {
+            globalSetupOptions[k] = options[k];
+        }
+    },
+
+    /**
+     * Ajax main function
+     *
+     * We are setting up the options first before
+     * we call the 'Ajax prototype'.
+     *
+     * Ajax is it's own prototype so we can use
+     * promises
+     *
+     */
+
+    ajax: function (options, callback) {
+
+        // Force options to be an object
+
+        options = options || {};
+
+        // Copy over and use the deault Ajax settings
+        // if no settings defined by user
+
+        for (var key in hAzzle.ajaxSettings) {
+            if (typeof options[key] === 'undefined') {
+                options[key] = hAzzle.ajaxSettings[key];
+            }
+        }
+
+        // New Ajax	
+
+        return new ajax(options, callback);
+    }
+
+}, hAzzle);
+
+
+
 
 // IE may throw an exception when accessing
 // a field from window.location if document.domain has been set
@@ -252,28 +421,28 @@ ajax.prototype = {
     },
 
     getRequest: function (fn, err) {
-        var options = this.options,
-            method = (options.type || 'GET').toUpperCase(),
+        var opt = this.options,
+            method = (opt.type || 'GET').toUpperCase(),
             url = this.url,
             xhr,
-            headers = options.headers || {},
+            headers = opt.headers || {},
 
             // convert non-string objects to query-string form unless o['processData'] is false
 
-            data = (options.processData !== false && options.data && typeof options.data !== 'string') ? hAzzle.param(options.data) : (options.data || null),
+            data = (opt.processData !== false && opt.data && typeof opt.data !== 'string') ? hAzzle.param(opt.data) : (opt.data || null),
             h, H_xhr, sendWait = false;
 
-        if ((options.dataType === 'jsonp' || method === 'GET') && data) {
+        if ((opt.dataType === 'jsonp' || method === 'GET') && data) {
             url = urlappend(url, data);
             data = null;
         }
 
-        if (options.dataType === 'jsonp') {
+        if (opt.dataType === 'jsonp') {
 
-            return handleJsonp(options, fn, err, url);
+            return handleJsonp(opt, fn, err, url);
         }
 
-        if (options.crossOrigin === true) {
+        if (opt.crossOrigin === true) {
 
             xhr = win.xmlHttpRequest ? new XMLHttpRequest() : null;
 
@@ -299,25 +468,27 @@ ajax.prototype = {
             } catch (e) {}
         }
 
-        H_xhr.open(method, url, options.async === false ? false : true);
+        H_xhr.open(method, url, opt.async === false ? false : true);
 
         // Set headers
 
-        headers.Accept = headers.Accept || defaultHeaders.accept[options.type] || defaultHeaders.accept['*'];
+        headers.Accept = headers.Accept || defaultHeaders.accept[opt.type] || defaultHeaders.accept['*'];
 
-        var iAFD = typeof FormData === "function" && (options.data instanceof FormData);
+
+        var iAFD = typeof FormData === "function" && (opt.data instanceof FormData);
 
         // Breaks cross-origin requests with legacy browsers
 
-        if (!options.crossOrigin && !headers[requestedWith]) {
+        if (!opt.crossOrigin && !headers[requestedWith]) {
 
             headers[requestedWith] = defaultHeaders.requestedWith;
         }
 
         if (!headers[contentType] && !iAFD) {
 
-            headers[contentType] = options.contentType || defaultHeaders.contentType;
+            headers[contentType] = opt.contentType || defaultHeaders.contentType;
         }
+
 
         for (h in headers) {
 
@@ -326,7 +497,7 @@ ajax.prototype = {
                 H_xhr.setRequestHeader(h, headers[h]);
             }
         }
-        setCredentials(H_xhr, options);
+        setCredentials(H_xhr, opt);
 
         if (win.xDomainRequest && H_xhr instanceof win.xDomainRequest) {
             H_xhr.onload = fn;
@@ -339,19 +510,22 @@ ajax.prototype = {
             H_xhr.onreadystatechange = handleReadyState(this, fn, err);
         }
 
-        if (options.beforeSend) {
+        if (opt.beforeSend) {
 
-            options.beforeSend(H_xhr);
+            opt.beforeSend(H_xhr);
         }
 
         if (sendWait) {
             setTimeout(function () {
-                H_xhr.send(data);
+                try {
+                    H_xhr.send(data);
+                } catch (e) {}
             }, 200);
 
         } else {
-
-            H_xhr.send(data);
+            try {
+                H_xhr.send(data);
+            } catch (e) {}
         }
 
         return H_xhr;
@@ -426,162 +600,14 @@ ajax.prototype = {
             this._errorHandlers.push(fn);
         }
         return this;
+    },
+    catch: function (fn) {
+        return this.fail(fn);
     }
 
 };
 
-
-hAzzle.extend({
-
-    ajaxSettings: {
-        url: ajaxLocation,
-        // Default type of request
-        type: 'GET',
-        // Callback that is executed before request
-        beforeSend: hAzzle.noop(),
-        // Callback that is executed if the request succeeds
-        success: hAzzle.noop(),
-        // Callback that is executed the the server drops error
-        error: hAzzle.noop(),
-        // Callback that is executed on request complete (both: error and success)
-        complete: hAzzle.noop(),
-        // Default timeout
-        timeout: 0,
-        // async
-        async: true,
-    },
-
-    serializeArray: function () {
-
-        var arr = [];
-
-        eachFormElement.apply(function (name, value) {
-            arr.push({
-                name: name,
-                value: value
-            });
-        }, arguments);
-
-        return arr;
-    },
-
-    serialize: function () {
-
-        if (arguments.length === 0) {
-            return '';
-        }
-
-        var opt, fn, args = Array.prototype.slice.call(arguments, 0);
-
-        opt = args.pop();
-        //TODO Kenny: check the new code does the exact same thing
-        //opt && opt.nodeType && args.push(opt) && (opt = null);
-        //opt && (opt = opt.dataType);
-        if (opt) {
-            if (opt.nodeType) {
-                args.push(opt);
-                opt = null;
-            } else {
-                opt = opt.dataType;
-            }
-        }
-
-        if (opt === 'map') {
-
-            fn = serializeHash;
-
-        } else if (opt === 'array') {
-
-            fn = hAzzle.serializeArray;
-
-        } else {
-
-            fn = serializeQueryString;
-        }
-
-        return fn.apply(null, args);
-    },
-
-    // Serialize an array of form elements or a set of
-    // key/values into a query string
-    param: function (options, trad) {
-        var prefix, i, traditional = trad || false,
-            s = [],
-            enc = encodeURIComponent,
-            add = function (key, value) {
-                // If value is a function, invoke it and return its value
-                value = ('function' === typeof value) ? value() : (value === null ? '' : value);
-                s[s.length] = enc(key) + '=' + enc(value);
-            };
-
-        // If an array was passed in, assume that it is an array of form elements.
-
-        if (hAzzle.isArray(options)) {
-
-            for (i = 0; options && i < options.length; i++) {
-                // Serialize the form elements		
-                add(options[i].name, options[i].value);
-            }
-        } else {
-
-            for (prefix in options) {
-                if (options.hasOwnProperty(prefix)) {
-                    buildParams(prefix, options[prefix], traditional, add);
-                }
-            }
-        }
-
-        // Return the resulting serialization
-        return s.join('&').replace(r20, '+');
-    },
-
-
-
-    getcallbackPrefix: function () {
-        return callbackPrefix;
-    },
-
-    ajaxSetup: function (options) {
-        options = options || {};
-        for (var k in options) {
-            globalSetupOptions[k] = options[k];
-        }
-    },
-
-    /**
-     * Ajax main function
-     *
-     * We are setting up the options first before
-     * we call the 'Ajax prototype'.
-     *
-     * Ajax is it's own prototype so we can use
-     * promises
-     *
-     */
-
-    ajax: function (options, callback) {
-
-        // Force options to be an object
-
-        options = options || {};
-
-        // Copy over and use the deault Ajax settings
-        // if no settings defined by user
-
-        for (var key in hAzzle.ajaxSettings) {
-            if (typeof options[key] === 'undefined') {
-                options[key] = hAzzle.ajaxSettings[key];
-            }
-        }
-
-        // New Ajax	
-
-        return new ajax(options, callback);
-    }
-
-}, hAzzle);
-
-
+/* =========================== PRIVATE FUNCTIONS ========================== */
 
 function setCredentials(H_xhr, options) {
 
@@ -622,6 +648,7 @@ function handleJsonp(options, fn, err, url) {
     win[cbval] = generalCallback;
 
     script.type = 'text/javascript';
+
     script.src = url;
     script.async = true;
 

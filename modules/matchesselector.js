@@ -24,6 +24,7 @@ function checkParent(elem) {
     // not needed if already has parent
 
     if (elem.parentNode) {
+		
         return;
     }
 
@@ -79,9 +80,9 @@ hAzzle.matchesSelector = function (elem, selector) {
 
         // match elem with all selected elems of parent
 
-        var elems = elem.parentNode.querySelectorAll(selector),
+        var els = elem.parentNode.querySelectorAll(selector),
             i = 0,
-            len = elems.length;
+            len = el.length;
 
         // Do a quick loop
 
@@ -89,10 +90,9 @@ hAzzle.matchesSelector = function (elem, selector) {
 
             // return true if match
 
-            if (elems[i] === elem) {
+            if (el[i] === elem) {
 
                 return true;
-
             }
         }
 

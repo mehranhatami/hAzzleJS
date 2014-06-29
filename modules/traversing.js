@@ -60,7 +60,7 @@ hAzzle.extend({
 
             for (; i < len; i++) {
 
-                hAzzle.find(selector, self[i], ret);
+                ret.push(hAzzle.find(selector, self[i], false));
             }
 
             // If more then one element, make sure they are unique
@@ -169,11 +169,12 @@ hAzzle.extend({
 
     closest: function (selector, index) {
         typeof selector === 'number' ? (index = selector, selector = "*") : index = index || 0;
-        return getNth(this, parentNode, selector, index, true)
+        return getNth(this, parentNode, selector, index, true);
     },
 
     /**
      * Get the immediately preceding sibling of each element
+
      * OR Nth preceding siblings of each element, if index is specified
      *
      * @param {String} selector
@@ -236,7 +237,10 @@ hAzzle.extend({
      */
 
     children: function (selector, index) {
-        return getNth(this.down.call(this), nextNode, selector || '*', index, true);
+
+        return getNth(hAzzle.map(this, function (elem) {
+            return hAzzle.sibling(elem.firstChild);
+        }, ''), nextNode, selector || '*', index, true);
     },
 
     /**
@@ -537,6 +541,17 @@ hAzzle.dir = function (elem, dir, until) {
     return matched;
 };
 
+hAzzle.sibling = function (n, elem) {
+    var matched = [];
+
+    for (; n; n = n.nextSibling) {
+        if (n.nodeType === 1 && n !== elem) {
+            matched.push(n);
+        }
+    }
+
+    return matched;
+};
 
 hAzzle.forOwn({
     parent: function (elem) {
@@ -563,6 +578,7 @@ hAzzle.forOwn({
 }, function (fn, name) {
 
     hAzzle.Core[name] = function (until, selector) {
+
         var matched = hAzzle.map(this, fn, until);
 
         if (name.slice(-5) !== 'Until') {
@@ -570,17 +586,19 @@ hAzzle.forOwn({
         }
 
         if (selector && isString(selector)) {
-            matched = hAzzle.find(selector, null, null, matched);
+            matched = hAzzle.matches(selector, matched);
         }
 
         if (this.length > 1) {
             // Remove duplicates
             if (!guaranteedUnique[name]) {
+				
                 hAzzle.unique(matched);
             }
 
             // Reverse order for parents* and prev-derivatives
             if (rparentsprev.test(name)) {
+				
                 matched.reverse();
             }
         }

@@ -12,6 +12,12 @@ var win = this,
     directions = ['Top', 'Right', 'Bottom', 'Left'],
     elemdisplay = {},
 
+    isString = hAzzle.isString,
+
+    // Various supports...
+
+    cssPrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
+
     /**
      * Remove units ( e.g. 'pc, 'px', '%') from values
      * This is an faster alternative then parseFloat
@@ -48,152 +54,8 @@ var win = this,
 
         letterSpacing: '0',
         fontWeight: '400'
-
     };
 
-function actualDisplay(name, doc) {
-
-    var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
-        display,
-        gDfCS = win.getDefaultComputedStyle,
-        style = gDfCS && gDfCS(elem[0]);
-
-    if (style) {
-
-        display = style.display;
-
-    } else {
-
-        display = hAzzle.css(elem[0], 'display');
-    }
-
-    elem.detach();
-
-    return display;
-}
-
-
-// Try to determine the default display value of an element
-function defaultDisplay(nodeName) {
-
-    var display = elemdisplay[nodeName];
-
-    if (!display) {
-
-        display = actualDisplay(nodeName, doc);
-
-        // If the simple way fails, read from inside an iframe
-
-        if (display === 'none' || !display) {
-
-            // Use the already-created iframe if possible
-
-            iframe = (iframe || doc.documentElement).appendChild('<iframe frameborder="0" width="0" height="0"/>');
-
-            // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
-            doc = iframe[0].contentDocument;
-
-            // Support: IE
-            doc.write();
-            doc.close();
-
-            display = actualDisplay(nodeName, doc);
-
-            doc.documentElement.removeChild(iframe);
-        }
-
-        // Store the correct default display
-        elemdisplay[nodeName] = display;
-    }
-
-    return display;
-}
-
-function vendorPrefixed(style, name) {
-
-    // shortcut for names that are not vendor prefixed
-    if (name in style) {
-        return name;
-    }
-
-    // check for vendor prefixed names
-    var capName = name[0].toUpperCase() + name.slice(1),
-        origName = name,
-        i = hAzzle.cssPrefixes.length;
-
-    while (i--) {
-        name = hAzzle.cssPrefixes[i] + capName;
-        if (name in style) {
-            return name;
-        }
-    }
-
-    return origName;
-}
-
-/**
- * Check if an element is hidden
- *  @return {Boolean}
- */
-
-function isHidden(elem, el) {
-    elem = el || elem;
-    return hAzzle.style(elem, 'display') === 'none' || !hAzzle.contains(elem.ownerDocument, elem);
-}
-
-
-/**
- * Show / Hide an elements
- *
- * @param {Object} elem
- * @param {Boolean} show
- * @return {Object}
- */
-
-function showHide(elements, show) {
-    var display, elem, hidden,
-        values = [],
-        index = 0,
-        length = elements.length;
-
-    for (; index < length; index++) {
-        elem = elements[index];
-        if (!elem.style) {
-            continue;
-        }
-
-        values[index] = hAzzle.data(elem, 'olddisplay');
-        display = elem.style.display;
-        if (show) {
-            if (!values[index] && display === 'none') {
-                elem.style.display = '';
-            }
-            if (elem.style.display === '' && isHidden(elem)) {
-                values[index] = hAzzle.data(elem, 'olddisplay', defaultDisplay(elem.nodeName));
-            }
-        } else {
-            hidden = isHidden(elem);
-
-            if (display !== 'none' || !hidden) {
-                hAzzle.data(elem, 'olddisplay', hidden ? display : hAzzle.css(elem, 'display'));
-            }
-        }
-    }
-
-    // Set the display of most of the elements in a second loop
-    // to avoid the constant reflow
-    for (index = 0; index < length; index++) {
-        elem = elements[index];
-        if (!elem.style) {
-            continue;
-        }
-        if (!show || elem.style.display === 'none' || elem.style.display === '') {
-            elem.style.display = show ? values[index] || '' : 'none';
-        }
-    }
-
-    return elements;
-}
 
 hAzzle.extend({
 
@@ -207,7 +69,8 @@ hAzzle.extend({
 
     css: function (prop, value) {
 
-        var obj = prop, el = this[0];
+        var obj = prop,
+            el = this[0];
 
         if (hAzzle.isArray(prop)) {
 
@@ -226,7 +89,7 @@ hAzzle.extend({
 
         // is this a request for just getting a style?
 
-        if (value === undefined && typeof prop === 'string') {
+        if (value === undefined && isString(prop)) {
 
             return hAzzle.css(el, prop);
         }
@@ -237,7 +100,7 @@ hAzzle.extend({
          * through
          */
 
-        if (typeof prop === 'string') {
+        if (isString(prop)) {
 
             obj = {};
             obj[prop] = value;
@@ -268,6 +131,8 @@ hAzzle.extend({
         }
 
         var el = this[0],
+            _win,
+            _doc = el && el.ownerDocument,
             bcr = {
                 top: 0,
                 left: 0
@@ -279,18 +144,18 @@ hAzzle.extend({
 
         if (typeof el.getBoundingClientRect !== typeof undefined) {
 
-
-
             bcr = el.getBoundingClientRect();
         }
 
         // We return all angeles of the 'offset'
 
+        _win = getWindow(_doc);
+
         return {
-            top: bcr.top + win.pageYOffset - docElem.clientTop,
-            left: bcr.left + win.pageXOffset - docElem.clientLeft,
-            right: bcr.right + win.pageXOffset - docElem.clientLeft,
-            bottom: bcr.bottom + win.pageYOffset - docElem.clientTop,
+            top: bcr.top + _win.pageYOffset - docElem.clientTop,
+            left: bcr.left + _win.pageXOffset - docElem.clientLeft,
+            right: bcr.right + _win.pageXOffset - docElem.clientLeft,
+            bottom: bcr.bottom + _win.pageYOffset - docElem.clientTop,
             height: bcr.bottom - bcr.top,
             width: bcr.right - bcr.left
         };
@@ -405,33 +270,37 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-    // Various supports...
-
-    cssPrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
-
-    // Properties that shouldn't have units behind e.g. 
-    // zIndex:33px are not allowed
+    // Properties that shouldn't have units behind 
 
     unitless: {
-        'lineHeight': true,
-        'zoom': true,
-        'zIndex': true,
-        'opacity': true,
-        'boxFlex': true,
-        'WebkitBoxFlex': true,
-        'MozBoxFlex': true,
-        'columns': true,
-        'fontWeight': true,
-        'overflow': true,
-        'fillOpacity': true,
-        'flexGrow': true,
-        'columnCount': true,
-
-
-        'flexShrink': true,
-        'order': true,
-        'orphans': true,
-        'widows': true,
+        'lineHeight': 1,
+        'zoom': 1,
+        'zIndex': 1,
+        'opacity': 1,
+        'boxFlex': 1,
+        'WebkitBoxFlex': 1,
+        'MozBoxFlex': 1,
+        'columns': 1,
+        'counterReset': 1,
+        'counterIncrement': 1,
+        'fontWeight': 1,
+        'float': 1,
+        'volume': 1,
+        'stress': 1,
+        'overflow': 1,
+        'fillOpacity': 1,
+        'flexGrow': 1,
+        'columnCount': 1,
+        'flexShrink': 1,
+        'order': 1,
+        'orphans': 1,
+        'widows': 1,
+        'transform': 1,
+        'transformOrigin': 1,
+        'transformStyle': 1,
+        'perspective': 1,
+        'perspectiveOrigin': 1,
+        'backfaceVisibility': 1
     },
 
     /**
@@ -453,17 +322,10 @@ hAzzle.extend({
         },
     },
 
-    /**
-     * cssSupport.js OR plug-ins will fill this object with data
-     */
+    cssProps: {
 
-    cssProps: {},
-
-    /**
-     * cssSupport.js OR plug-ins will fill this object with data
-     */
-
-    cssSupport: {},
+        "float": "cssFloat"
+    },
 
     style: function (elem, name, value) {
 
@@ -662,6 +524,151 @@ hAzzle.extend({
 
 }, hAzzle);
 
+/* =========================== PRIVATE FUNCTIONS ========================== */
+
+function actualDisplay(name, doc) {
+
+    var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
+        display,
+        gDfCS = win.getDefaultComputedStyle,
+        style = gDfCS && gDfCS(elem[0]);
+
+    if (style) {
+
+        display = style.display;
+
+    } else {
+
+        display = hAzzle.css(elem[0], 'display');
+    }
+
+    elem.detach();
+
+    return display;
+}
+
+
+// Try to determine the default display value of an element
+function defaultDisplay(nodeName) {
+
+    var display = elemdisplay[nodeName];
+
+    if (!display) {
+
+        display = actualDisplay(nodeName, doc);
+
+        // If the simple way fails, read from inside an iframe
+
+        if (display === 'none' || !display) {
+
+            // Use the already-created iframe if possible
+
+            iframe = (iframe || doc.documentElement).appendChild('<iframe frameborder="0" width="0" height="0"/>');
+
+            // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
+            doc = iframe[0].contentDocument;
+
+            // Support: IE
+            doc.write();
+            doc.close();
+
+            display = actualDisplay(nodeName, doc);
+
+            doc.documentElement.removeChild(iframe);
+        }
+
+        // Store the correct default display
+        elemdisplay[nodeName] = display;
+    }
+
+    return display;
+}
+
+function vendorPrefixed(style, name) {
+
+    // shortcut for names that are not vendor prefixed
+    if (name in style) {
+        return name;
+    }
+
+    // check for vendor prefixed names
+    var capName = name[0].toUpperCase() + name.slice(1),
+        origName = name,
+        i = cssPrefixes.length;
+
+    while (i--) {
+        name = cssPrefixes[i] + capName;
+        if (name in style) {
+            return name;
+        }
+    }
+
+    return origName;
+}
+
+/**
+ * Check if an element is hidden
+ *  @return {Boolean}
+ */
+
+function isHidden(elem, el) {
+    elem = el || elem;
+    return hAzzle.style(elem, 'display') === 'none' || !hAzzle.contains(elem.ownerDocument, elem);
+}
+
+
+/**
+ * Show / Hide an elements
+ *
+ * @param {Object} elem
+ * @param {Boolean} show
+ * @return {Object}
+ */
+
+function showHide(elements, show) {
+    var display, elem, hidden,
+        values = [],
+        index = 0,
+        length = elements.length;
+
+    for (; index < length; index++) {
+        elem = elements[index];
+        if (!elem.style) {
+            continue;
+        }
+
+        values[index] = hAzzle.data(elem, 'olddisplay');
+        display = elem.style.display;
+        if (show) {
+            if (!values[index] && display === 'none') {
+                elem.style.display = '';
+            }
+            if (elem.style.display === '' && isHidden(elem)) {
+                values[index] = hAzzle.data(elem, 'olddisplay', defaultDisplay(elem.nodeName));
+            }
+        } else {
+            hidden = isHidden(elem);
+
+            if (display !== 'none' || !hidden) {
+                hAzzle.data(elem, 'olddisplay', hidden ? display : hAzzle.css(elem, 'display'));
+            }
+        }
+    }
+
+    // Set the display of most of the elements in a second loop
+    // to avoid the constant reflow
+    for (index = 0; index < length; index++) {
+        elem = elements[index];
+        if (!elem.style) {
+            continue;
+        }
+        if (!show || elem.style.display === 'none' || elem.style.display === '') {
+            elem.style.display = show ? values[index] || '' : 'none';
+        }
+    }
+
+    return elements;
+}
 
 /**
  * sets an element to an explicit x/y position on the page
@@ -718,6 +725,94 @@ function xy(elem, options, i) {
     }
 }
 
+/**
+ * Gets a window from an element
+ */
+
+function getWindow(elem) {
+    return hAzzle.isWindow(elem) ? elem : elem.nodeType === 9 && elem.defaultView;
+}
+
+
+var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
+
+    var ret;
+
+    computed = computed || getStyles(elem);
+
+    if (computed) {
+
+        ret = computed.getPropertyValue(prop) || computed[prop];
+    }
+
+    if (computed) {
+
+        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
+
+            ret = hAzzle.style(elem, name);
+        }
+    }
+
+    return ret !== undefined ?
+        ret + '' :
+        ret;
+};
+
+/* =========================== INTERNAL ========================== */
+
+// scrollTop and scrollLeft functions
+
+hAzzle.forOwn({
+    scrollLeft: 'pageXOffset',
+    scrollTop: 'pageYOffset'
+}, function (prop, method) {
+
+    var top = 'pageYOffset' === prop;
+
+    hAzzle.Core[method] = function (val) {
+
+        var i = 0,
+            len = this.len || 1,
+            elem, win;
+
+        for (; i < len; i++) {
+
+            elem = this[i];
+
+            if (hAzzle.isWindow(elem)) {
+
+                win = elem;
+
+            } else {
+
+                if (elem.nodeType === 9) {
+
+                    win = elem.defaultView;
+                }
+            }
+
+            if (val === undefined) {
+
+                return win ? win[prop] : elem[method];
+            }
+
+            if (win) {
+
+                win.scrollTo(!top ? val : window.pageXOffset,
+                    top ? val : window.pageYOffset
+                );
+
+            } else {
+
+                elem[method] = val;
+
+            }
+        }
+    };
+});
+
+
+
 // Margin and padding cssHooks
 
 hAzzle.each(['margin', 'padding'], function (hook) {
@@ -755,110 +850,36 @@ hAzzle.each(['width', 'height'], function (name) {
 
     hAzzle.Core[name] = function (value) {
 
-        var orig,
-            ret,
-            elem = this[0];
+        var elem = this[0],
+            _doc = elem.documentElement;
 
         if (!elem) {
 
             return '';
-
         }
 
-        if (hAzzle.isWindow(elem)) {
+        if (getWindow(elem)) {
 
-            return elem.document.documentElement['client' + dimensionProperty];
+            return _doc['client' + dimensionProperty];
         }
 
         // Get document width or height
         if (elem.nodeType === 9) {
             return Math.max(
-                elem.documentElement['client' + dimensionProperty],
-                elem.body['scroll' + dimensionProperty], elem.documentElement['scroll' + dimensionProperty],
-                elem.body['client' + dimensionProperty], elem.documentElement['client' + dimensionProperty]);
+                elem.body['scroll' + dimensionProperty], _doc['scroll' + dimensionProperty],
+                elem.body['client' + dimensionProperty], _doc['client' + dimensionProperty],
+                _doc['client' + dimensionProperty]
+            );
         }
 
         // Get width or height on the element
         if (value === undefined) {
-            orig = hAzzle.css(elem, name);
-            return hAzzle.IsNaN(ret) ? parseFloat(orig) : orig;
+
+            return parseFloat(hAzzle.css(elem, name));
         }
 
         // Set the width or height on the element
 
         hAzzle(elem).css(name, value);
-    };
-});
-
-
-
-
-var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
-
-    var ret;
-
-    computed = computed || getStyles(elem);
-
-    if (computed) {
-
-        ret = computed.getPropertyValue(prop) || computed[prop];
-    }
-
-    if (computed) {
-
-        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
-
-            ret = hAzzle.style(elem, name);
-        }
-    }
-
-    return ret !== undefined ?
-
-        ret + '' :
-        ret;
-};
-
-
-
-
-// scrollTop and scrollLeft functions
-hAzzle.forOwn({
-    scrollLeft: 'pageXOffset',
-    scrollTop: 'pageYOffset'
-}, function (prop, method) {
-    var top = 'pageYOffset' === prop;
-
-    hAzzle.Core[method] = function (val) {
-        var elem = this[0],
-            win;
-
-        if (hAzzle.isWindow(elem)) {
-
-            win = elem;
-			
-        } else {
-
-            if (elem.nodeType === 9) {
-
-                win = elem.defaultView;
-            }
-        }
-
-        if (val === undefined) {
-
-            return win ? win[prop] : elem[method];
-        }
-
-        if (win) {
-
-            win.scrollTo(!top ? val : window.pageXOffset,
-                top ? val : window.pageYOffset
-            );
-
-        } else {
-
-            elem[method] = val;
-
-        }
     };
 });
