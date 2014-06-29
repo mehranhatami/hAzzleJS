@@ -1,7 +1,7 @@
-var 
+var
     win = this,
-	
-	doc = win.document,
+
+    doc = win.document,
 
     cache = [],
 
@@ -27,6 +27,8 @@ var
 
     rescape = /'|\\/g,
 
+    // Easily-parseable/retrievable ID or TAG or CLASS selectors
+
     rquickExpr = /^(?:#([\w\-]+)|(\w+)|\.([\w\-]+))$/,
 
     rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
@@ -40,7 +42,9 @@ var
     attrT = /^[^\s>+~:]+\[((?:[\w\-])+)([~^$*|!]?=)?([\w\- ]+)?\]*[^\w\s>+~:]+$/,
     attr = /^\[((?:[\w\-])+)([~^$*|!]?=)?([\w\- ]+)?\]$/,
     pseudoNH = /^(\w+|\*?):(not|has)(?:\(\s*(.+|(?:[+\-]?\d+|(?:[+\-]?\w+\d*)?n\s*(?:[+\-]\s*\d+)?))\s*\))?$/,
+
     pseudo = /^(\w+|\*?):((?:[\w\u00c0-\uFFFF\-]|\\.)+)(?:\(\s*(.+|(?:[+\-]?\d+|(?:[+\-]?\w+\d*)?n\s*(?:[+\-]\s*\d+)?))\s*\))?$/,
+
     nthChild = /^(\w+|\*?):((?:nth)(-last)?(?:-child|-of-type))(?:\(\s*((?:[+\-]?\d+|(?:[+\-]?\d*)?n\s*(?:[+\-]\s*\d+)?))\s*\))?/,
     nthBrck = /(-?)(\d*)(?:[n|N]([+\-]?\d*))?/,
     grpSplit = /\s*,\s*/g,
@@ -535,15 +539,15 @@ var Expr = {
 
 hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
-    selector = hAzzle.trim(selector);	
+    selector = hAzzle.trim(selector);
 
     if (cache[selector] && !noCache && !context) {
 
         return cache[selector];
     }
-   
+
     doc = hAzzle.setDocument(context);
- 
+
     noCache = noCache || !!context;
 
     // clean context with document
@@ -616,7 +620,7 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
             set = findAttr(selector, context, tag);
 
-            // Nth
+            // pseudos
 
         } else if ((m = pseudoNH.exec(selector)) !== null || nthrun) {
 
@@ -985,155 +989,166 @@ for (i in {
 
 
 hAzzle.extend({
-	
 
-/**
- *
- * 'Internal ' hAzzle.find function
- *
- * Only for find() function.
- *
- * To-do! Add match with pseudo selectors
- *
- */
 
-   find: function (selector, context, /*INTERNAL*/ all) {
+    /**
+     *
+     * 'Internal ' hAzzle.find function
+     *
+     * Only for find() function.
+     *
+     * To-do! Add match with pseudo selectors
+     *
+     */
 
-    var quickMatch = findExpr.exec(selector),
-        elements, old, nid;
-    
-	 doc = hAzzle.setDocument(context);
-	
-    context = context || doc;
+    find: function (selector, context, /*INTERNAL*/ all) {
 
-    if (quickMatch) {
+        var quickMatch = findExpr.exec(selector),
+            elements, old, nid;
 
-        if (quickMatch[1]) {
+        doc = hAzzle.setDocument(context);
 
-            // speed-up: "TAG"
-            elements = context.getElementsByTagName(selector);
+        context = context || doc;
 
-        } else {
+        if (quickMatch) {
 
-            // speed-up: ".CLASS"
-            elements = context.getElementsByClassName(quickMatch[2]);
-        }
+            if (quickMatch[1]) {
 
-        if (elements && !all) {
-
-            elements = elements[0];
-        }
-
-    } else {
-
-        old = true;
-        nid = expando;
-
-        if (context !== doc) {
-
-            if ((old = context.getAttribute("id"))) {
-
-                nid = old.replace(rescape, "\\$&");
+                // speed-up: "TAG"
+                elements = context.getElementsByTagName(selector);
 
             } else {
 
-                context.setAttribute("id", nid);
+                // speed-up: ".CLASS"
+                elements = context.getElementsByClassName(quickMatch[2]);
             }
 
-            nid = "[id='" + nid + "'] ";
+            if (elements && !all) {
 
-            context = sibling.test(selector) ? context.parentNode : context;
-            selector = nid + selector.split(",").join("," + nid);
+                elements = elements[0];
+            }
+
+        } else {
+
+            old = true;
+            nid = expando;
+
+            if (context !== doc) {
+
+                if ((old = context.getAttribute("id"))) {
+
+                    nid = old.replace(rescape, "\\$&");
+
+                } else {
+
+                    context.setAttribute("id", nid);
+                }
+
+                nid = "[id='" + nid + "'] ";
+
+                context = sibling.test(selector) ? context.parentNode : context;
+                selector = nid + selector.split(",").join("," + nid);
+            }
+
+            try {
+                elements = context[all ? "querySelectorAll" : "querySelector"](selector);
+            } finally {
+                if (!old) context.removeAttribute("id");
+            }
         }
 
-        try {
-            elements = context[all ? "querySelectorAll" : "querySelector"](selector);
-        } finally {
-            if (!old) context.removeAttribute("id");
+        return elements;
+    },
+
+
+    /**
+     * Find all matched elements by css selector
+     * @param  {String} selector
+     * @param  {Object/String} context
+     * @return {hAzzle}
+     */
+
+    findAll: function (selector, context) {
+        return this.find(selector, context || doc, true);
+    },
+
+
+    /**
+     * hAzzle matches
+     *
+     * Todo!
+     *
+     * Mehran!!
+     *
+     * Add match check against pseudos
+     *
+     */
+
+    matches: function (selector, context) {
+
+        if (typeof selector !== "string") {
+
+            return null;
         }
+
+        var quick = rquickIs.exec(selector),
+            i = 0,
+            l = context.length,
+            result = [];
+
+        if (quick) {
+            //   0  1    2   3          4
+            // [ _, tag, id, attribute, class ]
+            if (quick[1]) {
+
+                quick[1] = quick[1].toLowerCase();
+            }
+
+            if (quick[3]) {
+
+                quick[3] = quick[3].split("=");
+            }
+
+            if (quick[4]) {
+
+                quick[4] = " " + quick[4] + " ";
+            }
+        }
+
+        if (context.nodeType === 1) {
+
+            if (quick && context.nodeName) {
+
+                result = (
+                    (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
+                    (!quick[2] || context.id === quick[2]) &&
+                    (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
+                    (!quick[4] || (" " + context.className + " ").indexOf(quick[4]) >= 0)
+                );
+
+                // Fallback to hAzzle.matchesSelector
+
+            } else {
+
+                // Do a quick look-up if no array-context		 
+
+                if (!l) {
+
+                    return hAzzle.matchesSelector(context, selector);
+                }
+
+                for (; i < l; i++) {
+
+                    if (hAzzle.matchesSelector(context[i], selector)) {
+
+                        result.push(context[i]);
+
+                    }
+                }
+            }
+        }
+
+        return result;
     }
-
-    return elements;
-},
-
-
-/**
- * Find all matched elements by css selector
- * @param  {String} selector
- * @param  {Object/String} context
- * @return {hAzzle}
- */
-
- findAll: function (selector, context) {
-    return this.find(selector, context || doc, true);
-},
-
-
-/**
- * hAzzle matches
- *
- * Todo! 
- *
- * Mehran!!
- *
- * Add match check against pseudos
- *
- */
-
- matches: function (selector, context) {
-
-    if (typeof selector !== "string") {
-
-        return null;
-    }
-
-    var quick = rquickIs.exec(selector),
-	   i = 0,
-       l = context.length,
-        result = [];
-
-    if (quick) {
-        //   0  1    2   3          4
-        // [ _, tag, id, attribute, class ]
-        if (quick[1]) {
-
-            quick[1] = quick[1].toLowerCase();
-        }
-
-        if (quick[3]) {
-
-            quick[3] = quick[3].split("=");
-        }
-
-        if (quick[4]) {
-
-            quick[4] = " " + quick[4] + " ";
-        }
-    }
-    if (quick && context.nodeName) {
-
-        result = (
-            (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
-            (!quick[2] || context.id === quick[2]) &&
-            (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-            (!quick[4] || (" " + context.className + " ").indexOf(quick[4]) >= 0)
-        );
-
-    } else {
-
-
-    for (; i < l; i++) {
-		
-        if (hAzzle.matchesSelector(context[i], selector)) {
-            result.push(context[i]);
-        }
-    }
-
-    }
-
-    return result;
-}	
-
 
 }, hAzzle);
-
