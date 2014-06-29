@@ -7,4 +7,4 @@ before_script:
   - sh -e /etc/init.d/xvfb start
   #- npm install -g bower
   #- bower install
-  - npm install -g karma-cli
+  - npm install karma-cli
