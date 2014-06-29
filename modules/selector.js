@@ -83,33 +83,33 @@ var Expr = {
         },
 
         /**
-		 * Collect nth-childs
-		 *
-		 * @param{Object} el
-		 * @param{Number / Float} n
-		 * @param{Boolean} t	 
-		 *
-		 */
+         * Collect nth-childs
+         *
+         * @param{Object} el
+         * @param{Number / Float} n
+         * @param{Boolean} t
+         *
+         */
 
-        'nthChild': function (el, n, bool) {
+        'nthChild': function (el, num, bool) {
 
-            var x = n[0],
-                y = n[1];
+            var x = num[0],
+                y = num[1];
 
             if (x === 1 && y === 0) {
-				
+
                 return true;
             }
 
             if (!el.nIdx) {
-                
-				var node = el.parentNode.firstChild,
+
+                var node = el.parentNode.firstChild,
                     cnt = 0,
                     html = el.nodeName.toLowerCase() !== 'html';
 
                 for (; node; node = node.nextSibling) {
 
-                    if (bool ? node.nodeType === 1 && node.nodeName == el.nodeName && html : node.nodeType == 1 && html ) {
+                    if (bool ? node.nodeType === 1 && node.nodeName == el.nodeName && html : node.nodeType == 1 && html) {
 
                         node.nIdx = ++cnt;
                     }
@@ -119,11 +119,11 @@ var Expr = {
             var dif = el.nIdx - y;
 
             if (x === 0) {
-				
+
                 return (dif === 0);
-				
+
             } else {
-				
+
                 return (dif % x === 0 && dif / x >= 0);
             }
         },
@@ -136,12 +136,12 @@ var Expr = {
             return this.nthChild(el, n, true);
         },
 
-        'nthLastChild': function (el, n, t) {
+        'nthLastChild': function (el, num, bool) {
             var node = el,
                 par = el.parentNode,
                 html,
-                x = n[0],
-                y = n[1];
+                x = num[0],
+                y = num[1];
 
             if (x === 1 && y === 0) {
 
@@ -155,12 +155,12 @@ var Expr = {
 
                 do {
 
-                    if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
+                    if (!bool ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
 
                         node.nIdxL = ++cnt;
                     }
 
-                } while (node = node.previousSibling);
+                } while ((node = node.previousSibling));
             }
 
             var dif = el.nIdxL - y;
@@ -712,6 +712,18 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
+// Faster alternative till native indexOf
+
+var indexOf = (function () {
+    return function (obj, item) {
+        var i = this.length;
+        while (i--) {
+            if (this[i] === item) return i;
+        }
+        return -1;
+    };
+})();
+
 /**
  * Check for attribute match
  *
@@ -849,7 +861,7 @@ function getPseuNth(elem, typ, nth, nthrun) {
     } else {
 
         // For even and odd nth-last-child selectors
-		// Faster alternative then regEx
+        // Faster alternative then regEx
 
         if (nth === 'even') {
 
@@ -865,9 +877,9 @@ function getPseuNth(elem, typ, nth, nthrun) {
 
             var m = [],
                 rg;
-				
+
             nth = nth.replace(/\%/, '+');
-			
+
             rg = nthBrck.exec(!/\D/.test(nth) && '0n+' + nth || nth);
 
             // calculate the numbers (first)n+(last) including if they are negative
