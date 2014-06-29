@@ -651,19 +651,26 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     if (hAzzle.documentIsHTML && (m = rquickExpr.exec(selector)) !== null) {
 
-        if (_match = m[1]) {
+        if ( (_match = m[1])) {
 
             if (context.nodeType === 9) {
 
                 var el = context.getElementById(_match);
-                set = el && el.parentNode ? [el] : [];
-
+				
+					if ( el && el.parentNode  ) {
+                       set = el.id === _match ? [el] : [];
+					} else {
+						
+						set = [];
+						}
             } else {
 
                 // Context is not a document
+				
                 if (context.ownerDocument && (el = context.ownerDocument.getElementById(_match)) &&
                     hAzzle.contains(context, el) && el.id === _match) {
-                    set = [el];
+                
+				    set = [el];
                 }
 
             }
@@ -903,7 +910,7 @@ function parseNth(elem, typ, nth, nthrun) {
 
         // Remove whitespace
 
-        nth = nth.replace(grw, '')
+        nth = nth.replace(grw, '');
 
         // For even and odd nth-last-child selectors
         // Faster alternative then regEx
