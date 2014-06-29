@@ -417,13 +417,18 @@ var
                 };
             },
 
-            'dir': function (param) {
-                return function (el) {
-                    while (el) {
-                        if (el.dir) return el.dir === param;
-                        el = el.parentNode;
+            'dir': function (el, param) {
+
+                while (el) {
+
+                    if (el.dir) {
+
+                        return el.dir === param;
+
                     }
-                };
+
+                    el = el.parentNode;
+                }
             },
             'scope': function (el, con) {
                 var context = con || el.ownerDocument;
@@ -651,26 +656,26 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     if (hAzzle.documentIsHTML && (m = rquickExpr.exec(selector)) !== null) {
 
-        if ( (_match = m[1])) {
+        if ((_match = m[1])) {
 
             if (context.nodeType === 9) {
 
                 var el = context.getElementById(_match);
-				
-					if ( el && el.parentNode  ) {
-                       set = el.id === _match ? [el] : [];
-					} else {
-						
-						set = [];
-						}
+
+                if (el && el.parentNode) {
+                    set = el.id === _match ? [el] : [];
+                } else {
+
+                    set = [];
+                }
             } else {
 
                 // Context is not a document
-				
+
                 if (context.ownerDocument && (el = context.ownerDocument.getElementById(_match)) &&
                     hAzzle.contains(context, el) && el.id === _match) {
-                
-				    set = [el];
+
+                    set = [el];
                 }
 
             }
