@@ -1152,6 +1152,7 @@ hAzzle.extend({
      *
      */
 
+
     matches: function (selector, context) {
 
         if (typeof selector !== 'string') {
@@ -1182,8 +1183,6 @@ hAzzle.extend({
                 quick[4] = ' ' + quick[4] + ' ';
             }
         }
-
-        if (context.nodeType === 1) {
 
             // Always make sure we have a nodeName
 
@@ -1220,7 +1219,6 @@ hAzzle.extend({
                         result.push(context[i]);
                     }
                 }
-            }
         }
 
         return result;
