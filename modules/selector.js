@@ -896,6 +896,7 @@ function fnCombinator(elem, parts) {
             m = SimpComb.exec(part);
 
             if (m) {
+
                 // for nth-childs pseudo
 
                 nth = getPseuNth(elem, m[7], m[8]);
@@ -909,6 +910,8 @@ function fnCombinator(elem, parts) {
                 while (nl--) {
 
                     el = nodes[j];
+
+                    // regEx here will allways be cached
 
                     Expr.comb[combt](el, m[1] || "*", m[2], m[3] ? getClsReg("(?:^|\\s+)" + m[3] + "(?:\\s+|$)") : "", m[4], m[5] || "", m[6], m[7], nth, last, tmpNodes, j);
                     j++;
@@ -943,48 +946,6 @@ function truncateUrl(url, num) {
         .join('/');
 }
 
-/* =========================== INTERNAL ========================== */
-
-/**
- * Returns a function to use in pseudos for input types
- * @param {String} type
- */
-function createInputPseudo(type) {
-    return function (elem) {
-        var name = elem.nodeName.toLowerCase();
-        return name === "input" && elem.type === type;
-    };
-}
-
-/**
- * Returns a function to use in pseudos for buttons
- * @param {String} type
- */
-function createButtonPseudo(type) {
-    return function (elem) {
-        var name = elem.nodeName.toLowerCase();
-        return (name === "input" || name === "button") && elem.type === type;
-    };
-}
-
-// Add button/input type pseudos
-for (i in {
-    radio: true,
-    checkbox: true,
-    file: true,
-    password: true,
-    image: true
-}) {
-    Expr.pseudos[i] = createInputPseudo(i);
-}
-for (i in {
-    submit: true,
-    reset: true
-}) {
-    Expr.pseudos[i] = createButtonPseudo(i);
-}
-
-
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
 
@@ -996,6 +957,8 @@ hAzzle.extend({
      * 'Internal ' hAzzle.find function
      *
      * Only for find() function.
+     *
+     * Mehran!!
      *
      * To-do! Add match with pseudo selectors
      *
@@ -1117,6 +1080,8 @@ hAzzle.extend({
 
         if (context.nodeType === 1) {
 
+            // Always make sure we have a nodeName
+
             if (quick && context.nodeName) {
 
                 result = (
@@ -1130,19 +1095,24 @@ hAzzle.extend({
 
             } else {
 
-                // Do a quick look-up if no array-context		 
+                // Do a quick look-up if no array-context
+                //
+                // matchesSelector can't be run on XML docs,
+                // but we are solving this inside the 
+                // matchesSelector.js module
 
                 if (!l) {
 
                     return hAzzle.matchesSelector(context, selector);
                 }
 
+                // loop through
+
                 for (; i < l; i++) {
 
                     if (hAzzle.matchesSelector(context[i], selector)) {
 
                         result.push(context[i]);
-
                     }
                 }
             }
@@ -1152,3 +1122,45 @@ hAzzle.extend({
     }
 
 }, hAzzle);
+
+
+/* =========================== INTERNAL ========================== */
+
+/**
+ * Returns a function to use in pseudos for input types
+ * @param {String} type
+ */
+function createInputPseudo(type) {
+    return function (elem) {
+        var name = elem.nodeName.toLowerCase();
+        return name === "input" && elem.type === type;
+    };
+}
+
+/**
+ * Returns a function to use in pseudos for buttons
+ * @param {String} type
+ */
+function createButtonPseudo(type) {
+    return function (elem) {
+        var name = elem.nodeName.toLowerCase();
+        return (name === "input" || name === "button") && elem.type === type;
+    };
+}
+
+// Add button/input type pseudos
+for (i in {
+    radio: true,
+    checkbox: true,
+    file: true,
+    password: true,
+    image: true
+}) {
+    Expr.pseudos[i] = createInputPseudo(i);
+}
+for (i in {
+    submit: true,
+    reset: true
+}) {
+    Expr.pseudos[i] = createButtonPseudo(i);
+}
