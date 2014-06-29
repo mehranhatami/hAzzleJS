@@ -502,7 +502,7 @@ var
                 return matchIndexes - 0 === argument;
             },
 
-             'eq': function (el, n, i) {
+            'eq': function (el, n, i) {
 
                 return n - 0 === i;
             }
@@ -776,8 +776,8 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
     // No caching down here - dangerous !!
 
     // Mehran! Find another way to cache down here!!
-	
-     return set;
+
+    return set;
 };
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
@@ -930,7 +930,7 @@ function parseNth(elem, typ, nth, nthrun) {
             nth = '2n+1';
 
         }
-		
+
         if (nthChild.test(':' + typ)) {
 
             var m = [],
@@ -1189,41 +1189,41 @@ hAzzle.extend({
             }
         }
 
-            // Always make sure we have a nodeName
+        // Always make sure we have a nodeName
 
-            if (quick && context.nodeName) {
+        if (quick && context.nodeName) {
 
-                result = (
-                    (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
-                    (!quick[2] || context.id === quick[2]) &&
-                    (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-                    (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
-                );
+            result = (
+                (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
+                (!quick[2] || context.id === quick[2]) &&
+                (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
+                (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
+            );
 
-                // Fallback to hAzzle.matchesSelector
+            // Fallback to hAzzle.matchesSelector
 
-            } else {
+        } else {
 
-                // Do a quick look-up if no array-context
-                //
-                // matchesSelector can't be run on XML docs,
-                // but we are solving this inside the 
-                // matchesSelector.js module
+            // Do a quick look-up if no array-context
+            //
+            // matchesSelector can't be run on XML docs,
+            // but we are solving this inside the 
+            // matchesSelector.js module
 
-                if (!l) {
+            if (!l) {
 
-                    return hAzzle.matchesSelector(context, selector);
+                return hAzzle.matchesSelector(context, selector);
+            }
+
+            // loop through
+
+            for (; i < l; i++) {
+
+                if (hAzzle.matchesSelector(context[i], selector)) {
+
+                    result.push(context[i]);
                 }
-
-                // loop through
-
-                for (; i < l; i++) {
-
-                    if (hAzzle.matchesSelector(context[i], selector)) {
-
-                        result.push(context[i]);
-                    }
-                }
+            }
         }
 
         return result;
