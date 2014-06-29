@@ -9,7 +9,7 @@ var win = this,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
     rreturn = /\r/g,
-    wp = /\S+/g,
+    ssv  = /\S+/g,
 
     isFunction = hAzzle.isFunction,
     isString = hAzzle.isString,
@@ -78,6 +78,7 @@ hAzzle.extend({
      */
 
     hasAttr: function (name) {
+		
         return name && typeof this.attr(name) !== 'undefined';
     },
 
@@ -609,8 +610,9 @@ hAzzle.extend({
     },
 
     removeAttr: function (el, value) {
+		
         var name, propName, i = 0,
-            attrNames = value && value.match(wp),
+            attrNames = typeof value == 'string' ? value.match(ssv ) : [].concat(value),
             l = attrNames.length;
 
         for (; i < l; i++) {
@@ -856,7 +858,26 @@ hAzzle.extend({
 
             return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
         }
+    },
+	
+	anyAttr: function(elem, fn, scope) {
+        
+		var a, ela = elem.attributes, l = ela && ela.length, i = 0;
+        
+		if (typeof fn !== 'function') {
+			return +l || 0; 
+		}
+        
+		scope = scope || elem;
+        
+		while (i < l) {
+		if (fn.call(scope, (a = ela[i++]).value, a.name, a)) { 
+		     return i; 
+		}
+		}
+        return 0;
     }
+	
 }, hAzzle);
 
 
@@ -1021,8 +1042,8 @@ hAzzle.forOwn({
     hAzzle.Core[key] = function (node) {
         var i = 0,
             l;
-        return this.each(function (el, i) {
-            node = stabilizeHTML(node, i);
+        return this.each(function (el, a) {
+            node = stabilizeHTML(node, a);
             l = node.length;
             for (; i < l; i++) {
                 if (el.parentNode) {
