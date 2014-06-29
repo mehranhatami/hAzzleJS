@@ -502,9 +502,9 @@ var
                 return matchIndexes - 0 === argument;
             },
 
-            'eq': function (el, matchIndexes, argument) {
-                return argument < 0 ? argument + length : matchIndexes - 0 === argument;
+             'eq': function (el, n, i) {
 
+                return n - 0 === i;
             }
         },
 
@@ -924,11 +924,8 @@ function parseNth(elem, typ, nth, nthrun) {
 
             nth = '2n+1';
 
-        } else if (nth && !~nth.iOf('n')) {
-
-            nth = '0n' + nth;
         }
-
+		
         if (nthChild.test(':' + typ)) {
 
             var m = [],

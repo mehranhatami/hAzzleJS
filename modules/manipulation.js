@@ -636,14 +636,15 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
 
-   // Set document vars if needed
-	if ( ( elem.ownerDocument || elem ) !== document ) {
-		setDocument( elem );
-	}
+        // Set document vars if needed
+
+        if ((elem.ownerDocument || elem) !== document) {
+
+            hAzzle.setDocument(elem);
+        }
 
         var hooks, ret,
             nType = elem.nodeType;
-
         if (!name) {
             return;
         }
@@ -911,56 +912,55 @@ function stabilizeHTML(node, clone) {
 
 function injectHTML(target, node, fn, rev) {
 
-        var i = 0,
-            r = [],
-            nodes, stabilized;
+    var i = 0,
+        r = [],
+        nodes, stabilized;
 
-        if (isString(target) && target.charAt(0) === '<' &&
-            target[target.length - 1] === ">" &&
-            target.length >= 3) {
+    if (isString(target) && target.charAt(0) === '<' &&
+        target[target.length - 1] === ">" &&
+        target.length >= 3) {
 
-            nodes = target;
+        nodes = target;
 
-        } else {
+    } else {
 
-            nodes = hAzzle(target);
-        }
-
-        stabilized = stabilizeHTML(nodes);
-
-        // normalize each node in case it's still a string and we need to create nodes on the fly
-
-        hAzzle.each(stabilized, function (t, j) {
-
-            hAzzle.each(node, function (el) {
-
-                if (j > 0) {
-
-                    fn(t, r[i++] = hAzzle.cloneNode(node, el));
-
-                } else {
-
-                    fn(t, r[i++] = el);
-                }
-
-            }, null, rev);
-
-
-        }, this, rev);
-
-        node.length = i;
-
-        hAzzle.each(r, function (e) {
-
-            node[--i] = e;
-
-        }, null, !rev);
-
-        return node;
+        nodes = hAzzle(target);
     }
-   
-    /* =========================== INTERNAL ========================== */
 
+    stabilized = stabilizeHTML(nodes);
+
+    // normalize each node in case it's still a string and we need to create nodes on the fly
+
+    hAzzle.each(stabilized, function (t, j) {
+
+        hAzzle.each(node, function (el) {
+
+            if (j > 0) {
+
+                fn(t, r[i++] = hAzzle.cloneNode(node, el));
+
+            } else {
+
+                fn(t, r[i++] = el);
+            }
+
+        }, null, rev);
+
+
+    }, this, rev);
+
+    node.length = i;
+
+    hAzzle.each(r, function (e) {
+
+        node[--i] = e;
+
+    }, null, !rev);
+
+    return node;
+}
+
+/* =========================== INTERNAL ========================== */
 
 // Support: IE9+
 
@@ -1023,7 +1023,8 @@ hAzzle.forOwn({
     after: 'nextSibling'
 }, function (value, key) {
     hAzzle.Core[key] = function (node) {
-        var i = 0, l;
+        var i = 0,
+            l;
         return this.each(function (el, i) {
             node = stabilizeHTML(node, i);
             l = node.length;
@@ -1033,5 +1034,5 @@ hAzzle.forOwn({
                 }
             }
         });
-    }
+    };
 });
