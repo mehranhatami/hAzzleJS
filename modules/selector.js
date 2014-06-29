@@ -9,7 +9,7 @@ var
 
     i,
 
-    expando = "hAzzle_" + hAzzle.now(),
+    expando = 'hAzzle_' + hAzzle.now(),
 
     slice = Array.prototype.slice,
 
@@ -51,18 +51,17 @@ var
     combTest = /^[+>~ ]$/,
     SimpComb = /([^[:.#]+)?(?:#([^[:.#]+))?(?:\.([^[:.]+))?(?:\[([^!&^*|$[:=]+)([!$^*|&]?=)?([^:\]]+)?\])?(?:\:([^(]+)(?:\(([^)]+)\))?)?/,
 
-    identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
+    identifier = '(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+',
 
     langidentifier = new RegExp('^' + identifier + '$'),
 
-    whitespace = "[\\x20\\t\\r\\n\\f]",
+    whitespace = '[\\x20\\t\\r\\n\\f]',
 
-    runescape = new RegExp("\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig"),
+    runescape = new RegExp('\\\\([\\da-f]{1,6}' + whitespace + '?|(' + whitespace + ')|.)', 'ig'),
 
     funescape = function (_, escaped, escapedWhitespace) {
         var high = '0x' + escaped - 0x10000;
         // NaN means non-codepoint
-        // Support: Firefox<24
         // Workaround erroneous numeric interpretation of +"0x"
         return high !== high || escapedWhitespace ?
             escaped :
@@ -79,63 +78,88 @@ var Expr = {
 
     pseudos: {
 
-        root: function (el) {
+        'root': function (el) {
             return el === hAzzle.docElem;
         },
 
-        nthChild: function (el, n, t) {
+        /**
+		 * Collect nth-childs
+		 *
+		 * @param{Object} el
+		 * @param{Number / Float} n
+		 * @param{Boolean} t	 
+		 *
+		 */
+
+        'nthChild': function (el, n, bool) {
+
             var x = n[0],
                 y = n[1];
 
             if (x === 1 && y === 0) {
+				
                 return true;
             }
 
             if (!el.nIdx) {
-                var node = el.parentNode.firstChild,
+                
+				var node = el.parentNode.firstChild,
                     cnt = 0,
                     html = el.nodeName.toLowerCase() !== 'html';
+
                 for (; node; node = node.nextSibling) {
-                    if (!t ? node.nodeType == 1 && html : node.nodeType === 1 && node.nodeName == el.nodeName && html)
+
+                    if (bool ? node.nodeType === 1 && node.nodeName == el.nodeName && html : node.nodeType == 1 && html ) {
+
                         node.nIdx = ++cnt;
+                    }
                 }
             }
 
             var dif = el.nIdx - y;
 
             if (x === 0) {
+				
                 return (dif === 0);
+				
             } else {
+				
                 return (dif % x === 0 && dif / x >= 0);
             }
         },
 
         'nth-child': function (el, n) {
-            return this.nthChild(el, n);
+            return this.nthChild(el, n, false);
         },
 
         'nth-of-type': function (el, n) {
             return this.nthChild(el, n, true);
         },
 
-        nthLastChild: function (el, n, t) {
+        'nthLastChild': function (el, n, t) {
             var node = el,
+                par = el.parentNode,
                 html,
                 x = n[0],
                 y = n[1];
 
             if (x === 1 && y === 0) {
+
                 return true;
             }
 
-            var par = el.parentNode;
             if (par && !el.nIdxL) {
                 var cnt = 0;
                 node = par.lastChild;
                 html = el.nodeName.toLowerCase() !== 'html';
+
                 do {
-                    if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html)
+
+                    if (!t ? node.nodeType == 1 && html : node.nodeType == 1 && node.nodeName == el.nodeName && html) {
+
                         node.nIdxL = ++cnt;
+                    }
+
                 } while (node = node.previousSibling);
             }
 
@@ -431,7 +455,7 @@ var Expr = {
 
     comb: {
 
-        " ": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
+        ' ': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
 
 
             if (pseu && !Expr.pseudos[pseu]) {
@@ -464,7 +488,7 @@ var Expr = {
 
         // Direct children
 
-        ">": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
+        '>': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes) {
 
             if (pseu && !Expr.pseudos[pseu]) {
 
@@ -499,10 +523,10 @@ var Expr = {
             }
         },
 
-        "+": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
+        '+': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
             if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
             while ((el = el.nextSibling) && el.nodeType !== 1) {
-                if (el && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
+                if (el && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') &&
                     (!id || el.id === id) &&
                     (!cls || cls.test(el.className)) &&
                     (!attr || (attrMatch(eql, el, attr, val))) &&
@@ -516,10 +540,10 @@ var Expr = {
             }
         },
 
-        "~": function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
+        '~': function (el, tag, id, cls, attr, eql, val, pseu, nth, last, tmpNodes, h) {
             if (pseu && !Expr.pseudos[pseu]) hAzzle.error(pseu);
             while ((el = el.nextSibling) && !el.unq) {
-                if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === "*") &&
+                if (el.nodeType == 1 && (el.nodeName.toLowerCase() === tag.toLowerCase() || tag === '*') &&
                     (!id || el.id === id) &&
                     (!cls || cls.test(el.className)) &&
                     (!attr || (attrMatch(eql, el, attr, val))) &&
@@ -561,11 +585,11 @@ hAzzle.select = function (selector, context, noCache, loop, nthrun) {
 
     // Remove spaces around '['  and ']' of attributes
 
-    selector = selector.replace(/['"]/g, "").replace(/(\[)\s+/g, "$1").replace(/\s+(\])/g, "$1")
+    selector = selector.replace(/['']/g, '').replace(/(\[)\s+/g, '$1').replace(/\s+(\])/g, '$1')
         // remove spaces to the 'left' and 'right' of operator inside of attributes
-        .replace(/(\[[^\] ]+)\s+/g, "$1").replace(/\s+([^ \[]+\])/g, "$1")
+        .replace(/(\[[^\] ]+)\s+/g, '$1').replace(/\s+([^ \[]+\])/g, '$1')
         // remove spaces around '(' of pseudos
-        .replace(/(\()\s+/g, "$1");
+        .replace(/(\()\s+/g, '$1');
 
     var m, _match, set;
 
@@ -713,13 +737,13 @@ function attrMatch(operator, el, attr, check) {
         return true;
     }
 
-    return operator === "=" ? val === check :
-        operator === "!=" ? val !== check :
-        operator === "^=" ? check && val.indexOf(check) === 0 :
-        operator === "*=" ? check && val.indexOf(check) > -1 :
-        operator === "$=" ? check && val.slice(-check.length) === check :
-        operator === "~=" ? (' ' + val + ' ').indexOf(check) > -1 :
-        operator === "|=" ? val === check || val.slice(0, check.length + 1) === check + '-' :
+    return operator === '=' ? val === check :
+        operator === '!=' ? val !== check :
+        operator === '^=' ? check && val.indexOf(check) === 0 :
+        operator === '*=' ? check && val.indexOf(check) > -1 :
+        operator === '$=' ? check && val.slice(-check.length) === check :
+        operator === '~=' ? (' ' + val + ' ').indexOf(check) > -1 :
+        operator === '|=' ? val === check || val.slice(0, check.length + 1) === check + '-' :
         false;
 }
 
@@ -737,7 +761,7 @@ function findAttr(sel, elem, tag) {
         }
 
         var nodes = [],
-            els = elem.getElementsByTagName(tag || "*"),
+            els = elem.getElementsByTagName(tag || '*'),
             am = sel.match(attrM),
             a, j = 0,
             l = els.length,
@@ -753,7 +777,7 @@ function findAttr(sel, elem, tag) {
 
                     // check either attr is defined for given node or it's equal to given value
 
-                    if (attrMatch(m[2], el, m[1], m[3] || "")) {
+                    if (attrMatch(m[2], el, m[1], m[3] || '')) {
 
                         nodes.push(el);
                     }
@@ -811,24 +835,40 @@ function getClsReg(c) {
 
 /**
  * Get Nth pseudo selectors
+ *
  */
 
 function getPseuNth(elem, typ, nth, nthrun) {
 
     // Quick lookup for 'not'
 
-    if (typ === "not") {
+    if (typ === 'not') {
 
         return hAzzle.select(nth, elem, false, nthrun);
 
     } else {
 
-        if (nthChild.test(":" + typ)) {
+        // For even and odd nth-last-child selectors
+		// Faster alternative then regEx
+
+        if (nth === 'even') {
+
+            nth = '2n';
+        }
+
+        if (nth === 'odd') {
+
+            nth = '2n+1';
+        }
+
+        if (nthChild.test(':' + typ)) {
 
             var m = [],
                 rg;
-            nth = nth.replace(/\%/, "+");
-            rg = nthBrck.exec(!/\D/.test(nth) && "0n+" + nth || nth);
+				
+            nth = nth.replace(/\%/, '+');
+			
+            rg = nthBrck.exec(!/\D/.test(nth) && '0n+' + nth || nth);
 
             // calculate the numbers (first)n+(last) including if they are negative
 
@@ -845,7 +885,7 @@ function getPseuNth(elem, typ, nth, nthrun) {
 
 function fnPseudo(sel, elem, tag, n) {
 
-    tag = tag || "*";
+    tag = tag || '*';
 
     var nodes = [],
         els = elem.getElementsByTagName(tag),
@@ -884,12 +924,12 @@ function fnCombinator(elem, parts) {
         nl,
         i = 0;
 
-    combt = combt || " ";
+    combt = combt || ' ';
     // is cleanded up with DOM root 
     nodes = [elem];
 
     while (part = parts[i++]) {
-        // test for combinators [" ", ">", "+", "~"]
+        // test for combinators [' ', '>', '+', '~']
         if (!combTest.test(part)) {
 
             // match part selector;
@@ -913,12 +953,12 @@ function fnCombinator(elem, parts) {
 
                     // regEx here will allways be cached
 
-                    Expr.comb[combt](el, m[1] || "*", m[2], m[3] ? getClsReg("(?:^|\\s+)" + m[3] + "(?:\\s+|$)") : "", m[4], m[5] || "", m[6], m[7], nth, last, tmpNodes, j);
+                    Expr.comb[combt](el, m[1] || '*', m[2], m[3] ? getClsReg('(?:^|\\s+)' + m[3] + '(?:\\s+|$)') : '', m[4], m[5] || '', m[6], m[7], nth, last, tmpNodes, j);
                     j++;
                 }
                 // put selected nodes in temp nodes' set
                 nodes = tmpNodes;
-                combt = " ";
+                combt = ' ';
             }
         } else {
             // switch ancestor ( , > , ~ , +)
@@ -977,12 +1017,12 @@ hAzzle.extend({
 
             if (quickMatch[1]) {
 
-                // speed-up: "TAG"
+                // speed-up: 'TAG'
                 elements = context.getElementsByTagName(selector);
 
             } else {
 
-                // speed-up: ".CLASS"
+                // speed-up: '.CLASS'
                 elements = context.getElementsByClassName(quickMatch[2]);
             }
 
@@ -998,25 +1038,25 @@ hAzzle.extend({
 
             if (context !== doc) {
 
-                if ((old = context.getAttribute("id"))) {
+                if ((old = context.getAttribute('id'))) {
 
-                    nid = old.replace(rescape, "\\$&");
+                    nid = old.replace(rescape, '\\$&');
 
                 } else {
 
-                    context.setAttribute("id", nid);
+                    context.setAttribute('id', nid);
                 }
 
                 nid = "[id='" + nid + "'] ";
 
                 context = sibling.test(selector) ? context.parentNode : context;
-                selector = nid + selector.split(",").join("," + nid);
+                selector = nid + selector.split(',').join(',' + nid);
             }
 
             try {
-                elements = context[all ? "querySelectorAll" : "querySelector"](selector);
+                elements = context[all ? 'querySelectorAll' : 'querySelector'](selector);
             } finally {
-                if (!old) context.removeAttribute("id");
+                if (!old) context.removeAttribute('id');
             }
         }
 
@@ -1049,7 +1089,7 @@ hAzzle.extend({
 
     matches: function (selector, context) {
 
-        if (typeof selector !== "string") {
+        if (typeof selector !== 'string') {
 
             return null;
         }
@@ -1069,12 +1109,12 @@ hAzzle.extend({
 
             if (quick[3]) {
 
-                quick[3] = quick[3].split("=");
+                quick[3] = quick[3].split('=');
             }
 
             if (quick[4]) {
 
-                quick[4] = " " + quick[4] + " ";
+                quick[4] = ' ' + quick[4] + ' ';
             }
         }
 
@@ -1088,7 +1128,7 @@ hAzzle.extend({
                     (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
                     (!quick[2] || context.id === quick[2]) &&
                     (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-                    (!quick[4] || (" " + context.className + " ").indexOf(quick[4]) >= 0)
+                    (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
                 );
 
                 // Fallback to hAzzle.matchesSelector
@@ -1133,7 +1173,7 @@ hAzzle.extend({
 function createInputPseudo(type) {
     return function (elem) {
         var name = elem.nodeName.toLowerCase();
-        return name === "input" && elem.type === type;
+        return name === 'input' && elem.type === type;
     };
 }
 
@@ -1144,7 +1184,7 @@ function createInputPseudo(type) {
 function createButtonPseudo(type) {
     return function (elem) {
         var name = elem.nodeName.toLowerCase();
-        return (name === "input" || name === "button") && elem.type === type;
+        return (name === 'input' || name === 'button') && elem.type === type;
     };
 }
 
