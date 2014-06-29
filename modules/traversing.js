@@ -580,6 +580,7 @@ hAzzle.forOwn({
     hAzzle.Core[name] = function (until, selector) {
         var matched = hAzzle.map(this, fn, until);
 
+
         if (name.slice(-5) !== 'Until') {
             selector = until;
         }
