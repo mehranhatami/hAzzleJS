@@ -14,6 +14,10 @@ var win = this,
 
     isString = hAzzle.isString,
 
+    // Various supports...
+
+    cssPrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
+
     /**
      * Remove units ( e.g. 'pc, 'px', '%') from values
      * This is an faster alternative then parseFloat
@@ -121,10 +125,10 @@ function vendorPrefixed(style, name) {
     // check for vendor prefixed names
     var capName = name[0].toUpperCase() + name.slice(1),
         origName = name,
-        i = hAzzle.cssPrefixes.length;
+        i = cssPrefixes.length;
 
     while (i--) {
-        name = hAzzle.cssPrefixes[i] + capName;
+        name = cssPrefixes[i] + capName;
         if (name in style) {
             return name;
         }
@@ -410,12 +414,7 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-    // Various supports...
-
-    cssPrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
-
-    // Properties that shouldn't have units behind e.g. 
-    // zIndex:33px are not allowed
+    // Properties that shouldn't have units behind 
 
     unitless: {
         'lineHeight': 1,
@@ -426,12 +425,12 @@ hAzzle.extend({
         'WebkitBoxFlex': 1,
         'MozBoxFlex': 1,
         'columns': 1,
-        'counterReset': 1,	
-        'counterIncrement': 1,	
+        'counterReset': 1,
+        'counterIncrement': 1,
         'fontWeight': 1,
         'float': 1,
-        'volume': 1,	
-        'stress': 1,			
+        'volume': 1,
+        'stress': 1,
         'overflow': 1,
         'fillOpacity': 1,
         'flexGrow': 1,
@@ -440,6 +439,12 @@ hAzzle.extend({
         'order': 1,
         'orphans': 1,
         'widows': 1,
+        'transform': 1,
+        'transformOrigin': 1,
+        'transformStyle': 1,
+        'perspective': 1,
+        'perspectiveOrigin': 1,
+        'backfaceVisibility': 1
     },
 
     /**
@@ -462,9 +467,9 @@ hAzzle.extend({
     },
 
     cssProps: {
-		
-		"float": "cssFloat"
-	},
+
+        "float": "cssFloat"
+    },
 
     style: function (elem, name, value) {
 
@@ -846,7 +851,7 @@ hAzzle.each(['width', 'height'], function (name) {
     hAzzle.Core[name] = function (value) {
 
         var elem = this[0],
-			_doc = elem.documentElement;
+            _doc = elem.documentElement;
 
         if (!elem) {
 
@@ -863,13 +868,13 @@ hAzzle.each(['width', 'height'], function (name) {
             return Math.max(
                 elem.body['scroll' + dimensionProperty], _doc['scroll' + dimensionProperty],
                 elem.body['client' + dimensionProperty], _doc['client' + dimensionProperty],
-				_doc['client' + dimensionProperty]
-			);
+                _doc['client' + dimensionProperty]
+            );
         }
 
         // Get width or height on the element
         if (value === undefined) {
-           
+
             return parseFloat(hAzzle.css(elem, name));
         }
 
