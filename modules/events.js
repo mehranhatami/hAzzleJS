@@ -112,12 +112,11 @@ hAzzle.event = {
      * -----------------------------------
      *
      *  hAzzle( 'body' ).on({
+     *    click: {
      *
-     *   click: {
-     *
-     *     func: function (e) {}
-     *     delegate: 'p'
-     *  }
+     *      func: function (e) {}
+     *      delegate: 'p'
+     *    }
      *  });
      *
      */
@@ -382,21 +381,29 @@ hAzzle.event = {
   clone: function (element, from, type) {
     var handlers = hAzzle.event.get(from, type, null, false),
       l = handlers.length,
-      i = 0,
-      args, core;
+      i = 0;
+
+    //move out 'apply' from loops
+    var applyAddEvent = (function (element, handlers) {
+      return function (i) {
+        var args, core;
+        if (handlers[i].original) {
+          args = [element, handlers[i].type];
+          if ((core = handlers[i].handler.__hAzzle)) {
+
+            args.push(hAzzle.selector);
+          }
+
+          args.push(handlers[i].original);
+          hAzzle.event.addEvent.apply(null, args);
+        }
+      };
+    })(element, handlers);
 
     for (; i < l; i++) {
-      if (handlers[i].original) {
-        args = [element, handlers[i].type];
-        if ((core = handlers[i].handler.__hAzzle)) {
-
-          args.push(hAzzle.selector);
-        }
-
-        args.push(handlers[i].original);
-        hAzzle.event.addEvent.apply(null, args);
-      }
+      applyAddEvent(i);
     }
+
     return element;
   },
 
