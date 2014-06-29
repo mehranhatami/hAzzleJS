@@ -50,7 +50,7 @@ if ( div.style ) {
 
                     if (computed) {
   
-                        computed = hAzzle.getStyle(el, 'left');
+                        computed = hAzzle.curCSS(el, 'left');
                         return pxchk.test(computed) ?
                             hAzzle(el).position().left + "px" :
                             computed;

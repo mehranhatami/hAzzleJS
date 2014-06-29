@@ -12,6 +12,8 @@ var win = this,
     directions = ['Top', 'Right', 'Bottom', 'Left'],
     elemdisplay = {},
 
+    isString = hAzzle.isString,
+
     /**
      * Remove units ( e.g. 'pc, 'px', '%') from values
      * This is an faster alternative then parseFloat
@@ -227,7 +229,7 @@ hAzzle.extend({
 
         // is this a request for just getting a style?
 
-        if (value === undefined && typeof prop === 'string') {
+        if (value === undefined && isString(prop)) {
 
             return hAzzle.css(el, prop);
         }
@@ -238,7 +240,7 @@ hAzzle.extend({
          * through
          */
 
-        if (typeof prop === 'string') {
+        if (isString(prop)) {
 
             obj = {};
             obj[prop] = value;
@@ -751,7 +753,6 @@ var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
     }
 
     return ret !== undefined ?
-
         ret + '' :
         ret;
 };
