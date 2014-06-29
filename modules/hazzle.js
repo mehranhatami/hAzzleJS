@@ -247,7 +247,7 @@
         // Note! This can / will be overwritten 
         // by the document.js module
 
-        docElem: doc.documentElement,
+        docElem: window.document.documentElement,
 
         // Tells if the document are XML or HTML
         // Set to true as default, but it can be

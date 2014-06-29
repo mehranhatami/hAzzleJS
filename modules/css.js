@@ -207,7 +207,8 @@ hAzzle.extend({
 
     css: function (prop, value) {
 
-        var obj = prop, el = this[0];
+        var obj = prop,
+            el = this[0];
 
         if (hAzzle.isArray(prop)) {
 
@@ -268,6 +269,8 @@ hAzzle.extend({
         }
 
         var el = this[0],
+            _win,
+            _doc = el && el.ownerDocument,
             bcr = {
                 top: 0,
                 left: 0
@@ -279,18 +282,18 @@ hAzzle.extend({
 
         if (typeof el.getBoundingClientRect !== typeof undefined) {
 
-
-
             bcr = el.getBoundingClientRect();
         }
 
         // We return all angeles of the 'offset'
 
+        _win = getWindow(_doc);
+
         return {
-            top: bcr.top + win.pageYOffset - docElem.clientTop,
-            left: bcr.left + win.pageXOffset - docElem.clientLeft,
-            right: bcr.right + win.pageXOffset - docElem.clientLeft,
-            bottom: bcr.bottom + win.pageYOffset - docElem.clientTop,
+            top: bcr.top + _win.pageYOffset - docElem.clientTop,
+            left: bcr.left + _win.pageXOffset - docElem.clientLeft,
+            right: bcr.right + _win.pageXOffset - docElem.clientLeft,
+            bottom: bcr.bottom + _win.pageYOffset - docElem.clientTop,
             height: bcr.bottom - bcr.top,
             width: bcr.right - bcr.left
         };
@@ -662,6 +665,7 @@ hAzzle.extend({
 
 }, hAzzle);
 
+/* =========================== PRIVATE FUNCTIONS ========================== */
 
 /**
  * sets an element to an explicit x/y position on the page
@@ -717,6 +721,95 @@ function xy(elem, options, i) {
         curElem.css(props);
     }
 }
+
+/**
+ * Gets a window from an element
+ */
+
+function getWindow(elem) {
+    return hAzzle.isWindow(elem) ? elem : elem.nodeType === 9 && elem.defaultView;
+}
+
+
+var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
+
+    var ret;
+
+    computed = computed || getStyles(elem);
+
+    if (computed) {
+
+        ret = computed.getPropertyValue(prop) || computed[prop];
+    }
+
+    if (computed) {
+
+        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
+
+            ret = hAzzle.style(elem, name);
+        }
+    }
+
+    return ret !== undefined ?
+
+        ret + '' :
+        ret;
+};
+
+/* =========================== INTERNAL ========================== */
+
+// scrollTop and scrollLeft functions
+
+hAzzle.forOwn({
+    scrollLeft: 'pageXOffset',
+    scrollTop: 'pageYOffset'
+}, function (prop, method) {
+
+    var top = 'pageYOffset' === prop;
+
+    hAzzle.Core[method] = function (val) {
+
+        var i = 0,
+            len = this.len || 1,
+            elem, win;
+
+        for (; i < len; i++) {
+
+            elem = this[i];
+
+            if (hAzzle.isWindow(elem)) {
+
+                win = elem;
+
+            } else {
+
+                if (elem.nodeType === 9) {
+
+                    win = elem.defaultView;
+                }
+            }
+
+            if (val === undefined) {
+
+                return win ? win[prop] : elem[method];
+            }
+
+            if (win) {
+
+                win.scrollTo(!top ? val : window.pageXOffset,
+                    top ? val : window.pageYOffset
+                );
+
+            } else {
+
+                elem[method] = val;
+
+            }
+        }
+    };
+});
+
+
 
 // Margin and padding cssHooks
 
@@ -787,78 +880,5 @@ hAzzle.each(['width', 'height'], function (name) {
         // Set the width or height on the element
 
         hAzzle(elem).css(name, value);
-    };
-});
-
-
-
-
-var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
-
-    var ret;
-
-    computed = computed || getStyles(elem);
-
-    if (computed) {
-
-        ret = computed.getPropertyValue(prop) || computed[prop];
-    }
-
-    if (computed) {
-
-        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
-
-            ret = hAzzle.style(elem, name);
-        }
-    }
-
-    return ret !== undefined ?
-
-        ret + '' :
-        ret;
-};
-
-
-
-
-// scrollTop and scrollLeft functions
-hAzzle.forOwn({
-    scrollLeft: 'pageXOffset',
-    scrollTop: 'pageYOffset'
-}, function (prop, method) {
-    var top = 'pageYOffset' === prop;
-
-    hAzzle.Core[method] = function (val) {
-        var elem = this[0],
-            win;
-
-        if (hAzzle.isWindow(elem)) {
-
-            win = elem;
-			
-        } else {
-
-            if (elem.nodeType === 9) {
-
-                win = elem.defaultView;
-            }
-        }
-
-        if (val === undefined) {
-
-            return win ? win[prop] : elem[method];
-        }
-
-        if (win) {
-
-            win.scrollTo(!top ? val : window.pageXOffset,
-                top ? val : window.pageYOffset
-            );
-
-        } else {
-
-            elem[method] = val;
-
-        }
     };
 });
