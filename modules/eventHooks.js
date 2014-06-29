@@ -124,10 +124,7 @@ if (needsFocusShim) {
         }
     };
 
-    hAzzle.forOwn({
-        'focusin': 'focus',
-        'focusout': 'blur',
-    }, function (orig, fix) {
+    hAzzle.each(['focusin', 'focusout'], function (fix) {
         hAzzle.eventHooks[fix] = {
             simulate: simulate
         };
