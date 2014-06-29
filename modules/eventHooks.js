@@ -109,8 +109,8 @@ if (needsFocusShim) {
       focusEventType = (type === 'focusin') ? 'focus' : 'blur',
       focusables = (function (el) {
 
-        var focusables = slice.call(el.getElementsByTagName('input')),
-          selects = slice.call(el.getElementsByTagName('select'));
+        var focusables = hAzzle(el).find('input'),
+          selects = hAzzle(el).find('select');
 
         if (selects.length) {
           push.apply(focusables, selects);
@@ -121,7 +121,6 @@ if (needsFocusShim) {
       cback = (function (type, focusEventType) {
         return function () {
           if ((focusEventType === 'focus' && this === document.activeElement) || focusEventType === 'blur') {
-            //if (this === document.activeElement) {
             hAzzle(this).trigger(type);
           }
         };
