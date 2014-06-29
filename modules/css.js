@@ -850,31 +850,32 @@ hAzzle.each(['width', 'height'], function (name) {
 
         var orig,
             ret,
-            elem = this[0];
+            elem = this[0],
+			_doc = elem.documentElement;
 
         if (!elem) {
 
             return '';
-
         }
 
-        if (hAzzle.isWindow(elem)) {
+        if (getWindow(elem)) {
 
-            return elem.document.documentElement['client' + dimensionProperty];
+            return _doc['client' + dimensionProperty];
         }
 
         // Get document width or height
         if (elem.nodeType === 9) {
             return Math.max(
-                elem.documentElement['client' + dimensionProperty],
-                elem.body['scroll' + dimensionProperty], elem.documentElement['scroll' + dimensionProperty],
-                elem.body['client' + dimensionProperty], elem.documentElement['client' + dimensionProperty]);
+                elem.body['scroll' + dimensionProperty], _doc['scroll' + dimensionProperty],
+                elem.body['client' + dimensionProperty], _doc['client' + dimensionProperty],
+				_doc['client' + dimensionProperty]
+			);
         }
 
         // Get width or height on the element
         if (value === undefined) {
-            orig = hAzzle.css(elem, name);
-            return hAzzle.IsNaN(ret) ? parseFloat(orig) : orig;
+           
+            return parseFloat(hAzzle.css(elem, name));
         }
 
         // Set the width or height on the element
