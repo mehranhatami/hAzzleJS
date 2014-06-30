@@ -266,7 +266,7 @@
          */
 
         error: function (msg) {
-            throw new Error(msg);
+            throw new Error("Syntax error: " + msg );
         },
 
         /**
@@ -578,6 +578,7 @@
             var node, ret = '',
                 i = 0,
                 l = elem.length,
+				etc,
                 nodetype = elem.nodeType;
 
             if (!nodetype) {
@@ -592,7 +593,9 @@
 
             } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
 
-                if (typeof elem.textContent === 'string') {
+                 etc = elem.textContent;
+			   
+			    if (typeof etc === 'string') {
 
                     return elem.textContent;
 
