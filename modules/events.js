@@ -23,30 +23,25 @@ var win = this,
     isString = hAzzle.isString,
     isFunction = hAzzle.isFunction,
 
+    /**
+     * We only use rAF on the *most important*
+     * event types
+     */
+
     frameEvents = {
         'mouseover': 1,
         'mousemove': 1,
-        'mouseenter': 1,
-        'mouseleave': 1,
         'mousewheel': 1,
-        'mouseout': 1,
-        'mousedown': 1,
-        'mouseup': 1,
-        'contextmenu': 1,
         'drag': 1,
-        'drop': 1,
         'dropenter': 1,
         'dragstart': 1,
         'dragend': 1,
         'dragover': 1,
         'dropleave': 1,
-        'focus': 1,
-        'unfocus': 1,
         'touch': 1,
         'pointer': 1,
         'scroll': 1,
         'resize': 1,
-        'release': 1,
         'gesturechange': 1,
         'gestureend': 1
     },
@@ -1012,63 +1007,59 @@ Registry.prototype = {
 
 function rootListener(evt, type) {
 
-    var self = this,
-        listeners = hAzzle.event.get(self, type || evt.type, null, false);
+    var listeners = hAzzle.event.get(this, type || evt.type, null, false);
 
-    evt = hAzzle.Event(evt, self, true);
+    evt = hAzzle.Event(evt, this, true);
 
     if (type) {
         evt.type = type;
     }
 
-    if (frameEvents[evt.type]) {
-
-        rafCallHandler(evt, listeners, self);
-    } else {
-        triggerListeners(evt, listeners, self);
-    }
+    triggerListeners(evt, listeners, this);
 }
 
-function rafCallHandler(evt, listeners, thisArg) {
-
-    if (!ticking) {
-
-        ticking = true;
-
-        var rafId,
-            callback = (function (e, list, that) {
-                return function () {
-
-                    triggerListeners(e, list, that, rafId);
-
-                };
-
-            })(evt, listeners, thisArg);
-
-        cancelFrame(rafId);
-
-        // get the frame id, so we can cancel
-        // with hAzzle.cancelFrame
-
-        rafId = safeRAF(callback);
-    }
-}
-
-function triggerListeners(evt, listeners, thisArg, rafId) {
+function triggerListeners(evt, listeners, thisArg) {
     var l = listeners.length,
+        rafId = "",
         i = 0;
 
-    var notifyListener = (function (evt, listeners, thisArg, rafId) {
+    var notifyListener = (function (evt, listeners, thisArg) {
         return function (i) {
 
             if (!listeners[i].removed) {
 
-                listeners[i].rafId = rafId;
-                listeners[i].handler.call(thisArg, evt);
+                // Add rAF if possible
+
+                if (frameEvents[evt.type]) {
+
+                    if (!ticking) {
+
+                        ticking = true;
+
+                        // Todo !! Send rafId out of this function so we can
+                        // grab it and cancel the frame
+
+                        cancelFrame(rafId);
+
+                        listeners[i].rafId = rafId = safeRAF( (function (e, that) {
+
+                            return function (tick) {
+
+                                listeners[i].handler.call(thisArg, evt);
+                            };
+
+                        })(evt, thisArg) );
+                    }
+
+                } else {
+
+                    listeners[i].handler.call(thisArg, evt);
+                }
+
             }
 
         };
-    })(evt, listeners, thisArg, rafId);
+    })(evt, listeners, thisArg);
 
     if (listeners >= 2) {
         for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
