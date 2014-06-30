@@ -4,7 +4,6 @@ var win = this,
     // Make sure we always are on the correct document
 
     docElem = hAzzle.docElem,
-    cancelFrame = hAzzle.cancelFrame,
     evwhite = (/\S+/g),
     mouseEvent = /^click|mouse(?!(.*wheel|scroll))|menu|pointer|contextmenu|drag|drop/i,
     keyEvent = /^key/,
@@ -21,32 +20,7 @@ var win = this,
 
     isObject = hAzzle.isObject,
     isString = hAzzle.isString,
-    isFunction = hAzzle.isFunction,
-
-    /**
-     * We only use rAF on the *most important*
-     * event types
-     */
-
-    frameEvents = {
-        'mouseover': 1,
-        'mousemove': 1,
-        'mousewheel': 1,
-        'drag': 1,
-        'dropenter': 1,
-        'dragstart': 1,
-        'dragend': 1,
-        'dragover': 1,
-        'dropleave': 1,
-        'touch': 1,
-        'pointer': 1,
-        'scroll': 1,
-        'resize': 1,
-        'gesturechange': 1,
-        'gestureend': 1
-    },
-    ticking = false,
-    safeRAF = hAzzle.safeRAF;
+    isFunction = hAzzle.isFunction;
 
 function returnTrue() {
     return true;
@@ -505,7 +479,6 @@ hAzzle.event = {
         var type = types && types.replace(nameRegex, ''),
             handlers = hAzzle.event.get(elem, type, null, false),
             removed = [],
-            rAF = [],
             i = 0,
             j,
             x,
@@ -516,16 +489,9 @@ hAzzle.event = {
             if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
                 hAzzle.event.unregister(handlers[i]);
                 if (!removed[handlers[i].type]) {
-                    rAF[handlers[i].rafId] = handlers[i].rafId;
                     removed[handlers[i].type] = handlers[i].type;
                 }
             }
-        }
-
-        // Cancel rAF if any		
-
-        for (x in rAF) {
-            cancelFrame(rAF[x]);
         }
 
         // Remove the root listener if this is the last one
@@ -1020,42 +986,13 @@ function rootListener(evt, type) {
 
 function triggerListeners(evt, listeners, thisArg) {
     var l = listeners.length,
-        rafId = "",
         i = 0;
 
     var notifyListener = (function (evt, listeners, thisArg) {
         return function (i) {
 
             if (!listeners[i].removed) {
-
-                // Add rAF if possible
-
-                if (frameEvents[evt.type]) {
-
-                    if (!ticking) {
-
-                        ticking = true;
-
-                        // Todo !! Send rafId out of this function so we can
-                        // grab it and cancel the frame
-
-                        cancelFrame(rafId);
-
-                        listeners[i].rafId = rafId = safeRAF( (function (e, that) {
-
-                            return function (tick) {
-
-                                listeners[i].handler.call(thisArg, evt);
-                            };
-
-                        })(evt, thisArg) );
-                    }
-
-                } else {
-
                     listeners[i].handler.call(thisArg, evt);
-                }
-
             }
 
         };
@@ -1068,9 +1005,6 @@ function triggerListeners(evt, listeners, thisArg) {
     } else {
         notifyListener(0);
     }
-
-    ticking = false;
-
 }
 
 /**
