@@ -3,10 +3,9 @@
  *
  * hAzzle supports CSS4!!!
  */
-
 var win = this,
-    
-	doc = win.document,
+
+    doc = win.document,
 
     i,
 
@@ -60,7 +59,7 @@ hAzzle.extend({
     },
 
     'active': function (el) {
-		
+
         return el === el.activeElement;
     },
 
@@ -99,25 +98,28 @@ hAzzle.extend({
     },
 
     'enabled': function (el) {
-		
+
         return el.disabled === false;
     },
-	
+
     'checked': function (el) {
         return el.checked === true;
     },
-    
-	// non-standard
-    
-	'unchecked': function (el) {
+
+    // non-standard
+
+    'unchecked': function (el) {
+
         return el.checked === false;
     },
 
     'disabled': function (el) {
+
         return el.disabled === true;
     },
 
     'root': function (el) {
+
         return el === hAzzle.docElem;
     },
 
@@ -142,14 +144,14 @@ hAzzle.extend({
     // CSS 4
 
     'matches': function (els, val, roots, matchRoots) {
-        return intersection(els, hAzzle.tricky(val, roots, matchRoots));
+        return intersection(els, hAzzle.select(val, roots, matchRoots));
     },
 
     'in-range': function (el) {
         return el.value > el.min && el.value <= el.max;
     },
     ':out-of-range': function (el) {
-		
+
         return !pseudos['in-range'](el);
     },
     'required': function (el) {
@@ -205,10 +207,10 @@ hAzzle.extend({
         return !!el.defaultSelected;
     },
     'valid': function (el) {
-    return el.willValidate || (el.validity && el.validity.valid);
+        return el.willValidate || (el.validity && el.validity.valid);
     },
     'invalid': function (el) {
-   
+
         return !pseudos.valid(el);
     },
 
@@ -225,16 +227,16 @@ hAzzle.extend({
     },
 
     'read-write': function (el) {
-		
+
         return !pseudos['read-only'](el);
     },
 
     // Complex pseudos
 
     'not': function (els, val, roots, matchRoots) {
-        return difference(els, hAzzle.tricky(val, roots, matchRoots));
+        return difference(els, hAzzle.select(val, roots, matchRoots));
     }
-	
+
 }, pseudos);
 
 pseudos.matches.batch = true;
@@ -287,7 +289,8 @@ pseudos.not.batch = true;
 
         return function (els, val, roots) {
 
-            var check, m, set = [];
+            var check, m, set = [],
+                table = hAzzle.select('table', roots);
 
             if (nth) {
 
@@ -299,13 +302,13 @@ pseudos.not.batch = true;
             }
             // Do a quick look-up
 
-            hAzzle.each(hAzzle.tricky('table', roots), function (table) {
+            hAzzle.each(table, function (table) {
 
-                var col, max, min, tbody, _i, _len, _ref;
+                var col, max, min, tbody, _i, _len, _ref, span;
 
                 if (!nth) {
 
-                    col = hAzzle.tricky(val, [table])[0];
+                    col = hAzzle.select(val, [table])[0];
                     min = 0;
 
                     eachElement(col, 'previousSibling', 'previousSibling', function (col) {
@@ -317,6 +320,7 @@ pseudos.not.batch = true;
 
                     check = function (i) {
                         return (min < i && i <= max);
+
                     };
                 }
 
@@ -335,7 +339,6 @@ pseudos.not.batch = true;
                         i = 0;
 
                         eachElement(row, first, next, function (col) {
-                            var span;
                             span = parseInt(col.getAttribute('span') || 1);
                             while (span) {
                                 if (check(++i)) {
@@ -368,7 +371,7 @@ pseudos.not.batch = true;
 
             var filtered,
                 m = nthPattern.exec(val),
-                set = hAzzle.tricky(m[7], roots),
+                set = hAzzle.select(m[7], roots),
                 len = set.length;
 
             hAzzle.each(set, function (el, i) {
@@ -402,41 +405,58 @@ pseudos.not.batch = true;
 
         return function (els, val) {
 
-            var filtered, m;
+            var filtered, m, parent, i = 0,
+                el, len = els.length,
+                indices;
 
             if (val) {
-                m = nthPattern.exec(val);
 
+                m = nthPattern.exec(val);
             }
 
-            hAzzle.each(els, function (el) {
-                var indices, parent;
-                if ((parent = el.parentNode) && parent._hAzzle_children === void 0) {
+            // Loop through
+
+            for (; i < len; i++) {
+
+                el = els[i];
+
+                if ((parent = el.parentNode) && parent._hAzzle_children === undefined) {
+
                     indices = {
+
                         '*': 0
                     };
+
                     eachElement(parent, first, next, function (el) {
+
                         el._hAzzle_index = ++indices['*'];
                         el._hAzzle_indexOfType = indices[el.nodeName] = (indices[el.nodeName] || 0) + 1;
                     });
+
                     parent._hAzzle_children = indices;
                 }
 
-            });
+            }
 
             filtered = hAzzle.filter(els, function (el) {
                 return fn(el, m);
             });
 
-            hAzzle.each(els, function (el) {
-                var parent;
-                if ((parent = el.parentNode) && parent._hAzzle_children !== void 0) {
+            for (; i < len; i++) {
+
+                el = els[i];
+
+                if ((parent = el.parentNode) && parent._hAzzle_children !== undefined) {
+
                     eachElement(parent, first, next, function (el) {
-                        el._hAzzle_index = el._hAzzle_indexOfType = void 0;
+
+                        el._hAzzle_index = el._hAzzle_indexOfType = undefined;
                     });
-                    parent._hAzzle_children = void 0;
+
+                    parent._hAzzle_children = undefined;
                 }
-            });
+            }
+
             return filtered;
         };
     }
@@ -503,11 +523,11 @@ function eachElement(el, first, next, fn) {
     }
 
     while (el) {
-        if (el.nodeType === 1) {
-            if (fn(el) === false) {
-                break;
-            }
+
+        if (el.nodeType === 1 && fn(el) === false) {
+            break;
         }
+
         el = el[next];
     }
 }
