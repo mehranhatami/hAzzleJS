@@ -73,7 +73,7 @@ hAzzle.event = {
 
         // Don't attach events to text/comment nodes 
 
-        if (elem.nodeType === 3 || elem.nodeType === 8 || !events) {
+        if (elem.nodeType === 3 || elem.nodeType === 8 || !elem.nodeType || !events) {
 
             return;
         }
@@ -244,10 +244,8 @@ hAzzle.event = {
                 if (hooks && ('simulate' in hooks)) {
                     hooks.simulate(elem, type);
                 }
-
-                if (elem.nodeType) {
-                    elem.addEventListener(type, rootListener, false);
-                }
+           
+                elem.addEventListener(type, rootListener, false);
             }
         }
 
@@ -1030,7 +1028,7 @@ function triggerListeners(evt, listeners, thisArg) {
 
             if (!listeners[i].removed) {
 
-                /*    // Add rAF if possible
+            /*    // Add rAF if possible
 
                 if (frameEvents[evt.type]) {
 
@@ -1055,8 +1053,8 @@ function triggerListeners(evt, listeners, thisArg) {
 
                 } else {*/
 
-                listeners[i].handler.call(thisArg, evt);
-                //   }
+                    listeners[i].handler.call(thisArg, evt);
+             //   }
 
             }
 
@@ -1124,7 +1122,6 @@ function findTarget(selector, target, elem) {
         }
     }
 }
-
 
 // Delegate handler
 
