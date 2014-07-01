@@ -4,8 +4,8 @@ var win = this,
     cache = [],
 
     rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
-    
-	rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
+
+    rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
 
     sibreg = /^.*?#/,
 
@@ -26,43 +26,43 @@ var win = this,
         subject: 14
     },
 
-	sortOrder = function( a, b ) {
+    sortOrder = function (a, b) {
 
-    // Flag for duplicate removal
+        // Flag for duplicate removal
 
-    if (a === b) {
+        if (a === b) {
 
-        hasDuplicate = true;
-        return 0;
-    }
-
-    var compare = b.compareDocumentPosition && a.compareDocumentPosition && a.compareDocumentPosition(b);
-
-    if (compare) {
-		
-        // Disconnected nodes
-        
-		if (compare & 1) {
-
-            // Choose the first element that is related to our document
-            if (a === document || hAzzle.contains(document, a)) {
-                return -1;
-            }
-            if (b === document || hAzzle.contains(document, b)) {
-                return 1;
-            }
-
-            // Maintain original order
+            hasDuplicate = true;
             return 0;
         }
 
-        return compare & 4 ? -1 : 1;
-    }
+        var compare = b.compareDocumentPosition && a.compareDocumentPosition && a.compareDocumentPosition(b);
 
-    // Not directly comparable, sort on existence of method
-	
-    return a.compareDocumentPosition ? -1 : 1;
-};
+        if (compare) {
+
+            // Disconnected nodes
+
+            if (compare & 1) {
+
+                // Choose the first element that is related to our document
+                if (a === document || hAzzle.contains(document, a)) {
+                    return -1;
+                }
+                if (b === document || hAzzle.contains(document, b)) {
+                    return 1;
+                }
+
+                // Maintain original order
+                return 0;
+            }
+
+            return compare & 4 ? -1 : 1;
+        }
+
+        // Not directly comparable, sort on existence of method
+
+        return a.compareDocumentPosition ? -1 : 1;
+    };
 
 hAzzle.extend({
 
@@ -87,32 +87,32 @@ hAzzle.extend({
 
     select: function (selector, context, matchRoots) {
 
-        var match, elem, m, nodeType, results = [];
-	 
- // Allways make sure we are on the correct document 
- 
- if ( ( context ? context.ownerDocument || context : winDoc ) !== document ) {
-		hAzzle.setDocument( context );
-	}
-  	
-	context = context || document;
-  
-    if (!selector) {
+        var match, elem, m, res;
 
-        return [];
-    }
+        // Allways make sure we are on the correct document 
 
-    if (selector === window || selector === 'window') {
+        if ((context ? context.ownerDocument || context : winDoc) !== document) {
+            hAzzle.setDocument(context);
+        }
 
-        return [window];
-    } 
-	
-	if (selector === document || selector === 'document') {
+        context = context || document;
 
-        return [document];
-    } 
-	
-	 if (hAzzle.documentIsHTML) {
+        if (!selector) {
+
+            return [];
+        }
+
+        if (selector === window || selector === 'window') {
+
+            return [window];
+        }
+
+        if (selector === document || selector === 'document') {
+
+            return [document];
+        }
+
+        if (hAzzle.documentIsHTML) {
 
             if ((match = rquickExpr.exec(selector))) {
                 if ((m = match[1])) {
@@ -145,14 +145,14 @@ hAzzle.extend({
                 return cache[selector] = res;
             }
         }
-		
-    // Normalize our multiple roots
-    
-	context = normalizeRoots(context);
+        // Normalize our multiple roots
 
-   // Everything else
+        context = normalizeRoots(context);
 
-    return evaluate(compile(selector), context, matchRoots);
+
+        // Everything else
+
+        return evaluate(compile(selector), context, matchRoots);
 
     },
 
@@ -284,7 +284,7 @@ hAzzle.extend({
         }
         return result;
     }
-	
+
 }, hAzzle);
 
 
@@ -367,46 +367,46 @@ function extend(a, b) {
 
 function compile(selector) {
 
-   
+
 
     if (selector in compile.cache) {
-		
+
         return compile.cache[selector];
     }
 
-  var ps =  parseSimple(selector),
-     e = ps, 
-	 last = ps, 
-	 result = ps;
-	
+    var ps = parseSimple(selector),
+        e = ps,
+        last = ps,
+        result = ps;
+
     if (e.compound) {
-		
+
         e.children = [];
     }
-	
+
     while (e[0].length < selector.length) {
 
         selector = selector.substr(last[0].length);
-		
+
         e = parseSimple(selector);
 
         if (e.compound) {
-			
+
             e.children = [result];
             result = e;
-			
+
         } else if (last.compound) {
-			
+
             last.children.push(e);
-			
+
         } else {
-			
+
             last.child = e;
         }
-		
+
         last = e;
     }
-	
+
     return compile.cache[selector] = result;
 }
 
@@ -415,43 +415,43 @@ compile.cache = {};
 function parseSimple(selector) {
 
     var e, group, name;
-	
-    if ( (e = combinatorPattern.exec(selector))) {
-		
-        e.compound = true;
-        
-		e.type = e[1].charAt(0);
 
-		if (e.type === '/') {
-			
+    if ((e = combinatorPattern.exec(selector))) {
+
+        e.compound = true;
+
+        e.type = e[1].charAt(0);
+
+        if (e.type === '/') {
+
             e.idref = e[2];
         }
-		
+
     } else if ((e = selectorPattern.exec(selector)) && e[0].trim()) {
 
         e.simple = true;
 
         for (name in selectorGroups) {
-			
+
             group = selectorGroups[name];
-			
+
             e[name] = e[group];
         }
-		
+
         e.type || (e.type = ' ');
-        
-		e.tag && (e.tag = e.tag.toLowerCase());
-        
-		if (e.classes) {
-        
-		    e.classes = e.classes.toLowerCase().split('.');
+
+        e.tag && (e.tag = e.tag.toLowerCase());
+
+        if (e.classes) {
+
+            e.classes = e.classes.toLowerCase().split('.');
         }
-        
-		if (e.attrsAll) {
+
+        if (e.attrsAll) {
 
             e.attrs = [];
-            
-			e.attrsAll.replace(attrPattern, function (all, name, op, val, quotedVal, ignoreCase) {
+
+            e.attrsAll.replace(attrPattern, function (all, name, op, val, quotedVal, ignoreCase) {
                 name = name.toLowerCase();
                 val || (val = quotedVal);
                 if (op === '=') {
@@ -479,24 +479,24 @@ function parseSimple(selector) {
                 return "";
             });
         }
-		
+
         if (e.pseudosAll) {
 
             e.pseudos = [];
-			
+
             e.pseudosAll.replace(pseudoPattern, function (all, name, val) {
 
-			    e.pseudos.push({
+                e.pseudos.push({
                     name: name.toLowerCase(),
                     val: val
                 });
-				
+
                 return "";
             });
         }
-		
+
     } else {
-		
+
         hAzzle.error("Compile error at: " + selector);
     }
 
@@ -505,12 +505,12 @@ function parseSimple(selector) {
 
 
 function find(e, roots, matchRoots) {
-	
+
     var els, fr;
-    
-	// Find by 'id'
-    
-	if (e.id) {
+
+    // Find by 'id'
+
+    if (e.id) {
 
         els = [];
         roots.forEach(function (root) {
@@ -525,9 +525,9 @@ function find(e, roots, matchRoots) {
                 extend(els, root.getElementsByTagName(e.tag || '*'));
             }
         });
-		
-	// Find by 'class'
-   
+
+        // Find by 'class'
+
     } else if (e.classes) {
 
         els = selMap(roots, function (root) {
@@ -538,27 +538,27 @@ function find(e, roots, matchRoots) {
         e.ignoreClasses = true;
 
     } else {
-      
+
         // selMap() quicker then native map()
-		
-		els = selMap(roots, function (root) {
-			
-		    return root.getElementsByTagName(e.tag || '*');
-			
-		}).reduce(extend, []);
-		
+
+        els = selMap(roots, function (root) {
+
+            return root.getElementsByTagName(e.tag || '*');
+
+        }).reduce(extend, []);
+
         e.ignoreTag = true;
     }
 
     if (els && els.length) {
-		
+
         els = filter(els, e, roots, matchRoots);
-		
+
     } else {
-		
+
         els = [];
     }
-	
+
     e.ignoreTag = undefined;
     e.ignoreClasses = undefined;
     if (matchRoots) {
@@ -589,26 +589,44 @@ function filter(els, e, roots, matchRoots) {
             return el.nodeName.toLowerCase() === e.tag;
         });
     }
-	
+
     if (e.classes && !e.ignoreClasses) {
-	    e.classes.forEach(function (cls) {
+        e.classes.forEach(function (cls) {
             els = els.filter(function (el) {
                 return (" " + el.className + " ").indexOf(" " + cls + " ") >= 0;
             });
         });
     }
-  
+
     if (e.attrs) {
-alert("d")
-        e.attrs.forEach(function (_arg) {
-            var ignoreCase, name, op, val;
-            name = _arg.name, op = _arg.op, val = _arg.val, ignoreCase = _arg.ignoreCase;
-            els = els.filter(function (el) {
-                var attr, value;
+
+        var len = e.attrs.length,
+            aarg,
+            b = 0,
+            attr,
+            value,
+            ignoreCase, name, op, val;
+
+        for (; b < len; b++) {
+
+            aarg = e.attrs[b];
+
+            name = aarg.name;
+            op = aarg.op;
+            val = aarg.val;
+            ignoreCase = aarg.ignoreCase;
+
+            //	Filter
+
+            els = hAzzle.filter(els, function (el) {
+				
                 attr = hAzzle.attr(el, name);
-                value = attr + "";
-                if (ignoreCase) {
-                    value = value.toLowerCase();
+                
+				value = attr + "";
+                
+				if (ignoreCase) {
+                
+                   value = value.toLowerCase();
                 }
 
                 /**
@@ -622,41 +640,41 @@ alert("d")
 
                 return (attr || (el.attributes && el.attributes[name] && el.attributes[name].specified)) && (!op ? true : op === '=' ? value === val : op === '!=' ? value !== val : op === '*=' ? value.indexOf(val) >= 0 : op === '^=' ? value.indexOf(val) === 0 : op === '$=' ? value.substr(value.length - val.length) === val : op === '~=' ? (" " + value + " ").indexOf(" " + val + " ") >= 0 : op === '|=' ? value === val || (value.indexOf(val) === 0 && value.charAt(val.length) === '-') : false);
             });
-        });
+        }
     }
-	
-  // Process CSS pseudo selectors	
-	
-  if (e.pseudos) {
 
-    var arg,
-	    pseudo,
-        i = 0,
-        l = e.pseudos.length;
+    // Process CSS pseudo selectors	
 
- for (; i < l; i++) { 
+    if (e.pseudos) {
 
-    arg = e.pseudos[i];
+        var arg,
+            pseudo,
+            i = 0,
+            l = e.pseudos.length;
 
-    pseudo = hAzzle.pseudos[arg.name];
+        for (; i < l; i++) {
 
-    if (!pseudo) {
+            arg = e.pseudos[i];
 
-         hAzzle.error("no pseudo with name: " + arg.name);
-     }
+            pseudo = hAzzle.pseudos[arg.name];
 
-     if (pseudo.batch) {
+            if (!pseudo) {
 
-         els = pseudo(els, arg.val, roots, matchRoots);
+                hAzzle.error("no pseudo with name: " + arg.name);
+            }
 
-      } else {
+            if (pseudo.batch) {
 
-         els = hAzzle.filter(els, function (el) {
-			 
-             return pseudo(el, arg.val);
-          });
-       }
-   }
+                els = pseudo(els, arg.val, roots, matchRoots);
+
+            } else {
+
+                els = hAzzle.filter(els, function (el) {
+
+                    return pseudo(el, arg.val);
+                });
+            }
+        }
     }
     return els;
 }
@@ -664,65 +682,66 @@ alert("d")
 
 function evaluate(e, roots, matchRoots) {
 
-    var els = [], ids, outerRoots, sibs, type = e.type;
+    var els = [],
+        ids, outerRoots, sibs, type = e.type;
 
     if (roots.length) {
-		
-		if( type === ' ' || type === '>') {
 
-		   // Keep track of the roots
-		   
-		   outerRoots = filterDescendents(roots);
+        if (type === ' ' || type === '>') {
+
+            // Keep track of the roots
+
+            outerRoots = filterDescendents(roots);
 
             els = find(e, outerRoots, matchRoots);
-			
-			// Child Selector
-			
-            if (type === '>') {
-				
-				var i = 0,
-				    el,
-				    l = roots.length;
 
-				for (; i < l; i++) { 
-				    el = roots[i];
+            // Child Selector
+
+            if (type === '>') {
+
+                var i = 0,
+                    el,
+                    l = roots.length;
+
+                for (; i < l; i++) {
+                    el = roots[i];
                     el._hAzzle_mark = true;
                 }
-				
+
                 els = hAzzle.filter(els, function (el) {
                     if (el.parentNode) {
                         return el.parentNode._hAzzle_mark;
                     }
                 });
-                
-				// Always zero out !                
-				
-				i = 0;
-				
-				for (; i < l; i++) { 
-				    el = roots[i];
+
+                // Always zero out !                
+
+                i = 0;
+
+                for (; i < l; i++) {
+                    el = roots[i];
                     el._hAzzle_mark = undefined;
                 }
             }
-			
+
             if (e.child) {
 
                 if (e.subject) {
-                    
-					els = hAzzle.filter(els, function (el) {
+
+                    els = hAzzle.filter(els, function (el) {
                         return evaluate(e.child, [el]).length;
                     });
-					
+
                 } else {
 
                     els = evaluate(e.child, els);
                 }
             }
 
-		} else if( type === '+' || 
-		          type === '~' || 
-				  type === ',' || 
-				  type === '/') { 
+        } else if (type === '+' ||
+            type === '~' ||
+            type === ',' ||
+            type === '/') {
 
             if (e.children.length === 2) {
                 sibs = evaluate(e.children[0], roots, matchRoots);
@@ -737,18 +756,18 @@ function evaluate(e, roots, matchRoots) {
                 els = union(sibs, els);
 
             } else if (type === '/') {
-				
+
                 ids = selMap(sibs, function (el) {
-					
+
                     return hAzzle.attr(el, e.idref).replace(sibreg, '');
                 });
-				
+
                 els = hAzzle.filter(els, function (el) {
                     return ~ids.indexOf(el.id);
                 });
-				
+
             } else if (type === '+') {
-				
+
                 hAzzle.each(sibs, function (el) {
                     if ((el = nextElementSibling(el))) {
                         el._hAzzle_mark = true;
@@ -761,30 +780,30 @@ function evaluate(e, roots, matchRoots) {
                 });
 
                 hAzzle.each(sibs, function (el) {
-                   
-				    if ((el = nextElementSibling(el))) {
+
+                    if ((el = nextElementSibling(el))) {
                         el._hAzzle_mark = undefined;
                     }
                 });
-				
+
             } else if (type === '~') {
 
                 hAzzle.each(sibs, function (el) {
-					
+
                     while ((el = nextElementSibling(el)) && !el._hAzzle_mark) {
-						
+
                         el._hAzzle_mark = true;
                     }
                 });
-				
+
                 els = hAzzle.filter(els, function (el) {
                     return el._hAzzle_mark;
                 });
-				
+
                 hAzzle.each(sibs, function (el) {
 
                     while ((el = nextElementSibling(el)) && el._hAzzle_mark) {
-						
+
                         el._hAzzle_mark = undefined;
                     }
                 });
@@ -802,29 +821,27 @@ function nextElementSibling(el) {
 
 
 
-
-
 function findRoots(els) {
-    
-	var r = [],
-	i = 0,
-	el,
-	len = els.length;
 
- for (; i < len; i++) { 
- 
-    el = els[i];
+    var r = [],
+        i = 0,
+        el,
+        len = els.length;
 
-    while (el.parentNode) {
+    for (; i < len; i++) {
 
-        el = el.parentNode;
+        el = els[i];
+
+        while (el.parentNode) {
+
+            el = el.parentNode;
+        }
+
+        if (r[r.length - 1] !== el) {
+            r.push(el);
+        }
     }
-
-   if (r[r.length - 1] !== el) {
-         r.push(el);
-    }
-   }
-  return r;
+    return r;
 }
 
 
@@ -834,21 +851,23 @@ function findRoots(els) {
  */
 
 function selMap(obj, iterator, context) {
-    
-	var results = [], i = 0, l;
-    
-	if (obj == null) {
-  	 
-	 return results;
-	
-	}
-	
+
+    var results = [],
+        i = 0,
+        l;
+
+    if (obj === null) {
+
+        return results;
+
+    }
+
     l = obj.length;
-	
-	for (; i < l; i++) { 
-	
-        results.push(iterator.call(context, obj[i], i));	
-	}
+
+    for (; i < l; i++) {
+
+        results.push(iterator.call(context, obj[i], i));
+    }
 
     return results;
-  };
+}
