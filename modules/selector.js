@@ -38,8 +38,6 @@ var
 
     rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
 
-    findExpr = !!doc.getElementsByClassName ? /^(?:(\w+)|\.([\w\-]+))$/ : /^(?:(\w+))$/,
-
     sibling = /[\x20\t\r\n\f]*[+~>]/,
 
     aTag = /^(\w+|\*)\[/,
@@ -509,6 +507,7 @@ var
 
             'eq': function (el, n, i) {
 
+
                 return n - 0 === i;
             }
         },
@@ -526,7 +525,7 @@ var
 
                     hAzzle.error(pseu);
                 }
-
+alert("d")
                 var els = el.getElementsByTagName(tag),
                     i = 0,
                     l = els.length,
@@ -1079,160 +1078,7 @@ hAzzle.extend({
      *
      */
 
-    find: function (selector, context, /*INTERNAL*/ all) {
-
-        var quickMatch = findExpr.exec(selector),
-            elements, old, nid;
-
-        doc = hAzzle.setDocument(context);
-
-        context = context || doc;
-
-        if (quickMatch) {
-
-            if (quickMatch[1]) {
-
-                // speed-up: 'TAG'
-                elements = context.getElementsByTagName(selector);
-
-            } else {
-
-                // speed-up: '.CLASS'
-                elements = context.getElementsByClassName(quickMatch[2]);
-            }
-
-            if (elements && !all) {
-
-                elements = elements[0];
-            }
-
-        } else {
-
-            old = true;
-            nid = expando;
-
-            if (context !== doc) {
-
-                if ((old = context.getAttribute('id'))) {
-
-                    nid = old.replace(rescape, '\\$&');
-
-                } else {
-
-                    context.setAttribute('id', nid);
-                }
-
-                nid = "[id='" + nid + "'] ";
-
-                context = sibling.test(selector) ? context.parentNode : context;
-                selector = nid + selector.split(',').join(',' + nid);
-            }
-
-            try {
-                elements = context[all ? 'querySelectorAll' : 'querySelector'](selector);
-            } finally {
-                if (!old) context.removeAttribute('id');
-            }
-        }
-
-        return elements;
-    },
-
-
-    /**
-     * Find all matched elements by css selector
-     * @param  {String} selector
-     * @param  {Object/String} context
-     * @return {hAzzle}
-     */
-
-    findAll: function (selector, context) {
-        return this.find(selector, context || doc, true);
-    },
-
-
-    /**
-     * hAzzle matches
-     *
-     * Todo!
-     *
-     * Mehran!!
-     *
-     * Add match check against pseudos
-     *
-     */
-
-
-    matches: function (selector, context) {
-
-        if (typeof selector !== 'string') {
-
-            return null;
-        }
-
-        var quick = rquickIs.exec(selector),
-            i = 0,
-            l = context.length,
-            result = [];
-
-        if (quick) {
-            //   0  1    2   3          4
-            // [ _, tag, id, attribute, class ]
-            if (quick[1]) {
-
-                quick[1] = quick[1].toLowerCase();
-            }
-
-            if (quick[3]) {
-
-                quick[3] = quick[3].split('=');
-            }
-
-            if (quick[4]) {
-
-                quick[4] = ' ' + quick[4] + ' ';
-            }
-        }
-
-        // Always make sure we have a nodeName
-
-        if (quick && context.nodeName) {
-
-            result = (
-                (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
-                (!quick[2] || context.id === quick[2]) &&
-                (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-                (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
-            );
-
-            // Fallback to hAzzle.matchesSelector
-
-        } else {
-
-            // Do a quick look-up if no array-context
-            //
-            // matchesSelector can't be run on XML docs,
-            // but we are solving this inside the 
-            // matchesSelector.js module
-
-            if (!l) {
-
-                return hAzzle.matchesSelector(context, selector);
-            }
-
-            // loop through
-
-            for (; i < l; i++) {
-
-                if (hAzzle.matchesSelector(context[i], selector)) {
-
-                    result.push(context[i]);
-                }
-            }
-        }
-
-        return result;
-    }
+    
 
 }, hAzzle);
 
