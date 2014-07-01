@@ -18,10 +18,6 @@ var win = this,
 
     pheader = /^h\d$/i,
 
-    identifier = '(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+',
-
-    langidentifier = new RegExp('^' + identifier + '$'),
-
     whitespace = "[\\x20\\t\\r\\n\\f]",
 
     // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
@@ -79,28 +75,6 @@ hAzzle.extend({
     'target': function (el) {
         var hash = win.location && win.location.hash;
         return hash && hash.slice(1) === el.id;
-    },
-	
-	'lang': function (el, lang) {
-    
-        if (!langidentifier.test(lang || '')) {
-            hAzzle.error('unsupported lang: ' + lang);
-        }
-        lang = lang.replace(runescape, funescape).toLowerCase();
-
-        var elemLang;
-
-        do {
-			
-            if ((elemLang = hAzzle.documentIsHTML ?
-                el.lang :
-                el.getAttribute('xml:lang') || el.getAttribute('lang'))) {
-
-                elemLang = elemLang.toLowerCase();
-                return elemLang === lang || indexOf(elemLang, lang + '-') === 0;
-            }
-        } while ((el = el.parentNode) && el.nodeType === 1);
-        return false;
     },
 
     'has': function (el, selector) {
@@ -231,8 +205,7 @@ hAzzle.extend({
         return !!el.defaultSelected;
     },
     'valid': function (el) {
-     
-	    return el.willValidate || (el.validity && el.validity.valid);
+    return el.willValidate || (el.validity && el.validity.valid);
     },
     'invalid': function (el) {
    
@@ -378,8 +351,8 @@ pseudos.not.batch = true;
         };
     }
 
-    pseudos['column'] = matchColumn(false);
-    pseudos['column'].batch = true;
+    pseudos.column = matchColumn(false);
+    pseudos.column.batch = true;
     pseudos['nth-column'] = matchColumn(true);
     pseudos['nth-column'].batch = true;
     pseudos['nth-last-column'] = matchColumn(true, true);
