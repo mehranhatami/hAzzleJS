@@ -73,7 +73,7 @@ hAzzle.matchesSelector = function (elem, selector) {
         }
 
     } else {
-
+		
         // append to fragment if no parent
 
         checkParent(elem);
@@ -98,5 +98,5 @@ hAzzle.matchesSelector = function (elem, selector) {
 
         // otherwise return false
         return false;
-    }
+    } 
 };
