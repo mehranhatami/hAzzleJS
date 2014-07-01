@@ -471,7 +471,7 @@ function find(e, roots, matchRoots) {
 
     if (e.id) {
         els = [];
-        roots.forEach(function (root) {
+        hAzzle.each(roots, function (root) {
             var doc, el;
             doc = root.ownerDocument || root;
             if (root === doc || (root.nodeType === 1 && hAzzle.contains(doc.documentElement, root))) {
@@ -515,24 +515,26 @@ function find(e, roots, matchRoots) {
 function filter(els, e, roots, matchRoots) {
 
     if (e.id) {
-        els = els.filter(function (el) {
+        els = hAzzle.filter(els, function (el) {
             return el.id === e.id;
         });
     }
     if (e.tag && e.tag !== '*' && !e.ignoreTag) {
-        els = els.filter(function (el) {
+        els = hAzzle.filter(els, function (el) {
             return el.nodeName.toLowerCase() === e.tag;
         });
     }
     if (e.classes && !e.ignoreClasses) {
-        e.classes.forEach(function (cls) {
-            els = els.filter(function (el) {
+
+        hAzzle.each(e.classes, function (cls) {
+            els = hAzzle.filter(els, function (el) {
                 return (" " + el.className + " ").indexOf(" " + cls + " ") >= 0;
             });
         });
     }
     if (e.attrs) {
-        e.attrs.forEach(function (_arg) {
+
+        hAzzle.each(e.attrs, function (_arg) {
             var ignoreCase, name, op, val;
             name = _arg.name, op = _arg.op, val = _arg.val, ignoreCase = _arg.ignoreCase;
             els = els.filter(function (el) {
@@ -548,8 +550,6 @@ function filter(els, e, roots, matchRoots) {
                  *
                  * I'm so sorry for this, but I think you have to simplify this one :)
                  *
-                 * I was so tired and bored when I wrote this one !!!
-                 *
                  * Kenny
                  *
                  */
@@ -559,13 +559,16 @@ function filter(els, e, roots, matchRoots) {
             });
         });
     }
+
+    // Pseudo
+
     if (e.pseudos) {
 
-        hAzzle.each(e.pseudos, function (_arg) {
+        hAzzle.each(e.pseudos, function (arg) {
 
-            var name = _arg.name,
+            var name = arg.name,
                 pseudo = hAzzle.pseudos[name],
-                val = _arg.val;
+                val = arg.val;
 
             if (!pseudo) {
 
@@ -576,10 +579,9 @@ function filter(els, e, roots, matchRoots) {
 
                 els = pseudo(els, val, roots, matchRoots);
 
-
             } else {
 
-                els = els.filter(function (el) {
+                els = hAzzle.filter(els, function (el) {
                     return pseudo(el, val);
                 });
             }
@@ -590,30 +592,41 @@ function filter(els, e, roots, matchRoots) {
 
 
 function evaluate(e, roots, matchRoots) {
-    var els, ids, outerRoots, sibs, filterParents;
-    els = [];
+    var els = [],
+        ids,
+        outerRoots,
+        sibs,
+        filterParents;
+
     if (roots.length) {
+
         switch (e.type) {
+
         case ' ':
         case '>':
+
             outerRoots = filterDescendents(roots);
+
             els = find(e, outerRoots, matchRoots);
+
             if (e.type === '>') {
-                roots.forEach(function (el) {
+
+                hAzzle.each(roots, function (el) {
                     el._hAzzle_mark = true;
                 });
-                els = els.filter(function (el) {
+                els = hAzzle.filter(els, function (el) {
                     if (el.parentNode) {
                         return el.parentNode._hAzzle_mark;
                     }
                 });
-                roots.forEach(function (el) {
+
+                hAzzle.each(roots, function (el) {
                     el._hAzzle_mark = void 0;
                 });
             }
             if (e.child) {
                 if (e.subject) {
-                    els = els.filter(function (el) {
+                    els = hAzzle.filter(els, function (el) {
                         return evaluate(e.child, [el]).length;
                     });
                 } else {
@@ -625,18 +638,19 @@ function evaluate(e, roots, matchRoots) {
         case '~':
         case ',':
         case '/':
+
             if (e.children.length === 2) {
+
                 sibs = evaluate(e.children[0], roots, matchRoots);
                 els = evaluate(e.children[1], roots, matchRoots);
+
             } else {
+
                 sibs = roots;
 
                 filterParents = filterDescendents(roots.map(function (el) {
                     return el.parentNode;
                 }));
-
-
-
 
                 els = evaluate(e.children[0], filterParents, matchRoots);
             }
@@ -676,15 +690,20 @@ function evaluate(e, roots, matchRoots) {
                         el._hAzzle_mark = void 0;
                     }
                 });
+
             } else if (e.type === '~') {
+
                 hAzzle.each(sibs, function (el) {
+
                     while (el.nextElementSibling && !el._hAzzle_mark) {
                         el._hAzzle_mark = true;
                     }
                 });
+
                 els = hAzzle.filter(els, function (el) {
                     return el._hAzzle_mark;
                 });
+
                 hAzzle.each(sibs, function (el) {
                     while (el.nextElementSibling && el._hAzzle_mark) {
                         el._hAzzle_mark = void 0;
