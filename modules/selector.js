@@ -511,9 +511,9 @@ function find(e, roots, matchRoots) {
 
     if (e.id) {
 
-     els = [];
-	 
-       var  x = 0,
+        els = [];
+
+        var x = 0,
             length = roots.length,
             root, doc,
             el;
@@ -712,6 +712,8 @@ function filter(els, e, roots, matchRoots) {
 function evaluate(e, roots, matchRoots) {
 
     var els = [],
+        child = e.child,
+        children = e.children,
         ids, outerRoots, sibs, type = e.type;
 
     if (roots.length) {
@@ -753,31 +755,36 @@ function evaluate(e, roots, matchRoots) {
                 }
             }
 
-            if (e.child) {
+            if (child) {
 
                 if (e.subject) {
 
                     els = selfilter(els, function (el) {
-                        return evaluate(e.child, [el]).length;
+                        return evaluate(child, [el]).length;
                     });
 
                 } else {
 
-                    els = evaluate(e.child, els);
+                    els = evaluate(child, els);
                 }
             }
+
+            // Siblings selectors
 
         } else if (type === '+' ||
             type === '~' ||
             type === ',' ||
             type === '/') {
 
-            if (e.children.length === 2) {
-                sibs = evaluate(e.children[0], roots, matchRoots);
-                els = evaluate(e.children[1], roots, matchRoots);
+            if (children.length === 2) {
+
+                sibs = evaluate(children[0], roots, matchRoots);
+                els = evaluate(children[1], roots, matchRoots);
+
             } else {
+
                 sibs = roots;
-                els = evaluate(e.children[0], outerParents(roots), matchRoots);
+                els = evaluate(children[0], outerParents(roots), matchRoots);
             }
 
             if (type === ',') {
@@ -795,47 +802,78 @@ function evaluate(e, roots, matchRoots) {
                     return ~ids.indexOf(el.id);
                 });
 
-            } else if (type === '+') {
+                // Next Adjacent Selector
 
-                hAzzle.each(sibs, function (el) {
-                    if ((el = nextElementSibling(el))) {
-                        el._hAzzle_mark = true;
+            } else if (type === '+') {
+                var q = 0,
+                    le = sibs.length,
+                    elem;
+
+                for (; q < le; q++) {
+
+                    elem = sibs[q];
+
+
+                    if ((elem = nextElementSibling(elem))) {
+                        elem._hAzzle_mark = true;
                     }
-                });
+                }
 
                 els = selfilter(els, function (el) {
 
                     return el._hAzzle_mark;
                 });
+                // Always zero out		
+                q = 0;
 
-                hAzzle.each(sibs, function (el) {
+                for (; q < le; q++) {
 
-                    if ((el = nextElementSibling(el))) {
-                        el._hAzzle_mark = undefined;
+                    elem = sibs[q];
+
+                    if ((elem = nextElementSibling(elem))) {
+                        elem._hAzzle_mark = undefined;
                     }
-                });
+                }
+
+
+
+                // Next sibling
 
             } else if (type === '~') {
 
-                hAzzle.each(sibs, function (el) {
+                var u = 0,
+                    leng = sibs.length,
+                    el;
+
+                for (; u < leng; u++) {
+
+                    el = sibs[u];
 
                     while ((el = nextElementSibling(el)) && !el._hAzzle_mark) {
 
                         el._hAzzle_mark = true;
                     }
-                });
+                }
+                // Filter the selectors
 
                 els = selfilter(els, function (el) {
                     return el._hAzzle_mark;
                 });
 
-                hAzzle.each(sibs, function (el) {
+                // Always zero out
+
+
+                u = 0;
+
+                for (; u < leng; u++) {
+
+                    el = sibs[u];
 
                     while ((el = nextElementSibling(el)) && el._hAzzle_mark) {
 
                         el._hAzzle_mark = undefined;
                     }
-                });
+                }
             }
         }
     }

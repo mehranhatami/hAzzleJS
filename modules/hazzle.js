@@ -218,7 +218,8 @@
             if (typeof fn === 'function') {
                 return hAzzle.ready(fn);
             }
-        }
+        },
+	
     };
 
     /**
@@ -266,7 +267,7 @@
          */
 
         error: function (msg) {
-            throw new Error("Syntax error: " + msg );
+            throw new Error( msg );
         },
 
         /**
