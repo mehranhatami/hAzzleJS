@@ -580,7 +580,6 @@ function find(e, roots, matchRoots) {
             return el.nodeType === 1;
         });
 
-
         els = union(els, filter(fr, e, roots, matchRoots));
     }
     return els;
@@ -590,12 +589,12 @@ function find(e, roots, matchRoots) {
 
 function filter(els, e, roots, matchRoots) {
 
-    if (e.id) {
-
+    if (e.id && hAzzle.features.gEBI) {
         els = selfilter(els, function (el) {
             return el.id === e.id;
         });
     }
+
     if (e.tag && e.tag !== '*' && !e.ignoreTag) {
 
         els = selfilter(els, function (el) {
@@ -787,6 +786,8 @@ function evaluate(e, roots, matchRoots) {
                 els = evaluate(children[0], outerParents(roots), matchRoots);
             }
 
+            // Split by comma
+
             if (type === ',') {
 
                 els = union(sibs, els);
@@ -805,6 +806,7 @@ function evaluate(e, roots, matchRoots) {
                 // Next Adjacent Selector
 
             } else if (type === '+') {
+
                 var q = 0,
                     le = sibs.length,
                     elem;
@@ -835,23 +837,21 @@ function evaluate(e, roots, matchRoots) {
                     }
                 }
 
-
-
                 // Next sibling
 
             } else if (type === '~') {
 
                 var u = 0,
                     leng = sibs.length,
-                    el;
+                    ele;
 
                 for (; u < leng; u++) {
 
-                    el = sibs[u];
+                    ele = sibs[u];
 
-                    while ((el = nextElementSibling(el)) && !el._hAzzle_mark) {
+                    while ((ele = nextElementSibling(ele)) && !ele._hAzzle_mark) {
 
-                        el._hAzzle_mark = true;
+                        ele._hAzzle_mark = true;
                     }
                 }
                 // Filter the selectors
@@ -862,16 +862,15 @@ function evaluate(e, roots, matchRoots) {
 
                 // Always zero out
 
-
                 u = 0;
 
                 for (; u < leng; u++) {
 
-                    el = sibs[u];
+                    ele = sibs[u];
 
-                    while ((el = nextElementSibling(el)) && el._hAzzle_mark) {
+                    while ((ele = nextElementSibling(ele)) && ele._hAzzle_mark) {
 
-                        el._hAzzle_mark = undefined;
+                        ele._hAzzle_mark = undefined;
                     }
                 }
             }
@@ -882,10 +881,8 @@ function evaluate(e, roots, matchRoots) {
 }
 
 function nextElementSibling(el) {
-    return el.nextElementSibling;
+    return el.nodeType === 1 && el.nextElementSibling;
 }
-
-
 
 
 function findRoots(els) {

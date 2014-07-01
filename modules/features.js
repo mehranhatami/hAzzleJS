@@ -124,7 +124,9 @@
 		     return div.getElementsByClassName("i").length === 2;
           }),
 
-          // Check if getElementById returns elements by name (IE 9)
+           // Support: IE<10
+           // The broken getElementById methods don't pick up programatically-set names,
+           // so use a roundabout getElementsByName test
 
           gEBI: assert(function (div) {
               var sid = "hAzzle" + -(new Date());
