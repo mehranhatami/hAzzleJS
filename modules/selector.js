@@ -484,14 +484,14 @@ function find(e, roots, matchRoots) {
             }
         });
     } else if (e.classes && find.byClass) {
-        els = roots.map(function (root) {
-            return e.classes.map(function (cls) {
+        els = hAzzle.map(roots, function (root) {
+            return hAzzle.map(e.classes, function (cls) {
                 return root.getElementsByClassName(cls);
             }).reduce(union);
         }).reduce(extend, []);
         e.ignoreClasses = true;
     } else {
-        els = roots.map(function (root) {
+        els = hAzzle.map(roots, function (root) {
             return root.getElementsByTagName(e.tag || '*');
         }).reduce(extend, []);
         if (find.filterComments && (!e.tag || e.tag === '*')) {
@@ -648,7 +648,7 @@ function evaluate(e, roots, matchRoots) {
 
                 sibs = roots;
 
-                filterParents = filterDescendents(roots.map(function (el) {
+                filterParents = filterDescendents(hAzzle.map(roots, function (el) {
                     return el.parentNode;
                 }));
 
@@ -663,7 +663,7 @@ function evaluate(e, roots, matchRoots) {
 
             } else if (e.type === '/') {
 
-                ids = sibs.map(function (el) {
+                ids = hAzzle.map(sibs, function (el) {
 
                     return hAzzle.attr(el, e.idref).replace(sibreg, '');
                 });
