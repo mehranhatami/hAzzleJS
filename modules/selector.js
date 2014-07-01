@@ -304,7 +304,6 @@ function outerParents(els) {
     }));
 }
 
-
 function union(a, b) {
     return hAzzle.combine(a, b, true, true, {
         '0': 0,
@@ -312,7 +311,6 @@ function union(a, b) {
         '1': 2
     });
 }
-
 
 /**
  * Normalize roots
@@ -350,7 +348,6 @@ function normalizeRoots(roots) {
     }
 }
 
-
 function extend(a, b) {
     var x, i = 0,
         len = b.length;
@@ -362,18 +359,14 @@ function extend(a, b) {
     return a;
 }
 
-
-
 function compile(selector) {
-
-
 
     if (selector in compile.cache) {
 
         return compile.cache[selector];
     }
 
-    var ps = parseSimple(selector),
+    var ps = parse(selector),
         e = ps,
         last = ps,
         result = ps;
@@ -387,7 +380,7 @@ function compile(selector) {
 
         selector = selector.substr(last[0].length);
 
-        e = parseSimple(selector);
+        e = parse(selector);
 
         if (e.compound) {
 
@@ -411,7 +404,7 @@ function compile(selector) {
 
 compile.cache = {};
 
-function parseSimple(selector) {
+function parse(selector) {
 
     var e, group, name;
 
