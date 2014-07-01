@@ -2,10 +2,11 @@
  * hAzzle CSS pseudo selector
  *
  * hAzzle supports CSS4!!!
- *
  */
 
 var win = this,
+    
+	doc = win.document,
 
     i,
 
@@ -25,11 +26,9 @@ var win = this,
 
     // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
     runescape = new RegExp("\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig"),
+
     funescape = function (_, escaped, escapedWhitespace) {
         var high = "0x" + escaped - 0x10000;
-        // NaN means non-codepoint
-        // Support: Firefox<24
-        // Workaround erroneous numeric interpretation of +"0x"
         return high !== high || escapedWhitespace ?
             escaped :
             high < 0 ?
@@ -40,6 +39,7 @@ var win = this,
     };
 
 /* =========================== PSEUDO SELECTORS ========================== */
+
 hAzzle.extend({
 
     'parent': function (el) {
@@ -47,8 +47,7 @@ hAzzle.extend({
     },
 
     'selected': function (el) {
-        // Accessing this property makes selected-by-default
-        // options in Safari work properly
+
         if (el.parentNode) {
             el.parentNode.selectedIndex;
         }
@@ -65,11 +64,12 @@ hAzzle.extend({
     },
 
     'active': function (el) {
+		
         return el === el.activeElement;
     },
 
     'focus': function (el) {
-        return el === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
+        return el === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(el.type || el.href || ~el.tabIndex);
     },
 
     'hover': function (el) {
@@ -79,8 +79,10 @@ hAzzle.extend({
     'target': function (el) {
         var hash = win.location && win.location.hash;
         return hash && hash.slice(1) === el.id;
-    },    'lang': function (el, lang) {
-        // lang value must be a valid identifier
+    },
+	
+	'lang': function (el, lang) {
+    
         if (!langidentifier.test(lang || '')) {
             hAzzle.error('unsupported lang: ' + lang);
         }
@@ -89,6 +91,7 @@ hAzzle.extend({
         var elemLang;
 
         do {
+			
             if ((elemLang = hAzzle.documentIsHTML ?
                 el.lang :
                 el.getAttribute('xml:lang') || el.getAttribute('lang'))) {
@@ -122,11 +125,20 @@ hAzzle.extend({
     },
 
     'enabled': function (el) {
+		
         return el.disabled === false;
     },
+	
     'checked': function (el) {
         return el.checked === true;
     },
+    
+	// non-standard
+    
+	'unchecked': function (el) {
+        return el.checked === false;
+    },
+
     'disabled': function (el) {
         return el.disabled === true;
     },
@@ -163,6 +175,7 @@ hAzzle.extend({
         return el.value > el.min && el.value <= el.max;
     },
     ':out-of-range': function (el) {
+		
         return !pseudos['in-range'](el);
     },
     'required': function (el) {
@@ -218,9 +231,11 @@ hAzzle.extend({
         return !!el.defaultSelected;
     },
     'valid': function (el) {
-        return el.willValidate || (el.validity && el.validity.valid);
+     
+	    return el.willValidate || (el.validity && el.validity.valid);
     },
     'invalid': function (el) {
+   
         return !pseudos.valid(el);
     },
 
@@ -235,17 +250,18 @@ hAzzle.extend({
 
         return (name || el.disabled) && attr === null && prop !== 'true';
     },
+
     'read-write': function (el) {
+		
         return !pseudos['read-only'](el);
     },
-
-
 
     // Complex pseudos
 
     'not': function (els, val, roots, matchRoots) {
         return difference(els, hAzzle.tricky(val, roots, matchRoots));
     }
+	
 }, pseudos);
 
 pseudos.matches.batch = true;
@@ -383,15 +399,15 @@ pseudos.not.batch = true;
                 len = set.length;
 
             hAzzle.each(set, function (el, i) {
-                el._sel_index = (reversed ? len - i : i) + 1;
+                el._hAzzle_index = (reversed ? len - i : i) + 1;
             });
 
             filtered = hAzzle.filter(els, function (el) {
-                return checkNth(el._sel_index, m);
+                return checkNth(el._hAzzle_index, m);
             });
 
             hAzzle.each(set, function (el) {
-                el._sel_index = void 0;
+                el._hAzzle_index = void 0;
             });
             return filtered;
         };
@@ -422,15 +438,15 @@ pseudos.not.batch = true;
 
             hAzzle.each(els, function (el) {
                 var indices, parent;
-                if ((parent = el.parentNode) && parent._sel_children === void 0) {
+                if ((parent = el.parentNode) && parent._hAzzle_children === void 0) {
                     indices = {
                         '*': 0
                     };
                     eachElement(parent, first, next, function (el) {
-                        el._sel_index = ++indices['*'];
-                        el._sel_indexOfType = indices[el.nodeName] = (indices[el.nodeName] || 0) + 1;
+                        el._hAzzle_index = ++indices['*'];
+                        el._hAzzle_indexOfType = indices[el.nodeName] = (indices[el.nodeName] || 0) + 1;
                     });
-                    parent._sel_children = indices;
+                    parent._hAzzle_children = indices;
                 }
 
             });
@@ -441,11 +457,11 @@ pseudos.not.batch = true;
 
             hAzzle.each(els, function (el) {
                 var parent;
-                if ((parent = el.parentNode) && parent._sel_children !== void 0) {
+                if ((parent = el.parentNode) && parent._hAzzle_children !== void 0) {
                     eachElement(parent, first, next, function (el) {
-                        el._sel_index = el._sel_indexOfType = void 0;
+                        el._hAzzle_index = el._hAzzle_indexOfType = void 0;
                     });
-                    parent._sel_children = void 0;
+                    parent._hAzzle_children = void 0;
                 }
             });
             return filtered;
@@ -455,22 +471,22 @@ pseudos.not.batch = true;
     var positionalPseudos = {
 
         'first-child': function (el) {
-            return el._sel_index === 1;
+            return el._hAzzle_index === 1;
         },
         'only-child': function (el) {
-            return el._sel_index === 1 && el.parentNode._sel_children['*'] === 1;
+            return el._hAzzle_index === 1 && el.parentNode._hAzzle_children['*'] === 1;
         },
         'nth-child': function (el, m) {
-            return checkNth(el._sel_index, m);
+            return checkNth(el._hAzzle_index, m);
         },
         'first-of-type': function (el) {
-            return el._sel_indexOfType === 1;
+            return el._hAzzle_indexOfType === 1;
         },
         'only-of-type': function (el) {
-            return el._sel_indexOfType === 1 && el.parentNode._sel_children[el.nodeName] === 1;
+            return el._hAzzle_indexOfType === 1 && el.parentNode._hAzzle_children[el.nodeName] === 1;
         },
         'nth-of-type': function (el, m) {
-            return checkNth(el._sel_indexOfType, m);
+            return checkNth(el._hAzzle_indexOfType, m);
         }
     };
 
