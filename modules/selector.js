@@ -290,10 +290,9 @@ hAzzle.extend({
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
-
 function filterDescendents(els) {
 
-    return hAzzle.filter(els, function (el, i) {
+    return selfilter(els, function (el, i) {
         return el && !(i && (els[i - 1] === el || hAzzle.contains(els[i - 1], el)));
     });
 }
@@ -512,15 +511,16 @@ function find(e, roots, matchRoots) {
 
     if (e.id) {
 
-        els = [],
-		x = 0,
-		length = roots.length,
-		root, doc,
-		el;
-		
-		for (; x < length; x++) {
-		
-			root = roots[x]
+     els = [];
+	 
+       var  x = 0,
+            length = roots.length,
+            root, doc,
+            el;
+
+        for (; x < length; x++) {
+
+            root = roots[x];
 
             doc = root.ownerDocument || root;
 
@@ -576,7 +576,7 @@ function find(e, roots, matchRoots) {
     e.ignoreClasses = undefined;
     if (matchRoots) {
 
-        fr = hAzzle.filter(roots, function (el) {
+        fr = selfilter(roots, function (el) {
             return el.nodeType === 1;
         });
 
@@ -592,31 +592,39 @@ function filter(els, e, roots, matchRoots) {
 
     if (e.id) {
 
-        els = hAzzle.filter(els, function (el) {
+        els = selfilter(els, function (el) {
             return el.id === e.id;
         });
     }
     if (e.tag && e.tag !== '*' && !e.ignoreTag) {
 
-        els = hAzzle.filter(els, function (el) {
+        els = selfilter(els, function (el) {
             return el.nodeName.toLowerCase() === e.tag;
         });
     }
 
     if (e.classes && !e.ignoreClasses) {
-		
-		var z = 0,
-		    le = e.classes.length,
-			cls;
-		
-		for (; z < length; z++) { 
-		   
-		   cls = e.classes[z];
-		
-            els = hAzzle.filter(els, function (el) {
+
+        var z = 0,
+            le = e.classes.length,
+            cls;
+
+        for (; z < length; z++) {
+
+            cls = e.classes[z];
+
+            /**
+             * Mehran!
+             *
+             * Use of classList should be fastest choise here, so
+             * use the classes.js module here, so we have fallback
+             * for the browsers who don't support classList
+             */
+
+            els = selfilter(els, function (el) {
                 return (" " + el.className + " ").indexOf(" " + cls + " ") >= 0;
             });
-        };
+        }
     }
 
     if (e.attrs) {
@@ -639,15 +647,15 @@ function filter(els, e, roots, matchRoots) {
 
             //	Filter
 
-            els = hAzzle.filter(els, function (el) {
-				
+            els = selfilter(els, function (el) {
+
                 attr = hAzzle.attr(el, name);
-                
-				value = attr + "";
-                
-				if (ignoreCase) {
-                
-                   value = value.toLowerCase();
+
+                value = attr + "";
+
+                if (ignoreCase) {
+
+                    value = value.toLowerCase();
                 }
 
                 /**
@@ -690,7 +698,7 @@ function filter(els, e, roots, matchRoots) {
 
             } else {
 
-                els = hAzzle.filter(els, function (el) {
+                els = selfilter(els, function (el) {
 
                     return pseudo(el, arg.val);
                 });
@@ -729,7 +737,7 @@ function evaluate(e, roots, matchRoots) {
                     el._hAzzle_mark = true;
                 }
 
-                els = hAzzle.filter(els, function (el) {
+                els = selfilter(els, function (el) {
                     if (el.parentNode) {
                         return el.parentNode._hAzzle_mark;
                     }
@@ -749,7 +757,7 @@ function evaluate(e, roots, matchRoots) {
 
                 if (e.subject) {
 
-                    els = hAzzle.filter(els, function (el) {
+                    els = selfilter(els, function (el) {
                         return evaluate(e.child, [el]).length;
                     });
 
@@ -783,7 +791,7 @@ function evaluate(e, roots, matchRoots) {
                     return hAzzle.attr(el, e.idref).replace(sibreg, '');
                 });
 
-                els = hAzzle.filter(els, function (el) {
+                els = selfilter(els, function (el) {
                     return ~ids.indexOf(el.id);
                 });
 
@@ -795,7 +803,7 @@ function evaluate(e, roots, matchRoots) {
                     }
                 });
 
-                els = hAzzle.filter(els, function (el) {
+                els = selfilter(els, function (el) {
 
                     return el._hAzzle_mark;
                 });
@@ -817,7 +825,7 @@ function evaluate(e, roots, matchRoots) {
                     }
                 });
 
-                els = hAzzle.filter(els, function (el) {
+                els = selfilter(els, function (el) {
                     return el._hAzzle_mark;
                 });
 
@@ -865,10 +873,11 @@ function findRoots(els) {
     return r;
 }
 
+/* =========================== SELECTOR CORE FUNCTIONS ========================== */
 
 /**
  * Special map function for mapping
- * through our selects.
+ * through our selectors.
  */
 
 function selMap(obj, iterator, context) {
@@ -878,17 +887,37 @@ function selMap(obj, iterator, context) {
         l;
 
     if (obj === null) {
-
         return results;
-
     }
 
     l = obj.length;
 
     for (; i < l; i++) {
-
         results.push(iterator.call(context, obj[i], i));
     }
 
+    return results;
+}
+
+/**
+ * Special filter function for filtering
+ * our selectors.
+ */
+
+function selfilter(obj, predicate, context) {
+
+    var results = [],
+        i = 0,
+        l;
+
+    if (obj === null) {
+        return results;
+    }
+    l = obj.length;
+    for (; i < l; i++) {
+        if (predicate.call(context, obj[i], i)) {
+            results.push(obj[i]);
+        }
+    }
     return results;
 }
