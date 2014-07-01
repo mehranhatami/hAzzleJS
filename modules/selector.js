@@ -512,19 +512,32 @@ function find(e, roots, matchRoots) {
 
     if (e.id) {
 
-        els = [];
-        roots.forEach(function (root) {
-            var doc, el;
+        els = [],
+		x = 0,
+		length = roots.length,
+		root, doc,
+		el;
+		
+		for (; x < length; x++) {
+		
+			root = roots[x]
+
             doc = root.ownerDocument || root;
+
             if (root === doc || (root.nodeType === 1 && hAzzle.contains(doc.documentElement, root))) {
+
                 el = doc.getElementById(e.id);
+
                 if (el && hAzzle.contains(root, el)) {
+
                     els.push(el);
                 }
+
             } else {
+
                 extend(els, root.getElementsByTagName(e.tag || '*'));
             }
-        });
+        }
 
         // Find by 'class'
 
@@ -591,11 +604,19 @@ function filter(els, e, roots, matchRoots) {
     }
 
     if (e.classes && !e.ignoreClasses) {
-        e.classes.forEach(function (cls) {
-            els = els.filter(function (el) {
+		
+		var z = 0,
+		    le = e.classes.length,
+			cls;
+		
+		for (; z < length; z++) { 
+		   
+		   cls = e.classes[z];
+		
+            els = hAzzle.filter(els, function (el) {
                 return (" " + el.className + " ").indexOf(" " + cls + " ") >= 0;
             });
-        });
+        };
     }
 
     if (e.attrs) {
