@@ -11,8 +11,6 @@ var win = this,
 
     pseudos = hAzzle.pseudos,
 
-    indexOf = Array.prototype.indexOf,
-
     pinput = /^(?:input|select|textarea|button)$/i,
 
     pheader = /^h\d$/i,
@@ -167,7 +165,7 @@ hAzzle.extend({
         return typeof el.href === 'string';
     },
 
-    'local-link': function (el, val) {
+   'local-link': function (el) {
         if (el.nodeName) return el.href && el.host === win.location.host;
 
         var param = +el + 1;
@@ -273,6 +271,7 @@ pseudos.not.batch = true;
             return i === b;
 
         } else {
+
             hAzzle.error('Invalid nth expression');
         }
     }
@@ -300,11 +299,16 @@ pseudos.not.batch = true;
                     return checkNth(i, m);
                 };
             }
+
             // Do a quick look-up
+
+            // Todo! Need to be re-developed to normal for-loop for
+            // better performance.
 
             hAzzle.each(table, function (table) {
 
-                var col, max, min, tbody, _i, _len, _ref, span;
+                var col, max, min, tbody, i = 0,
+                    len, ref, span, ib = 0;
 
                 if (!nth) {
 
@@ -324,24 +328,25 @@ pseudos.not.batch = true;
                     };
                 }
 
-                _ref = table.tBodies;
+                ref = table.tBodies;
+                len = ref.length;
 
-                for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                for (; i < len; i++) {
 
-                    tbody = _ref[_i];
+                    tbody = ref[i];
 
                     eachElement(tbody, 'firstChild', 'nextSibling', function (row) {
-                        var i;
+
                         if (row.tagName.toLowerCase() !== 'tr') {
                             return;
                         }
 
-                        i = 0;
+                        ib = 0;
 
                         eachElement(row, first, next, function (col) {
                             span = parseInt(col.getAttribute('span') || 1);
                             while (span) {
-                                if (check(++i)) {
+                                if (check(++ib)) {
                                     set.push(col);
                                 }
                                 span--;
@@ -395,10 +400,10 @@ pseudos.not.batch = true;
     pseudos['nth-last-match'].batch = true;
 
     /**
-     * CSS2 / 3 nth selectors
+     * Parse CSS2 / 3 nth selectors
      */
 
-    function nthPositional(fn, reversed) {
+    function parseNth(fn, reversed) {
 
         var first = reversed ? 'lastChild' : 'firstChild',
             next = reversed ? 'previousSibling' : 'nextSibling';
@@ -464,40 +469,42 @@ pseudos.not.batch = true;
     var positionalPseudos = {
 
         'first-child': function (el) {
+
             return el._hAzzle_index === 1;
         },
+
         'only-child': function (el) {
+
             return el._hAzzle_index === 1 && el.parentNode._hAzzle_children['*'] === 1;
         },
         'nth-child': function (el, m) {
+
             return checkNth(el._hAzzle_index, m);
         },
         'first-of-type': function (el) {
+
             return el._hAzzle_indexOfType === 1;
         },
         'only-of-type': function (el) {
+
             return el._hAzzle_indexOfType === 1 && el.parentNode._hAzzle_children[el.nodeName] === 1;
         },
         'nth-of-type': function (el, m) {
+
             return checkNth(el._hAzzle_indexOfType, m);
         }
     };
 
     for (name in positionalPseudos) {
-
         fn = positionalPseudos[name];
-
-        pseudos[name] = nthPositional(fn);
+        pseudos[name] = parseNth(fn, false);
         pseudos[name].batch = true;
-        if (name.substr(0, 4) !== 'only') {
-            name = name.replace('first', 'last').replace('nth', 'nth-last');
-            pseudos[name] = nthPositional(fn, true);
+        hAzzle.each(['last-child', 'nth-last-child', 'last-of-type', 'nth-last-of-type'], function (name) {
+            pseudos[name] = parseNth(fn, true);
             pseudos[name].batch = true;
-        }
+        });
     }
-
 })();
-
 
 /**
  * Truncate given url
