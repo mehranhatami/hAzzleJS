@@ -245,7 +245,9 @@ hAzzle.event = {
                     hooks.simulate(elem, type);
                 }
 
-                elem.addEventListener(type, rootListener, false);
+                if (elem.nodeType) {
+                    elem.addEventListener(type, rootListener, false);
+                }
             }
         }
 
@@ -1028,7 +1030,7 @@ function triggerListeners(evt, listeners, thisArg) {
 
             if (!listeners[i].removed) {
 
-            /*    // Add rAF if possible
+                /*    // Add rAF if possible
 
                 if (frameEvents[evt.type]) {
 
@@ -1053,8 +1055,8 @@ function triggerListeners(evt, listeners, thisArg) {
 
                 } else {*/
 
-                    listeners[i].handler.call(thisArg, evt);
-             //   }
+                listeners[i].handler.call(thisArg, evt);
+                //   }
 
             }
 
@@ -1122,6 +1124,7 @@ function findTarget(selector, target, elem) {
         }
     }
 }
+
 
 // Delegate handler
 
