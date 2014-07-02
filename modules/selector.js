@@ -14,6 +14,12 @@ var win = this,
     combinatorPattern = /^\s*([,+~]|\/([-\w]+)\/)/,
     selectorPattern = RegExp("^(?:\\s*(>))?\\s*(?:(\\*|\\w+))?(?:\\#([-\\w]+))?(?:\\.([-\\.\\w]+))?((?:" + attrPattern.source + ")*)((?:" + pseudoPattern.source + ")*)(!)?"),
 
+    //    classCache = createCache(),
+
+    //    tokenCache = createCache(),
+
+    compilerCache = createCache(),
+
     hasDuplicate,
 
     selectorGroups = {
@@ -349,60 +355,67 @@ function normalizeRoots(roots) {
 }
 
 function extend(a, b) {
-    var x, i = 0,
-        len = b.length;
+        var x, i = 0,
+            len = b.length;
 
-    for (; i < len; i++) {
-        x = b[i];
-        a.push(x);
+        for (; i < len; i++) {
+            x = b[i];
+            a.push(x);
+        }
+        return a;
     }
-    return a;
-}
+    // compilerCache[ selector + " " ];
 
 function compile(selector) {
 
-    if (selector in compile.cache) {
+    var cached = compilerCache[selector + " "];
 
-        return compile.cache[selector];
-    }
+    if (!cached) {
 
-    var ps = parse(selector),
-        e = ps,
-        last = ps,
-        result = ps;
-
-    if (e.compound) {
-
-        e.children = [];
-    }
-
-    while (e[0].length < selector.length) {
-
-        selector = selector.substr(last[0].length);
-
-        e = parse(selector);
+        var ps = parse(selector),
+            e = ps,
+            last = ps,
+            result = ps;
 
         if (e.compound) {
 
-            e.children = [result];
-            result = e;
-
-        } else if (last.compound) {
-
-            last.children.push(e);
-
-        } else {
-
-            last.child = e;
+            e.children = [];
         }
 
-        last = e;
+        while (e[0].length < selector.length) {
+
+            selector = selector.substr(last[0].length);
+
+            e = parse(selector);
+
+            if (e.compound) {
+
+                e.children = [result];
+                result = e;
+
+            } else if (last.compound) {
+
+                last.children.push(e);
+
+            } else {
+
+                last.child = e;
+            }
+
+            last = e;
+        }
+
+        // Cache the compiled function
+
+        cached = compilerCache(selector, result);
+
+        // Save selector
+
+        cached.selector = selector;
     }
 
-    return compile.cache[selector] = result;
+    return cached;
 }
-
-compile.cache = {};
 
 function parse(selector) {
 
@@ -505,6 +518,7 @@ function find(e, roots, matchRoots) {
     if (e.id) {
 
         els = [];
+
 
         var x = 0,
             length = roots.length,
@@ -948,4 +962,18 @@ function selfilter(obj, predicate, context) {
         }
     }
     return results;
+}
+
+function createCache() {
+    var keys = [];
+
+    function cache(key, value) {
+        // Use (key + " ") to avoid collision with native prototype properties (see Issue #157)
+        if (keys.push(key + " ") > 50) {
+            // Only keep the most recent entries
+            delete cache[keys.shift()];
+        }
+        return (cache[key + " "] = value);
+    }
+    return cache;
 }
