@@ -55,7 +55,7 @@ hAzzle.extend({
 
         return this.each(function (el) {
 
-            if (el.nodeType === 1) {
+            if (el && el.nodeType === 1) {
 
                 // Prevent memory leaks
 
