@@ -152,12 +152,12 @@ var win = this,
         'type': /^<%identifier>/,
 
         // id selector
-        // $1 - id without #
-        'id': /^#(<%identifier>)/,
+      
+	    'id': /^#([\w\-]*)$/,
 
         // class selector
-        // $1 - class without .
-        'class': /^\.(<%identifier>)/,
+
+        'class': /^\.([\w\-]*)$/,
 
         // attribute selector
         // $1 - attribute name
@@ -166,9 +166,7 @@ var win = this,
         // $4 - attribute value (string)
         'attribute': /^\[<%ws>*(<%identifier>)<%ws>*(?:(<%attr_op>)<%ws>*(?:(<%identifier>)|(<%string>))<%ws>*)?\]/,
 
-        'simple_pseudo':
-        // $1 - pseudo class without :
-            /^:(<%identifier>)/,
+        'simple_pseudo': /^:([\w\-]+)(\(['"]?([^()]+)['"]?\))?/,
 
         'nth_pseudo':
         // $1 - nth function (without ':nth-')
@@ -289,7 +287,7 @@ var win = this,
     },
 
     indexOf = function (elem) {
-
+		
         var i = 0,
             len = this.length;
         for (; i < len; i++) {
@@ -299,8 +297,6 @@ var win = this,
         }
         return -1;
     },
-
-
 
     // Here we go....
 
@@ -1516,7 +1512,7 @@ pseudos[co['only-of-type']] = function () {
 
 /**
  * 'Find' function to be used by hAzzle.select if
- * we not are using native QSA
+ * we  are not using querySelectorAll (QSA)
  */
 
 function get(selector, ctx, results) {
@@ -1530,6 +1526,7 @@ function get(selector, ctx, results) {
     // Always set correct context
 
     context = normalizeRoot(ctx);
+	
     results = results || [];
 
     if (!selector || typeof selector !== "string") {
@@ -1537,9 +1534,9 @@ function get(selector, ctx, results) {
     }
 
     if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
-        return [];
+       return [];
     }
-    
+    /*
     if (documentIsHTML) {
         if ((match = rquickExpr.exec(selector))) {
             if ((m = match[1])) {
@@ -1570,7 +1567,8 @@ function get(selector, ctx, results) {
                 return results;
             }
         } 
-    } 
+    } */
+
 
     // call the parser here
     parsed = parse(selector);
