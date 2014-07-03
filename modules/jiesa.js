@@ -134,10 +134,10 @@ hAzzle.extend({
 
 Jiesa.useNative = Jiesa.QSA ?
     function (b) {
-        return b ? Jiesa.QSA : Jiesa.find;
+        return hAzzle.select = b ? Jiesa.QSA : Jiesa.find;
     } : function () {};
 
 
 // Set the selector engine global for hAzzle
 
-hAzzle.select = Jiesa.useNative(true);
+Jiesa.useNative(true);
