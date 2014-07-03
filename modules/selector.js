@@ -152,12 +152,12 @@ var win = this,
         'type': /^<%identifier>/,
 
         // id selector
-      
-	    'id': /^#([\w\-]*)$/,
+        // $1 - id without #
+        'id': /^#(<%identifier>)/,
 
         // class selector
-
-        'class': /^\.([\w\-]*)$/,
+        // $1 - class without .
+        'class': /^\.(<%identifier>)/,
 
         // attribute selector
         // $1 - attribute name
@@ -166,7 +166,9 @@ var win = this,
         // $4 - attribute value (string)
         'attribute': /^\[<%ws>*(<%identifier>)<%ws>*(?:(<%attr_op>)<%ws>*(?:(<%identifier>)|(<%string>))<%ws>*)?\]/,
 
-        'simple_pseudo': /^:([\w\-]+)(\(['"]?([^()]+)['"]?\))?/,
+        'simple_pseudo':
+        // $1 - pseudo class without :
+            /^:(<%identifier>)/,
 
         'nth_pseudo':
         // $1 - nth function (without ':nth-')
@@ -287,7 +289,6 @@ var win = this,
     },
 
     indexOf = function (elem) {
-		
         var i = 0,
             len = this.length;
         for (; i < len; i++) {
@@ -563,60 +564,46 @@ function compileSimple() {
 
     while (left !== '') {
 
-        switch (left.charAt(0)) {
+        la = left.charAt(0);
 
-        case '#':
+        if (la === '#') {
 
             if (!parseID()) {
-
-                hAzzle.error('invalid selector expression');
+                err;
             }
 
-            break;
-
-        case '.':
+        } else if (la === '.') {
 
             if (!parseCLASS()) {
-
-                hAzzle.error('invalid selector expression');
+                err;
             }
-            break;
-
-        case '[':
+        } else if (la === '[') {
 
             if (!parseATTR()) {
-
-                hAzzle.error('invalid selector expression');
-
+                err;
             }
-            break;
 
-        case ':':
+        } else if (la === ':') {
 
             if (/^:not/i.test(left)) {
-
                 if (!compileNOT()) {
-
-                    hAzzle.error('invalid selector expression');
-
+                    err;
                 }
             } else {
-
                 if (!compilePseudo()) {
-
-                    hAzzle.error('invalid selector expression');
+                    err;
                 }
             }
 
-            break;
+        } else {
 
-        default:
             // if remaining expression's length is same, we couldn't match anything
+
             if (left.length == l) {
-
-                hAzzle.error('invalid selector expression');
-
-            } else return;
+                err;
+            } else {
+                return;
+            }
         }
     }
 }
@@ -1526,7 +1513,6 @@ function get(selector, ctx, results) {
     // Always set correct context
 
     context = normalizeRoot(ctx);
-	
     results = results || [];
 
     if (!selector || typeof selector !== "string") {
@@ -1534,9 +1520,9 @@ function get(selector, ctx, results) {
     }
 
     if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
-       return [];
+        return [];
     }
-    /*
+
     if (documentIsHTML) {
         if ((match = rquickExpr.exec(selector))) {
             if ((m = match[1])) {
@@ -1566,9 +1552,8 @@ function get(selector, ctx, results) {
                 push.apply(results, context.getElementsByClassName(m));
                 return results;
             }
-        } 
-    } */
-
+        }
+    }
 
     // call the parser here
     parsed = parse(selector);
