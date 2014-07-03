@@ -9,7 +9,7 @@
 		<script type="text/javascript" src="modules/matchesselector.js"></script>
 		<script type="text/javascript" src="modules/selector.js"></script>
 		<script type="text/javascript" src="modules/pseudo.js"></script>        
-        <script type="text/javascript" src="find.js"></script>
+        <!-- <script type="text/javascript" src="find.js"></script> -->
 		<script type="text/javascript" src="modules/funcs.js"></script>
 		<script type="text/javascript" src="modules/traversing.js"></script>
 		<script type="text/javascript" src="modules/data.js"></script>
@@ -33,14 +33,14 @@
 	</head>
 	<body>
 		<div id="container">
-			<div id="box1-container" class="box" style="width:400px;height:150px;border:solid 1px blue;">
+			<div id="box1-container" class="box box1" style="width:400px;height:150px;border:solid 1px blue;">
 				<div id="box1" class="box" style="width:200px;height:100px;border:solid 1px red;">
 					<div>
 						<input type="text" />
 					</div>
 				</div>
 			</div>
-			<div id="box2-container" class="box" style="width:400px;height:150px;border:solid 1px blue;">
+			<div id="box2-container" class="box box2" style="width:400px;height:150px;border:solid 1px blue;">
 				<div id="box2" class="box" style="width:200px;height:100px;border:solid 1px red;">
 					<div>
 						<input id="txt2" type="text" />
@@ -56,8 +56,13 @@
 			hAzzle('.box').on('focusout', function(){
 				console.log('focusout: ' + this.id);
 			});
-			hAzzle(document.body).on('click', '.box', function(){
-				console.log('delegation:click: ' + this.id);
+			hAzzle(document.body).on('mousemove', '.box1', function(){
+				//debugger;
+				console.log('delegation:mousemove: ' + this.id);
+			});
+			hAzzle('.box2').on('mousemove', function(){
+				//debugger;
+				console.log('non-delegation:mousemove: ' + this.id);
 			});
 		</script>
 	</body>
