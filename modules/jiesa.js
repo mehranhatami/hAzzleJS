@@ -1,6 +1,26 @@
+/**
+ * Jiesa selector engine
+ *
+ * Contains:
+ *
+ * - QSA engine
+ *
+ * - Jiesa engine
+ *
+ * - Various bug checks
+ *
+ */
 var win = this,
     Jiesa = hAzzle.Jiesa,
-    doc = win.document;
+    doc = win.document,
+
+    push = Array.prototype.push,
+
+    whitespace = "[\\x20\\t\\r\\n\\f]",
+
+    rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+
+    rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g");
 
 // Set up Jiesa
 hAzzle.extend({
@@ -75,9 +95,61 @@ hAzzle.extend({
 
     find: function (selector, context) {
 
+        var match, elem, m, nodeType, results = [];
+
+        if ((context ? context.ownerDocument || context : doc) !== document) {
+            hAzzle.setDocument(context);
+        }
+
+        context = context || document;
+        results = results || [];
+
+        if (!selector || typeof selector !== "string") {
+
+            return results;
+        }
+
+        if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+            return [];
+        }
+
+        if (hAzzle.documentIsHTML) {
+
+            // Shortcuts
+            if ((match = rquickExpr.exec(selector))) {
+                if ((m = match[1])) {
+                    if (nodeType === 9) {
+                        elem = context.getElementById(m);
+                        if (elem && elem.parentNode) {
+                            if (elem.id === m) {
+                                results.push(elem);
+                                return results;
+                            }
+                        } else {
+                            return results;
+                        }
+                    } else {
+
+                        if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
+                            hAzzle.contains(context, elem) && elem.id === m) {
+                            results.push(elem);
+                            return results;
+                        }
+                    }
+
+                } else if (match[2]) {
+                    push.apply(results, context.getElementsByTagName(selector));
+                    return results;
+                } else if ((m = match[3]) && context.getElementsByClassName) {
+                    push.apply(results, context.getElementsByClassName(m));
+                    return results;
+                }
+            }
+        }
+
         // All others...
 
-        return Jiesa.parse(selector, context);
+        return Jiesa.parse(selector.replace(rtrim, "$1"), context);
     },
 
     /**
