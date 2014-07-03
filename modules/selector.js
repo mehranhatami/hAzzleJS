@@ -734,11 +734,11 @@ function compilePseudo() {
             x = arr[4],
             ws = /\s/g;
 
-        // Mehran!! IE treats arr[2], arr[3], arr[4] differently than other browsers --
+        // !! IE treats arr[2], arr[3], arr[4] differently than other browsers --
         // if nothing is matched, these will be undefined in other browsers BUT
         // will be empty strings in IE. Take care of this.
 
-        // Mehran!! a and x are mutually exclusive -- they can't be
+        // !! a and x are mutually exclusive -- they can't be
         // non-undefined or undefnied at the same time; if a is undefined,
         // x must be non-undefined, and vice-versa
 
@@ -1164,7 +1164,7 @@ filter[co['NOT_PSEUDO']] = function () {
 filter[co['DESCENDANT']] = function () {
 
     /** 
-     * Mehran!
+     * !
      *
      * Note very carefully that the following method of collecting
      * descendants (specially caching) relies on the fact that elements
@@ -1522,7 +1522,7 @@ function get(selector, ctx, results) {
     if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
         return [];
     }
-
+/*
     if (documentIsHTML) {
         if ((match = rquickExpr.exec(selector))) {
             if ((m = match[1])) {
@@ -1554,7 +1554,7 @@ function get(selector, ctx, results) {
             }
         }
     }
-
+*/
     // call the parser here
     parsed = parse(selector);
 
