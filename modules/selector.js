@@ -1,7 +1,6 @@
 /**
  * Jiesa - hAzzle selector engine
  */
-
 var win = this,
 
     winDoc = win.document,
@@ -9,26 +8,6 @@ var win = this,
     // document & root
 
     docElem = hAzzle.docElem,
-
-    toArray = function() {
-			var self = this, arr = [],
-			    i = 0, l = self.length;
-				
-			for ( ; i < l; i++ )
-				arr.push( self[i] );
-			return arr;
-	},
-	
-	indexOf = function( elem ) {
-		var i = 0,
-			len = this.length;
-		for ( ; i < len; i++ ) {
-			if ( this[i] === elem ) {
-				return i;
-			}
-		}
-		return -1;
-	},
 
     documentIsHTML = hAzzle.documentIsHTML,
 
@@ -38,14 +17,9 @@ var win = this,
 
     pi = 0,
 
-   context,
+    context,
 
     found,
-
-    csp = hAzzle.features.classList,
-
-    sMa = hAzzle.features.sMa, // Multiple arguments
-
 
     // variables for nth-pseudo arguments
     a, b,
@@ -54,7 +28,7 @@ var win = this,
     // Note: callIndex will be incremented for every new call to the getter
     // but gUID can be incremented anytime a new id is required
     callIndex = 0,
-	
+
     gUID = 0,
 
     // mathod containers -- find, filter, pseudos
@@ -303,6 +277,30 @@ var win = this,
         return (a = e.getAttributeNode(a)) && a.specified;
     },
 
+    toArray = function () {
+        var self = this,
+            arr = [],
+            i = 0,
+            l = self.length;
+
+        for (; i < l; i++)
+            arr.push(self[i]);
+        return arr;
+    },
+
+    indexOf = function (elem) {
+
+        var i = 0,
+            len = this.length;
+        for (; i < len; i++) {
+            if (this[i] === elem) {
+                return i;
+            }
+        }
+        return -1;
+    },
+
+
 
     // Here we go....
 
@@ -472,29 +470,29 @@ var win = this,
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
- /**
-  * Sort Attributes
-  */
-  
- function sortAttr( elem, name, operator, check ) {
-	var result = hAzzle.attr( elem, name );
-	  if ( result == null ) {
-		return operator === "!=";
-	 }
+/**
+ * Sort Attributes
+ */
 
-	if ( !operator ) {
-		return true;
-	}
-		result += "";
+function sortAttr(elem, name, operator, check) {
+    var result = hAzzle.attr(elem, name);
+    if (result === null) {
+        return operator === "!=";
+    }
 
-	return operator === "=" ? result === check :
-			operator === "!=" ? result !== check :
-			operator === "^=" ? check && result.indexOf( check ) === 0 :
-			operator === "*=" ? check && result.indexOf( check ) > -1 :
-			operator === "$=" ? check && result.slice( -check.length ) === check :
-			operator === "~=" ? ( " " + result + " " ).indexOf( check ) > -1 :
-			operator === "|=" ? result === check || result.slice( 0, check.length + 1 ) === check + "-" :
-	false;
+    if (!operator) {
+        return true;
+    }
+    result += "";
+
+    return operator === "=" ? result === check :
+        operator === "!=" ? result !== check :
+        operator === "^=" ? check && result.indexOf(check) === 0 :
+        operator === "*=" ? check && result.indexOf(check) > -1 :
+        operator === "$=" ? check && result.slice(-check.length) === check :
+        operator === "~=" ? (" " + result + " ").indexOf(check) > -1 :
+        operator === "|=" ? result === check || result.slice(0, check.length + 1) === check + "-" :
+        false;
 }
 
 
@@ -943,7 +941,7 @@ function parse(expr) {
 
 /* =========================== FIND METHODS ========================== */
 
-find[co['TYPE']] = function () { 	
+find[co['TYPE']] = function () {
     found = toArray.call(context.getElementsByTagName(parsed[pi++]), 0);
 };
 
@@ -951,44 +949,44 @@ find[co['ID']] = function () {
     var e = context.getElementById(parsed[pi++]);
 
     if (e) {
-		
-		found = (context === document) ? [e] : (hAzzle.contains(context, e) ? [e] : []);
-	
-	} else {
-	 
-	 found = [];	
-	}
+
+        found = (context === document) ? [e] : (hAzzle.contains(context, e) ? [e] : []);
+
+    } else {
+
+        found = [];
+    }
 };
 
 find[co['CLASS']] = function () {
-		
-   if(documentIsHTML) {
-	   
-    var e = toArray.call(context.getElementsByClassName(parsed[pi++]));
-	
-    if (e) {
-		
-		found = e;
-	
-	} else {
-	 
-	   found = [];	
-	}
-    
-	// If XML, we have to use 'getElementsByTagName' and
-    // filter the result - a much slower solution
-	
-  } else { 
-	
-	  found = context.getElementsByTagName('*');
-	  filter[co['CLASS']]();
-  }
-  
+
+    if (documentIsHTML) {
+
+        var e = toArray.call(context.getElementsByClassName(parsed[pi++]));
+
+        if (e) {
+
+            found = e;
+
+        } else {
+
+            found = [];
+        }
+
+        // If XML, we have to use 'getElementsByTagName' and
+        // filter the result - a much slower solution
+
+    } else {
+
+        found = context.getElementsByTagName('*');
+        filter[co['CLASS']]();
+    }
+
 };
 
 find[co['ATTR']] = function () {
-	found = context.getElementsByTagName('*');
-	filter[co['ATTR']]();
+    found = context.getElementsByTagName('*');
+    filter[co['ATTR']]();
 };
 
 find[co['PSEUDO']] = function () {
@@ -1010,16 +1008,17 @@ filter[co['TYPE']] = function () {
     if (t == '*') {
 
         if (found instanceof Array) {
-   		   
-		   return;
-		}
-		
+
+            return;
+        }
+
         found = toArray.call(found, 0);
         return;
     }
 
     var arr = [],
-        e, i = 0, l = found.length;
+        e, i = 0,
+        l = found.length;
 
     for (; i < l; i++) {
         if ((e = found[i]).nodeName == t)
@@ -1044,23 +1043,23 @@ filter[co['ID']] = function () {
     found = [];
 };
 
-   filter[co['CLASS']] = function () {
-        // TODO!! Add classList support
-        var re = new RegExp('(^|\\s)' + escapeRegex(parsed[pi++]) + '(\\s|$)'),
-            arr = [],
-            e, c,
-            i = 0,
-            l = found.length;
+filter[co['CLASS']] = function () {
+    // TODO!! Add classList support
+    var re = new RegExp('(^|\\s)' + escapeRegex(parsed[pi++]) + '(\\s|$)'),
+        arr = [],
+        e, c,
+        i = 0,
+        l = found.length;
 
-        for (; i < l; i++) {
-            if ((c = (e = found[i]).className) && re.test(c)) {
+    for (; i < l; i++) {
+        if ((c = (e = found[i]).className) && re.test(c)) {
 
-                arr.push(e);
-            }
+            arr.push(e);
         }
+    }
 
-        found = arr;
-    };
+    found = arr;
+};
 
 
 
@@ -1075,16 +1074,16 @@ filter[co['ATTR']] = function () {
         e, i, l = found.length;
 
     if (operator && check.length) {
-     
-	    var m, av, ln = check.length;
+
+        var m, av, ln = check.length;
 
         for (i = 0; i < l; i++) {
-			
+
             e = found[i];
-			
-		 // Sort the attributes and collect the result
-         
-		  if ( (m = sortAttr( e, name, operator, check )) ) {
+
+            // Sort the attributes and collect the result
+
+            if ((m = sortAttr(e, name, operator, check))) {
 
                 arr.push(e);
             }
@@ -1527,10 +1526,10 @@ function get(selector, ctx, results) {
     if ((ctx ? ctx.ownerDocument || ctx : winDoc) !== document) {
         hAzzle.setDocument(ctx);
     }
-    
-	// Always set correct context
-	
-	context = normalizeRoot(ctx);
+
+    // Always set correct context
+
+    context = normalizeRoot(ctx);
     results = results || [];
 
     if (!selector || typeof selector !== "string") {
@@ -1540,7 +1539,7 @@ function get(selector, ctx, results) {
     if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
         return [];
     }
-    /*
+    
     if (documentIsHTML) {
         if ((match = rquickExpr.exec(selector))) {
             if ((m = match[1])) {
@@ -1571,8 +1570,7 @@ function get(selector, ctx, results) {
                 return results;
             }
         } 
-    } */
-
+    } 
 
     // call the parser here
     parsed = parse(selector);
@@ -1668,19 +1666,19 @@ function attr(a, e) {
 
     if (a === 'href') {
 
-     return ('href' in e) ? e.getAttribute('href', 2) : e.getAttribute('href');
+        return ('href' in e) ? e.getAttribute('href', 2) : e.getAttribute('href');
 
     }
 
     if (a === 'type') {
 
-     return e.getAttribute('type');
+        return e.getAttribute('type');
 
     }
 
-	 if (a === 'tabindex') {
-       var attributeNode = e.getAttributeNode('tabindex');
-       return (attributeNode && attributeNode.specified) ? attributeNode.nodeValue : null;
+    if (a === 'tabindex') {
+        var attributeNode = e.getAttributeNode('tabindex');
+        return (attributeNode && attributeNode.specified) ? attributeNode.nodeValue : null;
     }
 
     if (a === 'style') {
@@ -1790,20 +1788,20 @@ if (Jiesa.has["api-GEBCN"] && !Jiesa.has['bug-GEBCN']) {
 function normalizeRoot(ctx) {
 
     if (!ctx) {
-	  
-	  return winDoc;
-	}
-	
+
+        return winDoc;
+    }
+
     if (typeof ctx === 'string') {
 
-	  return hAzzle.select(ctx)[0];
-	}
-	
+        return hAzzle.select(ctx)[0];
+    }
+
     if (!ctx.nodeType && arrayLike(ctx)) {
-	return ctx[0]	;
-	}
+        return ctx[0];
+    }
     return ctx;
-  }
+}
 
 /**
  * QSA selector engine
@@ -1820,10 +1818,10 @@ var QSA = (Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) ?
         if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
             return [];
         }
-		
-		// Fallback to non-native selector engine
-		// if QSA fails
-		
+
+        // Fallback to non-native selector engine
+        // if QSA fails
+
         res = toArray.call(context.querySelectorAll(selector), 0);
         if (!res) {
             res = get(selector, context);
@@ -1925,4 +1923,3 @@ pseudos[co['selected']] = function () {
 
     found = arr;
 };
-
