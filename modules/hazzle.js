@@ -219,8 +219,7 @@
                 return hAzzle.ready(fn);
             }
         },
-	
-    };
+	};
 
     /**
      * Extend the contents of two objects
@@ -796,6 +795,10 @@
         }
 
     }, hAzzle);
+	
+    /* =========================== SELECTOR ENGINE HOLDER ========================== */	
+	
+	var Jiesa = hAzzle.Jiesa = {};
 
     /* =========================== DOCUMENT READY FUNCTIONS ========================== */
 
