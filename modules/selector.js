@@ -1522,7 +1522,7 @@ function get(selector, ctx, results) {
     if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
         return [];
     }
-/*
+
     if (documentIsHTML) {
         if ((match = rquickExpr.exec(selector))) {
             if ((m = match[1])) {
@@ -1554,7 +1554,7 @@ function get(selector, ctx, results) {
             }
         }
     }
-*/
+
     // call the parser here
     parsed = parse(selector);
 
