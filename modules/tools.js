@@ -55,3 +55,72 @@ var Jiesa = hAzzle.Jiesa,
             // Supplemental Plane codepoint (surrogate pair)
             String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
     };
+
+
+/* =========================== VARIOUS SHIMS ========================== */
+/**
+ * Find next element sibiling.
+ *
+ * @param {Object} el
+ *
+ * @return {Object}
+ */
+
+Jiesa.nextElementSibling = function(el) {
+    if (el.nextElementSibling) {
+        return el.nextElementSibling;
+    } else {
+        while (el = el.nextSibling) {
+            if (el.nodeType !== 1) return el;
+        }
+    }
+}
+
+
+/**
+ * Find previous element sibling.
+ *
+ * @param {Object} el
+ *
+ * @return {Object}
+ */
+
+Jiesa.previousElementSibling = function(el) {
+    if (el.previousElementSibling) {
+        return el.previousElementSibling;
+    } else {
+        while (el = el.previousSibling) {
+            if (el.nodeType === 1) return el;
+        }
+    }
+}
+
+Jiesa.firstElementChild = function(el) {
+    var child = el.firstElementChild;
+    if (!child) {
+        child = el.firstChild;
+        while (child && child.nodeType !== 1)
+            child = child.nextSibling;
+    }
+    return child;
+}
+
+Jiesa.lastElementChild = function(el) {
+    var child = el.lastElementChild;
+    if (!child) {
+        child = el.lastChild;
+        while (child && child.nodeType !== 1)
+            child = child.previousSibling;
+    }
+    return child;
+}
+
+Jiesa.next = function(el) {
+    while ((el = el.nextSibling) && el.nodeType !== 1);
+    return el;
+}
+
+Jiesa.prev = function(el) {
+    while ((el = el.previousSibling) && el.nodeType !== 1);
+    return el;
+}

@@ -29,12 +29,14 @@ hAzzle.extend({
         // first-of-type
 
         'first-of-type': function (el) {
-
-
-            if (el.parentNode.nodeType !== 1) return;
+            if (el.parentNode.nodeType !== 1) {
+                return;
+            }
             var type = el.nodeName;
-            while (el = prev(el)) {
-                if (el.nodeName === type) return;
+            while (el = Jiesa.prev(el)) {
+                if (el.nodeName === type) {
+                    return;
+                }
             }
             return true;
         },
@@ -49,7 +51,7 @@ hAzzle.extend({
 
             var type = el.nodeName;
 
-            while ((el = next(el))) {
+            while ((el = Jiesa.next(el))) {
 
                 if (el.nodeName === type) {
                     return;
@@ -80,13 +82,13 @@ hAzzle.extend({
             return checkNth(el, children(p, el.nodeName).reverse(), val);
         },
         'first-child': function (elem) {
-            if ((elem === firstElementChild(elem.parentNode))) {
+            if ((elem === Jiesa.firstElementChild(elem.parentNode))) {
                 return true;
             }
             return false;
         },
         'last-child': function (elem) {
-            if ((elem === lastElementChild(elem.parentNode))) {
+            if ((elem === Jiesa.lastElementChild(elem.parentNode))) {
                 return true;
             }
             return false;
@@ -108,7 +110,7 @@ hAzzle.extend({
             return !Jiesa.pseudo_filters.contains(elem, sel);
         },
         'only-child': function (elem) {
-            return !prev(elem) && !next(elem) && elem.parentNode.childElementCount == 1;
+            return !Jiesa.prev(elem) && !Jiesa.next(elem) && elem.parentNode.childElementCount == 1;
 
         },
         'empty': function (elem) {
@@ -190,11 +192,11 @@ hAzzle.extend({
         'unchecked': function (elem) {
             return !Jiesa.pseudo_filters.checked(elem);
         },
-		
-		"button": function( elem ) {
-			var name = elem.nodeName.toLowerCase();
-			return name === "input" && elem.type === "button" || name === "button";
-		},
+
+        "button": function (elem) {
+            var name = elem.nodeName.toLowerCase();
+            return name === "input" && elem.type === "button" || name === "button";
+        },
     }
 
 }, Jiesa);
@@ -284,34 +286,4 @@ function checkNthExpr(el, nodes, a, b) {
         ((a > 0) ? (i <= l) : (i >= 1)); i += a)
         if (el == nodes[i - 1]) return true;
     return false;
-}
-
-function next(el) {
-    while ((el = el.nextSibling) && el.nodeType !== 1);
-    return el;
-}
-
-function prev(el) {
-    while ((el = el.previousSibling) && el.nodeType !== 1);
-    return el;
-}
-
-function lastElementChild(el) {
-    var child = el.lastElementChild;
-    if (!child) {
-        child = el.lastChild;
-        while (child && child.nodeType !== 1)
-            child = child.previousSibling;
-    }
-    return child;
-}
-
-function firstElementChild(el) {
-    var child = el.firstElementChild;
-    if (!child) {
-        child = el.firstChild;
-        while (child && child.nodeType !== 1)
-            child = child.nextSibling;
-    }
-    return child;
 }
