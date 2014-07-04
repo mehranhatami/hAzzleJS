@@ -190,6 +190,11 @@ hAzzle.extend({
         'unchecked': function (elem) {
             return !Jiesa.pseudo_filters.checked(elem);
         },
+		
+		"button": function( elem ) {
+			var name = elem.nodeName.toLowerCase();
+			return name === "input" && elem.type === "button" || name === "button";
+		},
     }
 
 }, Jiesa);

@@ -25,8 +25,9 @@ hAzzle.extend({
         'tag': /^((?:\\.|[\w-]|[^\x00-\xa0])+|[*])/,
         'rel': /^\>|\+|~$/,
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
-        'changer': /^:(eq|gt|lt|first|last|odd|even|nth)(?:\((\d+)\))?$/,
-        'pseudo': /^:([\w\-]+)(?:\((.+?)\))?$/,
+        'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
+		///^:(eq|gt|lt|first|last|odd|even|nth)(?:\((\d+)\))?$/,
+        'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
         'space': /^\s+$/
     },
 
@@ -154,7 +155,7 @@ hAzzle.extend({
         'Class': function (elem, sel) {
             sel = sel.replace('.', '');
 
-            if (elem.getElementsByClassName && !documentIsHTML) {
+            if (!elem.getElementsByClassName && !documentIsHTML) {
                 return toArray(elem.getElementsByClassName(sel));
 
                 // Mehran!
@@ -394,7 +395,7 @@ function IranianWalker(nodes, mode, fn) {
         var nativeMethod = {
                 f: hAzzle.filter,
                 m: hAzzle.map,
-                a: 'forEach'
+                a: hAzzle.each
             }[mode],
             i = 0,
             ret = [],
@@ -402,12 +403,16 @@ function IranianWalker(nodes, mode, fn) {
             elem, result;
 
         if (nativeMethod && nodes[nativeMethod]) {
-            return nodes[nativeMethod].call(nodes, fn);
+
+           return nodes[nativeMethod].call(nodes, fn);
         }
 
         for (; i < l; i++) {
-            elem = nodes[i], result = fn.call(nodes, elem, i, nodes);
+           
+		    elem = nodes[i], 
+			result = fn.call(nodes, elem, i, nodes);
 
+     
             switch (mode) {
             case 'f':
                 if (result) ret.push(elem);
@@ -434,13 +439,15 @@ function toArray(item) {
 //split the selector into a manageable array. 
 function selectorSplit(selector) {
     var chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
-    return selector.match(chunky) || [];
+	    return selector.match(chunky) || [];
 }
 
 //identify a chunk. Is it a class/id/tag etc?
 function identify(chunk) {
+	
     var type;
     for (type in Jiesa.regex) {
+		//alert( chunk )
         if (Jiesa.regex[type].test(chunk)) return type;
     }
     return false;
