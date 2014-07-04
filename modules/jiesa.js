@@ -8,11 +8,12 @@
  * - Jiesa engine
  *
  * - Various bug checks
- *
  */
 var win = this,
     Jiesa = hAzzle.Jiesa,
     doc = win.document,
+
+    expando = "hAzzle" + -(new Date()),
 
     push = Array.prototype.push,
 
@@ -23,6 +24,7 @@ var win = this,
     rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g");
 
 // Set up Jiesa
+
 hAzzle.extend({
 
     version: '0.0.1',
@@ -35,7 +37,10 @@ hAzzle.extend({
 
 }, Jiesa);
 
+/* =========================== INTERNAL ========================== */
+
 // Check for QSA support and bug
+// NOTE!! Need to add better check for this. See Sizzle
 
 (function () {
 
@@ -51,7 +56,48 @@ hAzzle.extend({
     e = null;
 })();
 
-// Tools
+/**
+ * Check if getElementsByTagName returns only elements
+ */
+
+Jiesa.has["bug-GEBTN"] = assert(function (div) {
+    div.appendChild(doc.createComment(''));
+    return !div.getElementsByTagName("*").length;
+});
+
+/**
+ * Check for getElementById bug
+ * Support: IE<10
+ */
+Jiesa.has["bug-GEBI"] = assert(function (div) {
+    hAzzle.docElem.appendChild(div).id = expando;
+    return !doc.getElementsByName || !doc.getElementsByName(expando).length;
+});
+
+
+/**
+ * Support testing using an element
+ * @param {Function} fn
+ */
+function assert(fn) {
+    var div = doc.createElement("div");
+
+    try {
+        return !!fn(div);
+    } catch (e) {
+        return false;
+    } finally {
+        // Remove from its parent by default
+        if (div.parentNode) {
+            div.parentNode.removeChild(div);
+        }
+        // release memory in IE
+        div = null;
+    }
+}
+
+
+/* =========================== TOOLS ========================== */
 
 function flatten(ar) {
 
@@ -75,7 +121,6 @@ function normalizeCtx(ctx) {
     if (typeof ctx == 'string') {
 
         return hAzzle.select(ctx)[0];
-
     }
 
     if (!ctx.nodeType && hAzzle.arrayLike(ctx)) {
@@ -84,8 +129,6 @@ function normalizeCtx(ctx) {
     }
     return ctx;
 }
-
-
 
 // Extend Jiesa
 
@@ -144,6 +187,7 @@ hAzzle.extend({
                     push.apply(results, context.getElementsByClassName(m));
                     return results;
                 }
+
             }
         }
 
@@ -187,15 +231,19 @@ hAzzle.extend({
 
             // Fallback to non-native selector engine
             // if QSA fails
+            // Note! Try / Catch should be replaced with
+            // something else for better performance
 
-            res = Jiesa.toArray(context.querySelectorAll(selector), 0);
+            try {
+                res = context.querySelectorAll(selector);
+            } catch (e) {}
 
             if (!res) {
 
                 res = Jiesa.parse(selector, context);
             }
 
-            return res;
+            return Jiesa.toArray(res, 0);
 
         } : null
 
