@@ -1,16 +1,36 @@
-// Jiesa special selectors
+/**
+ * Jiesa changers - special pseudo selectors
+ *
+ * Know from Sizzle, but for Jiesa, this are
+ * developed the natural way. Meaning
+ *
+ * -2 means -2 and not -1 as in Sizzle.
+ *
+ * for gt and lt, positive numbers to left,
+ * negative number to the right.
+ *
+ * Example:
+ *
+ * Array (1,2,3,4,5)
+ *
+ * gt(-1) - give you number 5
+ *
+ * gt(1) - give you number 1
+ *
+ */
 
 hAzzle.extend({
 
     changers: {
-        'eq': function (arr, digit) {
-            return arr[digit] ? [arr[digit]] : [];
+        'eq': function (arr, val) {
+            return arr[val] ? [arr[val]] : [];
         },
-        'gt': function (arr, digit) {
-            return arr.slice(digit);
+        'gt': function (arr, val) {
+
+            return arr.slice(val);
         },
-        'lt': function (arr, digit) {
-            return arr.slice(0, digit);
+        'lt': function (arr, val) {
+            return arr.Array.prototype.slice(0, val);
         },
         'first': function (arr) {
             return [arr[0]];
@@ -24,8 +44,8 @@ hAzzle.extend({
         'even': function (arr) {
             return ofType(arr, 1, 2);
         },
-        'nth': function (arr, digit) {
-            return ofType(arr, digit - 1, digit);
+        'nth': function (arr, val) {
+            return ofType(arr, val - 1, val);
         }
     }
 
@@ -42,6 +62,6 @@ function ofType(arr, start, increment) {
         ret.push(e);
         i += increment;
     }
-    //alert(ret);
+
     return ret;
 }
