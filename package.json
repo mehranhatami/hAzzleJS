@@ -3,6 +3,13 @@
   "description": "",
   "version": "1.6.1-BETA",
   "devDependencies": {
+    "grunt": "*",
+    "grunt-cli": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-contrib-jshint": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-contrib-concat": "*",
+
     "karma": "~0.12.8",
     "karma-mocha": "~0.1.4",
     "karma-chrome-launcher": "~0.1.2",
