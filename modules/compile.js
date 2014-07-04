@@ -1,15 +1,24 @@
+/**
+ * compile.js
+ *
+ * Include:
+ *
+ * - parser()
+ *
+ * This function are an seprate selector engine
+ * for public use, and in plugins.
+ *
+ */
 var win = this,
     doc = win.document,
     documentIsHTML = hAzzle.documentIsHTML,
     csp = hAzzle.features.classList,
     Jiesa = hAzzle.Jiesa,
-
     /**
      * Special regex, not part of the public Jiesa Object
      */
 
     special = /\s?([\+~\>])\s?/g;
-
 
 hAzzle.extend({
 
@@ -26,7 +35,6 @@ hAzzle.extend({
         'rel': /^\>|\+|~$/,
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
-		///^:(eq|gt|lt|first|last|odd|even|nth)(?:\((\d+)\))?$/,
         'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
         'space': /^\s+$/
     },
@@ -116,7 +124,7 @@ hAzzle.extend({
                         //a 'changer' changes the nodes completely, rather than adding to them.
                         if (pieceStore[j].type === 'changer') {
                             info = Jiesa.regex.changer.exec(pieceStore[j].text);
-                            nodes = Jiesa.changers[info[1]](nodes, parseInt(info[2])); //sooo ugly.
+                            nodes = Jiesa.changers[info[1]](nodes, info[2]);
                             continue;
                         }
 
@@ -129,7 +137,7 @@ hAzzle.extend({
                     if (piece.type === 'changer') {
 
                         inf = Jiesa.regex.changer.exec(piece.text);
-                        nodes = Jiesa.changers[inf[1]](nodes, parseInt(inf[2]));
+                        nodes = Jiesa.changers[inf[1]](nodes, inf[2]);
                     }
 
                     pieceStore = [];
@@ -155,16 +163,9 @@ hAzzle.extend({
         'Class': function (elem, sel) {
             sel = sel.replace('.', '');
 
-            if (!elem.getElementsByClassName && !documentIsHTML) {
+            if (elem.getElementsByClassName && documentIsHTML) {
                 return toArray(elem.getElementsByClassName(sel));
-
-                // Mehran!
-                // This should work on XML docs as well
-                // But it's damn slow if we have a HUGE DOM tree !!
-                // You fix this !
-
             } else {
-
                 return IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.Class(e, sel);
                 });
@@ -267,11 +268,16 @@ hAzzle.extend({
 
             // If ClassList are supported by the browser, use it !!			
 
-            var cn = elem.className,
+            var className = sel.replace('.', ''),
+                cn = elem.className,
                 nT = elem.nodeType;
 
-            return nT === 1 && csp ? elem.classList.contains(sel.replace('.', '')) :
-                nT === 1 && cn && (' ' + sel.replace('.', '') + ' ').replace(Jiesa.whitespace, ' ').indexOf(cn) >= 0;
+            if (typeof cn === "string") {
+                return csp ? elem.classList.contains(className) :
+                    nT === 1 && cn && (' ' + className + ' ').replace(Jiesa.whitespace, ' ').indexOf(cn) >= 0;
+            } else {
+                return typeof elem.getAttribute !== undefined && elem.getAttribute("class") || "";
+            }
         },
 
         'tag': function (elem, sel) {
@@ -404,15 +410,14 @@ function IranianWalker(nodes, mode, fn) {
 
         if (nativeMethod && nodes[nativeMethod]) {
 
-           return nodes[nativeMethod].call(nodes, fn);
+            return nodes[nativeMethod].call(nodes, fn);
         }
 
         for (; i < l; i++) {
-           
-		    elem = nodes[i], 
-			result = fn.call(nodes, elem, i, nodes);
 
-     
+            elem = nodes[i],
+                result = fn.call(nodes, elem, i, nodes);
+
             switch (mode) {
             case 'f':
                 if (result) ret.push(elem);
@@ -439,15 +444,15 @@ function toArray(item) {
 //split the selector into a manageable array. 
 function selectorSplit(selector) {
     var chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
-	    return selector.match(chunky) || [];
+    return selector.match(chunky) || [];
 }
 
 //identify a chunk. Is it a class/id/tag etc?
 function identify(chunk) {
-	
+
     var type;
     for (type in Jiesa.regex) {
-		//alert( chunk )
+
         if (Jiesa.regex[type].test(chunk)) return type;
     }
     return false;
