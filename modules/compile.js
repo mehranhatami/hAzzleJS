@@ -60,7 +60,7 @@ hAzzle.extend({
          * all the different parts of the selector
          */
 
-        chunks = array_walk(selectorSplit(selector), 'm', function (sel) {
+        chunks = IranianWalker(selectorSplit(selector), 'm', function (sel) {
 
             return {
                 text: sel,
@@ -105,7 +105,7 @@ hAzzle.extend({
                     piece1 = pieceStore.shift();
                     k = pieceStore.length;
 
-                    nodes = array_walk(nodes, 'c', function (elem) {
+                    nodes = IranianWalker(nodes, 'c', function (elem) {
                         return elem ? Jiesa.getters[piece1.type](elem, piece1.text, context) : [];
                     });
 
@@ -119,7 +119,7 @@ hAzzle.extend({
                             continue;
                         }
 
-                        nodes = array_walk(nodes, 'f', function (elem) {
+                        nodes = IranianWalker(nodes, 'f', function (elem) {
                             return elem ?
                                 Jiesa.filters[pieceStore[j].type](elem, pieceStore[j].text) : false;
                         });
@@ -176,7 +176,7 @@ hAzzle.extend({
 
             } else {
 
-                return array_walk(all(elem), 'f', function (e) {
+                return IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.Class(e, sel);
                 });
             }
@@ -216,7 +216,7 @@ hAzzle.extend({
 
 
 
-            return array_walk(all(elem), 'f', function (e) {
+            return IranianWalker(all(elem), 'f', function (e) {
                 return Jiesa.filters.attr(e, sel);
             });
         },
@@ -242,7 +242,7 @@ hAzzle.extend({
             }
 
             if (sel === '>') {
-                return array_walk(elem.childNodes, 'f', function (e) {
+                return IranianWalker(elem.childNodes, 'f', function (e) {
                     return e.nodeType === 1;
                 });
             }
@@ -250,7 +250,7 @@ hAzzle.extend({
             if (sel === '~') {
 
                 var children;
-                return (elem.parentNode && (children = elem.parentNode.children)) ? array_walk(children, 'f', function (e) {
+                return (elem.parentNode && (children = elem.parentNode.children)) ? IranianWalker(children, 'f', function (e) {
                     return Jiesa.filters.rel(e, '~', elem);
                 }) : [];
             }
@@ -259,7 +259,7 @@ hAzzle.extend({
 
         'pseudo': function (elem, sel) {
 
-            return array_walk(all(elem), 'f', function (e) {
+            return IranianWalker(all(elem), 'f', function (e) {
                 return Jiesa.filters.pseudo(e, sel);
             });
         }
@@ -368,7 +368,7 @@ hAzzle.extend({
 
 
 //MODE: f = filter, m = map, c = concat (fn returns arr to concat), a = all (forEach), no mode is essentially forEach
-function array_walk(nodes, mode, fn) {
+function IranianWalker(nodes, mode, fn) {
     if (nodes) {
 
         var nativeMethod = {
@@ -405,7 +405,7 @@ function array_walk(nodes, mode, fn) {
 }
 
 function toArray(item) {
-    return array_walk(item, 'm', function (o) {
+    return IranianWalker(item, 'm', function (o) {
         return o;
     });
 }
