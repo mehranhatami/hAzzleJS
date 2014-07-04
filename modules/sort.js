@@ -4,7 +4,8 @@
  
  // Need this for CSS4 selectors
 
-var sO = hAzzle.Jiesa.sortOrder = function( a, b ) {
+var Jiesa = hAzzle.Jiesa,
+    sO = Jiesa.sortOrder = function( a, b ) {
 		// Flag for duplicate removal
 		if ( a === b ) {
 			return 0;
@@ -35,40 +36,22 @@ var sO = hAzzle.Jiesa.sortOrder = function( a, b ) {
 		return a.compareDocumentPosition ? -1 : 1;
 	};
 
-hAzzle.Jiesa.combine = function (a, b, aRest, bRest, map) {
-    var i, j, r;
-    r = [];
-    i = 0;
-    j = 0;
+/* =========================== GLOBALE JIESA VARS ========================== */
 
-    while (i < a.length && j < b.length) {
-      switch (map[sO(a[i], b[j])]) {
-        case -1:
-          i++;
-          break;
-        case -2:
-          j++;
-          break;
-        case 1:
-          r.push(a[i++]);
-          break;
-        case 2:
-          r.push(b[j++]);
-          break;
-        case 0:
-          r.push(a[i++]);
-          j++;
-      }
-    }
-    if (aRest) {
-      while (i < a.length) {
-        r.push(a[i++]);
-      }
-    }
-    if (bRest) {
-      while (j < b.length) {
-        r.push(b[j++]);
-      }
-    }
-    return r;
-  };
+// CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
+
+   Jiesa.whitespace = "[\\x20\\t\\r\\n\\f]",
+   Jiesa.runescape = new RegExp("\\\\([\\da-f]{1,6}" + Jiesa.whitespace + "?|(" + Jiesa.whitespace + ")|.)", "ig"),
+   Jiesa.funescape = function (_, escaped, escapedWhitespace) {
+        var high = "0x" + escaped - 0x10000;
+        // NaN means non-codepoint
+        // Support: Firefox<24
+        // Workaround erroneous numeric interpretation of +"0x"
+        return high !== high || escapedWhitespace ?
+            escaped :
+            high < 0 ?
+            // BMP codepoint
+            String.fromCharCode(high + 0x10000) :
+            // Supplemental Plane codepoint (surrogate pair)
+            String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
+    };
