@@ -24,34 +24,16 @@ hAzzle.extend({
 
         var i = 0,
             pieceStore = [],
-            nodes = [doc],
+            nodes,
             l, piece, piece1, j = 0,
             k,
             info, inf, chunks;
 
+        // Set / Adjust correct context
 
-        if ((context ? context.ownerDocument || context : doc) !== document) {
-            hAzzle.setDocument(context);
-        }
+        nodes = AdjustDocument(context);
 
         selector = selector.replace(Jiesa.whitespace, '').replace(/\s?([\+~\>])\s?/g, ' $1');
-
-
-        if (context) { //context can be a node, nodelist, array, document
-            if (context instanceof Array) {
-                nodes = context;
-            } else if (context.length) {
-                nodes = toArray(nodes);
-            } else if (context.nodeType === 1) {
-                nodes = [context];
-            }
-            //throw error for invalid context? 
-        }
-
-        if (context.nodeType !== 1 && context.nodeType !== 9) {
-
-            return [];
-        }
 
         /**
          * Tokenizing
@@ -364,10 +346,42 @@ hAzzle.extend({
 
 }, Jiesa);
 
+/**
+ * Adjust document
+ *
+ * @param {string} context
+ * @return {Object}
+ */
+
+function AdjustDocument(context) {
+
+    // Make sure we always are using the correct documents 
+
+    if ((context ? context.ownerDocument || context : doc) !== document) {
+
+        // Override the already defined document
+        doc = hAzzle.setDocument(context);
+    }
+
+    // Default window.document / hAzzle.document	 
+
+    var nodes = [doc];
+
+    if (context) { //context can be a node, nodelist, array, document
+        if (context instanceof Array) {
+            nodes = context;
+        } else if (context.length) {
+            nodes = toArray(nodes);
+        } else if (context.nodeType === 1) {
+            nodes = [context];
+        }
+        //throw error for invalid context? 
+    }
+    return nodes;
+
+}
 
 
-
-//MODE: f = filter, m = map, c = concat (fn returns arr to concat), a = all (forEach), no mode is essentially forEach
 function IranianWalker(nodes, mode, fn) {
     if (nodes) {
 
