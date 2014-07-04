@@ -6,8 +6,8 @@ var win = this,
     rinputs = /^(?:input|select|textarea|button)$/i,
     rheader = /^h\d$/i,
 
-    nthPattern = ///\s*((?:\+|\-)?(\d*))n\s*((?:\+|\-)\s*\d+)?\s*/,
-    /^\s*(even|odd|(?:(\+|\-)?(\d*)(n))?(?:\s*(\+|\-)?\s*(\d+))?)(?:\s+of\s+(.*?))?\s*$/,
+    nthPattern = /\s*((?:\+|\-)?(\d*))n\s*((?:\+|\-)\s*\d+)?\s*/,
+
     // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
     whitespace = "[\\x20\\t\\r\\n\\f]",
 
@@ -42,18 +42,11 @@ hAzzle.extend({
 
         'first-of-type': function (el) {
 
-            if (el.parentNode.nodeType !== 1) {
 
-                return;
-            }
-
+            if (el.parentNode.nodeType !== 1) return;
             var type = el.nodeName;
-
-            while ((el = prev(el))) {
-                if (el.nodeName === type) {
-
-                    return;
-                }
+            while (el = prev(el)) {
+                if (el.nodeName === type) return;
             }
             return true;
         },
@@ -256,14 +249,14 @@ function createButtonPseudo(type) {
     };
 }
 
-function children(node, ofT) {
-    var r = [],
-        i = 0,
-        l = nodes.length,
-        nodes = node.childNodes;
+function children(node, ofType) {
+    var r = []
+    nodes = node.childNodes;
 
-    for (; i < l; i++) {
-        if (nodes[i].nodeType == 1 && (!ofT || nodes[i].nodeName == ofT)) r.push(nodes[i]);
+    for (i = 0, l = nodes.length; i < l; i++) {
+        if (nodes[i].nodeType == 1 && (!ofType || nodes[i].nodeName == ofType)) {
+            r.push(nodes[i]);
+        }
     }
     return r;
 }
@@ -291,26 +284,23 @@ function checkNth(el, nodes, val) {
 }
 
 function checkNthExpr(el, nodes, a, b) {
-    var i, l;
     if (!a) {
-        return (nodes[b - 1] == el);
+        return (nodes[b - 1] == el)
     }
     for (i = b, l = nodes.length;
-        ((a > 0) ? (i <= l) : (i >= 1)); i += a);
-    if (el == nodes[i - 1]) return true;
+        ((a > 0) ? (i <= l) : (i >= 1)); i += a)
+        if (el == nodes[i - 1]) return true;
     return false;
 }
 
 function next(el) {
-    while ((el = el.nextSibling) && el.nodeType !== 1) {
-        return el;
-    }
+    while ((el = el.nextSibling) && el.nodeType !== 1);
+    return el;
 }
 
 function prev(el) {
-    while ((el = el.previousSibling) && el.nodeType !== 1) {
-        return el;
-    }
+    while ((el = el.previousSibling) && el.nodeType !== 1);
+    return el;
 }
 
 function lastElementChild(el) {
