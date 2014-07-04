@@ -63,7 +63,7 @@ hAzzle.extend({
 
 Jiesa.has["bug-GEBTN"] = assert(function (div) {
     div.appendChild(doc.createComment(''));
-    return !div.getElementsByTagName("*").length;
+   return div.getElementsByTagName('*').length > 0;
 });
 
 /**
@@ -157,7 +157,7 @@ hAzzle.extend({
             return [];
         }
 
-        if (!hAzzle.documentIsHTML) {
+        if (hAzzle.documentIsHTML) {
 
             // Shortcuts
             if ((match = rquickExpr.exec(selector))) {
@@ -261,4 +261,4 @@ Jiesa.useNative = Jiesa.QSA ?
 
 // Set the selector engine global for hAzzle
 
-Jiesa.useNative(true);
+Jiesa.useNative(false);
