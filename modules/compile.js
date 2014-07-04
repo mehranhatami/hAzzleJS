@@ -1,24 +1,42 @@
-/**
-
-      WORK IN PROGRESS!!!!!!!!!!!!!!
-	  
-	  
-                            	  WORK IN PROGRESS!!!!!!!!!!!!!!
-								  
-								  
-         WORK IN PROGRESS!!!!!!!!!!!!!!								  
-
-
-DO NOT CHANGE ANYTHING HERE OR TOUCH IT YET !!!
-
-*/
 var win = this,
     doc = win.document,
     documentIsHTML = hAzzle.documentIsHTML,
     csp = hAzzle.features.classList,
-    Jiesa = hAzzle.Jiesa;
+    Jiesa = hAzzle.Jiesa,
+
+    /**
+     * Special regex, not part of the public Jiesa Object
+     */
+
+    special = /\s?([\+~\>])\s?/g;
+
 
 hAzzle.extend({
+
+    /**
+     * Global regEx for Jiesa
+     *
+     */
+
+    regex: {
+
+        'id': /^#((?:\\.|[\w-]|[^\x00-\xa0])+)/,
+        'Class': /^\.((?:\\.|[\w-]|[^\x00-\xa0])+)/,
+        'tag': /^((?:\\.|[\w-]|[^\x00-\xa0])+|[*])/,
+        'rel': /^\>|\+|~$/,
+        'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
+        'changer': /^:(eq|gt|lt|first|last|odd|even|nth)(?:\((\d+)\))?$/,
+        'pseudo': /^:([\w\-]+)(?:\((.+?)\))?$/,
+        'space': /^\s+$/
+    },
+
+    /**
+     * Jiesa parser
+     *
+     * @param {string} selector
+     * @param {string|Object|Array} context
+     * @return {Object}
+     */
 
     parse: function (selector, context) {
 
@@ -33,7 +51,7 @@ hAzzle.extend({
 
         nodes = AdjustDocument(context);
 
-        selector = selector.replace(Jiesa.whitespace, '').replace(/\s?([\+~\>])\s?/g, ' $1');
+        selector = selector.replace(Jiesa.whitespace, '').replace(special, ' $1');
 
         /**
          * Tokenizing
@@ -120,18 +138,6 @@ hAzzle.extend({
         return nodes;
     },
 
-
-    regex: {
-
-        'id': /^#((?:\\.|[\w-]|[^\x00-\xa0])+)/,
-        'Class': /^\.((?:\\.|[\w-]|[^\x00-\xa0])+)/,
-        'tag': /^((?:\\.|[\w-]|[^\x00-\xa0])+|[*])/,
-        'rel': /^\>|\+|~$/,
-        'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
-        'changer': /^:(eq|gt|lt|first|last|odd|even|nth)(?:\((\d+)\))?$/,
-        'pseudo': /^:([\w\-]+)(?:\((.+?)\))?$/,
-        'space': /^\s+$/
-    },
     getters: {
 
         'id': function (elem, id) {
