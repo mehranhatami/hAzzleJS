@@ -17,11 +17,11 @@ var win = this,
 
     push = Array.prototype.push,
 
-    whitespace = "[\\x20\\t\\r\\n\\f]",
+    whitespace = Jiesa.whitespace,
 
     rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
-    rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g");
+    rtrim = new RegExp("^" + Jiesa.whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + Jiesa.whitespace + "+$", "g");
 
 // Set up Jiesa
 

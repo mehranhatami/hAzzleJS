@@ -12,7 +12,6 @@
 DO NOT CHANGE ANYTHING HERE OR TOUCH IT YET !!!
 
 */
-
 var win = this,
     doc = win.document,
     documentIsHTML = hAzzle.documentIsHTML,
@@ -23,18 +22,20 @@ hAzzle.extend({
 
     parse: function (selector, context) {
 
-        if (!selector || Jiesa.regex.space.test(selector) || !selector.charAt) return [];
-        selector = selector.replace(/^\s+|\s+$/, '').replace(/\s?([\+~\>])\s?/g, ' $1'); //some internal fixing.
-
         var i = 0,
             pieceStore = [],
             nodes = [doc],
-            l,
-            piece,
-            piece1, j = 0,
+            l, piece, piece1, j = 0,
             k,
-            info, inf,
-            chunks;
+            info, inf, chunks;
+
+
+        if ((context ? context.ownerDocument || context : doc) !== document) {
+            hAzzle.setDocument(context);
+        }
+
+        selector = selector.replace(Jiesa.whitespace, '').replace(/\s?([\+~\>])\s?/g, ' $1');
+
 
         if (context) { //context can be a node, nodelist, array, document
             if (context instanceof Array) {
@@ -46,6 +47,12 @@ hAzzle.extend({
             }
             //throw error for invalid context? 
         }
+
+        if (context.nodeType !== 1 && context.nodeType !== 9) {
+
+            return [];
+        }
+
         /**
          * Tokenizing
          *
