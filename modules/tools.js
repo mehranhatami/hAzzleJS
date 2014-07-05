@@ -40,8 +40,8 @@ var Jiesa = hAzzle.Jiesa,
 
 // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
 
-   Jiesa.whitespace = "[\\x20\\t\\r\\n\\f]",
-   Jiesa.runescape = new RegExp("\\\\([\\da-f]{1,6}" + Jiesa.whitespace + "?|(" + Jiesa.whitespace + ")|.)", "ig"),
+   Jiesa.whitespace = "[\\x20\\t\\r\\n\\f]";
+   Jiesa.runescape = new RegExp("\\\\([\\da-f]{1,6}" + Jiesa.whitespace + "?|(" + Jiesa.whitespace + ")|.)", "ig");
    Jiesa.funescape = function (_, escaped, escapedWhitespace) {
         var high = "0x" + escaped - 0x10000;
         // NaN means non-codepoint

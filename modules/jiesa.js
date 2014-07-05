@@ -29,14 +29,9 @@ hAzzle.extend({
 
     version: '0.0.1',
 
-    has: {},
-
-    toArray: function (ar) {
-        return [].slice.call(ar, 0);
-    }
+    has: {}
 
 }, Jiesa);
-
 
 /* =========================== INTERNAL ========================== */
 
@@ -63,7 +58,7 @@ hAzzle.extend({
 
 Jiesa.has["bug-GEBTN"] = assert(function (div) {
     div.appendChild(doc.createComment(''));
-   return div.getElementsByTagName('*').length > 0;
+    return div.getElementsByTagName('*').length > 0;
 });
 
 /**
@@ -72,14 +67,14 @@ Jiesa.has["bug-GEBTN"] = assert(function (div) {
  */
 Jiesa.has["bug-GEBI"] = assert(function (div) {
     hAzzle.docElem.appendChild(div).id = expando;
-    return !doc.getElementsByName || !doc.getElementsByName(expando).length;
+    return !doc.getElementsByName > 0 || !doc.getElementsByName(expando).length;
 });
-
 
 /**
  * Support testing using an element
  * @param {Function} fn
  */
+
 function assert(fn) {
     var div = doc.createElement("div");
 
@@ -97,15 +92,14 @@ function assert(fn) {
     }
 }
 
-
 /* =========================== TOOLS ========================== */
 
 function flatten(ar) {
-
-    for (var r = [], i = 0, l = ar.length; i < l; ++i) {
-
+    var r = [],
+        i = 0,
+        l = ar.length;
+    for (; i < l; ++i) {
         hAzzle.arrayLike(ar[i]) ? (r = r.concat(ar[i])) : (r[r.length] = ar[i]);
-
     }
     return r;
 }
@@ -116,7 +110,6 @@ function normalizeCtx(ctx) {
     if (!ctx) {
 
         return doc;
-
     }
 
     if (typeof ctx == 'string') {
@@ -141,11 +134,14 @@ hAzzle.extend({
 
         var match, elem, m, nodeType, results = [];
 
+        // Set correct document
+
         if ((context ? context.ownerDocument || context : doc) !== document) {
-            hAzzle.setDocument(context);
+            // Overwrite if needed
+            doc = hAzzle.setDocument(context);
         }
 
-        context = context || document;
+        context = context || doc;
         results = results || [];
 
         if (!selector || typeof selector !== "string") {
@@ -157,7 +153,7 @@ hAzzle.extend({
             return [];
         }
 
-        if (hAzzle.documentIsHTML) {
+        if (!hAzzle.documentIsHTML) {
 
             // Shortcuts
             if ((match = rquickExpr.exec(selector))) {
@@ -192,7 +188,7 @@ hAzzle.extend({
             }
         }
 
-        // All others...
+        // Run the parser
 
         return Jiesa.parse(selector.replace(rtrim, "$1"), context);
     },
@@ -207,6 +203,12 @@ hAzzle.extend({
 
             var res, nodeType;
 
+            // Set correct document
+
+            if ((context ? context.ownerDocument || context : doc) !== document) {
+                // Overwrite if needed
+                doc = hAzzle.setDocument(context);
+            }
             context = normalizeCtx(context);
 
             // Early return if context is not an element or document
