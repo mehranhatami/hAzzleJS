@@ -19,11 +19,50 @@ var win = this,
     // You benchmark this Mehran!
 
     toArray = hAzzle.makeArray,
+	
+    // regEx are slow, so let us do it
+    // differently then Sizzle
+	
+    uri = {
+        action: 2,
+        cite: 2,
+        codebase: 2,
+        data: 2,
+        href: 2,
+        longdesc: 2,
+        lowsrc: 2,
+        src: 2,
+        usemap: 2
+    },
+	
+    booleans = {
+        checked: 1,
+        disabled: 1,
+        async: 1,
+        autofocus: 1,
+        aitoplay: 1,
+        controls: 1,
+        defer: 1,
+        disabled: 1,
+        hidden: 1,
+        loop: 1,
+        multiple: 1,
+        open: 1,
+        required: 1,
+        scoped: 1,
+        ismap: 1,
+        multiple: 1,
+        readonly: 1,
+        selected: 1
+    },
+
+
     /**
      * Special regex, not part of the public Jiesa Object
      */
 
-    special = /\s?([\+~\>])\s?/g;
+    special = /\s?([\+~\>])\s?/g,
+    chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
 
 hAzzle.extend({
 
@@ -59,13 +98,17 @@ hAzzle.extend({
             nodes,
             l, piece, piece1, j = 0,
             k,
-            info, inf, chunks;
+            info, inf, chunks, kf, soFar;
 
         // Set / Adjust correct context
 
         nodes = AdjustDocument(context);
 
         selector = selector.replace(Jiesa.whitespace, '').replace(special, ' $1');
+
+        // Split the selector before we are looping through
+
+        kf = selector.match(chunky)
 
         /**
          * Tokenizing
@@ -74,7 +117,7 @@ hAzzle.extend({
          * all the different parts of the selector
          */
 
-        chunks = IranianWalker(selectorSplit(selector), 'm', function (sel) {
+        chunks = IranianWalker(kf, 'm', function (sel) {
             return {
                 text: sel,
                 type: identify(sel)
@@ -122,7 +165,8 @@ hAzzle.extend({
                         return elem ? Jiesa.getters[piece1.type](elem, piece1.text, context) : [];
                     });
 
-                    //now perform filters on the nodes.
+                    // filter the nodes
+
                     for (; j < k; j++) {
 
                         //a 'changer' changes the nodes completely, rather than adding to them.
@@ -191,7 +235,6 @@ hAzzle.extend({
 
                 return toArray(elem.getElementsByClassName(sel));
             }
-
         },
 
         /**
@@ -240,10 +283,17 @@ hAzzle.extend({
             }
         },
 
-        'attr': function (elem, sel) {
-            return IranianWalker(all(elem), 'f', function (e) {
-                return Jiesa.filters.attr(e, sel);
-            });
+        /**
+         * Get the attribute value
+         */
+
+        'attr': function (elem, attribute) {
+
+            return elem.getAttribute(attribute) ||
+
+                IranianWalker(all(elem), 'f', function (e) {
+                    return Jiesa.filters.attr(e, attribute);
+                });
         },
 
         // relative selectors
@@ -316,11 +366,16 @@ hAzzle.extend({
 
         'attr': function (elem, sel) {
 
+            /**
+             * Mehran!!
+             *
+             * We could have used our own hAzzle.attr() to grab the
+             * attribute, but I think that is slowe. So I creted my
+             * own solution.
+             */
+
             var info = Jiesa.regex.attr.exec(sel),
-
-                // We use the native hAzzle.attr() function here
-
-                attr = hAzzle.attr(elem, info[1]);
+                attr = getAttribute(elem, info[1]);
 
             if (!info[2] || !attr) {
                 return !!attr;
@@ -340,19 +395,19 @@ hAzzle.extend({
                  *  hAzzle('div[id/= [ RegEX ] ')
                  */
 
-                if (operator === '/=') {
+                if (value && operator === '/=') {
 
                     var modifiers = value.match(/\s(\w+)$/) || ['', ''];
                     value = value.replace(/\\/g, '\\\\').replace(modifiers[0], '');
                     return RegExp(value, modifiers[1]).test(attr);
                 }
 
-                return operator === "==" ? attr === value :
+                return value && operator === "==" ? attr === value :
                     operator === "=" ? attr === value :
                     operator === "!=" ? attr !== value :
-                    operator === "^=" ? value && attr.indexOf(value) === 0 :
-                    operator === "*=" ? value && attr.indexOf(value) > -1 :
-                    operator === "$=" ? value && attr.slice(-value.length) === value :
+                    operator === "^=" ? attr.indexOf(value) === 0 :
+                    operator === "*=" ? attr.indexOf(value) > -1 :
+                    operator === "$=" ? attr.slice(-value.length) === value :
                     operator === "~=" ? (' ' + attr + ' ').indexOf(value) > -1 :
                     operator === "|=" ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
                     false;
@@ -465,13 +520,6 @@ function IranianWalker(nodes, mode, fn) {
     }
 }
 
-//split the selector into a manageable array. 
-
-function selectorSplit(selector) {
-    var chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
-    return selector.match(chunky) || [];
-}
-
 //identify a chunk. Is it a class/id/tag etc?
 function identify(chunk) {
 
@@ -521,4 +569,28 @@ function byIdRaw(id, elem) {
     return IranianWalker(all(elem), 'f', function (e) {
         return e.getAttribute('id') === id;
     });
+}
+
+
+
+function getAttribute(elem, attribute) {
+
+    // Set document vars if needed
+
+    if ((elem.ownerDocument || elem) !== document) {
+        doc = setDocument(elem);
+    }
+
+    // Lower case are always a good thing !!	 
+
+    attribute = attribute.toLowerCase();
+    if (typeof elem[attribute] === 'object') {
+        return elem.attributes[attribute] &&
+            elem.attributes[attribute].value || '';
+    }
+    return (
+        attribute === 'type' ? elem.getAttribute(attribute) || '' :
+        uri[attribute] ? elem.getAttribute(attribute, 2) || '' :
+        booleans[attribute] ? elem.getAttribute(attribute) ? attribute : 'false' :
+        ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
