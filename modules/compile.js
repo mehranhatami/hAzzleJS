@@ -745,4 +745,4 @@ function createCache() {
 
 // Some adjustments...
 
-//hAzzle.matches = Jiesa.matches;
+hAzzle.matches = Jiesa.matches;

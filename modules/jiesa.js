@@ -153,7 +153,7 @@ hAzzle.extend({
             return [];
         }
 
-        if (!hAzzle.documentIsHTML) {
+        if (hAzzle.documentIsHTML) {
 
             // Shortcuts
             if ((match = rquickExpr.exec(selector))) {
