@@ -2,10 +2,10 @@
  *
  * CSS3 pseudo-classes extension for Jiesa
  *
- * Contains all CSS3 pseudo selectors
+ * Contains all CSS Level 3 pseudo selectors
  *
  */
-// Jiesa CSS pseudo selectors
+
 var win = this,
     doc = win.document,
     i,
@@ -14,11 +14,6 @@ var win = this,
     rheader = /^h\d$/i,
 
     nthPattern = /\s*((?:\+|\-)?(\d*))n\s*((?:\+|\-)\s*\d+)?\s*/,
-
-    // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
-    whitespace = Jiesa.whitespace,
-
-    rtrim = new RegExp("^" + whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + whitespace + "+$", "g"),
 
     runescape = Jiesa.runescape,
 
@@ -151,10 +146,7 @@ hAzzle.extend({
         'parent': function (elem) {
             return !Jiesa.pseudo_filters.empty(elem);
         },
-        // Negation pseudo-class
-        'not': function (elem, sel) {
-            return Jiesa.parse(sel.replace(rtrim, '$1')).indexOf(elem) == -1;
-        },
+       
         'has': function (elem, sel) {
             return Jiesa.parse(sel, elem).length > 0;
         },
