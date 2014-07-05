@@ -246,7 +246,7 @@ hAzzle.extend({
                 res = Jiesa.parse(selector, context);
             }
 
-            return Jiesa.toArray(res, 0);
+            return hAzzle.makeArray(res, 0);
 
         } : null
 
