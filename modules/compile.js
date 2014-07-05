@@ -89,8 +89,8 @@ hAzzle.extend({
         'rel': /^\>|\+|~$/,
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
-        'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/
-
+        'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
+        'whitespace': new RegExp(Jiesa.whitespace),
     },
 
     /**
@@ -153,7 +153,7 @@ hAzzle.extend({
 
                 }
 
-                if (piece.type !== 'space' && chunks[i + 1]) {
+                if (piece.type !== 'whitespace' && chunks[i + 1]) {
 
                     pieceStore.push(piece);
 
@@ -161,7 +161,7 @@ hAzzle.extend({
 
                 } else {
 
-                    if (piece.type !== 'space' && piece.type !== 'changer') {
+                    if (piece.type !== 'whitespace' && piece.type !== 'changer') {
 
                         pieceStore.push(piece);
                     }
@@ -209,7 +209,7 @@ hAzzle.extend({
         /**
          * element by id
          *
-         * It try nativly to use getElementById, but
+         * Try nativly to use getElementById, but
          * if XML or buggy e.g., it fall back to the
          * hard and slow way of doing things
          */
@@ -242,14 +242,12 @@ hAzzle.extend({
                     return Jiesa.filters.Class(e, sel);
                 });
             } else {
-
                 return toArray(elem.getElementsByClassName(sel));
             }
         },
 
         /**
          * elements by tag
-         *
          */
 
         'tag': function (elem, tag) {
@@ -277,18 +275,17 @@ hAzzle.extend({
 
             } else {
 
-                // We have to let the Iranian walk again if XML doc
-                // or document fragment
+                // If XML doc or document fragment, do a 
+                // raw grab of the node, because the Iranian don't 
+				// fit for this 				
 
-                if (documentIsHTML || elem.nodeType == 11) {
+                if (documentIsHTML || elem.nodeType === 11) {
 
                     return byTagRaw(tag, elem) || toArray(elem.getElementsByTagName(tag));
 
                 } else {
 
-                    if (typeof elem.getElementsByTagName !== undefined) {
-                        return toArray(elem.getElementsByTagName(tag));
-                    }
+                    return toArray(elem.getElementsByTagName(tag));
                 }
             }
         },
@@ -298,10 +295,7 @@ hAzzle.extend({
          */
 
         'attr': function (elem, attribute) {
-
-
-            return elem.getAttribute(attribute) ||
-
+		   return getAttribute(elem, attribute) ||
                 IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.attr(e, attribute);
                 });
@@ -318,8 +312,10 @@ hAzzle.extend({
             if (sel === ' ') {
                 return elem && elem !== hAzzle.docElem && elem.parentNode;
             }
-
-            if (sel === '+') {
+            
+			// Next Adjacent Selector
+            
+			if (sel === '+') {
                 return [Jiesa.nextElementSibling(elem)];
             }
 
