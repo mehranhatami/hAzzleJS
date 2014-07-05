@@ -38,8 +38,6 @@ hAzzle.extend({
         return a.compareDocumentPosition ? -1 : 1;
     },
 
-    /* =========================== GLOBALE JIESA VARS ========================== */
-
     // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
 
     whitespace: "[\\x20\\t\\r\\n\\f]",
@@ -58,9 +56,6 @@ hAzzle.extend({
             String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
     },
 
-
-
-    /* =========================== VARIOUS SHIMS ========================== */
     /**
      * Find next element sibiling.
      *
