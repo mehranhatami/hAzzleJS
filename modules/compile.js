@@ -14,6 +14,11 @@ var win = this,
     documentIsHTML = hAzzle.documentIsHTML,
     csp = hAzzle.features.classList,
     Jiesa = hAzzle.Jiesa,
+
+    // Safer, but still slow I guess. 
+    // You benchmark this Mehran!
+
+    toArray = hAzzle.makeArray,
     /**
      * Special regex, not part of the public Jiesa Object
      */
@@ -177,13 +182,16 @@ hAzzle.extend({
         'Class': function (elem, sel) {
             sel = sel.replace('.', '');
 
-            if (elem.getElementsByClassName && documentIsHTML) {
-                return toArray(elem.getElementsByClassName(sel));
-            } else {
+            if (!documentIsHTML || elem.nodeType === 11) {
+                // Let the Iranian take a walk
                 return IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.Class(e, sel);
                 });
+            } else {
+
+                return toArray(elem.getElementsByClassName(sel));
             }
+
         },
 
         /**
@@ -219,9 +227,9 @@ hAzzle.extend({
                 // We have to let the Iranian walk again if XML doc
                 // or document fragment
 
-                if (!documentIsHTML || elem.nodeType == 11) {
+                if (documentIsHTML || elem.nodeType == 11) {
 
-                    return byTagRaw(tag, elem) || slice.call(elem.getElementsByTagName(tag), 0);
+                    return byTagRaw(tag, elem) || toArray(elem.getElementsByTagName(tag));
 
                 } else {
 
@@ -457,14 +465,8 @@ function IranianWalker(nodes, mode, fn) {
     }
 }
 
-function toArray(item) {
-    return IranianWalker(item, 'm', function (o) {
-        return o;
-    });
-}
-
-
 //split the selector into a manageable array. 
+
 function selectorSplit(selector) {
     var chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
     return selector.match(chunky) || [];
