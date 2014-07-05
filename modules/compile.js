@@ -148,7 +148,7 @@ hAzzle.extend({
     getters: {
 
         /**
-         * getElementById
+         * element by id
          *
          * It try nativly to use getElementById, but
          * if XML or buggy e.g., it fall back to the
@@ -156,16 +156,18 @@ hAzzle.extend({
          */
 
         'id': function (elem, id) {
+
+            // Grab the ID
+
             id = id.replace('#', '');
 
-            if (!hAzzle.documentIsHTML || elem.nodeType != 9) {
+            if (!hAzzle.documentIsHTML || elem.nodeType !== 9) {
                 return byIdRaw(id, elem);
             } else {
 
                 if (Jiesa.has["bug-GEBI"]) {
                     var m = elem.getElementById(id);
                     return m && m.parentNode ? [m] : [];
-
                 }
                 // The long Iranian walk !
                 return byIdRaw(id, elem);
@@ -183,6 +185,11 @@ hAzzle.extend({
                 });
             }
         },
+
+        /**
+         * elements by tag
+         *
+         */
 
         'tag': function (elem, tag) {
 
@@ -208,8 +215,19 @@ hAzzle.extend({
                 return results;
 
             } else {
-                if (typeof elem.getElementsByTagName !== undefined) {
-                    return toArray(elem.getElementsByTagName(tag));
+
+                // We have to let the Iranian walk again if XML doc
+                // or document fragment
+
+                if (!documentIsHTML || elem.nodeType == 11) {
+
+                    return byTagRaw(tag, elem) || slice.call(elem.getElementsByTagName(tag), 0);
+
+                } else {
+
+                    if (typeof elem.getElementsByTagName !== undefined) {
+                        return toArray(elem.getElementsByTagName(tag));
+                    }
                 }
             }
         },
@@ -468,7 +486,34 @@ function all(elem) {
     return elem.all ? elem.all : elem.getElementsByTagName('*');
 }
 
+/** 
+ * Mehran!
+ *
+ * I had to do it the ugly way, check if this is an fast
+ * solution. If not, speed it up
+ *
+ */
+function byTagRaw(tag, elem) {
+    var any = tag === '*',
+        element = elem,
+        elements = [],
+        next = element.firstChild;
 
+    any || (tag = tag.toUpperCase());
+
+    while ((element = next)) {
+        if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
+            elements[elements.length] = element;
+        }
+        if ((next = element.firstChild || element.nextSibling)) {
+            continue;
+        }
+        while (!next && (element = element.parentNode) && element !== elem) {
+            next = element.nextSibling;
+        }
+    }
+    return elements;
+}
 
 function byIdRaw(id, elem) {
     return IranianWalker(all(elem), 'f', function (e) {
