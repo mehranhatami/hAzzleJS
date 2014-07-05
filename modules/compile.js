@@ -10,20 +10,32 @@
  *
  */
 var win = this,
+
+    // Current document
+
     doc = win.document,
+
+    // Verify if the doc are HTML
+
     documentIsHTML = hAzzle.documentIsHTML,
+
+    // Check for classList support
+
     csp = hAzzle.features.classList,
+
+    // Short-hand for Jiesa
+
     Jiesa = hAzzle.Jiesa,
 
-    // Safer, but still slow I guess. 
-    // You benchmark this Mehran!
+    // Mehran! You benchmark this!
+    // Safer solution, but slower I guess
 
     toArray = hAzzle.makeArray,
-	
+
     // regEx are slow, so let us do it
     // differently then Sizzle
-	
-    uri = {
+
+    boolElem = {
         action: 2,
         cite: 2,
         codebase: 2,
@@ -34,7 +46,7 @@ var win = this,
         src: 2,
         usemap: 2
     },
-	
+
     booleans = {
         checked: 1,
         disabled: 1,
@@ -43,7 +55,6 @@ var win = this,
         aitoplay: 1,
         controls: 1,
         defer: 1,
-        disabled: 1,
         hidden: 1,
         loop: 1,
         multiple: 1,
@@ -51,17 +62,16 @@ var win = this,
         required: 1,
         scoped: 1,
         ismap: 1,
-        multiple: 1,
         readonly: 1,
         selected: 1
     },
 
-
     /**
-     * Special regex, not part of the public Jiesa Object
+     * Special regex. NOTE! This is not part of the public Jiesa Object
      */
 
     special = /\s?([\+~\>])\s?/g,
+    encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
     chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
 
 hAzzle.extend({
@@ -73,9 +83,9 @@ hAzzle.extend({
 
     regex: {
 
-        'id': /^#((?:\\.|[\w-]|[^\x00-\xa0])+)/,
-        'Class': /^\.((?:\\.|[\w-]|[^\x00-\xa0])+)/,
-        'tag': /^((?:\\.|[\w-]|[^\x00-\xa0])+|[*])/,
+        'id': new RegExp('^#(' + encoding + '+)(.*)'),
+        'tag': new RegExp('^(' + encoding + '+)(.*)'),
+        'Class': new RegExp('^\\.(' + encoding + '+)(.*)'),
         'rel': /^\>|\+|~$/,
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
@@ -98,7 +108,7 @@ hAzzle.extend({
             nodes,
             l, piece, piece1, j = 0,
             k,
-            info, inf, chunks, kf, soFar;
+            info, inf, chunks, kf;
 
         // Set / Adjust correct context
 
@@ -108,7 +118,7 @@ hAzzle.extend({
 
         // Split the selector before we are looping through
 
-        kf = selector.match(chunky)
+        kf = selector.match(chunky);
 
         /**
          * Tokenizing
@@ -288,6 +298,7 @@ hAzzle.extend({
          */
 
         'attr': function (elem, attribute) {
+
 
             return elem.getAttribute(attribute) ||
 
@@ -524,6 +535,7 @@ function IranianWalker(nodes, mode, fn) {
 function identify(chunk) {
 
     var type;
+
     for (type in Jiesa.regex) {
 
         if (Jiesa.regex[type].test(chunk)) return type;
@@ -571,14 +583,12 @@ function byIdRaw(id, elem) {
     });
 }
 
-
-
 function getAttribute(elem, attribute) {
 
     // Set document vars if needed
 
     if ((elem.ownerDocument || elem) !== document) {
-        doc = setDocument(elem);
+        doc = hAzzle.setDocument(elem);
     }
 
     // Lower case are always a good thing !!	 
@@ -590,7 +600,11 @@ function getAttribute(elem, attribute) {
     }
     return (
         attribute === 'type' ? elem.getAttribute(attribute) || '' :
-        uri[attribute] ? elem.getAttribute(attribute, 2) || '' :
+        boolElem[attribute] ? elem.getAttribute(attribute, 2) || '' :
         booleans[attribute] ? elem.getAttribute(attribute) ? attribute : 'false' :
+
+        // Support: IE<9
+        // Use getAttributeNode to fetch booleans when getAttribute lies
+
         ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }

@@ -96,10 +96,6 @@
           optDisabled: optDisabled,
           radioValue: radioValue,
 
-          // Check for classList support
-
-          clsp: clsp,
-
           noCloneChecked: noCloneChecked,
 
           checkClone: checkClone,
@@ -111,27 +107,13 @@
           // Check if support RAF
 
           supportRAF: !!win.requestAnimationFrame,
+          
+		  // Check for classList support
 
           classList: clsp,
 
           sMa: dcl,
-
-          // Check if getElementsByClassName are supported 
-
-          gEBCN: assert(function (div) {
-              div.innerHTML = "<div class='a'></div><div class='a i'></div>";
-			  div.firstChild.className = "i";
-		     return div.getElementsByClassName("i").length === 2;
-          }),
-
-          // Check if getElementById returns elements by name (IE 9)
-
-          gEBI: assert(function (div) {
-              var sid = "hAzzle" + -(new Date());
-              doc.documentElement.appendChild(div).id = sid;
-              return !doc.getElementsByName || !doc.getElementsByName(sid).length;
-          }),
-		  
+       		  
 		  // MatchesSelector
 		  // Use un-prefixed if we can
 		   mS: proto.matches ||
