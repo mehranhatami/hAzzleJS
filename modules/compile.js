@@ -71,8 +71,10 @@ var win = this,
     /**
      * Special regex. NOTE! This is not part of the public Jiesa Object
      */
-    
-	whitespace = new RegExp(Jiesa.whitespace),
+
+    rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
+    trimspaces = /^\s*|\s*$/g,
+    whitespace = new RegExp(Jiesa.whitespace),
     special = /\s?([\+~\>])\s?/g,
     encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
     chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
@@ -90,15 +92,21 @@ hAzzle.extend({
         'tag': new RegExp('^(' + encoding + '+)(.*)'),
         'Class': new RegExp('^\\.(' + encoding + '+)(.*)'),
         'rel': /^\>|\>|\+|~$/,
-        //		'nth': /^:(only|first|last|nth|nth-last)-(child|of-type)/,
+
+        // Mehran!! 
+        // We need to have this regex running around like a pig!! Because in
+        // Identity() we need to address NTH to 'pseudo'. 
+        // I will try to find a walk around, and see if I
+        // can merge something
 
         "nth": new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace +
             "*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace +
             "*(\\d+)|))" + whitespace + "*\\)|)", "i"),
-
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
+
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
         'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
+
         'whitespace': whitespace,
     },
 
@@ -123,7 +131,11 @@ hAzzle.extend({
 
         nodes = AdjustDocument(context);
 
-        selector = selector.replace(special, ' $1');
+        selector = selector.replace(trimspaces, '').replace(special, ' $1');
+
+        // Split the selector before we are looping through
+
+        kf = selector.match(chunky);
 
         /**
          * Tokenizing
@@ -132,26 +144,15 @@ hAzzle.extend({
          * all the different parts of the selector
          */
 
-        var cached = chunkCache[selector + " "];
+        chunks = IranianWalker(kf, 'm', function (sel) {
+			
+            return {
+                text: sel,
+                type: identify(sel)
+            };
+        });
 
-        if (!cached) {
-
-            // Split the selector before we are looping through
-
-            kf = selector.match(chunky);
-
-            chunks = IranianWalker(kf, 'm', function (sel) {
-
-                return {
-                    text: sel,
-                    type: identify(sel)
-                };
-            });
-
-            cached = chunkCache(selector, chunks);
-        }
-
-        if ((l = chunks.length) && nodes.length) {
+        if ((l = chunks.length)) {
 
             // create the node set
 
@@ -162,6 +163,7 @@ hAzzle.extend({
                 if (!piece.type) {
 
                     hAzzle.error('Invalid Selector: ' + piece.text);
+
                 }
 
                 if (piece.type !== 'whitespace' && chunks[i + 1]) {
@@ -203,6 +205,7 @@ hAzzle.extend({
                     }
 
                     if (piece.type === 'changer') {
+
                         inf = Jiesa.regex.changer.exec(piece.text);
                         nodes = Jiesa.changers[inf[1]](nodes, inf[2]);
                     }
@@ -210,10 +213,6 @@ hAzzle.extend({
                     pieceStore = [];
                 }
             }
-
-        } else {
-
-            return [];
         }
         return nodes;
     },
@@ -362,6 +361,8 @@ hAzzle.extend({
 
     // and as the name suggests, these filter the nodes to match a selector part
 
+    // and as the name suggests, these filter the nodes to match a selector part
+
     filters: {
 
         'id': function (elem, sel) {
@@ -481,6 +482,77 @@ hAzzle.extend({
             }
 
         }
+    },
+
+    matches: function (selector, context) {
+
+        if (typeof selector !== 'string') {
+
+            return null;
+        }
+
+        var quick = rquickIs.exec(selector),
+            i = 0,
+            l = context.length,
+            result = [];
+
+        if (quick) {
+            //   0  1    2   3          4
+            // [ _, tag, id, attribute, class ]
+            if (quick[1]) {
+
+                quick[1] = quick[1].toLowerCase();
+            }
+
+            if (quick[3]) {
+
+                quick[3] = quick[3].split('=');
+            }
+
+            if (quick[4]) {
+
+                quick[4] = ' ' + quick[4] + ' ';
+            }
+        }
+
+        // Always make sure we have a nodeName
+
+        if (quick && context.nodeName) {
+
+            result = (
+                (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
+                (!quick[2] || context.id === quick[2]) &&
+                (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
+                (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
+            );
+
+            // Fallback to hAzzle.matchesSelector
+
+        } else {
+
+            // Do a quick look-up if no array-context
+            //
+            // matchesSelector can't be run on XML docs,
+            // but we are solving this inside the 
+            // matchesSelector.js module
+
+            if (!l) {
+
+                return hAzzle.matchesSelector(context, selector);
+            }
+
+            // loop through
+
+            for (; i < l; i++) {
+
+                if (hAzzle.matchesSelector(context[i], selector)) {
+
+                    result.push(context[i]);
+                }
+            }
+        }
+
+        return result;
     }
 
 }, Jiesa);
@@ -516,10 +588,9 @@ function AdjustDocument(context) {
         }
         //throw error for invalid context? 
     }
+
     return nodes;
-
 }
-
 
 function IranianWalker(nodes, mode, fn) {
     if (nodes) {
@@ -591,6 +662,7 @@ function all(elem) {
     return elem.all ? elem.all : elem.getElementsByTagName('*');
 }
 
+
 /** 
  * Mehran!
  *
@@ -652,9 +724,16 @@ function getAttribute(elem, attribute) {
         ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
 
+
+
+
+
+
+
 function createCache() {
     var keys = [];
-   function cache(key, value) {
+
+    function cache(key, value) {
         if (keys.push(key + " ") > 70) {
             delete cache[keys.shift()];
         }
@@ -662,3 +741,8 @@ function createCache() {
     }
     return cache;
 }
+
+
+// Some adjustments...
+
+//hAzzle.matches = Jiesa.matches;
