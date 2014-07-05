@@ -66,10 +66,13 @@ var win = this,
         selected: 1
     },
 
+    chunkCache = createCache(),
+
     /**
      * Special regex. NOTE! This is not part of the public Jiesa Object
      */
-
+    
+	whitespace = new RegExp(Jiesa.whitespace),
     special = /\s?([\+~\>])\s?/g,
     encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
     chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
@@ -80,18 +83,23 @@ hAzzle.extend({
      * Global regEx for Jiesa
      *
      */
-       
+
     regex: {
 
         'id': new RegExp('^#(' + encoding + '+)(.*)'),
         'tag': new RegExp('^(' + encoding + '+)(.*)'),
         'Class': new RegExp('^\\.(' + encoding + '+)(.*)'),
         'rel': /^\>|\>|\+|~$/,
-		'nth': /^:(only|first|last|nth|nth-last)-(child|of-type)/,
+        //		'nth': /^:(only|first|last|nth|nth-last)-(child|of-type)/,
+
+        "nth": new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace +
+            "*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace +
+            "*(\\d+)|))" + whitespace + "*\\)|)", "i"),
+
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
         'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
-        'whitespace': new RegExp(Jiesa.whitespace),
+        'whitespace': whitespace,
     },
 
     /**
@@ -115,11 +123,7 @@ hAzzle.extend({
 
         nodes = AdjustDocument(context);
 
-        selector = selector.replace(Jiesa.whitespace, '').replace(special, ' $1');
-
-        // Split the selector before we are looping through
-
-        kf = selector.match(chunky);
+        selector = selector.replace(special, ' $1');
 
         /**
          * Tokenizing
@@ -128,31 +132,36 @@ hAzzle.extend({
          * all the different parts of the selector
          */
 
-        chunks = IranianWalker(kf, 'm', function (sel) {
-			
-            return {
-                text: sel,
-                type: identify(sel)
-            };
-        });
+        var cached = chunkCache[selector + " "];
 
-        if ((l = chunks.length)) {
+        if (!cached) {
+
+            // Split the selector before we are looping through
+
+            kf = selector.match(chunky);
+
+            chunks = IranianWalker(kf, 'm', function (sel) {
+
+                return {
+                    text: sel,
+                    type: identify(sel)
+                };
+            });
+
+            cached = chunkCache(selector, chunks);
+        }
+
+        if ((l = chunks.length) && nodes.length) {
 
             // create the node set
 
             for (; i < l; i++) {
-
-                if (nodes.length === 0 || chunks.length === 0) {
-
-                    return []; //no point carrying on if we run out of nodes.
-                }
 
                 piece = chunks[i];
 
                 if (!piece.type) {
 
                     hAzzle.error('Invalid Selector: ' + piece.text);
-
                 }
 
                 if (piece.type !== 'whitespace' && chunks[i + 1]) {
@@ -194,7 +203,6 @@ hAzzle.extend({
                     }
 
                     if (piece.type === 'changer') {
-
                         inf = Jiesa.regex.changer.exec(piece.text);
                         nodes = Jiesa.changers[inf[1]](nodes, inf[2]);
                     }
@@ -202,6 +210,10 @@ hAzzle.extend({
                     pieceStore = [];
                 }
             }
+
+        } else {
+
+            return [];
         }
         return nodes;
     },
@@ -279,7 +291,7 @@ hAzzle.extend({
 
                 // If XML doc or document fragment, do a 
                 // raw grab of the node, because the Iranian don't 
-				// fit for this 				
+                // fit for this 				
 
                 if (documentIsHTML || elem.nodeType === 11) {
 
@@ -297,7 +309,7 @@ hAzzle.extend({
          */
 
         'attr': function (elem, attribute) {
-		   return getAttribute(elem, attribute) ||
+            return getAttribute(elem, attribute) ||
                 IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.attr(e, attribute);
                 });
@@ -314,26 +326,26 @@ hAzzle.extend({
             if (sel === ' ') {
                 return elem && elem !== hAzzle.docElem && elem.parentNode;
             }
-            
-			// Next Adjacent Selector
-            
-			if (sel === '+') {
+
+            // Next Adjacent Selector
+
+            if (sel === '+') {
                 return [Jiesa.nextElementSibling(elem)];
             }
-            
-			// Child Selector
-            
-			if (sel === '>') {
+
+            // Child Selector
+
+            if (sel === '>') {
 
                 return IranianWalker(elem.childNodes, 'f', function (e) {
                     return e.nodeType === 1;
                 });
             }
-            
-			// Next Siblings Selector 
-            
-			if (sel === '~') {
-				
+
+            // Next Siblings Selector 
+
+            if (sel === '~') {
+                var children;
                 return (elem.parentNode && (children = elem.parentNode.children)) ? IranianWalker(children, 'f', function (e) {
                     return Jiesa.filters.rel(e, '~', elem);
                 }) : [];
@@ -431,26 +443,26 @@ hAzzle.extend({
 
         'rel': function (elem, sel, relElem) {
 
-          if(sel === '+') {
+            if (sel === '+') {
                 var prev = elem.previousElementSibling || elem.previousSibling;
                 while (prev && prev.nodeType != 1) {
                     prev = prev.previousSibling;
 
                 }
                 return prev === relElem;
-		  }
+            }
 
-          if(sel === '~') {
-	
-	          return elem !== relElem && elem.parentNode === relElem.parentNode;
-		  }
+            if (sel === '~') {
 
-          if(sel === '>') {
-             return elem.parentNode === relElem;
-		  }
+                return elem !== relElem && elem.parentNode === relElem.parentNode;
+            }
 
-           
-		   
+            if (sel === '>') {
+                return elem.parentNode === relElem;
+            }
+
+
+
             return false;
         },
 
@@ -458,16 +470,16 @@ hAzzle.extend({
 
             var pseudo = sel.replace(Jiesa.regex.pseudo, '$1'),
                 info = sel.replace(Jiesa.regex.pseudo, '$2');
-          
-		  // Mehran!!! Find a better solution here. try / catch are slow       
-	      
-		   try {
-			return Jiesa.pseudo_filters[pseudo](elem, info);    
-		  
-		   }catch(e) {
-		         hAzzle.error("Sorry!");		   
-		   }
-            
+
+            // Mehran!!! Find a better solution here. try / catch are slow       
+
+            try {
+                return Jiesa.pseudo_filters[pseudo](elem, info);
+
+            } catch (e) {
+                hAzzle.error("Sorry!");
+            }
+
         }
     }
 
@@ -552,19 +564,20 @@ function IranianWalker(nodes, mode, fn) {
 function identify(chunk) {
 
     var type;
-    
-	/**
-	 * Mehran!!
-	 *
-	 * Dirty fix to solve the nth problem with
-	 * relative attributes. Need to find a better
-	 * solution for this. Maybe Sizzle solution
-	 * where they filter on 'child'
-	 */
-	
-	if(Jiesa.regex.nth.test(chunk)) {
+
+    /**
+     * Mehran!!
+     *
+     * Dirty fix to solve the nth problem with
+     * relative attributes. Need to find a better
+     * solution for this. Maybe Sizzle solution
+     * where they filter on 'child'
+     */
+    var reg = Jiesa.regex;
+
+    if (reg.nth.test(chunk)) {
         return 'pseudo';
-	}
+    }
 
     for (type in Jiesa.regex) {
 
@@ -637,4 +650,15 @@ function getAttribute(elem, attribute) {
         // Use getAttributeNode to fetch booleans when getAttribute lies
 
         ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
+}
+
+function createCache() {
+    var keys = [];
+   function cache(key, value) {
+        if (keys.push(key + " ") > 70) {
+            delete cache[keys.shift()];
+        }
+        return (cache[key + " "] = value);
+    }
+    return cache;
 }
