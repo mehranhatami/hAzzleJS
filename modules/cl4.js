@@ -14,7 +14,7 @@ hAzzle.extend({
     // Test and check that indeterminate are working
 
     'indeterminate': function (elem) {
-        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.parse("[checked]", elem.form).length === 0;
+        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.parse('[checked]', elem.form).length === 0;
     },
     // HTML5 UI element states (form controls)
     'default': function (elem) {
@@ -26,34 +26,35 @@ hAzzle.extend({
     },
 
     'valid': function (elem) {
-        return typeof elem.form !== "undefined" && typeof elem.validity === "object" && elem.validity.valid;
+        return typeof elem.form !== 'undefined' && typeof elem.validity === 'object' && elem.validity.valid;
     },
     'invalid': function (elem) {
         // only fields for which validity applies
-        return typeof elem.form !== "undefined" && typeof elem.validity === "object" && !elem.validity.valid;
+        return typeof elem.form !== 'undefined' && typeof elem.validity === 'object' && !elem.validity.valid;
     },
 
     'in-range': function (elem, sel) {
         return typeof elem.form !== 'undefined' &&
-            (sel.getAttribute(elem, "min") || sel.getAttribute(elem, "max")) &&
+            (sel.getAttribute(elem, 'min') || sel.getAttribute(elem, 'max')) &&
             typeof elem.validity === 'object' && !elem.validity.typeMismatch &&
             !elem.validity.rangeUnderflow && !elem.validity.rangeOverflow;
     },
     'out-of-range': function (elem, sel) {
         // only fields for which validity applies
-        return typeof elem.form !== "undefined" &&
-            (sel.getAttribute(elem, "min") || sel.getAttribute(elem, "max")) &&
-            typeof elem.validity === "object" && (elem.validity.rangeUnderflow || elem.validity.rangeOverflow);
+        return typeof elem.form !== 'undefined' &&
+            (sel.getAttribute(elem, 'min') || sel.getAttribute(elem, 'max')) &&
+            typeof elem.validity === 'object' && (elem.validity.rangeUnderflow || elem.validity.rangeOverflow);
     },
     'required': function (elem) {
-        return !!elem.required;
+		return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && elem.required
+
     },
     'read-only': function (elem) {
-        // only fields for which "readOnly" applies
-        return typeof elem.form !== "undefined" && typeof elem.readOnly !== "undefined" && elem.readOnly;
+        // only fields for which 'readOnly' applies
+        return typeof elem.form !== 'undefined' && typeof elem.readOnly !== 'undefined' && elem.readOnly;
     },
     'read-write': function (elem) {
-        return typeof elem.form !== "undefined" && typeof elem.readOnly !== "undefined" && !elem.readOnly;
+        return typeof elem.form !== 'undefined' && typeof elem.readOnly !== 'undefined' && !elem.readOnly;
     },
 
     'dir': function (el, val) {
@@ -67,7 +68,7 @@ hAzzle.extend({
     },
 
     'optional': function (elem) {
-        return typeof elem.form !== "undefined" && typeof elem.required !== "undefined" && !elem.required;
+        return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && !elem.required;
     },
 
     'has': function (elem, sel) {
