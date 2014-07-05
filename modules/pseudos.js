@@ -1,3 +1,10 @@
+/*
+ *
+ * CSS3 pseudo-classes extension for Jiesa
+ *
+ * Contains all CSS3 pseudo selectors
+ *
+ */
 // Jiesa CSS pseudo selectors
 var win = this,
     doc = win.document,
@@ -15,7 +22,16 @@ var win = this,
 
     runescape = Jiesa.runescape,
 
-    funescape = Jiesa.funescape;
+    funescape = Jiesa.funescape,
+
+    linkNodes = {
+        'a': 1,
+        'A': 1,
+        'area': 1,
+        'AREA': 1,
+        'link': 1,
+        'LINK': 1
+    };
 
 hAzzle.extend({
 
@@ -111,30 +127,33 @@ hAzzle.extend({
         },
         'only-child': function (elem) {
             return !Jiesa.prev(elem) && !Jiesa.next(elem) && elem.parentNode.childElementCount == 1;
-
         },
+
+        // Select all elements that have no children (including text nodes).
+
         'empty': function (elem) {
-            // http://www.w3.org/TR/selectors/#empty-pseudo
-            // :empty is negated by element (1) or content nodes (text: 3; cdata: 4; entity ref: 5),
-            //   but not by others (comment: 8; processing instruction: 7; etc.)
-            // nodeType < 6 works because attributes (2) do not appear as children
-            for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+
+            elem = elem.firstChild;
+
+            while (elem) {
                 if (elem.nodeType < 6) {
                     return false;
                 }
+                elem = elem.nextSibling;
             }
+
             return true;
         },
 
-        "input": function (elem) {
+        'input': function (elem) {
             return rinputs.test(elem.nodeName);
         },
         'parent': function (elem) {
             return !Jiesa.pseudo_filters.empty(elem);
         },
-
+        // Negation pseudo-class
         'not': function (elem, sel) {
-            return Jiesa.parse(sel.replace(rtrim, "$1")).indexOf(elem) == -1;
+            return Jiesa.parse(sel.replace(rtrim, '$1')).indexOf(elem) == -1;
         },
         'has': function (elem, sel) {
             return Jiesa.parse(sel, elem).length > 0;
@@ -152,50 +171,67 @@ hAzzle.extend({
             return elem.selected === true;
         },
 
-        "root": function (elem) {
+        'root': function (elem) {
             return elem === hAzzle.docElem;
         },
 
-        "focus": function (elem) {
-            return elem === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
+        'focus': function (elem) {
+            return elem === doc.activeElement && (!doc.hasFocus || doc.hasFocus()) && !!(elem.type || elem.href || typeof elem.tabIndex === 'number');
         },
-        "target": function (elem) {
-            var hash = win.location && win.location.hash;
+
+        'target': function (elem) {
+            var hash = win.location ? win.location.hash : '';
             return hash && hash.slice(1) === elem.id;
+        },
+        'active': function (elem) {
+            return elem === doc.activeElement;
+        },
+
+        'hover': function (elem) {
+            return elem === doc.hoverElement;
+        },
+
+
+        'visited': function (elem) {
+            return isLink(elem) && elem.visited;
         },
 
         'visible': function (elem) {
             return !Jiesa.pseudo_filters.hidden(elem);
         },
         'enabled': function (elem) {
-            return elem.disabled === false;
+            if (typeof elem.form !== 'undefined') {
+                return elem.disabled === false;
+            }
         },
         'disabled': function (elem) {
-            return elem.disabled === true;
+            if (typeof elem.form !== 'undefined') {
+                return elem.disabled === true;
+            }
         },
         'text': function (elem) {
             var attr;
-            return elem.nodeName.toLowerCase() === "input" &&
-                elem.type === "text" &&
+            return elem.nodeName.toLowerCase() === 'input' &&
+                elem.type === 'text' &&
 
                 // Support: IE<8
-                // New HTML5 attribute values (e.g., "search") appear with elem.type === "text"
-                ((attr = elem.getAttribute("type")) === null || attr.toLowerCase() === "text");
+                // New HTML5 attribute values (e.g., 'search') appear with elem.type === 'text'
+                ((attr = elem.getAttribute('type')) === null || attr.toLowerCase() === 'text');
         },
         'header': function (elem) {
             return rheader.test(elem.nodeName);
         },
         'checked': function (elem) {
             var nodeName = elem.nodeName.toLowerCase();
-            return (nodeName === "input" && !!elem.checked) || (nodeName === "option" && !!elem.selected);
+            return (nodeName === 'input' && !!elem.checked) || (nodeName === 'option' && !!elem.selected);
         },
         'unchecked': function (elem) {
             return !Jiesa.pseudo_filters.checked(elem);
         },
 
-        "button": function (elem) {
+        'button': function (elem) {
             var name = elem.nodeName.toLowerCase();
-            return name === "input" && elem.type === "button" || name === "button";
+            return name === 'input' && elem.type === 'button' || name === 'button';
         },
     }
 
@@ -229,7 +265,7 @@ for (i in {
 function createInputPseudo(type) {
     return function (elem) {
         var name = elem.nodeName.toLowerCase();
-        return name === "input" && elem.type === type;
+        return name === 'input' && elem.type === type;
     };
 }
 
@@ -240,12 +276,12 @@ function createInputPseudo(type) {
 function createButtonPseudo(type) {
     return function (elem) {
         var name = elem.nodeName.toLowerCase();
-        return (name === "input" || name === "button") && elem.type === type;
+        return (name === 'input' || name === 'button') && elem.type === type;
     };
 }
 
 function children(node, ofType) {
-    var r = []
+    var r = [], i, l,
     nodes = node.childNodes;
 
     for (i = 0, l = nodes.length; i < l; i++) {
@@ -280,10 +316,15 @@ function checkNth(el, nodes, val) {
 
 function checkNthExpr(el, nodes, a, b) {
     if (!a) {
-        return (nodes[b - 1] == el)
+        return (nodes[b - 1] == el);
     }
-    for (i = b, l = nodes.length;
+    for (var i = b, l = nodes.length;
         ((a > 0) ? (i <= l) : (i >= 1)); i += a)
         if (el == nodes[i - 1]) return true;
     return false;
+}
+
+
+function isLink(elem) {
+    return elem.getAttribute('href') && linkNodes[elem.nodeName];
 }

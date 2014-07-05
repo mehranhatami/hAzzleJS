@@ -122,4 +122,4 @@ hAzzle.extend({
         while ((el = el.previousSibling) && el.nodeType !== 1);
         return el;
     }
-});
+}, Jiesa);
