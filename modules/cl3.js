@@ -2,10 +2,9 @@
  *
  * CSS3 pseudo-classes extension for Jiesa
  *
- * Contains all CSS Level 3 pseudo selectors
+ * Contains all CSS Level 3 selectors
  *
  */
-
 var win = this,
     doc = win.document,
     i,
@@ -14,6 +13,10 @@ var win = this,
     rheader = /^h\d$/i,
 
     nthPattern = /\s*((?:\+|\-)?(\d*))n\s*((?:\+|\-)\s*\d+)?\s*/,
+
+    identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
+
+    ridentifier = new RegExp("^" + identifier + "$"),
 
     runescape = Jiesa.runescape,
 
@@ -31,6 +34,30 @@ var win = this,
 hAzzle.extend({
 
     pseudo_filters: {
+
+        // Mehran! You fix this. Couldn't get it to work just now
+        "lang": function (el, lang) {
+
+            if (!ridentifier.test(lang || "")) {
+                hAzzle.error("unsupported lang: " + lang);
+            }
+
+            lang = lang.replace(runescape, funescape).toLowerCase();
+
+            var elemLang;
+            do {
+                if ((elemLang = hAzzle.documentIsHTML ?
+                    elem.lang :
+                    elem.getAttribute("xml:lang") || elem.getAttribute("lang"))) {
+
+                    elemLang = elemLang.toLowerCase();
+                    return elemLang === lang || elemLang.indexOf(lang + "-") === 0;
+                }
+            } while ((elem = elem.parentNode) && elem.nodeType === 1);
+            return false;
+
+        },
+
 
         'only-of-type': function (el) {
 
@@ -146,7 +173,7 @@ hAzzle.extend({
         'parent': function (elem) {
             return !Jiesa.pseudo_filters.empty(elem);
         },
-       
+
         'has': function (elem, sel) {
             return Jiesa.parse(sel, elem).length > 0;
         },
@@ -273,8 +300,9 @@ function createButtonPseudo(type) {
 }
 
 function children(node, ofType) {
-    var r = [], i, l,
-    nodes = node.childNodes;
+    var r = [],
+        i, l,
+        nodes = node.childNodes;
 
     for (i = 0, l = nodes.length; i < l; i++) {
         if (nodes[i].nodeType == 1 && (!ofType || nodes[i].nodeName == ofType)) {
