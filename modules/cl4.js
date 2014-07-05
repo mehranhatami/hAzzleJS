@@ -5,49 +5,56 @@ var Jiesa = hAzzle.Jiesa,
     pseudos = Jiesa.pseudo_filters,
 
     trimspaces = /^\s*|\s*$/g,
-
+    radicheck = /radio|checkbox/i,
     llps = /#.*?$/;
 
 hAzzle.extend({
 
-    // Negation pseudo-class
+    // Mehran !!
+    // Test and check that indeterminate are working
+
+    'indeterminate': function (elem) {
+        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.parse("[checked]", elem.form).length === 0;
+    },
+    // HTML5 UI element states (form controls)
+    'default': function (elem) {
+        return typeof elem.form !== 'undefined' && ((radicheck).test(elem.type) || /option/i.test(elem.nodeName)) && (elem.defaultChecked || elem.defaultSelected);
+    },
+
     'not': function (elem, sel) {
         return Jiesa.parse(sel.replace(trimspaces, '')).indexOf(elem) == -1;
     },
 
     'valid': function (elem) {
-        return elem.willValidate || (elem.validity && elem.validity.valid);
+        return typeof elem.form !== "undefined" && typeof elem.validity === "object" && elem.validity.valid;
     },
     'invalid': function (elem) {
-        return !pseudos.valid(elem);
+        // only fields for which validity applies
+        return typeof elem.form !== "undefined" && typeof elem.validity === "object" && !elem.validity.valid;
     },
-    'in-range': function (elem) {
-        return el.value > elem.min && elem.value <= elem.max;
+
+    'in-range': function (elem, sel) {
+        return typeof elem.form !== 'undefined' &&
+            (sel.getAttribute(elem, "min") || sel.getAttribute(elem, "max")) &&
+            typeof elem.validity === 'object' && !elem.validity.typeMismatch &&
+            !elem.validity.rangeUnderflow && !elem.validity.rangeOverflow;
     },
-    'out-of-range': function (elem) {
-        return !pseudos['in-range'](elem);
+    'out-of-range': function (elem, sel) {
+        // only fields for which validity applies
+        return typeof elem.form !== "undefined" &&
+            (sel.getAttribute(elem, "min") || sel.getAttribute(elem, "max")) &&
+            typeof elem.validity === "object" && (elem.validity.rangeUnderflow || elem.validity.rangeOverflow);
     },
     'required': function (elem) {
         return !!elem.required;
     },
-    'optional': function (elem) {
-        return !elem.required;
-    },
     'read-only': function (elem) {
-        if (elem.readOnly) return true;
-
-        var attr = elem.getAttribute('contenteditable'),
-            prop = elem.contentEditable,
-            name = elem.nodeName.toLowerCase();
-
-        name = name !== 'input' && name !== 'textarea';
-
-        return (name || elem.disabled) && attr === null && prop !== 'true';
+        // only fields for which "readOnly" applies
+        return typeof elem.form !== "undefined" && typeof elem.readOnly !== "undefined" && elem.readOnly;
     },
     'read-write': function (elem) {
-        return !pseudos['read-only'](elem);
+        return typeof elem.form !== "undefined" && typeof elem.readOnly !== "undefined" && !elem.readOnly;
     },
-
 
     'dir': function (el, val) {
         while (el) {
@@ -57,6 +64,10 @@ hAzzle.extend({
             el = el.parentNode;
         }
         return false;
+    },
+
+    'optional': function (elem) {
+        return typeof elem.form !== "undefined" && typeof elem.required !== "undefined" && !elem.required;
     },
 
     'has': function (elem, sel) {
