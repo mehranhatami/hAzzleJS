@@ -318,16 +318,20 @@ hAzzle.extend({
 			if (sel === '+') {
                 return [Jiesa.nextElementSibling(elem)];
             }
+            
+			// Child Selector
+            
+			if (sel === '>') {
 
-            if (sel === '>') {
                 return IranianWalker(elem.childNodes, 'f', function (e) {
                     return e.nodeType === 1;
                 });
             }
-
-            if (sel === '~') {
-
-                var children;
+            
+			// Next Siblings Selector 
+            
+			if (sel === '~') {
+				
                 return (elem.parentNode && (children = elem.parentNode.children)) ? IranianWalker(children, 'f', function (e) {
                     return Jiesa.filters.rel(e, '~', elem);
                 }) : [];
@@ -425,28 +429,43 @@ hAzzle.extend({
 
         'rel': function (elem, sel, relElem) {
 
-            switch (sel) {
-            case '+':
+          if(sel === '+') {
                 var prev = elem.previousElementSibling || elem.previousSibling;
                 while (prev && prev.nodeType != 1) {
                     prev = prev.previousSibling;
 
                 }
                 return prev === relElem;
-            case '~':
-                return elem !== relElem && elem.parentNode === relElem.parentNode;
-            case '>':
-                return elem.parentNode === relElem;
-            }
+		  }
+
+          if(sel === '~') {
+	
+	          return elem !== relElem && elem.parentNode === relElem.parentNode;
+		  }
+
+          if(sel === '>') {
+             return elem.parentNode === relElem;
+		  }
+
+           
+		   
             return false;
         },
 
         'pseudo': function (elem, sel) {
-            //	alert(sel);
+
             var pseudo = sel.replace(Jiesa.regex.pseudo, '$1'),
                 info = sel.replace(Jiesa.regex.pseudo, '$2');
-
-            return Jiesa.pseudo_filters[pseudo](elem, info); //we're going into another object again for pseudos.
+          
+		  // Mehran!!! Find a better solution here. try / catch are slow       
+	      
+		   try {
+			return Jiesa.pseudo_filters[pseudo](elem, info);    
+		  
+		   }catch(e) {
+		         hAzzle.error("Sorry!");		   
+		   }
+            
         }
     }
 
