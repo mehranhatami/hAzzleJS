@@ -35,8 +35,8 @@ hAzzle.extend({
         'rel': /^\>|\+|~$/,
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
-        'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
-        'space': /^\s+$/
+        'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/
+
     },
 
     /**
@@ -70,7 +70,6 @@ hAzzle.extend({
          */
 
         chunks = IranianWalker(selectorSplit(selector), 'm', function (sel) {
-
             return {
                 text: sel,
                 type: identify(sel)
@@ -129,8 +128,7 @@ hAzzle.extend({
                         }
 
                         nodes = IranianWalker(nodes, 'f', function (elem) {
-                            return elem ?
-                                Jiesa.filters[pieceStore[j].type](elem, pieceStore[j].text) : false;
+                            return elem ? Jiesa.filters[pieceStore[j].type](elem, pieceStore[j].text) : false;
                         });
                     }
 
@@ -149,14 +147,28 @@ hAzzle.extend({
 
     getters: {
 
+        /**
+         * getElementById
+         *
+         * It try nativly to use getElementById, but
+         * if XML or buggy e.g., it fall back to the
+         * hard and slow way of doing things
+         */
+
         'id': function (elem, id) {
+            id = id.replace('#', '');
 
-            // Mehran!! Add fallback for XML. You can do it! You know it !!!
+            if (!hAzzle.documentIsHTML || elem.nodeType != 9) {
+                return byIdRaw(id, elem);
+            } else {
 
-            if (typeof elem.getElementById !== undefined && hAzzle.documentIsHTML) {
-                id = id.replace('#', '');
-                var m = elem.getElementById ? elem.getElementById(id) : doc.getElementById(id);
-                return m && m.parentNode ? [m] : [];
+                if (Jiesa.has["bug-GEBI"]) {
+                    var m = elem.getElementById(id);
+                    return m && m.parentNode ? [m] : [];
+
+                }
+                // The long Iranian walk !
+                return byIdRaw(id, elem);
             }
         },
 
@@ -203,9 +215,6 @@ hAzzle.extend({
         },
 
         'attr': function (elem, sel) {
-
-
-
             return IranianWalker(all(elem), 'f', function (e) {
                 return Jiesa.filters.attr(e, sel);
             });
@@ -224,11 +233,7 @@ hAzzle.extend({
             }
 
             if (sel === '+') {
-                var next = elem.nextElementSibling || elem.nextSibling;
-                while (next && next.nodeType !== 1) {
-                    next = next.nextSibling;
-                }
-                return [next];
+                return [Jiesa.nextElementSibling(elem)];
             }
 
             if (sel === '>') {
@@ -248,7 +253,6 @@ hAzzle.extend({
         },
 
         'pseudo': function (elem, sel) {
-
             return IranianWalker(all(elem), 'f', function (e) {
                 return Jiesa.filters.pseudo(e, sel);
             });
@@ -323,8 +327,8 @@ hAzzle.extend({
                     operator === "^=" ? value && attr.indexOf(value) === 0 :
                     operator === "*=" ? value && attr.indexOf(value) > -1 :
                     operator === "$=" ? value && attr.slice(-value.length) === value :
-                    operator === "~=" ? (" " + attr + " ").indexOf(value) > -1 :
-                    operator === "|=" ? attr === value || attr.slice(0, value.length + 1) === value + "-" :
+                    operator === "~=" ? (' ' + attr + ' ').indexOf(value) > -1 :
+                    operator === "|=" ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
                     false;
 
             }
@@ -350,6 +354,7 @@ hAzzle.extend({
         },
 
         'pseudo': function (elem, sel) {
+            //	alert(sel);
             var pseudo = sel.replace(Jiesa.regex.pseudo, '$1'),
                 info = sel.replace(Jiesa.regex.pseudo, '$2');
 
@@ -461,4 +466,12 @@ function identify(chunk) {
 //just to prevent rewriting over and over...
 function all(elem) {
     return elem.all ? elem.all : elem.getElementsByTagName('*');
+}
+
+
+
+function byIdRaw(id, elem) {
+    return IranianWalker(all(elem), 'f', function (e) {
+        return e.getAttribute('id') === id;
+    });
 }
