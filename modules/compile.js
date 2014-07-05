@@ -86,7 +86,8 @@ hAzzle.extend({
         'id': new RegExp('^#(' + encoding + '+)(.*)'),
         'tag': new RegExp('^(' + encoding + '+)(.*)'),
         'Class': new RegExp('^\\.(' + encoding + '+)(.*)'),
-        'rel': /^[\x20\t\r\n\f]\>|\>|\+|~$/,
+        'rel': /^\>|\>|\+|~$/,
+		'nth': /^:(only|first|last|nth|nth-last)-(child|of-type)/,
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
         'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
@@ -128,6 +129,7 @@ hAzzle.extend({
          */
 
         chunks = IranianWalker(kf, 'm', function (sel) {
+			
             return {
                 text: sel,
                 type: identify(sel)
@@ -550,6 +552,19 @@ function IranianWalker(nodes, mode, fn) {
 function identify(chunk) {
 
     var type;
+    
+	/**
+	 * Mehran!!
+	 *
+	 * Dirty fix to solve the nth problem with
+	 * relative attributes. Need to find a better
+	 * solution for this. Maybe Sizzle solution
+	 * where they filter on 'child'
+	 */
+	
+	if(Jiesa.regex.nth.test(chunk)) {
+        return 'pseudo';
+	}
 
     for (type in Jiesa.regex) {
 
