@@ -209,32 +209,23 @@ hAzzle.extend({
         'hover': function (elem) {
             return elem === doc.hoverElement;
         },
-
-
-        'visited': function (elem) {
-            return isLink(elem) && elem.visited;
+        'visited': function (elem, sel) {
+            return isLink(sel) && elem.visited;
         },
 
         'visible': function (elem) {
             return !Jiesa.pseudo_filters.hidden(elem);
         },
         'enabled': function (elem) {
-            if (typeof elem.form !== 'undefined') {
-                return elem.disabled === false;
-            }
+           return typeof elem.form !== 'undefined' && elem.disabled === false;
         },
         'disabled': function (elem) {
-            if (typeof elem.form !== 'undefined') {
-                return elem.disabled === true;
-            }
+           return typeof elem.form !== 'undefined' && elem.disabled === true;
         },
         'text': function (elem) {
             var attr;
             return elem.nodeName.toLowerCase() === 'input' &&
                 elem.type === 'text' &&
-
-                // Support: IE<8
-                // New HTML5 attribute values (e.g., 'search') appear with elem.type === 'text'
                 ((attr = elem.getAttribute('type')) === null || attr.toLowerCase() === 'text');
         },
         'header': function (elem) {

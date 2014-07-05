@@ -14,7 +14,7 @@ hAzzle.extend({
     // Test and check that indeterminate are working
 
     'indeterminate': function (elem) {
-        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.parse('[checked]', elem.form).length === 0;
+        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.parse(':checked', elem.form).length === 0;
     },
     // HTML5 UI element states (form controls)
     'default': function (elem) {
