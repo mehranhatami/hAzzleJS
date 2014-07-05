@@ -1,10 +1,13 @@
 /**
- * Jiesa changers - special pseudo selectors
+ * Jiesa - Child Selectors
  *
- * Know from Sizzle, but for Jiesa, this are
- * developed the natural way. Meaning
+ * Known as special jQuery selectors.
  *
- * -2 means -2 and not -1 as in Sizzle.
+ * :even, :odd, :eq, :lt, :gt, :first, :last, :nth
+ *
+ * Note! There is some differences
+ *
+ * -2 means -2 and not -1 as in jQuey / Sizzle.
  *
  * for gt and lt, positive numbers to left,
  * negative number to the right.
@@ -18,25 +21,45 @@
  * gt(1) - give you number 1
  *
  */
-
 hAzzle.extend({
 
     changers: {
-        'eq': function (arr, val) {
-            return arr[val] ? [arr[val]] : [];
+        'eq': function (arr, index) {
+            return arr[index] ? [arr[index]] : [];
         },
-        'gt': function (arr, val) {
+        'gt': function (arr, index) {
 
-            return arr.slice(val);
+            return arr.slice(index);
         },
-        'lt': function (arr, val) {
-            return arr.Array.prototype.slice(0, val);
+        'lt': function (arr, index) {
+
+            return arr.slice(0, index);
         },
-        'first': function (arr) {
-            return [arr[0]];
+
+        /**
+         * Reduce the set of matched elements to the first in the set,
+         * OR to the first Nth elements, if index is specified
+         *
+         * @param {Array} arr
+         * @param {Number} index
+         * @return {hAzzle}
+         */
+
+        'first': function (arr, index) {
+            return index ? arr.slice(0, index) : [arr[0]];
         },
-        'last': function (arr) {
-            return [arr[arr.length - 1]];
+
+        /**
+         * Reduce the set of matched elements to the final one in the set,
+         * OR to the last Nth elements, if index is specified
+         *
+         * @param {Array} arr
+         * @param {Number} index
+         * @return {hAzzle}
+         */
+
+        'last': function (arr, index) {
+            return index ? arr.slice(arr.length - index) : [arr[arr.length - 1]];
         },
         'odd': function (arr) {
             return ofType(arr, 0, 2);
