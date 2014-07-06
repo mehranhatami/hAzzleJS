@@ -105,7 +105,6 @@ hAzzle.extend({
 
         'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
         'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
-
         'whitespace': whitespace,
     },
 
@@ -124,14 +123,13 @@ hAzzle.extend({
             nodes,
             l, piece, piece1, j = 0,
             k,
-            pC,
-            inf, chunks, kf;
+            info, inf, chunks, kf;
 
         // Set / Adjust correct context
 
         nodes = AdjustDocument(context);
 
-        selector = selector.replace(trimspaces, '').replace(special, ' $1');
+        selector = selector.replace(special, ' $1');
 
         // Split the selector before we are looping through
 
@@ -141,69 +139,59 @@ hAzzle.extend({
 
         chunks = Collector(kf);
 
+
         l = chunks.length;
 
         if (l) {
 
             // create the node set
 
-            pC = pieceCache(selector);
+            for (; i < l; i++) {
 
-            if (!pC) {
+                piece = chunks[i];
 
-                for (; i < l; i++) {
+                if (!piece.type) {
 
-                    piece = chunks[i];
+                    hAzzle.error('Invalid Selector: ' + piece.text);
 
-                    if (!piece.type) {
-
-                        hAzzle.error('Invalid Selector: ' + piece.text);
-                    }
-
-                    if (piece.type !== 'whitespace' && chunks[i + 1]) {
-
-                        // We push all non-descendant selectors into the pieceStore until we hit a space in the selector.
-
-                        pieceStore.push(piece);
-
-                    } else {
-
-                        if (piece.type !== 'whitespace' && piece.type !== 'changer') {
-
-                            pieceStore.push(piece);
-                        }
-
-                        //now we begin. Grab the first piece, as the starting point, then perform the filters on the nodes.
-
-                        piece1 = pieceStore.shift();
-                        k = pieceStore.length;
-
-                        // Collect everything
-
-                        nodes = Execute(nodes, piece1, context);
-
-                        // 'only' filter the nodes if a filter exist...
-
-                        if (Jiesa.filters[piece.type]) {
-
-                            for (; j < k; j++) {
-
-                                // filter the nodes
-
-                                nodes = filter(nodes, pieceStore[j]);
-                            }
-                        }
-
-                        if (piece.type === 'changer') {
-
-                            nodes = createPositionalPseudo(nodes, piece.text);
-                        }
-
-                        pieceStore = [];
-                    }
                 }
 
-                nodes = pieceCache(selector, nodes);
+                if (piece.type !== 'whitespace' && chunks[i + 1]) {
+
+                    pieceStore.push(piece);
+
+                    //We push all non-descendant selectors into piece store until we hit a space in the selector.
+
+                } else {
+
+                    if (piece.type !== 'whitespace' && piece.type !== 'changer') {
+
+                        pieceStore.push(piece);
+                    }
+
+                    //now we begin. Grab the first piece, as the starting point, then perform the filters on the nodes.
+
+                    piece1 = pieceStore.shift();
+                    k = pieceStore.length;
+
+                    // Collect everything
+
+                    nodes = Execute(nodes, piece1, context);
+
+                    // filter the nodes
+
+                    for (; j < k; j++) {
+
+                        nodes = filter(nodes, pieceStore[j]);
+                    }
+
+                    if (piece.type === 'changer') {
+
+                        nodes = createPositionalPseudo(nodes, piece.text);
+                    }
+
+                    pieceStore = [];
+                }
             }
         }
         return nodes;
@@ -297,15 +285,15 @@ hAzzle.extend({
 
         /**
          * Get the attribute value
+         */
 
         'attr': function (elem, attribute) {
-
             return getAttribute(elem, attribute) ||
                 IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.attr(e, attribute);
                 });
         },
-  */
+
         // relative selectors
 
         'rel': function (elem, sel) {
@@ -313,43 +301,25 @@ hAzzle.extend({
             if (!elem) {
                 return false;
             }
-           
-		   // working
-           
-		    if (sel === ' ') {
+
+            if (sel === ' ') {
                 return elem && elem !== hAzzle.docElem && elem.parentNode;
             }
 
             // Next Adjacent Selector
 
-           // working
-		   
-		    if (sel === '+') {
+            if (sel === '+') {
                 return [Jiesa.nextElementSibling(elem)];
-            }
-
-            if (sel === '++') {
-                // +
-                // !+
-            }
-
-            if (sel === '~~') {
-                // ~
-                // !~
-                // return [Jiesa.nextElementSibling(elem)];
             }
 
             // Child Selector
 
             if (sel === '>') {
 
-// NOTE!! This one are not correct now, need adjustments later				 
-
- if ((el = elem.parentNode)) do {
-			if (el.nodeType === 1) return el;
-		} while (el.parentNode && elem.parentNode);
-
-            }// broken
+                return IranianWalker(elem.childNodes, 'f', function (e) {
+                    return e.nodeType === 1;
+                });
+            }
 
             // Next Siblings Selector 
 
@@ -359,12 +329,6 @@ hAzzle.extend({
                     return Jiesa.filters.rel(e, '~', elem);
                 }) : [];
             }
-
-            /**
-             * Need to add:
-             *
-             *  '!' !>' '!+':
-             */
 
         },
 
@@ -402,7 +366,19 @@ hAzzle.extend({
             }
         },
 
+        'tag': function (elem, sel) {
+            return (elem.tagName && elem.tagName.toLowerCase() === sel.toLowerCase());
+        },
+
         'attr': function (elem, sel) {
+
+            /**
+             * Mehran!!
+             *
+             * We could have used our own hAzzle.attr() to grab the
+             * attribute, but I think that is slowe. So I creted my
+             * own solution.
+             */
 
             var info = Jiesa.regex.attr.exec(sel),
                 attr = getAttribute(elem, info[1]);
@@ -418,7 +394,12 @@ hAzzle.extend({
 
                 attr += "";
 
-
+                /**
+                 * Special attribute - Regex Attribute Selector
+                 * It gives the ability to match attributes with a regexp.
+                 *
+                 *  hAzzle('div[id/= [ RegEX ] ')
+                 */
 
                 if (value && operator === '/=') {
 
@@ -438,16 +419,16 @@ hAzzle.extend({
                     false;
 
             }
-
-
+            return false;
         },
-	
+
         'rel': function (elem, sel, relElem) {
 
             if (sel === '+') {
                 var prev = elem.previousElementSibling || elem.previousSibling;
                 while (prev && prev.nodeType != 1) {
                     prev = prev.previousSibling;
+
 
                 }
                 return prev === relElem;
@@ -462,15 +443,25 @@ hAzzle.extend({
                 return elem.parentNode === relElem;
             }
 
+
+
             return false;
         },
 
-        // Filter selector level 3 and 4 pseudo selectors
-
         'pseudo': function (elem, sel) {
-            var pseudo = PseudoCache[sel] ? PseudoCache[sel] : PseudoCache[sel] = sel.replace(Jiesa.regex.pseudo, '$1'),
-                info = PseudoInfoCache[sel] ? PseudoInfoCache[sel] : PseudoInfoCache[sel] = sel.replace(Jiesa.regex.pseudo, '$2');
-            return Jiesa.pseudo_filters[pseudo](elem, info);
+
+            var pseudo = sel.replace(Jiesa.regex.pseudo, '$1'),
+                info = sel.replace(Jiesa.regex.pseudo, '$2');
+
+            // Mehran!!! Find a better solution here. try / catch are slow       
+
+            try {
+                return Jiesa.pseudo_filters[pseudo](elem, info);
+
+            } catch (e) {
+                hAzzle.error("Sorry!");
+            }
+
         }
     },
 
@@ -582,81 +573,6 @@ function AdjustDocument(context) {
     return nodes;
 }
 
-function filter(nodes, pieceStore) {
-
-    var i = 0,
-        ret = [],
-        l = nodes.length,
-        fC, elem;
-
-    for (; i < l; i++) {
-        elem = nodes[i];
-        fC = filterCache[elem];
-
-        if (!fC) {
-            if (Jiesa.filters[pieceStore.type](elem, pieceStore.text)) {
-                ret.push(elem);
-            }
-            exeCache(nodes[i] + " ", ret);
-        }
-    }
-
-    return ret;
-}
-
-/**
- * Collect, and identify all selectors.
- *
- * @param {Object} nodes
- * @return {Object}
- *
- */
-
-function Collector(nodes) {
-
-    var i = 0,
-        ret = [],
-        l = nodes.length,
-        chunk, elem;
-
-    for (; i < l; i++) {
-
-        elem = nodes[i];
-        chunk = chunkCache[elem];
-
-        if (!chunk) {
-            ret.push({
-                text: nodes[i],
-                type: identify(elem)
-            });
-
-            // Cache the 'chunk'
-            chunk = chunkCache(elem, ret);
-        }
-    }
-
-    return ret;
-}
-
-function Execute(nodes, piece, context) {
-
-    var i = 0,
-        ret = [],
-        l = nodes.length,
-        exe;
-
-    for (; i < l; i++) {
-
-        exe = exeCache[nodes[i] + " "];
-
-        if (!exe) {
-            ret = exeCache(nodes[i] + " ", ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
-        }
-    }
-
-    return ret;
-}
-
 function IranianWalker(nodes, mode, fn) {
     if (nodes) {
 
@@ -727,6 +643,7 @@ function all(elem) {
     return elem.all ? elem.all : elem.getElementsByTagName('*');
 }
 
+
 /** 
  * Mehran!
  *
@@ -762,13 +679,9 @@ function byIdRaw(id, elem) {
     });
 }
 
-// getAttribute
-
 function getAttribute(elem, attribute) {
 
     // Set document vars if needed
-
-
 
     if ((elem.ownerDocument || elem) !== document) {
         doc = hAzzle.setDocument(elem);
@@ -792,6 +705,9 @@ function getAttribute(elem, attribute) {
         ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
 
+
+
+
 function createCache() {
     var keys = [];
 
@@ -803,6 +719,89 @@ function createCache() {
     }
     return cache;
 }
+
+
+
+function filter(nodes, pieceStore) {
+
+    var i = 0,
+        ret = [],
+        l = nodes.length,
+        fC, elem;
+
+    for (; i < l; i++) {
+        elem = nodes[i];
+        fC = filterCache[elem];
+
+        if (!fC) {
+
+            var a = Jiesa.filters[pieceStore.type](elem, pieceStore.text);
+
+            console.log(a);
+
+            if (a) {
+                ret.push(elem);
+            }
+            exeCache(nodes[i] + " ", ret);
+        }
+    }
+
+    return ret;
+}
+
+/**
+ * Collect, and identify all selectors.
+ *
+ * @param {Object} nodes
+ * @return {Object}
+ *
+ */
+
+function Collector(nodes) {
+
+    var i = 0,
+        ret = [],
+        l = nodes.length,
+        chunk, elem;
+
+    for (; i < l; i++) {
+
+        elem = nodes[i];
+        chunk = chunkCache[elem];
+
+        if (!chunk) {
+            ret.push({
+                text: nodes[i],
+                type: identify(elem)
+            });
+
+            // Cache the 'chunk'
+            chunk = chunkCache(elem, ret);
+        }
+    }
+
+    return ret;
+}
+
+function Execute(nodes, piece, context) {
+
+    var i = 0,
+        ret = [],
+        l = nodes.length,
+        exe;
+
+    for (; i < l; i++) {
+
+        exe = exeCache[nodes[i] + " "];
+
+        if (!exe) {
+            ret = exeCache(nodes[i] + " ", ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
+        }
+    }
+
+    return ret;
+}
+
 
 function createPositionalPseudo(nodes, sel) {
     var inf = Jiesa.regex.changer.exec(sel);
