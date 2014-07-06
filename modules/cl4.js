@@ -21,8 +21,23 @@ hAzzle.extend({
         return typeof elem.form !== 'undefined' && ((radicheck).test(elem.type) || /option/i.test(elem.nodeName)) && (elem.defaultChecked || elem.defaultSelected);
     },
 
+    /**
+	 * Mehran!!
+	 *
+	 * You have to extend this. Read this: http://dev.w3.org/csswg/selectors4/#negation
+	 *
+	 * As you may see - not can take more then one argument separated by comma. A comma-speperated selector list.
+	 *
+	 * Example:
+	 *
+	 *  E:not(s1, s2, ...)
+	 *
+	 * You fix!!
+	 */
+	 
+	 
     'not': function (elem, sel) {
-        return hAzzle.inArray(Jiesa.parse(sel.replace(trimspaces, '')), elem) === -1;
+          return hAzzle.inArray(Jiesa.parse(sel.replace(trimspaces, '')), elem) === -1;
     },
     'valid': function (elem) {
         return typeof elem.form !== 'undefined' && typeof elem.validity === 'object' && elem.validity.valid;
