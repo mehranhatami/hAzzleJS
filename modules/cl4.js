@@ -1,12 +1,12 @@
 /**
  * Selectors Level 4
  */
-var Jiesa = hAzzle.Jiesa,
+var win = this,
+    Jiesa = hAzzle.Jiesa,
     pseudos = Jiesa.pseudo_filters,
 
     trimspaces = /^\s*|\s*$/g,
-    radicheck = /radio|checkbox/i,
-    llps = /#.*?$/;
+    radicheck = /radio|checkbox/i;
 
 hAzzle.extend({
 
@@ -45,7 +45,7 @@ hAzzle.extend({
             typeof elem.validity === 'object' && (elem.validity.rangeUnderflow || elem.validity.rangeOverflow);
     },
     'required': function (elem) {
-		return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && elem.required
+        return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && elem.required;
     },
     'read-only': function (elem) {
         // only fields for which 'readOnly' applies
@@ -69,6 +69,9 @@ hAzzle.extend({
         return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && !elem.required;
     },
 
+    // What is the point? 
+    //  has equal to  'with' pseudo, but stands in the specs !! 
+
     'has': function (elem, sel) {
         return Jiesa.parse(sel, elem).length > 0;
     },
@@ -76,39 +79,29 @@ hAzzle.extend({
         return !Jiesa.pseudo_filters.has(elem, sel);
     },
 
-    'local-link': function (elem, val) {
-        var href, i, location, _i;
+    'local-link': function (elem) {
 
-        if (!elem.href) {
-            return false;
+        if (elem.nodeName) {
+
+            return elem.href && elem.host === win.location.host;
         }
 
-        href = elem.href.replace(llps, '');
+        var param = +elem + 1;
 
-        location = elem.ownerDocument.location.href.replace(llps, '');
+        if (!elem.href) return;
 
-        if (val === undefined) {
+        var url = win.location + '',
+            href = elem + '';
 
-            return href === location;
+        return truncateUrl(url, param) === truncateUrl(href, param);
 
-        } else {
-
-            href = href.split('/').slice(2);
-            location = location.split('/').slice(2);
-
-            for (i = _i = 0; _i <= val; i = _i += 1) {
-                if (href[i] !== location[i]) {
-                    return false;
-                }
-            }
-            return true;
-        }
     },
+    // Same as 'has'
     'with': function (elem, val) {
-        return Jiesa.parse(val, [elem]).length > 0;
+        return Jiesa.parse(val, elem).length > 0;
     },
     'without': function (elem, val) {
-        return Jiesa.parse(val, [elem]).length === 0;
+        return Jiesa.parse(val, elem).length === 0;
     },
     'scope': function (elem, con) {
         var context = con || elem.ownerDocument;
@@ -122,3 +115,11 @@ hAzzle.extend({
     }
 
 }, pseudos);
+
+var truncateUrl = function (url, num) {
+    return url
+        .replace(/^(?:\w+:\/\/|\/+)/, '')
+        .replace(/(?:\/+|\/*#.*?)$/, '')
+        .split('/', num)
+        .join('/');
+};
