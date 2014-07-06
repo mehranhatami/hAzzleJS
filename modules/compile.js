@@ -26,8 +26,6 @@ var win = this,
     // Short-hand for Jiesa
 
     Jiesa = hAzzle.Jiesa,
-	
-	DOM = hAzzle.docElem.cloneNode(true);
 
     // Mehran! You benchmark this!
     // Safer solution, but slower I guess
@@ -71,7 +69,6 @@ var win = this,
     PseudoCache = {},
     PseudoInfoCache = {},
     chunkCache = createCache(),
-    pieceCache = createCache(),
     exeCache = createCache(),
     filterCache = createCache(),
 
@@ -125,7 +122,7 @@ hAzzle.extend({
             nodes,
             l, piece, piece1, j = 0,
             k,
-            info, inf, chunks, kf;
+            chunks, kf;
 
         // Set / Adjust correct context
 
@@ -155,14 +152,13 @@ hAzzle.extend({
                 if (!piece.type) {
 
                     hAzzle.error('Invalid Selector: ' + piece.text);
-
                 }
 
                 if (piece.type !== 'whitespace' && chunks[i + 1]) {
 
-                    pieceStore.push(piece);
+                    // push all non-descendant selectors into piece store until we hit a space in the selector.
 
-                    //We push all non-descendant selectors into piece store until we hit a space in the selector.
+                    pieceStore.push(piece);
 
                 } else {
 
@@ -171,27 +167,30 @@ hAzzle.extend({
                         pieceStore.push(piece);
                     }
 
-                    //now we begin. Grab the first piece, as the starting point, then perform the filters on the nodes.
+                    // Grab the first piece, as the starting point, then perform the filters on the nodes.
 
                     piece1 = pieceStore.shift();
-                    k = pieceStore.length;
 
                     // Collect everything
 
                     nodes = Execute(nodes, piece1, context);
 
+                    k = pieceStore.length;
+
                     // filter the nodes
 
                     for (; j < k; j++) {
 
-					// Not everyone has a filter :)	
+                        // Not everyone has a filter :)	
+                       
+                        if (Jiesa.filters[pieceStore[j].type]) {
 
-				    if(Jiesa.filters[pieceStore[j].type]) {
-
-                        nodes = filter(nodes, pieceStore[j]);
-					}
+                            nodes = filter(nodes, pieceStore[j]);
+                        }
 
                     }
+
+                    // If  any positional pseudos, we have to create them
 
                     if (piece.type === 'changer') {
 
@@ -221,29 +220,40 @@ hAzzle.extend({
 
             id = id.replace('#', '');
 
-            if (!hAzzle.documentIsHTML || elem.nodeType !== 9) {
-                return byIdRaw(id, elem);
-            } else {
+            if (hAzzle.documentIsHTML || elem.nodeType === 9) {
+
+                // Check for getElementById bug
+                // Support: IE<10
 
                 if (Jiesa.has["bug-GEBI"]) {
-                    var m = elem.getElementById(id);
-                    return m && m.parentNode ? [m] : [];
+
+                    // If buggy, we have to let the Iranian take a
+                    // long walk, and inspect all the DOM nodes
+
+                    return byIdRaw(id, elem);
                 }
-                // The long Iranian walk !
+
+                // Everything good to go...
+                var m = elem.getElementById(id);
+                return m && m.parentNode ? [m] : [];
+
+            } else {
+
                 return byIdRaw(id, elem);
             }
         },
 
         'Class': function (elem, sel) {
+
             sel = sel.replace('.', '');
 
-            if (!documentIsHTML || elem.nodeType === 11) {
+            if (documentIsHTML || elem.nodeType !== 11) {
+                return toArray(elem.getElementsByClassName(sel));
+            } else {
                 // Let the Iranian take a walk
                 return IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.Class(e, sel);
                 });
-            } else {
-                return toArray(elem.getElementsByClassName(sel));
             }
         },
 
@@ -337,7 +347,6 @@ hAzzle.extend({
                     return Jiesa.filters.rel(e, '~', elem);
                 }) : [];
             }
-
         },
 
         'pseudo': function (elem, sel) {
@@ -353,7 +362,7 @@ hAzzle.extend({
 
         'id': function (elem, sel) {
 
-            return (elem.id && elem.id === sel.replace('#', ''));
+            return elem.id && elem.id === sel.replace('#', '');
         },
 
         'Class': function (elem, sel) {
@@ -570,33 +579,34 @@ function AdjustDocument(context) {
 }
 
 function IranianWalker(nodes, mode, fn) {
-    if (nodes) {
-        var i = 0,
-            ret = [],
-            l = nodes.length,
-            elem, result;
+        if (nodes) {
+            var i = 0,
+                ret = [],
+                l = nodes.length,
+                elem, result;
 
-        for (; i < l; i++) {
+            for (; i < l; i++) {
 
-            elem = nodes[i],
-                result = fn.call(nodes, elem, i, nodes);
+                elem = nodes[i],
+                    result = fn.call(nodes, elem, i, nodes);
 
-            switch (mode) {
-            case 'f':
-                if (result) ret.push(elem);
-                break;
-            case 'c':
-                ret = ret.concat(result);
-                break;
-            case 'm':
-                ret.push(result);
+                switch (mode) {
+                case 'f':
+                    if (result) ret.push(elem);
+                    break;
+                case 'c':
+                    ret = ret.concat(result);
+                    break;
+                case 'm':
+                    ret.push(result);
+                }
             }
-        }
 
-        return ret;
+            return ret;
+        }
     }
-}
-//identify a chunk. Is it a class/id/tag etc?
+    //identify a chunk. Is it a class/id/tag etc?
+
 function identify(chunk) {
 
     var type;
@@ -624,10 +634,9 @@ function identify(chunk) {
 
 //just to prevent rewriting over and over...
 function all(elem) {
-	
-   return elem.all ? elem.all : elem.getElementsByTagName('*');
-}
 
+    return elem.all ? elem.all : elem.getElementsByTagName('*');
+}
 
 /** 
  * Mehran!
@@ -658,11 +667,15 @@ function byTagRaw(tag, elem) {
     return elements;
 }
 
+// The hard and brutal way to collect ID nodes
+
 function byIdRaw(id, elem) {
-    return IranianWalker(all(elem), 'f', function (e) {
-        return e.getAttribute('id') === id;
+    return IranianWalker(all(elem), 'f', function (el) {
+        return getAttribute(el, 'id') === id;
     });
 }
+
+// Collect attributes
 
 function getAttribute(elem, attribute) {
 
@@ -675,6 +688,7 @@ function getAttribute(elem, attribute) {
     // Lower case are always a good thing !!	 
 
     attribute = attribute.toLowerCase();
+
     if (typeof elem[attribute] === 'object') {
         return elem.attributes[attribute] &&
             elem.attributes[attribute].value || '';
@@ -690,9 +704,6 @@ function getAttribute(elem, attribute) {
         ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
 
-
-
-
 function createCache() {
     var keys = [];
 
@@ -704,7 +715,6 @@ function createCache() {
     }
     return cache;
 }
-
 
 
 function filter(nodes, pieceStore) {
@@ -723,9 +733,7 @@ function filter(nodes, pieceStore) {
 
             var a = Jiesa.filters[pieceStore.type](elem, pieceStore.text);
 
-            console.log(a);
-
-            if (a) {
+             if (a) {
                 ret.push(elem);
             }
             exeCache(nodes[i] + " ", ret);
@@ -788,13 +796,10 @@ function Execute(nodes, piece, context) {
     return ret;
 }
 
-
 function createPositionalPseudo(nodes, sel) {
     var inf = Jiesa.regex.changer.exec(sel);
     return Jiesa.changers[inf[1]](nodes, inf[2]);
 }
-
-
 
 // Some adjustments...
 

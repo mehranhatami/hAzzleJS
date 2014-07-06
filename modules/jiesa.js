@@ -33,9 +33,7 @@ hAzzle.extend({
 
 }, Jiesa);
 
-/* =========================== INTERNAL ========================== */
-
-// Check for QSA support and bug
+// Feature / Bug detection
 // NOTE!! Need to add better check for this. See Sizzle
 
 (function () {
@@ -67,7 +65,7 @@ Jiesa.has["bug-GEBTN"] = assert(function (div) {
  */
 Jiesa.has["bug-GEBI"] = assert(function (div) {
     hAzzle.docElem.appendChild(div).id = expando;
-    return !doc.getElementsByName > 0 || !doc.getElementsByName(expando).length;
+    return doc.getElementsByName > 0 || doc.getElementsByName(expando).length;
 });
 
 /**

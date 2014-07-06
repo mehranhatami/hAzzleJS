@@ -1,5 +1,8 @@
 
 var findExpr = !!doc.getElementsByClassName ? /^(?:(\w+)|\.([\w\-]+))$/ : /^(?:(\w+))$/;
+
+
+var rsibling = /[+~]/;
 	
 hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
 
@@ -46,7 +49,7 @@ hAzzle.find = function (selector, context, /*INTERNAL*/ all) {
 
                 nid = "[id='" + nid + "'] ";
 
-                context = sibling.test(selector) ? context.parentNode : context;
+                context = rsibling.test(selector) ? context.parentNode : context;
                 selector = nid + selector.split(',').join(',' + nid);
             }
 
