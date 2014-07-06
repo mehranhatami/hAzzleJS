@@ -69,6 +69,7 @@ var win = this,
     chunkCache = createCache(),
     pieceCache = createCache(),
     exeCache = createCache(),
+    filterCache = createCache(),
 
     /**
      * Special regex. NOTE! This is not part of the public Jiesa Object
@@ -190,9 +191,7 @@ hAzzle.extend({
                                 continue;
                             }
 
-                            nodes = IranianWalker(nodes, 'f', function (elem) {
-                                return elem ? Jiesa.filters[pieceStore[j].type](elem, pieceStore[j].text) : false;
-                            });
+                            nodes = filter(nodes, pieceStore[j])
                         }
 
                         if (piece.type === 'changer') {
@@ -601,6 +600,29 @@ function AdjustDocument(context) {
     return nodes;
 }
 
+function filter(nodes, pieceStore) {
+
+    var i = 0,
+        ret = [],
+        l = nodes.length,
+        fC, elem;
+
+    for (; i < l; i++) {
+        elem = nodes[i];
+        fC = filterCache[elem];
+
+        if (!fC) {
+            if (Jiesa.filters[pieceStore.type](elem, pieceStore.text)) {
+                ret.push(elem);
+            }
+            exeCache(nodes[i] + " ", ret);
+        }
+    }
+
+    return ret;
+}
+
+
 /**
  * Collect, and identify all selectors.
  *
@@ -765,6 +787,7 @@ function byIdRaw(id, elem) {
 function getAttribute(elem, attribute) {
 
     // Set document vars if needed
+
 
 
     if ((elem.ownerDocument || elem) !== document) {
