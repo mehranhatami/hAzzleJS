@@ -313,14 +313,18 @@ hAzzle.extend({
             if (!elem) {
                 return false;
             }
-
-            if (sel === ' ') {
+           
+		   // working
+           
+		    if (sel === ' ') {
                 return elem && elem !== hAzzle.docElem && elem.parentNode;
             }
 
             // Next Adjacent Selector
 
-            if (sel === '+') {
+           // working
+		   
+		    if (sel === '+') {
                 return [Jiesa.nextElementSibling(elem)];
             }
 
@@ -339,10 +343,13 @@ hAzzle.extend({
 
             if (sel === '>') {
 
-                return IranianWalker(elem.childNodes, 'f', function (e) {
-                    return e.nodeType === 1;
-                });
-            }
+// NOTE!! This one are not correct now, need adjustments later				 
+
+ if ((el = elem.parentNode)) do {
+			if (el.nodeType === 1) return el;
+		} while (el.parentNode && elem.parentNode);
+
+            }// broken
 
             // Next Siblings Selector 
 
@@ -434,7 +441,7 @@ hAzzle.extend({
 
 
         },
-
+	
         'rel': function (elem, sel, relElem) {
 
             if (sel === '+') {
