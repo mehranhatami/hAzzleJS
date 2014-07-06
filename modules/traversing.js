@@ -33,7 +33,6 @@ if (!(nextNode in docElem)) nextNode = 'nextSibling';
 if (!(prevNode in docElem)) prevNode = 'previousSibling';
 if (!(parentNode in docElem)) parentNode = 'parentNode';
 
-
 // Extend the Core
 
 hAzzle.extend({
@@ -389,6 +388,27 @@ hAzzle.extend({
         return hAzzle(matched);
     },
 
+    firstElementChild: function () {
+        return this.children().first();
+    },
+
+    lastElementChild: function () {
+        return this.children().last();
+    },
+
+    previousElementSibling: function () {
+        return this.prev().last();
+    },
+
+    nextElementSibling: function () {
+        return this.next().first();
+    },
+
+    childElementCount: function () {
+        return this.children().length;
+    },
+
+
     // Internal usage only
 
     push: arr.push,
@@ -485,6 +505,7 @@ function walkElements(el, property, selector, index, fn) {
 
                         ret.unshift(el);
 
+
                     } else {
 
                         ret.push(el);
@@ -548,6 +569,16 @@ hAzzle.dir = function (elem, dir, until) {
     }
     return matched;
 };
+// New Element Traversel API support
+hAzzle.nTapi = function (elem, dir) {
+    var matched = [],
+        cur = elem[dir];
+    while (cur && cur !== document) {
+        matched.push(cur);
+        cur = cur[dir];
+    }
+    return matched;
+}
 
 hAzzle.sibling = function (n, elem) {
     var matched = [];
@@ -571,10 +602,15 @@ hAzzle.forOwn({
     },
 
     nextAll: function (elem) {
+        if (typeof hAzzle.docElem.children !== "undefined") {
+            return hAzzle.nTapi(elem, "nextElementSibling");
+        }
         return hAzzle.dir(elem, nextNode);
     },
     prevAll: function (elem) {
-        return hAzzle.dir(elem, prevNode);
+        if (typeof hAzzle.docElem.children !== "undefined") {
+            return hAzzle.nTapi(elem, "previousElementSibling");
+        }
     },
     nextUntil: function (elem, i, until) {
         return hAzzle.dir(elem, nextNode, until);
