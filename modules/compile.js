@@ -641,13 +641,17 @@ function Execute(nodes, piece, context) {
     var i = 0,
         ret = [],
         l = nodes.length,
-        exe = exeCache[nodes];
+        exe;
 
-    if (!exe) {
-        for (; i < l; i++) {
-            ret = exeCache(nodes[i], ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
+    for (; i < l; i++) {
+
+        exe = exeCache[nodes[i] + " "]
+
+        if (!exe) {
+            ret = exeCache(nodes[i] + " ", ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
         }
     }
+
     return ret;
 }
 
@@ -761,6 +765,7 @@ function byIdRaw(id, elem) {
 function getAttribute(elem, attribute) {
 
     // Set document vars if needed
+
 
     if ((elem.ownerDocument || elem) !== document) {
         doc = hAzzle.setDocument(elem);
