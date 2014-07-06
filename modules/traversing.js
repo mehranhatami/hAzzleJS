@@ -5,15 +5,15 @@ var arr = [],
     slice = arr.slice,
     push = arr.push,
     indexOf = arr.indexOf,
-
+    docElem = hAzzle.docElem,
     isString = hAzzle.isString,
 
-    // support W3C ElementTraversal interface
+    // Use the new Element Traversal API if available.
 
-    firstNode = 'firstChild',
-    nextNode = 'nextSibling',
-    prevNode = 'previousSibling',
-    parentNode = 'parentNode',
+    firstNode = 'firstElementChild',
+    nextNode = 'nextElementSibling',
+    prevNode = 'previousElementSibling',
+    parentNode = 'parentElement',
 
     rparentsprev = /^(?:parents|prev(?:Until|All))/,
 
@@ -25,6 +25,14 @@ var arr = [],
         next: true,
         prev: true
     };
+
+// Fall back to DOM Level 1 API if the new API are not supported.
+
+if (!(firstNode in docElem)) firstNode = 'firstChild';
+if (!(nextNode in docElem)) nextNode = 'nextSibling';
+if (!(prevNode in docElem)) prevNode = 'previousSibling';
+if (!(parentNode in docElem)) parentNode = 'parentNode';
+
 
 // Extend the Core
 
@@ -147,7 +155,7 @@ hAzzle.extend({
      */
 
     up: function (selector, index) {
-        return selector === null ? parent() : getNth(this, parentNode, selector, index);
+        return selector === null ? parent() : walkElements(this, parentNode, selector, index);
     },
 
     /**
@@ -169,7 +177,7 @@ hAzzle.extend({
 
     closest: function (selector, index) {
         typeof selector === 'number' ? (index = selector, selector = "*") : index = index || 0;
-        return getNth(this, parentNode, selector, index, true);
+        return walkElements(this, parentNode, selector, index, true);
     },
 
     /**
@@ -183,7 +191,7 @@ hAzzle.extend({
      */
 
     prev: function (selector, index) {
-        return getNth(this, prevNode, selector, index);
+        return walkElements(this, prevNode, selector, index);
 
     },
 
@@ -197,7 +205,7 @@ hAzzle.extend({
      */
 
     next: function (selector, index) {
-        return getNth(this, nextNode, selector, index);
+        return walkElements(this, nextNode, selector, index);
     },
 
     /**
@@ -222,7 +230,7 @@ hAzzle.extend({
             }
         }
 
-        return getNth(arr, nextNode, selector || '*', index, function (el, i) {
+        return walkElements(arr, nextNode, selector || '*', index, function (el, i) {
             return el !== self[i];
         });
     },
@@ -238,7 +246,7 @@ hAzzle.extend({
 
     children: function (selector, index) {
 
-        return getNth(hAzzle.map(this, function (elem) {
+        return walkElements(hAzzle.map(this, function (elem) {
             return hAzzle.sibling(elem.firstChild);
         }, ''), nextNode, selector || '*', index, true);
     },
@@ -444,7 +452,7 @@ function getIndex(selector, index) {
  * Traverse multiple DOM elements
  */
 
-function getNth(el, property, selector, index, fn) {
+function walkElements(el, property, selector, index, fn) {
 
     // Find our position in the DOM tree
 
@@ -592,13 +600,13 @@ hAzzle.forOwn({
         if (this.length > 1) {
             // Remove duplicates
             if (!guaranteedUnique[name]) {
-				
+
                 hAzzle.unique(matched);
             }
 
             // Reverse order for parents* and prev-derivatives
             if (rparentsprev.test(name)) {
-				
+
                 matched.reverse();
             }
         }
