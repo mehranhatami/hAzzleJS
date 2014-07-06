@@ -193,11 +193,10 @@ hAzzle.extend({
                                 nodes = filter(nodes, pieceStore[j]);
                             }
                         }
-                        // filters ends
+
                         if (piece.type === 'changer') {
 
-                            inf = Jiesa.regex.changer.exec(piece.text);
-                            nodes = Jiesa.changers[inf[1]](nodes, inf[2]);
+                            nodes = createPositionalPseudo(nodes, piece.text);
                         }
 
                         pieceStore = [];
@@ -298,7 +297,6 @@ hAzzle.extend({
 
         /**
          * Get the attribute value
-         */
 
         'attr': function (elem, attribute) {
 
@@ -307,7 +305,7 @@ hAzzle.extend({
                     return Jiesa.filters.attr(e, attribute);
                 });
         },
-
+  */
         // relative selectors
 
         'rel': function (elem, sel) {
@@ -399,14 +397,6 @@ hAzzle.extend({
 
         'attr': function (elem, sel) {
 
-            /**
-             * Mehran!!
-             *
-             * We could have used our own hAzzle.attr() to grab the
-             * attribute, but I think that is slowe. So I creted my
-             * own solution.
-             */
-
             var info = Jiesa.regex.attr.exec(sel),
                 attr = getAttribute(elem, info[1]);
 
@@ -421,12 +411,7 @@ hAzzle.extend({
 
                 attr += "";
 
-                /**
-                 * Special attribute - Regex Attribute Selector
-                 * It gives the ability to match attributes with a regexp.
-                 *
-                 *  hAzzle('div[id/= [ RegEX ] ')
-                 */
+
 
                 if (value && operator === '/=') {
 
@@ -446,7 +431,8 @@ hAzzle.extend({
                     false;
 
             }
-            return false;
+
+
         },
 
         'rel': function (elem, sel, relElem) {
@@ -810,6 +796,12 @@ function createCache() {
     }
     return cache;
 }
+
+function createPositionalPseudo(nodes, sel) {
+    var inf = Jiesa.regex.changer.exec(sel);
+    return Jiesa.changers[inf[1]](nodes, inf[2]);
+}
+
 
 
 // Some adjustments...
