@@ -174,12 +174,6 @@ hAzzle.extend({
             return !Jiesa.pseudo_filters.empty(elem);
         },
 
-        'has': function (elem, sel) {
-            return Jiesa.parse(sel, elem).length > 0;
-        },
-        'nothas': function (elem, sel) {
-            return !Jiesa.pseudo_filters.has(elem, sel);
-        },
         'selected': function (elem) {
             // Accessing this property makes selected-by-default
             // options in Safari work properly

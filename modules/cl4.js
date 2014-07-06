@@ -47,7 +47,6 @@ hAzzle.extend({
     },
     'required': function (elem) {
 		return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && elem.required
-
     },
     'read-only': function (elem) {
         // only fields for which 'readOnly' applies
