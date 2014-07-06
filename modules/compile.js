@@ -67,6 +67,7 @@ var win = this,
     },
 
     chunkCache = createCache(),
+    pieceCache = createCache(),
 
     /**
      * Special regex. NOTE! This is not part of the public Jiesa Object
@@ -119,6 +120,7 @@ hAzzle.extend({
             nodes,
             l, piece, piece1, j = 0,
             k,
+			pC,
             info, inf, chunks, kf;
 
         // Set / Adjust correct context
@@ -130,71 +132,80 @@ hAzzle.extend({
         // Split the selector before we are looping through
 
         kf = selector.match(chunky);
-   
-   // Collect all the chungs we need
-   
+
+        // Collect all the chunks, and
+        // identify them
+
         chunks = Collector(kf);
 
-        if ((l = chunks.length)) {
+        l = chunks.length;
+
+        if (l) {
 
             // create the node set
+			
+            pC = pieceCache(selector);
+			
+            if (!pC) {
+				
+                for (; i < l; i++) {
 
-            for (; i < l; i++) {
+                    piece = chunks[i];
 
-                piece = chunks[i];
+                    if (!piece.type) {
 
-                if (!piece.type) {
+                        hAzzle.error('Invalid Selector: ' + piece.text);
+                    }
 
-                    hAzzle.error('Invalid Selector: ' + piece.text);
-
-                }
-
-                if (piece.type !== 'whitespace' && chunks[i + 1]) {
-
-                    pieceStore.push(piece);
-
-                    //We push all non-descendant selectors into piece store until we hit a space in the selector.
-
-                } else {
-
-                    if (piece.type !== 'whitespace' && piece.type !== 'changer') {
+                    if (piece.type !== 'whitespace' && chunks[i + 1]) {
 
                         pieceStore.push(piece);
-                    }
 
-                    //now we begin. Grab the first piece, as the starting point, then perform the filters on the nodes.
+                        //We push all non-descendant selectors into piece store until we hit a space in the selector.
 
-                    piece1 = pieceStore.shift();
-                    k = pieceStore.length;
+                    } else {
 
-                    nodes = IranianWalker(nodes, 'c', function (elem) {
-                        return elem ? Jiesa.getters[piece1.type](elem, piece1.text, context) : [];
-                    });
+                        if (piece.type !== 'whitespace' && piece.type !== 'changer') {
 
-                    // filter the nodes
-
-                    for (; j < k; j++) {
-
-                        //a 'changer' changes the nodes completely, rather than adding to them.
-                        if (pieceStore[j].type === 'changer') {
-                            info = Jiesa.regex.changer.exec(pieceStore[j].text);
-                            nodes = Jiesa.changers[info[1]](nodes, info[2]);
-                            continue;
+                            pieceStore.push(piece);
                         }
 
-                        nodes = IranianWalker(nodes, 'f', function (elem) {
-                            return elem ? Jiesa.filters[pieceStore[j].type](elem, pieceStore[j].text) : false;
+                        //now we begin. Grab the first piece, as the starting point, then perform the filters on the nodes.
+
+                        piece1 = pieceStore.shift();
+                        k = pieceStore.length;
+
+                        nodes = IranianWalker(nodes, 'c', function (elem) {
+                            return elem ? Jiesa.getters[piece1.type](elem, piece1.text, context) : [];
                         });
+
+                        // filter the nodes
+
+                        for (; j < k; j++) {
+
+                            //a 'changer' changes the nodes completely, rather than adding to them.
+                            if (pieceStore[j].type === 'changer') {
+                                info = Jiesa.regex.changer.exec(pieceStore[j].text);
+                                nodes = Jiesa.changers[info[1]](nodes, info[2]);
+                                continue;
+                            }
+
+                            nodes = IranianWalker(nodes, 'f', function (elem) {
+                                return elem ? Jiesa.filters[pieceStore[j].type](elem, pieceStore[j].text) : false;
+                            });
+                        }
+
+                        if (piece.type === 'changer') {
+
+                            inf = Jiesa.regex.changer.exec(piece.text);
+                            nodes = Jiesa.changers[inf[1]](nodes, inf[2]);
+                        }
+
+                        pieceStore = [];
                     }
-
-                    if (piece.type === 'changer') {
-
-                        inf = Jiesa.regex.changer.exec(piece.text);
-                        nodes = Jiesa.changers[inf[1]](nodes, inf[2]);
-                    }
-
-                    pieceStore = [];
                 }
+
+                nodes = pieceCache(selector, nodes);
             }
         }
         return nodes;
@@ -314,16 +325,16 @@ hAzzle.extend({
             if (sel === '+') {
                 return [Jiesa.nextElementSibling(elem)];
             }
-			
-			if (sel === '++') {
-				// +
-				// !+
+
+            if (sel === '++') {
+                // +
+                // !+
             }
-			
-			if (sel === '~~') {
-				// ~
-				// !~
-               // return [Jiesa.nextElementSibling(elem)];
+
+            if (sel === '~~') {
+                // ~
+                // !~
+                // return [Jiesa.nextElementSibling(elem)];
             }
 
             // Child Selector
@@ -343,12 +354,12 @@ hAzzle.extend({
                     return Jiesa.filters.rel(e, '~', elem);
                 }) : [];
             }
-			
-			/**
-			 * Need to add:
-			 *
-			 *  '!' !>' '!+':
-			 */
+
+            /**
+             * Need to add:
+             *
+             *  '!' !>' '!+':
+             */
 
         },
 
@@ -596,10 +607,10 @@ function AdjustDocument(context) {
  * Collect, and identify all selectors.
  *
  * @param {Object} nodes
- * @return {Object} 
+ * @return {Object}
  *
  */
- 
+
 function Collector(nodes) {
 
     var i = 0,
@@ -619,7 +630,7 @@ function Collector(nodes) {
             });
 
             // Cache the 'chunk'
-            chunk = chunkCache(nodes[i], ret)
+            chunk = chunkCache(nodes[i], ret);
         }
     }
 
