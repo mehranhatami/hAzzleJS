@@ -22,9 +22,8 @@ hAzzle.extend({
     },
 
     'not': function (elem, sel) {
-        return Jiesa.parse(sel.replace(trimspaces, '')).indexOf(elem) == -1;
+        return hAzzle.inArray(Jiesa.parse(sel.replace(trimspaces, '')), elem) === -1;
     },
-
     'valid': function (elem) {
         return typeof elem.form !== 'undefined' && typeof elem.validity === 'object' && elem.validity.valid;
     },
