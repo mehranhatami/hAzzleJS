@@ -6,7 +6,7 @@
  *
  * Date: 2014-06-29
  */
- 
+
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -119,7 +119,7 @@
                 // Object	
 
             } else {
-				
+
                 selector = hAzzle.unique(!selector.nodeType &&
                     typeof selector.length !== 'undefined' ?
                     selector : [selector]);
@@ -208,7 +208,12 @@
 
                 n = callback.call(self, self[i], i);
 
-                func ? (func(n) && m.push(n)) : m.push(n);
+                //this is a lot more readable in compare with [func ? (func(n) && m.push(n)) : m.push(n);]
+                if (func) {
+                    func(n);
+                }
+                m.push(n);
+
             }
 
             return m;
@@ -219,7 +224,7 @@
                 return hAzzle.ready(fn);
             }
         },
-	};
+    };
 
     /**
      * Extend the contents of two objects
@@ -266,7 +271,7 @@
          */
 
         error: function (msg) {
-            throw new Error( msg );
+            throw new Error(msg);
         },
 
         /**
@@ -578,7 +583,7 @@
             var node, ret = '',
                 i = 0,
                 l = elem.length,
-				etc,
+                etc,
                 nodetype = elem.nodeType;
 
             if (!nodetype) {
@@ -593,9 +598,9 @@
 
             } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
 
-                 etc = elem.textContent;
-			   
-			    if (typeof etc === 'string') {
+                etc = elem.textContent;
+
+                if (typeof etc === 'string') {
 
                     return elem.textContent;
 
@@ -639,7 +644,7 @@
 
         isXML: function (elem) {
             var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-            return documentElement ? documentElement.nodeName !== "HTML" : false;
+            return documentElement ? documentElement.nodeName !== 'HTML' : false;
         },
 
         /**
@@ -704,7 +709,7 @@
             if (arr !== null) {
                 type = hAzzle.type(arr);
 
-                if (arr.length === null || type === "string" || type === "function" || type === "regexp" || hAzzle.isWindow(arr)) {
+                if (arr.length === null || type === 'string' || type === 'function' || type === 'regexp' || hAzzle.isWindow(arr)) {
                     push.call(ret, arr);
                 } else {
                     hAzzle.merge(ret, arr);
@@ -748,7 +753,7 @@
                 i = 0;
 
             // Setting many attributes
-            if (hAzzle.type(key) === "object") {
+            if (hAzzle.type(key) === 'object') {
 
                 for (k in key) {
 
@@ -795,10 +800,11 @@
         }
 
     }, hAzzle);
-	
-    /* =========================== SELECTOR ENGINE HOLDER ========================== */	
-	
-	var Jiesa = hAzzle.Jiesa = {};
+
+    /* =========================== SELECTOR ENGINE HOLDER ========================== */
+
+    var Jiesa = {};
+    hAzzle.Jiesa = Jiesa;
 
     /* =========================== DOCUMENT READY FUNCTIONS ========================== */
 
