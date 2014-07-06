@@ -26,6 +26,8 @@ var win = this,
     // Short-hand for Jiesa
 
     Jiesa = hAzzle.Jiesa,
+	
+	DOM = hAzzle.docElem.cloneNode(true);
 
     // Mehran! You benchmark this!
     // Safer solution, but slower I guess
@@ -129,7 +131,7 @@ hAzzle.extend({
 
         nodes = AdjustDocument(context);
 
-        selector = selector.replace(special, ' $1');
+        selector = selector.replace(trimspaces, '').replace(special, ' $1');
 
         // Split the selector before we are looping through
 
@@ -182,7 +184,13 @@ hAzzle.extend({
 
                     for (; j < k; j++) {
 
+					// Not everyone has a filter :)	
+
+				    if(Jiesa.filters[pieceStore[j].type]) {
+
                         nodes = filter(nodes, pieceStore[j]);
+					}
+
                     }
 
                     if (piece.type === 'changer') {
@@ -341,8 +349,6 @@ hAzzle.extend({
 
     // and as the name suggests, these filter the nodes to match a selector part
 
-    // and as the name suggests, these filter the nodes to match a selector part
-
     filters: {
 
         'id': function (elem, sel) {
@@ -447,22 +453,12 @@ hAzzle.extend({
 
             return false;
         },
-
         'pseudo': function (elem, sel) {
-
-            var pseudo = sel.replace(Jiesa.regex.pseudo, '$1'),
-                info = sel.replace(Jiesa.regex.pseudo, '$2');
-
-            // Mehran!!! Find a better solution here. try / catch are slow       
-
-            try {
-                return Jiesa.pseudo_filters[pseudo](elem, info);
-
-            } catch (e) {
-                hAzzle.error("Sorry!");
-            }
-
+            var pseudo = PseudoCache[sel] ? PseudoCache[sel] : PseudoCache[sel] = sel.replace(Jiesa.regex.pseudo, '$1'),
+                info = PseudoInfoCache[sel] ? PseudoInfoCache[sel] : PseudoInfoCache[sel] = sel.replace(Jiesa.regex.pseudo, '$2');
+            return Jiesa.pseudo_filters[pseudo](elem, info);
         }
+
     },
 
     matches: function (selector, context) {
@@ -575,21 +571,10 @@ function AdjustDocument(context) {
 
 function IranianWalker(nodes, mode, fn) {
     if (nodes) {
-
-        var nativeMethod = {
-                f: hAzzle.filter,
-                m: hAzzle.map,
-                a: hAzzle.each
-            }[mode],
-            i = 0,
+        var i = 0,
             ret = [],
             l = nodes.length,
             elem, result;
-
-        if (nativeMethod && nodes[nativeMethod]) {
-
-            return nodes[nativeMethod].call(nodes, fn);
-        }
 
         for (; i < l; i++) {
 
@@ -601,7 +586,7 @@ function IranianWalker(nodes, mode, fn) {
                 if (result) ret.push(elem);
                 break;
             case 'c':
-                ret = ret.concat(toArray(result));
+                ret = ret.concat(result);
                 break;
             case 'm':
                 ret.push(result);
@@ -611,7 +596,6 @@ function IranianWalker(nodes, mode, fn) {
         return ret;
     }
 }
-
 //identify a chunk. Is it a class/id/tag etc?
 function identify(chunk) {
 
@@ -640,7 +624,8 @@ function identify(chunk) {
 
 //just to prevent rewriting over and over...
 function all(elem) {
-    return elem.all ? elem.all : elem.getElementsByTagName('*');
+	
+   return elem.all ? elem.all : elem.getElementsByTagName('*');
 }
 
 
@@ -731,6 +716,7 @@ function filter(nodes, pieceStore) {
 
     for (; i < l; i++) {
         elem = nodes[i];
+
         fC = filterCache[elem];
 
         if (!fC) {
