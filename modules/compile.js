@@ -134,8 +134,7 @@ hAzzle.extend({
 
         kf = selector.match(chunky);
 
-        // Collect all the chunks, and
-        // identify them
+        // Collect all the chunks, and identify them
 
         chunks = Collector(kf);
 
@@ -642,15 +641,11 @@ function Execute(nodes, piece, context) {
     var i = 0,
         ret = [],
         l = nodes.length,
-        exe, elem;
-
-    exe = exeCache[nodes];
+        exe = exeCache[nodes];
 
     if (!exe) {
         for (; i < l; i++) {
-            elem = nodes[i];
-            exe = exeCache[elem];
-            ret = chunkCache(elem, ret.concat(Jiesa.getters[piece.type](elem, piece.text, context)));
+            ret = exeCache(nodes[i], ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
         }
     }
     return ret;
