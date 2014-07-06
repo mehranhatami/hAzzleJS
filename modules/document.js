@@ -10,14 +10,13 @@
  * - hAzzle.contains
  *
  */
-
 var contains,
     docElem,
     winDoc = window.document,
     setDocument,
     ntest = /^[^{]+\{\s*\[native \w/,
 
-    // Set our main document
+    // Convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
 
     setDocument = hAzzle.setDocument = function (node) {
 
@@ -27,11 +26,11 @@ var contains,
         // If no document and documentElement is available, return
 
         if (doc === document || doc.nodeType !== 9 || !hAzzle.docElem) {
-			
-            return document;
-         }
 
-        // Set our document
+            return document;
+        }
+
+        // set the new document
 
         document = doc;
 
@@ -40,13 +39,13 @@ var contains,
         docElem = hAzzle.docElem = doc.documentElement;
 
         // Checks if this is an XML or HTML doc
-		// If XML doc, set to false, else keep it's original value
-        
-		if( hAzzle.isXML(doc) ) {
-			
-		   hAzzle.documentIsHTML = false;
-		}
-        
+        // If XML doc, set to false, else keep it's original value
+
+        if (hAzzle.isXML(doc)) {
+
+            hAzzle.documentIsHTML = false;
+        }
+
         // Quick iFrame check
 
         if (parent && parent !== parent.top) {
@@ -79,34 +78,34 @@ var contains,
 var docElem = hAzzle.docElem,
     contains = ntest.test(docElem.compareDocumentPosition) || ntest.test(docElem.contains) ? function (a, b) {
 
-            var adown,
-                bup = b && b.parentNode;
+        var adown,
+            bup = b && b.parentNode;
 
-            if (a.nodeType === 9) {
+        if (a.nodeType === 9) {
 
-                adown = a.documentElement;
+            adown = a.documentElement;
 
-            } else {
+        } else {
 
-                adown = a;
-            }
+            adown = a;
+        }
 
-            return a === bup || !!(bup && bup.nodeType === 1 && (
-                adown.contains ?
-                adown.contains(bup) :
-                a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-            ));
-        } : function (a, b) {
+        return a === bup || !!(bup && bup.nodeType === 1 && (
+            adown.contains ?
+            adown.contains(bup) :
+            a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+        ));
+    } : function (a, b) {
 
-            if (b) {
-                while ((b = b.parentNode)) {
-                    if (b === a) {
-                        return true;
-                    }
+        if (b) {
+            while ((b = b.parentNode)) {
+                if (b === a) {
+                    return true;
                 }
             }
-            return false;
-        };
+        }
+        return false;
+    };
 
 
 hAzzle.contains = function (context, elem) {

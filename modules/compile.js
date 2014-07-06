@@ -93,18 +93,12 @@ hAzzle.extend({
         'Class': new RegExp('^\\.(' + encoding + '+)(.*)'),
         'rel': /^\>|\>|\+|~$/,
 
-        // Mehran!! 
-        // We need to have this regex running around like a pig!! Because in
-        // Identity() we need to address NTH to 'pseudo'. 
-        // I will try to find a walk around, and see if I
-        // can merge something
-
         "nth": new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace +
             "*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace +
             "*(\\d+)|))" + whitespace + "*\\)|)", "i"),
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
 
-        'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
+        'changer': /^\:((?:(nth|eq|lt|gt)\(([^()]*)\))|(?:even|odd|first|last))(.*)/i,
         'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
 
         'whitespace': whitespace,
@@ -136,21 +130,10 @@ hAzzle.extend({
         // Split the selector before we are looping through
 
         kf = selector.match(chunky);
-
-        /**
-         * Tokenizing
-         *
-         * We can do that if we create an array with
-         * all the different parts of the selector
-         */
-
-        chunks = IranianWalker(kf, 'm', function (sel) {
-			
-            return {
-                text: sel,
-                type: identify(sel)
-            };
-        });
+   
+   // Collect all the chungs we need
+   
+        chunks = Collector(kf);
 
         if ((l = chunks.length)) {
 
@@ -331,6 +314,17 @@ hAzzle.extend({
             if (sel === '+') {
                 return [Jiesa.nextElementSibling(elem)];
             }
+			
+			if (sel === '++') {
+				// +
+				// !+
+            }
+			
+			if (sel === '~~') {
+				// ~
+				// !~
+               // return [Jiesa.nextElementSibling(elem)];
+            }
 
             // Child Selector
 
@@ -349,6 +343,12 @@ hAzzle.extend({
                     return Jiesa.filters.rel(e, '~', elem);
                 }) : [];
             }
+			
+			/**
+			 * Need to add:
+			 *
+			 *  '!' !>' '!+':
+			 */
 
         },
 
@@ -592,6 +592,40 @@ function AdjustDocument(context) {
     return nodes;
 }
 
+/**
+ * Collect, and identify all selectors.
+ *
+ * @param {Object} nodes
+ * @return {Object} 
+ *
+ */
+ 
+function Collector(nodes) {
+
+    var i = 0,
+        ret = [],
+        l = nodes.length,
+        chunk, elem;
+
+    for (; i < l; i++) {
+
+        elem = nodes[i];
+        chunk = chunkCache[nodes[i]];
+
+        if (!chunk) {
+            ret.push({
+                text: nodes[i],
+                type: identify(nodes[i])
+            });
+
+            // Cache the 'chunk'
+            chunk = chunkCache(nodes[i], ret)
+        }
+    }
+
+    return ret;
+}
+
 function IranianWalker(nodes, mode, fn) {
     if (nodes) {
 
@@ -662,7 +696,6 @@ function all(elem) {
     return elem.all ? elem.all : elem.getElementsByTagName('*');
 }
 
-
 /** 
  * Mehran!
  *
@@ -698,6 +731,8 @@ function byIdRaw(id, elem) {
     });
 }
 
+// getAttribute
+
 function getAttribute(elem, attribute) {
 
     // Set document vars if needed
@@ -723,12 +758,6 @@ function getAttribute(elem, attribute) {
 
         ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
-
-
-
-
-
-
 
 function createCache() {
     var keys = [];
