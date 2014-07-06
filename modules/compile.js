@@ -66,6 +66,8 @@ var win = this,
         selected: 1
     },
 
+    PseudoCache = {},
+    PseudoInfoCache = {},
     chunkCache = createCache(),
     pieceCache = createCache(),
     exeCache = createCache(),
@@ -101,7 +103,7 @@ hAzzle.extend({
             "*(\\d+)|))" + whitespace + "*\\)|)", "i"),
         'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
 
-        'changer': /^\:((?:(nth|eq|lt|gt)\(([^()]*)\))|(?:even|odd|first|last))(.*)/i,
+        'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
         'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
 
         'whitespace': whitespace,
@@ -123,7 +125,7 @@ hAzzle.extend({
             l, piece, piece1, j = 0,
             k,
             pC,
-            info, inf, chunks, kf;
+            inf, chunks, kf;
 
         // Set / Adjust correct context
 
@@ -180,20 +182,18 @@ hAzzle.extend({
 
                         nodes = Execute(nodes, piece1, context);
 
-                        // filter the nodes
+                        // 'only' filter the nodes if a filter exist...
 
-                        for (; j < k; j++) {
+                        if (Jiesa.filters[piece.type]) {
 
-                            //a 'changer' changes the nodes completely, rather than adding to them.
-                            if (pieceStore[j].type === 'changer') {
-                                info = Jiesa.regex.changer.exec(pieceStore[j].text);
-                                nodes = Jiesa.changers[info[1]](nodes, info[2]);
-                                continue;
+                            for (; j < k; j++) {
+
+                                // filter the nodes
+
+                                nodes = filter(nodes, pieceStore[j]);
                             }
-
-                            nodes = filter(nodes, pieceStore[j])
                         }
-
+                        // filters ends
                         if (piece.type === 'changer') {
 
                             inf = Jiesa.regex.changer.exec(piece.text);
@@ -301,6 +301,7 @@ hAzzle.extend({
          */
 
         'attr': function (elem, attribute) {
+
             return getAttribute(elem, attribute) ||
                 IranianWalker(all(elem), 'f', function (e) {
                     return Jiesa.filters.attr(e, attribute);
@@ -396,10 +397,6 @@ hAzzle.extend({
             }
         },
 
-        'tag': function (elem, sel) {
-            return (elem.tagName && elem.tagName.toLowerCase() === sel.toLowerCase());
-        },
-
         'attr': function (elem, sel) {
 
             /**
@@ -475,20 +472,12 @@ hAzzle.extend({
             return false;
         },
 
+        // Filter selector level 3 and 4 pseudo selectors
+
         'pseudo': function (elem, sel) {
-
-            var pseudo = sel.replace(Jiesa.regex.pseudo, '$1'),
-                info = sel.replace(Jiesa.regex.pseudo, '$2');
-
-            // Mehran!!! Find a better solution here. try / catch are slow       
-
-            try {
-                return Jiesa.pseudo_filters[pseudo](elem, info);
-
-            } catch (e) {
-                hAzzle.error("Sorry!");
-            }
-
+            var pseudo = PseudoCache[sel] ? PseudoCache[sel] : PseudoCache[sel] = sel.replace(Jiesa.regex.pseudo, '$1'),
+                info = PseudoInfoCache[sel] ? PseudoInfoCache[sel] : PseudoInfoCache[sel] = sel.replace(Jiesa.regex.pseudo, '$2');
+            return Jiesa.pseudo_filters[pseudo](elem, info);
         }
     },
 
@@ -622,7 +611,6 @@ function filter(nodes, pieceStore) {
     return ret;
 }
 
-
 /**
  * Collect, and identify all selectors.
  *
@@ -657,7 +645,6 @@ function Collector(nodes) {
     return ret;
 }
 
-
 function Execute(nodes, piece, context) {
 
     var i = 0,
@@ -667,7 +654,7 @@ function Execute(nodes, piece, context) {
 
     for (; i < l; i++) {
 
-        exe = exeCache[nodes[i] + " "]
+        exe = exeCache[nodes[i] + " "];
 
         if (!exe) {
             ret = exeCache(nodes[i] + " ", ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
