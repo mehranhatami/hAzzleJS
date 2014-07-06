@@ -68,6 +68,7 @@ var win = this,
 
     chunkCache = createCache(),
     pieceCache = createCache(),
+    exeCache = createCache(),
 
     /**
      * Special regex. NOTE! This is not part of the public Jiesa Object
@@ -120,7 +121,7 @@ hAzzle.extend({
             nodes,
             l, piece, piece1, j = 0,
             k,
-			pC,
+            pC,
             info, inf, chunks, kf;
 
         // Set / Adjust correct context
@@ -143,11 +144,11 @@ hAzzle.extend({
         if (l) {
 
             // create the node set
-			
+
             pC = pieceCache(selector);
-			
+
             if (!pC) {
-				
+
                 for (; i < l; i++) {
 
                     piece = chunks[i];
@@ -159,9 +160,9 @@ hAzzle.extend({
 
                     if (piece.type !== 'whitespace' && chunks[i + 1]) {
 
-                        pieceStore.push(piece);
+                        // We push all non-descendant selectors into the pieceStore until we hit a space in the selector.
 
-                        //We push all non-descendant selectors into piece store until we hit a space in the selector.
+                        pieceStore.push(piece);
 
                     } else {
 
@@ -175,9 +176,9 @@ hAzzle.extend({
                         piece1 = pieceStore.shift();
                         k = pieceStore.length;
 
-                        nodes = IranianWalker(nodes, 'c', function (elem) {
-                            return elem ? Jiesa.getters[piece1.type](elem, piece1.text, context) : [];
-                        });
+                        // Collect everything
+
+                        nodes = Execute(nodes, piece1, context);
 
                         // filter the nodes
 
@@ -473,8 +474,6 @@ hAzzle.extend({
                 return elem.parentNode === relElem;
             }
 
-
-
             return false;
         },
 
@@ -621,19 +620,39 @@ function Collector(nodes) {
     for (; i < l; i++) {
 
         elem = nodes[i];
-        chunk = chunkCache[nodes[i]];
+        chunk = chunkCache[elem];
 
         if (!chunk) {
             ret.push({
                 text: nodes[i],
-                type: identify(nodes[i])
+                type: identify(elem)
             });
 
             // Cache the 'chunk'
-            chunk = chunkCache(nodes[i], ret);
+            chunk = chunkCache(elem, ret);
         }
     }
 
+    return ret;
+}
+
+
+function Execute(nodes, piece, context) {
+
+    var i = 0,
+        ret = [],
+        l = nodes.length,
+        exe, elem;
+
+    exe = exeCache[nodes];
+
+    if (!exe) {
+        for (; i < l; i++) {
+            elem = nodes[i];
+            exe = exeCache[elem];
+            ret = chunkCache(elem, ret.concat(Jiesa.getters[piece.type](elem, piece.text, context)));
+        }
+    }
     return ret;
 }
 
