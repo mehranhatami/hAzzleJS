@@ -30,7 +30,7 @@ var win = this,
 
   frameEvents = {
     'mouseover': 1,
-    'mousemove': 0,
+    'mousemove': 1,
     'mousewheel': 1,
     'drag': 1,
     'dropenter': 1,
@@ -753,7 +753,16 @@ hAzzle.Event = function (event, element) {
     i, p, props, cleaned;
 
   self.originalEvent = event;
-  self.target = target && target.nodeType === 3 ? target.parentNode : target;
+  if(target) {
+  if(target.nodeType === 3) {
+	
+	self.target = target.parentElement;  
+  
+  } else {
+	  self.target = target;  
+  }
+  }
+//  self.target = target && target.nodeType === 3 ? target.parentElement : target;
 
   cleaned = hAzzle.event.fixHook[type];
 
@@ -1115,7 +1124,7 @@ function findTarget(selector, target, elem) {
   elem = (elem === win) ? docElem : elem;
 
   var i, matches = cache[selector] ? cache[selector] : cache[selector] = hAzzle(selector, elem);
-  for (; target !== elem; target = target.parentNode || elem) {
+  for (; target !== elem; target = target.parentElement || elem) {
     if (matches !== null) {
 
       // Note!! if you use an while-loop here, you are sending
@@ -1159,10 +1168,9 @@ function delegate(selector, fn) {
 
               var raffn = (function (e, handler, fn, m, args) {
 
-                return function rafcall() {
+                return function rafcall(tr) {
                   if (triggering) {
                     var output = fn.apply(m, args);
-
                     handler.__hAzzle.rafId = safeRAF(rafcall);
 
                     return output;
@@ -1193,9 +1201,7 @@ function delegate(selector, fn) {
             cancelFrame(handler.__hAzzle.rafId);
 
             handler.__hAzzle.rafId = null;
-
           }
-
         }
       }
     }
