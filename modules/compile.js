@@ -131,8 +131,8 @@ hAzzle.extend({
         selector = selector.replace(trimspaces, '').replace(special, ' $1');
 
         // Split the selector before we are looping through
-
-        kf = selector.match(chunky);
+        //when we have only one chunk match returns null
+        kf = selector.match(chunky) || [selector];
 
         // Collect all the chunks, and identify them
 
@@ -621,7 +621,11 @@ function identify(chunk) {
      */
     var reg = Jiesa.regex;
 
-    if (reg.nth.test(chunk)) {
+    //Kenny!!
+    //I added another dirty fix here which we should fix it later
+    if(chunk === '*'){
+        return 'tag';
+    } else if (reg.nth.test(chunk)) {
         return 'pseudo';
     }
 
