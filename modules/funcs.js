@@ -7,21 +7,42 @@ var slice = Array.prototype.slice,
 
 hAzzle.extend({
 
-    bind: function (me) {
-        var args = slice.call(arguments, 1),
-            method = this;
+    lastIndexOf: function (array, item, from) {
+        if (array === null) {
+            return -1;
+        }
+        var hasIndex = from !== null,
+            i = (hasIndex ? from : array.length);
+        while (i--) {
+            if (array[i] === item) {
+                return i;
+            }
+        }
+        return -1;
+    },
 
-        if (args.length) {
-            return function () {
-                var t = arguments;
+    bind: function (func, context) {
+        var args, bound;
 
-                return method.apply(me, t.length ? args.concat(slice.call(t)) : args);
-            };
+        if (typeof func === 'function') {
+
+            hAzzle.error("Not supported!");
         }
 
-        args = null;
-        return function () {
-            return method.apply(me, arguments);
+        args = slice.call(arguments, 2);
+
+        return bound = function () {
+            if (!(this instanceof bound)) {
+                return func.apply(context, args.concat(slice.call(arguments)));
+            }
+            ctor.prototype = func.prototype;
+            var self = new ctor();
+            ctor.prototype = null;
+            var result = func.apply(self, args.concat(slice.call(arguments)));
+            if (Object(result) === result) {
+                return result;
+            }
+            return self;
         };
     },
 
@@ -30,18 +51,18 @@ hAzzle.extend({
      * to another object
      */
 
-  /**
-	 * Simple function for copy one object over
-	 * to another object
-	 */
-	 
-    shallowCopy: function(target, src) {
-       hAzzle.forOwn(src, function (prop) {
-       target[prop] = src[prop];
-    });
+    /**
+     * Simple function for copy one object over
+     * to another object
+     */
 
-    return target;
-  },
+    shallowCopy: function (target, src) {
+        hAzzle.forOwn(src, function (prop) {
+            target[prop] = src[prop];
+        });
+
+        return target;
+    },
 
 
     pluck: function (array, property) {
@@ -223,3 +244,6 @@ hAzzle.extend({
     },
 
 }, hAzzle);
+
+// Reusable constructor function for prototype setting.
+var ctor = function () {};
