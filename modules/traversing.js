@@ -5,10 +5,9 @@ var arr = [],
     slice = arr.slice,
     push = arr.push,
     indexOf = arr.indexOf,
-    docElem = hAzzle.docElem,
     isString = hAzzle.isString,
 
-    // Use the new Element Traversal API if available.
+    // hAzzle are using the new Element Traversal API
 
     firstNode = 'firstElementChild',
     nextNode = 'nextElementSibling',
@@ -25,13 +24,6 @@ var arr = [],
         next: true,
         prev: true
     };
-
-// Fall back to DOM Level 1 API if the new API are not supported.
-
-if (!(firstNode in docElem)) firstNode = 'firstChild';
-if (!(nextNode in docElem)) nextNode = 'nextSibling';
-if (!(prevNode in docElem)) prevNode = 'previousSibling';
-if (!(parentNode in docElem)) parentNode = 'parentNode';
 
 // Extend the Core
 
@@ -244,10 +236,7 @@ hAzzle.extend({
      */
 
     children: function (selector, index) {
-
-        return walkElements(hAzzle.map(this, function (elem) {
-            return hAzzle.sibling(elem.firstChild);
-        }, ''), nextNode, selector || '*', index, true);
+        return walkElements(this.down.call(this), nextNode, selector || '*', index, true);
     },
 
     /**
@@ -469,29 +458,19 @@ function getIndex(selector, index) {
 }
 
 /**
- * Traverse multiple DOM elements
+ * Element traversing support
  */
+ 
+function walkElements(el, property, selector, pos, fn) {
 
-function walkElements(el, property, selector, index, fn) {
-
-    // Find our position in the DOM tree
-
-    index = getIndex(selector, index);
-
-    var i,
-        isString,
-        ret = [];
+    var index = getIndex(selector, pos),
+	    i, ret = [];
 
     return collect(el, function (el, elind) {
 
         i = index || 0;
-        isString = typeof selector === 'string' ? selector : '*';
 
-
-        if (!fn) {
-
-            el = el[property];
-        }
+        if (!fn) el = el[property];
 
         // Don't run this loop if this is an document fragment
 
@@ -499,12 +478,11 @@ function walkElements(el, property, selector, index, fn) {
 
             if (el.nodeType === 1) {
 
-                if ((!fn || fn === true || fn(el, elind)) && hAzzle.matches(isString, el) && (index === null || i-- === 0)) {
+                if ((!fn || fn === true || fn(el, elind)) && hAzzle.matches(isString(selector) ? selector : '*', el) && (index === null || i-- === 0)) {
 
                     if (index === null && property !== nextNode && property !== parentNode) {
 
                         ret.unshift(el);
-
 
                     } else {
 
@@ -512,7 +490,8 @@ function walkElements(el, property, selector, index, fn) {
                     }
                 }
             }
-            el = el[property];
+          
+		    el = el[property];
         }
 
         return ret;
@@ -555,42 +534,36 @@ function filtered(callback) {
     };
 }
 
-hAzzle.dir = function (elem, dir, until) {
-    var matched = [],
-        truncate = until !== undefined;
+hAzzle.extend({
 
-    while ((elem = elem[dir]) && elem.nodeType !== 9) {
-        if (elem.nodeType === 1) {
+    dir: function (elem, dir, until) {
+        var matched = [],
+            truncate = until !== undefined;
+        while ((elem = elem[dir]) && elem !== document) {
             if (truncate && hAzzle(elem).is(until)) {
                 break;
             }
             matched.push(elem);
         }
-    }
-    return matched;
-};
-// New Element Traversel API support
-hAzzle.nTapi = function (elem, dir) {
-    var matched = [],
-        cur = elem[dir];
-    while (cur && cur !== document) {
-        matched.push(cur);
-        cur = cur[dir];
-    }
-    return matched;
-}
+        return matched;
+    },
 
-hAzzle.sibling = function (n, elem) {
-    var matched = [];
-
-    for (; n; n = n.nextSibling) {
-        if (n.nodeType === 1 && n !== elem) {
-            matched.push(n);
+    sibling: function (elem, skip) {
+        var ret = [],
+            tmp = elem.children,
+            i = 0,
+            l = tmp.length;
+        if (skip) {
+            for (; i < l; i++) {
+                if (tmp[i] !== skip) {
+                    ret.push(tmp[i]);
+                }
+            }
         }
-    }
 
-    return matched;
-};
+        return ret;
+    }
+}, hAzzle);
 
 hAzzle.forOwn({
     parent: function (elem) {
@@ -600,17 +573,11 @@ hAzzle.forOwn({
     parentsUntil: function (elem, i, until) {
         return hAzzle.dir(elem, parentNode, until);
     },
-
     nextAll: function (elem) {
-        if (typeof hAzzle.docElem.children !== "undefined") {
-            return hAzzle.nTapi(elem, "nextElementSibling");
-        }
         return hAzzle.dir(elem, nextNode);
     },
     prevAll: function (elem) {
-        if (typeof hAzzle.docElem.children !== "undefined") {
-            return hAzzle.nTapi(elem, "previousElementSibling");
-        }
+        return hAzzle.dir(elem, prevNode);
     },
     nextUntil: function (elem, i, until) {
         return hAzzle.dir(elem, nextNode, until);
@@ -618,7 +585,6 @@ hAzzle.forOwn({
     prevUntil: function (elem, i, until) {
         return hAzzle.dir(elem, prevNode, until);
     },
-
 }, function (fn, name) {
 
     hAzzle.Core[name] = function (until, selector) {
