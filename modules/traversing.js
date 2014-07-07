@@ -59,7 +59,7 @@ hAzzle.extend({
 
             for (; i < len; i++) {
 
-                ret.push(hAzzle.find(selector, self[i], false));
+                hAzzle.select(selector, self[i], ret);
             }
 
             // If more then one element, make sure they are unique
@@ -68,7 +68,6 @@ hAzzle.extend({
 
                 ret = hAzzle.unique(ret);
             }
-
             return hAzzle(ret);
 
         } else { // Object
