@@ -38,14 +38,13 @@ hAzzle.extend({
                 hAzzle.event.removeEvent(el);
             }
 
-            if (el.parentNode) {
+            if (el.parentNode && el.tagName !== 'BODY') {
                 el.parentNode.removeChild(el);
             }
         });
 
         return this;
     },
-
 
     /**
      * @return {hAzzle}

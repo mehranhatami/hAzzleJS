@@ -218,7 +218,11 @@
             if (typeof fn === 'function') {
                 return hAzzle.ready(fn);
             }
-        }
+        },
+        size: function () {
+            return this.length;
+        },
+
     };
 
     /**

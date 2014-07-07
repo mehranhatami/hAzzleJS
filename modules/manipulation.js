@@ -397,6 +397,7 @@ hAzzle.extend({
         }, 1);
     },
 
+
     /**
      * @param {hAzzle|string|Element|Array} target
      * @param {Object} scope
@@ -418,7 +419,6 @@ hAzzle.extend({
      * @param {Object} scope
      * @return {hAzzle}
      */
-
     insertAfter: function (node) {
         injectHTML.call(this, node, this, function (t, el) {
             var sibling = t[nextNode];

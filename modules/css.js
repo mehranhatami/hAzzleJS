@@ -520,7 +520,14 @@ hAzzle.extend({
         unit = hAzzle.units.unity[unit];
 
         return unit ? px / unit : px;
-    }
+
+    },
+    ViewportHeight: function () {
+        return win.innerHeight;
+    },
+    ViewportWidth: function () {
+        return win.innerWidth;
+    },
 
 }, hAzzle);
 
