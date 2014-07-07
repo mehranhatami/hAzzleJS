@@ -4,6 +4,7 @@
 var win = this,
     doc = win.document,
     docElem = hAzzle.docElem,
+    transparent = /^(?:transparent|(?:rgba[(](?:\s*\d+\s*[,]){3}\s*0\s*[)]))$/i,
     numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
@@ -262,6 +263,13 @@ hAzzle.extend({
                 hAzzle(this).hide();
             }
         });
+    },
+
+    // Check if an element are transparent
+
+    isTransparent: function (prop) {
+        var value = this.css(prop);
+        return value ? transparent.test(value) : false;
     }
 });
 
