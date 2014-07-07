@@ -1,16 +1,36 @@
 /**
  * A handfull Usefull functions for the hAzzle Object
  */
- 
- 
 /* =========================== PUBLIC FUNCTIONS ========================== */
-
 var slice = Array.prototype.slice,
     breaker = {};
 
 hAzzle.extend({
-    
-	/**
+
+    bind: function (me) {
+        var args = slice.call(arguments, 1),
+            method = this;
+
+        if (args.length) {
+            return function () {
+                var t = arguments;
+
+                return method.apply(me, t.length ? args.concat(slice.call(t)) : args);
+            };
+        }
+
+        args = null;
+        return function () {
+            return method.apply(me, arguments);
+        };
+    },
+
+    /**
+     * Simple function for copy one object over
+     * to another object
+     */
+
+  /**
 	 * Simple function for copy one object over
 	 * to another object
 	 */
@@ -20,13 +40,14 @@ hAzzle.extend({
        target[prop] = src[prop];
     });
 
-    return targetObj;
+    return target;
   },
 
+
     pluck: function (array, property) {
-            return array.map(function (item) {
-                return item[property];
-            });
+        return array.map(function (item) {
+            return item[property];
+        });
     },
 
     // Exact
@@ -46,29 +67,29 @@ hAzzle.extend({
         }
         return Math.rand(x, y);
     },
-	
-	  /*
-       * Finds the elements of an array which satisfy a filter function.
-       */
 
-        grep: function (elems, callback, invert) {
-            var cbi,
-                matches = [],
-                i = 0,
-                l = elems.length,
-                cbE = !invert;
+    /*
+     * Finds the elements of an array which satisfy a filter function.
+     */
 
-            // Go through the array, only saving the items
-            // that pass the validator function
-            for (; i < l; i++) {
-                cbi = !callback(elems[i], i);
-                if (cbi !== cbE) {
-                    matches.push(elems[i]);
-                }
+    grep: function (elems, callback, invert) {
+        var cbi,
+            matches = [],
+            i = 0,
+            l = elems.length,
+            cbE = !invert;
+
+        // Go through the array, only saving the items
+        // that pass the validator function
+        for (; i < l; i++) {
+            cbi = !callback(elems[i], i);
+            if (cbi !== cbE) {
+                matches.push(elems[i]);
             }
+        }
 
-            return matches;
-        },
+        return matches;
+    },
 
     // Invoke a method (with arguments) on every item in a collection.
 

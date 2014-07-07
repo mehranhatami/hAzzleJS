@@ -588,7 +588,7 @@
         
 		// Escape JavasScript string
 		
-        escJS(s) {
+        escJS: function(s) {
             return replace(s, js, ucode);
         },
         /**

@@ -6,23 +6,22 @@ var rcheckableType = /^(?:checkbox|radio)$/i;
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
     if ("input" === nodeName && rcheckableType.test(src.type)) {
-		dest.checked = src.checked;
-	}
-    else if ("input" === nodeName || "textarea" === nodeName) {
-		dest.defaultValue = src.defaultValue;
-	}	
+        dest.checked = src.checked;
+    } else if ("input" === nodeName || "textarea" === nodeName) {
+        dest.defaultValue = src.defaultValue;
+    }
 }
 
 hAzzle.extend({
 
     cloneNode: function (el, deep) {
-       
-	   if(! el) {
-		   
-		   return; 
-	   }
-       
-	    var c = el.cloneNode(deep || true),
+
+        if (!el) {
+
+            return;
+        }
+
+        var c = el.cloneNode(deep || true),
             cloneElems, elElems;
 
         hAzzle(c).cloneEvents(el);
@@ -32,8 +31,7 @@ hAzzle.extend({
         elElems = hAzzle.select("*", el);
 
         var i = 0,
-            len = elElems.length,
-			a = 0, b = elTextareas.length;
+            len = elElems.length;
 
         // Copy Events
 
@@ -50,7 +48,9 @@ hAzzle.extend({
             // Okey, Mehran. We have cloned. Let us copy over the textarea data
 
             var cloneTextareas = hAzzle.select("textarea", c),
-                elTextareas = hAzzle.select("textarea", el);
+                elTextareas = hAzzle.select("textarea", el),
+                a = 0,
+                b = elTextareas.length;
 
             // Copy over the textarea data	 
 
@@ -68,8 +68,8 @@ hAzzle.extend({
 
 hAzzle.extend({
     clone: function (deep) {
-		var self = this;
-	    return self[0] ? self.twist(function (el) {
+        var self = this;
+        return self[0] ? self.twist(function (el) {
             return hAzzle.cloneNode(el, deep);
         }) : self;
     }
