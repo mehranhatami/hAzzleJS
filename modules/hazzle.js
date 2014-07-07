@@ -165,7 +165,6 @@
          */
 
         forOwn: function (fn, obj) {
-
             return hAzzle.forOwn(this, fn, obj);
         },
 
@@ -176,7 +175,6 @@
          */
 
         each: function (fn, obj) {
-
             return hAzzle.each(this, fn, obj);
         },
 
@@ -187,7 +185,6 @@
          */
 
         deepEach: function (fn, obj) {
-
             return hAzzle.deepEach(this, fn, obj);
         },
 
@@ -802,8 +799,7 @@
          * Find next element sibiling.
          *
          * @param {Object} el
-         *
-         * @return {Object}
+         * @return {hAzzle}
          */
 
         nextElementSibling: function (el) {
@@ -821,8 +817,7 @@
          * Find previous element sibling.
          *
          * @param {Object} el
-         *
-         * @return {Object}
+         * @return {hAzzle}
          */
 
         previousElementSibling: function (el) {

@@ -8,8 +8,10 @@ var win = this,
     rnoInnerhtml = /<(?:script|style|link)/i,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
+    riAH = /<script|\[object/i,
+    rtagName = /<([\w:]+)/,
     rreturn = /\r/g,
-    ssv  = /\S+/g,
+    ssv = /\S+/g,
 
     isFunction = hAzzle.isFunction,
     isString = hAzzle.isString,
@@ -40,6 +42,7 @@ htmlMap.optgroup = htmlMap.option;
 htmlMap.script = htmlMap.style = htmlMap.link = htmlMap.param = htmlMap.base;
 htmlMap.tbody = htmlMap.tfoot = htmlMap.colgroup = htmlMap.caption = htmlMap.thead;
 htmlMap.th = htmlMap.td;
+htmlMap.style = htmlMap.table = htmlMap.base;
 
 hAzzle.extend({
 
@@ -78,7 +81,7 @@ hAzzle.extend({
      */
 
     hasAttr: function (name) {
-		
+
         return name && typeof this.attr(name) !== 'undefined';
     },
 
@@ -137,7 +140,6 @@ hAzzle.extend({
      */
 
     prop: function (name, value) {
-
         return hAzzle.setter(this, hAzzle.prop, name, value, true);
     },
 
@@ -329,16 +331,15 @@ hAzzle.extend({
      */
     append: function (node) {
         return this.each(function (el, i) {
+         if(!iAh(this, node, 'beforeend')) {
             if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
                 hAzzle.each(stabilizeHTML(node, i), function (i) {
-                    // We don't allow text nodes
-                    if (node.nodeType !== 3) {
-                        try {
-                            el.appendChild(i);
-                        } // Die silently
-                        catch (e) {}
-                    }
+                  try {
+                        el.appendChild(i);
+                      } // Die silently
+                      catch (e) {}
                 });
+              }
             }
         });
     },
@@ -350,16 +351,15 @@ hAzzle.extend({
 
     prepend: function (node) {
         return this.each(function (el, i) {
-            if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                hAzzle.each(stabilizeHTML(node, i), function (i) {
-                    // We don't allow text nodes
-                    if (node.nodeType !== 3) {
-                        try {
-                            el.insertBefore(i, el.firstChild);
-                        } // Die silently
-                        catch (e) {}
-                    }
-                });
+            if (!iAh(this, node, 'afterbegin')) {
+                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
+                    hAzzle.each(stabilizeHTML(node, i), function (i) {
+                            try {
+                                el.insertBefore(i, el.firstChild);
+                            } // Die silently
+                            catch (e) {}
+                    });
+                }
             }
         });
     },
@@ -610,9 +610,9 @@ hAzzle.extend({
     },
 
     removeAttr: function (el, value) {
-		
+
         var name, propName, i = 0,
-            attrNames = typeof value == 'string' ? value.match(ssv ) : [].concat(value),
+            attrNames = typeof value == 'string' ? value.match(ssv) : [].concat(value),
             l = attrNames.length;
 
         for (; i < l; i++) {
@@ -859,25 +859,27 @@ hAzzle.extend({
             return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
         }
     },
-	
-	anyAttr: function(elem, fn, scope) {
-        
-		var a, ela = elem.attributes, l = ela && ela.length, i = 0;
-        
-		if (typeof fn !== 'function') {
-			return +l || 0; 
-		}
-        
-		scope = scope || elem;
-        
-		while (i < l) {
-		if (fn.call(scope, (a = ela[i++]).value, a.name, a)) { 
-		     return i; 
-		}
-		}
+
+    anyAttr: function (elem, fn, scope) {
+
+        var a, ela = elem.attributes,
+            l = ela && ela.length,
+            i = 0;
+
+        if (typeof fn !== 'function') {
+            return +l || 0;
+        }
+
+        scope = scope || elem;
+
+        while (i < l) {
+            if (fn.call(scope, (a = ela[i++]).value, a.name, a)) {
+                return i;
+            }
+        }
         return 0;
     }
-	
+
 }, hAzzle);
 
 
@@ -895,6 +897,7 @@ function getBooleanAttrName(element, name) {
 // Stabilize HTML
 
 function stabilizeHTML(node, clone) {
+
     var i = 0,
         l = node.length,
         ret;
@@ -902,6 +905,9 @@ function stabilizeHTML(node, clone) {
     if (isString(node)) {
 
         return hAzzle.create(node);
+    }
+    if (typeof node === "object") {
+        return [node];
     }
 
     if (hAzzle.isNode(node)) {
@@ -975,6 +981,18 @@ function injectHTML(target, node, fn, rev) {
     }, null, !rev);
 
     return node;
+}
+
+function iAh(elem, html, dir) {
+    var tag = (/<([\w:]+)/.exec(html) || ["", ""])[1].toLowerCase();
+    if (isString(html) && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
+        if (elem.insertAdjacentHTML && elem.parentNode && elem.parentNode.nodeType === 1) {
+            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, "<$1></$2>"));
+            return true;
+        }
+        return false;
+    }
+    return false;
 }
 
 /* =========================== INTERNAL ========================== */
