@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.8.3
+ * Version: 0.8.4
  * Released under the MIT License.
  *
  * Date: 2014-07-07
@@ -51,6 +51,9 @@
         iews = /^\s*$/,
         trwl = /^\s\s*/,
         trwr = /\s\s*$/,
+
+        regexp = /[\\\[\]\/{}()*+?.$|^-]/g,
+        js = /[\x00-\x1f'"\u2028\u2029]/g,
 
         /*
          * Unique ID
@@ -176,6 +179,9 @@
 
         each: function (fn, obj) {
             return hAzzle.each(this, fn, obj);
+
+
+
         },
 
         /**
@@ -342,6 +348,7 @@
 
         isFunction: function (value) {
             return typeof value === 'function';
+
         },
 
         isEmptyObject: function (obj) {
@@ -574,6 +581,16 @@
             return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 11);
         },
 
+        // Escape RegExp
+        escRE: function (s) {
+            return replace(s, regexp, "\\$&");
+        },
+        
+		// Escape JavasScript string
+		
+        escJS(s) {
+            return replace(s, js, ucode);
+        },
         /**
          * Get text
          */
@@ -779,7 +796,6 @@
                     return elems;
                 }
 
-
                 // Getting an attribute
 
                 if (fn) {
@@ -797,7 +813,6 @@
 
             return fn(elems[0], key);
         },
-
 
         /**
          * Find next element sibiling.
@@ -953,7 +968,14 @@
         }
     }
 
-    /* =========================== INTERNAL ========================== */
+    function ucode(a) {
+        return '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+    }
+
+    function replace(s, regexp, sub) {
+            return toString(s).replace(regexp, sub !== null ? sub : '');
+        }
+        /* =========================== INTERNAL ========================== */
 
     // Populate the native list
     hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {
