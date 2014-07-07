@@ -24,26 +24,72 @@ var win = this,
     perf = top.performance && top.performance.now ? top.performance : {},
     native = true,
     fixTick = false,
+    _aq = [],
+    _process = [],
+    _irid = 0,
+    _iid;
 
-    // Use the best resolution timer that is currently available
+// Use the best resolution timer that is currently available
 
-    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow);
+perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow || perf.oNow);
 
 // If no native RequestAnimationFrame, grab a vendor prefixed one
 
 if (!requestFrame) {
 
-    requestFrame = top.mozRequestAnimationFrame ||
-        top.oRequestAnimationFrame ||
-        top.msRequestAnimationFrame ||
-        null;
+    requestFrame = top.mozRequestAnimationFrame || top.oRequestAnimationFrame ||
+        top.msRequestAnimationFrame || function (callback) {
 
-    cancelFrame = top.webkitCancelAnimationFrame ||
-        top.webkitCancelRequestAnimationFrame ||
-        top.mozCancelAnimationFrame ||
-        top.oCancelAnimationFrame ||
-        top.mozCancelRequestAnimationFrame ||
-        null;
+            _aq.push([++_irid, callback]);
+
+            if (!_iid) {
+                _iid = win.setInterval(function () {
+                    if (_aq.length) {
+
+                        // Use performance.now polyfill
+
+                        var time = hAzzle.pnow(),
+                            temp = _process;
+                        _process = _aq;
+                        _aq = temp;
+
+                        while (_process.length) {
+
+                            _process.shift()[1](time);
+                        }
+
+                    } else {
+                        // don't continue the interval, if unnecessary
+                        win.clearInterval(_iid);
+                        _iid = undefined;
+                    } // Estimating support for 50 frames per second
+                }, 1000 / 50);
+            }
+
+            return _irid;
+        };
+
+    cancelFrame = top.webkitCancelAnimationFrame || top.webkitCancelRequestAnimationFrame ||
+        top.mozCancelAnimationFrame || top.oCancelAnimationFrame ||
+        top.mozCancelRequestAnimationFrame || function (rid) {
+
+            var i,
+                x = _aq.length,
+                y = _process.length;
+
+            for (; i < x; i += 1) {
+                if (_aq[i][0] === rid) {
+                    _aq.splice(i, 1);
+                    return;
+                }
+            }
+            for (; i < y; i += 1) {
+                if (_process[i][0] === rid) {
+                    _process.splice(i, 1);
+                    return;
+                }
+            }
+        };
 
     // Vendor prefixed rAF, so set to false
 
@@ -77,16 +123,9 @@ hAzzle.pnow = perfNow ? function () {
     }
 
     return hAzzle.now() - nowOffset;
-
-  
 };
 
-  /**
-     * ONLY!! activate this function if we are dealing with
-     * rAF.
-     */
-if (requestFrame) {
-    function safeRAF(callback) {
+   hAzzle.safeRAF = function(callback) {
 
         var rafCallback = (function (callback) {
 
@@ -99,86 +138,12 @@ if (requestFrame) {
                 callback(tick);
             };
         })(callback);
-    
-	 // Need return value her, so we get the frame ID 
-     // in return
-	 
-      return requestFrame(rafCallback);
+
+        // Need return value her, so we get the frame ID 
+        // in return
+
+        return requestFrame(rafCallback);
     }
-
-    // Expose to the global hAzzle Object
-
-    hAzzle.safeRAF = safeRAF;
-}
-
-/* =========================== FALLBACK FOR IE 9 ========================== */
-
-if (!requestFrame) {
-
-    // No rAF, so set to false
-
-    native = false;
-
-    var _aq = [],
-        _process = [],
-        _irid = 0,
-        _iid;
-
-    requestFrame = function (callback) {
-
-        _aq.push([++_irid, callback]);
-
-        if (!_iid) {
-            _iid = win.setInterval(function () {
-                if (_aq.length) {
-
-                    // Use performance.now polyfill
-
-                    var time = hAzzle.pnow(),
-                        temp = _process;
-                    _process = _aq;
-                    _aq = temp;
-
-                    while (_process.length) {
-
-                        _process.shift()[1](time);
-                    }
-
-                } else {
-                    // don't continue the interval, if unnecessary
-                    win.clearInterval(_iid);
-                    _iid = undefined;
-                } // Estimating support for 50 frames per second
-            }, 1000 / 50);
-        }
-
-        return _irid;
-    };
-
-    /**
-     * Find the request ID and remove it
-     */
-
-    cancelFrame = function (rid) {
-
-        var i,
-            x = _aq.length,
-            y = _process.length;
-
-        for (; i < x; i += 1) {
-            if (_aq[i][0] === rid) {
-                _aq.splice(i, 1);
-                return;
-            }
-        }
-        for (; i < y; i += 1) {
-            if (_process[i][0] === rid) {
-                _process.splice(i, 1);
-                return;
-            }
-        }
-    };
-}
 
 // Throw the last of the functions
 // to the globale hAzzle Object

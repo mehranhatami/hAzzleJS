@@ -8,9 +8,6 @@
  */
 var rcheckableType = /^(?:checkbox|radio)$/i;
 
-/**
- * Helper function for cloning select and textareas e.g.
- */
 
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
@@ -65,18 +62,21 @@ hAzzle.cloneNode = function (el, deep) {
 
     } else {
 
-        // Clone job done! Copy radio, checkbox and textarea if any...
+        // Clone job done! Clone the textarea if it exist...
 
         var cloneTextareas = hAzzle.select('textarea', c),
             elTextareas = hAzzle.select('textarea', el),
             a = 0,
             b = elTextareas.length;
 
-        // Copy over the cloned elements data
+        // Copy over textarea content
 
-        for (; a < b; ++a) {
+        if (b) {
 
-            hAzzle(cloneTextareas[b]).val(hAzzle(elTextareas[b]).val());
+            for (; a < b; ++a) {
+
+                hAzzle(cloneTextareas[b]).val(hAzzle(elTextareas[b]).val());
+            }
         }
     }
 
@@ -86,7 +86,7 @@ hAzzle.cloneNode = function (el, deep) {
 };
 
 // Extend the hAzzle Core
-hAzzle.Core['clone'] = function (deep) {
+hAzzle.Core.clone = function (deep) {
     return this.twist(function (el) {
         return hAzzle.cloneNode(el, deep);
     });
