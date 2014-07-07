@@ -9,7 +9,7 @@ var win = this,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
     riAH = /<script|\[object/i,
-    rtagName = /<([\w:]+)/,
+    tagName = /<([\w:]+)/,
     rreturn = /\r/g,
     ssv = /\S+/g,
 
@@ -984,7 +984,7 @@ function injectHTML(target, node, fn, rev) {
 }
 
 function iAh(elem, html, dir) {
-    var tag = (/<([\w:]+)/.exec(html) || ["", ""])[1].toLowerCase();
+    var tag = (tagName.exec(html) || ["", ""])[1].toLowerCase();
     if (isString(html) && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
         if (elem.insertAdjacentHTML && elem.parentNode && elem.parentNode.nodeType === 1) {
             elem.insertAdjacentHTML(dir, html.replace(uniqueTags, "<$1></$2>"));
