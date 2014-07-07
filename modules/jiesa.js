@@ -9,7 +9,6 @@
  *
  * - Various bug checks
  */
- 
 var win = this,
     Jiesa = hAzzle.Jiesa,
     doc = win.document,
@@ -90,16 +89,6 @@ function assert(fn) {
 }
 
 /* =========================== TOOLS ========================== */
-
-function flatten(ar) {
-    var r = [],
-        i = 0,
-        l = ar.length;
-    for (; i < l; ++i) {
-        hAzzle.arrayLike(ar[i]) ? (r = r.concat(ar[i])) : (r[r.length] = ar[i]);
-    }
-    return r;
-}
 
 function normalizeCtx(ctx) {
 
@@ -185,7 +174,7 @@ hAzzle.extend({
         }
 
         // Run the parser
-		
+
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
     },
 
@@ -193,58 +182,44 @@ hAzzle.extend({
      * QSA selector engine
      */
 
-    QSA: (Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) ?
+    QSA: function (selector, context, results) {
 
-        function (selector, context, results) {
+        var res, nodeType;
 
-            var res, nodeType;
+        // Set correct document
 
-            // Set correct document
+        if ((context ? context.ownerDocument || context : doc) !== document) {
+            // Overwrite if needed
+            doc = hAzzle.setDocument(context);
+        }
 
-            if ((context ? context.ownerDocument || context : doc) !== document) {
-                // Overwrite if needed
-                doc = hAzzle.setDocument(context);
-            }
-            context = normalizeCtx(context);
-            results = results || [];
-            // Early return if context is not an element or document
+        context = normalizeCtx(context);
+        results = results || [];
 
-            if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+        // Early return if context is not an element or document
 
-                return [];
-            }
+        if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+            return [];
+        }
 
-            if (selector === win || hAzzle.isNode(selector)) {
+        // Fallback to non-native selector engine
+        // if QSA fails
+        // Note! Try / Catch should be replaced with
+        // something else for better performance
 
-                return !context || (selector !== win && hAzzle.isNode(context) && hAzzle.contains(selector, context)) ? [selector] : [];
-            }
+        try {
 
-            if (selector && typeof selector === 'object' && isFinite(selector.length)) {
+            res = context.querySelectorAll(selector);
 
-                return flatten(selector);
-            }
+        } catch (e) {}
 
-            if (selector && (selector.document || (selector.nodeType && selector.nodeType === 9))) {
-                return !context ? [selector] : [];
-            }
+        if (!res) {
 
-            // Fallback to non-native selector engine
-            // if QSA fails
-            // Note! Try / Catch should be replaced with
-            // something else for better performance
+            res = Jiesa.parse(selector, context);
+        }
 
-            try {
-                res = context.querySelectorAll(selector);
-            } catch (e) {}
-
-            if (!res) {
-
-                res = Jiesa.parse(selector, context);
-            }
-
-            return hAzzle.merge(results, res);
-
-        } : null
+        return hAzzle.merge(results, res);
+    }
 
 }, Jiesa);
 
@@ -253,10 +228,27 @@ hAzzle.extend({
 
 Jiesa.useNative = Jiesa.QSA ?
     function (b) {
-        return hAzzle.select = b ? Jiesa.QSA : Jiesa.find;
-    } : function () {};
 
+        // If querySelectorAll are not buggy,
+        //	existing, and not XML doc,
+        // we can use QSA. If not, we fallback
+        // to our internal selector engine
+
+        if (b && Jiesa.has['api-QSA'] &&
+            !Jiesa.has['bug-QSA'] &&
+            hAzzle.documentIsHTML) {
+
+            return hAzzle.select = Jiesa.QSA;
+
+        }
+
+        // fallback to hAzzle selector engine
+
+        return hAzzle.select = Jiesa.find;
+
+
+    } : function () {};
 
 // Set the selector engine global for hAzzle
 
-Jiesa.useNative(false);
+Jiesa.useNative(true);
