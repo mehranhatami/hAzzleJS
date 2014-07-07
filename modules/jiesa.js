@@ -9,6 +9,7 @@
  *
  * - Various bug checks
  */
+ 
 var win = this,
     Jiesa = hAzzle.Jiesa,
     doc = win.document,
@@ -16,8 +17,6 @@ var win = this,
     expando = "hAzzle" + -(new Date()),
 
     push = Array.prototype.push,
-
-    whitespace = Jiesa.whitespace,
 
     rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
@@ -102,7 +101,6 @@ function flatten(ar) {
     return r;
 }
 
-
 function normalizeCtx(ctx) {
 
     if (!ctx) {
@@ -128,9 +126,9 @@ hAzzle.extend({
 
     // Non-QSA selector engine
 
-    find: function (selector, context) {
+    find: function (selector, context, results) {
 
-        var match, elem, m, nodeType, results = [];
+        var match, elem, m, nodeType;
 
         // Set correct document
 
@@ -187,8 +185,8 @@ hAzzle.extend({
         }
 
         // Run the parser
-
-        return Jiesa.parse(selector.replace(rtrim, "$1"), context);
+		
+        return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
     },
 
     /**
@@ -197,7 +195,7 @@ hAzzle.extend({
 
     QSA: (Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) ?
 
-        function (selector, context) {
+        function (selector, context, results) {
 
             var res, nodeType;
 
@@ -208,7 +206,7 @@ hAzzle.extend({
                 doc = hAzzle.setDocument(context);
             }
             context = normalizeCtx(context);
-
+            results = results || [];
             // Early return if context is not an element or document
 
             if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
@@ -244,7 +242,7 @@ hAzzle.extend({
                 res = Jiesa.parse(selector, context);
             }
 
-            return hAzzle.makeArray(res, 0);
+            return hAzzle.merge(results, res);
 
         } : null
 
