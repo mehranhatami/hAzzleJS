@@ -121,12 +121,11 @@ hAzzle.extend({
 
         index = getIndex(selector, index);
 
-        var node = isString(selector) ? selector : '*',
-            obj;
+        var obj;
 
         return collect(this, function (el) {
 
-            obj = hAzzle.select(node, el);
+            obj = hAzzle.select(isString(selector) ? selector : '*', el);
 
             if (index === null) {
 
@@ -210,17 +209,11 @@ hAzzle.extend({
 
     siblings: function (selector, index) {
         var self = this,
-            arr = slice.call(this, 0),
-            i = 0,
-            l = arr.length;
-
-        for (; i < l; i++) {
+            arr = slice.call(self, 0),
+            i = arr.length;
+        while(i--) {
             arr[i] = arr[i][parentNode][firstNode];
-            while (arr[i].nodeType !== 1) {
-                arr[i] = arr[i][nextNode];
-            }
         }
-
         return walkElements(arr, nextNode, selector || '*', index, function (el, i) {
             return el !== self[i];
         });
@@ -364,19 +357,6 @@ hAzzle.extend({
         this.push(hAzzle(selector, context)[0]);
         return this;
     },
-
-    contents: function () {
-
-        var matched = hAzzle.map(this, function (elem) {
-            return elem.contentDocument || hAzzle.merge([], elem.childNodes);
-        });
-
-        if (this.length > 1) {
-            hAzzle.unique(matched);
-        }
-        return hAzzle(matched);
-    },
-
     firstElementChild: function () {
         return this.children().first();
     },
@@ -582,6 +562,9 @@ hAzzle.forOwn({
     nextUntil: function (elem, i, until) {
         return hAzzle.dir(elem, nextNode, until);
     },
+	contents: function( elem ) {
+	return elem.contentDocument || hAzzle.merge( [], elem.childNodes );
+	},
     prevUntil: function (elem, i, until) {
         return hAzzle.dir(elem, prevNode, until);
     },
