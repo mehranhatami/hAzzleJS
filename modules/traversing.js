@@ -112,10 +112,11 @@ hAzzle.extend({
      * Returns element's first descendant (or the Nth descendant, if
      * index is specified) that matches expression.
      *
-     * @param {string} selector
-     * @param {number} index
+     * @param {Number/String/Object} selector
+     * @param {Number/Undefined} index
      * @return {hAzzle}
      */
+
 
     down: function (selector, index) {
 
@@ -142,6 +143,10 @@ hAzzle.extend({
     /**
      * Returns element's first ancestor (or the Nth ancestor, if index is specified)
      * that matches expression
+     *
+     * @param {Number/String/Object} selector
+     * @param {Number/Undefined} index
+     * @return {hAzzle}
      */
 
     up: function (selector, index) {
@@ -275,12 +280,15 @@ hAzzle.extend({
         return this[eqIndex(this.length, index, 0)];
     },
 
+    // Need to wrap it inside hAzzle() so we get the
+    // Prototype attached to it
+
     slice: function () {
         return hAzzle(slice.apply(this, arguments));
     },
 
     filter: function (callback) {
-        return hAzzle(hAzzle.filter(this, filtered(callback)));
+        return hAzzle.filter(this, filtered(callback));
     },
 
     /**
@@ -338,13 +346,13 @@ hAzzle.extend({
             fn = filtered(selector);
 
         for (; i < l; i++) {
-			console.log(fn(this[i], i))
+            console.log(fn(this[i], i))
             if (fn(this[i], i)) {
                 return true;
             }
         }
         return false;
-		
+
     },
 
     /**
