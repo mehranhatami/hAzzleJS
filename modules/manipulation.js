@@ -16,6 +16,9 @@ var win = this,
     isFunction = hAzzle.isFunction,
     isString = hAzzle.isString,
 
+    nextNode = 'nextElementSibling',
+    parentNode = 'parentElement',
+
     // We have to close these tags to support XHTML	
 
     htmlMap = {
@@ -331,15 +334,16 @@ hAzzle.extend({
      */
     append: function (node) {
         return this.each(function (el, i) {
-         if(!iAh(this, node, 'beforeend')) {
-            if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                hAzzle.each(stabilizeHTML(node, i), function (i) {
-                  try {
-                        el.appendChild(i);
-                      } // Die silently
-                      catch (e) {}
-                });
-              }
+            if (!iAh(this, node, 'beforeend')) {
+                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
+                    hAzzle.each(stabilizeHTML(node, i), function (i) {
+
+                        try {
+                            el.appendChild(i);
+                        } // Die silently
+                        catch (e) {}
+                    });
+                }
             }
         });
     },
@@ -354,10 +358,10 @@ hAzzle.extend({
             if (!iAh(this, node, 'afterbegin')) {
                 if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
                     hAzzle.each(stabilizeHTML(node, i), function (i) {
-                            try {
-                                el.insertBefore(i, el.firstChild);
-                            } // Die silently
-                            catch (e) {}
+                        try {
+                            el.insertBefore(i, el.firstChild);
+                        } // Die silently
+                        catch (e) {}
                     });
                 }
             }
@@ -389,14 +393,9 @@ hAzzle.extend({
 
     prependTo: function (node) {
         return injectHTML.call(this, node, this, function (t, el) {
-            try {
-                t.insertBefore(el, t.firstChild);
-            } // Die silently
-            catch (e) {}
+            t.insertBefore(el, t.firstChild);
         }, 1);
     },
-
-
 
     /**
      * @param {hAzzle|string|Element|Array} target
@@ -407,13 +406,12 @@ hAzzle.extend({
     insertBefore: function (node) {
         injectHTML.call(this, node, this, function (t, el) {
             try {
-                t.parentNode.insertBefore(el, t);
+                t[parentNode].insertBefore(el, t);
             } // Die silently
             catch (e) {}
         });
         return this;
     },
-
 
     /**
      * @param {hAzzle|string|Element|Array} node
@@ -423,24 +421,15 @@ hAzzle.extend({
 
     insertAfter: function (node) {
         injectHTML.call(this, node, this, function (t, el) {
-            var sibling = t.nextSibling;
-
-            try {
-
-                if (sibling) {
-
-                    t.parentNode.insertBefore(el, sibling);
-
-                } else {
-
-                    t.parentNode.appendChild(el);
-                }
-            } // Die silently
-            catch (e) {}
+            var sibling = t[nextNode];
+            if (sibling) {
+                t[parentNode].insertBefore(el, sibling);
+            } else {
+                t[parentNode].appendChild(el);
+            }
         }, 1);
 
         return this;
-
     },
 
     /**
@@ -457,8 +446,8 @@ hAzzle.extend({
             // Prevent memory leaks
             hAzzle.clearData(el);
             hAzzle.each(stabilizeHTML(arg, self, i), function (i) {
-                if (el.parentNode) {
-                    el.parentNode.replaceChild(i, el);
+                if (el[parentNode]) {
+                    el[parentNode].replaceChild(i, el);
                 }
             });
         });
@@ -687,14 +676,14 @@ hAzzle.extend({
                      *
                      */
 
-                    if (name[0] === "-") {
+                    if (name[0] === '-') {
 
-                        elem.setAttribute('data' + name, value + "");
+                        elem.setAttribute('data' + name, value + '');
                         return value;
 
                     } else {
 
-                        elem.setAttribute(name, value + "");
+                        elem.setAttribute(name, value + '');
                         return value;
 
                     }
@@ -738,7 +727,7 @@ hAzzle.extend({
 
         if (typeof value !== 'undefined') {
 
-            return hooks && "set" in hooks && (ret = hooks.set(elem, value, name)) !== undefined ?
+            return hooks && 'set' in hooks && (ret = hooks.set(elem, value, name)) !== undefined ?
                 ret :
                 (elem[name] = value);
 
@@ -788,7 +777,7 @@ hAzzle.extend({
              *
              * Example:
              *
-             * hAzzle.create('<script src="test">');
+             * hAzzle.create('<script src='test'>');
              *
              * @return {src}
              */
@@ -906,7 +895,8 @@ function stabilizeHTML(node, clone) {
 
         return hAzzle.create(node);
     }
-    if (typeof node === "object") {
+    if (node.nodeType === 3) {
+
         return [node];
     }
 
@@ -940,7 +930,7 @@ function injectHTML(target, node, fn, rev) {
         nodes, stabilized;
 
     if (isString(target) && target.charAt(0) === '<' &&
-        target[target.length - 1] === ">" &&
+        target[target.length - 1] === '>' &&
         target.length >= 3) {
 
         nodes = target;
@@ -984,10 +974,10 @@ function injectHTML(target, node, fn, rev) {
 }
 
 function iAh(elem, html, dir) {
-    var tag = (tagName.exec(html) || ["", ""])[1].toLowerCase();
+    var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase();
     if (isString(html) && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
         if (elem.insertAdjacentHTML && elem.parentNode && elem.parentNode.nodeType === 1) {
-            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, "<$1></$2>"));
+            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
             return true;
         }
         return false;
@@ -1055,17 +1045,23 @@ hAzzle.each('input select option textarea button form details'.split(' '), funct
 
 hAzzle.forOwn({
     before: '',
-    after: 'nextSibling'
+    after: nextNode
 }, function (value, key) {
     hAzzle.Core[key] = function (node) {
         var i = 0,
             l;
         return this.each(function (el, a) {
-            node = stabilizeHTML(node, a);
-            l = node.length;
-            for (; i < l; i++) {
-                if (el.parentNode) {
-                    el.parentNode.insertBefore(node[i], el[value]);
+            if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
+                node = stabilizeHTML(node, a);
+
+                l = node.length;
+                for (; i < l; i++) {
+                    if (el[parentNode]) {
+                        try {
+                            el[parentNode].insertBefore(node[i], el[value]);
+                        } catch (e) {}
+
+                    }
                 }
             }
         });
