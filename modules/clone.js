@@ -32,7 +32,8 @@ hAzzle.extend({
         elElems = hAzzle.select("*", el);
 
         var i = 0,
-            len = elElems.length;
+            len = elElems.length,
+			a = 0, b = elTextareas.length;
 
         // Copy Events
 
@@ -53,7 +54,7 @@ hAzzle.extend({
 
             // Copy over the textarea data	 
 
-            for (var a = 0, b = elTextareas.length; a < b; ++a) {
+            for (; a < b; ++a) {
                 hAzzle(cloneTextareas[b]).val(hAzzle(elTextareas[b]).val());
             }
         }
@@ -67,8 +68,9 @@ hAzzle.extend({
 
 hAzzle.extend({
     clone: function (deep) {
-	    return this[0] ? this.twist(function (el) {
+		var self = this;
+	    return self[0] ? self.twist(function (el) {
             return hAzzle.cloneNode(el, deep);
-        }) : this;
+        }) : self;
     }
 });

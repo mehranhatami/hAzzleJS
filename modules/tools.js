@@ -2,8 +2,8 @@
  * sortOrder
  */
 var win = this,
-    doc = document, 
-	Jiesa = hAzzle.Jiesa;
+    doc = document,
+    Jiesa = hAzzle.Jiesa;
 
 hAzzle.extend({
 
@@ -55,6 +55,8 @@ hAzzle.extend({
             // Supplemental Plane codepoint (surrogate pair)
             String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
     },
+	
+	// HAS BEEN MOVED!!! WILL FIX THIS AS SOON AS I CAN WORK WITH COMPILER.JS!!!!!
 
     /**
      * Find next element sibiling.
@@ -92,7 +94,12 @@ hAzzle.extend({
             }
         }
     },
-
+    /**
+     * Get the first element child of the given element
+     *
+     * @param {string} el
+     * @return {hAzzle}
+     */
     firstElementChild: function (el) {
         var child = el.firstElementChild;
         if (!child) {
@@ -102,6 +109,12 @@ hAzzle.extend({
         }
         return child;
     },
+    /**
+     * Get the last element child of the given element
+     *
+     * @param {string} el
+     * @return {hAzzle}
+     */
 
     lastElementChild: function (el) {
         var child = el.lastElementChild;
@@ -111,6 +124,21 @@ hAzzle.extend({
                 child = child.previousSibling;
         }
         return child;
+    },
+
+    childElementCount: function (el) {
+        var Count = el.childElementCount;
+        if (!Count) {
+            el = el.firstChild || null;
+            do {
+                if (el && el.nodeType === 1) {
+                    count++;
+                }
+                el = el.nextSibling;
+            } while (el);
+        }
+        return Count;
+
     },
 
     next: function (el) {

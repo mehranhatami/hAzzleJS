@@ -120,13 +120,13 @@ hAzzle.extend({
             return checkNth(el, children(p, el.nodeName).reverse(), val);
         },
         'first-child': function (elem) {
-            if ((elem === Jiesa.firstElementChild(elem.parentNode))) {
+            if ((elem === hAzzle.firstElementChild(elem.parentNode))) {
                 return true;
             }
             return false;
         },
         'last-child': function (elem) {
-            if ((elem === Jiesa.lastElementChild(elem.parentNode))) {
+            if ((elem === hAzzle.lastElementChild(elem.parentNode))) {
                 return true;
             }
             return false;
