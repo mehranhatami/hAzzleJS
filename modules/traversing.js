@@ -162,8 +162,9 @@ hAzzle.extend({
     },
 
     /**
-     * Get the element that matches the selector, beginning at the current element and progressing up through the DOM tree.
-     * OR the closest Nth elements if index is specified
+     * Get the element that matches the selector, beginning at the current
+     * element and progressing up through the DOM tree. OR the closest
+     * Nth elements if index is specified
      *
      * @param {String} selector
      * @param {Number} index
@@ -346,7 +347,6 @@ hAzzle.extend({
             fn = filtered(selector);
 
         for (; i < l; i++) {
-            console.log(fn(this[i], i))
             if (fn(this[i], i)) {
                 return true;
             }
