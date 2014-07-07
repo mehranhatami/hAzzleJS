@@ -93,7 +93,7 @@ hAzzle.extend({
     regex: {
 
         'id': new RegExp('^#(' + encoding + '+)(.*)'),
-        'tag': new RegExp('^(' + encoding + '+)(.*)'),
+        'tag': new RegExp('^(' + encoding + '+|[*])'),
         'Class': new RegExp('^\\.(' + encoding + '+)(.*)'),
         'rel': /^\>|\>|\+|~$/,
 
@@ -621,11 +621,7 @@ function identify(chunk) {
      */
     var reg = Jiesa.regex;
 
-    //Kenny!!
-    //I added another dirty fix here which we should fix it later
-    if(chunk === '*'){
-        return 'tag';
-    } else if (reg.nth.test(chunk)) {
+    if (reg.nth.test(chunk)) {
         return 'pseudo';
     }
 
