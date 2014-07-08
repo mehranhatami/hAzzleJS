@@ -26,12 +26,11 @@ var win = this,
                 timeToCall);
         lastTime = currTime + timeToCall;
         return id;
-    },
-    fixTick = false,
+    }
 
-    // Checks for iOS6 will only be done if no native frame support
+// Checks for iOS6 will only be done if no native frame support
 
-    ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
+ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
 
     // Feature detection
 
@@ -61,15 +60,6 @@ var win = this,
                     clearTimeout(id);
                 });
     }();
-
-
-// Bug detection
-
-reqframe(function (timestamp) {
-    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-    // if not, we have to do a timestamp fix on each frame
-    fixTick = timestamp > 1e12 != hAzzle.now() > 1e12;
-});
 
 // Set up Mehran
 
@@ -102,16 +92,19 @@ hAzzle.extend({
 
 hAzzle.requestFrame = function (callback) {
     var rafCallback = (function (callback) {
+        // Wrap the given callback to pass in performance timestamp		
         return function (tick) {
-            if (fixTick) {
+            // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+            // if not, we have to do a timestamp fix on each frame
+            if (tick > 1e12 != hAzzle.now() > 1e12) {
                 tick = now();
             }
+            console.log(tick)
             callback(tick);
         };
     })(callback);
     return reqframe(rafCallback);
 };
-
 // cancelAnimationFrame
 
 hAzzle.cancelFrame = cancelframe;
