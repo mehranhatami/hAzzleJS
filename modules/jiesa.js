@@ -7,7 +7,6 @@
  *
  * - Various bug checks
  */
- 
 var win = this,
 
     Jiesa = hAzzle.Jiesa,
@@ -18,7 +17,7 @@ var win = this,
 
     // Expando
 
-    expando = "hAzzle_" + -(new Date()),
+    expando = "hAzzle" + -(new Date()),
 
     push = Array.prototype.push,
 
@@ -99,7 +98,6 @@ function assert(fn) {
     }
 }
 
-
 // Extend Jiesa
 
 hAzzle.extend({
@@ -136,6 +134,10 @@ hAzzle.extend({
             return [];
         }
 
+        // Activate QSA if 'single' {true}
+
+        Jiesa.useNative = single ? true : false;
+
         if (hAzzle.documentIsHTML) {
 
             if (quickMatch) {
@@ -170,7 +172,6 @@ hAzzle.extend({
 
                 } else if (context.getElementsByClassName) {
                     push.apply(results, context.getElementsByClassName(quickMatch[3]));
-
                     return results;
                 }
             }
@@ -210,8 +211,15 @@ hAzzle.extend({
 
                     // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
 
-                    push.apply(results, context[single ? 'querySelector' : 'querySelectorAll'](selector));
-                    return results;
+                    if (single) {
+
+                        return [context.querySelector(selector)];
+
+                    } else {
+
+                        push.apply(results, context.querySelectorAll(selector));
+                        return results;
+                    }
 
                 } finally {
 
@@ -239,11 +247,12 @@ hAzzle.extend({
 
 }, Jiesa);
 
+// Expost to the globale hAzzle object
+
+hAzzle.find = Jiesa.find;
+hAzzle.findOne = Jiesa.findOne;
+
 // Boolean true / false
 // If 'true', QSA got activated
 
-Jiesa.useNative = false;
-
-// Attach the selector engine to the globale hAzzle object
-
-hAzzle.find = Jiesa.find;
+hAzzle.useNative = Jiesa.useNative = false;
