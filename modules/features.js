@@ -103,9 +103,6 @@
 
          computedStyle: doc.defaultView && doc.defaultView.getComputedStyle,
 
-         // Check if support RAF
-
-         supportRAF: !!win.requestAnimationFrame,
 
          // Check for classList support
 
