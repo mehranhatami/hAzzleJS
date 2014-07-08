@@ -4,10 +4,11 @@
 var win = this,
     Mehran = hAzzle.Mehran,
 
-    slice = Array.prototype.slice,
+    // Deal with foreign domains
 
-    perf = top.performance,
-    perfNow = performance.now || performance.webkitNow || performance.msNow || performance.mozNow,
+    foreign = win.top.name ? win.top : win,
+    perf = foreign.performance,
+    perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
     now = perfNow ? function () {
         return perfNow.call(perf);
     } : function () {
@@ -23,11 +24,11 @@ var win = this,
                 timeToCall);
         lastTime = currTime + timeToCall;
         return id;
-    }
+    },
 
-// Checks for iOS6 will only be done if no native frame support
+    // Checks for iOS6 will only be done if no native frame support
 
-ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
+    ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
 
     // Feature detection
 
@@ -36,23 +37,23 @@ ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
         // http://webstuff.nfshost.com/anim-timing/Overview.html
         // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
 
-        return win.requestAnimationFrame ||
+        return foreign.requestAnimationFrame ||
             // no native rAF support
             (ios6 ? // iOS6 is buggy
-                win.requestAnimationFrame ||
-                win.webkitRequestAnimationFrame ||
-                win.mozRequestAnimationFrame ||
-                win.msRequestAnimationFrame :
+                foreign.requestAnimationFrame ||
+                foreign.webkitRequestAnimationFrame ||
+                foreign.mozRequestAnimationFrame ||
+                foreign.msRequestAnimationFrame :
                 polyfill);
     }(),
 
     cancelframe = function () {
-        return top.cancelAnimationFrame ||
+        return foreign.cancelAnimationFrame ||
             // no native cAF support
-            (!ios6 ? top.cancelAnimationFrame ||
-                win.webkitCancelAnimationFrame ||
-                win.webkitCancelRequestAnimationFrame ||
-                win.mozCancelAnimationFrame :
+            (!ios6 ? foreign.cancelAnimationFrame ||
+                foreign.webkitCancelAnimationFrame ||
+                foreign.webkitCancelRequestAnimationFrame ||
+                foreign.mozCancelAnimationFrame :
                 function (id) {
                     clearTimeout(id);
                 });
@@ -68,12 +69,12 @@ hAzzle.extend({
 
         // Check for foreign domain       
 
-        'foreign-domain': (win.top === win.self) ? false : true,
+        'foreign-domain': foreign ? true : false,
 
         // Detect if the browser supports native rAF
 
-        'native-rAF': (top.requestAnimationFrame && (top.cancelAnimationFrame ||
-            top.cancelRequestAnimationFrame)) ? true : false,
+        'native-rAF': (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
+            foreign.cancelRequestAnimationFrame)) ? true : false,
 
         // Detect if Performance now are supported
 
@@ -96,6 +97,7 @@ hAzzle.requestFrame = function (callback) {
             if (tick > 1e12 != hAzzle.now() > 1e12) {
                 tick = now();
             }
+            console.log(tick);
             callback(tick);
         };
     })(callback);
@@ -122,7 +124,11 @@ hAzzle.pnow = now;
 
 // Mehran.fx
 
-var fx = Mehran.fx = function (elem, options) {}
+var fx = Mehran.fx = function (elem, options) {
+    var self;
+    self.elem = elem;
+    self.options = options;
+};
 
 // Mehran.fx prototype
 
@@ -131,5 +137,7 @@ fx.prototype = {};
 // animation function
 
 hAzzle.Core.animate = function (options, duration, callback) {
-    this.each(function (el) {});
+    this.each(function (el) {
+        var fx = new fx(el, options, duration, callback);
+    });
 };
