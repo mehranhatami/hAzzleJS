@@ -5,10 +5,8 @@
 
  hAzzle.features = function () {
 
-     var checkOn,
-         doc = document,
+     var doc = document,
          optSelected,
-         optDisabled,
          radioValue,
          input = doc.createElement("input"),
          select = doc.createElement("select"),
@@ -16,13 +14,7 @@
 
      input.type = "checkbox";
 
-     checkOn = input.value !== "";
-
      optSelected = opt.selected;
-
-     select.disabled = true;
-
-     optDisabled = !opt.disabled;
 
      input = doc.createElement("input");
      input.value = "t";
@@ -90,9 +82,8 @@
      d = null;
 
      return {
-         checkOn: checkOn,
+
          optSelected: optSelected,
-         optDisabled: optDisabled,
          radioValue: radioValue,
 
          noCloneChecked: noCloneChecked,

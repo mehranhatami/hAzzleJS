@@ -525,8 +525,7 @@ hAzzle.extend({
 
                     option = options[i];
 
-                    if ((option.selected || i === index) && !option.disabled &&
-                        (hAzzle.features.optDisabled ? !option.disabled : option.getAttribute('disabled') === null) &&
+                    if ((option.selected || i === index) && !option.disabled && option.getAttribute('disabled' === null) &&
                         (!option.parentNode.disabled || !hAzzle.nodeName(option.parentNode, 'optgroup'))) {
 
                         // Get the specific value for the option
@@ -1001,7 +1000,7 @@ if (!hAzzle.features.optSelected) {
     };
 }
 
-// Radios and checkboxes getter/setter
+// Radios and checkboxes setter
 
 hAzzle.each(['radio', 'checkbox'], function () {
     hAzzle.valHooks[this] = {
@@ -1013,19 +1012,6 @@ hAzzle.each(['radio', 'checkbox'], function () {
             }
         }
     };
-    if (!hAzzle.features.checkOn) {
-        hAzzle.valHooks[this].get = function (elem) {
-            if (elem.getAttribute('value') === null) {
-
-                return 'on';
-
-            } else {
-
-                return elem.value;
-
-            }
-        };
-    }
 });
 
 // Boolean attributes and elements
