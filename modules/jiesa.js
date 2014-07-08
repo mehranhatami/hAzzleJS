@@ -108,12 +108,7 @@ Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
     return doc.getElementsByName > 0 || doc.getElementsByName(expando).length;
 });
 
-/**
- * Support testing using an element
- * @param {Function} fn
- */
-
-// Extend Jiesa
+// Extend the Jiesa Object
 
 hAzzle.extend({
 
