@@ -124,21 +124,3 @@
       };
 
   }();
-
-  function assert(fn) {
-      var div = document.createElement("div");
-
-      try {
-          return !!fn(div);
-      } catch (e) {
-          return false;
-      } finally {
-          // Remove from its parent by default
-          if (div.parentNode) {
-              div.parentNode.removeChild(div);
-          }
-          // release memory in IE
-          div = null;
-      }
-  }
-  

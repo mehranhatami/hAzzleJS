@@ -37,7 +37,9 @@ hAzzle.extend({
 
     version: '0.0.2a',
 
-    has: {}
+    has: {},
+	
+	cache: {}
 
 }, Jiesa);
 
@@ -61,7 +63,7 @@ hAzzle.extend({
  * Check if getElementsByTagName ("*") returns only elements
  */
 
-Jiesa.has["bug-GEBTN"] = assert(function (div) {
+Jiesa.has["bug-GEBTN"] = hAzzle.assert(function (div) {
     div.appendChild(doc.createComment(''));
     return div.getElementsByTagName('*').length > 0;
 });
@@ -70,7 +72,7 @@ Jiesa.has["bug-GEBTN"] = assert(function (div) {
  * Check for getElementById bug
  * Support: IE<10
  */
-Jiesa.has["bug-GEBI"] = assert(function (div) {
+Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
     hAzzle.docElem.appendChild(div).id = expando;
     return doc.getElementsByName > 0 || doc.getElementsByName(expando).length;
 });
@@ -80,23 +82,6 @@ Jiesa.has["bug-GEBI"] = assert(function (div) {
  * @param {Function} fn
  */
 
-function assert(fn) {
-
-    var div = doc.createElement("div");
-
-    try {
-        return !!fn(div);
-    } catch (e) {
-        return false;
-    } finally {
-        // Remove from its parent by default
-        if (div.parentNode) {
-            div.parentNode.removeChild(div);
-        }
-        // release memory in IE
-        div = null;
-    }
-}
 
 // Extend Jiesa
 

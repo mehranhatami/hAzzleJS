@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.8.4
+ * Version: 0.8.5
  * Released under the MIT License.
  *
- * Date: 2014-07-07
+ * Date: 2014-07-08
  */
 (function (window, undefined) {
 
@@ -585,10 +585,10 @@
         escRE: function (s) {
             return replace(s, regexp, "\\$&");
         },
-        
-		// Escape JavasScript string
-		
-        escJS: function(s) {
+
+        // Escape JavasScript string
+
+        escJS: function (s) {
             return replace(s, js, ucode);
         },
         /**
@@ -672,18 +672,20 @@
         },
 
         merge: function (first, second) {
-            var len = +second.length,
-                j = 0,
-                i = first.length;
+            if (second) {
+                var len = +second.length,
+                    j = 0,
+                    i = first.length;
 
-            for (; j < len; j++) {
+                for (; j < len; j++) {
 
-                first[i++] = second[j];
+                    first[i++] = second[j];
+                }
+
+                first.length = i;
+
+                return first;
             }
-
-            first.length = i;
-
-            return first;
         },
 
         // Nothing
@@ -893,7 +895,31 @@
             }
             return Count;
 
+        },
+        /**
+         * Feature test elements
+         *
+         * @param {Function} fn
+         * @return {Boolean}
+         */
+        assert: function (fn) {
+
+            var div = doc.createElement("div");
+
+            try {
+                return !!fn(div);
+            } catch (e) {
+                return false;
+            } finally {
+                // Remove from its parent by default
+                if (div.parentNode) {
+                    div.parentNode.removeChild(div);
+                }
+                // release memory in IE
+                div = null;
+            }
         }
+
 
     }, hAzzle);
 
