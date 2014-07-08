@@ -11,11 +11,11 @@ var win = this,
     now = perfNow ? function () {
         return perfNow.call(perf);
     } : function () {
-        return hAzzle.now()
+        return hAzzle.now();
     },
     fixTick = false,
 
-    // requestAnimationFrame
+    // Feature detection
 
     reqframe = function () {
         // native animation frames
@@ -32,8 +32,6 @@ var win = this,
                 }, 17);
             };
     }(),
-
-    // cancelAnimationFrame
 
     cancelframe = function () {
         return top.cancelAnimationFrame ||
@@ -77,46 +75,29 @@ hAzzle.extend({
         'perfNow': perfNow,
     },
 
-    // Feature detection
-
-    requestAnimationFrame: reqframe,
-
-    cancelAnimationFrame: cancelframe,
-
-    // Expose performance.now to the globale hAzzle Object
-
-    pnow: now
-
 }, Mehran);
 
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
-// performance.now()
-
-hAzzle.pnow = Mehran.pnow;
-
 // requestAnimationFrame
+// prop: Mehran Hatami
 
 hAzzle.requestFrame = function (callback) {
     var rafCallback = (function (callback) {
         return function (tick) {
             if (fixTick) {
-                tick = Mehran.pnow();
+                tick = now();
             }
             callback(tick);
         };
     })(callback);
-
-    // Need return value her, so we get the frame ID 
-    // in return
-
-    return Mehran.requestAnimationFrame.call(rafCallback);
+    return reqframe(rafCallback);
 };
 
 // cancelAnimationFrame
 
-hAzzle.cancelFrame = Mehran.cancelAnimationFrame;
+hAzzle.cancelFrame = cancelframe;
 
 // Detect if native rAF or not
 
@@ -125,3 +106,15 @@ hAzzle.nativeRAF = Mehran.has['native-rAF'];
 // Foreign domain detection
 
 hAzzle.foreignDomain = Mehran.has['foreign-domain'];
+
+// performance.now()
+
+hAzzle.pnow = now;
+
+/* =========================== ANIMATION ENGINE ========================== */
+
+Mehran.animate = function () {};
+
+// Expost to the globale hAzzle object
+
+hAzzle.animate = Mehran.animate();
