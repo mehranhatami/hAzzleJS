@@ -4,15 +4,20 @@
 var win = this,
     Mehran = hAzzle.Mehran,
     perf = top.performance,
-    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow),
+    perfNow = perf && (perf.now ||
+        perf.webkitNow ||
+        perf.msNow ||
+        perf.mozNow),
     now = perfNow ? function () {
         return perfNow.call(perf);
     } : function () {
-        return +new Date();
+        return hAzzle.now()
     },
     fixTick = false,
 
-    frame = function () {
+    // requestAnimationFrame
+
+    reqframe = function () {
         // native animation frames
         // http://webstuff.nfshost.com/anim-timing/Overview.html
         // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
@@ -23,12 +28,14 @@ var win = this,
             win.oRequestAnimationFrame ||
             function (callback) {
                 win.setTimeout(function () {
-                    callback(+new Date());
+                    callback(hAzzle.now());
                 }, 17);
             };
     }(),
 
-    cancel = function () {
+    // cancelAnimationFrame
+
+    cancelframe = function () {
         return top.cancelAnimationFrame ||
             win.webkitCancelAnimationFrame ||
             win.webkitCancelRequestAnimationFrame ||
@@ -42,7 +49,7 @@ var win = this,
 
 // Bug detection
 
-frame(function (timestamp) {
+reqframe(function (timestamp) {
     // feature-detect if rAF and now() are of the same scale (epoch or high-res),
     // if not, we have to do a timestamp fix on each frame
     fixTick = timestamp > 1e12 != hAzzle.now() > 1e12;
@@ -72,9 +79,9 @@ hAzzle.extend({
 
     // Feature detection
 
-    requestAnimationFrame: frame,
+    requestAnimationFrame: reqframe,
 
-    cancelAnimationFrame: cancel,
+    cancelAnimationFrame: cancelframe,
 
     // Expose performance.now to the globale hAzzle Object
 
