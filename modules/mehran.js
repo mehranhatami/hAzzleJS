@@ -29,6 +29,8 @@ var win = this,
     },
     fixTick = false,
 
+    // Checks for iOS6 will only be done if no native frame support
+
     ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
 
     // Feature detection
@@ -37,22 +39,27 @@ var win = this,
         // native animation frames
         // http://webstuff.nfshost.com/anim-timing/Overview.html
         // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
-        return ios6 ? // iOS6 is buggy
-            win.requestAnimationFrame ||
-            win.webkitRequestAnimationFrame ||
-            win.mozRequestAnimationFrame ||
-            win.msRequestAnimationFrame :
-            polyfill;
+
+        return win.requestAnimationFrame ||
+            // no native rAF support
+            (ios6 ? // iOS6 is buggy
+                win.requestAnimationFrame ||
+                win.webkitRequestAnimationFrame ||
+                win.mozRequestAnimationFrame ||
+                win.msRequestAnimationFrame :
+                polyfill);
     }(),
 
     cancelframe = function () {
-        return !ios6 ? top.cancelAnimationFrame ||
-            win.webkitCancelAnimationFrame ||
-            win.webkitCancelRequestAnimationFrame ||
-            win.mozCancelAnimationFrame :
-            function (id) {
-                clearTimeout(id);
-            };
+        return top.cancelAnimationFrame ||
+            // no native cAF support
+            (!ios6 ? top.cancelAnimationFrame ||
+                win.webkitCancelAnimationFrame ||
+                win.webkitCancelRequestAnimationFrame ||
+                win.mozCancelAnimationFrame :
+                function (id) {
+                    clearTimeout(id);
+                });
     }();
 
 
