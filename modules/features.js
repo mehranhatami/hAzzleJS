@@ -1,105 +1,65 @@
- /**
-  * An function used to flag environments/features.
-  */
- var win = this;
+// hAzzle feature detection
+// Set up feature detection
+var features = hAzzle.features = {
 
- hAzzle.features = function () {
+    version: '0.0.3',
 
-     var doc = document,
-         optSelected,
-         radioValue,
-         input = doc.createElement("input"),
-         select = doc.createElement("select"),
-         opt = select.appendChild(doc.createElement("option"));
+    has: {
 
-     input.type = "checkbox";
+        'computedStyle': document.defaultView && document.defaultView.getComputedStyle
+    },
 
-     optSelected = opt.selected;
+};
 
-     input = doc.createElement("input");
-     input.value = "t";
-     input.type = "radio";
+// Feature / Bug detection
 
-     radioValue = input.value === "t";
+// Support: IE<=11+
+// Make sure textarea (and checkbox) defaultValue is properly cloned
 
-     if (input.parentNode) {
-         input.parentNode.removeChild(input);
-     }
+features.has['bug-noCloneChecked'] = hAzzle.assert(function (div) {
+    div.innerHTML = "<textarea>x</textarea>";
+    return !!div.cloneNode(true).lastChild.defaultValue;
+});
 
-     if (select.parentNode) {
-         select.parentNode.removeChild(select);
-     }
+(function () {
+    var input = document.createElement("input"),
+        select = document.createElement("select"),
+        opt = select.appendChild(document.createElement("option"));
 
-     if (opt.parentNode) {
-         opt.parentNode.removeChild(opt);
-     }
+    input.type = "checkbox";
 
-     input = select = opt = null;
+    // Support: iOS<=5.1, Android<=4.2+
+    // Default value for a checkbox should be "on"
+    features['bug-checkbox'] = input.value !== "";
 
-     var clsp,
-         e = doc.createElement('p');
-     clsp = !!e.classList;
+    // Support: IE<=11+
+    // Must access selectedIndex to make default options select
+    features['bug-optSelected'] = opt.selected;
 
-     if (e.parentNode) {
-         e.parentNode.removeChild(e);
-     }
+    // Support: IE<=11+
+    // An input loses its value after becoming a radio
+    input = document.createElement("input");
+    input.value = "t";
+    input.type = "radio";
+    features['bug-radioValue'] = input.value === "t";
+})();
 
-     e = null;
+// classList support
 
-     var checkClone,
-         noCloneChecked,
-         fragment = doc.createDocumentFragment(),
-         divv = fragment.appendChild(doc.createElement("div")),
-         inp = doc.createElement("input");
+features.has['bug-clsp'] = hAzzle.assert(function (div) {
+    return !!div.classList;
+});
 
-     inp.setAttribute("type", "radio");
-     inp.setAttribute("checked", "checked");
-     inp.setAttribute("name", "t");
+features.has['bug-sMa'] = hAzzle.assert(function (div) {
+    div.classList.add('a', 'b');
+    return /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+});
 
-     divv.appendChild(inp);
+// Expand the global hAzzle object
 
-     checkClone = divv.cloneNode(true).cloneNode(true).lastChild.checked;
-
-     divv.innerHTML = "<textarea>x</textarea>";
-     noCloneChecked = !!divv.cloneNode(true).lastChild.defaultValue;
-
-     if (inp.parentNode) {
-         inp.parentNode.removeChild(inp);
-     }
-
-     input = fragment = null;
-
-     var dcl, d = doc.createElement('div');
-
-     d.classList.add('a', 'b');
-
-     dcl = /(^| )a( |$)/.test(d.className) && /(^| )b( |$)/.test(d.className);
-
-     if (d.parentNode) {
-         d.parentNode.removeChild(d);
-     }
-
-     d = null;
-
-     return {
-
-         optSelected: optSelected,
-         radioValue: radioValue,
-
-         noCloneChecked: noCloneChecked,
-
-         checkClone: checkClone,
-
-         // Check if support computedStyle
-
-         computedStyle: doc.defaultView && doc.defaultView.getComputedStyle,
-
-
-         // Check for classList support
-
-         classList: clsp,
-
-         sMa: dcl
-     };
-
- }();
+hAzzle.features.optSelected = features['bug-optSelected'];
+hAzzle.features.radioValue = features['bug-radioValue'];
+hAzzle.features.noCloneChecked = features.has['bug-noCloneChecked'];
+hAzzle.features.computedStyle = document.defaultView && document.defaultView.getComputedStyle;
+hAzzle.features.classList = features.has['bug-clsp'];
+hAzzle.features.sMa = features.has['bug-sMa'];
