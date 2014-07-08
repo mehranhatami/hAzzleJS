@@ -1,126 +1,117 @@
  /**
-   * An function used to flag environments/features.
-   */
-  var win = this;
+  * An function used to flag environments/features.
+  */
+ var win = this;
 
-  hAzzle.features = function () {
+ hAzzle.features = function () {
 
-      var checkOn,
-          doc = document,
-          optSelected,
-          optDisabled,
-          radioValue,
-          proto = Element.prototype,
-          input = doc.createElement("input"),
-          select = doc.createElement("select"),
-          opt = select.appendChild(doc.createElement("option"));
+     var checkOn,
+         doc = document,
+         optSelected,
+         optDisabled,
+         radioValue,
+         input = doc.createElement("input"),
+         select = doc.createElement("select"),
+         opt = select.appendChild(doc.createElement("option"));
 
-      input.type = "checkbox";
+     input.type = "checkbox";
 
-      checkOn = input.value !== "";
+     checkOn = input.value !== "";
 
-      optSelected = opt.selected;
+     optSelected = opt.selected;
 
-      select.disabled = true;
+     select.disabled = true;
 
-      optDisabled = !opt.disabled;
+     optDisabled = !opt.disabled;
 
-      input = doc.createElement("input");
-      input.value = "t";
-      input.type = "radio";
+     input = doc.createElement("input");
+     input.value = "t";
+     input.type = "radio";
 
-      radioValue = input.value === "t";
+     radioValue = input.value === "t";
 
-      if (input.parentNode) {
-          input.parentNode.removeChild(input);
-      }
+     if (input.parentNode) {
+         input.parentNode.removeChild(input);
+     }
 
-      if (select.parentNode) {
-          select.parentNode.removeChild(select);
-      }
+     if (select.parentNode) {
+         select.parentNode.removeChild(select);
+     }
 
-      if (opt.parentNode) {
-          opt.parentNode.removeChild(opt);
-      }
+     if (opt.parentNode) {
+         opt.parentNode.removeChild(opt);
+     }
 
-      input = select = opt = null;
+     input = select = opt = null;
 
-      var clsp,
-          e = doc.createElement('p');
-      clsp = !!e.classList;
+     var clsp,
+         e = doc.createElement('p');
+     clsp = !!e.classList;
 
-      if (e.parentNode) {
-          e.parentNode.removeChild(e);
-      }
+     if (e.parentNode) {
+         e.parentNode.removeChild(e);
+     }
 
-      e = null;
+     e = null;
 
-      var checkClone,
-          noCloneChecked,
-          fragment = doc.createDocumentFragment(),
-          divv = fragment.appendChild(doc.createElement("div")),
-          inp = doc.createElement("input");
+     var checkClone,
+         noCloneChecked,
+         fragment = doc.createDocumentFragment(),
+         divv = fragment.appendChild(doc.createElement("div")),
+         inp = doc.createElement("input");
 
-      inp.setAttribute("type", "radio");
-      inp.setAttribute("checked", "checked");
-      inp.setAttribute("name", "t");
+     inp.setAttribute("type", "radio");
+     inp.setAttribute("checked", "checked");
+     inp.setAttribute("name", "t");
 
-      divv.appendChild(inp);
+     divv.appendChild(inp);
 
-      checkClone = divv.cloneNode(true).cloneNode(true).lastChild.checked;
+     checkClone = divv.cloneNode(true).cloneNode(true).lastChild.checked;
 
-      divv.innerHTML = "<textarea>x</textarea>";
-      noCloneChecked = !!divv.cloneNode(true).lastChild.defaultValue;
+     divv.innerHTML = "<textarea>x</textarea>";
+     noCloneChecked = !!divv.cloneNode(true).lastChild.defaultValue;
 
-      if (inp.parentNode) {
-          inp.parentNode.removeChild(inp);
-      }
+     if (inp.parentNode) {
+         inp.parentNode.removeChild(inp);
+     }
 
-      input = fragment = null;
+     input = fragment = null;
 
-      var dcl, d = doc.createElement('div');
+     var dcl, d = doc.createElement('div');
 
-      d.classList.add('a', 'b');
+     d.classList.add('a', 'b');
 
-      dcl = /(^| )a( |$)/.test(d.className) && /(^| )b( |$)/.test(d.className);
+     dcl = /(^| )a( |$)/.test(d.className) && /(^| )b( |$)/.test(d.className);
 
-      if (d.parentNode) {
-          d.parentNode.removeChild(d);
-      }
+     if (d.parentNode) {
+         d.parentNode.removeChild(d);
+     }
 
-      d = null;
+     d = null;
 
-      return {
-          checkOn: checkOn,
-          optSelected: optSelected,
-          optDisabled: optDisabled,
-          radioValue: radioValue,
+     return {
+         checkOn: checkOn,
+         optSelected: optSelected,
+         optDisabled: optDisabled,
+         radioValue: radioValue,
 
-          noCloneChecked: noCloneChecked,
+         noCloneChecked: noCloneChecked,
 
-          checkClone: checkClone,
+         checkClone: checkClone,
 
-          // Check if support computedStyle
+         // Check if support computedStyle
 
-          computedStyle: doc.defaultView && doc.defaultView.getComputedStyle,
+         computedStyle: doc.defaultView && doc.defaultView.getComputedStyle,
 
-          // Check if support RAF
+         // Check if support RAF
 
-          supportRAF: !!win.requestAnimationFrame,
-          
-		  // Check for classList support
+         supportRAF: !!win.requestAnimationFrame,
 
-          classList: clsp,
+         // Check for classList support
 
-          sMa: dcl,
-       		  
-		  // MatchesSelector
-		  // Use un-prefixed if we can
-		   mS: proto.matches ||
-               proto.webkitMatchesSelector ||
-               proto.mozMatchesSelector ||
-             //  proto.msMatchesSelector || - QSA faster in Internet Explorer
-               proto.oMatchesSelector
-      };
+         classList: clsp,
 
-  }();
+         sMa: dcl
+     };
+
+ }();
