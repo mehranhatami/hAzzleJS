@@ -7,29 +7,36 @@
  *
  * - Various bug checks
  */
+ 
 var win = this,
 
     Jiesa = hAzzle.Jiesa,
 
+    // Default document
+
     doc = win.document,
 
-    expando = "hAzzle" + -(new Date()),
+    // Expando
+
+    expando = "hAzzle_" + -(new Date()),
 
     push = Array.prototype.push,
 
-    rsibling = /[+~]/,
+    // Various regEx we will need
 
-    rescape = /'|\\/g,
+    sibling = /[+~]/,
 
-    rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+    escaped = /'|\\/g,
 
-    rtrim = new RegExp("^" + Jiesa.whitespace + "+|((?:^|[^\\\\])(?:\\\\.)*)" + Jiesa.whitespace + "+$", "g");
+    quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+
+    rtrim = /^[\x20\t\r\n\f]+|((?:^|[^\\])(?:\\.)*)[\x20\t\r\n\f]+$/g;
 
 // Set up Jiesa
 
 hAzzle.extend({
 
-    version: '0.0.1',
+    version: '0.0.2a',
 
     has: {}
 
@@ -52,7 +59,7 @@ hAzzle.extend({
 })();
 
 /**
- * Check if getElementsByTagName returns only elements
+ * Check if getElementsByTagName ("*") returns only elements
  */
 
 Jiesa.has["bug-GEBTN"] = assert(function (div) {
@@ -75,6 +82,7 @@ Jiesa.has["bug-GEBI"] = assert(function (div) {
  */
 
 function assert(fn) {
+
     var div = doc.createElement("div");
 
     try {
@@ -103,6 +111,7 @@ hAzzle.extend({
      * @param {String/Object/Array}	context
      * @param {Array} results
      * @param {Boolean} single
+     * @return {hAzzle}
      *
      * 'single' are used if we want to use
      * querySelector and not querySelectorAll
@@ -110,7 +119,7 @@ hAzzle.extend({
 
     find: function (selector, context, results, /* INTERNAL */ single) {
 
-        var elem, quickMatch = rquickExpr.exec(selector),
+        var elem, quickMatch = quickExpr.exec(selector),
             m, nodeType;
 
         // Set correct document
@@ -161,6 +170,7 @@ hAzzle.extend({
 
                 } else if (context.getElementsByClassName) {
                     push.apply(results, context.getElementsByClassName(quickMatch[3]));
+
                     return results;
                 }
             }
@@ -183,7 +193,7 @@ hAzzle.extend({
 
                     if (old) {
 
-                        nid = old.replace(rescape, '\\$&');
+                        nid = old.replace(escaped, '\\$&');
 
                     } else {
 
@@ -192,13 +202,13 @@ hAzzle.extend({
 
                     nid = "[id='" + nid + "'] ";
 
-                    context = rsibling.test(selector) ? context.parentNode : context;
+                    context = sibling.test(selector) ? context.parentNode : context;
                     selector = nid + selector.split(',').join(',' + nid);
                 }
 
                 try {
 
-                    // Use 'querySelector' if single === true, otherwise use 'querySelectorAll'
+                    // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
 
                     push.apply(results, context[single ? 'querySelector' : 'querySelectorAll'](selector));
                     return results;
@@ -217,6 +227,16 @@ hAzzle.extend({
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
     },
 
+    /**
+     * Find the first matched element by css selector
+     * @param {String} selector
+     * @param {String/Object/Array}	context
+     * @return {hAzzle}
+     */
+    findOne: function (selector, context) {
+        return this.find(selector, context, null, true);
+    }
+
 }, Jiesa);
 
 // Boolean true / false
@@ -224,6 +244,6 @@ hAzzle.extend({
 
 Jiesa.useNative = false;
 
-// Attach the selector engine to the globale
-// hAzzle object
+// Attach the selector engine to the globale hAzzle object
+
 hAzzle.find = Jiesa.find;
