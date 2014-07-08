@@ -1,13 +1,8 @@
 // hAzzle feature detection
-// Set up feature detection
 var features = hAzzle.features = {
-
     version: '0.0.3',
 
-    has: {
-
-        'computedStyle': document.defaultView && document.defaultView.getComputedStyle
-    },
+    has: {},
 
 };
 
