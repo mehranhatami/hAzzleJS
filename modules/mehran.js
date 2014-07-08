@@ -69,14 +69,14 @@ hAzzle.extend({
 
         // Check for foreign domain       
 
-        'foreign-domain': foreign ? true : false,
+        'foreign-domain': foreign ? false : true,
 
         // Detect if the browser supports native rAF
 
         'native-rAF': (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
             foreign.cancelRequestAnimationFrame)) ? true : false,
 
-        // Detect if Performance now are supported
+        // Detect if performance.now() are supported
 
         'perfNow': perfNow,
     },
