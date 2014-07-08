@@ -203,7 +203,7 @@ hAzzle.extend({
 
                     nid = "[id='" + nid + "'] ";
 
-                    context = sibling.test(selector) ? context.parentNode : context;
+                    context = sibling.test(selector) ? context.parentElement : context;
                     selector = nid + selector.split(',').join(',' + nid);
                 }
 

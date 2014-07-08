@@ -55,19 +55,33 @@ hAzzle.extend({
 
         if (isString(selector)) {
 
-            // Loop through all elements, and check for match
-
-            for (; i < len; i++) {
-
-                hAzzle.find(selector, self[i], ret);
-            }
-
-            // If more then one element, make sure they are unique
+            /**
+             * For better performance, are we using
+             * hAzzle.findOne() if we only need to find
+             * one single element, with fallback to .
+             * hAzzle.find() for multiple elements
+             */
 
             if (len > 1) {
 
+                // Loop through all elements, and check for match
+
+                for (; i < len; i++) {
+
+                    hAzzle.find(selector, self[i], ret);
+                }
+
+                // If more then one element, make sure they are unique
+
                 ret = hAzzle.unique(ret);
+
+            } else {
+
+                ret = hAzzle.findOne(selector, self[0])
             }
+
+            // return the result
+
             return hAzzle(ret);
 
         } else { // Object
@@ -95,16 +109,19 @@ hAzzle.extend({
 
         if (!selector) {
 
-            return (this[0] && this[0][parentNode]) ? this.parent().children().indexOf(this[0]) : -1;
+            return (this[0] && this[0][parentNode]) ? this.first().prevAll().length : -1;
         }
 
         // index in selector
 
         if (typeof selector === "string") {
+
             return indexOf.call(hAzzle(selector), this[0]);
         }
 
-        return this.indexOf(selector[0]);
+        // Locate the position of the desired element
+
+        return indexOf.call(this, selector);
     },
 
     /**
@@ -159,6 +176,7 @@ hAzzle.extend({
     parents: function () {
         return this.up.apply(this, arguments.length ? arguments : ['*']);
     },
+
 
     /**
      * Get the element that matches the selector, beginning at the current
@@ -318,7 +336,7 @@ hAzzle.extend({
             this, selector.nodeType === 1 ? function (el) {
                 return hAzzle.contains(selector, el);
             } : typeof selector === 'string' && selector.length ? function (el) {
-                return hAzzle.find(selector, el).length;
+                return hAzzle.findOne(selector, el).length;
             } : function () {
                 return false;
             }
