@@ -3,6 +3,9 @@
  */
 var win = this,
     Mehran = hAzzle.Mehran,
+
+    slice = Array.prototype.slice,
+
     perf = top.performance,
     perfNow = perf && (perf.now ||
         perf.webkitNow ||
@@ -13,7 +16,20 @@ var win = this,
     } : function () {
         return hAzzle.now();
     },
+    lastTime = 0,
+    polyfill = function (callback) {
+        var currTime = new Date().getTime(),
+            timeToCall = Math.max(0, 16 - (currTime - lastTime)),
+            id = win.setTimeout(function () {
+                    callback(currTime + timeToCall);
+                },
+                timeToCall);
+        lastTime = currTime + timeToCall;
+        return id;
+    },
     fixTick = false,
+
+    ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent),
 
     // Feature detection
 
@@ -21,24 +37,19 @@ var win = this,
         // native animation frames
         // http://webstuff.nfshost.com/anim-timing/Overview.html
         // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
-        return win.requestAnimationFrame ||
+        return ios6 ? // iOS6 is buggy
+            win.requestAnimationFrame ||
             win.webkitRequestAnimationFrame ||
             win.mozRequestAnimationFrame ||
-            win.msRequestAnimationFrame ||
-            win.oRequestAnimationFrame ||
-            function (callback) {
-                win.setTimeout(function () {
-                    callback(hAzzle.now());
-                }, 17);
-            };
+            win.msRequestAnimationFrame :
+            polyfill;
     }(),
 
     cancelframe = function () {
-        return top.cancelAnimationFrame ||
+        return !ios6 ? top.cancelAnimationFrame ||
             win.webkitCancelAnimationFrame ||
             win.webkitCancelRequestAnimationFrame ||
-            win.mozCancelAnimationFrame ||
-            win.oCancelAnimationFrame ||
+            win.mozCancelAnimationFrame :
             function (id) {
                 clearTimeout(id);
             };
@@ -76,7 +87,6 @@ hAzzle.extend({
     },
 
 }, Mehran);
-
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
