@@ -14,7 +14,7 @@ hAzzle.extend({
     // Test and check that indeterminate are working
 
     'indeterminate': function (elem) {
-        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.parse(':checked', elem.form).length === 0;
+        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.find(':checked', elem.form).length === 0;
     },
     // HTML5 UI element states (form controls)
     'default': function (elem) {
@@ -37,7 +37,7 @@ hAzzle.extend({
 	 
 	 
     'not': function (elem, sel) {
-          return hAzzle.inArray(Jiesa.parse(sel.replace(trimspaces, '')), elem) === -1;
+          return hAzzle.inArray(Jiesa.find(sel.replace(trimspaces, '')), elem) === -1;
     },
     'valid': function (elem) {
         return typeof elem.form !== 'undefined' && typeof elem.validity === 'object' && elem.validity.valid;
@@ -88,7 +88,7 @@ hAzzle.extend({
     //  has equal to  'with' pseudo, but stands in the specs !! 
 
     'has': function (elem, sel) {
-        return Jiesa.parse(sel, elem).length > 0;
+        return Jiesa.find(sel, elem).length > 0;
     },
     'nothas': function (elem, sel) {
         return !Jiesa.pseudo_filters.has(elem, sel);
@@ -113,10 +113,10 @@ hAzzle.extend({
     },
     // Same as 'has'
     'with': function (elem, val) {
-        return Jiesa.parse(val, elem).length > 0;
+        return Jiesa.find(val, elem).length > 0;
     },
     'without': function (elem, val) {
-        return Jiesa.parse(val, elem).length === 0;
+        return Jiesa.find(val, elem).length === 0;
     },
     'scope': function (elem, con) {
         var context = con || elem.ownerDocument;

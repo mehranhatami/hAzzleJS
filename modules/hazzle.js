@@ -92,7 +92,7 @@
 
             if (typeof selector === 'string') {
 
-                selector = hAzzle.select(selector, context);
+                selector = hAzzle.find(selector, context);
 
                 // Document Ready
 

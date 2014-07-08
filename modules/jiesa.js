@@ -3,9 +3,7 @@
  *
  * Contains:
  *
- * - QSA engine
- *
- * - Jiesa engine
+ * - Jiesa selector engine
  *
  * - Various bug checks
  */
@@ -13,9 +11,15 @@ var win = this,
     Jiesa = hAzzle.Jiesa,
     doc = win.document,
 
+    useNative = false,
+
     expando = "hAzzle" + -(new Date()),
 
     push = Array.prototype.push,
+
+    rsibling = /[+~]/,
+
+    rescape = /'|\\/g,
 
     rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
@@ -88,34 +92,24 @@ function assert(fn) {
     }
 }
 
-/* =========================== TOOLS ========================== */
-
-function normalizeCtx(ctx) {
-
-    if (!ctx) {
-
-        return doc;
-    }
-
-    if (typeof ctx == 'string') {
-
-        return hAzzle.select(ctx)[0];
-    }
-
-    if (!ctx.nodeType && hAzzle.arrayLike(ctx)) {
-
-        return ctx[0];
-    }
-    return ctx;
-}
 
 // Extend Jiesa
 
 hAzzle.extend({
 
-    // Non-QSA selector engine
+	/**
+	 * Jiesa selector engine
+	 *
+	 * @param {String} selector
+	 * @param {String/Object/Array}	context
+	 * @param {Array} results	 
+	 * @param {Boolean} single
+	 *
+	 * 'single' are used if we want to use
+	 * querySelector and not qierySelectorAll
+	 */
 
-    find: function (selector, context, results) {
+    find: function (selector, context, results, /* INTERNAL */ single) {
 
         var match, elem, m, nodeType;
 
@@ -138,7 +132,7 @@ hAzzle.extend({
             return [];
         }
 
-        if (hAzzle.documentIsHTML) {
+        if (!hAzzle.documentIsHTML) {
 
             // Shortcuts
             if ((match = rquickExpr.exec(selector))) {
@@ -169,7 +163,46 @@ hAzzle.extend({
                     push.apply(results, context.getElementsByClassName(m));
                     return results;
                 }
+            }
+        }
 
+        // If querySelectorAll are activated, and not buggy,
+        //	existing, and not XML doc,
+        // we can use QSA. If not, we fallback
+        // to our internal selector engine
+
+        if (Jiesa.useNative && Jiesa.has['api-QSA'] &&
+            !Jiesa.has['bug-QSA']) {
+
+            var old = true,
+                nid = expando;
+
+            if (context !== doc) {
+
+                if ((old = context.getAttribute('id'))) {
+
+                    nid = old.replace(rescape, '\\$&');
+
+                } else {
+
+                    context.setAttribute('id', nid);
+                }
+
+                nid = "[id='" + nid + "'] ";
+
+                context = rsibling.test(selector) ? context.parentNode : context;
+                selector = nid + selector.split(',').join(',' + nid);
+            }
+
+            try {
+
+                push.apply(results, context[single ? 'querySelector' : 'querySelectorAll'](selector));
+                return results;
+
+            } catch (qsaError) {} finally {
+                if (!old) {
+                    context.removeAttribute("id");
+                }
             }
         }
 
@@ -178,77 +211,13 @@ hAzzle.extend({
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
     },
 
-    /**
-     * QSA selector engine
-     */
-
-    QSA: function (selector, context, results) {
-
-        var res, nodeType;
-
-        // Set correct document
-
-        if ((context ? context.ownerDocument || context : doc) !== document) {
-            // Overwrite if needed
-            doc = hAzzle.setDocument(context);
-        }
-
-        context = normalizeCtx(context);
-        results = results || [];
-
-        // Early return if context is not an element or document
-
-        if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
-            return [];
-        }
-
-        // Fallback to non-native selector engine
-        // if QSA fails
-        // Note! Try / Catch should be replaced with
-        // something else for better performance
-
-        try {
-
-            res = context.querySelectorAll(selector);
-
-        } catch (e) {}
-
-        if (!res) {
-
-            res = Jiesa.parse(selector, context);
-        }
-
-        return hAzzle.merge(results, res);
-    }
-
 }, Jiesa);
 
+// Boolean true / false
+// If 'true', QSA got activated
 
-// provide a enable/disable switch for QSA
+Jiesa.useNative = false;
 
-Jiesa.useNative = Jiesa.QSA ?
-    function (b) {
-
-        // If querySelectorAll are not buggy,
-        //	existing, and not XML doc,
-        // we can use QSA. If not, we fallback
-        // to our internal selector engine
-
-        if (b && Jiesa.has['api-QSA'] &&
-            !Jiesa.has['bug-QSA'] &&
-            hAzzle.documentIsHTML) {
-
-            return hAzzle.select = Jiesa.QSA;
-
-        }
-
-        // fallback to hAzzle selector engine
-
-        return hAzzle.select = Jiesa.find;
-
-
-    } : function () {};
-
-// Set the selector engine global for hAzzle
-
-Jiesa.useNative(true);
+// Attach the selector engine to the globale
+// hAzzle object
+hAzzle.find = Jiesa.find;

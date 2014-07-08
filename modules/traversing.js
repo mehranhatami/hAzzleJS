@@ -59,7 +59,7 @@ hAzzle.extend({
 
             for (; i < len; i++) {
 
-                hAzzle.select(selector, self[i], ret);
+                hAzzle.find(selector, self[i], ret);
             }
 
             // If more then one element, make sure they are unique
@@ -125,7 +125,7 @@ hAzzle.extend({
 
         return collect(this, function (el) {
 
-            obj = hAzzle.select(isString(selector) ? selector : '*', el);
+            obj = hAzzle.find(isString(selector) ? selector : '*', el);
 
             if (index === null) {
 
@@ -318,7 +318,7 @@ hAzzle.extend({
             this, selector.nodeType === 1 ? function (el) {
                 return hAzzle.contains(selector, el);
             } : typeof selector === 'string' && selector.length ? function (el) {
-                return hAzzle.select(selector, el).length;
+                return hAzzle.find(selector, el).length;
             } : function () {
                 return false;
             }
