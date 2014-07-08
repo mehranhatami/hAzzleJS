@@ -37,27 +37,26 @@ hAzzle.extend({
 
     version: '0.0.2a',
 
-    has: {},
-	
-	cache: {}
+    has: {
+
+        // Feature detect if the browser supports QSA
+
+        'api-QSA': !!doc.querySelectorAll,
+
+    },
+
+    cache: {}
 
 }, Jiesa);
 
 // Feature / Bug detection
 
-(function () {
+// QSA supported, test for bugs
 
-    if (!(Jiesa.has['api-QSA'] = doc.querySelectorAll !== undefined)) {
-        return;
-    }
-    var e = doc.createElement('div');
-
-    e.innerHTML = "<p class='QsA'>Jiesa</p>";
-
-    Jiesa.has['bug-QSA'] = (e.querySelectorAll(".QsA").length === 0);
-
-    e = null;
-})();
+Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function (div) {
+    div.innerHTML = "<p class='QsA'>Jiesa</p>";
+    return div.querySelectorAll(".QsA").length === 0;
+}) : false
 
 /**
  * Check if getElementsByTagName ("*") returns only elements

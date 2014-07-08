@@ -36,7 +36,7 @@ function checkParent(elem) {
 // IE9 supports matchesSelector, but doesn't work on orphaned elems
 // check for that
 
-orphans = hAzzle.supportsOrphans = assert(function (div) {
+orphans = hAzzle.supportsOrphans = hAzzle.assert(function (div) {
     return mS.call(div, 'div');
 });
 

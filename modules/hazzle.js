@@ -897,7 +897,7 @@
 
         },
         /**
-         * Feature test elements
+         * Feature detection of elements
          *
          * @param {Function} fn
          * @return {Boolean}
