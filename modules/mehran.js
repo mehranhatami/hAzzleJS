@@ -120,8 +120,16 @@ hAzzle.pnow = now;
 
 /* =========================== ANIMATION ENGINE ========================== */
 
-Mehran.animate = function () {};
+// Mehran.fx
 
-// Expost to the globale hAzzle object
+var fx = Mehran.fx = function (elem, options) {}
 
-hAzzle.animate = Mehran.animate();
+// Mehran.fx prototype
+
+fx.prototype = {};
+
+// animation function
+
+hAzzle.Core.animate = function (options, duration, callback) {
+    this.each(function (el) {});
+};
