@@ -5,6 +5,7 @@ var win = this,
     Mehran = hAzzle.Mehran,
 
     // Deal with foreign domains
+    // Accessing .name will throw SecurityError within a foreign domain.
 
     foreign = win.top.name ? win.top : win,
     perf = foreign.performance,
@@ -23,7 +24,7 @@ var win = this,
                 },
                 timeToCall);
         lastTime = currTime + timeToCall;
-        return id;
+        return id; // return the id for cancellation capabilities
     },
 
     // Checks for iOS6 will only be done if no native frame support
@@ -41,9 +42,10 @@ var win = this,
             // no native rAF support
             (ios6 ? // iOS6 is buggy
                 foreign.requestAnimationFrame ||
-                foreign.webkitRequestAnimationFrame ||
+                foreign.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
                 foreign.mozRequestAnimationFrame ||
                 foreign.msRequestAnimationFrame :
+                // IE <= 9, Android <= 4.3, very old/rare browsers
                 polyfill);
     }(),
 
@@ -89,6 +91,7 @@ hAzzle.extend({
 // prop: Mehran Hatami
 
 hAzzle.requestFrame = function (callback) {
+
     var rafCallback = (function (callback) {
         // Wrap the given callback to pass in performance timestamp		
         return function (tick) {
@@ -97,7 +100,6 @@ hAzzle.requestFrame = function (callback) {
             if (tick > 1e12 != hAzzle.now() > 1e12) {
                 tick = now();
             }
-            console.log(tick);
             callback(tick);
         };
     })(callback);

@@ -26,7 +26,7 @@ var win = this,
 
     // Expando
 
-    expando = "hAzzle" + -(new Date()),
+    expando = "hAzzle" + -hAzzle.now(),
 
     push = Array.prototype.push,
 
@@ -48,7 +48,7 @@ var win = this,
 
 hAzzle.extend({
 
-    version: '0.0.2b',
+    version: '0.0.2c',
 
     has: {
 
@@ -343,7 +343,7 @@ function checkParent(elem) {
     return fragment;
 }
 
-// Expost to the globale hAzzle object
+// Exand the global hAzzle object
 
 hAzzle.find = Jiesa.find;
 hAzzle.findOne = Jiesa.findOne;
