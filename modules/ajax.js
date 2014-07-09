@@ -1,21 +1,17 @@
 var KF = hAzzle.KF,
     win = window,
     doc = win.document,
-
-slice = Array.prototype.slice,
     isSuccess,
     state,
-
-    readyState = 'readyState',
-    contentType = 'Content-Type',
-
     head = document.getElementsByTagName('head')[0],
     uniqid = 0,
+
+    slice = Array.prototype.slice,
+
     callbackPrefix = 'KF_' + hAzzle.now(),
     lastValue, // data stored by the most recent JSONP callback
     xmlHttpRequest = 'XMLHttpRequest',
     xDomainRequest = 'XDomainRequest',
-    noop = function () {},
 
     xhrSuccessStatus = {
         // file protocol always yields status code 0, assume 200
@@ -27,14 +23,11 @@ slice = Array.prototype.slice,
 
     // Document location
 
-    ajaxLocParts,
     ajaxLocation = location.href,
 
-    allTypes = "*/".concat("*"),
-
     // Usefull regEx
-    
-	r20 = /%20/g,
+
+    r20 = /%20/g,
     normalize = /\r?\n/g,
     submittable = /^(?:input|select|textarea|keygen)/i,
     submitterTypes = /^(?:submit|button|image|reset|file)$/i,
@@ -44,7 +37,7 @@ slice = Array.prototype.slice,
     isArray = hAzzle.isArray,
 
     accepts = {
-        "*": allTypes,
+        "*": 'text/javascript, text/html, application/xml, text/xml, */*',
         text: "text/plain",
         html: "text/html",
         xml: "application/xml, text/xml",
@@ -66,7 +59,7 @@ slice = Array.prototype.slice,
             if (xhr && 'withCredentials' in xhr) {
 
                 return xhr;
-// Mehran!! Fix this and use Cors
+                // Mehran!! Fix this and use Cors
             } else if (win['XDomainRequest']) {
 
                 return new XDomainRequest();
@@ -124,13 +117,6 @@ hAzzle.extend({
         type: "GET",
         async: true,
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-        /*   accepts: {
-			"*": allTypes,
-			text: "text/plain",
-			html: "text/html",
-			xml: "application/xml, text/xml",
-			json: "application/json, text/javascript" 
-		},*/
         timeout: 1500,
         success: hAzzle.noop,
         error: hAzzle.noop,
@@ -285,14 +271,11 @@ function handleJsonp(o, fn, err, url) {
     script.src = url;
     script.async = true;
     if (typeof script.onreadystatechange !== 'undefined' && !isIE10) {
-        // need this for IE due to out-of-order onreadystatechange(), binding script
-        // execution to an event listener gives us control over when the script
-        // is executed. See http://jaubourg.net/2010/07/loading-script-as-onclick-handler-of.html
         script.htmlFor = script.id = '_KF_' + reqId;
     }
 
     script.onload = script.onreadystatechange = function () {
-        if ((script[readyState] && script[readyState] !== 'complete' && script[readyState] !== 'loaded') || loaded) {
+        if ((script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded') || loaded) {
             return false;
         }
         script.onload = script.onreadystatechange = null;
@@ -351,9 +334,9 @@ function getRequest(fn, err) {
 
     headers.Accept = headers.Accept || accepts[o.dataType] || accepts['*'];
 
-    if (!headers[contentType] && !isAFormData) {
+    if (!headers.contentType && !isAFormData) {
 
-        headers[contentType] = o.contentType || defaultHeaders.contentType;
+        headers.contentType = o.contentType || defaultHeaders.contentType;
     }
 
     // Check for headers option
@@ -502,6 +485,7 @@ function init(o, fn) {
             // Parse text as JSON
             resp = type === 'json' ? hAzzle.parseJSON(statusText) :
                 // Text to html
+
                 type === 'html' ? statusText :
                 // Parse text as xml
                 type === 'xml' ? resp = hAzzle.parseXML(resp) : '';
@@ -584,30 +568,33 @@ function eachFormElement() {
     var cb = this,
         e, i, serializeSubtags = function (e, tags) {
 
-            var i=0, j=0, l = tags.length, len, fa;
+            var i = 0,
+                j = 0,
+                l = tags.length,
+                len, fa;
 
             for (; i < l; i++) {
-                
-				fa = e.getElementsByTagName(tags[i]);
-				
-				len = fa.length;
-                
-				for (; j < len; j++) {
-				
-					serial(fa[j], cb);
-				}
+
+                fa = e.getElementsByTagName(tags[i]);
+
+                len = fa.length;
+
+                for (; j < len; j++) {
+
+                    serial(fa[j], cb);
+                }
             }
         };
 
     for (i = 0; i < arguments.length; i++) {
-		
+
         e = arguments[i];
-        
-		if (submittable.test(e.tagName)) {
-		  
-		  serial(e, cb);
-		}
-		
+
+        if (submittable.test(e.tagName)) {
+
+            serial(e, cb);
+        }
+
         serializeSubtags(e, ['input', 'select', 'textarea']);
     }
 }
@@ -634,6 +621,7 @@ function serializeHash() {
 // [ { name: 'name', value: 'value' }, ... ] style serialization
 KF.serializeArray = function () {
     var arr = [];
+
     eachFormElement.apply(function (name, value) {
         arr.push({
             name: name,
@@ -660,17 +648,18 @@ KF.serialize = function () {
 };
 // Serialize an array of form elements or a set of
 hAzzle.param = KF.toQueryString = function (o, trad) {
-    var prefix, i = 0, l, traditional = trad || false,
+    var prefix, i = 0,
+        l, traditional = trad || false,
         s = [],
         enc = encodeURIComponent,
         add = function (key, value) {
             // If value is a function, invoke it and return its value
-			value = hAzzle.isFunction( value ) ? value() : ( value === null ? '' : value );
+            value = hAzzle.isFunction(value) ? value() : (value === null ? '' : value);
             s[s.length] = enc(key) + '=' + enc(value);
         };
-        // If an array was passed in, assume that it is an array of form elements.
-    if (isArray(o) ) {
-		l = o.length;
+    // If an array was passed in, assume that it is an array of form elements.
+    if (isArray(o)) {
+        l = o.length;
         for (; i < l; i++) {
 
             add(o[i].name, o[i].value);
@@ -683,16 +672,17 @@ hAzzle.param = KF.toQueryString = function (o, trad) {
         }
     }
 
-   // Return the resulting serialization
+    // Return the resulting serialization
     return s.join('&').replace(r20, '+');
 };
 
 function buildParams(prefix, obj, traditional, add) {
-    var name, i=0, l, v, rbracket = /\[\]$/;
+    var name, i = 0,
+        l, v, rbracket = /\[\]$/;
 
     if (isArray(obj)) {
         // Serialize array item.
-		l = obj.length;
+        l = obj.length;
         for (; i < l; i++) {
             v = obj[i];
             if (traditional || rbracket.test(prefix)) {
@@ -702,7 +692,7 @@ function buildParams(prefix, obj, traditional, add) {
                 buildParams(prefix + '[' + (typeof v === 'object' ? i : '') + ']', v, traditional, add);
             }
         }
-    } else if ( !traditional && hAzzle.type( obj ) === "object"  ) {
+    } else if (!traditional && hAzzle.type(obj) === "object") {
         // Serialize object item.
         for (name in obj) {
             buildParams(prefix + '[' + name + ']', obj[name], traditional, add);
@@ -737,7 +727,3 @@ KF.getcallbackPrefix = function () {
 hAzzle.ajax = function (o, fn) {
     return new KF.xmlhttp(o, fn);
 };
-
-
-
-
