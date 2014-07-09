@@ -343,7 +343,7 @@ function getRequest(fn, err) {
         headers = o.headers || {},
         url = typeof o === 'string' ? o : o.url,
         data = (o.processData !== false && o.data && typeof o.data !== 'string') ? AjaxCore.toQueryString(o.data) : (o.data || null),
-        http, sendWait = false;
+        xhttp, sendWait = false;
 
     // if we're working on a GET request and we have data then we should append
     // query string to end of URL and not post data
@@ -354,9 +354,14 @@ function getRequest(fn, err) {
 
     if (o.dataType == 'jsonp') return handleJsonp(o, fn, err, url);
 
-    http = (o.xhr && o.xhr(o)) || xhr(o);
+    xhttp = (o.xhr && o.xhr(o)) || xhr(o);
 
-    http.open(method, url, o.async === false ? false : true);
+    // Open the socket
+    if (o.username) {
+        xhttp.open(method, url, o.async === false ? false : true, o.username, o.password);
+    } else {
+        xhttp.open(method, url, o.async === false ? false : true);
+    }
 
     // Set headers
 
@@ -376,45 +381,45 @@ function getRequest(fn, err) {
 
     for (i in headers) {
 
-        http.setRequestHeader(i, headers[i]);
+        xhttp.setRequestHeader(i, headers[i]);
     }
 
     // setCredentials
 
-    if (typeof o.withCredentials !== 'undefined' && typeof http.withCredentials !== 'undefined') {
+    if (typeof o.withCredentials !== 'undefined' && typeof xhttp.withCredentials !== 'undefined') {
 
-        http.withCredentials = !!o.withCredentials;
+        xhttp.withCredentials = !!o.withCredentials;
     }
 
 
-    if (win[xDomainRequest] && http instanceof win[xDomainRequest]) {
-        http.onload = fn;
-        http.onerror = err;
+    if (win[xDomainRequest] && xhttp instanceof win[xDomainRequest]) {
+        xhttp.onload = fn;
+        xhttp.onerror = err;
         // NOTE: see
         // http://social.msdn.microsoft.com/Forums/en-US/iewebdevelopment/thread/30ef3add-767c-4436-b8a9-f1ca19b4812e
-        http.onprogress = function () {};
+        xhttp.onprogress = function () {};
         sendWait = true;
     } else {
-        http.onreadystatechange = handleReadyState(this, fn, err);
+        xhttp.onreadystatechange = handleReadyState(this, fn, err);
     }
-    o.before && o.before(http);
+    o.before && o.before(xhttp);
     if (sendWait) {
         setTimeout(function () {
             try {
-                http.send(data);
+                xhttp.send(data);
             } catch (e) {
                 err(e);
             }
         }, 200);
     } else {
         try {
-            http.send(data);
+            xhttp.send(data);
         } catch (e) {
             err(e);
         }
 
     }
-    return http;
+    return xhttp;
 }
 
 /**
