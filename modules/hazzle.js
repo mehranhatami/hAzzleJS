@@ -923,7 +923,12 @@
 
     }, hAzzle);
 
-    /* =========================== SELECTOR ENGINE HOLDER ========================== */
+     /* =========================== AJAX HOLDER ========================== */
+
+    var KF = {};
+    hAzzle.KF = KF;
+	
+     /* =========================== SELECTOR ENGINE HOLDER ========================== */
 
     var Jiesa = {};
     hAzzle.Jiesa = Jiesa;
