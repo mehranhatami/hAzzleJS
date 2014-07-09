@@ -5,7 +5,7 @@ var win = window,
 
     slice = Array.prototype.slice,
 
-    callbackPrefix = 'AjaxCore_' + hAzzle.now(),
+    callbackPrefix = 'xmlhttp_' + hAzzle.now(),
     lastValue, // data stored by the most recent JSONP callback
     xmlHttpRequest = 'XMLHttpRequest',
     xDomainRequest = 'XDomainRequest',
@@ -91,11 +91,12 @@ var AjaxCore = {
     },
 
     /**
-     * XMLHTTP main function
+     * Ajax method to create ajax request with XMLHTTPRequest
+     * Support for JSONP && Cross domain
      *
-     * @param{Object} options
-     * @param{Function} fn
-     *
+     * @param {String|Object} options
+     * @param {Function} fn
+     * @return {hAzzle}
      */
 
     xmlhttp: function (options, fn) {
@@ -110,11 +111,8 @@ var AjaxCore = {
     },
 
     /**
-     * Default AJAX settings
-     *
-     * TODO! Should this be extended?
+     * Default ajax settings.
      */
-
     ajaxSettings: {
 
         // The url to make request to. If empty no request will be made.
@@ -290,7 +288,7 @@ function handleJsonp(options, fn, err, url) {
 
     if (typeof script.onreadystatechange !== 'undefined' && !isIE10) {
         script.event = 'onclick';
-        script.htmlFor = script.id = '_AjaxCore_' + reqId;
+        script.htmlFor = script.id = '_xmlhttp_' + reqId;
     }
 
     script.onload = script.onreadystatechange = function () {
@@ -486,6 +484,10 @@ function init(o, fn) {
     /* Handles responses to an ajax request:
      * - finds the right dataType (mediates between content-type and expected dataType)
      * - returns the corresponding response
+     *
+     * @param {Object} resp
+     *
+     * @return {hAzzle}
      */
     function ajaxHandleResponses(resp) {
 
@@ -508,15 +510,14 @@ function init(o, fn) {
 
         resp = (type !== 'jsonp') ? self.request : resp;
 
-        if (statusText) {
-
+        if (resp) {
             // Parse text as JSON
             resp = type === 'json' ? hAzzle.parseJSON(statusText) :
                 // Text to html
 
                 type === 'html' ? statusText :
                 // Parse text as xml
-                type === 'xml' ? resp = hAzzle.parseXML(resp) : '';
+                type === 'xml' ? resp = hAzzle.parseXML(resp.responseXML) : '';
         }
 
         self._responseArgs.resp = resp;
@@ -648,6 +649,7 @@ function serializeHash() {
 
 // [ { name: 'name', value: 'value' }, ... ] style serialization
 AjaxCore.serializeArray = function () {
+
     var arr = [];
 
     eachFormElement.apply(function (name, value) {
@@ -660,21 +662,37 @@ AjaxCore.serializeArray = function () {
 };
 
 AjaxCore.serialize = function () {
-    if (arguments.length === 0) return '';
+
+    if (arguments.length === 0) {
+
+        return '';
+    }
+
     var opt, fn, args = slice.call(arguments, 0);
 
     opt = args.pop();
     opt && opt.nodeType && args.push(opt) && (opt = null);
     opt && (opt = opt.type);
 
-    if (opt == 'map') {
+    if (opt === 'map') {
         fn = serializeHash;
-    } else if (opt == 'array') fn = AjaxCore.serializeArray;
-    else fn = serializeQueryString;
-
+    } else if (opt == 'array') {
+        fn = AjaxCore.serializeArray;
+    } else {
+        fn = serializeQueryString;
+    }
     return fn.apply(null, args);
 };
-// Serialize an array of form elements or a set of
+
+
+/**
+ * Create a serialized representation of an array or object.
+ *
+ * @param {Array|Object} o
+ * @param {Object} trad
+ * @return {String}
+ */
+
 hAzzle.param = AjaxCore.toQueryString = function (o, trad) {
     var prefix, i = 0,
         l, traditional = trad || false,
@@ -685,14 +703,18 @@ hAzzle.param = AjaxCore.toQueryString = function (o, trad) {
             value = hAzzle.isFunction(value) ? value() : (value === null ? '' : value);
             s[s.length] = enc(key) + '=' + enc(value);
         };
+
     // If an array was passed in, assume that it is an array of form elements.
+
     if (isArray(o)) {
         l = o.length;
+
         for (; i < l; i++) {
 
             add(o[i].name, o[i].value);
         }
     } else {
+
         for (prefix in o) {
             if (o.hasOwnProperty(prefix)) {
                 buildParams(prefix, o[prefix], traditional, add);
@@ -739,6 +761,6 @@ AjaxCore.getcallbackPrefix = function () {
 
 // Extend to the global hAzzle Object
 
-hAzzle.ajax = function (o, fn) {
-    return new AjaxCore.xmlhttp(o, fn);
+hAzzle.ajax = function (options, fn) {
+    return new AjaxCore.xmlhttp(options, fn);
 };
