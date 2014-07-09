@@ -1,8 +1,6 @@
 var KF = hAzzle.KF,
     win = window,
     doc = win.document,
-    isSuccess,
-    state,
     head = document.getElementsByTagName('head')[0],
     uniqid = 0,
 
@@ -21,12 +19,23 @@ var KF = hAzzle.KF,
         1223: 204
     },
 
+    headerTypes = {
+        'text/plain': 'html',
+        'text/html': 'html',
+        'application/xml': 'xml',
+        'text/xml': 'xml',
+        'application/json': 'json',
+        'text/javascript': 'json',
+        'application/json, text/javascript': 'json',
+    },
+
     // Document location
 
     ajaxLocation = location.href,
 
     // Usefull regEx
 
+    query = (/\?/),
     r20 = /%20/g,
     normalize = /\r?\n/g,
     submittable = /^(?:input|select|textarea|keygen)/i,
@@ -81,37 +90,39 @@ hAzzle.extend({
 
     has: {
 
+        // Mehran!  I added feature check for CORS here
+        // You fix!!
+
         'api-cors': !!xhr && ("withCredentials" in xhr),
-        //	'api-ajax': xhrSupported = !!xhrSupported
+        'api-ajax': !!xhr
 
     },
 
-    xhr: function () {
+    /**
+     * XMLHTTP main function
+     *
+     * @param{Object} options
+     * @param{Function} fn
+     *
+     */
 
-        if (KF.has['api-ajax']) {
+    xmlhttp: function (options, fn) {
 
-            return xhrSupported;
-        } else {
-            hAzzle.error("xmlhttp not supported!!");
-        }
-
-    },
-
-    // Ajax	
-
-    xmlhttp: function (o, fn) {
-        this.o = o;
-        this.fn = fn;
+        var self = this;
+        self.o = options;
+        self.fn = fn;
 
         // prepeare for xmlhttp requests
 
         init.apply(this, arguments);
-
-        /**
-         * Default AJAX settings
-         */
-
     },
+
+    /**
+     * Default AJAX settings
+     *
+     * TODO! Should this be extended?
+     */
+
     ajaxSettings: {
         url: ajaxLocation,
         type: "GET",
@@ -129,69 +140,80 @@ hAzzle.extend({
 
 KF.xmlhttp.prototype = {
 
-    abort: function () {
+    // About requests
 
+    abort: function () {
         this._aborted = true;
         this.request.abort();
     },
 
-    retry: function () {
+    // Try again!
 
+    retry: function () {
         init.call(this, this.o, this.fn);
     },
+
     then: function (success, fail) {
+
+        var self = this;
 
         success = success || function () {};
         fail = fail || function () {};
 
-        if (this._fulfilled) {
+        if (self._fulfilled) {
 
-            this._responseArgs.resp = success(this._responseArgs.resp);
+            self._responseArgs.resp = success(self._responseArgs.resp);
 
-        } else if (this._erred) {
+        } else if (self._erred) {
 
-            fail(this._responseArgs.resp, this._responseArgs.msg, this._responseArgs.t);
+            fail(self._responseArgs.resp, self._responseArgs.msg, self._responseArgs.t);
 
         } else {
 
-            this._fulfillmentHandlers.push(success);
-            this._errorHandlers.push(fail);
+            self._fulfillmentHandlers.push(success);
+            self._errorHandlers.push(fail);
         }
-        return this;
+        return self;
     },
     always: function (fn) {
 
-        if (this._fulfilled || this._erred) {
+        var self = this;
 
-            fn(this._responseArgs.resp);
+        if (self._fulfilled || self._erred) {
+
+            fn(self._responseArgs.resp);
 
         } else {
 
-            this._completeHandlers.push(fn);
+            self._completeHandlers.push(fn);
         }
 
-        return this;
+        return self;
 
     },
 
     fail: function (fn) {
 
-        if (this._erred) {
+        var self = this;
 
-            fn(this._responseArgs.resp, this._responseArgs.msg, this._responseArgs.t);
+        if (self._erred) {
+
+            fn(self._responseArgs.resp, self._responseArgs.msg, self._responseArgs.t);
 
         } else {
 
-            this._errorHandlers.push(fn);
+            self._errorHandlers.push(fn);
         }
 
-        return this;
+        return self;
     },
 
     catch: function (fn) {
         return this.fail(fn);
     }
 };
+
+// Inspiration from jQuery
 
 function handleReadyState(r, success, error) {
 
@@ -201,48 +223,24 @@ function handleReadyState(r, success, error) {
 
             return error(r.request);
         }
-
-        state = r.request.readyState;
-
-        // Called once
-
-        if (state === 2) {
-
-            return;
-        }
-
-        // State is "done" now
-
-        state = 2;
-
-        // Set readyState
-
-        r.request.readyState = status > 0 ? 4 : 0;
-
-        // Determine if successful
-        isSuccess = r.request.status >= 200 && r.request.status < 300 || r.request.status === 304;
-
-        // We now have readyState 3 or 4. readyState 2 are left behind
-
-        if (isSuccess) {
-            if (r.request && r.request.readyState == 4) {
-                r.request.onreadystatechange = hAzzle.noop;
-                if (xhrSuccessStatus[r.request.status] || r.request.status) {
-                    success(r.request);
-                } else {
-                    error(r.request);
-                }
+        if (r.request && r.request.readyState == 4) {
+            r.request.onreadystatechange = hAzzle.noop;
+            if (xhrSuccessStatus[r.request.status] || r.request.status) {
+                success(r.request);
+            } else {
+                error(r.request);
             }
         }
     };
 }
 
-function generalCallback(data) {
+function gC(data) {
     lastValue = data;
 }
 
+
 function urlappend(url, s) {
-    return url + (/\?/.test(url) ? '&' : '?') + s;
+    return s && (url + (query.test(url) ? '&' : '?') + s);
 }
 
 function handleJsonp(o, fn, err, url) {
@@ -256,6 +254,7 @@ function handleJsonp(o, fn, err, url) {
         isIE10 = navigator.userAgent.indexOf('MSIE 10.0') !== -1;
 
     if (match) {
+
         if (match[3] === '?') {
             url = url.replace(cbreg, '$1=' + cbval); // wildcard callback func name
         } else {
@@ -265,22 +264,28 @@ function handleJsonp(o, fn, err, url) {
         url = urlappend(url, cbkey + '=' + cbval); // no callback details, add 'em
     }
 
-    win[cbval] = generalCallback;
+    win.cbval = gC;
 
     script.type = 'text/javascript';
     script.src = url;
     script.async = true;
+
     if (typeof script.onreadystatechange !== 'undefined' && !isIE10) {
+        script.event = 'onclick';
         script.htmlFor = script.id = '_KF_' + reqId;
     }
 
     script.onload = script.onreadystatechange = function () {
+
         if ((script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded') || loaded) {
             return false;
         }
+
         script.onload = script.onreadystatechange = null;
         script.onclick && script.onclick();
+
         // Call the user callback with the last value stored and clean up values and scripts.
+
         fn(lastValue);
         lastValue = undefined;
         head.removeChild(script);
@@ -367,20 +372,21 @@ function getRequest(fn, err) {
     o.before && o.before(http);
     if (sendWait) {
         setTimeout(function () {
-            http.send(data);
+            try {
+                http.send(data);
+            } catch (e) {
+                err(e);
+            }
         }, 200);
     } else {
-        http.send(data);
+        try {
+            http.send(data);
+        } catch (e) {
+            err(e);
+        }
+
     }
     return http;
-}
-
-function setType(header) {
-    // json, javascript, text/plain, text/html, xml
-    if (header.match('json')) return 'json';
-    if (header.match('javascript')) return 'js';
-    if (header.match('text')) return 'html';
-    if (header.match('xml')) return 'xml';
 }
 
 /**
@@ -459,11 +465,9 @@ function init(o, fn) {
 
     function success(resp) {
 
-        var type = o.dataType || setType(resp.getResponseHeader('Content-Type')),
+        var type = o.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
             status = resp.status,
             statusText = resp.responseText;
-
-
 
         // if no content
 
