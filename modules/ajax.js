@@ -1,12 +1,11 @@
-var KF = hAzzle.KF,
-    win = window,
+var win = window,
     doc = win.document,
     head = document.getElementsByTagName('head')[0],
     uniqid = 0,
 
     slice = Array.prototype.slice,
 
-    callbackPrefix = 'KF_' + hAzzle.now(),
+    callbackPrefix = 'AjaxCore_' + hAzzle.now(),
     lastValue, // data stored by the most recent JSONP callback
     xmlHttpRequest = 'XMLHttpRequest',
     xDomainRequest = 'XDomainRequest',
@@ -28,10 +27,6 @@ var KF = hAzzle.KF,
         'text/javascript': 'json',
         'application/json, text/javascript': 'json',
     },
-
-    // Document location
-
-    ajaxLocation = location.href,
 
     // Usefull regEx
 
@@ -84,7 +79,7 @@ var KF = hAzzle.KF,
         }
     };
 
-hAzzle.extend({
+var AjaxCore = {
 
     version: '0.0.2',
 
@@ -95,7 +90,6 @@ hAzzle.extend({
 
         'api-cors': !!xhr && ("withCredentials" in xhr),
         'api-ajax': !!xhr
-
     },
 
     /**
@@ -109,7 +103,7 @@ hAzzle.extend({
     xmlhttp: function (options, fn) {
 
         var self = this;
-        self.o = options;
+        self.options = options;
         self.fn = fn;
 
         // prepeare for xmlhttp requests
@@ -124,9 +118,9 @@ hAzzle.extend({
      */
 
     ajaxSettings: {
-        url: ajaxLocation,
+        url: location.href,
         type: "GET",
-        async: true,
+        async: 1,
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         timeout: 1500,
         success: hAzzle.noop,
@@ -134,11 +128,11 @@ hAzzle.extend({
         complete: hAzzle.noop
     }
 
-}, KF);
+};
 
 /* =========================== AJAX PROTOTYPE CHAIN ========================== */
 
-KF.xmlhttp.prototype = {
+AjaxCore.xmlhttp.prototype = {
 
     // About requests
 
@@ -150,7 +144,7 @@ KF.xmlhttp.prototype = {
     // Try again!
 
     retry: function () {
-        init.call(this, this.o, this.fn);
+        init.call(this, this.options, this.fn);
     },
 
     then: function (success, fail) {
@@ -177,6 +171,7 @@ KF.xmlhttp.prototype = {
     },
     always: function (fn) {
 
+
         var self = this;
 
         if (self._fulfilled || self._erred) {
@@ -189,7 +184,6 @@ KF.xmlhttp.prototype = {
         }
 
         return self;
-
     },
 
     fail: function (fn) {
@@ -213,14 +207,10 @@ KF.xmlhttp.prototype = {
     }
 };
 
-// Inspiration from jQuery
-
 function handleReadyState(r, success, error) {
 
     return function () {
-
         if (r._aborted) {
-
             return error(r.request);
         }
         if (r.request && r.request.readyState == 4) {
@@ -243,10 +233,10 @@ function urlappend(url, s) {
     return s && (url + (query.test(url) ? '&' : '?') + s);
 }
 
-function handleJsonp(o, fn, err, url) {
+function handleJsonp(options, fn, err, url) {
     var reqId = uniqid++,
-        cbkey = o.jsonp || 'callback', // the 'callback' key
-        cbval = o.jsonpCallback || KF.getcallbackPrefix(reqId),
+        cbkey = options.jsonp || 'callback', // the 'callback' key
+        cbval = options.jsonpCallback || AjaxCore.getcallbackPrefix(reqId),
         cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
         match = url.match(cbreg),
         script = doc.createElement('script'),
@@ -272,7 +262,7 @@ function handleJsonp(o, fn, err, url) {
 
     if (typeof script.onreadystatechange !== 'undefined' && !isIE10) {
         script.event = 'onclick';
-        script.htmlFor = script.id = '_KF_' + reqId;
+        script.htmlFor = script.id = '_AjaxCore_' + reqId;
     }
 
     script.onload = script.onreadystatechange = function () {
@@ -308,11 +298,11 @@ function handleJsonp(o, fn, err, url) {
 }
 
 function getRequest(fn, err) {
-    var o = this.o,
+    var o = this.options,
         method = (o.type || 'GET').toUpperCase(),
         headers = o.headers || {},
         url = typeof o === 'string' ? o : o.url,
-        data = (o.processData !== false && o.data && typeof o.data !== 'string') ? KF.toQueryString(o.data) : (o.data || null),
+        data = (o.processData !== false && o.data && typeof o.data !== 'string') ? AjaxCore.toQueryString(o.data) : (o.data || null),
         http, sendWait = false;
 
     // if we're working on a GET request and we have data then we should append
@@ -324,12 +314,9 @@ function getRequest(fn, err) {
 
     if (o.dataType == 'jsonp') return handleJsonp(o, fn, err, url);
 
-    // get the xhr from the factory if passed
-    // if the factory returns null, fall-back to ours
     http = (o.xhr && o.xhr(o)) || xhr(o);
 
     http.open(method, url, o.async === false ? false : true);
-
 
     // Set headers
 
@@ -415,7 +402,7 @@ function init(o, fn) {
      * the default options are not set
      */
 
-    o = ajaxExtend(KF.ajaxSettings, o);
+    o = ajaxExtend(AjaxCore.ajaxSettings, o);
 
     self._fulfilled = false;
     self._successHandler = hAzzle.noop;
@@ -605,7 +592,7 @@ function eachFormElement() {
 
 // standard query string style serialization
 function serializeQueryString() {
-    return KF.toQueryString(KF.serializeArray.apply(null, arguments));
+    return AjaxCore.toQueryString(AjaxCore.serializeArray.apply(null, arguments));
 }
 
 // { 'name': 'value', ... } style serialization
@@ -623,7 +610,7 @@ function serializeHash() {
 }
 
 // [ { name: 'name', value: 'value' }, ... ] style serialization
-KF.serializeArray = function () {
+AjaxCore.serializeArray = function () {
     var arr = [];
 
     eachFormElement.apply(function (name, value) {
@@ -635,7 +622,7 @@ KF.serializeArray = function () {
     return arr;
 };
 
-KF.serialize = function () {
+AjaxCore.serialize = function () {
     if (arguments.length === 0) return '';
     var opt, fn, args = slice.call(arguments, 0);
 
@@ -645,13 +632,13 @@ KF.serialize = function () {
 
     if (opt == 'map') {
         fn = serializeHash;
-    } else if (opt == 'array') fn = KF.serializeArray;
+    } else if (opt == 'array') fn = AjaxCore.serializeArray;
     else fn = serializeQueryString;
 
     return fn.apply(null, args);
 };
 // Serialize an array of form elements or a set of
-hAzzle.param = KF.toQueryString = function (o, trad) {
+hAzzle.param = AjaxCore.toQueryString = function (o, trad) {
     var prefix, i = 0,
         l, traditional = trad || false,
         s = [],
@@ -721,7 +708,7 @@ function ajaxExtend(target, src) {
 }
 
 
-KF.getcallbackPrefix = function () {
+AjaxCore.getcallbackPrefix = function () {
     return callbackPrefix;
 };
 
@@ -729,5 +716,5 @@ KF.getcallbackPrefix = function () {
 // Extend to the global hAzzle Object
 
 hAzzle.ajax = function (o, fn) {
-    return new KF.xmlhttp(o, fn);
+    return new AjaxCore.xmlhttp(o, fn);
 };
