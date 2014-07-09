@@ -116,25 +116,36 @@ var AjaxCore = {
     ajaxSettings: {
 
         // The url to make request to. If empty no request will be made.
+
         url: '',
 
         // Modify the xhr object before open it. Default is null.
+
         before: null,
 
         // Modify the xhr object before send. Default is null.
 
         sendWait: null,
+
         // The type of the request. Default is GET.
+
         type: "GET",
+
+        // if set to 'true', it will not be recognized
+
         async: 1,
+
         // Tell server witch content type it is.
+
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 
         // Set a timeout (in milliseconds) for the request.
+
         timeout: 1500,
 
         // Data that is send to the server.
         // Can be: json, jsonp, html, text, xml.
+
         data: {},
 
         // Function that runs on a successful request.
@@ -146,8 +157,11 @@ var AjaxCore = {
 
         // Error function that is called on failed request.
         // Take to arguments, xhr and the options object.
+
         error: hAzzle.noop,
+
         complete: hAzzle.noop,
+
         // An object of additional header key/value pairs to send along with the request
         headers: {
             'requestedWith': 'XMLHttpRequest'
@@ -489,6 +503,7 @@ function init(o, fn) {
      *
      * @return {hAzzle}
      */
+
     function ajaxHandleResponses(resp) {
 
         var type = o.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
@@ -546,42 +561,43 @@ function init(o, fn) {
     this.request = getRequest.call(this, ajaxHandleResponses, error);
 }
 
-
-
-// normalize newline variants according to spec -> CRLF
 function normalize(s) {
+
     return s ? s.replace(normalize, '\r\n') : '';
 }
 
-function serial(el, cb) {
+function serial(el, callback) {
     var n = el.name,
         t = el.tagName.toLowerCase(),
-        optCb = function (o) {
-            // IE gives value="" even where there is no value attribute
-            // 'specified' ref: http://www.w3.org/TR/DOM-Level-3-Core/core.html#ID-862529273
-            if (o && !o.disabled) {
-                cb(n, normalize(o.attributes.value && o.attributes.value.specified ? o.value : o.text));
+        optCb = function (options) {
+            if (options && !options.disabled) {
+                callback(n, normalize(options.attributes.value && options.attributes.value.specified ? options.value : options.text));
             }
         },
         ch, ra, val, i;
 
-    // don't serialize elements that are disabled or without a name
-    if (el.disabled || !n) return;
+    // don't serialize nameless or hidden elements
 
-    switch (t) {
-    case 'input':
+    if (el.disabled || !n) {
+        return;
+    }
+
+    if (t === 'input') {
         if (!submitterTypes.test(el.type)) {
             ch = checkbox.test(el.type);
             ra = radio.test(el.type);
             val = el.value;
 
-            (!(ch || ra) || el.checked) && cb(n, normalize(ch && val === '' ? 'on' : val));
+            (!(ch || ra) || el.checked) && callback(n, normalize(ch && val === '' ? 'on' : val));
         }
-        break;
-    case 'textarea':
-        cb(n, normalize(el.value));
-        break;
-    case 'select':
+    }
+
+    if (t === 'textarea') {
+
+        callback(n, normalize(el.value));
+    }
+
+    if (t === 'select') {
         if (el.type.toLowerCase() === 'select-one') {
             optCb(el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null);
         } else {
@@ -589,7 +605,6 @@ function serial(el, cb) {
                 el.options[i].selected && optCb(el.options[i]);
             }
         }
-        break;
     }
 }
 
