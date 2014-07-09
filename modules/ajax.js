@@ -1,14 +1,12 @@
 var win = window,
     doc = win.document,
-    head = document.getElementsByTagName('head')[0],
     uniqid = 0,
 
     slice = Array.prototype.slice,
 
-    callbackPrefix = 'xmlhttp_' + hAzzle.now(),
+    expando = 'xmlhttp_' + hAzzle.now(),
+
     lastValue, // data stored by the most recent JSONP callback
-    xmlHttpRequest = 'XMLHttpRequest',
-    xDomainRequest = 'XDomainRequest',
 
     xhrSuccessStatus = {
         // file protocol always yields status code 0, assume 200
@@ -54,7 +52,7 @@ var win = window,
 
         if (options.crossOrigin === true) {
 
-            var xhr = win.xmlHttpRequest ? new XMLHttpRequest() : null;
+            var xhr = win['XMLHttpRequest'] ? new XMLHttpRequest() : null;
 
             if (xhr && 'withCredentials' in xhr) {
 
@@ -69,7 +67,7 @@ var win = window,
                 hAzzle.error('Browser does not support cross-origin requests');
             }
 
-        } else if (window.xmlHttpRequest) {
+        } else if (win['XMLHttpRequest']) {
 
             return new XMLHttpRequest();
         }
@@ -189,57 +187,52 @@ AjaxCore.xmlhttp.prototype = {
 
     then: function (ajaxHandleResponses, fail) {
 
-        var self = this;
-
         ajaxHandleResponses = ajaxHandleResponses || function () {};
         fail = fail || function () {};
 
-        if (self._fulfilled) {
+        if (this._fulfilled) {
 
-            self._responseArgs.resp = ajaxHandleResponses(self._responseArgs.resp);
+            this._responseArgs.resp = ajaxHandleResponses(this._responseArgs.resp);
 
-        } else if (self._erred) {
+        } else if (this._erred) {
 
-            fail(self._responseArgs.resp, self._responseArgs.msg, self._responseArgs.t);
+            fail(this._responseArgs.resp, this._responseArgs.msg, this._responseArgs.t);
 
         } else {
 
-            self._fulfillmentHandlers.push(ajaxHandleResponses);
-            self._errorHandlers.push(fail);
+            this._fulfillmentHandlers.push(ajaxHandleResponses);
+            this._errorHandlers.push(fail);
         }
-        return self;
+        return this;
     },
     always: function (fn) {
 
+        if (this._fulfilled || this._erred) {
 
-        var self = this;
-
-        if (self._fulfilled || self._erred) {
-
-            fn(self._responseArgs.resp);
+            fn(this._responseArgs.resp);
 
         } else {
 
-            self._completeHandlers.push(fn);
+            this._completeHandlers.push(fn);
         }
 
-        return self;
+        return this;
     },
+
+    // fail will execute when the request fails
 
     fail: function (fn) {
 
-        var self = this;
+        if (this._erred) {
 
-        if (self._erred) {
-
-            fn(self._responseArgs.resp, self._responseArgs.msg, self._responseArgs.t);
+            fn(this._responseArgs.resp, this._responseArgs.msg, this._responseArgs.t);
 
         } else {
 
-            self._errorHandlers.push(fn);
+            this._errorHandlers.push(fn);
         }
 
-        return self;
+        return this;
     },
 
     catch: function (fn) {
@@ -276,7 +269,7 @@ function urlappend(url, s) {
 function handleJsonp(options, fn, err, url) {
     var reqId = uniqid++,
         cbkey = options.jsonp || 'callback', // the 'callback' key
-        cbval = options.jsonpCallback || AjaxCore.getcallbackPrefix(reqId),
+        cbval = options.jsonpCallback || AjaxCore.getexpando(reqId),
         cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
         match = url.match(cbreg),
         script = doc.createElement('script'),
@@ -318,12 +311,12 @@ function handleJsonp(options, fn, err, url) {
 
         fn(lastValue);
         lastValue = undefined;
-        head.removeChild(script);
+        doc.head.removeChild(script);
         loaded = 1;
     };
 
     // Add the script to the DOM head
-    head.appendChild(script);
+    doc.head.appendChild(script);
 
     // Enable JSONP timeout
     return {
@@ -331,7 +324,7 @@ function handleJsonp(options, fn, err, url) {
             script.onload = script.onreadystatechange = null;
             err({}, 'Request is aborted: timeout', {});
             lastValue = undefined;
-            head.removeChild(script);
+            doc.head.removeChild(script);
             loaded = 1;
         }
     };
@@ -392,7 +385,7 @@ function getRequest(fn, err) {
     }
 
 
-    if (win[xDomainRequest] && xhttp instanceof win[xDomainRequest]) {
+    if (win['XDomainRequest'] && xhttp instanceof win['XDomainRequest']) {
         xhttp.onload = fn;
         xhttp.onerror = err;
         // NOTE: see
@@ -431,36 +424,37 @@ function getRequest(fn, err) {
 
 function init(o, fn) {
 
-    var self = this;
+    var self = this,
+        opt;
 
     if (typeof o === 'string') {
 
-        self.url = o;
+        this.url = o;
 
     } else {
 
-        self.url = o.url;
+        this.url = o.url;
     }
 
     /**
-     * Create the final options object, clone
-     * the default settings to the o Object, IF
+     * Create the final options object - clone
+     * the default ajaxsettings, IF
      * the default options are not set
      */
 
-    for (var opt in AjaxCore.ajaxSettings) {
+    for (opt in AjaxCore.ajaxSettings) {
         if (!o.hasOwnProperty(opt)) {
             o[opt] = AjaxCore.ajaxSettings[opt];
         }
     }
 
-    self._fulfilled = false;
-    self._successHandler = hAzzle.noop;
-    self._fulfillmentHandlers = [];
-    self._errorHandlers = [];
-    self._completeHandlers = [];
-    self._erred = false;
-    self._responseArgs = {};
+    this._fulfilled = false;
+    this._successHandler = hAzzle.noop;
+    this._fulfillmentHandlers = [];
+    this._errorHandlers = [];
+    this._completeHandlers = [];
+    this._erred = false;
+    this._responseArgs = {};
 
     // set timeout
     // default: 1500
@@ -472,13 +466,13 @@ function init(o, fn) {
     // set up the handlers
     // default: hAzzle.noop
 
-    self._successHandler = function () {
+    this._successHandler = function () {
         o.success.apply(o, arguments);
     };
-    self._errorHandlers.push(function () {
+    this._errorHandlers.push(function () {
         o.error.apply(o, arguments);
     });
-    self._completeHandlers.push(function () {
+    this._completeHandlers.push(function () {
         o.complete.apply(o, arguments);
     });
 
@@ -486,14 +480,18 @@ function init(o, fn) {
     fn = fn || hAzzle.noop;
 
     // Complete
-    // Can we use rAF for this?
 
     function complete(resp) {
 
-        // Clear the timeout
+        // Clear timeout if it exists
 
-        clearTimeout(self.timeout);
-        self.timeout = null;
+        if (self.timeout) {
+
+            clearTimeout(self.timeout);
+            self.timeout = null;
+
+        }
+
         while (self._completeHandlers.length > 0) {
 
             self._completeHandlers.shift()(resp);
@@ -531,10 +529,10 @@ function init(o, fn) {
         resp = (type !== 'jsonp') ? self.request : resp;
 
         if (resp) {
+
             // Parse text as JSON
             resp = type === 'json' ? hAzzle.parseJSON(statusText) :
                 // Text to html
-
                 type === 'html' ? statusText :
                 // Parse text as xml
                 type === 'xml' ? resp = hAzzle.parseXML(resp.responseXML) : '';
@@ -573,7 +571,9 @@ function normalize(s) {
 
 function serial(el, callback) {
     var n = el.name,
-        t = el.tagName.toLowerCase(),
+        t = el.nodeName,
+        a = 0,
+        len = el.length,
         optCb = function (options) {
             if (options && !options.disabled) {
                 callback(n, normalize(options.attributes.value && options.attributes.value.specified ? options.value : options.text));
@@ -587,7 +587,7 @@ function serial(el, callback) {
         return;
     }
 
-    if (t === 'input') {
+    if (t === 'INPUT') {
         if (!submitterTypes.test(el.type)) {
             ch = checkbox.test(el.type);
             ra = radio.test(el.type);
@@ -597,17 +597,25 @@ function serial(el, callback) {
         }
     }
 
-    if (t === 'textarea') {
+    if (t === 'TEXTAREA' || t === 'KEYGEN') {
 
         callback(n, normalize(el.value));
     }
 
-    if (t === 'select') {
+    if (t === 'SELECT') {
+
         if (el.type.toLowerCase() === 'select-one') {
+
             optCb(el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null);
+
         } else {
-            for (i = 0; el.length && i < el.length; i++) {
-                el.options[i].selected && optCb(el.options[i]);
+
+            for (; i < len; i++) {
+
+                if (el.options[a].selected) {
+
+                    optCb(el.options[a]);
+                }
             }
         }
     }
@@ -644,8 +652,9 @@ function eachFormElement() {
             serial(e, cb);
         }
 
-        serializeSubtags(e, ['input', 'select', 'textarea']);
+        serializeSubtags(e, ['input', 'select', 'textarea', 'keygen']);
     }
+
 }
 
 // standard query string style serialization
@@ -667,7 +676,7 @@ function serializeHash() {
     return hash;
 }
 
-// [ { name: 'name', value: 'value' }, ... ] style serialization
+
 AjaxCore.serializeArray = function () {
 
     var arr = [];
@@ -774,8 +783,8 @@ function buildParams(prefix, obj, traditional, add) {
     }
 }
 
-AjaxCore.getcallbackPrefix = function () {
-    return callbackPrefix;
+AjaxCore.getexpando = function () {
+    return expando;
 };
 
 
