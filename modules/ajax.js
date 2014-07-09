@@ -48,11 +48,7 @@ var win = window,
         json: "application/json, text/javascript"
     },
 
-    defaultHeaders = {
-
-        'contentType': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'requestedWith': 'XMLHttpRequest',
-    },
+    // ActiveXObject when available (IE), otherwise XMLHttpRequest. 
 
     xhr = function (options) {
 
@@ -78,6 +74,8 @@ var win = window,
             return new XMLHttpRequest();
         }
     };
+
+
 
 var AjaxCore = {
 
@@ -118,16 +116,46 @@ var AjaxCore = {
      */
 
     ajaxSettings: {
-        url: location.href,
+
+        // The url to make request to. If empty no request will be made.
+        url: '',
+
+        // Modify the xhr object before open it. Default is null.
+        before: null,
+
+        // Modify the xhr object before send. Default is null.
+
+        sendWait: null,
+        // The type of the request. Default is GET.
         type: "GET",
         async: 1,
+        // Tell server witch content type it is.
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-        timeout: 1500,
-        success: hAzzle.noop,
-        error: hAzzle.noop,
-        complete: hAzzle.noop
-    }
 
+        // Set a timeout (in milliseconds) for the request.
+        timeout: 1500,
+
+        // Data that is send to the server.
+        // Can be: json, jsonp, html, text, xml.
+        data: {},
+
+        // Function that runs on a successful request.
+        // Takes on argument, the response.
+
+        success: hAzzle.noop,
+
+        crossOrigin: false,
+
+        // Error function that is called on failed request.
+        // Take to arguments, xhr and the options object.
+        error: hAzzle.noop,
+        complete: hAzzle.noop,
+        // An object of additional header key/value pairs to send along with the request
+        headers: {
+            'requestedWith': 'XMLHttpRequest'
+
+        }
+    }
 };
 
 /* =========================== AJAX PROTOTYPE CHAIN ========================== */
@@ -147,16 +175,16 @@ AjaxCore.xmlhttp.prototype = {
         init.call(this, this.options, this.fn);
     },
 
-    then: function (success, fail) {
+    then: function (ajaxHandleResponses, fail) {
 
         var self = this;
 
-        success = success || function () {};
+        ajaxHandleResponses = ajaxHandleResponses || function () {};
         fail = fail || function () {};
 
         if (self._fulfilled) {
 
-            self._responseArgs.resp = success(self._responseArgs.resp);
+            self._responseArgs.resp = ajaxHandleResponses(self._responseArgs.resp);
 
         } else if (self._erred) {
 
@@ -164,7 +192,7 @@ AjaxCore.xmlhttp.prototype = {
 
         } else {
 
-            self._fulfillmentHandlers.push(success);
+            self._fulfillmentHandlers.push(ajaxHandleResponses);
             self._errorHandlers.push(fail);
         }
         return self;
@@ -207,7 +235,7 @@ AjaxCore.xmlhttp.prototype = {
     }
 };
 
-function handleReadyState(r, success, error) {
+function handleReadyState(r, ajaxHandleResponses, error) {
 
     return function () {
         if (r._aborted) {
@@ -216,7 +244,7 @@ function handleReadyState(r, success, error) {
         if (r.request && r.request.readyState == 4) {
             r.request.onreadystatechange = hAzzle.noop;
             if (xhrSuccessStatus[r.request.status] || r.request.status) {
-                success(r.request);
+                ajaxHandleResponses(r.request);
             } else {
                 error(r.request);
             }
@@ -326,9 +354,10 @@ function getRequest(fn, err) {
 
     headers.Accept = headers.Accept || accepts[o.dataType] || accepts['*'];
 
+
     if (!headers.contentType && !isAFormData) {
 
-        headers.contentType = o.contentType || defaultHeaders.contentType;
+        headers.contentType = o.contentType;
     }
 
     // Check for headers option
@@ -402,7 +431,11 @@ function init(o, fn) {
      * the default options are not set
      */
 
-    o = ajaxExtend(AjaxCore.ajaxSettings, o);
+    for (var opt in AjaxCore.ajaxSettings) {
+        if (!o.hasOwnProperty(opt)) {
+            o[opt] = AjaxCore.ajaxSettings[opt];
+        }
+    }
 
     self._fulfilled = false;
     self._successHandler = hAzzle.noop;
@@ -450,7 +483,11 @@ function init(o, fn) {
         }
     }
 
-    function success(resp) {
+    /* Handles responses to an ajax request:
+     * - finds the right dataType (mediates between content-type and expected dataType)
+     * - returns the corresponding response
+     */
+    function ajaxHandleResponses(resp) {
 
         var type = o.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
             status = resp.status,
@@ -505,7 +542,7 @@ function init(o, fn) {
         complete(resp);
     }
 
-    this.request = getRequest.call(this, success, error);
+    this.request = getRequest.call(this, ajaxHandleResponses, error);
 }
 
 
@@ -694,19 +731,6 @@ function buildParams(prefix, obj, traditional, add) {
         add(prefix, obj);
     }
 }
-
-function ajaxExtend(target, src) {
-    var key;
-
-    for (key in src) {
-        if (src[key] !== undefined) {
-            target[key] = src[key];
-        }
-    }
-
-    return target;
-}
-
 
 AjaxCore.getcallbackPrefix = function () {
     return callbackPrefix;
