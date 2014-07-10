@@ -36,7 +36,7 @@ var win = window,
         text: "text/plain",
         html: "text/html",
         xml: "application/xml, text/xml",
-        json: "application/json, text/javascript"
+        json: "application/json;charset=utf-8, text/javascript;charset=utf-8"
     },
 
     xhr = function (options) {
@@ -124,7 +124,7 @@ var win = window,
 
             // Tell server witch content type it is.
 
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            contentType: "application/x-www-form-urlencoded; charset=utf-8",
 
             // default: html
 
@@ -349,7 +349,7 @@ function getRequest(fn, err) {
         method = (opt.type || 'GET').toUpperCase(),
         headers = opt.headers || {},
         url = hAzzle.isString(opt) ? opt : opt.url,
-        i, isAFormData,
+        formData,
         data = (opt.processData !== false && opt.data && typeof opt.data !== 'string') ?
         AjaxCore.toQueryString(opt.data) : (opt.data || null),
         xhttp, sendWait = false;
@@ -380,7 +380,7 @@ function getRequest(fn, err) {
         xhttp.open(method, url, opt.async === false ? false : true);
     }
 
-    isAFormData = hAzzle.isFunction(FormData) && (opt.data instanceof FormData);
+    formData = hAzzle.isFunction(FormData) && (opt.data instanceof FormData);
 
     // Set aaccept header
 
@@ -388,7 +388,7 @@ function getRequest(fn, err) {
 
     // Set contentType
 
-    if (!headers.contentType && !isAFormData) {
+    if (!headers.contentType && !formData) {
 
         headers.contentType = opt.contentType;
     }
@@ -420,22 +420,48 @@ function getRequest(fn, err) {
 
     } else {
 
+        // NOTE!! onreadystatechange might get called multiple times with 
+        // readyState === 4 on mobile webkit. But only for Android 4.1 and
+        // below. But hAzzle are not supposed to support so old versions
+        // anyway
+
         xhttp.onreadystatechange = handleReadyState(this, fn, err);
     }
     opt.before && opt.before(xhttp);
+
     if (sendWait) {
+
         setTimeout(function () {
-            try {
-                xhttp.send(data);
-            } catch (e) { /* Die silently !*/ }
+
+            SendRequest(xhttp, data);
+
         }, 200);
+
     } else {
-        try {
-            xhttp.send(data);
-        } catch (e) { /* Die silently !*/ }
+
+        SendRequest(xhttp, data);
     }
+
     // return
+	
     return xhttp;
+}
+
+/**
+ * Send XMLHTTP data
+ *
+ * @param {Object} xhttp
+ * @param {String/Object} data
+ *
+ */
+
+function SendRequest(xhttp, data) {
+	
+    try {
+        // Avoid memory leak in IE, by sending
+        // 'null' if no data
+        xhttp.send(data || null);
+    } catch (e) { /* Die silently !*/ }
 }
 
 /**
@@ -534,7 +560,7 @@ function init(options, fn) {
         var type = options.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
             status = resp.status,
 
-            // XHR Level 2 spec (supported by IE10 introduced the response/responseType properties. This are
+            // XHR Level 2 spec - supported by IE10 - introduced the new response/responseType properties. This are
             // - obviously - not working in IE9, so we do a litle 'magic'
 
             response = ('response' in resp) ? resp.response : resp.responseText;
