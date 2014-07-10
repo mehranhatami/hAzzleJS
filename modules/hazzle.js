@@ -6,7 +6,6 @@
  *
  * Date: 2014-07-11
  */
-
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -26,12 +25,6 @@
         natives = {},
 
         /**
-         * Helper to break out of loops
-         */
-
-        breaker = {},
-
-        /**
          * Prototype references.
          */
 
@@ -46,8 +39,6 @@
         slice = ArrayProto.slice,
         concat = ArrayProto.concat,
         toString = Object.prototype.toString,
-        Okeys = Object.keys,
-        trim = String.prototype.trim,
 
         iews = /^\s*$/,
         trwl = /^\s\s*/,
@@ -226,6 +217,7 @@
                 return hAzzle.ready(fn);
             }
         },
+
         size: function () {
             return this.length;
         },
@@ -410,6 +402,14 @@
             ], obj);
         },
 
+        lowercase: function (string) {
+            return typeof string === 'string' ? string.toLowerCase() : string;
+        },
+
+        uppercase: function (string) {
+            return typeof string === 'string' ? string.toUpperCase() : string;
+        },
+
         /* =========================== PUBLIC FUNCTIONS ========================== */
 
         /**
@@ -564,21 +564,6 @@
             return concat.apply([], ret);
         },
 
-        /**
-         * Remove empty whitespace from beginning and end of a string
-         *
-         * @param{String} str
-         * @return{String}
-         *
-         * String.prototype.trim() are only supported in IE9+ Standard mode.
-         */
-
-        trim: trim ? function (text) {
-            return text === null ? '' : trim.call(text);
-        } : function (text) {
-            return text === null ? '' : text.replace(trwl, '').replace(trwr, '');
-        },
-
         isNode: function (node) {
             return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 11);
         },
@@ -592,6 +577,21 @@
 
         escJS: function (s) {
             return replace(s, js, ucode);
+        },
+
+        size: function (obj, ownPropsOnly) {
+            var count = 0,
+                key;
+
+            if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
+                return obj.length;
+            } else if (hAzzle.isObject(obj)) {
+                for (key in obj)
+                    if (!ownPropsOnly || obj.hasOwnProperty(key))
+                        count++;
+            }
+
+            return count;
         },
         /**
          * Get text
@@ -744,6 +744,7 @@
         // they'll iterate over anything added to the Array.prototype
 
         forOwn: function (obj, iterator, context) {
+            var key;
             if (obj === null) return obj;
             for (key in obj) {
                 if (obj.hasOwnProperty(key)) {
@@ -754,18 +755,25 @@
         },
 
         sortKeys: function (obj) {
-            var keys = [], key;
+            var keys = [],
+                key;
             for (key in obj) {
                 if (obj.hasOwnProperty(key)) {
                     keys.push(key);
                 }
             }
             return keys.sort();
-        }
+        },
+
+        reverseParams: function (iteratorFn) {
+            return function (value, key) {
+                iteratorFn(key, value);
+            };
+        },
 
         // This one has to be fast...
 
-            setter: function (elems, fn, key, value, exec) {
+        setter: function (elems, fn, key, value, exec) {
 
             var len = elems.length,
                 k,
@@ -831,6 +839,7 @@
                 while (el = el.nextSibling) {
                     if (el.nodeType !== 1) return el;
                 }
+
             }
         },
 
@@ -980,14 +989,26 @@
 
     }, hAzzle);
 
-    // Functions / variabels that will be available after 'grunt'. Else it will result in an jsLint error 'undefined'
+    /**
+     * Remove empty whitespace from beginning and end of a string
+     *
+     * @param{String} str
+     * @return{String}
+     *
+     * String.prototype.trim() are only supported in IE9+ Standard mode.
+     */
 
-    var lowercase = hAzzle.lowercase = function (string) {
-            return hAzzle.isString(string) ? string.toLowerCase() : string;
-        },
-        uppercase = hAzzle.lowercase = function (string) {
-            return hAzzle.isString(string) ? string.toUpperCase() : string;
+
+    hAzzle.trim = (function () {
+        if (!String.prototype.trim) {
+            return function (value) {
+                return typeof value === 'string' ? value.replace(trwl, '').replace(trwr, '') : value;
+            };
+        }
+        return function (value) {
+            return value === 'string' ? value.trim() : value;
         };
+    })();
 
     // call this when the document is ready
     // this function protects itself against being called more than once

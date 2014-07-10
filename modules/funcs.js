@@ -56,13 +56,35 @@ hAzzle.extend({
      * to another object
      */
 
-    shallowCopy: function (target, src) {
-        hAzzle.forOwn(src, function (prop) {
-            target[prop] = src[prop];
-        });
 
-        return target;
+    shallowCopy: function (src, target) {
+        var i = 0;
+
+        if (hAzzle.isArray(src)) {
+
+            target = target || [];
+
+            for (; i < src.length; i++) {
+
+                target[i] = src[i];
+            }
+
+        } else if (hAzzle.isObject(src)) {
+
+            target = target || {};
+
+            var keys = Object.keys(src),
+                key, l = keys.length;
+
+            for (; i < l; i++) {
+                key = keys[i];
+                target[key] = src[key];
+            }
+        }
+
+        return target || src;
     },
+
 
 
     pluck: function (array, property) {
