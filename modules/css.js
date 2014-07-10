@@ -179,20 +179,13 @@ hAzzle.extend({
     }
 });
 
-
-// Let us extend the hAzzle Object a litle ...
+// Go globale!
 
 hAzzle.extend({
 
     // Properties that shouldn't have units behind 
 
     unitless: {},
-
-    /**
-     * Yes, we are now supporting CSS hooks
-     * Some cssHooks are injected from the
-     * cssSupport.js module
-     */
 
     cssHooks: {
 
@@ -211,6 +204,15 @@ hAzzle.extend({
 
         "float": "cssFloat"
     },
+
+    /**
+     * Set css properties
+     *
+     * @param {Object} elem
+     * @param {String|Object} name
+     * @param {String} value
+     * @return {String|hAzzle}
+     */
 
     style: function (elem, name, value) {
 
@@ -273,14 +275,15 @@ hAzzle.extend({
         }
     },
 
-    /*
+    /**
      * Set CSS rules on DOM nodes
      *
-     * It also converts CSS-style (e.g. box-sizing) to
-     * camelCase
+     * @param {Object} elem
+     * @param {String|Object} prop
+     * @return {String|Object|Array}
      */
 
-    css: function (el, prop) {
+    css: function (elem, prop) {
 
         var val,
             hooks,
@@ -288,10 +291,7 @@ hAzzle.extend({
 
         // If no element, return
 
-        if (!el) {
-
-            return null;
-        }
+        if (!elem) return null;
 
         // Inspiration from jQuery
 
@@ -301,7 +301,7 @@ hAzzle.extend({
 
         if (hooks && 'get' in hooks) {
 
-            val = hooks.get(el, true);
+            val = hooks.get(elem, true);
 
         }
 
@@ -309,7 +309,7 @@ hAzzle.extend({
 
         if (val === undefined) {
 
-            val = curCSS(el, prop);
+            val = curCSS(elem, prop);
         }
 
         //convert 'normal' to computed value
@@ -662,16 +662,17 @@ hAzzle.each(['width', 'height'], function (name) {
 // Unitless properties
 
 hAzzle.each(['lineHeight', 'zoom', 'zIndex', 'opacity', 'boxFlex',
-    'WebkitBoxFlex', 'MozBoxFlex',
-    'columns', 'counterReset', 'counterIncrement',
-    'fontWeight', 'float', 'volume', 'stress',
-    'overflow', 'fillOpacity',
-    'flexGrow', 'columnCount',
-    'flexShrink', 'order',
-    'orphans', 'widows',
-    'transform', 'transformOrigin',
-    'transformStyle', 'perspective',
-    'perspectiveOrigin', 'backfaceVisibility'
-], function (name) {
-    hAzzle.unitless[name] = true;
-});
+        'WebkitBoxFlex', 'MozBoxFlex',
+        'columns', 'counterReset', 'counterIncrement',
+        'fontWeight', 'float', 'volume', 'stress',
+        'overflow', 'fillOpacity',
+        'flexGrow', 'columnCount',
+        'flexShrink', 'order',
+        'orphans', 'widows',
+        'transform', 'transformOrigin',
+        'transformStyle', 'perspective',
+        'perspectiveOrigin', 'backfaceVisibility'
+    ],
+    function (name) {
+        hAzzle.unitless[name] = true;
+    });

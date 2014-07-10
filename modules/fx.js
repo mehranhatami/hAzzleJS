@@ -2,7 +2,6 @@
  * Mehran animation engine
  */
 var win = this,
-    Mehran = hAzzle.Mehran,
 
     // Deal with foreign domains
     // Accessing .name will throw SecurityError within a foreign domain.
@@ -59,11 +58,9 @@ var win = this,
                 function (id) {
                     clearTimeout(id);
                 });
-    }();
-
-// Set up Mehran
-
-hAzzle.extend({
+    }(),
+	
+	fxCore = {
 
     version: '0.0.1a',
 
@@ -83,7 +80,7 @@ hAzzle.extend({
         'perfNow': perfNow,
     },
 
-}, Mehran);
+};
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
@@ -112,11 +109,11 @@ hAzzle.cancelFrame = cancelframe;
 
 // Detect if native rAF or not
 
-hAzzle.nativeRAF = Mehran.has['native-rAF'];
+hAzzle.nativeRAF = fxCore.has['native-rAF'];
 
 // Foreign domain detection
 
-hAzzle.foreignDomain = Mehran.has['foreign-domain'];
+hAzzle.foreignDomain = fxCore.has['foreign-domain'];
 
 // performance.now()
 
@@ -124,15 +121,15 @@ hAzzle.pnow = now;
 
 /* =========================== ANIMATION ENGINE ========================== */
 
-// Mehran.fx
+// fxCore.fx
 
-var fx = Mehran.fx = function (elem, options) {
+var fx = fxCore.fx = function (elem, options) {
     var self;
     self.elem = elem;
     self.options = options;
 };
 
-// Mehran.fx prototype
+// fxCore.fx prototype
 
 fx.prototype = {};
 

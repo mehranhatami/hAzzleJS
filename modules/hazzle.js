@@ -199,8 +199,8 @@
 
                 n = callback.call(self, self[i], i);
 
-                //this is a lot more readable in compare with [func ? (func(n) && m.push(n)) : m.push(n);]
                 if (func) {
+					
                     func(n);
                 }
                 m.push(n);
@@ -983,11 +983,6 @@
     hAzzle.Jiesa = Jiesa;
 
     /* =========================== ANIMATION ENGINE HOLDER ========================== */
-
-    var Mehran = {};
-    hAzzle.Mehran = Mehran;
-
-    /* =========================== DOCUMENT READY FUNCTIONS ========================== */
 
     hAzzle.extend({
 
