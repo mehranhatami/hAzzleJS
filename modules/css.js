@@ -64,7 +64,7 @@ hAzzle.extend({
         // Both values set, get CSS value
 
         if (typeof value === 'undefined' && type === 'string') return hAzzle.css(el, prop);
-        if (type === "string") obj[prop] = value;
+        if (type === 'string') obj[prop] = value;
 
         for (; i < l; i++) {
 
@@ -134,48 +134,49 @@ hAzzle.extend({
 
     position: function () {
 
-        if (!this[0]) {
-            return null;
-        }
+        if (this[0]) {
 
-        var offsetParent, offset,
-            parentOffset = {
-                top: 0,
-                left: 0
-            },
-            elem = this[0];
 
-        if (hAzzle.style(elem, 'position') === 'fixed') {
+            var offsetParent, offset,
+                parentOffset = {
+                    top: 0,
+                    left: 0
+                },
+                elem = this[0];
 
-            offset = elem.getBoundingClientRect();
+            if (hAzzle.style(elem, 'position') === 'fixed') {
 
-        } else {
+                offset = elem.getBoundingClientRect();
 
-            // Get *real* offsetParent
+            } else {
 
-            offsetParent = this.offsetParent();
+                // Get *real* offsetParent
 
-            // Get correct offsets
+                offsetParent = this.offsetParent();
 
-            offset = this.offset();
+                // Get correct offsets
 
-            if (!hAzzle.nodeName(offsetParent[0], 'html')) {
+                offset = this.offset();
 
-                parentOffset = offsetParent.offset();
+                if (!hAzzle.nodeName(offsetParent[0], 'html')) {
+
+                    parentOffset = offsetParent.offset();
+                }
+
+                offset.top -= parseFloat(hAzzle.css(elem, 'margin-top')) || 0;
+                offset.left -= parseFloat(hAzzle.css(elem, 'margin-left')) || 0;
+
+                // Add offsetParent borders
+                parentOffset.top += parseFloat(hAzzle.css(offsetParent[0], 'border-top-width')) || 0;
+                parentOffset.left += parseFloat(hAzzle.css(offsetParent[0], 'border-left-width')) || 0;
             }
-
-            offset.top -= parseFloat(hAzzle.css(elem, 'margin-top')) || 0;
-            offset.left -= parseFloat(hAzzle.css(elem, 'margin-left')) || 0;
-
-            // Add offsetParent borders
-            parentOffset.top += parseFloat(hAzzle.css(offsetParent[0], 'border-top-width')) || 0;
-            parentOffset.left += parseFloat(hAzzle.css(offsetParent[0], 'border-left-width')) || 0;
+            // Subtract the two offsets
+            return {
+                top: offset.top - parentOffset.top,
+                left: offset.left - parentOffset.left
+            };
         }
-        // Subtract the two offsets
-        return {
-            top: offset.top - parentOffset.top,
-            left: offset.left - parentOffset.left
-        };
+        return null;
     }
 });
 
@@ -193,7 +194,7 @@ hAzzle.extend({
             get: function (el, computed) {
 
                 if (computed) {
-                    var ret = hAzzle.css(el, 'opacity');
+                    var ret = curCSS(el, 'opacity');
                     return ret === '' ? '1' : ret;
                 }
             }
@@ -202,7 +203,7 @@ hAzzle.extend({
 
     cssProps: {
 
-        "float": "cssFloat"
+        'float': 'cssFloat'
     },
 
     /**
@@ -302,7 +303,6 @@ hAzzle.extend({
         if (hooks && 'get' in hooks) {
 
             val = hooks.get(elem, true);
-
         }
 
         // Otherwise, if a way to get the computed value exists, use that
@@ -407,13 +407,7 @@ hAzzle.extend({
 
         return unit ? px / unit : px;
 
-    },
-    ViewportHeight: function () {
-        return win.innerHeight;
-    },
-    ViewportWidth: function () {
-        return win.innerWidth;
-    },
+    }
 
 }, hAzzle);
 
@@ -476,6 +470,8 @@ function xy(elem, options, i) {
         curTop = curPosition.top;
         curLeft = curPosition.left;
 
+
+
     } else {
         curTop = parseFloat(curCSSTop) || 0;
         curLeft = parseFloat(curCSSLeft) || 0;
@@ -508,30 +504,24 @@ function getWindow(elem) {
     return hAzzle.isWindow(elem) ? elem : elem.nodeType === 9 && elem.defaultView;
 }
 
-
-var curCSS = hAzzle.curCSS = function (elem, prop, computed) {
-
+function curCSS(elem, prop, computed) {
     var ret;
 
     computed = computed || getStyles(elem);
 
     if (computed) {
-
         ret = computed.getPropertyValue(prop) || computed[prop];
     }
 
-    if (computed) {
+    if (computed && (ret === '' && !hAzzle.contains(elem.ownerDocument, elem))) {
 
-        if (ret === '' && !hAzzle.contains(elem.ownerDocument, prop)) {
-
-            ret = hAzzle.style(elem, name);
-        }
+        ret = hAzzle.style(elem, prop);
     }
 
     return ret !== undefined ?
         ret + '' :
         ret;
-};
+}
 
 /* =========================== INTERNAL ========================== */
 
@@ -585,8 +575,6 @@ hAzzle.forOwn({
         }
     };
 });
-
-
 
 // Margin and padding cssHooks
 
