@@ -170,9 +170,6 @@
 
         each: function (fn, obj) {
             return hAzzle.each(this, fn, obj);
-
-
-
         },
 
         /**
@@ -482,8 +479,20 @@
             });
         },
 
-        arrayLike: function (o) {
-            return (typeof o === 'object' && isFinite(o.length));
+        arrayLike: function (obj) {
+
+            if (obj == null || hAzzle.isWindow(obj)) {
+                return false;
+            }
+
+            var length = obj.length;
+
+            if (obj.nodeType === 1 && length) {
+                return true;
+            }
+
+            return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
+                typeof length === 'number' && length > 0 && (length - 1) in obj;
         },
 
         /**
