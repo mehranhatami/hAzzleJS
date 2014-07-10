@@ -236,39 +236,6 @@ AjaxCore.xmlhttp.prototype = {
     }
 };
 
-function handleReadyState(r, aHR, error) {
-
-    return function () {
-
-        if (r._aborted) {
-
-            return error(r.request);
-        }
-
-        if (r.request && r.request.readyState === 4) {
-
-            var status = r.request.status;
-
-            // normalize IE bug (http://bugs.jquery.com/ticket/1450)
-
-            status = status === 1223 ? 204 : status;
-
-            // Zero out onreadystatechange
-
-            r.request.onreadystatechange = hAzzle.noop;
-
-            if (status) {
-
-                aHR(r.request);
-
-            } else {
-
-                error(r.request);
-            }
-        }
-    };
-}
-
 function gC(data) {
     lastValue = data;
 }
@@ -425,8 +392,39 @@ function getRequest(fn, err) {
         // below. But hAzzle are not supposed to support so old versions
         // anyway
 
-        xhttp.onreadystatechange = handleReadyState(this, fn, err);
+        var self = this;
+
+        xhttp.onreadystatechange = function () {
+
+            if (self._aborted) {
+
+                return err(self.request);
+            }
+
+            if (self.request && self.request.readyState === 4) {
+
+                var status = self.request.status;
+
+                // normalize IE bug (http://bugs.jquery.com/ticket/1450)
+
+                status = status === 1223 ? 204 : status;
+
+                // Zero out onreadystatechange
+
+                self.request.onreadystatechange = hAzzle.noop;
+
+                if (status) {
+
+                    fn(self.request);
+
+                } else {
+
+                    err(self.request);
+                }
+            }
+        };
     }
+
     opt.before && opt.before(xhttp);
 
     if (sendWait) {
@@ -443,7 +441,7 @@ function getRequest(fn, err) {
     }
 
     // return
-	
+
     return xhttp;
 }
 
@@ -456,7 +454,7 @@ function getRequest(fn, err) {
  */
 
 function SendRequest(xhttp, data) {
-	
+
     try {
         // Avoid memory leak in IE, by sending
         // 'null' if no data
@@ -656,6 +654,7 @@ function serial(el, callback) {
 
         callback(n, normalize(el.value));
     }
+
 
     if (t === 'SELECT') {
 
