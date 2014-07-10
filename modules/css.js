@@ -4,7 +4,6 @@
 var win = this,
     doc = win.document,
     docElem = hAzzle.docElem,
-    transparent = /^(?:transparent|(?:rgba[(](?:\s*\d+\s*[,]){3}\s*0\s*[)]))$/i,
     numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
@@ -93,8 +92,8 @@ hAzzle.extend({
             d = el && el.ownerDocument,
             w = getWindow(d),
 
-            // Support from IE9 and all the other major 
-            // browsers hAzzle are supposed to support
+            // getBoundingClientRect() are supported from IE9, and all the 
+            // other major browsers hAzzle are supposed to support
 
             bcr = el.getBoundingClientRect();
 
@@ -123,11 +122,13 @@ hAzzle.extend({
 
     offsetParent: function () {
         return hAzzle(this.map(function (el) {
-            var op = el.offsetParent || docElem;
-            while (op && (!hAzzle.nodeName(op, 'html') && hAzzle.css(op, 'position') === 'static')) {
-                op = op.offsetParent || docElem;
-            }
-            return op;
+            var offsetParent  = el.offsetParent || docElem;
+		if( offsetParent ) {
+            while ( (!hAzzle.nodeName(offsetParent, 'html') && hAzzle.css(offsetParent, 'position') === 'static')) {
+                offsetParent  = offsetParent .offsetParent || docElem;
+           }
+		}
+            return offsetParent ;
         }));
     },
 
@@ -146,8 +147,6 @@ hAzzle.extend({
 
         if (hAzzle.style(elem, 'position') === 'fixed') {
 
-            // we assume that getBoundingClientRect is available when computed position is fixed
-
             offset = elem.getBoundingClientRect();
 
         } else {
@@ -161,29 +160,22 @@ hAzzle.extend({
             offset = this.offset();
 
             if (!hAzzle.nodeName(offsetParent[0], 'html')) {
+
                 parentOffset = offsetParent.offset();
             }
 
-            offset.top -= parseFloat(hAzzle(elem).css('margin-top')) || 0;
-            offset.left -= parseFloat(hAzzle(elem).css('margin-left')) || 0;
+            offset.top -= parseFloat(hAzzle.css(elem, 'margin-top')) || 0;
+            offset.left -= parseFloat(hAzzle.css(elem, 'margin-left')) || 0;
 
             // Add offsetParent borders
-            parentOffset.top += parseFloat(hAzzle(offsetParent[0]).css('border-top-width')) || 0;
-            parentOffset.left += parseFloat(hAzzle(offsetParent[0]).css('border-left-width')) || 0;
+           parentOffset.top += parseFloat(hAzzle.css(offsetParent[0], 'border-top-width')) || 0;
+            parentOffset.left += parseFloat(hAzzle.css(offsetParent[0], 'border-left-width')) || 0;
         }
         // Subtract the two offsets
         return {
             top: offset.top - parentOffset.top,
             left: offset.left - parentOffset.left
         };
-    },
-
-
-    // Check if an element are transparent
-
-    isTransparent: function (prop) {
-        var value = this.css(prop);
-        return value ? transparent.test(value) : false;
     }
 });
 
@@ -241,7 +233,7 @@ hAzzle.extend({
                     return ret === '' ? '1' : ret;
                 }
             }
-        },
+        }
     },
 
     cssProps: {
