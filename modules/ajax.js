@@ -235,9 +235,7 @@ AjaxCore.xmlhttp.prototype = {
         return this.fail(fn);
     }
 };
-// if (!(status === ABORTED && msie < 10)) {
-//            statusText = xhr.statusText;
-//        }
+
 function handleReadyState(r, aHR, error) {
 
     return function () {
