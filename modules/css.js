@@ -122,13 +122,13 @@ hAzzle.extend({
 
     offsetParent: function () {
         return hAzzle(this.map(function (el) {
-            var offsetParent  = el.offsetParent || docElem;
-		if( offsetParent ) {
-            while ( (!hAzzle.nodeName(offsetParent, 'html') && hAzzle.css(offsetParent, 'position') === 'static')) {
-                offsetParent  = offsetParent .offsetParent || docElem;
-           }
-		}
-            return offsetParent ;
+            var offsetParent = el.offsetParent || docElem;
+            if (offsetParent) {
+                while ((!hAzzle.nodeName(offsetParent, 'html') && hAzzle.css(offsetParent, 'position') === 'static')) {
+                    offsetParent = offsetParent.offsetParent || docElem;
+                }
+            }
+            return offsetParent;
         }));
     },
 
@@ -168,7 +168,7 @@ hAzzle.extend({
             offset.left -= parseFloat(hAzzle.css(elem, 'margin-left')) || 0;
 
             // Add offsetParent borders
-           parentOffset.top += parseFloat(hAzzle.css(offsetParent[0], 'border-top-width')) || 0;
+            parentOffset.top += parseFloat(hAzzle.css(offsetParent[0], 'border-top-width')) || 0;
             parentOffset.left += parseFloat(hAzzle.css(offsetParent[0], 'border-left-width')) || 0;
         }
         // Subtract the two offsets
@@ -186,36 +186,7 @@ hAzzle.extend({
 
     // Properties that shouldn't have units behind 
 
-    unitless: {
-        'lineHeight': 1,
-        'zoom': 1,
-        'zIndex': 1,
-        'opacity': 1,
-        'boxFlex': 1,
-        'WebkitBoxFlex': 1,
-        'MozBoxFlex': 1,
-        'columns': 1,
-        'counterReset': 1,
-        'counterIncrement': 1,
-        'fontWeight': 1,
-        'float': 1,
-        'volume': 1,
-        'stress': 1,
-        'overflow': 1,
-        'fillOpacity': 1,
-        'flexGrow': 1,
-        'columnCount': 1,
-        'flexShrink': 1,
-        'order': 1,
-        'orphans': 1,
-        'widows': 1,
-        'transform': 1,
-        'transformOrigin': 1,
-        'transformStyle': 1,
-        'perspective': 1,
-        'perspectiveOrigin': 1,
-        'backfaceVisibility': 1
-    },
+    unitless: {},
 
     /**
      * Yes, we are now supporting CSS hooks
@@ -686,4 +657,21 @@ hAzzle.each(['width', 'height'], function (name) {
 
         hAzzle(elem).css(name, value);
     };
+});
+
+// Unitless properties
+
+hAzzle.each(['lineHeight', 'zoom', 'zIndex', 'opacity', 'boxFlex',
+    'WebkitBoxFlex', 'MozBoxFlex',
+    'columns', 'counterReset', 'counterIncrement',
+    'fontWeight', 'float', 'volume', 'stress',
+    'overflow', 'fillOpacity',
+    'flexGrow', 'columnCount',
+    'flexShrink', 'order',
+    'orphans', 'widows',
+    'transform', 'transformOrigin',
+    'transformStyle', 'perspective',
+    'perspectiveOrigin', 'backfaceVisibility'
+], function (name) {
+    hAzzle.unitless[name] = true;
 });
