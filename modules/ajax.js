@@ -184,7 +184,7 @@ AjaxCore.xmlhttp.prototype = {
     retry: function () {
         init.call(this, this.options, this.fn);
     },
-
+    // Add handlers to be called when the request is resolved, rejected, or still in progress.
     then: function (ajaxHandleResponses, fail) {
 
         ajaxHandleResponses = ajaxHandleResponses || function () {};
@@ -205,7 +205,10 @@ AjaxCore.xmlhttp.prototype = {
         }
         return this;
     },
-    always: function (fn) {
+	
+    // Add handlers to be called when the request is either resolved or rejected. 
+	
+	always: function (fn) {
 
         if (this._done || this._erred) {
 
@@ -331,43 +334,47 @@ function handleJsonp(options, fn, err, url) {
 }
 
 function getRequest(fn, err) {
-    var o = this.options,
-        method = (o.type || 'GET').toUpperCase(),
-        headers = o.headers || {},
-        url = typeof o === 'string' ? o : o.url,
-        data = (o.processData !== false && o.data && typeof o.data !== 'string') ? AjaxCore.toQueryString(o.data) : (o.data || null),
+    var opt = this.options,
+        method = (opt.type || 'GET').toUpperCase(),
+        headers = opt.headers || {},
+        url = hAzzle.isString(opt) ? opt : opt.url,
+		i, isAFormData,
+        data = (opt.processData !== false && opt.data && typeof opt.data !== 'string') ? AjaxCore.toQueryString(opt.data) : (opt.data || null),
         xhttp, sendWait = false;
 
-    // if we're working on a GET request and we have data then we should append
-    // query string to end of URL and not post data
-    if ((o.dataType == 'jsonp' || method == 'GET') && data) {
+    // if jsonp or get request, create query string
+
+    if ((opt.dataType == 'jsonp' || method == 'GET') && data) {
+		
         url = urlappend(url, data);
         data = null;
     }
 
-    if (o.dataType == 'jsonp') return handleJsonp(o, fn, err, url);
+    if (opt.dataType == 'jsonp') return handleJsonp(opt, fn, err, url);
 
-    xhttp = (o.xhr && o.xhr(o)) || xhr(o);
+    xhttp = xhr(opt);
 
     // Open the socket
-    if (o.username) {
-        xhttp.open(method, url, o.async === false ? false : true, o.username, o.password);
+
+    if (opt.username) {
+		
+        xhttp.open(method, url, opt.async === false ? false : true, opt.username, opt.password);
     } else {
-        xhttp.open(method, url, o.async === false ? false : true);
+		
+        xhttp.open(method, url, opt.async === false ? false : true);
     }
 
-    // Set headers
-
-    var i, isAFormData = hAzzle.isFunction(FormData) && (o.data instanceof FormData);
+    isAFormData = hAzzle.isFunction(FormData) && (opt.data instanceof FormData);
 
     // Set aaccept header
 
-    headers.Accept = headers.Accept || accepts[o.dataType] || accepts['*'];
+    headers.Accept = headers.Accept || accepts[opt.dataType] || accepts['*'];
 
-
+    // Set contentType
+	
     if (!headers.contentType && !isAFormData) {
 
-        headers.contentType = o.contentType;
+        headers.contentType = opt.contentType;
     }
 
     // Check for headers option
@@ -379,9 +386,9 @@ function getRequest(fn, err) {
 
     // setCredentials
 
-    if (typeof o.withCredentials !== 'undefined' && typeof xhttp.withCredentials !== 'undefined') {
+    if (typeof opt.withCredentials !== 'undefined' && typeof xhttp.withCredentials !== 'undefined') {
 
-        xhttp.withCredentials = !!o.withCredentials;
+        xhttp.withCredentials = !!opt.withCredentials;
     }
 
 
@@ -395,22 +402,13 @@ function getRequest(fn, err) {
     } else {
         xhttp.onreadystatechange = handleReadyState(this, fn, err);
     }
-    o.before && o.before(xhttp);
+    opt.before && opt.before(xhttp);
     if (sendWait) {
         setTimeout(function () {
-            try {
-                xhttp.send(data);
-            } catch (e) {
-                err(e);
-            }
+            try { xhttp.send(data); } catch (e) {/* Die silently !*/ }
         }, 200);
     } else {
-        try {
-            xhttp.send(data);
-        } catch (e) {
-            err(e);
-        }
-
+            try { xhttp.send(data); } catch (e) {/* Die silently !*/ }
     }
     return xhttp;
 }
@@ -573,7 +571,8 @@ function serial(el, callback) {
         t = el.nodeName,
         a = 0,
         len = el.length,
-        optCb = function (options) {
+        // options callback
+		optCallback = function (options) {
             if (options && !options.disabled) {
                 callback(n, normalize(options.attributes.value && options.attributes.value.specified ? options.value : options.text));
             }
@@ -595,8 +594,10 @@ function serial(el, callback) {
             (!(ch || ra) || el.checked) && callback(n, normalize(ch && val === '' ? 'on' : val));
         }
     }
-
-    if (t === 'TEXTAREA' || t === 'KEYGEN') {
+    
+	// Do the Keygen only need to be normalized??
+    
+	if (t === 'TEXTAREA' || t === 'KEYGEN') {
 
         callback(n, normalize(el.value));
     }
@@ -605,7 +606,7 @@ function serial(el, callback) {
 
         if (el.type.toLowerCase() === 'select-one') {
 
-            optCb(el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null);
+            optCallback(el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null);
 
         } else {
 
@@ -613,7 +614,7 @@ function serial(el, callback) {
 
                 if (el.options[a].selected) {
 
-                    optCb(el.options[a]);
+                    optCallback(el.options[a]);
                 }
             }
         }
