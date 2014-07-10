@@ -55,6 +55,5 @@ features.has['bug-sMa'] = hAzzle.assert(function (div) {
 hAzzle.features.optSelected = features['bug-optSelected'];
 hAzzle.features.radioValue = features['bug-radioValue'];
 hAzzle.features.noCloneChecked = features.has['bug-noCloneChecked'];
-hAzzle.features.computedStyle = document.defaultView && document.defaultView.getComputedStyle;
 hAzzle.features.classList = features.has['bug-clsp'];
 hAzzle.features.sMa = features.has['bug-sMa'];
