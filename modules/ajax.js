@@ -46,8 +46,6 @@ var win = window,
         json: "application/json, text/javascript"
     },
 
-    // ActiveXObject when available (IE), otherwise XMLHttpRequest. 
-
     xhr = function (options) {
 
         if (options.crossOrigin === true) {
@@ -71,102 +69,104 @@ var win = window,
 
             return new XMLHttpRequest();
         }
-    };
-
-
-
-var AjaxCore = {
-
-    version: '0.0.2',
-
-    has: {
-
-        // Mehran!  I added feature check for CORS here
-        // You fix!!
-
-        'api-cors': !!xhr && ("withCredentials" in xhr),
-        'api-ajax': !!xhr
     },
 
-    /**
-     * Ajax method to create ajax request with XMLHTTPRequest
-     * Support for JSONP && Cross domain
-     *
-     * @param {String|Object} options
-     * @param {Function} fn
-     * @return {hAzzle}
-     */
+    AjaxCore = {
 
-    xmlhttp: function (options, fn) {
+        version: '0.0.2',
 
-        var self = this;
-        self.options = options;
-        self.fn = fn;
+        has: {
 
-        // prepeare for xmlhttp requests
+            // Mehran!  I added feature check for CORS here
+            // You fix!!
 
-        init.apply(this, arguments);
-    },
+            'api-cors': !!xhr && ("withCredentials" in xhr),
+            'api-ajax': !!xhr
+        },
 
-    /**
-     * Default ajax settings.
-     */
-    ajaxSettings: {
+        /**
+         * Ajax method to create ajax request with XMLHTTPRequest
+         * Support for JSONP && Cross domain
+         *
+         * @param {String|Object} options
+         * @param {Function} fn
+         * @return {hAzzle}
+         */
 
-        // The url to make request to. If empty no request will be made.
+        xmlhttp: function (options, fn) {
 
-        url: '',
+            var self = this;
+            self.options = options;
+            self.fn = fn;
 
-        // Modify the xhr object before open it. Default is null.
+            // prepeare for xmlhttp requests
 
-        before: null,
+            init.apply(this, arguments);
+        },
 
-        // Modify the xhr object before send. Default is null.
+        /**
+         * Default ajax settings.
+         */
+        ajaxSettings: {
 
-        sendWait: null,
+            // The url to make request to. If empty no request will be made.
 
-        // The type of the request. Default is GET.
+            url: '',
 
-        type: "GET",
+            // Modify the xhr object before open it. Default is null.
 
-        // if set to 'true', it will not be recognized
+            before: null,
 
-        async: 1,
+            // Modify the xhr object before send. Default is null.
 
-        // Tell server witch content type it is.
+            sendWait: null,
 
-        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            // The type of the request. Default is GET.
 
-        // Set a timeout (in milliseconds) for the request.
+            type: "GET",
 
-        timeout: 1500,
+            // if set to 'true', it will not be recognized
 
-        // Data that is send to the server.
-        // Can be: json, jsonp, html, text, xml.
+            async: 1,
 
-        data: {},
+            // Tell server witch content type it is.
 
-        // Function that runs on a successful request.
-        // Takes on argument, the response.
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
 
-        success: hAzzle.noop,
+            // default: html
 
-        crossOrigin: false,
+            dataType: 'html',
 
-        // Error function that is called on failed request.
-        // Take to arguments, xhr and the options object.
+            // Set a timeout (in milliseconds) for the request.
 
-        error: hAzzle.noop,
+            timeout: 1500,
 
-        complete: hAzzle.noop,
+            // Data that is send to the server.
+            // Can be: json, jsonp, html, text, xml.
 
-        // An object of additional header key/value pairs to send along with the request
-        headers: {
-            'requestedWith': 'XMLHttpRequest'
+            data: {},
 
+            // Function that runs on a successful request.
+            // Takes on argument, the response.
+
+            success: hAzzle.noop,
+
+            crossOrigin: false,
+
+            // Error function that is called on failed request.
+            // Take to arguments, xhr and the options object.
+
+            error: hAzzle.noop,
+
+            complete: hAzzle.noop,
+
+            // An object of additional header key/value pairs to send along with the request
+            headers: {
+
+                'requestedWith': 'XMLHttpRequest'
+            }
         }
-    }
-};
+    };
 
 /* =========================== AJAX PROTOTYPE CHAIN ========================== */
 
@@ -190,26 +190,26 @@ AjaxCore.xmlhttp.prototype = {
         ajaxHandleResponses = ajaxHandleResponses || function () {};
         fail = fail || function () {};
 
-        if (this._fulfilled) {
+        if (this._done) {
 
-            this._responseArgs.resp = ajaxHandleResponses(this._responseArgs.resp);
+            this._respArgs.resp = ajaxHandleResponses(this._respArgs.resp);
 
         } else if (this._erred) {
 
-            fail(this._responseArgs.resp, this._responseArgs.msg, this._responseArgs.t);
+            fail(this._respArgs.resp, this._respArgs.msg, this._respArgs.t);
 
         } else {
 
-            this._fulfillmentHandlers.push(ajaxHandleResponses);
+            this._doneHandlers.push(ajaxHandleResponses);
             this._errorHandlers.push(fail);
         }
         return this;
     },
     always: function (fn) {
 
-        if (this._fulfilled || this._erred) {
+        if (this._done || this._erred) {
 
-            fn(this._responseArgs.resp);
+            fn(this._respArgs.resp);
 
         } else {
 
@@ -225,7 +225,7 @@ AjaxCore.xmlhttp.prototype = {
 
         if (this._erred) {
 
-            fn(this._responseArgs.resp, this._responseArgs.msg, this._responseArgs.t);
+            fn(this._respArgs.resp, this._respArgs.msg, this._respArgs.t);
 
         } else {
 
@@ -360,7 +360,7 @@ function getRequest(fn, err) {
 
     var i, isAFormData = hAzzle.isFunction(FormData) && (o.data instanceof FormData);
 
-    // Set accept header
+    // Set aaccept header
 
     headers.Accept = headers.Accept || accepts[o.dataType] || accepts['*'];
 
@@ -422,18 +422,18 @@ function getRequest(fn, err) {
  * @param{Function} fn
  */
 
-function init(o, fn) {
+function init(options, fn) {
 
     var self = this,
         opt;
 
-    if (typeof o === 'string') {
+    if (typeof options === 'string') {
 
-        this.url = o;
+        this.url = options;
 
     } else {
 
-        this.url = o.url;
+        this.url = options.url;
     }
 
     /**
@@ -443,37 +443,37 @@ function init(o, fn) {
      */
 
     for (opt in AjaxCore.ajaxSettings) {
-        if (!o.hasOwnProperty(opt)) {
-            o[opt] = AjaxCore.ajaxSettings[opt];
+        if (!options.hasOwnProperty(opt)) {
+            options[opt] = AjaxCore.ajaxSettings[opt];
         }
     }
 
-    this._fulfilled = false;
+    this._done = false;
     this._successHandler = hAzzle.noop;
-    this._fulfillmentHandlers = [];
+    this._doneHandlers = [];
     this._errorHandlers = [];
     this._completeHandlers = [];
     this._erred = false;
-    this._responseArgs = {};
+    this._respArgs = {};
 
     // set timeout
     // default: 1500
 
     self.timeout = setTimeout(function () {
         self.abort();
-    }, o.timeout);
+    }, options.timeout);
 
     // set up the handlers
     // default: hAzzle.noop
 
     this._successHandler = function () {
-        o.success.apply(o, arguments);
+        options.success.apply(options, arguments);
     };
     this._errorHandlers.push(function () {
-        o.error.apply(o, arguments);
+        options.error.apply(options, arguments);
     });
     this._completeHandlers.push(function () {
-        o.complete.apply(o, arguments);
+        options.complete.apply(options, arguments);
     });
 
     //
@@ -489,7 +489,6 @@ function init(o, fn) {
 
             clearTimeout(self.timeout);
             self.timeout = null;
-
         }
 
         while (self._completeHandlers.length > 0) {
@@ -509,7 +508,7 @@ function init(o, fn) {
 
     function ajaxHandleResponses(resp) {
 
-        var type = o.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
+        var type = options.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
             status = resp.status,
             statusText = resp.responseText;
 
@@ -538,12 +537,12 @@ function init(o, fn) {
                 type === 'xml' ? resp = hAzzle.parseXML(resp.responseXML) : '';
         }
 
-        self._responseArgs.resp = resp;
-        self._fulfilled = true;
+        self._respArgs.resp = resp;
+        self._done = true;
         fn(resp);
         self._successHandler(resp);
-        while (self._fulfillmentHandlers.length > 0) {
-            resp = self._fulfillmentHandlers.shift()(resp);
+        while (self._doneHandlers.length > 0) {
+            resp = self._doneHandlers.shift()(resp);
         }
 
         complete(resp);
@@ -551,9 +550,9 @@ function init(o, fn) {
 
     function error(resp, msg, t) {
         resp = self.request;
-        self._responseArgs.resp = resp;
-        self._responseArgs.msg = msg;
-        self._responseArgs.t = t;
+        self._respArgs.resp = resp;
+        self._respArgs.msg = msg;
+        self._respArgs.t = t;
         self._erred = true;
         while (self._errorHandlers.length > 0) {
             self._errorHandlers.shift()(resp, msg, t);
