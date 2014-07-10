@@ -38,7 +38,43 @@ var win = this,
 
     // Boolean elements
 
-    boolElem = {};
+    boolElem = {},
+
+    domCore = {
+
+        has: {
+
+
+
+
+        }
+
+
+    };
+// Bug checking	
+(function () {
+    var input = doc.createElement("input"),
+        select = doc.createElement("select"),
+        opt = select.appendChild(docu.createElement("option"));
+
+    input.type = "checkbox";
+
+    // Support: iOS<=5.1, Android<=4.2+
+    // Default value for a checkbox should be "on"
+    domCore.has['bug-checkbox'] = input.value !== "";
+
+    // Support: IE<=11+
+    // Must access selectedIndex to make default options select
+    domCore.has['bug-optSelected'] = opt.selected;
+
+    // Support: IE<=11+
+    // An input loses its value after becoming a radio
+    input = doc.createElement("input");
+    input.value = "t";
+    input.type = "radio";
+    domCore.has['bug-radioValue'] = input.value === "t";
+})();
+
 
 // Support: IE 9
 htmlMap.optgroup = htmlMap.option;
@@ -287,6 +323,7 @@ hAzzle.extend({
                 value = value.replace(uniqueTags, '<$1></$2>');
 
                 try {
+
 
                     if (el.nodeType === 1) {
 
@@ -578,7 +615,7 @@ hAzzle.extend({
         type: {
             set: function (elem, value) {
 
-                if (!hAzzle.features.radioValue && value === 'radio' &&
+                if (!domCore.has['bug-radioValue'] && value === 'radio' &&
                     hAzzle.nodeName(elem, 'input')) {
 
                     var val = elem.value;
@@ -988,7 +1025,7 @@ function iAh(elem, html, dir) {
 
 // Support: IE9+
 
-if (!hAzzle.features.optSelected) {
+if (!domCore.has['bug-optSelected']) {
     hAzzle.propHooks.selected = {
         get: function (elem) {
             var parent = elem.parentNode;
