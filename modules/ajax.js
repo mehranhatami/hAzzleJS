@@ -8,14 +8,6 @@ var win = window,
 
     lastValue, // data stored by the most recent JSONP callback
 
-    xhrSuccessStatus = {
-        // file protocol always yields status code 0, assume 200
-        0: 200,
-        // Support: IE9
-        // #1450: sometimes IE returns 1223 when it should be 204
-        1223: 204
-    },
-
     headerTypes = {
         'text/plain': 'html',
         'text/html': 'html',
@@ -26,6 +18,7 @@ var win = window,
         'application/json, text/javascript': 'json',
     },
 
+    ie10 = navigator.userAgent.indexOf('MSIE 10.0') !== -1,
     // Usefull regEx
 
     query = (/\?/),
@@ -50,7 +43,7 @@ var win = window,
 
         if (options.crossOrigin === true) {
 
-            var xhr = win['XMLHttpRequest'] ? new XMLHttpRequest() : null;
+            var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : null;
 
             if (xhr && 'withCredentials' in xhr) {
 
@@ -205,10 +198,10 @@ AjaxCore.xmlhttp.prototype = {
         }
         return this;
     },
-	
+
     // Add handlers to be called when the request is either resolved or rejected. 
-	
-	always: function (fn) {
+
+    always: function (fn) {
 
         if (this._done || this._erred) {
 
@@ -242,18 +235,36 @@ AjaxCore.xmlhttp.prototype = {
         return this.fail(fn);
     }
 };
-
-function handleReadyState(r, ajaxHandleResponses, error) {
+// if (!(status === ABORTED && msie < 10)) {
+//            statusText = xhr.statusText;
+//        }
+function handleReadyState(r, aHR, error) {
 
     return function () {
+
         if (r._aborted) {
+
             return error(r.request);
         }
-        if (r.request && r.request.readyState == 4) {
+
+        if (r.request && r.request.readyState === 4) {
+
+            var status = r.request.status;
+
+            // normalize IE bug (http://bugs.jquery.com/ticket/1450)
+
+            status = status === 1223 ? 204 : status;
+
+            // Zero out onreadystatechange
+
             r.request.onreadystatechange = hAzzle.noop;
-            if (xhrSuccessStatus[r.request.status] || r.request.status) {
-                ajaxHandleResponses(r.request);
+
+            if (status) {
+
+                aHR(r.request);
+
             } else {
+
                 error(r.request);
             }
         }
@@ -264,20 +275,14 @@ function gC(data) {
     lastValue = data;
 }
 
-
-function urlappend(url, s) {
-    return s && (url + (query.test(url) ? '&' : '?') + s);
-}
-
-function handleJsonp(options, fn, err, url) {
+function jsonpReq(options, fn, err, url) {
     var reqId = uniqid++,
         cbkey = options.jsonp || 'callback', // the 'callback' key
         cbval = options.jsonpCallback || AjaxCore.getexpando(reqId),
         cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
         match = url.match(cbreg),
         script = doc.createElement('script'),
-        loaded = 0,
-        isIE10 = navigator.userAgent.indexOf('MSIE 10.0') !== -1;
+        loaded = 0;
 
     if (match) {
 
@@ -296,7 +301,8 @@ function handleJsonp(options, fn, err, url) {
     script.src = url;
     script.async = true;
 
-    if (typeof script.onreadystatechange !== 'undefined' && !isIE10) {
+    if (typeof script.onreadystatechange !== 'undefined' && !ie10) {
+
         script.event = 'onclick';
         script.htmlFor = script.id = '_xmlhttp_' + reqId;
     }
@@ -314,12 +320,15 @@ function handleJsonp(options, fn, err, url) {
 
         fn(lastValue);
         lastValue = undefined;
-        doc.head.removeChild(script);
+        doc.body.removeChild(script);
         loaded = 1;
     };
 
-    // Add the script to the DOM head
-    doc.head.appendChild(script);
+    // It's possible to add the script to the document head
+    // instead of the 'body'. But only supported in HTML5,
+    // and almost all major browsers
+
+    doc.body.appendChild(script);
 
     // Enable JSONP timeout
     return {
@@ -327,10 +336,14 @@ function handleJsonp(options, fn, err, url) {
             script.onload = script.onreadystatechange = null;
             err({}, 'Request is aborted: timeout', {});
             lastValue = undefined;
-            doc.head.removeChild(script);
+            doc.body.removeChild(script);
             loaded = 1;
         }
     };
+}
+
+function urlappend(url, s) {
+    return s && (url + (query.test(url) ? '&' : '?') + s);
 }
 
 function getRequest(fn, err) {
@@ -338,29 +351,34 @@ function getRequest(fn, err) {
         method = (opt.type || 'GET').toUpperCase(),
         headers = opt.headers || {},
         url = hAzzle.isString(opt) ? opt : opt.url,
-		i, isAFormData,
-        data = (opt.processData !== false && opt.data && typeof opt.data !== 'string') ? AjaxCore.toQueryString(opt.data) : (opt.data || null),
+        i, isAFormData,
+        data = (opt.processData !== false && opt.data && typeof opt.data !== 'string') ?
+        AjaxCore.toQueryString(opt.data) : (opt.data || null),
         xhttp, sendWait = false;
 
     // if jsonp or get request, create query string
 
     if ((opt.dataType == 'jsonp' || method == 'GET') && data) {
-		
+
         url = urlappend(url, data);
         data = null;
     }
 
-    if (opt.dataType == 'jsonp') return handleJsonp(opt, fn, err, url);
+    if (opt.dataType == 'jsonp') {
+
+        return jsonpReq(opt, fn, err, url);
+    }
 
     xhttp = xhr(opt);
 
     // Open the socket
 
     if (opt.username) {
-		
+
         xhttp.open(method, url, opt.async === false ? false : true, opt.username, opt.password);
+
     } else {
-		
+
         xhttp.open(method, url, opt.async === false ? false : true);
     }
 
@@ -371,45 +389,54 @@ function getRequest(fn, err) {
     headers.Accept = headers.Accept || accepts[opt.dataType] || accepts['*'];
 
     // Set contentType
-	
+
     if (!headers.contentType && !isAFormData) {
 
         headers.contentType = opt.contentType;
     }
 
-    // Check for headers option
+    // Set headers
 
-    for (i in headers) {
-
-        xhttp.setRequestHeader(i, headers[i]);
-    }
+    hAzzle.forOwn(headers, function (value, key) {
+        // Make sure the value are 'defined' before
+        // setting the headers
+        if (hAzzle.isDefined(value)) {
+            xhttp.setRequestHeader(key, value);
+        }
+    });
 
     // setCredentials
+    // Todo!? Fix CORS
 
     if (typeof opt.withCredentials !== 'undefined' && typeof xhttp.withCredentials !== 'undefined') {
 
         xhttp.withCredentials = !!opt.withCredentials;
     }
 
-
     if (win['XDomainRequest'] && xhttp instanceof win['XDomainRequest']) {
+
         xhttp.onload = fn;
         xhttp.onerror = err;
-        // NOTE: see
-        // http://social.msdn.microsoft.com/Forums/en-US/iewebdevelopment/thread/30ef3add-767c-4436-b8a9-f1ca19b4812e
         xhttp.onprogress = function () {};
         sendWait = true;
+
     } else {
+
         xhttp.onreadystatechange = handleReadyState(this, fn, err);
     }
     opt.before && opt.before(xhttp);
     if (sendWait) {
         setTimeout(function () {
-            try { xhttp.send(data); } catch (e) {/* Die silently !*/ }
+            try {
+                xhttp.send(data);
+            } catch (e) { /* Die silently !*/ }
         }, 200);
     } else {
-            try { xhttp.send(data); } catch (e) {/* Die silently !*/ }
+        try {
+            xhttp.send(data);
+        } catch (e) { /* Die silently !*/ }
     }
+    // return
     return xhttp;
 }
 
@@ -508,19 +535,23 @@ function init(options, fn) {
 
         var type = options.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
             status = resp.status,
-            statusText = resp.responseText;
+
+            // XHR Level 2 spec (supported by IE10 introduced the response/responseType properties. This are
+            // - obviously - not working in IE9, so we do a litle 'magic'
+
+            response = ('response' in resp) ? resp.response : resp.responseText;
 
         // if no content
 
         if (status === 204) {
 
-            statusText = "nocontent";
+            response = "nocontent";
 
             // if not modified
 
         } else if (status === 304) {
 
-            statusText = "notmodified";
+            response = "notmodified";
         }
 
         resp = (type !== 'jsonp') ? self.request : resp;
@@ -528,9 +559,9 @@ function init(options, fn) {
         if (resp) {
 
             // Parse text as JSON
-            resp = type === 'json' ? hAzzle.parseJSON(statusText) :
+            resp = type === 'json' ? hAzzle.parseJSON(response) :
                 // Text to html
-                type === 'html' ? statusText :
+                type === 'html' ? response :
                 // Parse text as xml
                 type === 'xml' ? resp = hAzzle.parseXML(resp.responseXML) : '';
         }
@@ -572,7 +603,7 @@ function serial(el, callback) {
         a = 0,
         len = el.length,
         // options callback
-		optCallback = function (options) {
+        optCallback = function (options) {
             if (options && !options.disabled) {
                 callback(n, normalize(options.attributes.value && options.attributes.value.specified ? options.value : options.text));
             }
@@ -594,10 +625,10 @@ function serial(el, callback) {
             (!(ch || ra) || el.checked) && callback(n, normalize(ch && val === '' ? 'on' : val));
         }
     }
-    
-	// Do the Keygen only need to be normalized??
-    
-	if (t === 'TEXTAREA' || t === 'KEYGEN') {
+
+    // Do the Keygen only need to be normalized??
+
+    if (t === 'TEXTAREA' || t === 'KEYGEN') {
 
         callback(n, normalize(el.value));
     }
@@ -618,6 +649,7 @@ function serial(el, callback) {
                 }
             }
         }
+
     }
 }
 
@@ -628,6 +660,7 @@ function eachFormElement() {
             var i = 0,
                 j = 0,
                 l = tags.length,
+
                 len, fa;
 
             for (; i < l; i++) {
