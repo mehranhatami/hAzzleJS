@@ -481,7 +481,7 @@
 
         arrayLike: function (obj) {
 
-            if (obj == null || hAzzle.isWindow(obj)) {
+            if (obj === null || hAzzle.isWindow(obj)) {
                 return false;
             }
 
@@ -879,7 +879,6 @@
                 while (el = el.nextSibling) {
                     if (el.nodeType !== 1) return el;
                 }
-
             }
         },
 
@@ -901,12 +900,14 @@
                 }
             }
         },
+		
         /**
          * Get the first element child of the given element
          *
          * @param {string} el
          * @return {hAzzle}
          */
+		 
         firstElementChild: function (el) {
             var child = el.firstElementChild;
             if (!child) {
@@ -916,6 +917,7 @@
             }
             return child;
         },
+		
         /**
          * Get the last element child of the given element
          *
@@ -947,12 +949,14 @@
             return Count;
 
         },
+		
         /**
          * Feature detection of elements
          *
          * @param {Function} fn
          * @return {Boolean}
          */
+		 
         assert: function (fn) {
 
             var div = doc.createElement("div");
@@ -970,7 +974,6 @@
                 div = null;
             }
         }
-
 
     }, hAzzle);
 

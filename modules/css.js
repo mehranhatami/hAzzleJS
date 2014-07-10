@@ -13,48 +13,25 @@ var win = this,
     directions = ['Top', 'Right', 'Bottom', 'Left'],
     elemdisplay = {},
 
-    isString = hAzzle.isString,
+    cssCore = {
 
-    // Various supports...
+        stylePrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
-    cssPrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
+        cssNT: {
 
-    /**
-     * Remove units ( e.g. 'pc, 'px', '%') from values
-     * This is an faster alternative then parseFloat
-     */
+            letterSpacing: '0',
+            fontWeight: '400'
+        },
 
-    getStyles = hAzzle.features.computedStyle ? function (el) {
+        has: {
 
-        if (el) {
-
-            if (el.ownerDocument && el.ownerDocument.defaultView.opener) {
-
-                return el.ownerDocument.defaultView.getComputedStyle(el[0], null);
-            }
+            'api-gCS': !!document.defaultView.getComputedStyle
         }
-
-        return el && win.getComputedStyle(el, null);
-
-    } : function (el) {
-
-        /**
-         * We will never reach down here unless we are using some old
-         * mobile browsers. Anyways. After a few months when all
-         * vendors have upgraded their browsers - I guess we
-         * can remove this 'hack'
-         *
-         */
-
-        return el.style || el.currentStyle;
     },
-
-    // Has to be numbers, not strings
-
-    cssNormalTransform = {
-
-        letterSpacing: '0',
-        fontWeight: '400'
+    getStyles = function (elem) {
+        var view = elem.ownerDocument.defaultView;
+        return cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
+            window.getComputedStyle(elem, null)) : elem.style;
     };
 
 
@@ -70,50 +47,32 @@ hAzzle.extend({
 
     css: function (prop, value) {
 
-        var obj = prop,
+        var type = typeof prop,
+            obj = type === 'string' ? {} : prop,
             el = this[0];
 
-        if (hAzzle.isArray(prop)) {
-
+        if (Array.isArray(prop)) {
             var map = {},
-                i = 0,
+                x = 0,
                 styles = getStyles(el),
                 len = prop.length;
-
-            for (; i < len; i++) {
-
-                map[prop[i]] = curCSS(el, prop[i], styles);
-            }
-
+            for (; x < len; x++) map[prop[i]] = curCSS(el, prop[i], styles);
             return map;
         }
 
-        // is this a request for just getting a style?
+        // Both values set, get CSS value
 
-        if (value === undefined && isString(prop)) {
+        if (typeof value === 'undefined' && type === 'string') return hAzzle.css(el, prop);
+        if (type === "string") obj[prop] = value;
 
-            return hAzzle.css(el, prop);
+        var i = 0,
+            o,
+            l = this.length;
+
+        for (; i < l; i++) {
+            for (o in obj) hAzzle.style(el, o, obj[o]);
         }
-
-        /**
-         * If both prop and value are string values, we
-         * create an object out of it, so we can iterate
-         * through
-         */
-
-        if (isString(prop)) {
-
-            obj = {};
-            obj[prop] = value;
-        }
-
-        // Loop through, and collect the result
-
-        return this.each(function (el) {
-            hAzzle.forOwn(obj, function (value, key) {
-                hAzzle.style(el, key, value);
-            });
-        });
+        return this;
     },
 
     /**
@@ -437,9 +396,9 @@ hAzzle.extend({
 
         //convert 'normal' to computed value
 
-        if (val === 'normal' && prop in cssNormalTransform) {
+        if (val === 'normal' && prop in cssCore.cssNT) {
 
-            val = cssNormalTransform[prop];
+            val = cssCore.cssNT[prop];
         }
 
         return val;
@@ -498,6 +457,7 @@ hAzzle.extend({
         }
 
         if (unit === 'em') {
+
 
             val = hAzzle.css(elem, 'fontSize');
             num = parseFloat(val);
@@ -609,10 +569,10 @@ function vendorPrefixed(style, name) {
     // check for vendor prefixed names
     var capName = name[0].toUpperCase() + name.slice(1),
         origName = name,
-        i = cssPrefixes.length;
+        i = cssCore.stylePrefixes.length;
 
     while (i--) {
-        name = cssPrefixes[i] + capName;
+        name = cssCore.stylePrefixes[i] + capName;
         if (name in style) {
             return name;
         }
