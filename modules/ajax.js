@@ -36,7 +36,7 @@ var win = window,
         text: "text/plain",
         html: "text/html",
         xml: "application/xml, text/xml",
-        json: "application/json;charset=utf-8, text/javascript;charset=utf-8"
+        json: "application/json;charset=utf-8, text/javascript"
     },
 
     xhr = function (options) {
