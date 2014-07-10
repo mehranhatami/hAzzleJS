@@ -1,11 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.8.5
+ * Version: 0.9.0a
  * Released under the MIT License.
  *
- * Date: 2014-07-08
+ * Date: 2014-07-11
  */
+
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -289,6 +290,7 @@
         type: function (obj) {
 
             if (obj === null) {
+
                 return obj + '';
             }
 
@@ -742,29 +744,28 @@
         // they'll iterate over anything added to the Array.prototype
 
         forOwn: function (obj, iterator, context) {
-
-            if (obj === null) {
-
-                return obj;
-            }
-
-            var keys = Okeys(obj),
-                i = 0,
-                l = keys.length;
-
-            for (; i < l; i++) {
-
-                if (iterator.call(context, obj[keys[i]], keys[i], obj) === breaker) {
-
-                    return;
+            if (obj === null) return obj;
+            for (key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    iterator.call(context, obj[key], key);
                 }
             }
             return obj;
         },
 
+        sortKeys: function (obj) {
+            var keys = [], key;
+            for (key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    keys.push(key);
+                }
+            }
+            return keys.sort();
+        }
+
         // This one has to be fast...
 
-        setter: function (elems, fn, key, value, exec) {
+            setter: function (elems, fn, key, value, exec) {
 
             var len = elems.length,
                 k,
@@ -838,6 +839,7 @@
          * Find previous element sibling.
          *
          * @param {Object} el
+
          * @return {hAzzle}
          */
 
@@ -923,7 +925,7 @@
 
     }, hAzzle);
 
-     /* =========================== SELECTOR ENGINE HOLDER ========================== */
+    /* =========================== SELECTOR ENGINE HOLDER ========================== */
 
     var Jiesa = {};
     hAzzle.Jiesa = Jiesa;
@@ -977,6 +979,15 @@
         }
 
     }, hAzzle);
+
+    // Functions / variabels that will be available after 'grunt'. Else it will result in an jsLint error 'undefined'
+
+    var lowercase = hAzzle.lowercase = function (string) {
+            return hAzzle.isString(string) ? string.toLowerCase() : string;
+        },
+        uppercase = hAzzle.lowercase = function (string) {
+            return hAzzle.isString(string) ? string.toUpperCase() : string;
+        };
 
     // call this when the document is ready
     // this function protects itself against being called more than once
