@@ -44,8 +44,7 @@
         trwl = /^\s\s*/,
         trwr = /\s\s*$/,
 
-        regexp = /[\\\[\]\/{}()*+?.$|^-]/g,
-        js = /[\x00-\x1f'"\u2028\u2029]/g,
+        escEp = /[-\\^$*+?.()|[\]{}]/g,
 
         /*
          * Unique ID
@@ -183,6 +182,7 @@
          */
 
         deepEach: function (fn, obj) {
+
             return hAzzle.deepEach(this, fn, obj);
         },
 
@@ -564,19 +564,37 @@
             return concat.apply([], ret);
         },
 
+        /**
+         * Faster alternative till native prototype reduce
+         *
+         * @param {Array} array
+         * @param {Function} fn
+         * @param {Object} initial value
+         */
+
+        reduce: function (arr, fn, val) {
+            var rval = val,
+                i = 0,
+                l = arr.length;
+            for (; i < l; i++) {
+                rval = fn(rval, arr[i], i, arr);
+            }
+            return rval;
+        },
+
         isNode: function (node) {
             return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 11);
         },
 
-        // Escape RegExp
-        escRE: function (s) {
-            return replace(s, regexp, "\\$&");
-        },
+        /**
+         * Escape regular expression characters in `str`.
+         *
+         * @param {String} str
+         * @return {String}
+         */
 
-        // Escape JavasScript string
-
-        escJS: function (s) {
-            return replace(s, js, ucode);
+        escapeRegexp: function (str) {
+            str.replace(escEp, "\\$&");
         },
 
         size: function (obj, ownPropsOnly) {
@@ -720,6 +738,19 @@
             });
 
             return hAzzle(results);
+        },
+
+        keys: function (obj) {
+            var keys = [],
+                key, has = Object.prototype.hasOwnProperty;
+
+            for (key in obj) {
+                if (has.call(obj, key)) {
+                    keys.push(key);
+                }
+            }
+
+            return keys;
         },
 
         makeArray: function (arr, results) {
@@ -1015,28 +1046,20 @@
 
     function ready() {
 
-        var i = 0,
-            l = hAzzle.readyList.length;
+            var i = 0,
+                l = hAzzle.readyList.length;
 
-        if (!hAzzle.readyFired) {
-            // this must be set to true before we start calling callbacks
-            hAzzle.readyFired = true;
+            if (!hAzzle.readyFired) {
+                // this must be set to true before we start calling callbacks
+                hAzzle.readyFired = true;
 
-            for (; i < l; i++) {
+                for (; i < l; i++) {
 
-                hAzzle.readyList[i].call(window, document);
+                    hAzzle.readyList[i].call(window, document);
+                }
+                // allow any closures held by these functions to free
+                hAzzle.readyList = [];
             }
-            // allow any closures held by these functions to free
-            hAzzle.readyList = [];
-        }
-    }
-
-    function ucode(a) {
-        return '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-    }
-
-    function replace(s, regexp, sub) {
-            return toString(s).replace(regexp, sub !== null ? sub : '');
         }
         /* =========================== INTERNAL ========================== */
 
