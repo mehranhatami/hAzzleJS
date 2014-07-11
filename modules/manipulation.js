@@ -904,8 +904,10 @@ hAzzle.each(['radio', 'checkbox'], function () {
         set: function (elem, value) {
            if (hAzzle.isArray(value)) {
 			var val = hAzzle(elem).val(),
-			    checked = hAzzle.indexOf( val, value ) >= 0 ;
-			return ((elem.checked = checked));
+                checked = hAzzle.indexOf( val, value ) >= 0 ;
+			// Set the value
+				elem.checked = checked;
+			return;
             }
         }
     };
