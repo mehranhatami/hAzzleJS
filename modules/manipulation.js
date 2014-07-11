@@ -655,9 +655,11 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
 
-        var hooks, ret, nType = elem.nodeType;
+        var hooks, ret, 
+		valid = [2,3,8],
+		nType = elem.nodeType;
 
-        if (elem && (nType !== 2 || nType !== 3 || nType !== 8)) {
+        if (elem && ( valid[nType] ) ) {
 
             // Fallback to prop when attributes are not supported
             if (typeof elem.getAttribute === undefined) {
