@@ -902,8 +902,10 @@ if (!domCore.has['bug-optSelected']) {
 hAzzle.each(['radio', 'checkbox'], function () {
     hAzzle.valHooks[this] = {
         set: function (elem, value) {
-            if (hAzzle.isArray(value)) {
-			return ((elem.checked = hAzzle.indexOf( hAzzle(elem).val(), value ) >= 0 ));
+           if (hAzzle.isArray(value)) {
+			var val = hAzzle(elem).val(),
+			    checked = hAzzle.indexOf( val, value ) >= 0 ;
+			return ((elem.checked = checked));
             }
         }
     };
