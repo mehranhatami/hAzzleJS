@@ -3,9 +3,9 @@
  */
 var win = this,
     doc = win.document,
-    singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
     rnoInnerhtml = /<(?:script|style|link)/i,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+    specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i,
     riAH = /<script|\[object/i,
     tagName = /<([\w:]+)/,
     rreturn = /\r/g,
@@ -113,7 +113,7 @@ hAzzle.extend({
      */
 
     hasAttr: function (name) {
-      return name && typeof this.attr(name) !== 'undefined';
+        return name && typeof this.attr(name) !== 'undefined';
     },
 
     /**
@@ -475,6 +475,7 @@ hAzzle.extend({
         return self.each(function (el, i) {
             // Prevent memory leaks
             hAzzle.clearData(el);
+
             hAzzle.each(stabilizeHTML(arg, self, i), function (i) {
                 if (el[parentNode]) {
                     el[parentNode].replaceChild(i, el);
@@ -652,22 +653,14 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
 
-        // Set document vars if needed
-
-        if ((elem.ownerDocument || elem) !== document) {
-
-            hAzzle.setDocument(elem);
-        }
-
-        var hooks, ret,
-            nType = elem.nodeType;
-        if (!name) {
-            return;
-        }
-
-        // don't get/set attributes on text, comment and attribute nodes
+        var hooks, ret, nType = elem.nodeType;
 
         if (elem && (nType !== 2 || nType !== 3 || nType !== 8)) {
+
+            // Fallback to prop when attributes are not supported
+            if (typeof elem.getAttribute === undefined) {
+                return hAzzle.prop(elem, name, value);
+            }
 
             if (nType !== 1 || hAzzle.documentIsHTML) {
 
@@ -683,54 +676,36 @@ hAzzle.extend({
 
                     hAzzle.removeAttr(elem, name);
 
-                } else if (hooks && 'set' in hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
-
-                    return ret;
-
                 } else {
 
-                    /**
-                     * Quick way for setting a HTML5 data attribute
-                     *
-                     * Example:
-                     *
-                     * hAzzle('#test').attr('-html5', 'cool')
-                     *
-                     * The result will be:
-                     *
-                     * data-html5="cool"
-                     *
-                     *
-                     * Less code to write then: 'data-html5', 'cool'
-                     *
-                     */
+                    if (hooks && 'set' in hooks) {
 
-                    if (name[0] === '-') {
+                        ret = hooks.set(elem, value, name);
 
-                        elem.setAttribute('data' + name, value + '');
-                        return value;
+                        if (ret) {
 
-                    } else {
-
-                        elem.setAttribute(name, value + '');
-                        return value;
-
+                            return ret;
+                        }
                     }
+
+                    elem.setAttribute(name, value + '');
+                    return value;
                 }
-
-            } else if (hooks && 'get' in hooks && (ret = hooks.get(elem, name)) !== null) {
-
-                return ret;
 
             } else {
 
+                if (hooks && 'get' in hooks) {
+                    ret = hooks.get(elem, name);
+                    if (ret !== null) {
+                        return ret;
+                    }
+                }
                 ret = elem.getAttribute(name, 2);
-
-                // Non-existent attributes return null, we normalize to undefined
 
                 return ret === null ?
                     undefined :
                     ret;
+
             }
         }
     },
