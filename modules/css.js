@@ -53,23 +53,35 @@ hAzzle.extend({
             obj = type === 'string' ? {} : prop,
             el = this[0];
 
-        if (Array.isArray(prop)) {
+        if (hAzzle.isArray(prop)) {
             var map = {},
                 styles = getStyles(el),
                 len = prop.length;
             i = 0;
-            for (; i < len; i++) map[prop[i]] = curCSS(el, prop[i], styles);
+            for (; i < len; i++) {
+
+                map[prop[i]] = curCSS(el, prop[i], styles);
+            }
             return map;
         }
 
         // Both values set, get CSS value
 
-        if (typeof value === 'undefined' && type === 'string') return hAzzle.css(el, prop);
-        if (type === 'string') obj[prop] = value;
+        if (typeof value === 'undefined' && type === 'string') {
+
+            return hAzzle.css(el, prop);
+        }
+
+        if (type === 'string') {
+            obj[prop] = value;
+        }
 
         for (; i < l; i++) {
 
-            for (key in obj) obj.hasOwnProperty(key) && hAzzle.style(this[i], key, obj[key]);
+            for (key in obj) {
+
+                hAzzle.style(this[i], key, obj[key]);
+            }
         }
         return this;
     },
@@ -294,8 +306,6 @@ hAzzle.extend({
         // If no element, return
 
         if (!elem) return null;
-
-        // Inspiration from jQuery
 
         hooks = hAzzle.cssHooks[prop] || hAzzle.cssHooks[origName];
 
