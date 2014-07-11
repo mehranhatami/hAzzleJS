@@ -354,6 +354,7 @@
 
         },
 
+
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
         },
@@ -544,32 +545,34 @@
             return -1;
         },
 
-        map: function (elem, callback, arg) {
-            var value, i = 0,
-                length = elem.length,
+        map: function (elems, callback, arg) {
+            var value,
+                i = 0,
+                length = elems.length,
+                isArray = isArraylike(elems),
                 ret = [];
 
             // Go through the array, translating each of the items to their new values
-
-            if (hAzzle.type(elem) === 'object') {
-
-                for (i in elem) {
-
-                    value = callback(elem[i], i, arg);
+            if (isArray) {
+                for (; i < length; i++) {
+                    value = callback(elems[i], i, arg);
 
                     if (value !== null) {
                         ret.push(value);
                     }
                 }
-            } else {
 
-                for (; i < length; i++) {
-                    value = callback(elem[i], i, arg);
+                // Go through every key on the object,
+            } else {
+                for (i in elems) {
+                    value = callback(elems[i], i, arg);
+
                     if (value !== null) {
                         ret.push(value);
                     }
-                } // Go through every key on the object,
+                }
             }
+
             // Flatten any nested arrays
             return concat.apply([], ret);
         },
@@ -1053,6 +1056,26 @@
             return toString.call(o) === '[object ' + name + ']';
         };
     });
+
+
+
+
+    function isArraylike(obj) {
+        var length = obj.length,
+            type = hAzzle.type(obj);
+
+        if (type === "function" || hAzzle.isWindow(obj)) {
+            return false;
+        }
+
+        if (obj.nodeType === 1 && length) {
+            return true;
+        }
+
+        return type === "array" || length === 0 ||
+            typeof length === "number" && length > 0 && (length - 1) in obj;
+    }
+
 
     // Expose hAzzle to the global object
 
