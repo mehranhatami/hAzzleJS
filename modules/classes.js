@@ -1,8 +1,12 @@
 // Classes
 var whitespaceRegex = /\S+/g,
-    clsCore = {
-        has: {}
-    };
+    mal = /(^| )a( |$)/,
+    mar = /(^| )b( |$)/;
+
+// class feature cotnainer 
+// Contains various supports and bug related info
+
+hAzzle.clsF = {}; // class features
 
 // Check for classList support. NOTE! IE9 are the only browser
 // who don't support classList
@@ -10,9 +14,9 @@ var whitespaceRegex = /\S+/g,
 hAzzle.assert(function (div) {
     div.classList.add('a', 'b');
     // Detect if the browser supports classList
-    clsCore.has['api-classList'] = !!document.documentElement.classList;
+    hAzzle.clsF['api-classList'] = !!document.documentElement.classList;
     // Detect if the classList API suuports multiple arguments
-    clsCore.has['api-MultiArgs'] = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+    hAzzle.clsF['api-MultiArgs'] = mal.test(div.className) && mar.test(div.className);
 });
 
 hAzzle.extend({
@@ -26,10 +30,7 @@ hAzzle.extend({
 
     addClass: function (value) {
 
-        var classes, elem, clazz,
-            i = 0,
-            l,
-            len = this.length;
+        var classes, cls, i = 0, l;
 
         if (typeof value === 'function') {
             return this.each(function (j) {
@@ -41,30 +42,26 @@ hAzzle.extend({
 
             classes = (value || '').match(whitespaceRegex) || [];
 
-            for (; i < len; i++) {
-
-                elem = this[i];
+            return this.each(function (elem) {
 
                 if (elem.nodeType === 1) {
 
-                    if (clsCore.has['api-MultiArgs']) {
+                    if (hAzzle.clsF['api-MultiArgs']) {
 
                         elem.classList.add.apply(elem.classList, classes);
 
                     } else {
-                        i = 0;
+
                         l = classes.length;
 
                         for (; i < l; i++) {
-                            clazz = classes[i];
-                            elem.classList.add(clazz);
+                            cls = classes[i];
+                            elem.classList.add(cls);
                         }
                     }
                 }
-            }
+            });
         }
-
-        return this;
     },
 
 
@@ -76,9 +73,7 @@ hAzzle.extend({
 
     removeClass: function (value) {
 
-        var classes, elem, clazz,
-            i = 0, l,
-            len = this.length;
+        var classes, cls, i = 0, l;
 
         if (typeof value === 'function') {
             return this.each(function (j) {
@@ -90,46 +85,45 @@ hAzzle.extend({
 
             classes = (value || '').match(whitespaceRegex) || [];
 
-            for (; i < len; i++) {
-
-                elem = this[i];
+            return this.each(function (elem) {
 
                 if (elem.nodeType === 1 && elem.className) {
                     if (!value) {
                         elem.className = '';
                     }
-                    if (clsCore.has['api-MultiArgs']) {
+
+                    // Check if we are supporting multiple arguments
+
+                    if (hAzzle.clsF['api-MultiArgs']) {
+
                         elem.classList.remove.apply(elem.classList, classes);
+
                     } else {
-                        i = 0;
+
                         l = classes.length;
 
                         for (; i < l; i++) {
-                            clazz = classes[i];
-                            elem.classList.add(clazz);
+                            cls = classes[i];
+                            elem.classList.add(cls);
                         }
                     }
                 }
-            }
+            });
         }
-
-        return this;
     },
 
     /**
      * Checks if an element has the given class
-
      *
      * @param {String} selector(s)
      * @return {Boolean} true if the element contains all classes
      */
 
     hasClass: function (value) {
-        var i = 0,
-            l = this.length;
+        var i = 0, self = this, l = self.length;
         for (; i < l; i++) {
-            if (this[i].nodeType === 1) {
-                if (this[i].classList.contains(value)) {
+            if (self[i].nodeType === 1) {
+                if (self[i].classList.contains(value)) {
                     return true;
                 }
             }
@@ -218,4 +212,4 @@ hAzzle.extend({
 
 // Return true/ false if classList are supported
 
-hAzzle.classList = clsCore.has['api-classList'];
+hAzzle.classList = hAzzle.clsF['api-classList'];
