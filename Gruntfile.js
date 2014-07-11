@@ -1,43 +1,4 @@
-//the reson for using this function is that in our solution files order really matter
-var conf = function conf() {
-  if (conf.info) {
-    return conf.info;
-  } else {
-
-    var config = {
-      //although we don't have any app here but I think we will probably have it very soon
-      //the app could be the hAzzle's documentaion site
-      app: 'app',
-      dist: 'distro',
-      modules: 'modules'
-    };
-
-    var m = config.modules + '/',
-      modules = [
-        m + 'hazzle.js',
-        m + 'features.js',
-        m + 'selector.js',
-        m + 'traversing.js',
-        m + 'css.js',
-        m + 'classes.js',
-        m + 'manipulation.js',
-        m + 'removeable.js',
-        m + 'events.js',
-        m + 'data.js',
-        m + 'clone.js',
-        m + 'parsing.js',
-        m + 'observer.js',
-        m + 'localestorage.js',
-        m + 'browser.js'
-      ];
-
-    conf.info = {
-      config: config,
-      modules: modules,
-    };
-    return conf.info;
-  }
-};
+'use strict';
 
 module.exports = function (grunt) {
 
