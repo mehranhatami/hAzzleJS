@@ -1,12 +1,12 @@
 // Classes
 var whitespaceRegex = /\S+/g,
     mal = /(^| )a( |$)/,
-    mar = /(^| )b( |$)/;
+    mar = /(^| )b( |$)/,
 
-// class feature cotnainer 
+// class feature container 
 // Contains various supports and bug related info
 
-hAzzle.clsF = {}; // class features
+   clsF = {}; // class features
 
 // Check for classList support. NOTE! IE9 are the only browser
 // who don't support classList
@@ -14,9 +14,9 @@ hAzzle.clsF = {}; // class features
 hAzzle.assert(function (div) {
     div.classList.add('a', 'b');
     // Detect if the browser supports classList
-    hAzzle.clsF['api-classList'] = !!document.documentElement.classList;
-    // Detect if the classList API suuports multiple arguments
-    hAzzle.clsF['api-MultiArgs'] = mal.test(div.className) && mar.test(div.className);
+    clsF['api-classList'] = !!document.documentElement.classList;
+    // Detect if the classList API supports multiple arguments
+    clsF['api-MultiArgs'] = mal.test(div.className) && mar.test(div.className);
 });
 
 hAzzle.extend({
@@ -46,7 +46,7 @@ hAzzle.extend({
 
                 if (elem.nodeType === 1) {
 
-                    if (hAzzle.clsF['api-MultiArgs']) {
+                    if (clsF['api-MultiArgs']) {
 
                         elem.classList.add.apply(elem.classList, classes);
 
@@ -94,7 +94,7 @@ hAzzle.extend({
 
                     // Check if we are supporting multiple arguments
 
-                    if (hAzzle.clsF['api-MultiArgs']) {
+                    if (clsF['api-MultiArgs']) {
 
                         elem.classList.remove.apply(elem.classList, classes);
 
@@ -212,4 +212,4 @@ hAzzle.extend({
 
 // Return true/ false if classList are supported
 
-hAzzle.classList = hAzzle.clsF['api-classList'];
+hAzzle.classList = clsF['api-classList'];
