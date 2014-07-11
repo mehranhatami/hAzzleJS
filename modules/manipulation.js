@@ -559,7 +559,7 @@ hAzzle.extend({
 
                      if ( ( option.selected || i === index ) &&
 							option.getAttribute( 'disabled' ) === null  &&
-							 (!option.parentNode.disabled || !hAzzle.nodeName( option.parentNode, "optgroup" ) ) ) {
+                             (!option.parentNode.disabled || !hAzzle.nodeName( option.parentNode, "optgroup" ) ) ) {
 
                         // Get the specific value for the option
 
@@ -903,7 +903,7 @@ hAzzle.each(['radio', 'checkbox'], function () {
     hAzzle.valHooks[this] = {
         set: function (elem, value) {
             if (hAzzle.isArray(value)) {
-			return ( elem.checked = hAzzle.indexOf( hAzzle(elem).val(), value ) >= 0 );
+			return ((elem.checked = hAzzle.indexOf( hAzzle(elem).val(), value ) >= 0 ));
             }
         }
     };

@@ -92,12 +92,12 @@ hAzzle.extend({
      * @return {hAzzle|number}
      */
 
-    offset: function (options) {
+    offset: function (ops) {
         if (arguments.length) {
-            return options === undefined ?
+            return ops === undefined ?
                 this :
                 this.each(function (el, i) {
-                    xy(el, options, i);
+                    xy(el, ops, i);
                 });
         }
 
@@ -368,57 +368,59 @@ function vendorPrefixed(style, name) {
 /**
  * sets an element to an explicit x/y position on the page
  * @param {Element} element
- * @param {Object/Number} options
+ * @param {Object/Number} ops
  * @param {Number} i
  */
-function xy(elem, options, i) {
+function xy(elem, ops, i) {
 
-    var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+    var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft,
         position = hAzzle.css(elem, 'position'),
-        curElem = hAzzle(elem),
+        elem = hAzzle(elem),
         props = {};
 
     // Set position first, in-case top/left are set even on static elem
     if (position === 'static') {
+		
         elem.style.position = 'relative';
     }
 
-    curOffset = curElem.offset();
+    curOffset = elem.offset();
 
     curCSSTop = hAzzle.css(elem, 'top');
     curCSSLeft = hAzzle.css(elem, 'left');
-    calculatePosition = (position === 'absolute' || position === 'fixed') &&
-        hAzzle.inArray((curCSSTop + curCSSLeft), 'auto') > -1;
 
     // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
-    if (calculatePosition) {
-        curPosition = curElem.position();
+	
+    if ((position === 'absolute' || position === 'fixed') &&
+        hAzzle.inArray((curCSSTop + curCSSLeft), 'auto') > -1) {
+        curPosition = elem.position();
         curTop = curPosition.top;
         curLeft = curPosition.left;
 
-
-
     } else {
+
         curTop = parseFloat(curCSSTop) || 0;
         curLeft = parseFloat(curCSSLeft) || 0;
     }
 
-    if (hAzzle.isFunction(options)) {
-        options = options.call(elem, i, curOffset);
+    if (typeof ops === 'function') {
+		
+        ops = ops.call(elem, i, curOffset);
     }
 
-    if (options.top !== null) {
-        props.top = (options.top - curOffset.top) + curTop;
-    }
-    if (options.left !== null) {
-        props.left = (options.left - curOffset.left) + curLeft;
+    if (ops.top !== null) {
+        props.top = (ops.top - curOffset.top) + curTop;
     }
 
-    if ('using' in options) {
-        options.using.call(elem, props);
+    if (ops.left !== null) {
+        props.left = (ops.left - curOffset.left) + curLeft;
+    }
+
+    if ('using' in ops) {
+        ops.using.call(elem, props);
 
     } else {
-        curElem.css(props);
+        elem.css(props);
     }
 }
 
