@@ -49,7 +49,7 @@ var win = window,
 
                 return xhr;
                 // Mehran!! Fix this and use Cors
-            } else if (win['XDomainRequest']) {
+            } else if (win.XDomainRequest) {
 
                 return new XDomainRequest();
 
@@ -58,7 +58,7 @@ var win = window,
                 hAzzle.error('Browser does not support cross-origin requests');
             }
 
-        } else if (win['XMLHttpRequest']) {
+        } else if (win.XMLHttpRequest) {
 
             return new XMLHttpRequest();
         }
@@ -160,6 +160,7 @@ var win = window,
             }
         }
     };
+
 
 /* =========================== AJAX PROTOTYPE CHAIN ========================== */
 
@@ -279,7 +280,9 @@ function jsonpReq(options, fn, err, url) {
         }
 
         script.onload = script.onreadystatechange = null;
-        script.onclick && script.onclick();
+        if (script.onclick) {
+            script.onclick();
+        }
 
         // Call the user callback with the last value stored and clean up values and scripts.
 
@@ -378,7 +381,7 @@ function getRequest(fn, err) {
         xhttp.withCredentials = !!opt.withCredentials;
     }
 
-    if (win['XDomainRequest'] && xhttp instanceof win['XDomainRequest']) {
+    if (win.XDomainRequest && xhttp instanceof win.XDomainRequest) {
 
         xhttp.onload = fn;
         xhttp.onerror = err;
@@ -424,8 +427,9 @@ function getRequest(fn, err) {
             }
         };
     }
-
-    opt.before && opt.before(xhttp);
+    if (opt.before) {
+        opt.before(xhttp);
+    }
 
     if (sendWait) {
 

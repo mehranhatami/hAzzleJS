@@ -149,7 +149,6 @@ hAzzle.extend({
 
         if (this[0]) {
 
-
             var offsetParent, offset,
                 parentOffset = {
                     top: 0,
