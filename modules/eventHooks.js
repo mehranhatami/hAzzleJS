@@ -73,10 +73,8 @@ hAzzle.eventHooks.blur = {
 
 var win = this,
     hAzzle = win.hAzzle,
-    browserInfo = hAzzle.browser(),
     push = Array.prototype.push,
-    needsFocusShim = (browserInfo.browser === 'firefox' ||
-        (browserInfo.browser === 'opera' && browserInfo.mobile));
+    needsFocusShim = hAzzle.isFirefox;
 
 if (needsFocusShim) {
 

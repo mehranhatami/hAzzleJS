@@ -19,10 +19,6 @@ var win = this,
 
     documentIsHTML = hAzzle.documentIsHTML,
 
-    // Check for classList support
-
-    csp = hAzzle.features.classList,
-
     // Short-hand for Jiesa
 
     Jiesa = hAzzle.Jiesa,
@@ -374,7 +370,7 @@ hAzzle.extend({
                 nT = elem.nodeType;
 
             if (typeof cn === "string") {
-                return csp ? elem.classList.contains(className) :
+                return Jiesa.has['api-classList'] ? elem.classList.contains(className) :
                     nT === 1 && cn && (' ' + className + ' ').replace(Jiesa.whitespace, ' ').indexOf(cn) >= 0;
             } else {
                 return typeof elem.getAttribute !== undefined && elem.getAttribute("class") || "";
