@@ -42,20 +42,15 @@ var win = this,
 
     domCore = {
 
-        has: {
-
-
-
-
-        }
-
+        has: {}
 
     };
-// Bug checking	
+// Bug detection
+
 (function () {
     var input = doc.createElement("input"),
         select = doc.createElement("select"),
-        opt = select.appendChild(docu.createElement("option"));
+        opt = select.appendChild(doc.createElement("option"));
 
     input.type = "checkbox";
 
@@ -120,8 +115,7 @@ hAzzle.extend({
      */
 
     hasAttr: function (name) {
-
-        return name && typeof this.attr(name) !== 'undefined';
+      return name && typeof this.attr(name) !== 'undefined';
     },
 
     /**
@@ -143,6 +137,7 @@ hAzzle.extend({
             return self;
 
             // When toggle arg not provided, add attribute where not present, remove it where prosent:
+
         } else if (args === 1) {
 
             return self.each(function (el) {
@@ -154,6 +149,7 @@ hAzzle.extend({
         } else {
 
             // When toggle is a function, apply it to each element:
+
             if (isFunction(toggle)) {
 
                 return self.each(function (el) {
@@ -323,7 +319,6 @@ hAzzle.extend({
                 value = value.replace(uniqueTags, '<$1></$2>');
 
                 try {
-
 
                     if (el.nodeType === 1) {
 

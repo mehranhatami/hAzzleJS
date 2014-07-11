@@ -1,15 +1,19 @@
 // Classes
+var whitespaceRegex = /\S+/g,
+    clsCore = {
+        has: {}
+    };
 
-var csp = hAzzle.features.classList,
-    sMa = hAzzle.features.sMa, // Multiple arguments
-    classCache = {},
+// Check for classList support. NOTE! IE9 are the only browser
+// who don't support classList
 
-    isFunction = hAzzle.isFunction,
-    isString = hAzzle.isString,
-
-    indexOf = Array.prototype.indexOf,
-    rclass = /[\t\r\n\f]/g,
-    whitespaceRegex = /\S+/g;
+hAzzle.assert(function (div) {
+    div.classList.add('a', 'b');
+    // Detect if the browser supports classList
+    clsCore.has['api-classList'] = !!document.documentElement.classList;
+    // Detect if the classList API suuports multiple arguments
+    clsCore.has['api-MultiArgs'] = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+});
 
 hAzzle.extend({
 
@@ -22,56 +26,42 @@ hAzzle.extend({
 
     addClass: function (value) {
 
-        var finalValue, classes;
-        if (isFunction(value)) {
-            return this.each(function (i) {
-                hAzzle(this).addClass(value.call(this, i, this.className));
+        var classes, elem, clazz,
+            i = 0,
+            l,
+            len = this.length;
+
+        if (typeof value === 'function') {
+            return this.each(function (j) {
+                hAzzle(this).addClass(value.call(this, j, this.className));
             });
         }
 
-        if (value && isString(value)) {
+        if (typeof value === 'string') {
 
             classes = (value || '').match(whitespaceRegex) || [];
 
-            this.each(function (elem) {
+            for (; i < len; i++) {
+
+                elem = this[i];
 
                 if (elem.nodeType === 1) {
-                    var c, cl;
 
-                    if (csp) {
+                    if (clsCore.has['api-MultiArgs']) {
 
-                        if (sMa) {
-                            elem.classList.add.apply(elem.classList, classes);
-                        } else {
-
-                            for (c = 0, cl = classes.length; c < cl; c++) {
-                                elem.classList.add(classes[c]);
-                            }
-                            elem.className = hAzzle.trim(elem.className); // added to pass unit tests
-                        }
+                        elem.classList.add.apply(elem.classList, classes);
 
                     } else {
-                        if (!elem.className) {
-                            elem.className = value;
-                        } else {
-                            var className = " " + elem.className + " ",
-                                setClass = elem.className;
+                        i = 0;
+                        l = classes.length;
 
-                            for (c = 0, cl = classes.length; c < cl; c++) {
-                                if (className.indexOf(" " + classes[c] + " ") < 0) {
-                                    setClass += " " + classes[c];
-                                }
-                            }
-
-                            // only assign if different to avoid unneeded rendering.
-                            finalValue = hAzzle.trim(className);
-                            if (elem.className !== finalValue) {
-                                elem.className = finalValue;
-                            }
+                        for (; i < l; i++) {
+                            clazz = classes[i];
+                            elem.classList.add(clazz);
                         }
                     }
                 }
-            });
+            }
         }
 
         return this;
@@ -86,68 +76,44 @@ hAzzle.extend({
 
     removeClass: function (value) {
 
-        var cls,
-            element,
+        var classes, elem, clazz,
+            i = 0, l,
+            len = this.length;
+
+        if (typeof value === 'function') {
+            return this.each(function (j) {
+                hAzzle(this).removeClass(value.call(this, j, this.className));
+            });
+        }
+
+        if (arguments.length === 0 || typeof value === 'string') {
+
             classes = (value || '').match(whitespaceRegex) || [];
 
-        // Function
+            for (; i < len; i++) {
 
-        return isFunction(value) ?
-            this.each(function (j) {
-                hAzzle(this).removeClass(value.call(this, j, this.className));
-            }) : this.each(function () {
-                element = this;
-                if (element.nodeType === 1 && element.className) {
+                elem = this[i];
 
+                if (elem.nodeType === 1 && elem.className) {
                     if (!value) {
-                        element.className = '';
-                        return;
+                        elem.className = '';
                     }
-
-                    if (value === '*') {
-                        element.className = '';
+                    if (clsCore.has['api-MultiArgs']) {
+                        elem.classList.remove.apply(elem.classList, classes);
                     } else {
-                        if (hAzzle.isRegExp(value)) {
-                            value = [value];
-                        } else if (csp && hAzzle.inArray(value, '*') === -1) {
-                            if (sMa) {
-                                element.classList.remove.apply(element.classList, classes);
-                            } else {
-                                var i = 0;
-                                while ((cls = classes[i++])) {
-                                    element.classList.remove(cls);
-                                }
-                            }
-                            return;
-                        } else {
-                            value = value.trim().split(/\s+/);
+                        i = 0;
+                        l = classes.length;
 
-                            var name;
-
-                            classes = ' ' + element.className + ' ';
-
-                            while ((name = value.shift())) {
-
-                                if (name.indexOf('*') !== -1) {
-
-                                    name = name in classCache ?
-                                        classCache[name] :
-                                        (classCache[name] = new RegExp('\\s*\\b' + name.replace('*', '\\S*') + '\\b\\s*', 'g'));
-                                }
-                                if (name instanceof RegExp) {
-                                    classes = classes.replace(name, ' ');
-                                } else {
-                                    while (classes.indexOf(' ' + name + ' ') !== -1) {
-                                        classes = classes.replace(' ' + name + ' ', ' ');
-                                    }
-                                }
-                            }
-                            element.className = classes.trim();
+                        for (; i < l; i++) {
+                            clazz = classes[i];
+                            elem.classList.add(clazz);
                         }
-                        return element;
                     }
                 }
-            });
+            }
+        }
+
+        return this;
     },
 
     /**
@@ -159,24 +125,16 @@ hAzzle.extend({
      */
 
     hasClass: function (value) {
-
         var i = 0,
-            className = ' ' + value + ' ',
-            self = this,
-            l = self.length;
+            l = this.length;
         for (; i < l; i++) {
-            if (csp) {
-                if (self[i].nodeType === 1) {
-                    if (self[i].classList.contains(value)) {
-                        return true;
-                    }
-                }
-            } else {
-                if (self[i].nodeType === 1 && (' ' + self[i].className + ' ').replace(rclass, ' ').indexOf(className) >= 0) {
+            if (this[i].nodeType === 1) {
+                if (this[i].classList.contains(value)) {
                     return true;
                 }
             }
         }
+
         return false;
     },
 
@@ -209,76 +167,55 @@ hAzzle.extend({
      * @return {Boolean}
      */
 
-        toggleClass: function (value, state) {
+    toggleClass: function (value, stateVal) {
 
-        var type = typeof value;
+        var type = typeof value,
+            isBool = typeof stateVal === 'boolean';
 
-        if (typeof state === 'boolean' && type === 'string') {
-            return state ? this.addClass(value) : this.removeClass(value);
-        }
-
-        if (hAzzle.isFunction(value)) {
+        if (typeof value === 'function') {
             return this.each(function (i) {
-                hAzzle(this).toggleClass(value.call(this, i, this.className, state), state);
+                hAzzle(this).toggleClass(value.call(this, i, this.className, stateVal), stateVal);
             });
         }
 
-        var classNames = value.match(whitespaceRegex) || [],
-            cls,
-            i = 0,
-            self;
+        return this.each(function () {
+            if (this.nodeType === 1) {
+                if (type === 'string') {
+                    // Toggle individual class names
+                    var className,
+                        i = 0,
+                        classNames = value.match(whitespaceRegex) || [];
 
-        return this.each(function (elem) {
-
-            if (type === 'string') {
-
-                // ClassList
-
-                self = hAzzle(elem);
-
-                while ((cls = classNames[i++])) {
-
-                    if (csp) {
-
-                        if (typeof state === 'boolean') {
-
+                    // Check each className given, space separated list
+                    while ((className = classNames[i++])) {
+                        if (isBool) {
                             // IE10+ doesn't support the toggle boolean flag.
-
-                            if (state) {
-
-                                return elem.classList.add(cls);
-
+                            if (stateVal) {
+                                this.classList.add(className);
                             } else {
-
-                                return elem.classList.remove(cls);
+                                this.classList.remove(className);
                             }
+                        } else {
+                            this.classList.toggle(className);
                         }
-
-                        return elem.classList.toggle(cls);
                     }
 
-                    // check each className given, space separated list
-
-                    if (self.hasClass(cls)) {
-
-                        self.removeClass(cls);
-
-                    } else {
-
-                        self.addClass(cls);
+                } else if (type === 'undefined' || type === 'boolean') { // toggle whole class name
+                    if (this.className) {
+                        // store className if set
+                        hAzzle.data(this, '__className__', this.className);
                     }
-                }
 
-                // Toggle whole class name
-            } else if (value === undefined || type === "boolean") {
-                if (this.className) {
-                    // store className if set
-                    hAzzle.data(this, '__className__', this.className);
+                    this.className = this.className ||
+                        value === false ? '' : hAzzle.data(this, '__className__') || '';
                 }
-
-                this.className = this.className || value === false ? '' : hAzzle.data(this, '__className__') || '';
             }
         });
     }
 
 });
+
+
+// Return true/ false if classList are supported
+
+hAzzle.classList = clsCore.has['api-classList'];

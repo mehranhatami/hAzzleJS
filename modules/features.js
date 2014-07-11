@@ -17,16 +17,6 @@ features.has['bug-noCloneChecked'] = hAzzle.assert(function (div) {
 });
 
 
-// classList support
-
-features.has['bug-clsp'] = hAzzle.assert(function (div) {
-    return !!div.classList;
-});
-
-features.has['bug-sMa'] = hAzzle.assert(function (div) {
-    div.classList.add('a', 'b');
-    return /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-});
 
 // Expand the global hAzzle object
 
