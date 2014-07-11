@@ -76,21 +76,16 @@ var win = this,
     trimspaces = /^\s*|\s*$/g,
     whitespace = new RegExp(Jiesa.whitespace),
     special = /\s?([\+~\>])\s?/g,
-    encoding = '(?:[-\\w]|[^\\x00-\\xa0]|\\\\.)',
+    identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
     chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
 
 hAzzle.extend({
 
-    /**
-     * Global regEx for Jiesa
-     *
-     */
-
     regex: {
-
-        'id': new RegExp('^#(' + encoding + '+)(.*)'),
-        'tag': new RegExp('^(' + encoding + '+|[*])'),
-        'Class': new RegExp('^\\.(' + encoding + '+)(.*)'),
+        'id': new RegExp('^#(' + identifier + ')' ),
+        'tag': new RegExp('^(' + identifier + '|[*])' ),
+        'Class': new RegExp('^\\.(' + identifier + ')' ),
+        'rel': /^\>|\>|\+|~$/,
         'rel': /^\>|\>|\+|~$/,
 
         "nth": new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace +
