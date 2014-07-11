@@ -6,8 +6,15 @@
  * - data cloning
  * - event cloning
  */
-var rcheckableType = /^(?:checkbox|radio)$/i;
+var rcheckableType = /^(?:checkbox|radio)$/i,
 
+    // Support: IE<=11+
+    // Make sure textarea (and checkbox) defaultValue is properly cloned
+
+    noCC = hAzzle.assert(function (div) {
+        div.innerHTML = "<textarea>x</textarea>";
+        return !!div.cloneNode(true).lastChild.defaultValue;
+    });
 
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
@@ -53,7 +60,7 @@ hAzzle.cloneNode = function (el, deep) {
     // we need to check directly with current DOM node
     // This also fixes the IE cloning issues
 
-    if (!hAzzle.features.noCloneChecked && el.nodeType === 1 || el.nodeType === 11 && hAzzle.hAzzle.isXML(el)) {
+    if (!noCC && el.nodeType === 1 || el.nodeType === 11 && hAzzle.isXML(el)) {
 
         for (; i < len; i++) {
 

@@ -52,7 +52,10 @@ hAzzle.extend({
 
     has: {
 
-        // Feature detect if the browser supports QSA
+    // Detect if the browser supports classList
+        'api-classList': !!document.documentElement.classList,
+		
+		// Feature detect if the browser supports QSA
 
         'api-QSA': !!doc.querySelectorAll,
 
@@ -343,7 +346,7 @@ function checkParent(elem) {
     return fragment;
 }
 
-// Exand the global hAzzle object
+// Expand to the global hAzzle object
 
 hAzzle.find = Jiesa.find;
 hAzzle.findOne = Jiesa.findOne;
