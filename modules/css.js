@@ -1,8 +1,7 @@
 /*!
  * CSS
  */
-var win = this,
-    docElem = hAzzle.docElem,
+var docElem = hAzzle.docElem,
     numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
     cssCore = {
@@ -29,7 +28,13 @@ var win = this,
             window.getComputedStyle(elem, null)) : elem.style;
     };
 
+// Bug detection
 
+hAzzle.assert(function (div) {
+    cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
+});
+
+// Extend the hAzzle Core
 hAzzle.extend({
 
     /**
@@ -254,7 +259,7 @@ hAzzle.extend({
                     value += ret && ret[3] ? ret[3] : 'px';
                 }
 
-                if (!hAzzle.features.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+                if (!cssCore.has['bug-clearCloneStyle'] && value === '' && name.indexOf('background') === 0) {
 
                     style[hAzzle.camelize(name)] = 'inherit';
                 }
@@ -318,7 +323,7 @@ hAzzle.extend({
         return val;
     },
 
-   
+
 
 }, hAzzle);
 
@@ -473,6 +478,7 @@ hAzzle.forOwn({
             }
 
             if (win) {
+
 
                 win.scrollTo(!top ? val : window.pageXOffset,
                     top ? val : window.pageYOffset
