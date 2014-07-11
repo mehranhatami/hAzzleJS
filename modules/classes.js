@@ -33,8 +33,8 @@ hAzzle.extend({
         var classes, cls, i = 0, l;
 
         if (typeof value === 'function') {
-            return this.each(function (j) {
-                hAzzle(this).addClass(value.call(this, j, this.className));
+            return this.each(function (el, count) {
+                hAzzle(el).addClass(value.call(el, count, el.className));
             });
         }
 
@@ -76,8 +76,8 @@ hAzzle.extend({
         var classes, cls, i = 0, l;
 
         if (typeof value === 'function') {
-            return this.each(function (j) {
-                hAzzle(this).removeClass(value.call(this, j, this.className));
+            return this.each(function (el, count) {
+                hAzzle(el).removeClass(value.call(el, count, el.className));
             });
         }
 
@@ -167,13 +167,13 @@ hAzzle.extend({
             isBool = typeof stateVal === 'boolean';
 
         if (typeof value === 'function') {
-            return this.each(function (i) {
-                hAzzle(this).toggleClass(value.call(this, i, this.className, stateVal), stateVal);
+            return this.each(function (el, count) {
+                hAzzle(el).toggleClass(value.call(el, count, el.className, stateVal), stateVal);
             });
         }
 
-        return this.each(function () {
-            if (this.nodeType === 1) {
+        return this.each(function (el) {
+            if (el.nodeType === 1) {
                 if (type === 'string') {
                     // Toggle individual class names
                     var className,
@@ -185,23 +185,23 @@ hAzzle.extend({
                         if (isBool) {
                             // IE10+ doesn't support the toggle boolean flag.
                             if (stateVal) {
-                                this.classList.add(className);
+                                el.classList.add(className);
                             } else {
-                                this.classList.remove(className);
+                                el.classList.remove(className);
                             }
                         } else {
-                            this.classList.toggle(className);
+                            el.classList.toggle(className);
                         }
                     }
 
                 } else if (type === 'undefined' || type === 'boolean') { // toggle whole class name
-                    if (this.className) {
+                    if (el.className) {
                         // store className if set
-                        hAzzle.data(this, '__className__', this.className);
+                        hAzzle.data(this, '__cln__', el.className);
                     }
 
-                    this.className = this.className ||
-                        value === false ? '' : hAzzle.data(this, '__className__') || '';
+                    el.className = this.className ||
+                        value === false ? '' : hAzzle.data(el, '__cln__') || '';
                 }
             }
         });
@@ -211,5 +211,8 @@ hAzzle.extend({
 
 
 // Return true/ false if classList are supported
+// This depends of the 'classList shim' are 
+// included in the build or not. If not, it
+// will only return false on IE9
 
 hAzzle.classList = clsF['api-classList'];
