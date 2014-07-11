@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.0a
+ * Version: 0.9.1a
  * Released under the MIT License.
  *
  * Date: 2014-07-11
@@ -200,7 +200,7 @@
                 n = callback.call(self, self[i], i);
 
                 if (func) {
-					
+
                     func(n);
                 }
                 m.push(n);
@@ -353,6 +353,7 @@
             return !hAzzle.isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
 
         },
+
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
         },
@@ -749,19 +750,6 @@
             return hAzzle(results);
         },
 
-        keys: function (obj) {
-            var keys = [],
-                key, has = Object.prototype.hasOwnProperty;
-
-            for (key in obj) {
-                if (has.call(obj, key)) {
-                    keys.push(key);
-                }
-            }
-
-            return keys;
-        },
-
         makeArray: function (arr, results) {
             var type,
                 ret = results || [];
@@ -792,23 +780,6 @@
                 }
             }
             return obj;
-        },
-
-        sortKeys: function (obj) {
-            var keys = [],
-                key;
-            for (key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    keys.push(key);
-                }
-            }
-            return keys.sort();
-        },
-
-        reverseParams: function (iteratorFn) {
-            return function (value, key) {
-                iteratorFn(key, value);
-            };
         },
 
         // This one has to be fast...
@@ -853,6 +824,7 @@
 
                     for (; i < len; i++) {
 
+
                         fn(elems[i], key, value);
                     }
 
@@ -876,7 +848,7 @@
             if (el.nextElementSibling) {
                 return el.nextElementSibling;
             } else {
-                while (el = el.nextSibling) {
+                while ((el = el.nextSibling)) {
                     if (el.nodeType !== 1) return el;
                 }
             }
@@ -895,19 +867,19 @@
             if (el.previousElementSibling) {
                 return el.previousElementSibling;
             } else {
-                while (el = el.previousSibling) {
+                while ((el = el.previousSibling)) {
                     if (el.nodeType === 1) return el;
                 }
             }
         },
-		
+
         /**
          * Get the first element child of the given element
          *
          * @param {string} el
          * @return {hAzzle}
          */
-		 
+
         firstElementChild: function (el) {
             var child = el.firstElementChild;
             if (!child) {
@@ -917,7 +889,7 @@
             }
             return child;
         },
-		
+
         /**
          * Get the last element child of the given element
          *
@@ -949,14 +921,14 @@
             return Count;
 
         },
-		
+
         /**
          * Feature detection of elements
          *
          * @param {Function} fn
          * @return {Boolean}
          */
-		 
+
         assert: function (fn) {
 
             var div = doc.createElement("div");

@@ -7,6 +7,38 @@ var slice = Array.prototype.slice,
 
 hAzzle.extend({
 
+    keys: function (obj) {
+        var keys = [],
+            key, has = Object.prototype.hasOwnProperty;
+
+        for (key in obj) {
+            if (has.call(obj, key)) {
+                keys.push(key);
+            }
+        }
+
+        return keys;
+    },
+
+
+    sortKeys: function (obj) {
+        var keys = [],
+            key;
+        for (key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                keys.push(key);
+            }
+        }
+        return keys.sort();
+    },
+
+    reverseParams: function (iteratorFn) {
+        return function (value, key) {
+            iteratorFn(key, value);
+        };
+    },
+
+
     lastIndexOf: function (array, item, from) {
         if (array === null) {
             return -1;
