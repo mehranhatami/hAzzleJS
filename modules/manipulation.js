@@ -4,10 +4,8 @@
 var win = this,
     doc = win.document,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
-    specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i,
     rnoInnerhtml = /<(?:script|style|link)/i,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-    simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
     riAH = /<script|\[object/i,
     tagName = /<([\w:]+)/,
     rreturn = /\r/g,
@@ -767,116 +765,6 @@ hAzzle.extend({
             return hooks && 'get' in hooks && (ret = hooks.get(elem, name)) !== null ?
                 ret :
                 elem[name];
-        }
-    },
-
-    /**
-     * Create HTML
-     *
-     *  @param {string} html
-     *  @param {string} context
-     *  @return {hAzzle}
-     *
-     * 'context' are just an extra parameter so
-     * we can create html on CSS nodes as well
-     * as document.
-     *
-     * LEFT TO DO!!
-     *
-     * - use of documentFragment
-     *
-     * - Add an similar function to jQuery's keepScript
-     *
-     */
-
-    create: function (html, context) {
-
-        // Prevent XSS vulnerability
-
-        var tag,
-            matches,
-            defaultContext = isFunction(doc.implementation.createHTMLDocument) ?
-            doc.implementation.createHTMLDocument() :
-            doc;
-
-        context = context || defaultContext;
-
-        if (html !== '' && isString(html)) {
-
-            /**
-             * Create script tags
-             *
-             * Example:
-             *
-             * hAzzle.create('<script src='test'>');
-             *
-             * @return {src}
-             */
-
-            if (simpleScriptTagRe.test(html)) {
-                matches = html.match(simpleScriptTagRe);
-                doc.createElement('script').src = matches[1];
-                return [doc.createElement('script')];
-            }
-
-            // Single tag
-
-            if ((tag = html.match(singleTag))) {
-
-                return [context.createElement(tag[1])];
-            }
-
-            var el = context.createElement('div'),
-                els = [],
-                p = tag ? htmlMap[tag[1].toLowerCase()] : null,
-                dep = p ? p[2] + 1 : 1,
-                ns = p && p[3],
-                pn = 'parentNode';
-
-
-            if (p) {
-
-                el.innerHTML = (p[0] + html + p[1]);
-
-            } else {
-
-                el.innerHTML = html;
-            }
-
-            while (dep--) {
-
-                if (el.firstChild) {
-
-                    el = el.firstChild;
-                }
-            }
-
-            if (ns && el && el.nodeType !== 1) {
-
-                el = el.nextSibling;
-            }
-
-            do {
-
-                if (!tag || el.nodeType == 1) {
-
-                    els.push(el);
-                }
-
-            } while ((el = el.nextSibling));
-
-            hAzzle.each(els, function (el) {
-
-                if (el[pn]) {
-                    el[pn].removeChild(el);
-                }
-            });
-
-            return els;
-
-        } else {
-
-            return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
         }
     },
 
