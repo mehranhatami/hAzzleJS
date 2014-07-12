@@ -76,7 +76,7 @@ var win = this,
   trimspaces = /^\s*|\s*$/g,
   whitespace = new RegExp(Jiesa.whitespace),
   special = /\s?([\+~\>])\s?/g,
-  identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
+  identifier = '(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+',
   chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
 
 hAzzle.extend({
@@ -86,11 +86,10 @@ hAzzle.extend({
     'tag': new RegExp('^(' + identifier + '|[*])'),
     'Class': new RegExp('^\\.(' + identifier + ')'),
     'rel': /^\>|\>|\+|~$/,
-    'rel': /^\>|\>|\+|~$/,
 
-    "nth": new RegExp("^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(" + whitespace +
-      "*(even|odd|(([+-]|)(\\d*)n|)" + whitespace + "*(?:([+-]|)" + whitespace +
-      "*(\\d+)|))" + whitespace + "*\\)|)", "i"),
+    'nth': new RegExp('^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(' + whitespace +
+      '*(even|odd|(([+-]|)(\\d*)n|)' + whitespace + '*(?:([+-]|)' + whitespace +
+      '*(\\d+)|))' + whitespace + '*\\)|)', 'i'),
     'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
 
     'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
@@ -214,7 +213,7 @@ hAzzle.extend({
         // Check for getElementById bug
         // Support: IE<10
 
-        if (Jiesa.has["bug-GEBI"]) {
+        if (Jiesa.has['bug-GEBI']) {
 
           // If buggy, we have to let the Iranian take a
           // long walk, and inspect all the DOM nodes
@@ -254,14 +253,14 @@ hAzzle.extend({
 
       // If getElementsByTagName  are buggy, we fix it!!
 
-      if (Jiesa.has["bug-GEBTN"]) {
+      if (Jiesa.has['bug-GEBTN']) {
         var tmp = [],
           i = 0,
           results = elem.getElementsByTagName(tag);
 
         // Filter out possible comments
 
-        if (tag === "*") {
+        if (tag === '*') {
 
           while ((elem = results[i++])) {
             if (elem.nodeType === 1) {
@@ -362,11 +361,11 @@ hAzzle.extend({
         cn = elem.className,
         nT = elem.nodeType;
 
-      if (typeof cn === "string") {
+      if (typeof cn === 'string') {
         return Jiesa.has['api-classList'] ? elem.classList.contains(className) :
           nT === 1 && cn && (' ' + className + ' ').replace(Jiesa.whitespace, ' ').indexOf(cn) >= 0;
       } else {
-        return typeof elem.getAttribute !== undefined && elem.getAttribute("class") || "";
+        return typeof elem.getAttribute !== undefined && elem.getAttribute('class') || '';
       }
     },
 
@@ -396,7 +395,7 @@ hAzzle.extend({
         var value = info[3].replace(/^['"]|['"]$/g, ''),
           operator = info[2];
 
-        attr += "";
+        attr += '';
 
         /**
          * Special attribute - Regex Attribute Selector
@@ -412,14 +411,14 @@ hAzzle.extend({
           return RegExp(value, modifiers[1]).test(attr);
         }
 
-        return value && operator === "==" ? attr === value :
-          operator === "=" ? attr === value :
-          operator === "!=" ? attr !== value :
-          operator === "^=" ? attr.indexOf(value) === 0 :
-          operator === "*=" ? attr.indexOf(value) > -1 :
-          operator === "$=" ? attr.slice(-value.length) === value :
-          operator === "~=" ? (' ' + attr + ' ').indexOf(value) > -1 :
-          operator === "|=" ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
+        return value && operator === '==' ? attr === value :
+          operator === '=' ? attr === value :
+          operator === '!=' ? attr !== value :
+          operator === '^=' ? attr.indexOf(value) === 0 :
+          operator === '*=' ? attr.indexOf(value) > -1 :
+          operator === '$=' ? attr.slice(-value.length) === value :
+          operator === '~=' ? (' ' + attr + ' ').indexOf(value) > -1 :
+          operator === '|=' ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
           false;
 
       }
@@ -556,13 +555,13 @@ function IranianWalker(nodes, mode, fn) {
     var i = 0,
       ret = [],
       l = nodes.length,
-      elem, result;
+      result;
 
-    var callfn = (function (nodes, elem) {
+    var callfn = (function (nodes) {
       return function (i) {
         return fn.call(nodes, nodes[i], i, nodes);
       };
-    })(nodes, elem);
+    })(nodes);
 
     for (; i < l; i++) {
 
@@ -631,10 +630,12 @@ function byTagRaw(tag, elem) {
     elements = [],
     next = element.firstChild;
 
-  any || (tag = tag.toUpperCase());
+  if (!any) {
+    tag = tag.toUpperCase();
+  }
 
   while ((element = next)) {
-    if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
+    if (element.tagName > "@" && (any || element.tagName.toUpperCase() == tag)) {
       elements[elements.length] = element;
     }
     if ((next = element.firstChild || element.nextSibling)) {
@@ -688,10 +689,10 @@ function createCache() {
   var keys = [];
 
   function cache(key, value) {
-    if (keys.push(key + " ") > 70) {
+    if (keys.push(key + ' ') > 70) {
       delete cache[keys.shift()];
     }
-    return (cache[key + " "] = value);
+    return (cache[key + ' '] = value);
   }
   return cache;
 }
@@ -716,7 +717,7 @@ function filter(nodes, pieceStore) {
       if (a) {
         ret.push(elem);
       }
-      exeCache(nodes[i] + " ", ret);
+      exeCache(nodes[i] + ' ', ret);
     }
   }
 
@@ -766,10 +767,10 @@ function Execute(nodes, piece, context) {
 
   for (; i < l; i++) {
 
-    exe = exeCache[nodes[i] + " "];
+    exe = exeCache[nodes[i] + ' '];
 
     if (!exe) {
-      ret = exeCache(nodes[i] + " ", ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
+      ret = exeCache(nodes[i] + ' ', ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
     }
   }
 
