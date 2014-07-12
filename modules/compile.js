@@ -558,14 +558,21 @@ function IranianWalker(nodes, mode, fn) {
       l = nodes.length,
       elem, result;
 
+    var callfn = (function (nodes, elem) {
+      return function (i) {
+        return fn.call(nodes, nodes[i], i, nodes);
+      };
+    })(nodes, elem);
+
     for (; i < l; i++) {
 
-      elem = nodes[i],
-      result = fn.call(nodes, elem, i, nodes);
+      result = callfn(i);
 
       switch (mode) {
       case 'f':
-        if (result) ret.push(elem);
+        if (result) {
+          ret.push(nodes[i]);
+        }
         break;
       case 'c':
         ret = ret.concat(result);
