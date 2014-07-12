@@ -45,6 +45,31 @@ var arrayProto = Array.prototype,
 // Extend the core
 
 hAzzle.extend({
+	
+	 contains: function (target) {
+        return this.has(target).length > 0;
+    },
+	
+    /**
+     * Adds one element to the set of matched elements.
+     *
+     * @param {String} selector
+     * @param {String} context
+     * @return {hAzzle}
+     */
+	
+	add: function(other, context) {
+     var selection = hAzzle(other, context),
+         contents = hAzzle.unique(selection.get().concat(this.get())),
+         i = 0, l = contents.length; 
+		 
+      for (; i < l; ++i) {
+          selection[i] = contents[i];
+      }
+       selection.length = contents.length;
+
+  return selection;
+},
 
     /**
      * Reduce the set of matched elements to the final one in the set,
@@ -103,8 +128,7 @@ hAzzle.extend({
     // Get the whole matched element set as a clean array
 
     get: function (num) {
-
-        if (num === null) {
+        if (!num || num === null) {
             return slice.call(this);
         } else {
             return this[num < 0 ? (this.length + num) : num];
@@ -190,6 +214,15 @@ hAzzle.extend({
 
         return indexOf.call(this, selector);
     },
+
+    /**
+     * Get the element that matches the selector, beginning at the current
+     * element and progressing up through the DOM tree. 
+     *
+     * @param {String} selectors
+     * @param {String} context
+     * @return {hAzzle}
+     */
 
     closest: function (selectors, context) {
         var cur,
@@ -330,10 +363,10 @@ hAzzle.forOwn({
         return parent && parent.nodeType !== 11 ? parent : null;
     },
     parents: function (elem) {
-        return hAzzle.dir(elem, "parentNode");
+        return hAzzle.dir(elem, "parentElement");
     },
     parentsUntil: function (elem, i, until) {
-        return hAzzle.dir(elem, "parentNode", until);
+        return hAzzle.dir(elem, "parentElement", until);
     },
     siblings: function (elem) {
         return hAzzle.sibling(elem.parentElement, elem);
@@ -341,10 +374,26 @@ hAzzle.forOwn({
     children: function (elem) {
         return hAzzle.sibling(elem, true);
     },
+	
+	/**
+     * Get the immediately following sibling of each element
+     *
+     * @param {Object} elem
+     * @return {hAzzle}
+     */
+	
     next: function (elem) {
         return elem.nextElementSibling;
     },
-    prev: function (elem) {
+    
+	/**
+     * Get the immediately preceding sibling of each element
+     *
+     * @param {Object} elem
+     * @return {hAzzle}
+     */
+	
+	prev: function (elem) {
         return elem.previousElementSibling;
     },
     nextAll: function (elem) {
@@ -369,7 +418,6 @@ hAzzle.forOwn({
     hAzzle.Core[name] = function (until, selector) {
 
         var matched = map(this, fn, until);
-        //        var matched = hAzzle.map(this, fn, until);
 
         if (name.slice(-5) !== 'Until') {
             selector = until;
