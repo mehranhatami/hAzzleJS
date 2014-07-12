@@ -6,7 +6,7 @@
  * functions only for Jiesa
  */
 var win = this,
-    doc = document,
+    doc = win.document,
     Jiesa = hAzzle.Jiesa,
     expando = "DOM" + -hAzzle.now(),
 
@@ -144,8 +144,8 @@ hAzzle.extend({
     },
 
     childElementCount: function (el) {
-        var Count = el.childElementCount;
-        if (!Count) {
+        var count = el.childElementCount;
+        if (!count) {
             el = el.firstChild || null;
             do {
                 if (el && el.nodeType === 1) {
@@ -154,7 +154,7 @@ hAzzle.extend({
                 el = el.nextSibling;
             } while (el);
         }
-        return Count;
+        return count;
 
     },
 

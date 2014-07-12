@@ -4,19 +4,20 @@
 var win = this,
     doc = win.document,
     html = hAzzle.docElem,
-    hasDuplicate = false,
-    expando = "traversal" + -hAzzle.now(),
 
     indexOf = Array.prototype.indexOf,
     slice = Array.prototype.slice,
 
     // Use the Element Traversal API if available.
+
     nextElement = 'nextElementSibling',
     previousElement = 'previousElementSibling',
     parentElement = 'parentElement';
 
 var rparentsprev = /^(?:parents|prev(?:Until|All))/,
+
     // Methods guaranteed to produce a unique set when starting from a unique set
+
     guaranteedUnique = {
         children: true,
         contents: true,
@@ -24,6 +25,15 @@ var rparentsprev = /^(?:parents|prev(?:Until|All))/,
         prev: true
     },
 
+    /**
+     * Optimized map method for selector filtering
+     *
+     * @param {Array} arr
+     * @param {Function} fn
+     * @param {String} scope
+     * @param {hAzzle}
+     *
+     */
     map = function (arr, fn, scope) {
         var result = [],
             i = arr.length;
@@ -31,32 +41,32 @@ var rparentsprev = /^(?:parents|prev(?:Until|All))/,
             result.push(fn.call(scope, arr[i], i));
         }
         return result;
-    },
-
-    sortOrder = function (a, b) {
-        if (a === b) {
-            hasDuplicate = true;
-        }
-        return 0;
-    },
-
-    domCore = {
-
-        has: {
-            'api-stableSort': expando.split("").sort(sortOrder).join("") === expando
-
-        }
-
-
     };
 
 // Extend the core
 
 hAzzle.extend({
 
+    /**
+     * Reduce the set of matched elements to the final one in the set,
+     * OR to the last Nth elements, if index is specified
+     *
+     * @param {Number} index
+     * @return {hAzzle}
+     */
+
     last: function (index) {
         return index ? this.slice(this.length - index) : this[this.length - 1];
     },
+
+    /**
+     * Reduce the set of matched elements to the first in the set,
+     * OR to the first Nth elements, if index is specified
+     *
+     * @param {Number} index
+     * @return {hAzzle}
+     */
+
 
     first: function (index) {
         return hAzzle(index ? this.slice(0, index) : this[0]);
@@ -104,23 +114,60 @@ hAzzle.extend({
 
 
     filter: function (selector) {
-        return hAzzle(filterFn(this, selector || [], false));
+        return hAzzle(isnot(this, selector || [], false));
     },
+
+    /**
+     * Remove elements from the set of matched elements.
+     *
+     * @param {String} selector
+     * @return {hAzzle}
+     *
+     */
 
     not: function (selector) {
-        return hAzzle(filterFn(this, selector || [], true));
+        return hAzzle(isnot(this, selector || [], true));
     },
 
+    /**
+     * Check if the first element in the element collection matches the selector
+     *
+     * @param {String} selector
+     * @return {Boolean}
+     */
+
     is: function (selector) {
-        return !!filterFn(
+        return !!isnot(
             this,
             selector || [],
             false
         ).length;
-
-
     },
 
+    /**
+     * Reduce the set of matched elements to those that have a descendant that matches the selector or DOM element.
+     *
+     * @param {String} selector
+     * @return {hAzzle}
+     *
+     */
+
+    has: function (target) {
+        var targets = hAzzle(target, this),
+            l = targets.length;
+        return this.filter(function () {
+            var i = 0;
+            for (; i < l; i++) {
+                if (hAzzle.contains(this, targets[i])) {
+                    return true;
+                }
+            }
+        });
+    },
+
+    match: function (callback) {
+        return hAzzle.filter(this, filtered(callback));
+    },
 
     find: function (selector) {
         var i = 0,
@@ -163,7 +210,7 @@ hAzzle.extend({
 
         } else { // Object
 
-            return hAzzle(selector).filter(function () {
+            return hAzzle(selector).match(function () {
                 for (; i < len; i++) {
                     if (hAzzle.contains(self[i], this)) {
                         return true;
@@ -171,8 +218,27 @@ hAzzle.extend({
                 }
             });
         }
-    }
+    },
+    // New DOM Traversal API functions for hAzzle
+    firstElementChild: function () {
+        return this.children().first();
+    },
 
+    lastElementChild: function () {
+        return this.children().last();
+    },
+
+    previousElementSibling: function () {
+        return this.prev().last();
+    },
+
+    nextElementSibling: function () {
+        return this.next().first();
+    },
+
+    childElementCount: function () {
+        return this.children().length;
+    }
 });
 
 hAzzle.extend({
@@ -255,7 +321,7 @@ hAzzle.forOwn({
 
     hAzzle.Core[name] = function (until, selector) {
 
-        var matched = map(this, fn, until);
+        var matched = hAzzle.map(this, fn, until);
 
         if (name.slice(-5) !== 'Until') {
             selector = until;
@@ -272,6 +338,7 @@ hAzzle.forOwn({
                 hAzzle.unique(matched);
             }
 
+
             // Reverse order for parents* and prev-derivatives
             if (rparentsprev.test(name)) {
 
@@ -286,38 +353,7 @@ hAzzle.forOwn({
 });
 
 
-
-
-hAzzle.uniqueSort = function (results) {
-    var elem,
-        duplicates = [],
-        j = 0,
-        i = 0,
-
-        // Unless we *know* we can detect duplicates, assume their presence
-
-        sortInput = !domCore.has['api-stableSort'] && results.slice(0);
-    results.sort(sortOrder);
-
-    if (hasDuplicate) {
-        while ((elem = results[i++])) {
-            if (elem === results[i]) {
-                j = duplicates.push(i);
-            }
-        }
-        while (j--) {
-            results.splice(duplicates[j], 1);
-        }
-    }
-
-    // Clear input after sorting to release objects
-    // See https://github.com/jquery/sizzle/pull/225
-    sortInput = null;
-
-    return results;
-};
-
-function filterFn(elements, selector, not) {
+function isnot(elements, selector, not) {
 
     var type = typeof selector;
 
@@ -335,4 +371,20 @@ function filterFn(elements, selector, not) {
             return (elem === selector) !== not;
 
         }) : [];
+}
+
+
+
+
+function filtered(callback) {
+    var to;
+    return callback.nodeType === 1 ? function (el) {
+        return el === callback;
+    } : (to = typeof callback) === 'function' ? function (el, i) {
+        return callback.call(el, i);
+    } : to === 'string' && callback.length ? function (el) {
+        return hAzzle.matches(callback, el);
+    } : function () {
+        return false;
+    };
 }
