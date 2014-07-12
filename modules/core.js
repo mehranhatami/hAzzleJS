@@ -171,7 +171,7 @@ hAzzle.extend({
 
  /* =========================== UNIQUE SORT FUNCTION ========================== */
 
-hAzzle.unique = function (results) {
+hAzzle.uniqueSort = function (results) {
     var elem,
         duplicates = [],
         j = 0,
@@ -180,8 +180,10 @@ hAzzle.unique = function (results) {
 
         // Unless we *know* we can detect duplicates, assume their presence
 
+  
     apis = !domCore['api-stableSort'] && results.slice(0);
-    results.sort(sortOrder);
+
+//     results.sort(sortOrder);
 
     if (apis) {
         while ((elem = results[i++])) {

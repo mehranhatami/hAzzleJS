@@ -118,7 +118,7 @@ hAzzle.extend({
      * @param {String} selector(s)
      * @return {Boolean} true if the element contains all classes
      */
-/*
+
     hasClass: function (value) {
         var i = 0, self = this, l = self.length;
         for (; i < l; i++) {
@@ -132,7 +132,7 @@ hAzzle.extend({
         return false;
     },
 
-*/
+
     /**
      * Replace each class name in the set of matched elements
      *
