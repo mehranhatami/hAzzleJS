@@ -1,16 +1,29 @@
 /**
- * sortOrder
+ * Core
+ *
+ * Core function for hAzzle and Jiesa selector engine.
+ * Contains functions to sort DOM nodes, and 
+ * functions only for Jiesa
  */
 var win = this,
     doc = document,
-    Jiesa = hAzzle.Jiesa;
+    Jiesa = hAzzle.Jiesa,
+    expando = "traversal" + -hAzzle.now(),
 
-hAzzle.extend({
+    // Core methods for DOM
 
-    sortOrder: function (a, b) {
+    domCore = {
+		
+        'api-stableSort': expando.split("").sort(sortOrder).join("") === expando,
+		'api-sortInput': false
+    },
+	
+	 sortOrder = function(a, b) {
         // Flag for duplicate removal
         if (a === b) {
-            return 0;
+			
+            domCore['api-sortInput'] = true;
+		    return 0;
         }
 
         var compare = b.compareDocumentPosition && a.compareDocumentPosition && a.compareDocumentPosition(b);
@@ -36,7 +49,11 @@ hAzzle.extend({
 
         // Not directly comparable, sort on existence of method
         return a.compareDocumentPosition ? -1 : 1;
-    },
+    };
+
+hAzzle.extend({
+
+    sortOrder: sortOrder,
 
     // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
 
