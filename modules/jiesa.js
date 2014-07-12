@@ -18,6 +18,8 @@ var win = this,
 
     doc = win.document,
 
+   ElemProto = (window.Element || window.Node || window.HTMLElement).prototype,
+   
     docElem = hAzzle.docElem,
 
     documentIsHTML = hAzzle.documentIsHTML,
@@ -61,11 +63,11 @@ hAzzle.extend({
 
         // Feature detect if the browser supports MatchesSelector
 
-        'api-mS': native.test((matches = docElem.matches ||
-            docElem.webkitMatchesSelector ||
-            docElem.mozMatchesSelector ||
-            docElem.oMatchesSelector ||
-            docElem.msMatchesSelector))
+        'api-mS': native.test((matches = ElemProto.matches ||
+            ElemProto.webkitMatchesSelector ||
+            ElemProto.mozMatchesSelector ||
+            ElemProto.oMatchesSelector ||
+            ElemProto.msMatchesSelector))
     }
 
 }, Jiesa);

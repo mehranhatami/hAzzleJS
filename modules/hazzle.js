@@ -356,6 +356,7 @@
 
 
 
+
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
         },
@@ -726,24 +727,19 @@
 
             return hAzzle(results);
         },
-
-        makeArray: function (arr, results) {
-            var type,
-                ret = results || [];
-
-            if (arr !== null) {
-                type = hAzzle.type(arr);
-
-                if (arr.length === null || type === 'string' || type === 'function' || type === 'regexp' || hAzzle.isWindow(arr)) {
-                    push.call(ret, arr);
-                } else {
-                    hAzzle.merge(ret, arr);
+        
+		// Is it better now???
+        
+		makeArray: function (nodeList) {
+            var index = -1,
+                length = nodeList.length,
+                array = Array(length),
+                while (++index < length) {
+                    array[index] = nodeList[index];
                 }
-            }
-
-            return ret;
+            return array;
         },
-
+		
         // Loop through Objects
         // Note ! A for-in loop won't guarantee property iteration order and
         // they'll iterate over anything added to the Array.prototype
@@ -1030,8 +1026,6 @@
             return toString.call(o) === '[object ' + name + ']';
         };
     });
-
-
 
 
     function isArraylike(obj) {
