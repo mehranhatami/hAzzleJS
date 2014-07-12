@@ -635,7 +635,7 @@ function byTagRaw(tag, elem) {
   }
 
   while ((element = next)) {
-    if (element.tagName > "@" && (any || element.tagName.toUpperCase() == tag)) {
+    if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
       elements[elements.length] = element;
     }
     if ((next = element.firstChild || element.nextSibling)) {
