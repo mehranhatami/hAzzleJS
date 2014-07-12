@@ -693,7 +693,8 @@ function createCache() {
     if (keys.push(key + ' ') > 70) {
       delete cache[keys.shift()];
     }
-    return (cache[key + ' '] = value);
+    cache[key + ' '] = value;
+    return value;
   }
   return cache;
 }
