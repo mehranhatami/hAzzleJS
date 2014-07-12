@@ -78,7 +78,7 @@ path + 'hazzle.js',
       path + 'ajax.js',
       path + 'clone.js',
       path + 'parsing.js',
-      path + 'localestorage.js'
+      path + 'localestorage.js',
       //'hazzle.js',
       'test/test.js'
     ],
