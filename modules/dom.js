@@ -1,22 +1,12 @@
 /*!
  * DOM walker & getters
  */
-var win = this,
-    doc = win.document,
-    html = hAzzle.docElem,
+var arrayProto = Array.prototype,
+    indexOf = arrayProto.indexOf,
+    slice = arrayProto.slice,
+    concat = arrayProto.concat,
 
-    indexOf = Array.prototype.indexOf,
-    slice = Array.prototype.slice,
-    slice = Array.prototype.slice,
-    concat = Array.prototype.concat,
-
-    // Use the Element Traversal API if available.
-
-    nextElement = 'nextElementSibling',
-    previousElement = 'previousElementSibling',
-    parentElement = 'parentElement';
-
-var rparentsprev = /^(?:parents|prev(?:Until|All))/,
+    rparentsprev = /^(?:parents|prev(?:Until|All))/,
 
     // Methods guaranteed to produce a unique set when starting from a unique set
 
@@ -174,13 +164,58 @@ hAzzle.extend({
         });
     },
 
+    /** Determine the position of an element within the matched set of elements
+     *
+     * @param {string} elem
+     * @param {return} Object
+     */
 
+    index: function (selector) {
 
+        // No argument, return index in parent
 
-    closest: function (selector, index) {
-        typeof selector === 'number' ? (index = selector, selector = "*") : index = index || 0;
-        return walkElements(this, parentNode, selector, index, true);
+        if (!selector) {
+
+            return (this[0] && this[0].parentElement) ? this.first().prevAll().length : -1;
+        }
+
+        // index in selector
+
+        if (typeof selector === "string") {
+
+            return indexOf.call(hAzzle(selector), this[0]);
+        }
+
+        // Locate the position of the desired element
+
+        return indexOf.call(this, selector);
     },
+
+    closest: function (selectors, context) {
+        var cur,
+            i = 0,
+            l = this.length,
+            matched = [],
+            pos = typeof selectors !== "string" ?
+            hAzzle(selectors, context || this.context) :
+            0;
+
+        for (; i < l; i++) {
+
+            cur = this[i];
+
+            while (cur && cur !== context && cur.nodeType !== 11) {
+                if (pos ? pos.index(cur) > -1 : cur.nodeType === 1 && hAzzle.matches(cur, selectors)) {
+                    matched.push(cur);
+                    break;
+                }
+                cur = cur.parentElement;
+            }
+        }
+
+        return hAzzle(matched.length > 1 ? hAzzle.unique(matched) : matched);
+    },
+
     find: function (selector) {
         var i = 0,
             len = this.length,
@@ -360,8 +395,6 @@ hAzzle.forOwn({
         }
 
         return hAzzle(matched);
-
-
     };
 });
 
@@ -383,76 +416,4 @@ function isnot(elements, selector, not) {
         hAzzle.grep(elements, function (elem) {
             return (elem === selector) !== not;
         }) : [];
-}
-
-
-
-
-function getIndex(selector, index) {
-
-    var type = typeof index;
-
-    if (selector === undefined && type !== "number") {
-
-        return 0;
-
-    } else if (typeof selector === "number") {
-
-        return selector;
-
-    } else if (type === "number") {
-
-        return index;
-
-    } else {
-
-        return null;
-    }
-}
-
-/**
- * Element traversing support
- */
-
-function walkElements(els, method, selector, index, filterFn) {
-    index = getIndex(selector, index);
-    selector = getSelector(selector);
-    return collect(els, function (el, elind) {
-        var i = index || 0,
-            ret = [];
-        if (!filterFn)
-            el = el[method];
-        while (el && (index === null || i >= 0)) {
-            // ignore non-elements, only consider selector-matching elements
-            // handle both the index and no-index (selector-only) cases
-            if (hAzzle.isElement(el) && (!filterFn || filterFn === true || filterFn(el, elind)) && hAzzle.matches(selector, el) && (index === null || i-- === 0)) {
-                // this concat vs push is to make sure we add elements to the result array
-                // in reverse order when doing a previous(selector) and up(selector)
-                index === null && method != 'nextElementSibling' && method != 'parentNode' ? ret.unshift(el) : ret.push(el);
-            }
-            el = el[method];
-        }
-        return ret;
-    });
-}
-
-// for each element of 'els' execute 'fn' to get an array of elements to collect
-function collect(els, fn) {
-    var ret = [],
-        res, i = 0,
-        j, l = els.length,
-        l2;
-    while (i < l) {
-        j = 0;
-        l2 = (res = fn(els[i], i++)).length;
-        while (j < l2)
-            ret.push(res[j++]);
-    }
-    return hAzzle(ret);
-}
-
-
-// figure out which argument, if any, is our 'selector'
-function getSelector(selector) {
-    return isString(selector) ? selector : '*';
 }
