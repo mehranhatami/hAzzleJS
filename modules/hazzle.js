@@ -355,6 +355,7 @@
         },
 
 
+
         isBlank: function (str) {
             return hAzzle.trim(str).length === 0;
         },
@@ -495,33 +496,6 @@
 
             return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
-        },
-
-        /**
-         * Unique
-         */
-
-        unique: function (ar) {
-            var a = [],
-                i = -1,
-                j,
-                has,
-                len = ar.length;
-            while (++i < len) {
-                j = -1;
-                has = false;
-                while (++j < a.length) {
-                    if (a[j] === ar[i]) {
-                        has = true;
-                        break;
-                    }
-                }
-                if (!has) {
-
-                    a.push(ar[i]);
-                }
-            }
-            return a;
         },
 
         indexOf: function (elem, arr, i) {

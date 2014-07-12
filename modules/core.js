@@ -8,7 +8,7 @@
 var win = this,
     doc = document,
     Jiesa = hAzzle.Jiesa,
-    expando = "traversal" + -hAzzle.now(),
+    expando = "DOM" + -hAzzle.now(),
 
     // Core methods for DOM
 
@@ -168,3 +168,33 @@ hAzzle.extend({
         return el;
     }
 }, Jiesa);
+
+ /* =========================== UNIQUE SORT FUNCTION ========================== */
+
+hAzzle.unique = function (results) {
+    var elem,
+        duplicates = [],
+        j = 0,
+        i = 0,
+		apis =  domCore['api-sortInput'];
+
+        // Unless we *know* we can detect duplicates, assume their presence
+
+    apis = !domCore['api-stableSort'] && results.slice(0);
+    results.sort(sortOrder);
+
+    if (apis) {
+        while ((elem = results[i++])) {
+            if (elem === results[i]) {
+                j = duplicates.push(i);
+            }
+        }
+        while (j--) {
+            results.splice(duplicates[j], 1);
+        }
+    }
+
+    apis = null;
+
+    return results;
+};
