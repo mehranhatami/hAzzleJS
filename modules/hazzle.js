@@ -727,19 +727,20 @@
 
             return hAzzle(results);
         },
-        
-		// Is it better now???
-        
-		makeArray: function (nodeList) {
+
+
+        // Happy now???
+        makeArray: function (nodeList) {
             var index = -1,
                 length = nodeList.length,
-                array = Array(length),
-                while (++index < length) {
-                    array[index] = nodeList[index];
-                }
+                array = Array(length);
+
+            while (++index < length) {
+                array[index] = nodeList[index];
+            }
             return array;
         },
-		
+
         // Loop through Objects
         // Note ! A for-in loop won't guarantee property iteration order and
         // they'll iterate over anything added to the Array.prototype
