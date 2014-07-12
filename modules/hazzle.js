@@ -86,37 +86,17 @@
 
         // Document Ready
 
-      } else if (typeof selector === 'function') {
+      } else if ( selector.nodeType ) {
 
-        return hAzzle.ready(selector);
+           selector = [selector]
 
-        // Array
+		} else if ( hAzzle.isFunction( selector ) ) {
+              return hAzzle.ready(selector);
+		}
 
-      } else if (hAzzle.isArray(selector)) {
-
-        selector = hAzzle.unique(selector.filter(hAzzle.isElement));
-
-        // Nodelist
-
-      } else if (hAzzle.isNodeList(selector)) {
-
-        selector = slice.call(selector).filter(hAzzle.isElement);
-
-        // nodeTypes
-
-      } else if (hAzzle.isElement(selector)) {
-
-        selector = [selector];
-
-        // Object	
-
-      } else {
-
-        selector = hAzzle.unique(!selector.nodeType &&
-          typeof selector.length !== 'undefined' ?
-          selector : [selector]);
-      }
-
+		if ( selector.selector !== undefined ) {
+			selector = selector;
+		}
 
       var i = this.length = selector.length;
 

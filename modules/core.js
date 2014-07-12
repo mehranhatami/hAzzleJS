@@ -171,7 +171,12 @@ hAzzle.extend({
 
  /* =========================== UNIQUE SORT FUNCTION ========================== */
 
-hAzzle.uniqueSort = function (results) {
+/**
+ * Document sorting and removing duplicates
+ * @param {ArrayLike} results
+ */
+ 
+hAzzle.unique = function (results) {
     var elem,
         duplicates = [],
         j = 0,
