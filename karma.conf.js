@@ -7,7 +7,7 @@ module.exports = function (config) {
   'use strict';
 
   var path = 'modules/';
-  
+
   config.set({
     // base path, that will be used to resolve files and exclude
     basePath: '',
@@ -16,25 +16,69 @@ module.exports = function (config) {
       'mocha'
     ],
 
+    /*
+
+path + 'hazzle.js',
+    path + 'shims/pnow.js',
+    path + 'document.js',
+        path + 'core.js',
+        path + 'cl3.js',
+        path + 'cl4.js',
+        path + 'changers.js',
+        path + 'compile.js',
+        path + 'jiesa.js',
+    path + 'funcs.js',
+    path + 'fx.js',
+    path + 'data.js',
+        path + 'shims/classlist.js',
+    path + 'classes.js',
+    path + 'create.js',
+    path + 'manipulation.js',
+    path + 'removeable.js',
+    path + 'units.js',
+    path + 'css.js',
+    path + 'showhide.js',
+    path + 'detection.js',
+    path + 'events.js',
+    path + 'eventhooks.js',
+    path + 'ajax.js',
+    path + 'clone.js',
+    path + 'parsing.js',
+    path + 'localestorage.js'
+
+*/
+
     // list of files / patterns to load in the browser
     files: [
       //'node_modules/requirejs/require.js',
       'components/chai/chai.js',
       path + 'hazzle.js',
-      path + 'features.js',
-      path + 'selector.js',
-      path + 'traversing.js',
-      path + 'css.js',
+      path + 'shims/pnow.js',
+      path + 'document.js',
+      path + 'core.js',
+      path + 'cl3.js',
+      path + 'cl4.js',
+      path + 'changers.js',
+      path + 'compile.js',
+      path + 'jiesa.js',
+      path + 'funcs.js',
+      path + 'fx.js',
+      path + 'data.js',
+      path + 'shims/classlist.js',
       path + 'classes.js',
+      path + 'create.js',
       path + 'manipulation.js',
       path + 'removeable.js',
+      path + 'units.js',
+      path + 'css.js',
+      path + 'showhide.js',
+      path + 'detection.js',
       path + 'events.js',
-      path + 'data.js',
+      path + 'eventhooks.js',
+      path + 'ajax.js',
       path + 'clone.js',
       path + 'parsing.js',
-      path + 'observer.js',
-      path + 'localestorage.js',
-      path + 'browser.js',
+      path + 'localestorage.js'
       //'hazzle.js',
       'test/test.js'
     ],
