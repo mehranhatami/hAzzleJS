@@ -169,7 +169,7 @@ hAzzle.extend({
 
           for (; j < k; j++) {
 
-            // Not everyone has a filter :)	
+            // Not everyone has a filter :) 
 
             if (Jiesa.filters[pieceStore[j].type]) {
 
@@ -220,7 +220,7 @@ hAzzle.extend({
 
           return byIdRaw(id, elem);
         }
-        //console.log(elem	)
+        //console.log(elem  )
         // Everything good to go...
         var m = elem.getElementById(id);
         return m && m.parentNode ? [m] : [];
@@ -276,7 +276,7 @@ hAzzle.extend({
 
         // If XML doc or document fragment, do a 
         // raw grab of the node, because the Iranian don't 
-        // fit for this 				
+        // fit for this         
 
         if (documentIsHTML || elem.nodeType === 11) {
 
@@ -355,7 +355,7 @@ hAzzle.extend({
 
     'Class': function (elem, sel) {
 
-      // If ClassList are supported by the browser, use it !!			
+      // If ClassList are supported by the browser, use it !!     
 
       var className = sel.replace('.', ''),
         cn = elem.className,
@@ -549,6 +549,7 @@ function getNodes(context) {
     return [doc];
   }
 }
+hAzzle.getNodes = getNodes;
 
 function IranianWalker(nodes, mode, fn) {
   if (nodes) {
@@ -666,7 +667,7 @@ function getAttribute(elem, attribute) {
     doc = hAzzle.setDocument(elem);
   }
 
-  // Lower case are always a good thing !!	 
+  // Lower case are always a good thing !!   
 
   attribute = attribute.toLowerCase();
 

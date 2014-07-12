@@ -4,3 +4,4 @@ algorithms.map
 npm-debug.log
 npm-debug.log
 distro
+*.tmp
