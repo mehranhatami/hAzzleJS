@@ -60,7 +60,7 @@ hAzzle.extend({
 	
 	add: function(other, context) {
      var selection = hAzzle(other, context),
-         contents = hAzzle.unique(selection.get().concat(this.get())),
+         contents = hAzzle.uniqueSort(selection.get().concat(this.get())),
          i = 0, l = contents.length; 
 		 
       for (; i < l; ++i) {
