@@ -2,8 +2,8 @@
  * A handfull Usefull functions for the hAzzle Object
  */
 /* =========================== PUBLIC FUNCTIONS ========================== */
-var slice = Array.prototype.slice,
-    breaker = {};
+
+var slice = Array.prototype.slice;
 
 hAzzle.extend({
 
@@ -53,28 +53,23 @@ hAzzle.extend({
         return -1;
     },
 
-    bind: function (func, context) {
-        var args, bound;
+    bind: function (scope, fn) {
+        var args = arguments.length > 2 ? slice.call(arguments, 2) : null;
+        return function () {
+            return fn.apply(scope, args ? args.concat(slice.call(arguments)) : arguments);
+        };
+    },
 
-        if (typeof func === 'function') {
+    curry: function curry(fn) {
 
-            hAzzle.error("Not supported!");
+        if (arguments.length == 1) {
+            return fn;
         }
 
-        args = slice.call(arguments, 2);
-
-        return bound = function () {
-            if (!(this instanceof bound)) {
-                return func.apply(context, args.concat(slice.call(arguments)));
-            }
-            ctor.prototype = func.prototype;
-            var self = new ctor();
-            ctor.prototype = null;
-            var result = func.apply(self, args.concat(slice.call(arguments)));
-            if (Object(result) === result) {
-                return result;
-            }
-            return self;
+        var args = slice.call(arguments, 1);
+		
+        return function () {
+            return fn.apply(null, args.concat(slice.call(arguments)));
         };
     },
 
@@ -82,12 +77,6 @@ hAzzle.extend({
      * Simple function for copy one object over
      * to another object
      */
-
-    /**
-     * Simple function for copy one object over
-     * to another object
-     */
-
 
     shallowCopy: function (src, target) {
         var i = 0;
@@ -117,22 +106,10 @@ hAzzle.extend({
         return target || src;
     },
 
-
-
     pluck: function (array, property) {
         return array.map(function (item) {
             return item[property];
         });
-    },
-
-    // Exact
-
-    exact: function (elem, attribute) {
-        return elem.getAttribute(attribute, 2);
-    },
-
-    setChecked: function (elem, value) {
-        elem.checked = !!value;
     },
 
     rand: function (x, y) {
@@ -166,25 +143,6 @@ hAzzle.extend({
         return matches;
     },
 
-    // Invoke a method (with arguments) on every item in a collection.
-
-    invoke: function (obj, method) {
-
-        var args = slice.call(arguments, 2);
-
-        return hAzzle.map(obj, function (value) {
-
-            if (typeof method === 'function') {
-
-                return method.apply(value, args);
-
-            } else {
-
-                return value[method].apply(value, args);
-            }
-        });
-    },
-
     /**
      * @param {hAzzle|Array} ar
      * @param {function(Object, number, (hAzzle|Array))} fn
@@ -207,84 +165,6 @@ hAzzle.extend({
         return false;
     },
 
-    // Keep the identity function around for default iterators.
-
-    identity: function (value) {
-        return value;
-    },
-
-    /**
-     * Determine whether all of the elements match a truth test.
-     */
-
-    every: function (obj, predicate, context) {
-
-        predicate = predicate || hAzzle.identity;
-
-        var result = true;
-        if (obj === null) {
-            return result;
-        }
-        hAzzle.each(obj, function (value, index, list) {
-
-            if (!(result = result && predicate.call(context, value, index, list))) {
-                return breaker;
-            }
-        });
-        return !!result;
-    },
-
-    /**
-     *  Determine if at least one element in the object matches a truth test.
-     */
-
-    any: function (obj, predicate, context) {
-
-        predicate = predicate || hAzzle.identity;
-        var result = false;
-        if (obj === null) {
-            return result;
-        }
-        hAzzle.each(obj, function (value, index, list) {
-            if (result || (result = predicate.call(context, value, index, list))) {
-                return breaker;
-            }
-        });
-        return !!result;
-    },
-
-    max: function (obj, iterator, context) {
-        if (!iterator && hAzzle.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
-            return Math.max.apply(Math, obj);
-        }
-        var result = -Infinity,
-            lastComputed = -Infinity;
-        hAzzle.each(obj, function (value, index, list) {
-            var computed = iterator ? iterator.call(context, value, index, list) : value;
-            if (computed > lastComputed) {
-                result = value;
-                lastComputed = computed;
-            }
-        });
-        return result;
-    },
-
-    min: function (obj, iterator, context) {
-        if (!iterator && hAzzle.isArray(obj) && obj[0] === +obj[0] && obj.length < 65535) {
-            return Math.min.apply(Math, obj);
-        }
-        var result = Infinity,
-            lastComputed = Infinity;
-        hAzzle.each(obj, function (value, index, list) {
-            var computed = iterator ? iterator.call(context, value, index, list) : value;
-            if (computed < lastComputed) {
-                result = value;
-                lastComputed = computed;
-            }
-        });
-        return result;
-    },
-
     /**
      * Return the number of elements in an object.
      */
@@ -298,6 +178,3 @@ hAzzle.extend({
     },
 
 }, hAzzle);
-
-// Reusable constructor function for prototype setting.
-var ctor = function () {};
