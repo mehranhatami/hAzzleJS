@@ -16,43 +16,14 @@ module.exports = function (config) {
       'mocha'
     ],
 
-    /*
-
-path + 'hazzle.js',
-    path + 'shims/pnow.js',
-    path + 'document.js',
-        path + 'core.js',
-        path + 'cl3.js',
-        path + 'cl4.js',
-        path + 'changers.js',
-        path + 'compile.js',
-        path + 'jiesa.js',
-    path + 'funcs.js',
-    path + 'fx.js',
-    path + 'data.js',
-        path + 'shims/classlist.js',
-    path + 'classes.js',
-    path + 'create.js',
-    path + 'manipulation.js',
-    path + 'removeable.js',
-    path + 'units.js',
-    path + 'css.js',
-    path + 'showhide.js',
-    path + 'detection.js',
-    path + 'events.js',
-    path + 'eventhooks.js',
-    path + 'ajax.js',
-    path + 'clone.js',
-    path + 'parsing.js',
-    path + 'localestorage.js'
-
-*/
-
     // list of files / patterns to load in the browser
     files: [
       //'node_modules/requirejs/require.js',
       'components/chai/chai.js',
       path + 'hazzle.js',
+      path + 'ntapi.js',
+      path + 'types.js',
+      path + 'ready.js',
       path + 'shims/pnow.js',
       path + 'document.js',
       path + 'core.js',
@@ -66,11 +37,14 @@ path + 'hazzle.js',
       path + 'data.js',
       path + 'shims/classlist.js',
       path + 'classes.js',
-      path + 'create.js',
+      path + 'html.js',
       path + 'manipulation.js',
+      path + 'attributes.js',
       path + 'removeable.js',
       path + 'units.js',
       path + 'css.js',
+      path + 'position.js',
+      path + 'offset.js',
       path + 'showhide.js',
       path + 'detection.js',
       path + 'events.js',
@@ -96,7 +70,10 @@ path + 'hazzle.js',
     // CLI --browsers Chrome,Firefox,Safari
     browsers: [
       'Chrome',
-      'Firefox'
+      'Firefox',
+      'Safari',
+      'Opera',
+      'IE'
     ],
 
     // if browser does not capture in given timeout [ms], kill it

@@ -1,6 +1,5 @@
-
 var expect = chai.expect,
-	global = this;
+  global = this;
 
 describe('Test engine test', function () {
   it('Check if test engine works', function () {
@@ -8,7 +7,7 @@ describe('Test engine test', function () {
   });
 });
 
-/*describe('hAzzle()', function () {
+describe('hAzzle()', function () {
   it('Check if it exists', function () {
     expect(typeof (hAzzle) === 'function').to.equal(true);
   });
@@ -26,4 +25,4 @@ describe('hAzzle.isNumeric()', function () {
     expect(hAzzle.isNumeric("str")).to.equal(false);
     expect(hAzzle.isNumeric(20)).to.equal(true);
   });
-});*/
+});
