@@ -11,10 +11,10 @@ var arrayProto = Array.prototype,
     // Methods guaranteed to produce a unique set when starting from a unique set
 
     guaranteedUnique = {
-        children: true,
-        contents: true,
-        next: true,
-        prev: true
+        children: 1,
+        contents: 1,
+        next: 1,
+        prev: 1
     },
 
     /**
@@ -30,6 +30,7 @@ var arrayProto = Array.prototype,
         var value,
             i = arr.length,
             ret = [];
+
         while (i--) {
 
             value = fn(arr[i], i, scope);
@@ -41,8 +42,6 @@ var arrayProto = Array.prototype,
         // Flatten any nested arrays
         return concat.apply([], ret);
     };
-
-// Extend the core
 
 hAzzle.extend({
 
@@ -119,15 +118,22 @@ hAzzle.extend({
 
         // Use the first identity optimization if possible
 
-        if (index === 0 && this.length <= index) return this;
+        if (index === 0 && this.length <= index) {
 
-        if (index < 0) index = this.length + index;
+            return this;
+        }
+
+        if (index < 0) {
+
+            index = this.length + index;
+        }
 
         return this[index] ? hAzzle(this[index]) : hAzzle([]);
 
     },
 
     toArray: function () {
+
         return slice.call(this);
     },
 
@@ -217,6 +223,7 @@ hAzzle.extend({
 
             haystack = hAzzle(selector);
             needle = this[0];
+
         } else {
 
             haystack = this;
@@ -312,7 +319,6 @@ hAzzle.extend({
             });
         }
     },
-
     /**
      * NOTE!! In the upcoming DOM level 4, the nextElementSibling and
      * previousElementSibling have been removed from the
