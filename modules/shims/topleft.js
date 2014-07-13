@@ -1,47 +1,44 @@
 /**
  * Fixes top / left computedStyle bugs in Webkit based browsers
- * The issue are caused by the getComputedStyle. It returns the percent when specified for top/left/bottom/right
  */
  
 var win = this,
     doc = win.document,
+	computedstyle = !!document.defaultView.getComputedStyle,
     pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i;
 
  /**
   * If the browser suports the computedStyle, we go on...
   */
+hAzzle.assert( function(div) {
 
-if (hAzzle.features.computedStyle) {
-
-var 
-    docElem = doc.documentElement,
-    container = doc.createElement("div"),
-    div = doc.createElement("div");
-
-// Only if the 'div' have style property, we continue...
-
-if ( div.style ) {
-
+  var container = doc.createElement("div");
+	
     div.style.cssText =
         "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;" +
         "box-sizing:border-box;display:block;margin-top:1%;top:1%;" +
         "border:1px;padding:1px;width:4px;position:absolute";
+  
     div.innerHTML = "";
-    docElem.appendChild(container);
+  
+    hAzzle.docElem.appendChild(container);
 
     var divStyle = win.getComputedStyle(div, null);
 
   // Check if browser supports pixelposition (Webkit don't)
-  
-    hAzzle.pixelPosition = divStyle.top === "1%";
+    cssCore.has['api-pixelPosition'] = divStyle.top === "1%";
   
     // Check if support boxSizing
-  
-    hAzzle.boxSizing = divStyle.width === "4px";
+    
+	cssCore.has['api-boxSizing'] = divStyle.width === "4px";
 
-    docElem.removeChild(container);
+    hAzzle.docElem.removeChild(container);	
+	
+	});
 
-    if (! hAzzle.pixelPosition) {
+if (computedstyle) {
+
+    if (! cssCore.has['api-pixelPosition']) {
 
         hAzzle.extend({
 
@@ -49,8 +46,9 @@ if ( div.style ) {
                 get: function (el, computed) {
 
                     if (computed) {
-  
-                        computed = hAzzle.curCSS(el, 'left');
+
+                        computed = curCSS(el, 'left');
+
                         return pxchk.test(computed) ?
                             hAzzle(el).position().left + "px" :
                             computed;
@@ -61,7 +59,7 @@ if ( div.style ) {
             'top': {
                 get: function (el, computed) {
                     if (computed) {
-                        computed = hAzzle.getStyle(el, 'top');
+                        computed = curCSS(el, 'top');
                         return pxchk.test(computed) ?
                             hAzzle(el).position().top + "px" :
                             computed;
@@ -72,4 +70,3 @@ if ( div.style ) {
         }, hAzzle.cssHooks);
     }
   }
-}
