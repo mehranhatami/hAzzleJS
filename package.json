@@ -12,11 +12,13 @@
 
     "karma": "~0.12.8",
     "karma-mocha": "~0.1.4",
+    
     "karma-chrome-launcher": "~0.1.2",
     "karma-ie-launcher": "~0.1.2",
     "karma-firefox-launcher": "~0.1.2",
     "karma-safari-launcher": "~0.1.1",
     "karma-opera-launcher": "~0.1.0",
+
     "requirejs": "~2.1.10",
     "karma-requirejs": "~0.2.1"
   },
@@ -25,6 +27,6 @@
     "url": "https://github.com/mehranhatami/hAzzleJS"
   },
   "scripts": {
-    "test": "./node_modules/.bin/karma start --browsers phantomjs --single-run"
+    "test": "./node_modules/.bin/karma start --single-run"
   }
 }
