@@ -315,7 +315,7 @@ hAzzle.extend({
             // Next Adjacent Selector
 
             if (sel === '+') {
-                return [Jiesa.nextElementSibling(elem)];
+                return [hAzzle.nextElementSibling(elem)];
             }
 
             // Child Selector
