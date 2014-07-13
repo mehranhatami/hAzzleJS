@@ -1,8 +1,8 @@
-# hAzzleJS v. 0.6.3a BETA [![Build Status](https://travis-ci.org/hazzlejs/hAzzleJS.svg?branch=master)](https://travis-ci.org/hazzlejs/hAzzleJS) [![Code Climate](https://codeclimate.com/github/hazzlejs/hAzzleJS.png)](https://codeclimate.com/github/hazzlejs/hAzzleJS)
+# hAzzleJS v. 0.9.1a RC1 [![Build Status](https://travis-ci.org/hazzlejs/hAzzleJS.svg?branch=master)](https://travis-ci.org/hazzlejs/hAzzleJS) [![Code Climate](https://codeclimate.com/github/hazzlejs/hAzzleJS.png)](https://codeclimate.com/github/hazzlejs/hAzzleJS)
 
 **hAzzle** aims to be the fastest JavaScript library, but still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
 
-**hAzzle** support all modern browsers and features - such as HTML 5. It's build in CSS module supports CSS transform and other 'special' CSS properties.
+**hAzzle** support all modern browsers and features - such as HTML 5, and new Traversal API. In its selector engine it supports both CSS Level 3 selectors and CSS Level 4 selectors. And before the stable 1.0 release it will support DOM Level 4.
 
 Browser compatiblity
 --------------------
@@ -28,7 +28,7 @@ Browser compatiblity
 
 <tr>
 <td style="text-align:left;"> Firefox </td>
-<td style="text-align:left;">6+       </td>
+<td style="text-align:left;">9+       </td>
 </tr>
 
 <tr>
@@ -38,7 +38,7 @@ Browser compatiblity
 
 <tr>
 <td style="text-align:left;"> Opera   </td>
-<td style="text-align:left;">11.5+    </td>
+<td style="text-align:left;">13.5+    </td>
 </tr>
 
 </tbody>
@@ -55,32 +55,32 @@ Browser compatiblity
 <tbody>
 <tr>
 <td style="text-align:left;"> iOS               </td>
-<td style="text-align:left;"> 4.1+ (6.0.1) </td>
+<td style="text-align:left;"> 6.0.1 </td>
 </tr>
 
 <tr>
 <td style="text-align:left;"> Android           </td>
-<td style="text-align:left;"> 4.0+         </td>
+<td style="text-align:left;"> 4.2+         </td>
 </tr>
 
 <tr>
 <td style="text-align:left;"> Blackberry        </td>
-<td style="text-align:left;"> 10+          </td>
+<td style="text-align:left;"> 9.0+          </td>
 </tr>
 
 <tr>
 <td style="text-align:left;"> Opera Mobile      </td>
-<td style="text-align:left;"> 11.1+ (12.1) </td>
+<td style="text-align:left;"> 13.1+ (13.1) </td>
 </tr>
 
 <tr>
 <td style="text-align:left;"> Chrome (Android)  </td>
-<td style="text-align:left;"> 18+ (18)     </td>
+<td style="text-align:left;"> 16+ (16)     </td>
 </tr>
 
 <tr>
 <td style="text-align:left;"> Firefox (Android) </td>
-<td style="text-align:left;"> 15+ (18)     </td>
+<td style="text-align:left;"> 16+ (18)     </td>
 </tr>
 
 </tbody>
