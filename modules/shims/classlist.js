@@ -1,4 +1,4 @@
-if (("classList" in document.documentElement) && Object.defineProperty && typeof HTMLElement !== 'undefined') {
+if (!("classList" in document.documentElement) && Object.defineProperty && typeof HTMLElement !== 'undefined') {
     Object.defineProperty(HTMLElement.prototype, 'classList', {
         get: function() {
             var self = this;
