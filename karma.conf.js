@@ -69,7 +69,6 @@ module.exports = function (config) {
     // start these browsers
     // CLI --browsers Chrome,Firefox,Safari
     browsers: [
-      'Chrome',
       'Firefox',
       'Opera'
     ],
