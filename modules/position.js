@@ -1,4 +1,5 @@
-//  CSS position
+//  CSS position, width and height
+
 hAzzle.extend({
 
     position: function () {
@@ -47,58 +48,6 @@ hAzzle.extend({
         return null;
     }
 });
-
-
-
-
-/**
- * Width and height
- */
-
-hAzzle.each(['width', 'height'], function (name) {
-
-    var dimensionProperty =
-        name.replace(/./, function (m) {
-            return m[0].toUpperCase();
-        });
-
-    hAzzle.Core[name] = function (value) {
-
-        var elem = this[0],
-            _doc = elem.documentElement;
-
-        if (!elem) {
-
-            return '';
-        }
-
-        if (getWindow(elem)) {
-
-            return _doc['client' + dimensionProperty];
-        }
-
-        // Get document width or height
-        if (elem.nodeType === 9) {
-            return Math.max(
-                elem.body['scroll' + dimensionProperty], _doc['scroll' + dimensionProperty],
-                elem.body['client' + dimensionProperty], _doc['client' + dimensionProperty],
-                _doc['client' + dimensionProperty]
-            );
-        }
-
-        // Get width or height on the element
-        if (value === undefined) {
-
-            return parseFloat(hAzzle.css(elem, name));
-        }
-
-        // Set the width or height on the element
-
-        hAzzle(elem).css(name, value);
-    };
-});
-
-
 
 
 /**
