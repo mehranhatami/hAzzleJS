@@ -2,6 +2,12 @@
 var expect = chai.expect,
 	global = this;
 
+describe('Test engine test', function () {
+  it('Check if test engine works', function () {
+    expect(1).to.equal(1);
+  });
+});
+
 /*describe('hAzzle()', function () {
   it('Check if it exists', function () {
     expect(typeof (hAzzle) === 'function').to.equal(true);
