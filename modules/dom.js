@@ -98,6 +98,10 @@ hAzzle.extend({
         return index ? this.slice(0, index) : this.eq(0);
     },
 
+    /**
+     * Reduce the set of matched elements to a subset specified by a range of indices.
+     */
+
     slice: function () {
 
         return hAzzle(slice.apply(this, arguments));
@@ -379,19 +383,48 @@ hAzzle.extend({
 
 hAzzle.forOwn({
 
+    /**
+     * Get the parent of each element in the current set of matched
+     * elements, optionally filtered by a selector.
+     */
+
     parent: function (elem) {
         var parent = elem.parentElement;
         return parent && parent.nodeType !== 11 ? parent : null;
     },
+
+    /**
+     * Get the ancestors of each element in the current set of matched
+     *elements, optionally filtered by a selector.
+     */
+
     parents: function (elem) {
         return hAzzle.dir(elem, "parentElement");
     },
+
+    /**
+     * Get the ancestors of each element in the current set of matched elements, up to
+     * but not including the element matched by the selector, DOM node, or hAzzle object.
+     */
+
     parentsUntil: function (elem, i, until) {
         return hAzzle.dir(elem, "parentElement", until);
     },
+
+    /**
+     * Get the siblings of each element in the set of matched elements, optionally
+     * filtered by a selector.
+     */
+
     siblings: function (elem) {
         return hAzzle.sibling(elem.parentElement, elem);
     },
+
+    /**
+     * Get the children of each element in the set of matched elements, optionally
+     * filtered by a selector.
+     */
+
     children: function (elem) {
         return hAzzle.sibling(elem, true);
     },
@@ -409,6 +442,8 @@ hAzzle.forOwn({
 
     /**
      * Get the immediately preceding sibling of each element
+     * in the set of matched  elements, optionally filtered by a
+     * selector.
      *
      * @param {Object} elem
      * @return {hAzzle}
@@ -417,20 +452,50 @@ hAzzle.forOwn({
     prev: function (elem) {
         return elem.previousElementSibling;
     },
+
+    /**
+     * Get all following siblings of each element in the set of matched
+     * elements, optionally filtered by a selector.
+     */
+
     nextAll: function (elem) {
         return hAzzle.dir(elem, "nextElementSibling");
     },
+
+    /**
+     * Get all preceding siblings of each element in the set of matched elements
+     * optionally filtered by a selector.
+     */
+
     prevAll: function (elem) {
         return hAzzle.dir(elem, "previousElementSibling");
     },
+
+    /**
+     * Get all following siblings of each element up to but not including the
+     * element matched by the selector, DOM node, or jQuery object passed.
+     */
+
     nextUntil: function (elem, i, until) {
 
         return hAzzle.dir(elem, "nextElementSibling", until);
     },
+
+    /**
+     * Get all preceding siblings of each element up to but not including the
+     * element matched by the selector, DOM node, or hAzzle object.
+     */
+
     prevUntil: function (elem, i, until) {
 
         return hAzzle.dir(elem, "previousElementSibling", until);
     },
+
+    /**
+     * Get the children of each element in the set of matched elements,
+     * including text and comment nodes.
+     */
+
     contents: function (elem) {
         return elem.contentDocument || hAzzle.merge([], elem.childNodes);
     }
