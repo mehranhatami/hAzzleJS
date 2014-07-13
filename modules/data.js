@@ -1,8 +1,26 @@
 /** 
  * Data
  */
- 
-var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/;
+var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
+
+    // Unique ID
+
+    uid = {
+        current: 0,
+        next: function () {
+            var id = ++this.current + '';
+            return 'hAzzle_' + id;
+        }
+    },
+
+    getUID = function (el) {
+
+        if (el) {
+
+            return (el.hAzzle_id || (el.hAzzle_id = uid.next()));
+
+        }
+    };
 
 // Extend the hAzzle object
 
@@ -19,7 +37,7 @@ hAzzle.extend({
      */
 
     hasData: function (elem) {
-        return elem.nodeType && hAzzle._cache[hAzzle.getUID(elem)] ? true : false;
+        return elem.nodeType && hAzzle._cache[getUID(elem)] ? true : false;
     },
     /**
      * Remove data from an element
@@ -40,7 +58,7 @@ hAzzle.extend({
 
             // get / create unique ID for this element
 
-            var id = hAzzle.getUID(elem);
+            var id = getUID(elem);
 
             // Nothing to do if there are no data stored on the elem itself
 
@@ -71,13 +89,13 @@ hAzzle.extend({
         if (_validate(elem)) {
 
             var pid,
-                id = hAzzle._cache[hAzzle.getUID(elem)];
+                id = hAzzle._cache[getUID(elem)];
 
             // Create and unique ID for this elem
 
             if (!id && elem.nodeType) {
 
-                pid = hAzzle.getUID(elem);
+                pid = getUID(elem);
                 id = hAzzle._cache[pid] = {};
             }
 
@@ -196,7 +214,7 @@ hAzzle.extend({
 
             if (this.length === 1) {
 
-                return hAzzle.data(this[0], key);
+                return hAzzle.data(this[0], key, value);
 
             } else {
 
@@ -204,7 +222,7 @@ hAzzle.extend({
 
                 return this.map(function (el) {
 
-                    return hAzzle.data(el, key);
+                    return hAzzle.data(el, key, value);
 
                 });
             }

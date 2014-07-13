@@ -1,881 +1,854 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.1a
+ * Version: 0.9.2a
  * Released under the MIT License.
  *
- * Date: 2014-07-11
+ * Date: 2014-07-14
  */
+ 
 (function (window, undefined) {
 
-  // hAzzle already defined, leave now
+    // hAzzle already defined, leave now
 
-  if (window.hAzzle) {
+    if (window.hAzzle) {
 
-    return;
-  }
-
-  var win = window,
-    doc = win.document,
-
-    /**
-     * Prototype references.
-     */
-
-    ArrayProto = Array.prototype,
-
-    /**
-     * Save a reference to some core methods
-     */
-
-    indexOf = ArrayProto.indexOf,
-    concat = ArrayProto.concat,
-    
-    trwl = /^\s\s*/,
-    trwr = /\s\s*$/,
-
-    escEp = /[-\\^$*+?.()|[\]{}]/g,
-
-    /*
-     * Unique ID
-     */
-
-    uid = {
-      current: 0,
-      next: function () {
-        var id = ++this.current + '';
-        return 'hAzzle_' + id;
-      }
-    },
-
-    // The ready event handler
-
-    DOMContentLoaded = false,
-
-    // Define a local copy of hAzzle
-
-    hAzzle = function (selector, context) {
-      return new Core(selector, context);
-    };
-
-  /**
-   * Init Core
-   *
-   * All checks are done here, so we don't have to check
-   * for all this in the selector engine.
-   */
-
-  function Core(selector, context) {
-
-    if (selector) {
-
-      if (typeof selector === 'string') {
-
-        selector = hAzzle.find(selector, context);
-
-        // nodeType
-
-      } else if ( selector.nodeType ) {
-
-           selector = [selector];
-
-		// Document Ready
-		
-		} else if ( hAzzle.isFunction( selector ) ) {
-
-              return hAzzle.ready(selector);
-		}
-
-		if ( selector.selector !== undefined ) {
-			selector = selector;
-		}
-
-      var i = this.length = selector.length;
-
-      while (i--) {
-        this[i] = selector[i];
-      }
-    }
-  }
-
-  /* =========================== CORE FUNCTIONS ========================== */
-
-  hAzzle.Core = Core.prototype = {
-
-    // The default length of a hAzzle object is 0
-
-    length: 0,
-
-    /**
-     * Returns a new array with the result of calling callback on each element of the array
-     * @param {function} fn
-     * @return {hAzzle}
-     */
-
-    twist: function (fn) {
-      var elems = this,
-        i = 0,
-        len = elems.length;
-      for (i = len; i--;) {
-        return hAzzle(fn(elems[i]));
-      }
-    },
-
-    /**
-     * Loop through objects
-     *
-     * @param {function} fn
-     * @param {Object} obj
-     * @return {hAzzle}
-     */
-
-    forOwn: function (fn, obj) {
-      return hAzzle.forOwn(this, fn, obj);
-    },
-
-    /**
-     * @param {function} fn
-     * @param {Object} obj
-     * @return {hAzzle}
-     */
-
-    each: function (fn, obj) {
-      return hAzzle.each(this, fn, obj);
-    },
-
-    /**
-     * @param {Function} fn
-     * @param {Object} obj
-     * @return {hAzzle}
-     */
-
-    deepEach: function (fn, obj) {
-
-      return hAzzle.deepEach(this, fn, obj);
-    },
-
-    /**
-     * @param {Function} callback
-     * @param {Function} func
-     * @return {Array}
-     */
-
-    map: function (callback, func) {
-      var m = [],
-        n, i = 0,
-        self = this,
-        l = self.length;
-
-      for (; i < l; i++) {
-
-        n = callback.call(self, self[i], i);
-
-        if (func) {
-
-          func(n);
-        }
-        m.push(n);
-      }
-
-      return m;
-    },
-
-    ready: function (fn) {
-      if (typeof fn === 'function') {
-        return hAzzle.ready(fn);
-      }
-    },
-
-    size: function () {
-      return this.length;
-    },
-
-  };
-
-  /**
-   * Extend the contents of two objects
-   */
-
-  hAzzle.extend = function () {
-    var destination = arguments[0],
-      source = arguments[1],
-      property;
-    for (property in destination) {
-      // Objects only
-      if (destination[property] && destination[property].constructor && typeof destination[property] === 'object') {
-        (source || Core.prototype)[property] = destination[property] || {};
-      } else {
-        if (destination.hasOwnProperty(property)) {
-          (source || Core.prototype)[property] = destination[property];
-        }
-      }
-    }
-  };
-
-  hAzzle.extend({
-
-    // documentElement after adjustments
-    // Note! This can / will be overwritten 
-    // by the document.js module
-
-    docElem: doc.documentElement,
-
-    // Tells if the document are XML or HTML
-    // Set to true as default, but it can be
-    // overwritten by the document.js module
-
-    documentIsHTML: true,
-
-    /** 
-     * Return current time
-     */
-
-    now: Date.now,
-
-    /**
-     * Error function
-     */
-
-    error: function (msg) {
-      throw new Error(msg);
-    },
-
-    lowercase: function (string) {
-      return typeof string === 'string' ? string.toLowerCase() : string;
-    },
-
-    uppercase: function (string) {
-      return typeof string === 'string' ? string.toUpperCase() : string;
-    },
-
-    /* =========================== PUBLIC FUNCTIONS ========================== */
-
-    /**
-     * Run callback for each element in the collection
-     * @param {hAzzle|Array} ar
-     * @param {function(Object, number, (hAzzle|Array))} fn
-     * @param {Object} scope
-     * @param {boolean} arg
-     * @return {hAzzle|Array}
-     */
-
-    each: function (ar, callback, fn, args) {
-
-      var ind, i = 0,
-        l = ar.length;
-
-      for (; i < l; i++) {
-
-        if (args) {
-
-          ind = ar.length - i - 1;
-
-        } else {
-
-          ind = i;
-        }
-        callback.call(fn || ar[ind], ar[ind], ind, ar);
-      }
-      return ar;
-
-    },
-
-    /**
-     * @param {hAzzle|Array} ar
-     * @param {function(Object, number, (hAzzle|Array))} fn
-     * @param {Object} scope
-     * @return {hAzzle|Array}
-     */
-
-    deepEach: function (ar, fn, scope) {
-      var i = 0,
-        l = ar.length;
-      for (; i < l; i++) {
-        if (ar[i].nodeName && (ar[i].nodeType === 1 || ar[i].nodeType === 11)) {
-          hAzzle.deepEach(ar[i].childNodes, fn, scope);
-          fn.call(scope || ar[i], ar[i], i, ar);
-        }
-      }
-      return ar;
-    },
-
-    // Convert camelCase to  CSS-style
-    // e.g. boxSizing -> box-sizing
-
-    decamelize: function (str) {
-      return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
-    },
-
-    /**
-     *  Convert dashed to camelCase
-     *
-     * @param {string} str
-     * @return {string}
-     */
-
-    camelize: function (str) {
-
-      return str.replace(/-(.)/g, function (m, m1) {
-        return m1.toUpperCase();
-      });
-    },
-
-    arrayLike: function (obj) {
-
-      if (obj === null || hAzzle.isWindow(obj)) {
-        return false;
-      }
-
-      var length = obj.length;
-
-      if (obj.nodeType === 1 && length) {
-        return true;
-      }
-
-      return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
-        typeof length === 'number' && length > 0 && (length - 1) in obj;
-    },
-
-    indexOf: function (elem, arr, i) {
-      return arr === null ? -1 : indexOf.call(arr, elem, i);
-    },
-
-    /**
-     * Check if an element exist in an array
-     */
-
-    inArray: function (array, value, index) {
-
-      var i = (index || 0),
-        m = array.length;
-      for (; i < m; i++) {
-        if (array[i] === value) {
-
-          return i;
-        }
-      }
-      return -1;
-    },
-
-    map: function (elems, callback, arg) {
-      var value,
-        i = 0,
-        length = elems.length,
-        isArray = isArraylike(elems),
-        ret = [];
-
-      // Go through the array, translating each of the items to their new values
-      if (isArray) {
-        for (; i < length; i++) {
-          value = callback(elems[i], i, arg);
-
-          if (value !== null) {
-            ret.push(value);
-          }
-        }
-
-        // Go through every key on the object,
-      } else {
-        for (i in elems) {
-          value = callback(elems[i], i, arg);
-
-          if (value !== null) {
-            ret.push(value);
-          }
-        }
-      }
-
-      // Flatten any nested arrays
-      return concat.apply([], ret);
-    },
-
-    /**
-     * Faster alternative till native prototype reduce
-     *
-     * @param {Array} array
-     * @param {Function} fn
-     * @param {Object} initial value
-     */
-
-    reduce: function (arr, fn, val) {
-      var rval = val,
-        i = 0,
-        l = arr.length;
-      for (; i < l; i++) {
-        rval = fn(rval, arr[i], i, arr);
-      }
-      return rval;
-    },
-
-    isNode: function (node) {
-      return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 11);
-    },
-
-    /**
-     * Escape regular expression characters in `str`.
-     *
-     * @param {String} str
-     * @return {String}
-     */
-
-    escapeRegexp: function (str) {
-      str.replace(escEp, '\\$&');
-    },
-
-    size: function (obj, ownPropsOnly) {
-      var count = 0,
-        key;
-
-      if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
-        return obj.length;
-      } else if (hAzzle.isObject(obj)) {
-        for (key in obj)
-          if (!ownPropsOnly || obj.hasOwnProperty(key))
-            count++;
-      }
-
-      return count;
-    },
-    /**
-     * Get text
-     */
-
-    getText: function (elem) {
-      var node, ret = '',
-        i = 0,
-        l = elem.length,
-        etc,
-        nodetype = elem.nodeType;
-
-      if (!nodetype) {
-
-        for (; i < l; i++) {
-
-          node = elem[i++];
-
-          // Do not traverse comment nodes
-          ret += hAzzle.getText(node);
-        }
-
-      } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
-
-        etc = elem.textContent;
-
-        if (typeof etc === 'string') {
-
-          return elem.textContent;
-
-        } else {
-
-          for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-
-            ret += hAzzle.getText(elem);
-          }
-
-        }
-      } else if (nodetype === 3 || nodetype === 4) {
-
-        return elem.nodeValue;
-      }
-
-      return ret;
-    },
-
-
-    /**
-     *  Global ID for objects and hACE
-     *  Return or compute a unique ID
-     *
-     * @param{Object} elem
-     * @return{Object}
-     */
-
-    getUID: function (el) {
-
-      if (el) {
-
-        return (el.hAzzle_id || (el.hAzzle_id = uid.next()));
-
-      }
-    },
-
-    /**
-     * Check if it's an XML or HTML document
-     */
-
-    isXML: function (elem) {
-      var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-      return documentElement ? documentElement.nodeName !== 'HTML' : false;
-    },
-
-    /**
-     * Return the elements nodeName
-     */
-
-    nodeName: function (el, name) {
-      return el.nodeName && el.nodeName.toLowerCase() === name.toLowerCase();
-    },
-
-    merge: function (first, second) {
-      if (second) {
-        var len = +second.length,
-          j = 0,
-          i = first.length;
-
-        for (; j < len; j++) {
-
-          first[i++] = second[j];
-        }
-
-        first.length = i;
-
-        return first;
-      }
-    },
-
-    // Nothing
-
-
-    noop: function () {},
-
-    /**
-     * Return all the elements that pass a truth test.
-     *
-     * @param {String|nodeType|Function} sel
-     * @return {Array}
-     *
-     */
-
-    filter: function (obj, predicate, context) {
-
-      var results = [];
-
-      if (obj === null) {
-        return results;
-      }
-
-      hAzzle.each(obj, function (value, index, list) {
-
-        if (predicate.call(context, value, index, list)) {
-
-          results.push(value);
-        }
-      });
-
-      return hAzzle(results);
-    },
-
-
-    // Happy now??? -really happy
-    makeArray: function (nodeList) {
-      if (nodeList instanceof Array) {
-        return nodeList;
-      }
-      var index = -1,
-        length = nodeList.length,
-        array = Array(length);
-
-      while (++index < length) {
-        array[index] = nodeList[index];
-      }
-      return array;
-    },
-
-    // Loop through Objects
-    // Note ! A for-in loop won't guarantee property iteration order and
-    // they'll iterate over anything added to the Array.prototype
-
-    forOwn: function (obj, iterator, context) {
-      var key;
-      if (obj === null) return obj;
-      for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          iterator.call(context, obj[key], key);
-        }
-      }
-      return obj;
-    },
-
-    // This one has to be fast...
-
-    setter: function (elems, fn, key, value, exec) {
-
-      var len = elems.length,
-        k,
-        i = 0;
-
-      // Setting many attributes
-      if (hAzzle.type(key) === 'object') {
-
-        for (k in key) {
-
-          hAzzle.setter(elems, fn, k, key[k], exec);
-        }
-
-        // Return the elements
-
-        return elems;
-
-        // No value 
-
-      } else if (value !== undefined) {
-
-        if (typeof value === 'function') {
-
-          for (; i < len; i++) {
-
-            fn(elems[i], key, value.call(elems[i], i, fn(elems[i], key)));
-          }
-
-          // Return the elements
-
-          return elems;
-        }
-
-        // Getting an attribute
-
-        if (fn) {
-
-          for (; i < len; i++) {
-
-
-            fn(elems[i], key, value);
-          }
-
-          // Return the elements
-
-          return elems;
-        }
-      }
-
-      return fn(elems[0], key);
-    },
-	
-    /**
-     * Find next element sibiling.
-     *
-     * @param {Object} el
-     * @return {hAzzle}
-     */
-
-    nextElementSibling: function (el) {
-      if (el.nextElementSibling) {
-        return el.nextElementSibling;
-      } else {
-        while ((el = el.nextSibling)) {
-          if (el.nodeType !== 1) return el;
-        }
-      }
-    },
-
-
-    /**
-     * Find previous element sibling.
-     *
-     * @param {Object} el
-     
-     * @return {hAzzle}
-     */
-
-    previousElementSibling: function (el) {
-      if (el.previousElementSibling) {
-        return el.previousElementSibling;
-      } else {
-        while ((el = el.previousSibling)) {
-          if (el.nodeType === 1) return el;
-        }
-      }
-    },
-
-    /**
-     * Get the first element child of the given element
-     *
-     * @param {string} el
-     * @return {hAzzle}
-     */
-
-    firstElementChild: function (el) {
-      var child = el.firstElementChild;
-      if (!child) {
-        child = el.firstChild;
-        while (child && child.nodeType !== 1)
-          child = child.nextSibling;
-      }
-      return child;
-    },
-
-    /**
-     * Get the last element child of the given element
-     *
-     * @param {string} el
-     * @return {hAzzle}
-     */
-
-    lastElementChild: function (el) {
-      var child = el.lastElementChild;
-      if (!child) {
-        child = el.lastChild;
-        while (child && child.nodeType !== 1)
-          child = child.previousSibling;
-      }
-      return child;
-    },
-
-    childElementCount: function (el) {
-      var Count = el.childElementCount;
-      if (!Count) {
-        el = el.firstChild || null;
-        do {
-          if (el && el.nodeType === 1) {
-            Count++;
-          }
-          el = el.nextSibling;
-        } while (el);
-      }
-      return Count;
-
-    },
-
-    /**
-     * Feature detection of elements
-     *
-     * @param {Function} fn
-     * @return {Boolean}
-     */
-
-    assert: function (fn) {
-
-      var div = doc.createElement('div');
-
-      try {
-        return !!fn(div);
-      } catch (e) {
-        return false;
-      } finally {
-        // Remove from its parent by default
-        if (div.parentNode) {
-          div.parentNode.removeChild(div);
-        }
-        // release memory in IE
-        div = null;
-      }
-    }
-
-  }, hAzzle);
-
-  /* =========================== SELECTOR ENGINE HOLDER ========================== */
-
-  var Jiesa = {};
-  hAzzle.Jiesa = Jiesa;
-
-  /* =========================== ANIMATION ENGINE HOLDER ========================== */
-
-  hAzzle.extend({
-
-    /**
-     * DOM ready
-     * Execute a callback for every element in the matched set.
-     */
-
-    readyList: [],
-    readyFired: false,
-
-    ready: function (fn) {
-
-      if (hAzzle.readyFired) {
-        setTimeout(function () {
-          fn(document);
-        }, 1);
         return;
-      } else {
-
-        // add the function and context to the list
-
-        hAzzle.readyList.push(fn);
-      }
-
-      // if document already ready to go, schedule the ready function to run
-      if (doc.readyState === 'complete') {
-
-        setTimeout(ready, 1);
-
-      } else if (!DOMContentLoaded) {
-
-        // otherwise if we don't have event handlers installed, install them
-
-        doc.addEventListener('DOMContentLoaded', ready, false);
-        // backup is window load event
-        window.addEventListener('load', ready, false);
-
-        DOMContentLoaded = true;
-      }
     }
 
-  }, hAzzle);
+    // Usefull variabels
 
-  /**
-   * Remove empty whitespace from beginning and end of a string
-   *
-   * @param{String} str
-   * @return{String}
-   *
-   * String.prototype.trim() are only supported in IE9+ Standard mode.
-   */
+    var win = window,
+        doc = win.document,
 
+        /**
+         * Prototype references.
+         */
 
-  hAzzle.trim = (function () {
-    if (!String.prototype.trim) {
-      return function (value) {
-        return typeof value === 'string' ? value.replace(trwl, '').replace(trwr, '') : value;
-      };
+        ArrayProto = Array.prototype,
+
+        // Save a reference to some core methods
+
+        indexOf = ArrayProto.indexOf,
+        concat = ArrayProto.concat,
+
+        // Left and right regEx for hAzzle.trim()
+
+        trwl = /^\s\s*/,
+        trwr = /\s\s*$/,
+
+        escEp = /[-\\^$*+?.()|[\]{}]/g,
+
+        // The ready event handler
+
+        DOMContentLoaded = false,
+
+        // Define a local copy of hAzzle
+
+        hAzzle = function (selector, context) {
+            return new Core(selector, context);
+        };
+
+    // Init Core
+
+    function Core(selector, context) {
+
+        if (selector) {
+
+            if (typeof selector === 'string') {
+
+                selector = hAzzle.find(selector, context);
+
+                // nodeType
+
+            } else if (selector.nodeType) {
+
+                selector = [selector];
+
+                // Document Ready
+
+            } else if (hAzzle.isFunction(selector)) {
+
+                return hAzzle.ready(selector);
+            }
+
+            if (selector.selector !== undefined) {
+                selector = selector;
+            }
+
+            var i = this.length = selector.length;
+
+            while (i--) {
+                this[i] = selector[i];
+            }
+        }
     }
-    return function (value) {
-      return value === 'string' ? value.trim() : value;
+
+    // Prototype functions
+
+    hAzzle.Core = Core.prototype = {
+
+        // The default length of a hAzzle object is 0
+
+        length: 0,
+
+        /**
+         * Returns a new array with the result of calling callback on each element of the array
+         * @param {function} fn
+         * @return {hAzzle}
+         */
+
+        twist: function (fn) {
+            var elems = this,
+                i = 0,
+                len = elems.length;
+            for (i = len; i--;) {
+                return hAzzle(fn(elems[i]));
+            }
+        },
+
+        /**
+         * Loop through objects
+         *
+         * @param {function} fn
+         * @param {Object} obj
+         * @return {hAzzle}
+         */
+
+        forOwn: function (fn, obj) {
+            return hAzzle.forOwn(this, fn, obj);
+        },
+
+        /**
+         * @param {function} fn
+         * @param {Object} obj
+         * @return {hAzzle}
+         */
+
+        each: function (fn, obj) {
+            return hAzzle.each(this, fn, obj);
+        },
+
+        /**
+         * @param {Function} fn
+         * @param {Object} obj
+         * @return {hAzzle}
+         */
+
+        deepEach: function (fn, obj) {
+
+            return hAzzle.deepEach(this, fn, obj);
+        },
+
+        /**
+         * @param {Function} callback
+         * @param {Function} func
+         * @return {Array}
+         */
+
+        map: function (callback, func) {
+            var m = [],
+                n, i = 0,
+                self = this,
+                l = self.length;
+
+            for (; i < l; i++) {
+
+                n = callback.call(self, self[i], i);
+
+                if (func) {
+
+                    func(n);
+                }
+                m.push(n);
+            }
+
+            return m;
+        },
+
+        ready: function (fn) {
+            if (typeof fn === 'function') {
+                return hAzzle.ready(fn);
+            }
+        },
+
+        size: function () {
+            return this.length;
+        },
+
     };
-  })();
 
-  // call this when the document is ready
-  // this function protects itself against being called more than once
+    /**
+     * Extend the contents of two objects
+     */
 
-  function ready() {
+    hAzzle.extend = function () {
+        var destination = arguments[0],
+            source = arguments[1],
+            property;
+        for (property in destination) {
+            // Objects only
+            if (destination[property] && destination[property].constructor && typeof destination[property] === 'object') {
+                (source || Core.prototype)[property] = destination[property] || {};
+            } else {
+                if (destination.hasOwnProperty(property)) {
+                    (source || Core.prototype)[property] = destination[property];
+                }
+            }
+        }
+    };
 
-    var i = 0,
-      l = hAzzle.readyList.length;
+    hAzzle.extend({
 
-    if (!hAzzle.readyFired) {
-      // this must be set to true before we start calling callbacks
-      hAzzle.readyFired = true;
+        // documentElement after adjustments
+        // Note! This can / will be overwritten 
+        // by the document.js module
 
-      for (; i < l; i++) {
+        docElem: doc.documentElement,
 
-        hAzzle.readyList[i].call(window, document);
-      }
-      // allow any closures held by these functions to free
-      hAzzle.readyList = [];
+        // Tells if the document are XML or HTML
+        // Set to true as default, but it can be
+        // overwritten by the document.js module
+
+        documentIsHTML: true,
+
+        /** 
+         * Return current time
+         */
+
+        now: Date.now,
+
+        /**
+         * Error function
+         */
+
+        error: function (msg) {
+            throw new Error(msg);
+        },
+
+        lowercase: function (string) {
+            return typeof string === 'string' ? string.toLowerCase() : string;
+        },
+
+        uppercase: function (string) {
+            return typeof string === 'string' ? string.toUpperCase() : string;
+        },
+
+        /* =========================== PUBLIC FUNCTIONS ========================== */
+
+        /**
+         * Run callback for each element in the collection
+         * @param {hAzzle|Array} ar
+         * @param {function(Object, number, (hAzzle|Array))} fn
+         * @param {Object} scope
+         * @param {boolean} arg
+         * @return {hAzzle|Array}
+         */
+
+        each: function (ar, callback, fn, args) {
+
+            var ind, i = 0,
+                l = ar.length;
+
+            for (; i < l; i++) {
+
+                if (args) {
+
+                    ind = ar.length - i - 1;
+
+                } else {
+
+                    ind = i;
+                }
+                callback.call(fn || ar[ind], ar[ind], ind, ar);
+            }
+            return ar;
+
+        },
+
+        /**
+         * @param {hAzzle|Array} ar
+         * @param {function(Object, number, (hAzzle|Array))} fn
+         * @param {Object} scope
+         * @return {hAzzle|Array}
+         */
+
+        deepEach: function (ar, fn, scope) {
+            var i = 0,
+                l = ar.length;
+            for (; i < l; i++) {
+                if (ar[i].nodeName && (ar[i].nodeType === 1 || ar[i].nodeType === 11)) {
+                    hAzzle.deepEach(ar[i].childNodes, fn, scope);
+                    fn.call(scope || ar[i], ar[i], i, ar);
+                }
+            }
+            return ar;
+        },
+
+        // Convert camelCase to  CSS-style
+        // e.g. boxSizing -> box-sizing
+
+        decamelize: function (str) {
+            return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
+        },
+
+        /**
+         *  Convert dashed to camelCase
+         *
+         * @param {string} str
+         * @return {string}
+         */
+
+        camelize: function (str) {
+
+            return str.replace(/-(.)/g, function (m, m1) {
+                return m1.toUpperCase();
+            });
+        },
+
+        arrayLike: function (obj) {
+
+            if (obj === null || hAzzle.isWindow(obj)) {
+                return false;
+            }
+
+            var length = obj.length;
+
+            if (obj.nodeType === 1 && length) {
+                return true;
+            }
+
+            return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
+                typeof length === 'number' && length > 0 && (length - 1) in obj;
+        },
+
+        indexOf: function (elem, arr, i) {
+            return arr === null ? -1 : indexOf.call(arr, elem, i);
+        },
+
+        /**
+         * Check if an element exist in an array
+         */
+
+        inArray: function (array, value, index) {
+
+            var i = (index || 0),
+                m = array.length;
+
+            for (; i < m; i++) {
+
+                if (array[i] === value) {
+
+                    return i;
+
+                }
+            }
+            return -1;
+        },
+
+        map: function (elems, callback, arg) {
+            var value,
+                i = 0,
+                length = elems.length,
+                isArray = isArraylike(elems),
+                ret = [];
+
+            // Go through the array, translating each of the items to their new values
+            if (isArray) {
+                for (; i < length; i++) {
+                    value = callback(elems[i], i, arg);
+
+                    if (value !== null) {
+                        ret.push(value);
+                    }
+                }
+
+                // Go through every key on the object,
+            } else {
+                for (i in elems) {
+                    value = callback(elems[i], i, arg);
+
+                    if (value !== null) {
+                        ret.push(value);
+                    }
+                }
+            }
+
+            // Flatten any nested arrays
+            return concat.apply([], ret);
+        },
+
+        /**
+         * Faster alternative till native prototype reduce
+         *
+         * @param {Array} array
+         * @param {Function} fn
+         * @param {Object} initial value
+         */
+
+        reduce: function (arr, fn, val) {
+            var rval = val,
+                i = 0,
+                l = arr.length;
+            for (; i < l; i++) {
+                rval = fn(rval, arr[i], i, arr);
+            }
+            return rval;
+        },
+
+        isNode: function (node) {
+            return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 11);
+        },
+
+        /**
+         * Escape regular expression characters in `str`.
+         *
+         * @param {String} str
+         * @return {String}
+         */
+
+        escapeRegexp: function (str) {
+            str.replace(escEp, '\\$&');
+        },
+
+        size: function (obj, ownPropsOnly) {
+            var count = 0,
+                key;
+
+            if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
+                return obj.length;
+            } else if (hAzzle.isObject(obj)) {
+                for (key in obj)
+                    if (!ownPropsOnly || obj.hasOwnProperty(key))
+                        count++;
+            }
+
+            return count;
+        },
+        /**
+         * Get text
+         */
+
+        getText: function (elem) {
+            var node, ret = '',
+                i = 0,
+                l = elem.length,
+                etc,
+                nodetype = elem.nodeType;
+
+            if (!nodetype) {
+
+                for (; i < l; i++) {
+
+                    node = elem[i++];
+
+                    // Do not traverse comment nodes
+                    ret += hAzzle.getText(node);
+                }
+
+            } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
+
+                etc = elem.textContent;
+
+                if (typeof etc === 'string') {
+
+                    return elem.textContent;
+
+                } else {
+
+                    for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+
+                        ret += hAzzle.getText(elem);
+                    }
+
+                }
+            } else if (nodetype === 3 || nodetype === 4) {
+
+                return elem.nodeValue;
+            }
+
+            return ret;
+        },
+
+
+
+
+        /**
+         * Check if it's an XML or HTML document
+         */
+
+        isXML: function (elem) {
+            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
+            return documentElement ? documentElement.nodeName !== 'HTML' : false;
+        },
+
+        /**
+         * Return the elements nodeName
+         */
+
+        nodeName: function (el, name) {
+            return el.nodeName && el.nodeName.toLowerCase() === name.toLowerCase();
+        },
+
+        merge: function (first, second) {
+            if (second) {
+                var len = +second.length,
+                    j = 0,
+                    i = first.length;
+
+                for (; j < len; j++) {
+
+                    first[i++] = second[j];
+                }
+
+                first.length = i;
+
+                return first;
+            }
+        },
+
+        // Nothing
+
+
+        noop: function () {},
+
+        /**
+         * Return all the elements that pass a truth test.
+         *
+         * @param {String|nodeType|Function} sel
+         * @return {Array}
+         *
+         */
+
+        filter: function (obj, predicate, context) {
+
+            var results = [];
+
+            if (obj === null) {
+                return results;
+            }
+
+            hAzzle.each(obj, function (value, index, list) {
+
+                if (predicate.call(context, value, index, list)) {
+
+                    results.push(value);
+                }
+            });
+
+            return hAzzle(results);
+        },
+
+
+        // Happy now??? -really happy
+        makeArray: function (nodeList) {
+            if (nodeList instanceof Array) {
+                return nodeList;
+            }
+            var index = -1,
+                length = nodeList.length,
+                array = Array(length);
+
+            while (++index < length) {
+                array[index] = nodeList[index];
+            }
+            return array;
+        },
+
+        // Loop through Objects
+        // Note ! A for-in loop won't guarantee property iteration order and
+        // they'll iterate over anything added to the Array.prototype
+
+        forOwn: function (obj, iterator, context) {
+            var key;
+            if (obj === null) return obj;
+            for (key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    iterator.call(context, obj[key], key);
+                }
+            }
+            return obj;
+        },
+
+        // This one has to be fast...
+
+        setter: function (elems, fn, key, value, exec) {
+
+            var len = elems.length,
+                k,
+                i = 0;
+
+            // Setting many attributes
+            if (hAzzle.type(key) === 'object') {
+
+                for (k in key) {
+
+                    hAzzle.setter(elems, fn, k, key[k], exec);
+                }
+
+                // Return the elements
+
+                return elems;
+
+                // No value 
+
+            } else if (value !== undefined) {
+
+                if (typeof value === 'function') {
+
+                    for (; i < len; i++) {
+
+                        fn(elems[i], key, value.call(elems[i], i, fn(elems[i], key)));
+                    }
+
+                    // Return the elements
+
+                    return elems;
+                }
+
+                // Getting an attribute
+
+                if (fn) {
+
+                    for (; i < len; i++) {
+
+
+                        fn(elems[i], key, value);
+                    }
+
+                    // Return the elements
+
+                    return elems;
+                }
+            }
+
+            return fn(elems[0], key);
+        },
+
+        /**
+         * Find next element sibiling.
+         *
+         * @param {Object} el
+         * @return {hAzzle}
+         */
+
+        nextElementSibling: function (el) {
+            if (el.nextElementSibling) {
+                return el.nextElementSibling;
+            } else {
+                while ((el = el.nextSibling)) {
+                    if (el.nodeType !== 1) return el;
+                }
+            }
+        },
+
+        /**
+         * Find previous element sibling.
+         *
+         * @param {Object} el
+         
+         * @return {hAzzle}
+         */
+
+        previousElementSibling: function (el) {
+            if (el.previousElementSibling) {
+                return el.previousElementSibling;
+            } else {
+                while ((el = el.previousSibling)) {
+                    if (el.nodeType === 1) return el;
+                }
+            }
+        },
+
+        /**
+         * Get the first element child of the given element
+         *
+         * @param {string} el
+         * @return {hAzzle}
+         */
+
+        firstElementChild: function (el) {
+            var child = el.firstElementChild;
+            if (!child) {
+                child = el.firstChild;
+                while (child && child.nodeType !== 1)
+                    child = child.nextSibling;
+            }
+            return child;
+        },
+
+        /**
+         * Get the last element child of the given element
+         *
+         * @param {string} el
+         * @return {hAzzle}
+         */
+
+        lastElementChild: function (el) {
+            var child = el.lastElementChild;
+            if (!child) {
+                child = el.lastChild;
+                while (child && child.nodeType !== 1)
+                    child = child.previousSibling;
+            }
+            return child;
+        },
+
+        childElementCount: function (el) {
+            var Count = el.childElementCount;
+            if (!Count) {
+                el = el.firstChild || null;
+                do {
+                    if (el && el.nodeType === 1) {
+                        Count++;
+                    }
+                    el = el.nextSibling;
+                } while (el);
+            }
+            return Count;
+
+        },
+
+        /**
+         * Feature detection of elements
+         *
+         * @param {Function} fn
+         * @return {Boolean}
+         */
+
+        assert: function (fn) {
+
+            var div = doc.createElement('div');
+
+            try {
+                return !!fn(div);
+            } catch (e) {
+                return false;
+            } finally {
+                // Remove from its parent by default
+                if (div.parentNode) {
+                    div.parentNode.removeChild(div);
+                }
+                // release memory in IE
+                div = null;
+            }
+        }
+
+    }, hAzzle);
+
+    /* =========================== SELECTOR ENGINE HOLDER ========================== */
+
+    var Jiesa = {};
+    hAzzle.Jiesa = Jiesa;
+
+    /* =========================== ANIMATION ENGINE HOLDER ========================== */
+
+    hAzzle.extend({
+
+        /**
+         * DOM ready
+         * Execute a callback for every element in the matched set.
+         */
+
+        readyList: [],
+        readyFired: false,
+
+        ready: function (fn) {
+
+            if (hAzzle.readyFired) {
+                setTimeout(function () {
+                    fn(document);
+                }, 1);
+                return;
+            } else {
+
+                // add the function and context to the list
+
+                hAzzle.readyList.push(fn);
+            }
+
+            // if document already ready to go, schedule the ready function to run
+            if (doc.readyState === 'complete') {
+
+                setTimeout(ready, 1);
+
+            } else if (!DOMContentLoaded) {
+
+                // otherwise if we don't have event handlers installed, install them
+
+                doc.addEventListener('DOMContentLoaded', ready, false);
+                // backup is window load event
+                window.addEventListener('load', ready, false);
+
+                DOMContentLoaded = true;
+            }
+        }
+
+    }, hAzzle);
+
+    /**
+     * Remove empty whitespace from beginning and end of a string
+     *
+     * @param{String} str
+     * @return{String}
+     *
+     * String.prototype.trim() are only supported in IE9+ Standard mode.
+     */
+
+
+    hAzzle.trim = (function () {
+        if (!String.prototype.trim) {
+            return function (value) {
+                return typeof value === 'string' ? value.replace(trwl, '').replace(trwr, '') : value;
+            };
+        }
+        return function (value) {
+            return value === 'string' ? value.trim() : value;
+        };
+    })();
+
+    // call this when the document is ready
+    // this function protects itself against being called more than once
+
+    function ready() {
+
+        var i = 0,
+            l = hAzzle.readyList.length;
+
+        if (!hAzzle.readyFired) {
+            // this must be set to true before we start calling callbacks
+            hAzzle.readyFired = true;
+
+            for (; i < l; i++) {
+
+                hAzzle.readyList[i].call(window, document);
+            }
+            // allow any closures held by these functions to free
+            hAzzle.readyList = [];
+        }
     }
-  }
 
-  /* =========================== INTERNAL ========================== */
+    /* =========================== INTERNAL ========================== */
 
-  function isArraylike(obj) {
-    var length = obj.length,
-      type = hAzzle.type(obj);
+    function isArraylike(obj) {
+        var length = obj.length,
+            type = hAzzle.type(obj);
 
-    if (type === 'function' || hAzzle.isWindow(obj)) {
-      return false;
+        if (type === 'function' || hAzzle.isWindow(obj)) {
+            return false;
+        }
+
+        if (obj.nodeType === 1 && length) {
+            return true;
+        }
+
+        return type === 'array' || length === 0 ||
+            typeof length === 'number' && length > 0 && (length - 1) in obj;
     }
 
-    if (obj.nodeType === 1 && length) {
-      return true;
-    }
 
-    return type === 'array' || length === 0 ||
-      typeof length === 'number' && length > 0 && (length - 1) in obj;
-  }
+    // Expose hAzzle to the global object
 
-
-  // Expose hAzzle to the global object
-
-  window.hAzzle = hAzzle;
+    window.hAzzle = hAzzle;
 
 })(this);
