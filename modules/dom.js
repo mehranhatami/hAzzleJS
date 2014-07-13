@@ -45,11 +45,11 @@ var arrayProto = Array.prototype,
 // Extend the core
 
 hAzzle.extend({
-	
-	 contains: function (target) {
+
+    contains: function (target) {
         return this.has(target).length > 0;
     },
-	
+
     /**
      * Adds one element to the set of matched elements.
      *
@@ -57,19 +57,20 @@ hAzzle.extend({
      * @param {String} context
      * @return {hAzzle}
      */
-	
-	add: function(other, context) {
-     var selection = hAzzle(other, context),
-         contents = hAzzle.unique(selection.get().concat(this.get())),
-         i = 0, l = contents.length; 
-		 
-      for (; i < l; ++i) {
-          selection[i] = contents[i];
-      }
-       selection.length = contents.length;
 
-  return selection;
-},
+    add: function (other, context) {
+        var selection = hAzzle(other, context),
+            contents = hAzzle.unique(selection.get().concat(this.get())),
+            i = 0,
+            l = contents.length;
+
+        for (; i < l; ++i) {
+            selection[i] = contents[i];
+        }
+        selection.length = contents.length;
+
+        return selection;
+    },
 
     /**
      * Reduce the set of matched elements to the final one in the set,
@@ -80,7 +81,8 @@ hAzzle.extend({
      */
 
     last: function (index) {
-        return index ? this.slice(this.length - index) : this[this.length - 1];
+
+        return index ? this.slice(this.length - index) : this.eq(2);
     },
 
     /**
@@ -91,12 +93,13 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-
     first: function (index) {
-        return hAzzle(index ? this.slice(0, index) : this[0]);
+
+        return index ? this.slice(0, index) : this.eq(0);
     },
 
     slice: function () {
+
         return hAzzle(slice.apply(this, arguments));
     },
 
@@ -128,7 +131,7 @@ hAzzle.extend({
     // Get the whole matched element set as a clean array
 
     get: function (num) {
-        if (!num || num === null) {
+        if (!num) {
             return slice.call(this);
         } else {
             return this[num < 0 ? (this.length + num) : num];
@@ -195,29 +198,35 @@ hAzzle.extend({
      */
 
     index: function (selector) {
+        var haystack, needle;
 
         // No argument, return index in parent
 
-        if (!selector) {
+        if (arguments.length === 0) {
 
-            return (this[0] && this[0].parentElement) ? this.first().prevAll().length : -1;
-        }
+            haystack = this.parent().children();
+            needle = this[0];
 
-        // index in selector
+            // index in selector
 
-        if (typeof selector === "string") {
+        } else if (typeof selector === 'string') {
 
-            return indexOf.call(hAzzle(selector), this[0]);
+            haystack = hAzzle(selector);
+            needle = this[0];
+        } else {
+
+            haystack = this;
+
+            needle = selector.length ? selector[0] : selector;
         }
 
         // Locate the position of the desired element
-
-        return indexOf.call(this, selector);
+        return haystack.get().indexOf(needle);
     },
 
     /**
      * Get the element that matches the selector, beginning at the current
-     * element and progressing up through the DOM tree. 
+     * element and progressing up through the DOM tree.
      *
      * @param {String} selectors
      * @param {String} context
@@ -374,26 +383,26 @@ hAzzle.forOwn({
     children: function (elem) {
         return hAzzle.sibling(elem, true);
     },
-	
-	/**
+
+    /**
      * Get the immediately following sibling of each element
      *
      * @param {Object} elem
      * @return {hAzzle}
      */
-	
+
     next: function (elem) {
         return elem.nextElementSibling;
     },
-    
-	/**
+
+    /**
      * Get the immediately preceding sibling of each element
      *
      * @param {Object} elem
      * @return {hAzzle}
      */
-	
-	prev: function (elem) {
+
+    prev: function (elem) {
         return elem.previousElementSibling;
     },
     nextAll: function (elem) {
