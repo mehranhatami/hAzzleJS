@@ -204,7 +204,7 @@ hAzzle.extend({
 
         if (arguments.length === 0) {
 
-            haystack = this.parent().children();
+            haystack = this.parentElement();
             needle = this[0];
 
             // index in selector
@@ -308,7 +308,19 @@ hAzzle.extend({
             });
         }
     },
-    // New DOM Traversal API functions for hAzzle
+
+    /**
+     * NOTE!! In the upcoming DOM level 4, the nextElementSibling and
+     * previousElementSibling have been removed from the
+     * 'documentType' for compatibility reasons.
+     *
+     * Therefor hAzzle choose to support this features with it's internal
+     * API
+     */
+
+    parentElement: function () {
+        return this.parent().children();
+    },
     firstElementChild: function () {
         return this.children().first();
     },
@@ -439,10 +451,8 @@ hAzzle.forOwn({
         if (this.length > 1) {
             // Remove duplicates
             if (!guaranteedUnique[name]) {
-                console.log("BILAT!!");
                 hAzzle.unique(matched);
             }
-
 
             // Reverse order for parents* and prev-derivatives
             if (rparentsprev.test(name)) {
