@@ -6,7 +6,6 @@
  *
  * Date: 2014-07-14
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -38,10 +37,6 @@
         trwr = /\s\s*$/,
 
         escEp = /[-\\^$*+?.()|[\]{}]/g,
-
-        // The ready event handler
-
-        DOMContentLoaded = false,
 
         // Define a local copy of hAzzle
 
@@ -657,50 +652,6 @@
     var Jiesa = {};
     hAzzle.Jiesa = Jiesa;
 
-    /* =========================== ANIMATION ENGINE HOLDER ========================== */
-
-    hAzzle.extend({
-
-        /**
-         * DOM ready
-         * Execute a callback for every element in the matched set.
-         */
-
-        readyList: [],
-        readyFired: false,
-
-        ready: function (fn) {
-
-            if (hAzzle.readyFired) {
-                setTimeout(function () {
-                    fn(document);
-                }, 1);
-                return;
-            } else {
-
-                // add the function and context to the list
-
-                hAzzle.readyList.push(fn);
-            }
-
-            // if document already ready to go, schedule the ready function to run
-            if (doc.readyState === 'complete') {
-
-                setTimeout(ready, 1);
-
-            } else if (!DOMContentLoaded) {
-
-                // otherwise if we don't have event handlers installed, install them
-
-                doc.addEventListener('DOMContentLoaded', ready, false);
-                // backup is window load event
-                window.addEventListener('load', ready, false);
-
-                DOMContentLoaded = true;
-            }
-        }
-
-    }, hAzzle);
 
     /**
      * Remove empty whitespace from beginning and end of a string
@@ -708,6 +659,7 @@
      * @param{String} str
      * @return{String}
      *
+
      * String.prototype.trim() are only supported in IE9+ Standard mode.
      */
 
@@ -723,26 +675,7 @@
         };
     })();
 
-    // call this when the document is ready
-    // this function protects itself against being called more than once
 
-    function ready() {
-
-        var i = 0,
-            l = hAzzle.readyList.length;
-
-        if (!hAzzle.readyFired) {
-            // this must be set to true before we start calling callbacks
-            hAzzle.readyFired = true;
-
-            for (; i < l; i++) {
-
-                hAzzle.readyList[i].call(window, document);
-            }
-            // allow any closures held by these functions to free
-            hAzzle.readyList = [];
-        }
-    }
 
     /* =========================== INTERNAL ========================== */
 
