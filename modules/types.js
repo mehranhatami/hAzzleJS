@@ -1,10 +1,9 @@
-// types
 /**
  * Holds javascript natives
  */
 var natives = {},
-    toString = Object.prototype.toString,
-	iews = /^\s*$/;
+
+    toString = Object.prototype.toString;
 
 hAzzle.extend({
     /**
@@ -16,17 +15,19 @@ hAzzle.extend({
 
     type: function (obj) {
 
+        var type = typeof obj;
+
         if (obj === null) {
 
             return obj + '';
         }
 
-        if (typeof obj === 'undefined') {
+        if (type === 'undefined') {
 
             return 'undefined';
         }
 
-        if (typeof obj === 'object') {
+        if (type === 'object') {
 
             return 'object';
         }
@@ -37,7 +38,7 @@ hAzzle.extend({
             return natives[str];
         }
 
-        return typeof obj;
+        return type;
     },
 
     /* =========================== 'IS' FUNCTIONS ========================== */
@@ -54,26 +55,31 @@ hAzzle.extend({
         return typeof obj === kind;
     },
 
-    /**
-     * Checks if an string are empty.
-     */
+    isEmpty: function (value) {
 
-    isEmpty: function (str, ignoreWhitespace) {
-
-        return str === null || !str.length || ignoreWhitespace && iews.test(str);
+        return typeof value === 'undefined' || value === '' || value === null || value !== value;
     },
 
-    isObject: function (obj) {
-        return obj !== null && typeof obj === 'object';
+    // Determines if a reference is an `Object`
+
+    isObject: function (value) {
+
+        return value !== null && typeof value === 'object';
     },
+
+    // Determines if a reference is a `Number`.
 
     isNumber: function (value) {
         return typeof value === 'number';
     },
 
+    // Determines if a reference is a `String`.
+
     isString: function (value) {
         return typeof value === 'string';
     },
+
+    // Determines if a reference is a `Function`.
 
     isFunction: function (value) {
         return typeof value === 'function';
@@ -92,25 +98,20 @@ hAzzle.extend({
 
     },
 
-
-
-
     isBlank: function (str) {
         return hAzzle.trim(str).length === 0;
     },
 
     isArray: Array.isArray,
 
+    //  Checks if `obj` is a window object.
+
     isWindow: function (obj) {
         return obj !== null && obj === obj.window;
     },
 
     isDocument: function (obj) {
-        return obj !== null && obj.nodeType === obj.DOCUMENT_NODE;
-    },
-
-    isNull: function (obj) {
-        return obj === null;
+        return obj !== null && obj.nodeType === 8;
     },
 
     isBoolean: function (value) {

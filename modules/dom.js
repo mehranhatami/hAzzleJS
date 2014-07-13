@@ -63,6 +63,9 @@ hAzzle.extend({
             i = 0,
             l = contents.length;
 
+        // can't use while-loop here
+        // returned selection will be in reverse
+
         for (; i < l; ++i) {
             selection[i] = contents[i];
         }
@@ -72,29 +75,50 @@ hAzzle.extend({
     },
 
     /**
-     * Reduce the set of matched elements to the final one in the set,
-     * OR to the last Nth elements, if index is specified
-     *
-     * @param {Number} index
-     * @return {hAzzle}
-     */
-
-    last: function (index) {
-
-        return index ? this.slice(this.length - index) : this.eq(-1);
-    },
-
-    /**
      * Reduce the set of matched elements to the first in the set,
      * OR to the first Nth elements, if index is specified
      *
      * @param {Number} index
      * @return {hAzzle}
+     *
+     * @param {Number} index
+     * @return {hAzzle}
+     *
+     * The index starts to count from left to right.
+     *
+     * Example:
+     *
+     *  hAzzle('li').first() - will return the first li elem
+     *
+     *  hAzzle('li').first(2) - will return the first 2 li elems
+     *
      */
 
     first: function (index) {
 
         return index ? this.slice(0, index) : this.eq(0);
+    },
+
+    /**
+     * Reduce the set of matched elements to the finale one in the set,
+     * OR to the last Nth elements, if index is specified
+     *
+     * @param {Number} index
+     * @return {hAzzle}
+     *
+     * The index starts to count from right to left.
+     *
+     * Example:
+     *
+     *  hAzzle('li').last() - will return the last li elem
+     *
+     *  hAzzle('li').last(2) - will return the last 2 li elems
+     *
+     */
+
+    last: function (index) {
+
+        return index ? this.slice(this.length - index) : this.eq(-1);
     },
 
     /**
@@ -203,16 +227,15 @@ hAzzle.extend({
 
     /** Determine the position of an element within the matched set of elements
      *
-     * @param {string} elem
-     * @param {return} Object
+     * @param {string} selector
+     * @return {hAzzle}
      */
 
     index: function (selector) {
+
         var haystack, needle;
 
-        // No argument, return index in parent
-
-        if (arguments.length === 0) {
+        if (!selector) {
 
             haystack = this.parentElement();
             needle = this[0];
