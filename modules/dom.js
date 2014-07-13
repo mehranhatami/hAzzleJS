@@ -81,7 +81,7 @@ hAzzle.extend({
 
     last: function (index) {
 
-        return index ? this.slice(this.length - index) : this.eq(2);
+        return index ? this.slice(this.length - index) : this.eq(-1);
     },
 
     /**
