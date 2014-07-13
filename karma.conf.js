@@ -71,9 +71,7 @@ module.exports = function (config) {
     browsers: [
       'Chrome',
       'Firefox',
-      'Safari',
-      'Opera',
-      'IE'
+      'Opera'
     ],
 
     // if browser does not capture in given timeout [ms], kill it
