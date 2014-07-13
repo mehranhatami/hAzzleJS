@@ -194,7 +194,7 @@ hAzzle.extend({
             // If querySelectorAll are activated, and not buggy,
             // existing, and no XML doc - use QSA. If not, fallback
             // to the internal selector engine 
-/*
+
             if (Jiesa.useNative){ 
               if(Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
                 var old = true,
@@ -243,8 +243,8 @@ hAzzle.extend({
                     }
                 }
             }
-        }*/
-	 }	
+        }
+    }	
         // Run the parser
 
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
