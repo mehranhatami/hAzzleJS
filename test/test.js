@@ -2,7 +2,7 @@
 var expect = chai.expect,
 	global = this;
 
-describe('hAzzle()', function () {
+/*describe('hAzzle()', function () {
   it('Check if it exists', function () {
     expect(typeof (hAzzle) === 'function').to.equal(true);
   });
@@ -20,4 +20,4 @@ describe('hAzzle.isNumeric()', function () {
     expect(hAzzle.isNumeric("str")).to.equal(false);
     expect(hAzzle.isNumeric(20)).to.equal(true);
   });
-});
+});*/
