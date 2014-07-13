@@ -1,5 +1,68 @@
 'use strict';
 
+var conf = function conf() {
+  if (conf.info) {
+    return conf.info;
+  } else {
+
+    var config = {
+        //although we don't have any app here but I think we will probably have it very soon
+        //the app could be the hAzzle's documentaion site
+        app: 'app',
+        dist: 'distro',
+        modules: 'modules'
+      },
+      hAzzleModules = [
+        'hazzle.js',
+        'ntapi.js',
+        'types.js',
+        'ready.js',
+        'shims/pnow.js',
+        'document.js',
+        'core.js',
+        'cl3.js',
+        'cl4.js',
+        'changers.js',
+        'compile.js',
+        'jiesa.js',
+        'funcs.js',
+        'fx.js',
+        'data.js',
+        'shims/classlist.js',
+        'classes.js',
+        'html.js',
+        'manipulation.js',
+        'attributes.js',
+        'removeable.js',
+        'units.js',
+        'css.js',
+        'position.js',
+        'offset.js',
+        'showhide.js',
+        'detection.js',
+        'events.js',
+        'eventhooks.js',
+        'ajax.js',
+        'clone.js',
+        'parsing.js',
+        'localestorage.js'
+      ],
+      modules = [],
+      i = 0,
+      l = hAzzleModules.length;
+
+    for (; i < l; i++) {
+      modules.push(config.modules + '/' + hAzzleModules[i]);
+    }
+
+    conf.info = {
+      config: config,
+      modules: modules
+    };
+    return conf.info;
+  }
+};
+
 module.exports = function (grunt) {
 
   grunt.initConfig({
@@ -42,6 +105,16 @@ module.exports = function (grunt) {
     watch: {
       files: ['<%= jshint.files %>'],
       tasks: ['jshint', 'qunit']
+    },
+
+    coveralls: {
+      options: {
+        debug: true,
+        coverage_dir: 'coverage',
+        dryRun: false,
+        force: true,
+        recursive: true
+      }
     }
   });
 
@@ -50,6 +123,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-karma-coveralls');
 
   //test task should be also added here
   grunt.registerTask('test', ['jshint']);
