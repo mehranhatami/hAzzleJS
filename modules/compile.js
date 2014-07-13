@@ -85,7 +85,6 @@ hAzzle.extend({
         'tag': new RegExp('^(' + identifier + '|[*])' ),
         'Class': new RegExp('^\\.(' + identifier + ')' ),
         'rel': /^\>|\>|\+|~$/,
-        'rel': /^\>|\>|\+|~$/,
 
         'nth': new RegExp('^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(' + whitespace +
             '*(even|odd|(([+-]|)(\\d*)n|)' + whitespace + '*(?:([+-]|)' + whitespace +
@@ -504,11 +503,11 @@ function IranianWalker(nodes, mode, fn) {
                 l = nodes.length,
                 result;
 
-	 var callfn = (function (nodes) {
-	       return function (i) {
-	         return fn.call(nodes, nodes[i], i, nodes);
-	       };
-	     })(nodes);
+      var callfn = (function (nodes) {
+          return function (i) {
+        return fn.call(nodes, nodes[i], i, nodes);
+            };
+       })(nodes);
 
             for (; i < l; i++) {
 
