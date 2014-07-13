@@ -28,7 +28,7 @@ module.exports = function (grunt) {
     },
 
     jshint: {
-      files: ['Gruntfile.js', 'test/*.js', 'test/**/spec/*.js'].concat(conf().modules),
+      files: ['Gruntfile.js', 'test/modules/*.js', 'test/**/spec/*.js'].concat(conf().modules),
 
       options: {
         globals: {

@@ -6,7 +6,57 @@
 module.exports = function (config) {
   'use strict';
 
-  var path = 'modules/';
+  var path = 'modules/',
+    modules, files,
+    hAzzleFiles = [],
+    testFiles = [],
+    i = 0,
+    l;
+
+  var modules = [
+    'hazzle.js',
+    'ntapi.js',
+    'types.js',
+    'ready.js',
+    'shims/pnow.js',
+    'document.js',
+    'core.js',
+    'cl3.js',
+    'cl4.js',
+    'changers.js',
+    'compile.js',
+    'jiesa.js',
+    'funcs.js',
+    'fx.js',
+    'data.js',
+    'shims/classlist.js',
+    'classes.js',
+    'html.js',
+    'manipulation.js',
+    'attributes.js',
+    'removeable.js',
+    'units.js',
+    'css.js',
+    'position.js',
+    'offset.js',
+    'showhide.js',
+    'detection.js',
+    'events.js',
+    'eventhooks.js',
+    'ajax.js',
+    'clone.js',
+    'parsing.js',
+    'localestorage.js'
+  ];
+
+  for (l = modules.length; i < l; i++) {
+    hAzzleFiles.push(path + modules[i]);
+    testFiles.push('test/' + path + modules[i]);
+  };
+
+  files = ['components/chai/chai.js']
+    .concat(hAzzleFiles)
+    .concat(testFiles);
 
   config.set({
     // base path, that will be used to resolve files and exclude
@@ -17,45 +67,7 @@ module.exports = function (config) {
     ],
 
     // list of files / patterns to load in the browser
-    files: [
-      //'node_modules/requirejs/require.js',
-      'components/chai/chai.js',
-      path + 'hazzle.js',
-      path + 'ntapi.js',
-      path + 'types.js',
-      path + 'ready.js',
-      path + 'shims/pnow.js',
-      path + 'document.js',
-      path + 'core.js',
-      path + 'cl3.js',
-      path + 'cl4.js',
-      path + 'changers.js',
-      path + 'compile.js',
-      path + 'jiesa.js',
-      path + 'funcs.js',
-      path + 'fx.js',
-      path + 'data.js',
-      path + 'shims/classlist.js',
-      path + 'classes.js',
-      path + 'html.js',
-      path + 'manipulation.js',
-      path + 'attributes.js',
-      path + 'removeable.js',
-      path + 'units.js',
-      path + 'css.js',
-      path + 'position.js',
-      path + 'offset.js',
-      path + 'showhide.js',
-      path + 'detection.js',
-      path + 'events.js',
-      path + 'eventhooks.js',
-      path + 'ajax.js',
-      path + 'clone.js',
-      path + 'parsing.js',
-      path + 'localestorage.js',
-      //'hazzle.js',
-      'test/test.js'
-    ],
+    files: files,
 
     // use dots reporter, as travis terminal does not support escaping sequences
     // possible values: 'dots', 'progress', 'junit', 'teamcity'
@@ -69,8 +81,9 @@ module.exports = function (config) {
     // start these browsers
     // CLI --browsers Chrome,Firefox,Safari
     browsers: [
-      'Firefox',
-      'Opera'
+      //'Firefox',
+      'PhantomJS'
+      //'Chrome'
     ],
 
     // if browser does not capture in given timeout [ms], kill it
@@ -84,10 +97,12 @@ module.exports = function (config) {
     plugins: [
       'karma-mocha',
       'karma-requirejs',
+      'karma-phantomjs-launcher',
       'karma-chrome-launcher',
       'karma-firefox-launcher',
       'karma-ie-launcher',
-      'karma-safari-launcher'
+      'karma-safari-launcher',
+      'karma-opera-launcher'
     ]
   });
 };
