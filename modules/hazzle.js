@@ -565,61 +565,6 @@
             return obj;
         },
 
-        // This one has to be fast...
-
-        setter: function (elems, fn, key, value, exec) {
-
-            var len = elems.length,
-                k,
-                i = 0;
-
-            // Setting many attributes
-            if (hAzzle.type(key) === 'object') {
-
-                for (k in key) {
-
-                    hAzzle.setter(elems, fn, k, key[k], exec);
-                }
-
-                // Return the elements
-
-                return elems;
-
-                // No value 
-
-            } else if (value !== undefined) {
-
-                if (typeof value === 'function') {
-
-                    for (; i < len; i++) {
-
-                        fn(elems[i], key, value.call(elems[i], i, fn(elems[i], key)));
-                    }
-
-                    // Return the elements
-
-                    return elems;
-                }
-
-                // Getting an attribute
-
-                if (fn) {
-
-                    for (; i < len; i++) {
-
-
-                        fn(elems[i], key, value);
-                    }
-
-                    // Return the elements
-
-                    return elems;
-                }
-            }
-
-            return fn(elems[0], key);
-        },
-
         /**
          * Feature detection of elements
          *
@@ -651,6 +596,62 @@
 
     var Jiesa = {};
     hAzzle.Jiesa = Jiesa;
+
+
+    // This one has to be fast...
+
+    var setter = hAzzle.setter = function (elems, fn, key, value, exec) {
+
+        var len = elems.length,
+            k,
+            i = 0;
+
+        // Setting many attributes
+        if (hAzzle.type(key) === 'object') {
+
+            for (k in key) {
+
+                setter(elems, fn, k, key[k], exec);
+            }
+
+            // Return the elements
+
+            return elems;
+
+            // No value 
+
+        } else if (value !== undefined) {
+
+            if (typeof value === 'function') {
+
+                for (; i < len; i++) {
+
+                    fn(elems[i], key, value.call(elems[i], i, fn(elems[i], key)));
+                }
+
+                // Return the elements
+
+                return elems;
+            }
+
+            // Getting an attribute
+
+            if (fn) {
+
+                for (; i < len; i++) {
+
+
+                    fn(elems[i], key, value);
+                }
+
+                // Return the elements
+
+                return elems;
+            }
+        }
+
+        return fn(elems[0], key);
+    };
 
 
     /**
