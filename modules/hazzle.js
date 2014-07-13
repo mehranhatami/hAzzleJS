@@ -651,29 +651,6 @@
       return fn(elems[0], key);
     },
 	
-	 unique: function (ar) {
-            var a = [],
-                i = -1,
-                j,
-                has,
-                len = ar.length;
-            while (++i < len) {
-                j = -1;
-                has = false;
-                while (++j < a.length) {
-                    if (a[j] === ar[i]) {
-                        has = true;
-                        break;
-                    }
-                }
-                if (!has) {
-
-                    a.push(ar[i]);
-                }
-            }
-            return a;
-        },
-
     /**
      * Find next element sibiling.
      *
