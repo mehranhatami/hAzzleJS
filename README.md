@@ -11,6 +11,7 @@ jQuery, Zepto, Underscore, Loadash, AngularJS e.g. are more or less supporting t
 hAzzle supports all the new features on the marked that has been there for years, and other libs to scared to include. List is to long to list it all here, but short - hAzzle support some of this features:
 
 - insertAdjacentHTML, 
+- new Traversal API such as nextElementSibling, parentElement e.g.
 - rAF
 - cAF
 - performance.now()
