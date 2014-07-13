@@ -258,7 +258,9 @@ hAzzle.extend({
             cur = this[i];
 
             while (cur && cur !== context && cur.nodeType !== 11) {
-                if (pos ? pos.index(cur) > -1 : cur.nodeType === 1 && hAzzle.matches(cur, selectors)) {
+
+                if (pos ? pos.index(cur) > -1 : cur.nodeType === 1 && hAzzle.matches(selectors, cur)) {
+
                     matched.push(cur);
                     break;
                 }
@@ -270,7 +272,7 @@ hAzzle.extend({
     },
 
     find: function (selector) {
-        var i = 0,
+        var i,
             len = this.length,
             ret = [],
             self = this;
@@ -290,7 +292,7 @@ hAzzle.extend({
 
                 // Loop through all elements, and check for match
 
-                for (; i < len; i++) {
+                for (i = 0; i < len; i++) {
 
                     hAzzle.find(selector, self[i], ret);
                 }
@@ -311,7 +313,7 @@ hAzzle.extend({
         } else { // Object
 
             return hAzzle(selector).filter(function () {
-                for (; i < len; i++) {
+                for (i = 0; i < len; i++) {
                     if (hAzzle.contains(self[i], this)) {
                         return true;
                     }
@@ -496,6 +498,7 @@ hAzzle.forOwn({
 
         return hAzzle.dir(elem, "previousElementSibling", until);
     },
+
 
     /**
      * Get the children of each element in the set of matched elements,
