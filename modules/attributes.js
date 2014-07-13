@@ -36,9 +36,11 @@ var win = this,
     // Support: IE<=11+
     // An input loses its value after becoming a radio
     input = doc.createElement("input");
-    input.value = "t";
-    input.type = "radio";
+	input.setAttribute( "type", "radio" );
+	input.setAttribute( "name", "t" );
+
     attrCore['bug-radioValue'] = input.value === "t";
+
 })();
 
 

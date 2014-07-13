@@ -12,10 +12,14 @@ var rcheckableType = /^(?:checkbox|radio)$/i,
     // Make sure textarea (and checkbox) defaultValue is properly cloned
 
     noCC = hAzzle.assert(function (div) {
+		
+		var fragment = document.createDocumentFragment(),
+		div = fragment.appendChild( div );
+		
         div.innerHTML = "<textarea>x</textarea>";
         return !!div.cloneNode(true).lastChild.defaultValue;
     });
-
+	
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
     // checkbox / radio
