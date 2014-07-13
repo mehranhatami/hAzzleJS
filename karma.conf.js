@@ -95,7 +95,7 @@ path + 'hazzle.js',
     // start these browsers
     // CLI --browsers Chrome,Firefox,Safari
     browsers: [
-      'ChromeCanary',
+      'Chrome',
       'Firefox'
     ],
 
