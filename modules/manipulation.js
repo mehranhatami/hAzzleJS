@@ -1,34 +1,14 @@
 /*!
  * Manipulation
  */
+
 var win = this,
     doc = win.document,
     rnoInnerhtml = /<(?:script|style|link)/i,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i,
-    riAH = /<script|\[object/i,
-    tagName = /<([\w:]+)/,
     rreturn = /\r/g,
     ssv = /\S+/g,
-
-    isFunction = hAzzle.isFunction,
-    isString = hAzzle.isString,
-
-    nextNode = 'nextElementSibling',
-    parentNode = 'parentElement',
-
-    // We have to close these tags to support XHTML	
-
-    htmlMap = {
-        thead: ['<table>', '</table>', 1],
-        tr: ['<table><tbody>', '</tbody></table>', 2],
-        td: ['<table><tbody><tr>', '</tr></tbody></table>', 3],
-        col: ['<table><colgroup>', '</colgroup></table>', 2],
-        fieldset: ['<form>', '</form>', 1],
-        legend: ['<form><fieldset>', '</fieldset></form>', 2],
-        option: ['<select multiple="multiple">', '</select>', 1],
-        base: ['_', '', 0, 1]
-    },
 
     // Boolean attributes
 
@@ -43,7 +23,8 @@ var win = this,
         has: {}
 
     };
-// Bug detection
+	
+	// Bug detection
 
 (function () {
     var input = doc.createElement("input"),
@@ -69,12 +50,6 @@ var win = this,
 })();
 
 
-// Support: IE 9
-htmlMap.optgroup = htmlMap.option;
-htmlMap.script = htmlMap.style = htmlMap.link = htmlMap.param = htmlMap.base;
-htmlMap.tbody = htmlMap.tfoot = htmlMap.colgroup = htmlMap.caption = htmlMap.thead;
-htmlMap.th = htmlMap.td;
-htmlMap.style = htmlMap.table = htmlMap.base;
 
 hAzzle.extend({
 
@@ -148,7 +123,7 @@ hAzzle.extend({
 
             // When toggle is a function, apply it to each element:
 
-            if (isFunction(toggle)) {
+            if (typeof toggle === 'function') {
 
                 return self.each(function (el) {
 
@@ -225,7 +200,7 @@ hAzzle.extend({
 
                 ret = elem.value;
 
-                return isString(ret) ? ret.replace(rreturn, '') : ret === null ? '' : ret;
+                return typeof ret === 'string' ? ret.replace(rreturn, '') : ret === null ? '' : ret;
             }
 
             return;
@@ -239,7 +214,7 @@ hAzzle.extend({
                 return;
             }
 
-            if (isFunction(value)) {
+            if (typeof value === 'function') {
 
                 val = value.call(el, i, hAzzle(el).val());
 
@@ -289,7 +264,7 @@ hAzzle.extend({
 
         var el = this[0] || {},
             append = function (el, i) {
-                hAzzle.each(stabilizeHTML(value, i), function (node) {
+                hAzzle.each(hAzzle.stabilizeHTML(value, i), function (node) {
                     el.appendChild(node);
                 });
             };
@@ -301,7 +276,7 @@ hAzzle.extend({
 
         // check if the value are an 'function'
 
-        if (isFunction(value)) {
+        if (typeof value === 'function') {
 
             return this.each(function (el, i) {
                 var self = hAzzle(el);
@@ -312,7 +287,7 @@ hAzzle.extend({
 
         return this.empty().each(function (el, i) {
 
-            if (isString(value) && !specialTags.test(el.tagName) &&
+            if (typeof value === 'string' && !specialTags.test(el.tagName) &&
                 !rnoInnerhtml.test(el.tagName)) {
 
                 value = value.replace(uniqueTags, '<$1></$2>');
@@ -346,7 +321,7 @@ hAzzle.extend({
      */
 
     text: function (value) {
-        return isFunction(value) ?
+        return typeof value === 'function' ?
             this.each(function (el, i) {
                 var self = hAzzle(el);
                 self.text(value.call(el, i, self.text()));
@@ -359,133 +334,8 @@ hAzzle.extend({
             });
     },
 
-    /**
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-    append: function (node) {
-        return this.each(function (el, i) {
-            if (!iAh(this, node, 'beforeend')) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    hAzzle.each(stabilizeHTML(node, i), function (i) {
-
-                        try {
-                            el.appendChild(i);
-                        } // Die silently
-                        catch (e) {}
-                    });
-                }
-            }
-        });
-    },
-
-    /**
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-
-    prepend: function (node) {
-        return this.each(function (el, i) {
-            if (!iAh(this, node, 'afterbegin')) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    hAzzle.each(stabilizeHTML(node, i), function (i) {
-                        try {
-                            el.insertBefore(i, el.firstChild);
-                        } // Die silently
-                        catch (e) {}
-                    });
-                }
-            }
-        });
-    },
-
-    /**
-     * Append the current element to another
-     *
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-
-    appendTo: function (node) {
-        return injectHTML.call(this, node, this, function (t, el) {
-            try {
-                t.appendChild(el);
-            } // Die silently
-            catch (e) {}
-        }, 1);
-    },
-
-    /**
-     * Prepend the current element to another.
-     *
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-
-    prependTo: function (node) {
-        return injectHTML.call(this, node, this, function (t, el) {
-            t.insertBefore(el, t.firstChild);
-        }, 1);
-    },
-
-    /**
-     * @param {hAzzle|string|Element|Array} target
-     * @param {Object} scope
-     * @return {hAzzle}
-     */
-
-    insertBefore: function (node) {
-        injectHTML.call(this, node, this, function (t, el) {
-            try {
-                t[parentNode].insertBefore(el, t);
-            } // Die silently
-            catch (e) {}
-        });
-        return this;
-    },
-
-    /**
-     * @param {hAzzle|string|Element|Array} node
-     * @param {Object} scope
-     * @return {hAzzle}
-     */
-
-    insertAfter: function (node) {
-        injectHTML.call(this, node, this, function (t, el) {
-            var sibling = t[nextNode];
-            if (sibling) {
-                t[parentNode].insertBefore(el, sibling);
-            } else {
-                t[parentNode].appendChild(el);
-            }
-        }, 1);
-
-        return this;
-    },
-
-    /**
-     * Replace current element with html
-     *
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-
-    replaceWith: function () {
-        var arg = arguments[0],
-            self = this;
-        return self.each(function (el, i) {
-            // Prevent memory leaks
-            hAzzle.clearData(el);
-
-            hAzzle.each(stabilizeHTML(arg, self, i), function (i) {
-                if (el[parentNode]) {
-                    el[parentNode].replaceChild(i, el);
-                }
-            });
-        });
-    }
-
 });
+
 
 // Extend the globale hAzzle Object
 
@@ -557,9 +407,9 @@ hAzzle.extend({
 
                     option = options[i];
 
-                     if ( ( option.selected || i === index ) &&
-							option.getAttribute( 'disabled' ) === null  &&
-                             (!option.parentNode.disabled || !hAzzle.nodeName( option.parentNode, "optgroup" ) ) ) {
+                    if ((option.selected || i === index) &&
+                        option.getAttribute('disabled') === null &&
+                        (!option.parentNode.disabled || !hAzzle.nodeName(option.parentNode, "optgroup"))) {
 
                         // Get the specific value for the option
 
@@ -655,11 +505,11 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
 
-        var hooks, ret, 
-		valid = [2,3,8],
-		nType = elem.nodeType;
+        var hooks, ret,
+            valid = [2, 3, 8],
+            nType = elem.nodeType;
 
-        if (elem && ( valid[nType] ) ) {
+        if (elem && (valid[nType])) {
 
             // Fallback to prop when attributes are not supported
             if (typeof elem.getAttribute === undefined) {
@@ -769,7 +619,6 @@ hAzzle.extend({
 
 }, hAzzle);
 
-
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
 // Get names on the boolean attributes
@@ -781,107 +630,8 @@ function getBooleanAttrName(element, name) {
     return booleanAttr && boolElem[element.nodeName] && booleanAttr;
 }
 
-// Stabilize HTML
-
-function stabilizeHTML(node, clone) {
-
-    var i = 0,
-        l = node.length,
-        ret;
-
-    if (isString(node)) {
-
-        return hAzzle.create(node);
-    }
-    if (node.nodeType === 3) {
-
-        return [node];
-    }
-
-    if (hAzzle.isNode(node)) {
-
-        node = [node];
-    }
-
-    if (clone) {
-
-        ret = [];
-
-        // don't change original array
-
-        for (; i < l; i++) {
-            ret[i] = hAzzle.cloneNode(node[i]);
-        }
-
-        return ret;
-    }
-    return node;
-}
 
 
-// Inject HTML
-
-function injectHTML(target, node, fn, rev) {
-
-    var i = 0,
-        r = [],
-        nodes, stabilized;
-
-    if (isString(target) && target.charAt(0) === '<' &&
-        target[target.length - 1] === '>' &&
-        target.length >= 3) {
-
-        nodes = target;
-
-    } else {
-
-        nodes = hAzzle(target);
-    }
-
-    stabilized = stabilizeHTML(nodes);
-
-    // normalize each node in case it's still a string and we need to create nodes on the fly
-
-    hAzzle.each(stabilized, function (t, j) {
-
-        hAzzle.each(node, function (el) {
-
-            if (j > 0) {
-
-                fn(t, r[i++] = hAzzle.cloneNode(node, el));
-
-            } else {
-
-                fn(t, r[i++] = el);
-            }
-
-        }, null, rev);
-
-
-    }, this, rev);
-
-    node.length = i;
-
-    hAzzle.each(r, function (e) {
-
-        node[--i] = e;
-
-    }, null, !rev);
-
-    return node;
-}
-
-function iAh(elem, html, dir) {
-    var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase();
-    if (isString(html) && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
-        if (elem.insertAdjacentHTML && elem.parentNode && elem.parentNode.nodeType === 1) {
-            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
-            return true;
-        }
-        return false;
-    }
-    return false;
-}
 
 /* =========================== INTERNAL ========================== */
 
@@ -924,33 +674,4 @@ hAzzle.each(('multiple selected checked disabled readOnly required async autofoc
 
 hAzzle.each('input select option textarea button form details'.split(' '), function (value) {
     boolElem[value.toUpperCase()] = true;
-});
-
-/*
- * Before and after
- */
-
-hAzzle.forOwn({
-    before: '',
-    after: nextNode
-}, function (value, key) {
-    hAzzle.Core[key] = function (node) {
-        var i = 0,
-            l;
-        return this.each(function (el, a) {
-            if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                node = stabilizeHTML(node, a);
-
-                l = node.length;
-                for (; i < l; i++) {
-                    if (el[parentNode]) {
-                        try {
-                            el[parentNode].insertBefore(node[i], el[value]);
-                        } catch (e) {}
-
-                    }
-                }
-            }
-        });
-    };
 });
