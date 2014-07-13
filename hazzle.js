@@ -1,4 +1,4 @@
-/*! hazzle v0.0.0 - MIT license */
+/*! hazzle v0.9.3a - MIT license */
 (function (win) {
     function moduleDefinition() {
         return win.hAzzle;
@@ -28,6 +28,7 @@
             path + 'removeable.js',
             path + 'units.js',
             path + 'css.js',
+            path + 'topleft.js',
             path + 'position.js',
             path + 'offset.js',
             path + 'showhide.js',

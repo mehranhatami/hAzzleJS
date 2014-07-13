@@ -36,6 +36,7 @@ var conf = function conf() {
         'removeable.js',
         'units.js',
         'css.js',
+		'topleft.js',
         'position.js',
         'offset.js',
         'showhide.js',
