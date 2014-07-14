@@ -101,12 +101,12 @@ hAzzle.extend({
 
             // Return all data on the element
 
-            if (key === undefined) {
+            if (typeof key === 'undefined') {
 
-                return id;
-            }
+              return id;
+           }
 
-            if (value === undefined) {
+            if (typeof value === 'undefined') {
 
                 return id[key];
             }
