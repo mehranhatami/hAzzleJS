@@ -5,16 +5,8 @@ var win = this,
 
     docElem = hAzzle.docElem,
     evwhite = (/\S+/g),
-    mouseEvent = /^click|mouse(?!(.*wheel|scroll))|menu|pointer|contextmenu|drag|drop/i,
-    keyEvent = /^key/,
     namespaceRegex = /^([^\.]*(?=\..*)\.|.*)/,
     nameRegex = /(\..*)/,
-    textEvent = /^text/i,
-    mouseWheelEvent = /mouse.*(wheel|scroll)/i,
-    touchEvent = /^touch|^gesture/i,
-    messageEvent = /^message$/i,
-    popstateEvent = /^popstate$/i,
-    overOut = /over|out/,
     cache = [],
     slice = Array.prototype.slice,
 
@@ -23,571 +15,491 @@ var win = this,
 
     fixHook = {},
 
-    // Common properties for all event types
+    eC = hAzzle.event = {
 
-    commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget detail ' +
-        'eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget ' +
-        'shiftKey srcElement target timeStamp type view which propertyName').split(' '),
+        map: {},
 
-    // Return all common properties
-    typeFixers = [{
-            // key events
-            reg: keyEvent,
-            fix: function (event, original) {
+        /**
+         * Add event to element.
+         * Using addEventListener
+         *
+         * @param {Object} elem
+         * @param {String} events
+         * @param {String} selector
+         * @param {Function} fn
+         * @param {Undefined/Function} args
+         * @param {Undefined/Object} of
+         */
 
-                original.keyCode = event.keyCode || event.which;
+        addEvent: function (elem, events, selector, fn, /* internal */ one, args, of) {
 
-                return commonProps.concat('char charCode key keyCode keyIdentifier keyLocation location'.split(' '));
-            },
+            var type, types, i, first,
+                hooks, elt = elem.nodeType,
+                namespaces;
+
+            // Don't attach events to text/comment nodes 
+
+            if (elem || elt !== 3 || elt !== 8 || !events) {
+
+                // Handle multiple events separated by a space
+
+                if (typeof events === 'string') {
+
+                    types = (events || '').match(evwhite) || [''];
+
+                } else {
+
+                    return;
+                }
+
+                // special case for one(), wrap in a self-removing handler
+
+                if (one === 1) {
+
+                    fn = hAzzle.event.once(hAzzle.event.removeEvent, elem, events, fn, of);
+                }
+
+                i = types.length;
+
+                while (i--) {
+
+                    // event type
+
+                    type = types[i].replace(nameRegex, '');
+
+                    // There *must* be a type, no attaching namespace-only handlers
+
+                    if (!type) {
+
+                        continue;
+                    }
+
+                    hooks = hAzzle.eventHooks[type] || {};
+
+                    if (selector && hooks.delegateType) {
+
+                        type = hooks.delegateType;
+                    }
+
+                    namespaces = types[i].replace(namespaceRegex, '').split('.').sort();
+
+
+                    first = FirstRun(elem, type, fn, of, namespaces, args, false);
+
+                    // Add roothandler if we're the first
+
+                    if (first) {
+
+                        type = first.eventType;
+
+                        // Trigger eventHooks if any
+                        // e.g. support for 'bubbling' focus and blur events
+
+                        hooks = hAzzle.eventHooks[type] || {};
+
+                        if (hooks.simulate) {
+                            hooks.simulate(elem, type);
+                        }
+
+                        elem.addEventListener(type, rootListener, false);
+                    }
+                }
+            }
         },
 
-        {
-            reg: mouseEvent,
-            fix: function (event, original, type) {
+        once: function (rm, element, type, fn, originalFn) {
+            // wrap the handler in a handler that does a remove as well
+            return function (el) {
+                fn.apply(el, arguments);
+                rm(element, type, originalFn);
+            };
+        },
 
-                original.rightClick = event.which === 3 || event.button === 2;
-                original.pos = {
-                    x: 0,
-                    y: 0
-                };
+        /**
+         * Remove an event handler.
+         *
+         * @param {Object} el
+         * @param {String} selector
+         * @param {String} type
+         * @param {Function} fn
+         *
+         *
+         * FIX ME!!
+         *
+         * Left to do with this function is to remove
+         * handlers on delegated events.
+         *
+         * For now we can do:
+         *
+         *  hAzzle( delegated node, root node).off()
+         *
+         */
 
-                if (event.pageX || event.pageY) {
-                    original.clientX = event.pageX;
-                    original.clientY = event.pageY;
-                } else if (event.clientX || event.clientY) {
-                    original.clientX = event.clientX + doc.body.scrollLeft + docElem.scrollLeft;
-                    original.clientY = event.clientY + doc.body.scrollTop + docElem.scrollTop;
-                }
-                if (overOut.test(type)) {
-                    original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
-                }
+        removeEvent: function (elem, evt, selector, fn) {
 
-                return commonProps.concat('button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' '));
-            },
-        }, {
-            reg: textEvent,
-            fix: function () {
+            var k, type, namespaces, i, hooks;
 
-                return commonProps.concat('data');
-            },
-        }, {
-            reg: mouseWheelEvent,
-            fix: function () {
-
-                return commonProps.concat(('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ ' +
-                    'axis button buttons clientX clientY dataTransfer ' +
-                    'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' '));
-            },
-        }, {
-            reg: touchEvent,
-            fix: function () {
-
-                return commonProps.concat('touches targetTouches changedTouches scale rotation'.split(' '));
-            },
-        }, {
-            reg: messageEvent,
-            fix: function () {
-
-                return commonProps.concat('data origin source'.split(' '));
-            },
-        }, {
-            reg: popstateEvent,
-            fix: function () {
-
-                return commonProps.concat('state');
-            }
-        }, { // everything else
-            reg: /.*/,
-            fix: function () {
-                return commonProps;
-            }
-        }
-    ];
-
-var eC = hAzzle.event = {
-
-    map: {},
-
-    /**
-     * Add event to element.
-     * Using addEventListener
-     *
-     * @param {Object} elem
-     * @param {String} events
-     * @param {String} selector
-     * @param {Function} fn
-     * @param {Undefined/Function} args
-     * @param {Undefined/Object} of
-     */
-
-    addEvent: function (elem, events, selector, fn, /* internal */ one, args, of) {
-
-        var type, types, i, first,
-            hooks, elt = elem.nodeType,
-            namespaces;
-
-        // Don't attach events to text/comment nodes 
-
-        if (elem || elt !== 3 || elt !== 8 || !events) {
-
-            // Handle multiple events separated by a space
-
-            if (typeof events === 'string') {
-
-                types = (events || '').match(evwhite) || [''];
-
-            } else {
+            if (!elem) {
 
                 return;
             }
 
-            // special case for one(), wrap in a self-removing handler
-
-            if (one === 1) {
-
-                fn = hAzzle.event.once(hAzzle.event.removeEvent, elem, events, fn, of);
+            if (selector === false || typeof selector === 'function') {
+                // ( types [, fn] )
+                fn = selector;
+                selector = undefined;
             }
 
-            i = types.length;
+            // hAzzle.inArray() are faster then native indexOf, and this
+            // has to be fast
 
-            while (i--) {
+            if (isString(evt) && hAzzle.inArray(evt, ' ') > 0) {
 
-                // event type
+                // Handle multiple events separated by a space
 
-                type = types[i].replace(nameRegex, '');
+                evt = (evt || '').match(evwhite) || [''];
 
-                // There *must* be a type, no attaching namespace-only handlers
+                i = evt.length;
 
-                if (!type) {
+                while (i--) {
 
-                    continue;
+                    this.removeEvent(elem, evt[i], selector, fn);
                 }
+
+                return elem;
+            }
+
+            // Check for namespace
+
+            if (isString(evt)) {
+
+                type = evt.replace(nameRegex, '');
+            }
+
+            if (type) {
+
+                // Checks if any 'type' need special threatment
+                // e.g. mouseenter and mouseleave
 
                 hooks = hAzzle.eventHooks[type] || {};
 
-                if (selector && hooks.delegateType) {
+                if (hooks.specialEvents) {
 
-                    type = hooks.delegateType;
-                }
-
-                namespaces = types[i].replace(namespaceRegex, '').split('.').sort();
-
-
-                first = FirstRun(elem, type, fn, of, namespaces, args, false);
-
-                // Add roothandler if we're the first
-
-                if (first) {
-
-                    type = first.eventType;
-
-                    // Trigger eventHooks if any
-                    // e.g. support for 'bubbling' focus and blur events
-
-                    hooks = hAzzle.eventHooks[type] || {};
-
-                    if (hooks.simulate) {
-                        hooks.simulate(elem, type);
-                    }
-
-                    elem.addEventListener(type, rootListener, false);
+                    type = hooks.specialEvents;
                 }
             }
-        }
-    },
 
-    once: function (rm, element, type, fn, originalFn) {
-        // wrap the handler in a handler that does a remove as well
-        return function (el) {
-            fn.apply(el, arguments);
-            rm(element, type, originalFn);
-        };
-    },
+            if (!evt || isString(evt)) {
 
-    /**
-     * Remove an event handler.
-     *
-     * @param {Object} el
-     * @param {String} selector
-     * @param {String} type
-     * @param {Function} fn
-     *
-     *
-     * FIX ME!!
-     *
-     * Left to do with this function is to remove
-     * handlers on delegated events.
-     *
-     * For now we can do:
-     *
-     *  hAzzle( delegated node, root node).off()
-     *
-     */
+                // namespace
 
-    removeEvent: function (elem, evt, selector, fn) {
+                if ((namespaces = isString(evt) && evt.replace(namespaceRegex, ''))) {
 
-        var k, type, namespaces, i, hooks;
+                    namespaces = namespaces.split('.').sort();
+                }
 
-        if (!elem) {
+                hAzzle.event.remove(elem, type, fn, namespaces, selector);
 
-            return;
-        }
+            } else if (isFunction(evt)) {
 
-        if (selector === false || typeof selector === 'function') {
-            // ( types [, fn] )
-            fn = selector;
-            selector = undefined;
-        }
+                // removeEvent(el, fn)
 
-        // hAzzle.inArray() are faster then native indexOf, and this
-        // has to be fast
+                this.remove(elem, null, evt, null, selector);
 
-        if (isString(evt) && hAzzle.inArray(evt, ' ') > 0) {
+            } else {
 
-            // Handle multiple events separated by a space
+                // removeEvent(el, { t1: fn1, t2, fn2 })
 
-            evt = (evt || '').match(evwhite) || [''];
+                for (k in evt) {
 
-            i = evt.length;
+                    if (evt.hasOwnProperty(k)) {
 
-            while (i--) {
-
-                this.removeEvent(elem, evt[i], selector, fn);
+                        this.removeEvent(elem, k, evt[k]);
+                    }
+                }
             }
 
             return elem;
-        }
+        },
 
-        // Check for namespace
+        /**
+         * Clone events attached to elements
+         *
+         * @param {Object} element
+         * @param {Object} from
+         * @param {String} type (e.g. 'click', 'mouseover')
+         * @return {hAzzle}
+         */
 
-        if (isString(evt)) {
+        clone: function (elem, from, type) {
+            var handlers = hAzzle.event.get(from, type, null, false),
+                l = handlers.length,
+                i = 0;
 
-            type = evt.replace(nameRegex, '');
-        }
+            //move out 'apply' from loops
+            var applyAddEvent = (function (elem, handlers) {
+                return function (i) {
+                    var args, core;
+                    if (handlers[i].original) {
+                        args = [elem, handlers[i].type];
+                        if ((core = handlers[i].handler.__hAzzle)) {
 
-        if (type) {
+                            args.push(hAzzle.selector);
+                        }
 
-            // Checks if any 'type' need special threatment
-            // e.g. mouseenter and mouseleave
+                        args.push(handlers[i].original);
+                        hAzzle.event.addEvent.apply(null, args);
+                    }
+                };
+            })(elem, handlers);
 
-            hooks = hAzzle.eventHooks[type] || {};
-
-            if (hooks.specialEvents) {
-
-                type = hooks.specialEvents;
+            for (; i < l; i++) {
+                applyAddEvent(i);
             }
-        }
 
-        if (!evt || isString(evt)) {
+            return elem;
+        },
 
-            // namespace
+        trigger: function (elem, type, args) {
 
-            if ((namespaces = isString(evt) && evt.replace(namespaceRegex, ''))) {
+            var cur, types = type.split(' '),
+                i = types.length,
+                j = 0,
+                et = elem.nodeType,
+                l, call, evt, names, handlers;
 
-                namespaces = namespaces.split('.').sort();
-            }
+            cur = elem || doc;
 
-            hAzzle.event.remove(elem, type, fn, namespaces, selector);
+            // Don't do events on text and comment nodes
 
-        } else if (isFunction(evt)) {
+            if (et === 3 || et === 8 || !type) {
 
-            // removeEvent(el, fn)
+                while (i--) {
 
-            this.remove(elem, null, evt, null, selector);
+                    type = types[i].replace(nameRegex, '');
 
-        } else {
+                    if ((names = types[i].replace(namespaceRegex, ''))) {
 
-            // removeEvent(el, { t1: fn1, t2, fn2 })
-
-            for (k in evt) {
-
-                if (evt.hasOwnProperty(k)) {
-
-                    this.removeEvent(elem, k, evt[k]);
-                }
-            }
-        }
-
-        return elem;
-    },
-
-    /**
-     * Clone events attached to elements
-     *
-     * @param {Object} element
-     * @param {Object} from
-     * @param {String} type (e.g. 'click', 'mouseover')
-     * @return {hAzzle}
-     */
-
-    clone: function (elem, from, type) {
-        var handlers = hAzzle.event.get(from, type, null, false),
-            l = handlers.length,
-            i = 0;
-
-        //move out 'apply' from loops
-        var applyAddEvent = (function (elem, handlers) {
-            return function (i) {
-                var args, core;
-                if (handlers[i].original) {
-                    args = [elem, handlers[i].type];
-                    if ((core = handlers[i].handler.__hAzzle)) {
-
-                        args.push(hAzzle.selector);
+                        names = names.split('.');
                     }
 
-                    args.push(handlers[i].original);
-                    hAzzle.event.addEvent.apply(null, args);
-                }
-            };
-        })(elem, handlers);
+                    if (!names && !args) {
 
-        for (; i < l; i++) {
-            applyAddEvent(i);
-        }
+                        /**
+                         * Create custom events.
+                         *
+                         * These events can be listened by hAzzle via `on`,
+                         * and by pure javascript via `addEventListener`
+                         *
+                         * Examples:
+                         *
+                         * hAzzle('p').on('customEvent', handler);
+                         *
+                         * hAzzle('p').trigger('customEvent');
+                         *
+                         * window.document.addEventListener('customEvent', handler);
+                         *
+                         */
 
-        return elem;
-    },
+                        evt = doc.createEvent('HTMLEvents');
+                        evt.initEvent(type, true, true, win, 1);
+                        elem.dispatchEvent(evt);
 
-    trigger: function (elem, type, args) {
+                    } else {
 
-        var cur, types = type.split(' '),
-            i = types.length,
-            j = 0,
-            et = elem.nodeType,
-            l, call, evt, names, handlers;
+                        // non-native event, either because of a namespace, arguments or a non DOM element
+                        // iterate over all listeners and manually 'fire'
 
-        cur = elem || doc;
+                        handlers = hAzzle.event.get(cur, type, null, false);
 
-        // Don't do events on text and comment nodes
+                        evt = new hAzzle.Event(null, cur);
 
-        if (et === 3 || et === 8 || !type) {
+                        evt.type = type;
 
-            while (i--) {
+                        call = args ? 'apply' : 'call';
 
-                type = types[i].replace(nameRegex, '');
+                        args = args ? [evt].concat(args) : evt;
 
-                if ((names = types[i].replace(namespaceRegex, ''))) {
+                        l = handlers.length;
 
-                    names = names.split('.');
-                }
+                        for (; j < l; j++) {
 
-                if (!names && !args) {
+                            if (handlers[j].inNamespaces(names)) {
 
-                    /**
-                     * Create custom events.
-                     *
-                     * These events can be listened by hAzzle via `on`,
-                     * and by pure javascript via `addEventListener`
-                     *
-                     * Examples:
-                     *
-                     * hAzzle('p').on('customEvent', handler);
-                     *
-                     * hAzzle('p').trigger('customEvent');
-                     *
-                     * window.document.addEventListener('customEvent', handler);
-                     *
-                     */
-
-                    evt = doc.createEvent('HTMLEvents');
-                    evt.initEvent(type, true, true, win, 1);
-                    elem.dispatchEvent(evt);
-
-                } else {
-
-                    // non-native event, either because of a namespace, arguments or a non DOM element
-                    // iterate over all listeners and manually 'fire'
-
-                    handlers = hAzzle.event.get(cur, type, null, false);
-
-                    evt = new hAzzle.Event(null, cur);
-
-                    evt.type = type;
-
-                    call = args ? 'apply' : 'call';
-
-                    args = args ? [evt].concat(args) : evt;
-
-                    l = handlers.length;
-
-                    for (; j < l; j++) {
-
-                        if (handlers[j].inNamespaces(names)) {
-
-                            handlers[j].handler.apply(cur, args);
+                                handlers[j].handler.apply(cur, args);
+                            }
                         }
                     }
                 }
             }
-        }
-    },
+        },
 
-    /**
-     * Detach an event or set of events from an element
-     *
-     * There are many different methods for removing events:
-     *
-     *  hAzzle.('p').off(handler);
-     *
-     *  hAzzle.('p').off('click');
-     *
-     *  hAzzle.('p').off('click', handler);
-     *
-     *  hAzzle.('p').off('click mouseover');
-     *
-     *  hAzzle.('p').off({ click: clickHandler, keyup: keyupHandler });
-     *
-     *  hAzzle.('p').off();
-     *
-     */
+        /**
+         * Detach an event or set of events from an element
+         *
+         * There are many different methods for removing events:
+         *
+         *  hAzzle.('p').off(handler);
+         *
+         *  hAzzle.('p').off('click');
+         *
+         *  hAzzle.('p').off('click', handler);
+         *
+         *  hAzzle.('p').off('click mouseover');
+         *
+         *  hAzzle.('p').off({ click: clickHandler, keyup: keyupHandler });
+         *
+         *  hAzzle.('p').off();
+         *
+         */
 
-    remove: function (elem, types, handler, namespaces /*, selector*/ ) {
-        //the question here is what are we going to do with this selector argument
-        var type = types && types.replace(nameRegex, ''),
-            handlers = hAzzle.event.get(elem, type, null, false),
-            removed = [],
-            i = 0,
-            j,
-            l = handlers.length;
-
-        for (; i < l; i++) {
-
-            if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
-                hAzzle.event.unregister(handlers[i]);
-                if (!removed[handlers[i].type]) {
-                    removed[handlers[i].type] = handlers[i].type;
-                }
-            }
-        }
-
-        // Remove the root listener if this is the last one
-
-        for (j in removed) {
-            if (!hAzzle.event.has(elem, removed[j], null, false)) {
-                elem.removeEventListener(removed[j], rootListener, false);
-            }
-        }
-    },
-
-    // This functions are developed with inspiration from Bean
-
-    loopThrough: function (elem, type, original, handler, root, fn) {
-
-        var pfx = root ? 'r' : '#',
-            t, self = this;
-
-        if (!type || type == '*') {
-            for (t in self.map) {
-                if (t.charAt(0) == pfx) {
-                    self.loopThrough(elem, t.substr(1), original, handler, root, fn);
-                }
-            }
-        } else {
-
-            var i = 0,
-                l,
-                list = self.map[pfx + type],
-                all = elem == '*';
-
-            if (!list) {
-
-                return;
-            }
-
-            l = list.length;
+        remove: function (elem, types, handler, namespaces /*, selector*/ ) {
+            //the question here is what are we going to do with this selector argument
+            var type = types && types.replace(nameRegex, ''),
+                handlers = hAzzle.event.get(elem, type, null, false),
+                removed = [],
+                i = 0,
+                j,
+                l = handlers.length;
 
             for (; i < l; i++) {
 
-                if ((all || list[i].matches(elem, original, handler)) && !fn(list[i], list, i, type)) {
+                if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(namespaces)) {
+                    hAzzle.event.unregister(handlers[i]);
+                    if (!removed[handlers[i].type]) {
+                        removed[handlers[i].type] = handlers[i].type;
+                    }
+                }
+            }
+
+            // Remove the root listener if this is the last one
+
+            for (j in removed) {
+                if (!hAzzle.event.has(elem, removed[j], null, false)) {
+                    elem.removeEventListener(removed[j], rootListener, false);
+                }
+            }
+        },
+
+        // This functions are developed with inspiration from Bean
+
+        loopThrough: function (elem, type, original, handler, root, fn) {
+
+            var pfx = root ? 'r' : '#',
+                t, self = this;
+
+            if (!type || type == '*') {
+                for (t in self.map) {
+                    if (t.charAt(0) == pfx) {
+                        self.loopThrough(elem, t.substr(1), original, handler, root, fn);
+                    }
+                }
+            } else {
+
+                var i = 0,
+                    l,
+                    list = self.map[pfx + type],
+                    all = elem == '*';
+
+                if (!list) {
 
                     return;
                 }
-            }
-        }
-    },
 
-    has: function (elem, type, original, root) {
+                l = list.length;
 
-        var i, list = this.map[(root ? 'r' : '#') + type];
+                for (; i < l; i++) {
 
-        if (list) {
+                    if ((all || list[i].matches(elem, original, handler)) && !fn(list[i], list, i, type)) {
 
-            i = list.length;
-
-            while (i--) {
-
-                if (!list[i].root && list[i].matches(elem, original, null)) {
-
-                    return true;
+                        return;
+                    }
                 }
             }
-        }
-        return false;
-    },
+        },
 
-    get: function (elem, type, original, root) {
-        var entries = [];
-        this.loopThrough(elem, type, original, null, root, function (entry) {
-            return entries.push(entry);
-        });
-        return entries;
-    },
+        has: function (elem, type, original, root) {
 
-    // Add an event to the element's event registry.
+            var i, list = this.map[(root ? 'r' : '#') + type];
 
-    register: function (entry) {
+            if (list) {
 
-        var has = !entry.root && !this.has(entry.element, entry.type, null, false),
-            key;
+                i = list.length;
 
-        if (entry.root) {
+                while (i--) {
 
-            key = 'r' + entry.type;
+                    if (!list[i].root && list[i].matches(elem, original, null)) {
 
-        } else {
-
-            key = '#' + entry.type;
-        }
-
-        (this.map[key] || (this.map[key] = [])).push(entry);
-
-        return has;
-    },
-
-    // Remove an event from the element's event registry.
-
-    unregister: function (entry) {
-
-        var self = this;
-
-        this.loopThrough(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
-
-            list.splice(i, 1);
-
-            entry.removed = true;
-
-            if (list.length === 0) {
-
-                delete self.map[(entry.root ? 'r' : '#') + entry.type];
+                        return true;
+                    }
+                }
             }
             return false;
-        });
-    },
+        },
 
-    entries: function () {
-        var t, entries = [],
-            self = this;
+        get: function (elem, type, original, root) {
+            var entries = [];
+            this.loopThrough(elem, type, original, null, root, function (entry) {
 
-        for (t in self.map) {
-            if (t.charAt(0) == '#') {
-                entries = entries.concat(self.map[t]);
+                return entries.push(entry);
+            });
+            return entries;
+        },
+
+        // Add an event to the element's event registry.
+
+        register: function (entry) {
+
+            var has = !entry.root && !this.has(entry.element, entry.type, null, false),
+                key;
+
+            if (entry.root) {
+
+                key = 'r' + entry.type;
+
+            } else {
+
+                key = '#' + entry.type;
             }
-        }
 
-        return entries;
-    }
-};
+            (this.map[key] || (this.map[key] = [])).push(entry);
+
+            return has;
+        },
+
+        // Remove an event from the element's event registry.
+
+        unregister: function (entry) {
+
+            var self = this;
+
+            this.loopThrough(entry.element, entry.type, null, entry.handler, entry.root, function (entry, list, i) {
+
+                list.splice(i, 1);
+
+                entry.removed = true;
+
+                if (list.length === 0) {
+
+                    delete self.map[(entry.root ? 'r' : '#') + entry.type];
+                }
+                return false;
+            });
+        },
+
+        entries: function () {
+            var t, entries = [],
+                self = this;
+
+            for (t in self.map) {
+                if (t.charAt(0) == '#') {
+                    entries = entries.concat(self.map[t]);
+                }
+            }
+
+            return entries;
+        }
+    };
 
 hAzzle.eventHooks = {};
 
@@ -601,8 +513,9 @@ hAzzle.Event = function (event, element) {
             evt = event || pW.event,
             type = evt.type,
             target = evt.target || evt.srcElement,
-			l = typeFixers.length,
-            i = 0, p, props, cleaned;
+            l = hAzzle.event.typeFixers.length,
+            i = 0,
+            p, props, cleaned;
 
         self.originalEvent = evt;
 
@@ -620,8 +533,8 @@ hAzzle.Event = function (event, element) {
         if (!cleaned) {
 
             for (; i < l; i++) {
-                if (typeFixers[i].reg.test(type)) { // guaranteed to match at least one, last is .*
-                    fixHook[type] = cleaned = typeFixers[i].fix;
+                if (hAzzle.event.typeFixers[i].reg.test(type)) { // guaranteed to match at least one, last is .*
+                    fixHook[type] = cleaned = hAzzle.event.typeFixers[i].fix;
                     break;
                 }
             }
