@@ -581,14 +581,15 @@ hAzzle.Event = function (event, element) {
 
     if (arguments.length && event) {
 
-    event = event || ((element.ownerDocument || element.document || element).parentWindow || win).event;
-
     var self = this,
-        type = event.type,
-        target = event.target || event.srcElement,
+        pW = (element.ownerDocument || element.document || element).parentWindow,
+	    evt = event || pW.event,
+        he = hAzzle.event,		
+	    type = evt.type,
+        target = evt.target || evt.srcElement,
         i, p, props, cleaned;
 
-    self.originalEvent = event;
+    self.originalEvent = evt;
 	
       self.target = target;
      
@@ -599,48 +600,48 @@ hAzzle.Event = function (event, element) {
          self.target = target.parentElement;
      }
 
-    cleaned = hAzzle.event.fixHook[type];
+    cleaned = he.fixHook[type];
 
     if (!cleaned) {
 
-        hAzzle.event.fixHook[type] = cleaned =
+        he.fixHook[type] = cleaned =
 
-            mouseEvent.test(type) ? hAzzle.event.mouseHooks :
+            mouseEvent.test(type) ? he.mouseHooks :
 
             // keys
 
-            keyEvent.test(type) ? hAzzle.event.keyHooks :
+            keyEvent.test(type) ? he.keyHooks :
 
             // text
 
-            textEvent.test(type) ? hAzzle.event.textHooks :
+            textEvent.test(type) ? he.textHooks :
 
             // mouseWheel
 
-            mouseWheelEvent.test(type) ? hAzzle.event.mouseWheelHooks :
+            mouseWheelEvent.test(type) ? he.mouseWheelHooks :
 
             // touch and gestures
 
-            touchEvent.test(type) ? hAzzle.event.touchHooks :
+            touchEvent.test(type) ? he.touchHooks :
 
             // popstate
 
-            popstateEvent.test(type) ? hAzzle.event.popstateHooks :
+            popstateEvent.test(type) ? he.popstateHooks :
 
             // messages
 
-            messageEvent.test(type) ? hAzzle.event.messageHooks :
+            messageEvent.test(type) ? he.messageHooks :
 
             // common
 
-            hAzzle.event.common;
+            he.common;
     }
 
-    props = hAzzle.merge(cleaned(event, self), hAzzle.event.props);
+    props = hAzzle.merge(cleaned(evt, self), he.props);
 
     for (i = props.length; i--;) {
-
-        if (!((p = props[i]) in this) && p in event) this[p] = event[p];
+         p = props[i];
+        if (!(p in this) && p in evt) this[p] = evt[p];
     }
 
     return self;
