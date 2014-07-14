@@ -23,7 +23,7 @@ var win = this,
 
     eC = hAzzle.event = {
 
-        'global': {},
+        map: {},
 
         /**
          * Add event to element.
@@ -45,104 +45,78 @@ var win = this,
 
             // Don't attach events to text/comment nodes 
 
-            if (elt === 3 || elt === 8 || !events) {
+            if (elem || elt !== 3 || elt !== 8 || !events) {
 
-                return;
-            }
+                // Handle multiple events separated by a space
 
-            // Handle multiple events separated by a space
+                if (typeof events === 'string') {
 
-            if (typeof events === 'string') {
+                    types = (events || '').match(evwhite) || [''];
 
-                types = (events || '').match(evwhite) || [''];
+                } else {
 
-            } else {
-
-                return;
-            }
-
-            // special case for one(), wrap in a self-removing handler
-
-            if (one === 1) {
-
-                fn = hAzzle.event.once(hAzzle.event.removeEvent, elem, events, fn, of);
-            }
-
-            i = types.length;
-
-            while (i--) {
-
-                // event type
-
-                type = types[i].replace(nameRegex, '');
-
-                // There *must* be a type, no attaching namespace-only handlers
-
-                if (!type) {
-
-                    continue;
+                    return;
                 }
 
-                /* If event delegation, check for eventHooks
+                // special case for one(), wrap in a self-removing handler
 
-             Note !! This is important. For us to get 'mouseenter'
-             to work on delegated events, we use 'hooks'.
-             'mouseenter' will then become 'mouseover' and work
-             right out of the box.
+                if (one === 1) {
 
-             A possible problem can occur when we are going to delete
-             the delegated events. We have to turn it back to normal
-             event type before removing it. 
-			 
-             It can be done if we are using an hook for this inside
-             the function for removing delegated events, and not inside
-             the main function itself. This for better performance.
-
-             Keep that in mind !!
-			 
-			 */
-
-                hooks = hAzzle.eventHooks[type] || {};
-
-                if (selector && hooks.delegateType) {
-
-                    type = hooks.delegateType;
+                    fn = hAzzle.event.once(hAzzle.event.removeEvent, elem, events, fn, of);
                 }
 
-                namespaces = types[i].replace(namespaceRegex, '').split('.').sort();
+                i = types.length;
 
+                while (i--) {
 
-                first = FirstRun(elem, type, fn, of, namespaces, args, false);
+                    // event type
 
-                // Add roothandler if we're the first
+                    type = types[i].replace(nameRegex, '');
 
-                if (first) {
+                    // There *must* be a type, no attaching namespace-only handlers
 
-                    type = first.eventType;
+                    if (!type) {
 
-                    // Trigger eventHooks if any
-                    // e.g. support for 'bubbling' focus and blur events
+                        continue;
+                    }
 
                     hooks = hAzzle.eventHooks[type] || {};
 
-                    if (hooks.simulate) {
-                        hooks.simulate(elem, type);
+                    if (selector && hooks.delegateType) {
+
+                        type = hooks.delegateType;
                     }
 
-                    elem.addEventListener(type, rootListener, false);
+                    namespaces = types[i].replace(namespaceRegex, '').split('.').sort();
+
+
+                    first = FirstRun(elem, type, fn, of, namespaces, args, false);
+
+                    // Add roothandler if we're the first
+
+                    if (first) {
+
+                        type = first.eventType;
+
+                        // Trigger eventHooks if any
+                        // e.g. support for 'bubbling' focus and blur events
+
+                        hooks = hAzzle.eventHooks[type] || {};
+
+                        if (hooks.simulate) {
+                            hooks.simulate(elem, type);
+                        }
+
+                        elem.addEventListener(type, rootListener, false);
+                    }
                 }
-            }
-
-            if (first) {
-
-                hAzzle.event.global[first.eventType] = true;
             }
         },
 
         once: function (rm, element, type, fn, originalFn) {
             // wrap the handler in a handler that does a remove as well
-            return function () {
-                fn.apply(this, arguments);
+            return function (el) {
+                fn.apply(el, arguments);
                 rm(element, type, originalFn);
             };
         },
@@ -172,10 +146,11 @@ var win = this,
             var k, type, namespaces, i;
 
             if (!elem) {
+
                 return;
             }
 
-            if (selector === false || isFunction(selector)) {
+            if (selector === false || typeof selector === 'function') {
                 // ( types [, fn] )
                 fn = selector;
                 selector = undefined;
@@ -295,70 +270,69 @@ var win = this,
             var cur, types = type.split(' '),
                 i = types.length,
                 j = 0,
+                et = elem.nodeType,
                 l, call, evt, names, handlers;
 
             cur = elem || doc;
 
             // Don't do events on text and comment nodes
 
-            if (elem.nodeType === 3 || elem.nodeType === 8 || !type) {
+            if (et === 3 || et === 8 || !type) {
 
-                return;
-            }
+                while (i--) {
 
-            while (i--) {
+                    type = types[i].replace(nameRegex, '');
 
-                type = types[i].replace(nameRegex, '');
+                    if ((names = types[i].replace(namespaceRegex, ''))) {
 
-                if ((names = types[i].replace(namespaceRegex, ''))) {
+                        names = names.split('.');
+                    }
 
-                    names = names.split('.');
-                }
+                    if (!names && !args) {
 
-                if (!names && !args) {
+                        /**
+                         * Create custom events.
+                         *
+                         * These events can be listened by hAzzle via `on`,
+                         * and by pure javascript via `addEventListener`
+                         *
+                         * Examples:
+                         *
+                         * hAzzle('p').on('customEvent', handler);
+                         *
+                         * hAzzle('p').trigger('customEvent');
+                         *
+                         * window.document.addEventListener('customEvent', handler);
+                         *
+                         */
 
-                    /**
-                     * Create custom events.
-                     *
-                     * These events can be listened by hAzzle via `on`,
-                     * and by pure javascript via `addEventListener`
-                     *
-                     * Examples:
-                     *
-                     * hAzzle('p').on('customEvent', handler);
-                     *
-                     * hAzzle('p').trigger('customEvent');
-                     *
-                     * window.document.addEventListener('customEvent', handler);
-                     *
-                     */
+                        evt = doc.createEvent('HTMLEvents');
+                        evt.initEvent(type, true, true, win, 1);
+                        elem.dispatchEvent(evt);
 
-                    evt = doc.createEvent('HTMLEvents');
-                    evt.initEvent(type, true, true, win, 1);
-                    elem.dispatchEvent(evt);
+                    } else {
 
-                } else {
+                        // non-native event, either because of a namespace, arguments or a non DOM element
+                        // iterate over all listeners and manually 'fire'
 
-                    // non-native event, either because of a namespace, arguments or a non DOM element
-                    // iterate over all listeners and manually 'fire'
+                        handlers = hAzzle.event.get(cur, type, null, false);
 
-                    handlers = hAzzle.event.get(cur, type, null, false);
+                        evt = hAzzle.Event(null, cur);
 
-                    evt = hAzzle.Event(null, cur);
+                        evt.type = type;
 
-                    evt.type = type;
+                        call = args ? 'apply' : 'call';
 
-                    call = args ? 'apply' : 'call';
+                        args = args ? [evt].concat(args) : evt;
 
-                    args = args ? [evt].concat(args) : evt;
+                        l = handlers.length;
 
-                    l = handlers.length;
+                        for (; j < l; j++) {
 
-                    for (; j < l; j++) {
+                            if (handlers[j].inNamespaces(names)) {
 
-                        if (handlers[j].inNamespaces(names)) {
-
-                            handlers[j].handler.apply(cur, args);
+                                handlers[j].handler.apply(cur, args);
+                            }
                         }
                     }
                 }
@@ -411,8 +385,6 @@ var win = this,
                 }
             }
         },
-
-        map: {},
 
         // This functions are developed with inspiration from Bean
 
@@ -481,6 +453,7 @@ var win = this,
         // Add an event to the element's event registry.
 
         register: function (entry) {
+
             var has = !entry.root && !this.has(entry.element, entry.type, null, false),
                 key;
 
