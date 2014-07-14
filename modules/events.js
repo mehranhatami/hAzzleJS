@@ -39,14 +39,13 @@ var win = this,
         addEvent: function (elem, events, selector, fn, /* internal */ one) {
 
             var originalFn, type, types, i, args, entry, first,
-			    nType = [3,8],
-				et = elem.nodeType,
+                nType = [3, 8],
+                et = elem.nodeType,
                 namespaces;
 
             // Don't attach events to text/comment nodes 
 
             if (nType[et] || !et || !events) {
-
                 return;
             }
 
@@ -133,9 +132,13 @@ var win = this,
 
             // Handle multiple events separated by a space
 
-            types = isString(events) && (events || '').match(evwhite) || [''];
+            if (typeof events === 'string') {
 
-            if (!types) {
+                types = (events || '').match(evwhite) || [''];
+
+                // If no types, return
+
+            } else {
 
                 return;
 
@@ -162,25 +165,6 @@ var win = this,
 
                     continue;
                 }
-
-                /* If event delegation, check for eventHooks
-
-             Note !! This is important. For us to get 'mouseenter'
-             to work on delegated events, we use 'hooks'.
-             'mouseenter' will then become 'mouseover' and work
-             right out of the box.
-
-             A possible problem can occur when we are going to delete
-             the delegated events. We have to turn it back to normal
-             event type before removing it. 
-			 
-             It can be done if we are using an hook for this inside
-             the function for removing delegated events, and not inside
-             the main function itself. This for better performance.
-
-             Keep that in mind !!
-			 
-			 */
 
                 var hooks = hAzzle.eventHooks[type] || {};
 
@@ -259,85 +243,85 @@ var win = this,
 
             var k, type, namespaces, i;
 
-            if (!elem) {
-                return;
-            }
+            if (elem) {
 
-            if (selector === false || isFunction(selector)) {
-                // ( types [, fn] )
-                fn = selector;
-                selector = undefined;
-            }
+                if (selector === false || isFunction(selector)) {
+                    // ( types [, fn] )
+                    fn = selector;
+                    selector = undefined;
+                }
 
-            // hAzzle.inArray() are faster then native indexOf, and this
-            // has to be fast
+                // hAzzle.inArray() are faster then native indexOf, and this
+                // has to be fast
 
-            if (isString(evt) && hAzzle.inArray(evt, ' ') > 0) {
+                if (isString(evt) && hAzzle.inArray(evt, ' ') > 0) {
 
-                // Handle multiple events separated by a space
+                    // Handle multiple events separated by a space
 
-                evt = (evt || '').match(evwhite) || [''];
+                    evt = (evt || '').match(evwhite) || [''];
 
-                i = evt.length;
+                    i = evt.length;
 
-                while (i--) {
+                    while (i--) {
 
-                    this.removeEvent(elem, evt[i], selector, fn);
+                        this.removeEvent(elem, evt[i], selector, fn);
+                    }
+
+                    return elem;
+                }
+
+                // Check for namespace
+
+                if (isString(evt)) {
+
+                    type = evt.replace(nameRegex, '');
+                }
+
+                if (type) {
+
+                    // Checks if any 'type' need special threatment
+                    // e.g. mouseenter and mouseleave
+
+                    var hooks = hAzzle.eventHooks[type];
+
+                    if (hooks && ('specialEvents' in hooks)) {
+                        type = hooks.specialEvents.name || type;
+                    }
+                }
+
+                if (!evt || isString(evt)) {
+
+                    // namespace
+
+                    if ((namespaces = isString(evt) && evt.replace(namespaceRegex, ''))) {
+
+                        namespaces = namespaces.split('.').sort();
+                    }
+
+                    hAzzle.event.remove(elem, type, fn, namespaces, selector);
+
+                } else if (isFunction(evt)) {
+
+                    // removeEvent(el, fn)
+
+                    this.remove(elem, null, evt, null, selector);
+
+                } else {
+
+                    // removeEvent(el, { t1: fn1, t2, fn2 })
+
+                    for (k in evt) {
+
+                        if (evt.hasOwnProperty(k)) {
+
+                            this.removeEvent(elem, k, evt[k]);
+                        }
+                    }
                 }
 
                 return elem;
             }
 
-            // Check for namespace
-
-            if (isString(evt)) {
-
-                type = evt.replace(nameRegex, '');
-            }
-
-            if (type) {
-
-                // Checks if any 'type' need special threatment
-                // e.g. mouseenter and mouseleave
-
-                var hooks = hAzzle.eventHooks[type];
-
-                if (hooks && ('specialEvents' in hooks)) {
-                    type = hooks.specialEvents.name || type;
-                }
-            }
-
-            if (!evt || isString(evt)) {
-
-                // namespace
-
-                if ((namespaces = isString(evt) && evt.replace(namespaceRegex, ''))) {
-
-                    namespaces = namespaces.split('.').sort();
-                }
-
-                hAzzle.event.remove(elem, type, fn, namespaces, selector);
-
-            } else if (isFunction(evt)) {
-
-                // removeEvent(el, fn)
-
-                this.remove(elem, null, evt, null, selector);
-
-            } else {
-
-                // removeEvent(el, { t1: fn1, t2, fn2 })
-
-                for (k in evt) {
-
-                    if (evt.hasOwnProperty(k)) {
-
-                        this.removeEvent(elem, k, evt[k]);
-                    }
-                }
-            }
-
-            return elem;
         },
 
         /**
@@ -383,7 +367,7 @@ var win = this,
             var cur, types = type.split(' '),
                 i = types.length,
                 j = 0,
-				nType = [3,8],
+                nType = [3, 8],
                 l, call, evt, names, handlers;
 
             cur = elem || doc;
@@ -612,7 +596,9 @@ var win = this,
                 self = this;
 
             for (t in self.map) {
+
                 if (t.charAt(0) == '#') {
+
                     entries = entries.concat(self.map[t]);
                 }
             }
