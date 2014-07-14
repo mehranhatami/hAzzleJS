@@ -35,27 +35,17 @@ var win = this,
          * @param {Function} fn
          */
 
-        addEvent: function (elem, events, selector, fn, /* internal */ one) {
+        addEvent: function (elem, events, selector, fn, /* internal */ one, args, of) {
 
-            var originalFn, type, types, i, args, entry, first,
+            var type, types, i, entry, first,
+                nTypes = [3, 8],
                 namespaces;
 
             // Don't attach events to text/comment nodes 
 
-            if (elem.nodeType === 3 || elem.nodeType === 8 || !elem.nodeType || !events) {
+            if (nTypes[elem.nodeType] || !elem.nodeType || !events) {
 
                 return;
-            }
-
-            // Event delegation
-
-            if (!isFunction(selector)) {
-                originalFn = fn;
-                args = slice.call(arguments, 4);
-                fn = delegate(selector, originalFn);
-            } else {
-                args = slice.call(arguments, 3);
-                fn = originalFn = selector;
             }
 
             // Handle multiple events separated by a space
@@ -71,7 +61,7 @@ var win = this,
 
             if (one === 1) {
 
-                fn = hAzzle.event.once(hAzzle.event.removeEvent, elem, events, fn, originalFn);
+                fn = hAzzle.event.once(hAzzle.event.removeEvent, elem, events, fn, of);
             }
 
             i = types.length;
@@ -122,7 +112,7 @@ var win = this,
                     elem,
                     type,
                     fn,
-                    originalFn,
+                    of,
                     namespaces,
                     args,
                     false // not root
@@ -1047,7 +1037,7 @@ hAzzle.extend({
 
     on: function (types, selector, fn) {
 
-        var type, e;
+        var type, e, originalFn, args;
 
         if (typeof types === 'object') {
 
@@ -1059,26 +1049,36 @@ hAzzle.extend({
 
                     if (typeof e === 'object') {
 
-                        selector = e.delegate;
-                        fn = e.func;
-                        types = type;
+                        this.on(type, e.delegate, e.func);
 
                     } else {
 
-                        selector = types[type];
-                        fn = undefined;
-                        types = type;
-
+                        this.on(type, types[type]);
                     }
                 }
             }
-
-            return;
         }
 
-        return this.each(function (el) {
-            eC.addEvent(el, types, selector, fn);
+        // Event delegation
+
+        if (typeof selector === 'function') {
+
+            args = slice.call(arguments, 3);
+            fn = originalFn = selector;
+
+        } else {
+
+            originalFn = fn;
+            args = slice.call(arguments, 4);
+            fn = delegate(selector, originalFn);
+        }
+
+        // Add the listener
+
+        return this.each(function () {
+            hAzzle.event.addEvent(this, types, selector, fn, null, originalFn, args);
         });
+
     },
     one: function (events, selector, fn) {
         return this.each(function (el) {
