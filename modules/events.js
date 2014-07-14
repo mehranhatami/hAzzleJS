@@ -33,26 +33,32 @@ var win = this,
          * @param {String} events
          * @param {String} selector
          * @param {Function} fn
+         * @param {Undefined/Function} args
+         * @param {Undefined/Object} of
          */
 
         addEvent: function (elem, events, selector, fn, /* internal */ one, args, of) {
 
             var type, types, i, entry, first,
                 nTypes = [3, 8],
+                hooks,
+                elt = elem.nodeType,
                 namespaces;
 
             // Don't attach events to text/comment nodes 
 
-            if (nTypes[elem.nodeType] || !elem.nodeType || !events) {
+            if (nTypes[elt] || !elt || !events) {
 
                 return;
             }
 
             // Handle multiple events separated by a space
 
-            types = isString(events) && (events || '').match(evwhite) || [''];
+            if (typeof events === 'string') {
 
-            if (!types) {
+                types = (events || '').match(evwhite) || [''];
+
+            } else {
 
                 return;
             }
@@ -98,13 +104,12 @@ var win = this,
 			 
 			 */
 
-                var hooks = hAzzle.eventHooks[type] || {};
+                hooks = hAzzle.eventHooks[type] || {};
 
-                if (hooks && ('delegateType' in hooks)) {
-                    type = selector ? hooks.delegateType : type;
+                if (selector && hooks.delegateType) {
+
+                    type = hooks.delegateType;
                 }
-
-                // namespaces
 
                 namespaces = types[i].replace(namespaceRegex, '').split('.').sort();
 
@@ -127,9 +132,9 @@ var win = this,
                     // Trigger eventHooks if any
                     // e.g. support for 'bubbling' focus and blur events
 
-                    hooks = hAzzle.eventHooks[type];
+                    hooks = hAzzle.eventHooks[type] || {};
 
-                    if (hooks && ('simulate' in hooks)) {
+                    if (hooks.simulate) {
                         hooks.simulate(elem, type);
                     }
 
@@ -1082,7 +1087,7 @@ hAzzle.extend({
     },
     one: function (events, selector, fn) {
         return this.each(function (el) {
-            eC.addEvent(el, events, selector, fn, 1);
+            hAzzle.event.addEvent(el, events, selector, fn, 1);
         });
     },
 
