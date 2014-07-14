@@ -44,8 +44,9 @@ hAzzle.extend({
      */
 
     append: function (node) {
+        var self = this;
         return this.each(function (el, i) {
-            ManipulationMethod(el, i, node, 'append', 'beforeend');
+            ManipulationMethod(el, i, node, self, 'append', 'beforeend');
         });
     },
 
@@ -59,8 +60,9 @@ hAzzle.extend({
      */
 
     prepend: function (node) {
+        var self = this;
         return this.each(function (el, i) {
-            ManipulationMethod(el, i, node, 'prepend', 'afterbegin');
+            ManipulationMethod(el, i, node, self, 'prepend', 'afterbegin');
         });
     },
 
@@ -73,8 +75,9 @@ hAzzle.extend({
      */
 
     after: function (node) {
+        var self = this;
         return this.each(function (el, i) {
-            ManipulationMethod(el, i, node, 'after', 'afterend');
+            ManipulationMethod(el, i, node, self, 'after', 'afterend');
         });
     },
 
@@ -87,8 +90,9 @@ hAzzle.extend({
      */
 
     before: function (node) {
+        var self = this;
         return this.each(function (el, i) {
-            ManipulationMethod(el, i, node, 'before', 'beforebegin');
+            ManipulationMethod(el, i, node, self, 'before', 'beforebegin');
         });
     },
 
@@ -164,9 +168,14 @@ hAzzle.extend({
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
-// Stabilize HTML
+/**
+ * Stabilize HTML
+ * @param {Object} node
+ * @param {Object} elems
+ * @param {Numbers} clone
+ */
 
-var stabilizeHTML = hAzzle.stabilizeHTML = function (node, clone) {
+var stabilizeHTML = hAzzle.stabilizeHTML = function (node, elems, clone) {
 
     var i = 0,
         l = node.length,
@@ -177,16 +186,14 @@ var stabilizeHTML = hAzzle.stabilizeHTML = function (node, clone) {
         return hAzzle.create(node);
     }
 
-    // temporary solution
-
-    if (node.nodeType === 3) {
-
-        return [node];
-    }
-
     if (hAzzle.isNode(node)) {
 
         node = [node];
+    }
+
+    // temporary solution
+    if (node.nodeType === 3) {
+        return [node];
     }
 
     if (clone) {
@@ -196,7 +203,8 @@ var stabilizeHTML = hAzzle.stabilizeHTML = function (node, clone) {
         // don't change original array
 
         for (; i < l; i++) {
-            ret[i] = hAzzle.cloneNode(node[i]);
+
+            ret[i] = hAzzle.cloneNode(elems[i], node[i]);
         }
 
         return ret;
@@ -365,7 +373,7 @@ hAzzle.create = function (html, context) {
 
 // Append, prepend, before and after manipulation methods
 
-function ManipulationMethod(elem, count, html, method, iah) {
+function ManipulationMethod(elem, count, html, chain, method, iah) {
 
     // Accepted nodeTypes
 
@@ -377,13 +385,13 @@ function ManipulationMethod(elem, count, html, method, iah) {
 
         if (types[elem.nodeType]) {
 
-            hAzzle.each(stabilizeHTML(html, count), function (count) {
+            hAzzle.each(stabilizeHTML(html, chain, count), function (count) {
 
                 if (method === 'append') {
                     elem.appendChild(count);
                 }
                 if (method === 'prepend') {
-                    elem.insertBefore(count, elem.firstChild);
+                    elem.insertBefore(count, elem.firstChild, true);
                 }
                 if (method === 'after') {
                     elem.parentElement.insertBefore(count, elem.nextSibling);

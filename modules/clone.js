@@ -12,14 +12,14 @@ var rcheckableType = /^(?:checkbox|radio)$/i,
     // Make sure textarea (and checkbox) defaultValue is properly cloned
 
     noCC = hAzzle.assert(function (div) {
-		
-		var fragment = document.createDocumentFragment(),
-		div = fragment.appendChild( div );
-		
-        div.innerHTML = "<textarea>x</textarea>";
+
+        var fragment = document.createDocumentFragment(),
+            d = fragment.appendChild(div);
+
+        d.innerHTML = "<textarea>x</textarea>";
         return !!div.cloneNode(true).lastChild.defaultValue;
     });
-	
+
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
     // checkbox / radio
@@ -48,8 +48,8 @@ hAzzle.cloneNode = function (el, deep) {
     // but we don't know if native QSA are used
     // or not. 
 
-    cloneElems = hAzzle.select('*', c);
-    elElems = hAzzle.select('*', el);
+    cloneElems = hAzzle.find('*', c);
+    elElems = hAzzle.find('*', el);
 
     var i = 0,
         len = elElems.length;
@@ -75,8 +75,8 @@ hAzzle.cloneNode = function (el, deep) {
 
         // Clone job done! Clone the textarea if it exist...
 
-        var cloneTextareas = hAzzle.select('textarea', c),
-            elTextareas = hAzzle.select('textarea', el),
+        var cloneTextareas = hAzzle.find('textarea', c),
+            elTextareas = hAzzle.find('textarea', el),
             a = 0,
             b = elTextareas.length;
 
