@@ -317,7 +317,7 @@ var win = this,
 
                         handlers = hAzzle.event.get(cur, type, null, false);
 
-                        evt = hAzzle.Event(null, cur);
+                        evt = new hAzzle.Event(null, cur);
 
                         evt.type = type;
 
@@ -579,11 +579,6 @@ hAzzle.eventHooks = {};
 
 hAzzle.Event = function (event, element) {
 
-    // Allow instantiation without the 'new' keyword
-    if (!(this instanceof hAzzle.Event)) {
-        return new hAzzle.Event(event, element);
-    }
-
     if (!arguments.length) {
         return;
     }
@@ -702,7 +697,6 @@ hAzzle.Event.prototype = {
         this.stopped = true;
         this.preventDefault();
         this.stopPropagation();
-
     },
 
     stopImmediatePropagation: function () {
@@ -725,7 +719,7 @@ hAzzle.Event.prototype = {
         }
     },
     clone: function (currentTarget) {
-        var ne = hAzzle.Event(this, this.element);
+        var ne = new hAzzle.Event(this, this.element);
         ne.currentTarget = currentTarget;
         return ne;
     }
@@ -873,7 +867,7 @@ function rootListener(evt, type) {
 
     var listeners = hAzzle.event.get(this, type || evt.type, null, false);
 
-    evt = hAzzle.Event(evt, this, true);
+    evt = new hAzzle.Event(evt, this, true);
 
     if (type) {
         evt.type = type;
