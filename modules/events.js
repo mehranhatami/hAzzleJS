@@ -581,73 +581,71 @@ hAzzle.Event = function (event, element) {
 
     if (arguments.length && event) {
 
-        event = event || ((element.ownerDocument || element.document || element).parentWindow || win).event;
+    event = event || ((element.ownerDocument || element.document || element).parentWindow || win).event;
 
-        var self = this,
-            type = event.type,
-            target = event.target || event.srcElement,
-            i, p, props, cleaned;
+    var self = this,
+        type = event.type,
+        target = event.target || event.srcElement,
+        i, p, props, cleaned;
 
-        self.originalEvent = event;
+    self.originalEvent = event;
+	
+      self.target = target;
+     
+	  // overwrite if nodeType 3
+     
+	 if (target && target.nodeType === 3) {
 
-        self.target = target;
+         self.target = target.parentElement;
+     }
 
-        // overwrite if nodeType 3
+    cleaned = hAzzle.event.fixHook[type];
 
-        if (target && target.nodeType === 3) {
+    if (!cleaned) {
 
-            self.target = target.parentElement;
-        }
+        hAzzle.event.fixHook[type] = cleaned =
 
-        //  self.target = target && target.nodeType === 3 ? target.parentElement : target;
+            mouseEvent.test(type) ? hAzzle.event.mouseHooks :
 
-        cleaned = hAzzle.event.fixHook[type];
+            // keys
 
-        if (!cleaned) {
+            keyEvent.test(type) ? hAzzle.event.keyHooks :
 
-            hAzzle.event.fixHook[type] = cleaned =
+            // text
 
-                mouseEvent.test(type) ? hAzzle.event.mouseHooks :
+            textEvent.test(type) ? hAzzle.event.textHooks :
 
-                // keys
+            // mouseWheel
 
-                keyEvent.test(type) ? hAzzle.event.keyHooks :
+            mouseWheelEvent.test(type) ? hAzzle.event.mouseWheelHooks :
 
-                // text
+            // touch and gestures
 
-                textEvent.test(type) ? hAzzle.event.textHooks :
+            touchEvent.test(type) ? hAzzle.event.touchHooks :
 
-                // mouseWheel
+            // popstate
 
-                mouseWheelEvent.test(type) ? hAzzle.event.mouseWheelHooks :
+            popstateEvent.test(type) ? hAzzle.event.popstateHooks :
 
-                // touch and gestures
+            // messages
 
-                touchEvent.test(type) ? hAzzle.event.touchHooks :
+            messageEvent.test(type) ? hAzzle.event.messageHooks :
 
-                // popstate
+            // common
 
-                popstateEvent.test(type) ? hAzzle.event.popstateHooks :
-
-                // messages
-
-                messageEvent.test(type) ? hAzzle.event.messageHooks :
-
-                // common
-
-                hAzzle.event.common;
-        }
-
-        props = hAzzle.merge(cleaned(event, self), hAzzle.event.props);
-
-        for (i = props.length; i--;) {
-
-            if (!((p = props[i]) in this) && p in event) this[p] = event[p];
-        }
-
-        return self;
-
+            hAzzle.event.common;
     }
+
+    props = hAzzle.merge(cleaned(event, self), hAzzle.event.props);
+
+    for (i = props.length; i--;) {
+
+        if (!((p = props[i]) in this) && p in event) this[p] = event[p];
+    }
+
+    return self;
+	
+    }	
 };
 
 /* =========================== EVENT PROPAGATION ========================== */
