@@ -1,7 +1,6 @@
 /*!
  * HTML
  */
- 
 var win = this,
     doc = win.document,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
@@ -44,17 +43,7 @@ hAzzle.extend({
      */
     append: function (node) {
         return this.each(function (el, i) {
-            if (!iAh(this, node, 'beforeend')) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    hAzzle.each(stabilizeHTML(node, i), function (i) {
-
-                        try {
-                            el.appendChild(i);
-                        } // Die silently
-                        catch (e) {}
-                    });
-                }
-             }
+            ManipulationMethod(el, i, node, 'append', 'beforeend');
         });
     },
 
@@ -65,16 +54,7 @@ hAzzle.extend({
 
     prepend: function (node) {
         return this.each(function (el, i) {
-            if (!iAh(this, node, 'afterbegin')) {
-                if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                    hAzzle.each(stabilizeHTML(node, i), function (i) {
-                        try {
-                            el.insertBefore(i, el.firstChild);
-                        } // Die silently
-                        catch (e) {}
-                    });
-                }
-            }
+            ManipulationMethod(el, i, node, 'prepend', 'afterbegin');
         });
     },
 
@@ -86,12 +66,7 @@ hAzzle.extend({
      */
 
     appendTo: function (node) {
-        return injectHTML.call(this, node, this, function (t, el) {
-            try {
-                t.appendChild(el);
-            } // Die silently
-            catch (e) {}
-        }, 1);
+        return injectMethods(this, node, 'appendTo');
     },
 
     /**
@@ -102,9 +77,7 @@ hAzzle.extend({
      */
 
     prependTo: function (node) {
-        return injectHTML.call(this, node, this, function (t, el) {
-            t.insertBefore(el, t.firstChild);
-        }, 1);
+        return injectMethods(this, node, 'prependTo');
     },
 
     /**
@@ -114,13 +87,7 @@ hAzzle.extend({
      */
 
     insertBefore: function (node) {
-        injectHTML.call(this, node, this, function (t, el) {
-            try {
-                t[parentNode].insertBefore(el, t);
-            } // Die silently
-            catch (e) {}
-        });
-        return this;
+        return injectMethods(this, node, 'insertBefore');
     },
 
     /**
@@ -130,17 +97,7 @@ hAzzle.extend({
      */
 
     insertAfter: function (node) {
-        injectHTML.call(this, node, this, function (t, el) {
-            var sibling = t[nextNode];
-            if (sibling) {
-                t[parentNode].insertBefore(el, sibling);
-            } else {
-                t[parentNode].appendChild(el);
-            }
-        }, 1);
-
-        return this;
-
+        return injectMethods(this, node, 'insertAfter');
     },
 
     /**
@@ -174,7 +131,7 @@ hAzzle.extend({
 
 // Stabilize HTML
 
-var stabilizeHTML = hAzzle.stabilizeHTML = function(node, clone) {
+var stabilizeHTML = hAzzle.stabilizeHTML = function (node, clone) {
 
     var i = 0,
         l = node.length,
@@ -275,38 +232,6 @@ function iAh(elem, html, dir) {
 }
 
 
-/*
- * Before and after
- */
-
-hAzzle.forOwn({
-    before: '',
-    after: nextNode
-}, function (value, key) {
-    hAzzle.Core[key] = function (node) {
-        var i = 0,
-            l;
-        return this.each(function (el, a) {
-            if (el.nodeType === 1 || el.nodeType === 9 || el.nodeType === 11) {
-                node = stabilizeHTML(node, a);
-
-                l = node.length;
-                for (; i < l; i++) {
-                    if (el[parentNode]) {
-                        try {
-                            el[parentNode].insertBefore(node[i], el[value]);
-                        } catch (e) {}
-
-                    }
-                }
-            }
-        });
-    };
-});
-
-
-
-
 
 
 /**
@@ -368,6 +293,8 @@ hAzzle.create = function (html, context) {
 
 
         if (p) el.innerHTML = (p[0] + html + p[1]);
+
+
         else el.innerHTML = html;
 
         while (dep--) {
@@ -406,3 +333,83 @@ hAzzle.create = function (html, context) {
         return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
     }
 };
+
+
+// Append / prepend manipulation methods
+
+function ManipulationMethod(elem, count, html, method, iah) {
+
+    // Accepted nodeTypes
+
+    var types = [1, 9, 11];
+
+    // Try to use insertAdjutantHTML if we can
+
+    if (!iAh(elem, html, iah)) {
+
+        if (types[elem.nodeType]) {
+
+            hAzzle.each(stabilizeHTML(html, count), function (count) {
+
+                if (method === 'append') {
+                    elem.appendChild(count);
+                }
+                if (method === 'prepend') {
+                    elem.insertBefore(i, elem.firstChild);
+                }
+            });
+        }
+    }
+}
+
+// appendTo, prependTo manipulation methods
+
+function injectMethods(elem, html, method) {
+    return injectHTML.call(elem, html, elem, function (t, el) {
+        if (method === 'appendTo') {
+            t.appendChild(el);
+        }
+        if (method === 'prependTo') {
+            t.insertBefore(el, t.firstChild);
+        }
+        if (method === 'insertBefore') {
+            t.parentElement.insertBefore(el, t);
+        }
+        if (method === 'insertAfter') {
+            var sibling = t[nextNode];
+            if (sibling) {
+                t.parentElement.insertBefore(el, sibling);
+            } else {
+                t.parentElement.appendChild(el);
+            }
+        }
+    }, 1);
+}
+
+// Before / after need special threatment
+
+hAzzle.forOwn({
+    before: '',
+    after: nextNode
+}, function (value, key) {
+    hAzzle.Core[key] = function (node) {
+        var i = 0,
+            types = [1, 9, 1],
+            l;
+        return this.each(function (el, a) {
+            if (types[el.nodeType]) {
+                node = stabilizeHTML(node, a);
+
+                l = node.length;
+                for (; i < l; i++) {
+                    if (el[parentNode]) {
+                        try {
+                            el[parentNode].insertBefore(node[i], el[value]);
+                        } catch (e) {}
+
+                    }
+                }
+            }
+        });
+    };
+});
