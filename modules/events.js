@@ -48,76 +48,6 @@ var win = this,
                 return;
             }
 
-            /**
-             * Attach multiple events on an object.
-             *
-             * Note!
-             *
-             * For event delegation, you use:
-             *
-             *   func:
-             *   delegate:
-             *
-             * wrapped inside an object after the event type.
-             * All events will then be delegated
-             *
-             * Examples:
-             *
-             * Multiple events
-             * ---------------
-             *
-             *  hAzzle('p'.on({
-             *
-             *         click: function (e) {},
-             *         mouseover: function (e) {},
-             *  });
-             *
-             *
-             * Multiple events - event delegation:
-             * -----------------------------------
-             *
-             *  hAzzle( 'body' ).on({
-             *    click: {
-             *
-             *      func: function (e) {}
-             *      delegate: 'p'
-             *    }
-             *  });
-             *
-             */
-
-            if (isObject(events)) {
-
-                //move out 'call' and 'apply' from loops
-
-                var addEventCall = (function (thisArg, events, elem) {
-                    return function (type) {
-                        var evto = events[type];
-
-                        if (isObject(evto)) {
-
-                            hAzzle.event.addEvent.call(thisArg, elem, type, evto.delegate, evto.func);
-
-                        } else {
-
-                            hAzzle.event.addEvent.call(thisArg, elem, type, events[type]);
-                        }
-                    };
-
-                })(this, events, elem);
-
-                for (type in events) {
-
-                    if (events.hasOwnProperty(type)) {
-
-                        addEventCall(type);
-
-                    }
-                }
-
-                return;
-            }
-
             // Event delegation
 
             if (!isFunction(selector)) {
@@ -136,7 +66,6 @@ var win = this,
             if (!types) {
 
                 return;
-
             }
 
             // special case for one(), wrap in a self-removing handler
@@ -1118,6 +1047,34 @@ hAzzle.extend({
      */
 
     on: function (events, selector, fn) {
+
+        if (typeof events === 'object') {
+
+            for (type in events) {
+
+                if (events.hasOwnProperty(type)) {
+
+                    evto = events[type];
+
+                    if (typeof evto === 'object') {
+
+                        return this.each(function (el) {
+
+                            hAzzle.event.addEvent(elem, type, evto.delegate, evto.func);
+                        });
+
+                    } else {
+
+                        return this.each(function (el) {
+                            hAzzle.event.addEvent(elem, type, events[type]);
+                        });
+                    }
+                }
+            }
+
+            return;
+        }
+
         return this.each(function (el) {
             eC.addEvent(el, events, selector, fn);
         });
