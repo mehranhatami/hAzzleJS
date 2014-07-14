@@ -11,9 +11,6 @@ var win = this,
 
     isString = hAzzle.isString,
 
-    nextNode = 'nextElementSibling',
-    parentNode = 'parentElement',
-
     // We have to close these tags to support XHTML	
 
     htmlMap = {
@@ -55,6 +52,18 @@ hAzzle.extend({
     prepend: function (node) {
         return this.each(function (el, i) {
             ManipulationMethod(el, i, node, 'prepend', 'afterbegin');
+        });
+    },
+
+    after: function (node) {
+        return this.each(function (el, i) {
+            ManipulationMethod(el, i, node, 'after', 'afterend');
+        });
+    },
+
+    before: function (node) {
+        return this.each(function (el, i) {
+            ManipulationMethod(el, i, node, 'before', 'beforebegin');
         });
     },
 
@@ -111,12 +120,14 @@ hAzzle.extend({
         var arg = arguments[0],
             self = this;
         return self.each(function (el, i) {
+
             // Prevent memory leaks
+
             hAzzle.clearData(el);
 
             hAzzle.each(stabilizeHTML(arg, self, i), function (i) {
-                if (el[parentNode]) {
-                    el[parentNode].replaceChild(i, el);
+                if (el.parentElement) {
+                    el.parentElement.replaceChild(i, el);
                 }
             });
         });
@@ -335,15 +346,16 @@ hAzzle.create = function (html, context) {
 };
 
 
-// Append / prepend manipulation methods
+// Append, prepend, before and after manipulation methods
 
 function ManipulationMethod(elem, count, html, method, iah) {
 
     // Accepted nodeTypes
 
-    var types = [1, 9, 11];
+    var i = 0,
+        types = [1, 9, 11];
 
-    // Try to use insertAdjutantHTML if we can
+    // Use insertAdjutantHTML (iAH) if a valid 'string'
 
     if (!iAh(elem, html, iah)) {
 
@@ -357,59 +369,47 @@ function ManipulationMethod(elem, count, html, method, iah) {
                 if (method === 'prepend') {
                     elem.insertBefore(i, elem.firstChild);
                 }
+                if (method === 'after') {
+                    elem.parentElement.insertBefore(count, elem.nextSibling);
+                }
+                if (method === 'before') {
+                    elem.parentElement.insertBefore(count, elem);
+                }
             });
         }
     }
 }
 
-// appendTo, prependTo manipulation methods
+// appendTo, prependTo, insertBefore, insertAfter manipulation methods
 
 function injectMethods(elem, html, method) {
+
     return injectHTML.call(elem, html, elem, function (t, el) {
+
         if (method === 'appendTo') {
+
             t.appendChild(el);
         }
         if (method === 'prependTo') {
+
             t.insertBefore(el, t.firstChild);
         }
         if (method === 'insertBefore') {
+
             t.parentElement.insertBefore(el, t);
         }
         if (method === 'insertAfter') {
-            var sibling = t[nextNode];
+
+            var sibling = t.nextElementSibling;
+
             if (sibling) {
-                t.parentElement.insertBefore(el, sibling);
+
+                sibling.parentElement.insertBefore(el, sibling);
+
             } else {
+
                 t.parentElement.appendChild(el);
             }
         }
     }, 1);
 }
-
-// Before / after need special threatment
-
-hAzzle.forOwn({
-    before: '',
-    after: nextNode
-}, function (value, key) {
-    hAzzle.Core[key] = function (node) {
-        var i = 0,
-            types = [1, 9, 1],
-            l;
-        return this.each(function (el, a) {
-            if (types[el.nodeType]) {
-                node = stabilizeHTML(node, a);
-
-                l = node.length;
-                for (; i < l; i++) {
-                    if (el[parentNode]) {
-                        try {
-                            el[parentNode].insertBefore(node[i], el[value]);
-                        } catch (e) {}
-
-                    }
-                }
-            }
-        });
-    };
-});
