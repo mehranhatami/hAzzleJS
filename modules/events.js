@@ -39,11 +39,13 @@ var win = this,
         addEvent: function (elem, events, selector, fn, /* internal */ one) {
 
             var originalFn, type, types, i, args, entry, first,
+			    nType = [3,8],
+				et = elem.nodeType,
                 namespaces;
 
             // Don't attach events to text/comment nodes 
 
-            if (elem.nodeType === 3 || elem.nodeType === 8 || !elem.nodeType || !events) {
+            if (nType[et] || !et || !events) {
 
                 return;
             }
@@ -381,13 +383,14 @@ var win = this,
             var cur, types = type.split(' '),
                 i = types.length,
                 j = 0,
+				nType = [3,8],
                 l, call, evt, names, handlers;
 
             cur = elem || doc;
 
             // Don't do events on text and comment nodes
 
-            if (elem.nodeType === 3 || elem.nodeType === 8 || !type) {
+            if (nType[elem.nodeType] || !type) {
 
                 return;
             }
