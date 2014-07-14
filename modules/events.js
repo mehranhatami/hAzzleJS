@@ -18,7 +18,6 @@ var win = this,
     cache = [],
     slice = Array.prototype.slice,
 
-    isObject = hAzzle.isObject,
     isString = hAzzle.isString,
     isFunction = hAzzle.isFunction,
 
@@ -1046,28 +1045,30 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    on: function (events, selector, fn) {
+    on: function (types, selector, fn) {
 
-        if (typeof events === 'object') {
+        var type, e;
 
-            for (type in events) {
+        if (typeof types === 'object') {
 
-                if (events.hasOwnProperty(type)) {
+            for (type in types) {
 
-                    evto = events[type];
+                if (types.hasOwnProperty(type)) {
 
-                    if (typeof evto === 'object') {
+                    e = types[type];
 
-                        return this.each(function (el) {
+                    if (typeof e === 'object') {
 
-                            hAzzle.event.addEvent(elem, type, evto.delegate, evto.func);
-                        });
+                        selector = e.delegate;
+                        fn = e.func;
+                        types = type;
 
                     } else {
 
-                        return this.each(function (el) {
-                            hAzzle.event.addEvent(elem, type, events[type]);
-                        });
+                        selector = types[type];
+                        fn = undefined;
+                        types = type;
+
                     }
                 }
             }
@@ -1076,7 +1077,7 @@ hAzzle.extend({
         }
 
         return this.each(function (el) {
-            eC.addEvent(el, events, selector, fn);
+            eC.addEvent(el, types, selector, fn);
         });
     },
     one: function (events, selector, fn) {
