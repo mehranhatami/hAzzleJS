@@ -143,7 +143,7 @@ var win = this,
 
         removeEvent: function (elem, evt, selector, fn) {
 
-            var k, type, namespaces, i;
+            var k, type, namespaces, i, hooks;
 
             if (!elem) {
 
@@ -187,10 +187,11 @@ var win = this,
                 // Checks if any 'type' need special threatment
                 // e.g. mouseenter and mouseleave
 
-                var hooks = hAzzle.eventHooks[type];
+                hooks = hAzzle.eventHooks[type] || {};
 
-                if (hooks && ('specialEvents' in hooks)) {
-                    type = hooks.specialEvents.name || type;
+                if (hooks.specialEvents) {
+
+                    type = hooks.specialEvents;
                 }
             }
 
@@ -581,72 +582,72 @@ hAzzle.Event = function (event, element) {
 
     if (arguments.length && event) {
 
-    var self = this,
-        pW = (element.ownerDocument || element.document || element).parentWindow,
-	    evt = event || pW.event,
-        he = hAzzle.event,		
-	    type = evt.type,
-        target = evt.target || evt.srcElement,
-        i, p, props, cleaned;
+        var self = this,
+            pW = (element.ownerDocument || element.document || element).parentWindow,
+            evt = event || pW.event,
+            he = hAzzle.event,
+            type = evt.type,
+            target = evt.target || evt.srcElement,
+            i, p, props, cleaned;
 
-    self.originalEvent = evt;
-	
-      self.target = target;
-     
-	  // overwrite if nodeType 3
-     
-	 if (target && target.nodeType === 3) {
+        self.originalEvent = evt;
 
-         self.target = target.parentElement;
-     }
+        self.target = target;
 
-    cleaned = he.fixHook[type];
+        // overwrite if nodeType 3
 
-    if (!cleaned) {
+        if (target && target.nodeType === 3) {
 
-        he.fixHook[type] = cleaned =
+            self.target = target.parentElement;
+        }
 
-            mouseEvent.test(type) ? he.mouseHooks :
+        cleaned = he.fixHook[type];
 
-            // keys
+        if (!cleaned) {
 
-            keyEvent.test(type) ? he.keyHooks :
+            he.fixHook[type] = cleaned =
 
-            // text
+                mouseEvent.test(type) ? he.mouseHooks :
 
-            textEvent.test(type) ? he.textHooks :
+                // keys
 
-            // mouseWheel
+                keyEvent.test(type) ? he.keyHooks :
 
-            mouseWheelEvent.test(type) ? he.mouseWheelHooks :
+                // text
 
-            // touch and gestures
+                textEvent.test(type) ? he.textHooks :
 
-            touchEvent.test(type) ? he.touchHooks :
+                // mouseWheel
 
-            // popstate
+                mouseWheelEvent.test(type) ? he.mouseWheelHooks :
 
-            popstateEvent.test(type) ? he.popstateHooks :
+                // touch and gestures
 
-            // messages
+                touchEvent.test(type) ? he.touchHooks :
 
-            messageEvent.test(type) ? he.messageHooks :
+                // popstate
 
-            // common
+                popstateEvent.test(type) ? he.popstateHooks :
 
-            he.common;
+                // messages
+
+                messageEvent.test(type) ? he.messageHooks :
+
+                // common
+
+                he.common;
+        }
+
+        props = hAzzle.merge(cleaned(evt, self), he.props);
+
+        for (i = props.length; i--;) {
+            p = props[i];
+            if (!(p in this) && p in evt) this[p] = evt[p];
+        }
+
+        return self;
+
     }
-
-    props = hAzzle.merge(cleaned(evt, self), he.props);
-
-    for (i = props.length; i--;) {
-         p = props[i];
-        if (!(p in this) && p in evt) this[p] = evt[p];
-    }
-
-    return self;
-	
-    }	
 };
 
 /* =========================== EVENT PROPAGATION ========================== */
