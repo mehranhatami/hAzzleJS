@@ -39,15 +39,13 @@ var win = this,
 
         addEvent: function (elem, events, selector, fn, /* internal */ one, args, of) {
 
-            var type, types, i, entry, first,
-                nTypes = [3, 8],
-                hooks,
-                elt = elem.nodeType,
+            var type, types, i, first,
+                hooks, elt = elem.nodeType,
                 namespaces;
 
             // Don't attach events to text/comment nodes 
 
-            if (nTypes[elt] || !elt || !events) {
+            if (elt === 3 || elt === 8 || !events) {
 
                 return;
             }
@@ -113,21 +111,14 @@ var win = this,
 
                 namespaces = types[i].replace(namespaceRegex, '').split('.').sort();
 
-                first = hAzzle.event.register(entry = new Registry(
-                    elem,
-                    type,
-                    fn,
-                    of,
-                    namespaces,
-                    args,
-                    false // not root
-                ));
+
+                first = FirstRun(elem, type, fn, of, namespaces, args, false);
 
                 // Add roothandler if we're the first
 
                 if (first) {
 
-                    type = entry.eventType;
+                    type = first.eventType;
 
                     // Trigger eventHooks if any
                     // e.g. support for 'bubbling' focus and blur events
@@ -142,9 +133,9 @@ var win = this,
                 }
             }
 
-            if (entry) {
+            if (first) {
 
-                hAzzle.event.global[entry.eventType] = true;
+                hAzzle.event.global[first.eventType] = true;
             }
         },
 
@@ -1028,6 +1019,26 @@ function delegate(selector, fn) {
 
     return handler;
 }
+
+function FirstRun(elem, type, fn, of, namespaces, args, root) {
+
+    var entry = new Registry(
+        elem,
+        type,
+        fn,
+        of,
+        namespaces,
+        args,
+        root
+    );
+
+    // Register the new entry
+
+    hAzzle.event.register(entry);
+
+    return entry;
+}
+
 
 hAzzle.extend({
 
