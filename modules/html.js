@@ -35,9 +35,14 @@ htmlMap.style = htmlMap.table = htmlMap.base;
 hAzzle.extend({
 
     /**
-     * @param {hAzzle|string|Element|Array} node
+     * Insert content, specified by the parameter, to the end of each element
+     * in the set of matched elements.
+     *
+     * @param {String/Object} node
      * @return {hAzzle}
+     *
      */
+
     append: function (node) {
         return this.each(function (el, i) {
             ManipulationMethod(el, i, node, 'append', 'beforeend');
@@ -45,8 +50,12 @@ hAzzle.extend({
     },
 
     /**
-     * @param {hAzzle|string|Element|Array} node
+     * Insert content to the beginning of each element in the set
+     * of matched elements.
+     *
+     * @param {String/Object} node
      * @return {hAzzle}
+     *
      */
 
     prepend: function (node) {
@@ -55,11 +64,27 @@ hAzzle.extend({
         });
     },
 
+    /**
+     * Insert content after each element in the set of matched elements.
+     *
+     * @param {String/Object} node
+     * @return {hAzzle}
+     *
+     */
+
     after: function (node) {
         return this.each(function (el, i) {
             ManipulationMethod(el, i, node, 'after', 'afterend');
         });
     },
+
+    /**
+     * Insert content before each element in the set of matched elements.
+     *
+     * @param {String/Object} node
+     * @return {hAzzle}
+     *
+     */
 
     before: function (node) {
         return this.each(function (el, i) {
@@ -68,7 +93,8 @@ hAzzle.extend({
     },
 
     /**
-     * Append the current element to another
+     * Insert every element in the set of matched elements to the
+     * end of the target.
      *
      * @param {hAzzle|string|Element|Array} node
      * @return {hAzzle}
@@ -79,7 +105,8 @@ hAzzle.extend({
     },
 
     /**
-     * Prepend the current element to another.
+     * Insert every element in the set of matched elements to the
+     * beginning of the target.
      *
      * @param {hAzzle|string|Element|Array} node
      * @return {hAzzle}
@@ -135,9 +162,6 @@ hAzzle.extend({
 
 });
 
-
-
-
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
 // Stabilize HTML
@@ -152,6 +176,9 @@ var stabilizeHTML = hAzzle.stabilizeHTML = function (node, clone) {
 
         return hAzzle.create(node);
     }
+
+    // temporary solution
+
     if (node.nodeType === 3) {
 
         return [node];
@@ -230,20 +257,6 @@ function injectHTML(target, node, fn, rev) {
     return node;
 }
 
-function iAh(elem, html, dir) {
-    var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase();
-    if (isString(html) && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
-        if (elem.insertAdjacentHTML && elem.parentNode && elem.parentNode.nodeType === 1) {
-            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
-            return true;
-        }
-        return false;
-    }
-    return false;
-}
-
-
-
 
 /**
  * Create HTML
@@ -262,6 +275,8 @@ function iAh(elem, html, dir) {
  *
  * - Add an similar function to jQuery's keepScript
  *
+ * - re-factoring
+ *
  */
 
 hAzzle.create = function (html, context) {
@@ -269,6 +284,7 @@ hAzzle.create = function (html, context) {
     if (html === '') {
         return;
     }
+
 
     var tag = html.match(singleTag),
         matches,
@@ -278,6 +294,7 @@ hAzzle.create = function (html, context) {
         defaultContext = typeof doc.implementation.createHTMLDocument === 'function' ?
         doc.implementation.createHTMLDocument() :
         doc;
+
 
     context = context || defaultContext;
 
@@ -352,12 +369,11 @@ function ManipulationMethod(elem, count, html, method, iah) {
 
     // Accepted nodeTypes
 
-    var i = 0,
-        types = [1, 9, 11];
+    var types = [1, 9, 11];
 
     // Use insertAdjutantHTML (iAH) if a valid 'string'
 
-    if (!iAh(elem, html, iah)) {
+    if (!iAh(elem, html, iah, types)) {
 
         if (types[elem.nodeType]) {
 
@@ -367,7 +383,7 @@ function ManipulationMethod(elem, count, html, method, iah) {
                     elem.appendChild(count);
                 }
                 if (method === 'prepend') {
-                    elem.insertBefore(i, elem.firstChild);
+                    elem.insertBefore(count, elem.firstChild);
                 }
                 if (method === 'after') {
                     elem.parentElement.insertBefore(count, elem.nextSibling);
@@ -412,4 +428,26 @@ function injectMethods(elem, html, method) {
             }
         }
     }, 1);
+}
+
+/**
+ * insertAdjacentHTML method
+ *
+ * @param {Object} elem
+ * @param {String} html
+ * @param {String} dir
+ * @return {hAzzle}
+ */
+
+function iAh(elem, html, dir) {
+    var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase(),
+        pNode = elem.parentElement;
+    if (typeof html === 'string' && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
+        if (elem.insertAdjacentHTML && pNode && pNode.nodeType === 1) {
+            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
+            return true;
+        }
+        return false;
+    }
+    return false;
 }
