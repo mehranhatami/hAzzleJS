@@ -34,6 +34,7 @@
             path + 'showhide.js',
             path + 'detection.js',
             path + 'events.js',
+            path + 'shorthand.js',
             path + 'eventhooks.js',
             path + 'ajax.js',
             path + 'clone.js',

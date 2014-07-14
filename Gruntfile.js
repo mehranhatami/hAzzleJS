@@ -42,6 +42,7 @@ var conf = function conf() {
         'showhide.js',
         'detection.js',
         'events.js',
+        'shorthand.js',		
         'eventhooks.js',
         'ajax.js',
         'clone.js',
