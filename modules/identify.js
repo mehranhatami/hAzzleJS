@@ -1,5 +1,8 @@
 // identify.js
 // Identify the selector and return it's
+// Mehran! Fill out this lists with valid tags
+var validTags = ['div', 'span', 'b', 'p', 'href', 'img', 'button', 'textarea', 'form', 'table', 'input'];
+
 hAzzle.identify = function (selector, context) {
 
     if (typeof selector === 'string') {
@@ -10,9 +13,9 @@ hAzzle.identify = function (selector, context) {
 
             selector = fragment(selector).childNodes;
 
-            // NOTE!! hAzzle are an Object too, so don't try to create some HTML out of it !!
+            // Create tags with properties (e.g.   div  { id: 'mehran'  }
 
-        } else if (/^[a-zA-Z1-6]+$/.test(selector) && hAzzle.isObject(context) && !selector instanceof hAzzle) {
+        } else if (/^[a-zA-Z1-6]+$/.test(selector) && hAzzle.isObject(context)) {
 
             selector = [element(selector, context)];
 
@@ -59,19 +62,21 @@ hAzzle.identify = function (selector, context) {
 
 function element(tag, props) {
 
+    // Only allow valid HTML tags
     var p, elem = document.createElement(tag);
+    if (validTags[tag]) {
+        if (hAzzle.isObject(props)) {
 
-    if (hAzzle.isObject(props)) {
+            // Copy over the properties
 
-        // Copy over the properties
+            for (p in props) {
 
-        for (p in props) {
-
-            elem[p] = props[p];
+                elem[p] = props[p];
+            }
         }
     }
-
     return elem;
+
 }
 
 /**
@@ -87,9 +92,9 @@ function fragment(html) {
 
     if (typeof html === 'string') {
 
-    // Get rid of whitespace e.g.
+        // Get rid of whitespace e.g.
 
-    html = hAzzle.trim(html);
+        html = hAzzle.trim(html);
 
         var cur, elem = element('div', {
 
