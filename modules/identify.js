@@ -4,11 +4,15 @@ hAzzle.identify = function (selector, context) {
 
     if (typeof selector === 'string') {
 
-        if (/<[^>]+>/.test(selector)) {
+        if (selector[0] === "<" && selector[selector.length - 1] === ">" && selector.length >= 3) {
 
-            selector = fragment(selector.replace(/^\s+|\s+$/g, '')).childNodes;
+            // Grab the childNodes of the fragment
 
-        } else if (/^[a-zA-Z1-6]+$/.test(selector) && typeof context === Object) {
+            selector = fragment(selector).childNodes;
+
+            // NOTE!! hAzzle are an Object too, so don't try to create some HTML out of it !!
+
+        } else if (/^[a-zA-Z1-6]+$/.test(selector) && hAzzle.isObject(context) && !selector instanceof hAzzle) {
 
             selector = [element(selector, context)];
 
@@ -45,6 +49,14 @@ hAzzle.identify = function (selector, context) {
     return selector;
 };
 
+/**
+ * Create single element tags ( e.g. div, span, b)
+ *
+ *  @param {String} html
+ * @return {Object}
+ *
+ */
+
 function element(tag, props) {
 
     var p, elem = document.createElement(tag);
@@ -62,25 +74,39 @@ function element(tag, props) {
     return elem;
 }
 
-// Create a document fragment from a string
+/**
+ * Create a document fragment from a string
+ *
+ * @param {String} html
+ * @return {Object}
+ */
 
 function fragment(html) {
 
+    // Get rid of whitespace e.g.
+
+    html = hAzzle.trim(html);
+
     var frag = document.createDocumentFragment();
 
-    if (hAzzle.isString(html)) {
-        var cur, div = hAzzle.elem('div', {
+    if (typeof html === 'string') {
+
+        var cur, div = element('div', {
+
+            // Danger or not, Mehran??
+
             innerHTML: html
         });
 
-        while (cur = div.firstChild) {
+        while ((cur = div.firstChild)) {
             frag.appendChild(cur);
         }
+
     } else {
+
         hAzzle(html).all(function (n) {
             frag.appendChild(n);
         });
     }
-
     return frag;
 }
