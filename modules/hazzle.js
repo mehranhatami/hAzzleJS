@@ -53,8 +53,8 @@
         // access to main function.
 
        function Core(selector, context) {
-       
-	   // Identify the selecotr and return it's
+
+	   // Identify the selector and return it's
        // content
 
            selector = hAzzle.identify(selector, context);
@@ -339,7 +339,9 @@
                 ret = [];
 
             // Go through the array, translating each of the items to their new values
+
             if (isArray) {
+
                 for (; i < length; i++) {
                     value = callback(elems[i], i, arg);
 
@@ -348,7 +350,7 @@
                     }
                 }
 
-                // Go through every key on the object,
+            // Go through every key on the object,
             } else {
                 for (i in elems) {
                     value = callback(elems[i], i, arg);
@@ -669,7 +671,7 @@
         var length = obj.length,
             type = hAzzle.type(obj);
 
-        if (type === 'function' || hAzzle.isWindow(obj)) {
+        if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
             return false;
         }
 
