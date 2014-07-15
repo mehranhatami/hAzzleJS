@@ -43,6 +43,7 @@ var conf = function conf() {
         'showhide.js',
         'detection.js',
         'events.js',
+        'props.js',
         'aliases.js',
         'eventhooks.js',
         'ajax.js',
