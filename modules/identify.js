@@ -1,7 +1,16 @@
 // identify.js
 // Identify the selector and return it's
 // Mehran! Fill out this lists with valid tags
+
 var validTags = ['div', 'span', 'b', 'p', 'href', 'img', 'button', 'textarea', 'form', 'table', 'input'];
+
+
+/**
+ *  MEHRAN!   URGENT!!
+ *
+ * You can't pass in hAzzle(window) because it breaks your test.
+ *
+ */
 
 hAzzle.identify = function (selector, context) {
 
@@ -25,7 +34,6 @@ hAzzle.identify = function (selector, context) {
         }
 
         // document fragment
-
     } else if (selector.nodeType === 11) {
 
         // collect the child nodes
