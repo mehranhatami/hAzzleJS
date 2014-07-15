@@ -83,22 +83,22 @@ function element(tag, props) {
 
 function fragment(html) {
 
-    // Get rid of whitespace e.g.
-
-    html = hAzzle.trim(html);
-
     var frag = document.createDocumentFragment();
 
     if (typeof html === 'string') {
 
-        var cur, div = element('div', {
+    // Get rid of whitespace e.g.
+
+    html = hAzzle.trim(html);
+
+        var cur, elem = element('div', {
 
             // Danger or not, Mehran??
 
             innerHTML: html
         });
 
-        while ((cur = div.firstChild)) {
+        while ((cur = elem.firstElementChild)) {
             frag.appendChild(cur);
         }
 
