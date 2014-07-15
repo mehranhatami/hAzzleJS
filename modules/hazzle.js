@@ -53,50 +53,11 @@
         // access to main function.
 
        function Core(selector, context) {
+       
+	   // Identify the selecotr and return it's
+       // content
 
-        if (typeof selector === 'string') {
-
-            if( /<[^>]+>/.test(selector) ) {
-			
-				selector = hAzzle.frag( selector.replace(/^\s+|\s+$/g, '') ).childNodes;
-			}
-
-			else if(/^[a-zA-Z1-6]+$/.test(selector) && typeof context === 'Object') {
-
-				selector = [ hAzzle.elem(item, context) ];
-			}
-
-			else {
-				
-			selector = hAzzle.find(selector, context);
-			
-			}
-
-            // document fragment
-
-        } else if (selector.nodeType === 11) {
-
-            // collect the child nodes
-            selector = selector.childNodes;
-
-            // nodeType			
-
-        } else if (selector.nodeType) {
-
-            selector = [selector];
-
-            // Document Ready
-
-        } else if (hAzzle.isNodeList(selector)) {
-
-            selector = hAzzle.makeArray(selector);
-        }
-
-
-        if (selector.selector !== undefined) {
-
-            selector = selector;
-        }
+           selector = hAzzle.identify(selector, context);
 
         var i = this.length = this.size = selector.length;
 
