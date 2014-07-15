@@ -1,71 +1,61 @@
 // Dom ready
 // The ready event handler
-
 var win = this,
-   doc = win.document, 
-   DOMContentLoaded = false;
+    doc = win.document;
 
-hAzzle.extend({
+hAzzle.domReady = {
+    callbacks: [],
+    loaded: false,
 
-    /**
-     * DOM ready
-     * Execute a callback for every element in the matched set.
-     */
+    listen: function () {
 
-    readyList: [],
-    readyFired: false,
+        if (doc.addEventListener) {
 
-    ready: function (fn) {
+            doc.addEventListener("DOMContentLoaded", hAzzle.domReady.run, false); //the browsers that play nice.
 
-        if (hAzzle.readyFired) {
-            setTimeout(function () {
-                fn(document);
-            }, 1);
+        } else if (doc.readyState) {
+
+            var timer = setInterval(function () {
+                if (/loaded|complete/.test(doc.readyState)) {
+                    clearInterval(timer);
+                    hAzzle.domReady.run();
+                }
+            }, 50);
+
+        }
+    },
+
+    run: function (forceRun) {
+
+        if (!forceRun && this.loaded) {
+
             return;
-        } else {
-
-            // add the function and context to the list
-
-            hAzzle.readyList.push(fn);
         }
 
-        // if document already ready to go, schedule the ready function to run
-        if (doc.readyState === 'complete') {
+        hAzzle.each(hAzzle.domReady.callbacks, function (fn) {
 
-            setTimeout(ready, 1);
+            // Any better solution?
+            fn.call(this, doc, hAzzle);
+        });
 
-        } else if (!DOMContentLoaded) {
+        hAzzle.domReady.loaded = true;
 
-            // otherwise if we don't have event handlers installed, install them
+        if (doc.removeEventListener) {
 
-            doc.addEventListener('DOMContentLoaded', ready, false);
-            // backup is window load event
-            window.addEventListener('load', ready, false);
+            doc.removeEventListener('DOMContentLoaded', hAzzle.domReady.run, false);
+        }
+    },
 
-            DOMContentLoaded = true;
+    add: function (fn) {
+
+        if (hAzzle.domReady.callbacks.push(fn) == 1) {
+
+            hAzzle.domReady.listen();
         }
     }
+};
 
-}, hAzzle);
-
-
-// call this when the document is ready
-// this function protects itself against being called more than once
-
-function ready() {
-
-    var i = 0,
-        l = hAzzle.readyList.length;
-
-    if (!hAzzle.readyFired) {
-        // this must be set to true before we start calling callbacks
-        hAzzle.readyFired = true;
-
-        for (; i < l; i++) {
-
-            hAzzle.readyList[i].call(window, document);
-        }
-        // allow any closures held by these functions to free
-        hAzzle.readyList = [];
-    }
-}
+/****/
+hAzzle.isDomLoaded = function () {
+    return hAzzle.domReady.loaded;
+};

@@ -41,8 +41,6 @@ hAzzle.extend({
         return type;
     },
 
-    /* =========================== 'IS' FUNCTIONS ========================== */
-
     is: function (kind, obj) {
 
         if (hAzzle.isArray(kind)) {
@@ -111,7 +109,7 @@ hAzzle.extend({
     },
 
     isDocument: function (obj) {
-        return obj !== null && obj.nodeType === 8;
+		return obj.nodeType && obj.nodeType === 9;
     },
 
     isBoolean: function (value) {

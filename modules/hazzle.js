@@ -4,82 +4,111 @@
  * Version: 0.9.2a
  * Released under the MIT License.
  *
- * Date: 2014-07-14
+ * Date: 2014-07-16
  */
 (function (window, undefined) {
 
-    // hAzzle already defined, leave now
+        // hAzzle already defined, leave now
 
-    if (window.hAzzle) {
+        if (window.hAzzle) {
 
-        return;
-    }
-
-    // Usefull variabels
-
-    var win = window,
-        doc = win.document,
-
-        /**
-         * Prototype references.
-         */
-
-        ArrayProto = Array.prototype,
-
-        // Save a reference to some core methods
-
-        indexOf = ArrayProto.indexOf,
-        concat = ArrayProto.concat,
-
-        // Left and right regEx for hAzzle.trim()
-
-        trwl = /^\s\s*/,
-        trwr = /\s\s*$/,
-
-        escEp = /[-\\^$*+?.()|[\]{}]/g,
-
-        // Define a local copy of hAzzle
-
-        hAzzle = function (selector, context) {
-            return new Core(selector, context);
-        };
-
-    // Init Core
-
-    function Core(selector, context) {
-
-        if (selector) {
-
-            if (typeof selector === 'string') {
-
-                selector = hAzzle.find(selector, context);
-
-                // nodeType
-
-            } else if (selector.nodeType) {
-
-                selector = [selector];
-
-                // Document Ready
-
-            } else if (hAzzle.isFunction(selector)) {
-
-                return hAzzle.ready(selector);
-            }
-
-            if (selector.selector !== undefined) {
-                selector = selector;
-            }
-
-            var i = this.length = selector.length;
-
-            while (i--) {
-                this[i] = selector[i];
-            }
+            return;
         }
+
+        // Usefull variabels
+
+        var win = window,
+            doc = win.document,
+
+            /**
+             * Prototype references.
+             */
+
+            ArrayProto = Array.prototype,
+
+            // Save a reference to some core methods
+
+            indexOf = ArrayProto.indexOf,
+            concat = ArrayProto.concat,
+
+            // Left and right regEx for hAzzle.trim()
+
+            trwl = /^\s\s*/,
+            trwr = /\s\s*$/,
+
+            escEp = /[-\\^$*+?.()|[\]{}]/g,
+
+            // Define a local copy of hAzzle
+
+            hAzzle = function (selector, context) {
+
+                // Force domReady if the selector is a
+                // function
+
+                return typeof selector === 'function' ?
+                    hAzzle.domReady.add(selector) :
+                    new Core(selector, context);
+            };
+
+        // access to main function.
+
+       function Core(selector, context) {
+
+        if (typeof selector === 'string') {
+
+            if( /<[^>]+>/.test(selector) ) {
+			
+				selector = hAzzle.frag( selector.replace(/^\s+|\s+$/g, '') ).childNodes;
+			}
+
+			else if(/^[a-zA-Z1-6]+$/.test(selector) && typeof context === 'Object') {
+
+				selector = [ hAzzle.elem(item, context) ];
+			}
+
+			else {
+				
+			selector = hAzzle.find(selector, context);
+			
+			}
+
+            // document fragment
+
+        } else if (selector.nodeType === 11) {
+
+            // collect the child nodes
+            selector = selector.childNodes;
+
+            // nodeType			
+
+        } else if (selector.nodeType) {
+
+            selector = [selector];
+
+            // Document Ready
+
+        } else if (hAzzle.isNodeList(selector)) {
+
+            selector = hAzzle.makeArray(selector);
+        }
+
+
+        if (selector.selector !== undefined) {
+
+            selector = selector;
+        }
+
+        var i = this.length = this.size = selector.length;
+
+        while (i--) {
+
+            this[i] = selector[i];
+        }
+		
+		return this;
     }
 
-    // Prototype functions
+    // Easy access variable for the Prototype function
 
     hAzzle.Core = Core.prototype = {
 
@@ -392,7 +421,7 @@
         },
 
         isNode: function (node) {
-            return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 11);
+            return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 9 || node.nodeType === 11);
         },
 
         /**
@@ -465,9 +494,6 @@
             return ret;
         },
 
-
-
-
         /**
          * Check if it's an XML or HTML document
          */
@@ -508,7 +534,7 @@
         noop: function () {},
 
         /**
-         * Return all the elements that pass a truth test.
+         * Return only nodes matching the filter
          *
          * @param {String|nodeType|Function} sel
          * @return {Array}
@@ -589,13 +615,11 @@
                 div = null;
             }
         }
-
-    }, hAzzle);
+   }, hAzzle);
 
     /* =========================== SELECTOR ENGINE HOLDER ========================== */
 
-    var Jiesa = {};
-    hAzzle.Jiesa = Jiesa;
+    var Jiesa = {}; hAzzle.Jiesa = Jiesa;
 
 
     // This one has to be fast...
@@ -695,7 +719,6 @@
         return type === 'array' || length === 0 ||
             typeof length === 'number' && length > 0 && (length - 1) in obj;
     }
-
 
     // Expose hAzzle to the global object
 

@@ -17,6 +17,7 @@ var conf = function conf() {
         'ntapi.js',
         'types.js',
         'ready.js',
+        'fragment.js',		
         'shims/pnow.js',
         'document.js',
         'core.js',
