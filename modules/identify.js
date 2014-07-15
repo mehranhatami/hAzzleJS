@@ -4,14 +4,6 @@
 
 var validTags = ['div', 'span', 'b', 'p', 'href', 'img', 'button', 'textarea', 'form', 'table', 'input'];
 
-
-/**
- *  MEHRAN!   URGENT!!
- *
- * You can't pass in hAzzle(window) because it breaks your test.
- *
- */
-
 hAzzle.identify = function (selector, context) {
 
     if (typeof selector === 'string') {
@@ -51,6 +43,9 @@ hAzzle.identify = function (selector, context) {
 
         selector = hAzzle.makeArray(selector);
     }
+	else if( hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector) ) {
+			selector = [ selector ];
+	}	
 
     if (selector.selector !== undefined) {
 
