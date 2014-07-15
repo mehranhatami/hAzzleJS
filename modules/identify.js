@@ -110,11 +110,6 @@ function fragment(html) {
             frag.appendChild(cur);
         }
 
-    } else {
-
-        hAzzle(html).all(function (n) {
-            frag.appendChild(n);
-        });
-    }
+    } 
     return frag;
 }
