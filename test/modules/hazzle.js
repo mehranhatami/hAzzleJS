@@ -33,3 +33,56 @@ describe('hAzzle.forOwn()', function () {
 
   });
 });
+
+describe('hAzzle([...]).each()', function () {
+  it('check if each function works', function () {
+
+    var contextObjIsValue = true,
+      hAzzleObj1 = null,
+      array1 = [10, 20, 30, 40, 50, 60],
+      array2 = [],
+      keys = [],
+      hAzzleObj2 = hAzzle(array1).each(function (value, index, hObj) {
+        hAzzleObj1 = hObj;
+        array2.push(value)
+        keys.push(String(index));
+
+        if (this.valueOf() !== value) {
+          contextObjIsValue = false;
+        }
+      });
+
+    expect(array1).to.deep.equal(array2);
+
+    expect(Object.keys(array1)).to.deep.equal(keys);
+
+    expect(hAzzleObj1).to.be.equal(hAzzleObj2);
+
+    expect(hAzzleObj1.__proto__).to.be.equal(hAzzle.Core);
+
+    expect(contextObjIsValue).to.be.true;
+
+  });
+});
+
+describe('hAzzle([...]).map()', function () {
+  it('check if each function works', function () {
+
+    var thisArg = null,
+      array1 = [10, 20, 30, 40, 50, 60],
+      array2 = [20, 40, 60, 80, 100, 120],
+      keys = [],
+      array3 = hAzzle(array1).map(function (value, index) {
+        keys.push(String(index));
+        thisArg = this;
+        return value * 2;
+      });
+
+    expect(array3).to.deep.equal(array2);
+
+    expect(Object.keys(array1)).to.deep.equal(keys);
+
+    expect(thisArg.__proto__).to.be.equal(hAzzle.Core);
+
+  });
+});
