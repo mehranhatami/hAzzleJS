@@ -8,87 +8,65 @@
  */
 (function (window, undefined) {
 
-        // hAzzle already defined, leave now
+    // hAzzle already defined, leave now
 
-        if (window.hAzzle) {
+    if (window.hAzzle) {
 
-            return;
+        return;
+    }
+
+    // Usefull variabels
+
+    var win = window,
+        doc = win.document,
+
+        /**
+         * Prototype references.
+         */
+
+        ArrayProto = Array.prototype,
+
+        // Save a reference to some core methods
+
+        indexOf = ArrayProto.indexOf,
+        concat = ArrayProto.concat,
+
+        // Left and right regEx for hAzzle.trim()
+
+        trwl = /^\s\s*/,
+        trwr = /\s\s*$/,
+
+        escEp = /[-\\^$*+?.()|[\]{}]/g,
+
+        // Define a local copy of hAzzle
+
+        hAzzle = function (selector, context) {
+
+            // Force domReady if the selector is a
+            // function
+
+            return typeof selector === 'function' ?
+                hAzzle.domReady.add(selector) :
+                new Core(selector, context);
+        };
+
+    // access to main function.
+
+    function Core(selector, context) {
+
+        if (!selector) {
+            return this;
         }
 
-        // Usefull variabels
+        selector = typeof selector === 'string' ? hAzzle.find(selector, context) :
+            selector.nodeType === 11 ? selector.childNodes : selector.nodeType ? [selector] :
+            hAzzle.isNodeList(selector) ? hAzzle.makeArray(selector) :
+            (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) ? [selector] : [selector];
 
-        var win = window,
-            doc = win.document,
+        if (selector.selector !== undefined) {
 
-            /**
-             * Prototype references.
-             */
-
-            ArrayProto = Array.prototype,
-
-            // Save a reference to some core methods
-
-            indexOf = ArrayProto.indexOf,
-            concat = ArrayProto.concat,
-
-            // Left and right regEx for hAzzle.trim()
-
-            trwl = /^\s\s*/,
-            trwr = /\s\s*$/,
-
-            escEp = /[-\\^$*+?.()|[\]{}]/g,
-
-            // Define a local copy of hAzzle
-
-            hAzzle = function (selector, context) {
-
-                // Force domReady if the selector is a
-                // function
-
-                return typeof selector === 'function' ?
-                    hAzzle.domReady.add(selector) :
-                    new Core(selector, context);
-            };
-
-        // access to main function.
-
-       function Core(selector, context) {
-
-        if ( !selector ) {
-			return this;
-		}
-	 
-     if (typeof selector === 'string') {
-
-
-            selector = hAzzle.find(selector, context);
-
-        // document fragment
-    } else if (selector.nodeType === 11) {
-
-        // collect the child nodes
-        selector = selector.childNodes;
-
-        // nodeType			
-
-    } else if (selector.nodeType) {
-
-        selector = [selector];
-
-        // Document Ready
-
-    } else if (hAzzle.isNodeList(selector)) {
-
-        selector = hAzzle.makeArray(selector);
-    }
-	else if( hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector) ) {
-			selector = [ selector ];
-	}	
-
-    if (selector.selector !== undefined) {
-
-        selector = selector;
-    }
+            selector = selector;
+        }
 
         var i = this.length = this.size = selector.length;
 
@@ -96,8 +74,8 @@
 
             this[i] = selector[i];
         }
-		
-		return this;
+
+        return this;
     }
 
     // Easy access variable for the Prototype function
@@ -346,6 +324,7 @@
          * Check if an element exist in an array
          */
 
+
         inArray: function (array, value, index) {
 
             var i = (index || 0),
@@ -381,7 +360,7 @@
                     }
                 }
 
-            // Go through every key on the object,
+                // Go through every key on the object,
             } else {
                 for (i in elems) {
                     value = callback(elems[i], i, arg);
@@ -609,11 +588,12 @@
                 div = null;
             }
         }
-   }, hAzzle);
+    }, hAzzle);
 
     /* =========================== SELECTOR ENGINE HOLDER ========================== */
 
-    var Jiesa = {}; hAzzle.Jiesa = Jiesa;
+    var Jiesa = {};
+    hAzzle.Jiesa = Jiesa;
 
 
     // This one has to be fast...
