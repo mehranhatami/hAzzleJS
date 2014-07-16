@@ -58,10 +58,36 @@
             return this;
         }
 
-        selector = typeof selector === 'string' ? hAzzle.find(selector, context) :
-            selector.nodeType === 11 ? selector.childNodes : selector.nodeType ? [selector] :
-            hAzzle.isNodeList(selector) ? hAzzle.makeArray(selector) :
-            (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) ? [selector] : [selector];
+        if (typeof selector === 'string') {
+
+            selector = hAzzle.find(selector, context);
+
+            // document fragment
+        } else if (selector.nodeType === 11) {
+
+            // collect the child nodes
+            selector = selector.childNodes;
+
+            // nodeType			
+
+        } else if (selector.nodeType) {
+
+            selector = [selector];
+
+            // Document Ready
+
+        } else if (hAzzle.isNodeList(selector)) {
+
+            selector = hAzzle.makeArray(selector);
+        } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) {
+            selector = [selector];
+        }
+
+        if (selector.selector !== undefined) {
+
+            selector = selector;
+        }
+
 
         if (selector.selector !== undefined) {
 
