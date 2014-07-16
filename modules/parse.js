@@ -249,23 +249,7 @@ hAzzle.parseHTML = function (selector) {
                 isSibling = false;
 
             } else {
-
-                preBorn = preBorn.childNodes;
-
-                var i = preBorn.length,
-                    parent;
-
-                while (i--) {
-
-                    parent = preBorn[i];
-
-                    if (parent.nodeName.toLowerCase() === 'table') {
-                        /* IE requires table to have tbody */
-                        parent.appendChild(parent = doc.createElement('tbody'));
-                    }
-
-                    parent.appendChild(preBorn.cloneNode(true));
-                }
+                multiAppend(newBorn, preBorn);
             }
         }
     }
@@ -278,3 +262,26 @@ hAzzle.parseHTML = function (selector) {
 
     return fragment.childNodes;
 };
+
+
+
+function multiAppend(parents, children) {
+
+    parents = parents.childNodes;
+
+    var i = parents.length,
+        parent;
+
+    while (i--) {
+
+        parent = parents[i];
+
+        if (parent.nodeName.toLowerCase() === 'table') {
+            /* IE requires table to have tbody */
+            parent.appendChild(parent = doc.createElement('tbody'));
+        }
+
+        parent.appendChild(children.cloneNode(true));
+
+    }
+}
