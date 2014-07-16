@@ -1,13 +1,86 @@
-//
+/** 
+ * Generate HTML from CSS selectors
+ 
+ A FEW EXAMPLES:
+ 
+  #ID
+  ---
+  
+  hAzzle.html('div#hello');  
+
+  RESULT: 
+  
+  <div id="hello"> <div>
+
+  #CLASS
+  ------
+  
+  hAzzle.html('div.hello');  
+
+  RESULT: 
+  
+  <div class="hello"> <div>
+
+  #ID AND CLASS
+  ------
+  
+  hAzzle.html('div#hello.test');  
+
+  RESULT: 
+  
+  <div id="hello" class="test"> <div>
+
+  DIV AND A-TAG
+  -------------
+
+ hAzzle.html('div a');
+ 
+  RESULT:  
+  
+  <div>
+    <a></a>
+</div>
+
+
+  HTML
+  -------------
+
+ hAzzle.html('div[innerHTML=FOO]')
+  
+  RESULT:
+  
+  <div> FOO </div>
+
+
+  hAzzle.html('div span + a');
+  
+
+ IMAGES
+  -------------
+
+ hAzzle.html('img src="/test.png"')
+  
+  RESULT:
+  
+  <img src="/test.png"> FOO </img>
+
+
+ SETTING ATTRIBUTES:
+  -------------
+ hAzzle.html('input[type=checkbox][checked]');
+
+**/
+
+
 var win = this,
     doc = win,
 
     chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
-    
-	white = /^\s+$/,
-    
-	matchExpr = {
-		
+
+    white = /^\s+$/,
+
+    matchExpr = {
+
         ID: /#((?:[\w\u00c0-\uFFFF_-]|\\.)+)/,
         CLASS: /\.((?:[\w\u00c0-\uFFFF_-]|\\.)+)(?![^[\]]+])/g,
         NAME: /\[name=['"]*((?:[\w\u00c0-\uFFFF_-]|\\.)+)['"]*\]/,
@@ -49,9 +122,9 @@ var win = this,
                 if (val === true || attr === 'innerHTML' || expr.attr.hasOwnProperty(attr)) {
 
                     node[expr.attr[attr] || attr] = val;
-					
+
                 } else {
-					
+
                     node.setAttribute(attr, val);
                 }
 
