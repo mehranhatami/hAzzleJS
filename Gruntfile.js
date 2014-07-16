@@ -27,6 +27,7 @@ var conf = function conf() {
         'jiesa.js',
         'funcs.js',
         'fx.js',
+        'parse.js',
         'data.js',
         'shims/classlist.js',
         'classes.js',

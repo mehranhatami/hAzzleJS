@@ -19,6 +19,7 @@
             path + 'jiesa.js',
             path + 'funcs.js',
             path + 'fx.js',
+            path + 'parse.js',
             path + 'data.js',
             path + 'shims/classlist.js',
             path + 'classes.js',
