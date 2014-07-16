@@ -141,7 +141,7 @@ function create(part, n) {
 
         }
 
-        if (match = regex.exec(part)) {
+        if ((match = regex.exec(part))) {
             callback(match, node);
         }
 
