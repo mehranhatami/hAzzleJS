@@ -137,7 +137,7 @@ hAzzle.html = function (selector) {
 
     // Remove whitespace
 
-    selector = selector.replace(trimspaces, '')
+    selector = selector.replace(trimspaces, '');
 
     // Return if the selector are cached
 
@@ -147,6 +147,7 @@ hAzzle.html = function (selector) {
     }
 
     var nodes = [],
+        container = [],
         fragment = doc.createDocumentFragment(),
         children,
         prevChildren,
@@ -214,7 +215,17 @@ hAzzle.html = function (selector) {
 
     cache[selector] = fragment.cloneNode(true);
 
-    return hAzzle(fragment.childNodes);
+    hAzzle.merge(container, fragment.childNodes);
+
+    // Remove wrapper from fragment
+
+    fragment.textContent = "";
+
+    // Clear inner HTML
+
+    fragment.innerHTML = "";
+
+    return hAzzle(container);
 };
 
 /* =========================== INTERNAL FUNCTIONS ========================== */
@@ -257,6 +268,7 @@ function create(part, n) {
     }
 
     while (n--) {
+		
         fragment.appendChild(node.cloneNode(true));
     }
 
