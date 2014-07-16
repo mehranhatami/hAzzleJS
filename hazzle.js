@@ -9,7 +9,6 @@
             path + 'ntapi.js',
             path + 'types.js',
             path + 'ready.js',
-            path + 'identify.js',			
             path + 'shims/pnow.js',
             path + 'document.js',
             path + 'core.js',
