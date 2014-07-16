@@ -59,15 +59,15 @@ var win = this,
 
             var attr = match[1],
                 val = match[4] || true;
-       
-	   // Mehran! Happy now when I used  hasOwnProperty ??
-	   
+
+            // Mehran! Happy now when I used  hasOwnProperty ??
+
             if (val === true || attr === 'innerHTML' || attrMap.hasOwnProperty(attr)) {
-				
+
                 node[attrMap[attr] || attr] = val;
-				
+
             } else {
-				
+
                 node.setAttribute(attr, val);
             }
 
@@ -148,46 +148,71 @@ hAzzle.parseHTML = function (selector) {
         return cache[selector].cloneNode(true).childNodes;
     }
 
-    var selectorParts = [],
+    var
+
+    // Contains all HTML parts
+
+        selection = [],
+
+        // Create documentFragment
+
         fragment = doc.createDocumentFragment(),
-        children,
-        prevChildren,
-        curSelector,
-        nClones = 1,
-        nParts = 0,
+
+        // General variabels
+
+        newBorn,
+        preBorn,
+        current,
+        clones = 1,
+        parts = 0,
         isSibling = false,
         cloneMatch,
-        tag, node, c, match, regex, callback,
-        m;
+        tag, node, c, match, regex, callback, m;
 
     while ((m = chunker.exec(selector)) !== null) {
 
-        ++nParts;
-        selectorParts.push(m[1]);
+        ++parts;
+        selection.push(m[1]);
     }
 
-    while (nParts--) {
+    while (parts--) {
 
-        curSelector = selectorParts[nParts];
+        current = selection[parts];
 
-        if (matchExpr.combinator.test(curSelector)) {
-            isSibling = curSelector === '~' || curSelector === '+';
+        // check for relative selector expressions
+
+        if (matchExpr.combinator.test(current)) {
+
+            isSibling = current === '~' || current === '+';
             continue;
         }
 
         // Number of clones must be an int >= 1
 
-        nClones = (cloneMatch = curSelector.match(matchExpr.pseudo)) ? ~~cloneMatch[1] : 1;
+        clones = (cloneMatch = current.match(matchExpr.pseudo)) ? ~~cloneMatch[1] : 1;
 
-        prevChildren = children;
+        preBorn = newBorn;
 
-        tag = matchExpr.tag.exec(curSelector);
+        tag = matchExpr.tag.exec(current);
 
-        // Create the node
+        // Set correct HTML tag
 
-        node = doc.createElement(tag && tag[1] !== '*' ? tag[1] : 'div');
+        if (tag && tag[1] !== '*') {
 
-        children = doc.createDocumentFragment();
+            tag = tag[1];
+
+        } else {
+
+            tag = 'div';
+        }
+
+        // Create the node element
+
+        node = doc.createElement(tag);
+
+        // Create the newBorn fragment
+
+        newBorn = doc.createDocumentFragment();
 
         c = tags.length;
 
@@ -198,7 +223,7 @@ hAzzle.parseHTML = function (selector) {
 
             if (regex.global) {
 
-                while ((match = regex.exec(curSelector)) !== null) {
+                while ((match = regex.exec(current)) !== null) {
 
                     callback(match, node);
                 }
@@ -206,46 +231,46 @@ hAzzle.parseHTML = function (selector) {
                 continue;
             }
 
-            if ((match = regex.exec(curSelector))) {
+            if ((match = regex.exec(current))) {
                 callback(match, node);
             }
 
         }
 
-        while (nClones--) {
+        while (clones--) {
 
-            children.appendChild(node.cloneNode(true));
+            newBorn.appendChild(node.cloneNode(true));
         }
-        if (prevChildren) {
+        if (preBorn) {
 
             if (isSibling) {
 
-                children.appendChild(prevChildren);
+                newBorn.appendChild(preBorn);
                 isSibling = false;
 
             } else {
 
-                prevChildren = prevChildren.childNodes;
+                preBorn = preBorn.childNodes;
 
-                var i = prevChildren.length,
+                var i = preBorn.length,
                     parent;
 
                 while (i--) {
 
-                    parent = prevChildren[i];
+                    parent = preBorn[i];
 
                     if (parent.nodeName.toLowerCase() === 'table') {
                         /* IE requires table to have tbody */
                         parent.appendChild(parent = doc.createElement('tbody'));
                     }
 
-                    parent.appendChild(prevChildren.cloneNode(true));
+                    parent.appendChild(preBorn.cloneNode(true));
                 }
             }
         }
     }
 
-    fragment.appendChild(children);
+    fragment.appendChild(newBorn);
 
     // Cache, and make a deep clone
 
