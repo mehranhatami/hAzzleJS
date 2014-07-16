@@ -54,10 +54,41 @@
 
        function Core(selector, context) {
 
-	   // Identify the selector and return it's
-       // content
+        if ( !selector ) {
+			return this;
+		}
+	 
+     if (typeof selector === 'string') {
 
-           selector = hAzzle.identify(selector, context);
+
+            selector = hAzzle.find(selector, context);
+
+        // document fragment
+    } else if (selector.nodeType === 11) {
+
+        // collect the child nodes
+        selector = selector.childNodes;
+
+        // nodeType			
+
+    } else if (selector.nodeType) {
+
+        selector = [selector];
+
+        // Document Ready
+
+    } else if (hAzzle.isNodeList(selector)) {
+
+        selector = hAzzle.makeArray(selector);
+    }
+	else if( hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector) ) {
+			selector = [ selector ];
+	}	
+
+    if (selector.selector !== undefined) {
+
+        selector = selector;
+    }
 
         var i = this.length = this.size = selector.length;
 
