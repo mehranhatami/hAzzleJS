@@ -70,14 +70,14 @@
  hAzzle.html('input[type=checkbox][checked]');
 
 **/
-
-
 var win = this,
     doc = win,
 
     chunker = /((?:\((?:\([^()]+\)|[^()]+)+\)|\[(?:\[[^[\]]*\]|['"][^'"]*['"]|[^[\]'"]+)+\]|\\.|[^ >+~,(\[\\]+)+|[>+~])(\s*,\s*)?/g,
 
     white = /^\s+$/,
+
+    trimspaces = /^\s*|\s*$/g,
 
     matchExpr = {
 
@@ -135,41 +135,69 @@ var win = this,
 
 hAzzle.html = function (selector) {
 
+    // Remove whitespace
+
+    selector = selector.replace(trimspaces, '')
+
+    // Return if the selector are cached
+
     if (selector in cache) {
+
         return cache[selector].cloneNode(true).childNodes;
     }
 
-    var selectorParts = [],
+    var nodes = [],
         fragment = doc.createDocumentFragment(),
         children,
         prevChildren,
         curSelector,
-        nClones = 1,
-        nParts = 0,
+
+        /** Keep track of how many duplicates / clones of an tag we
+         * are creating.
+         *
+         * E.g hAzzle.html('div:49')
+         *
+         * Clones will be set to 49.
+         */
+
+        Clones = 1,
+        Parts = 0,
         isSibling = false,
         cloneMatch,
         m;
 
-    while ((m = chunker.exec(selector)) !== null) {
-        ++nParts;
-        selectorParts.push(m[1]);
+    for (;
+        (m = chunker.exec(selector)) !== null;) {
+
+        ++Parts, nodes.push(m[1]);
     }
 
     // We're going in reverse
-    while (nParts--) {
 
-        curSelector = selectorParts[nParts];
+    while (Parts--) {
+
+        curSelector = nodes[Parts];
 
         if (matchExpr.COMBINATOR.test(curSelector)) {
+
             isSibling = curSelector === '~' || curSelector === '+';
             continue;
         }
 
-        // Number of clones must be an int >= 1
-        nClones = (cloneMatch = curSelector.match(matchExpr.CLONE)) ? ~~cloneMatch[1] : 1;
+        Clones = (cloneMatch = curSelector.match(matchExpr.CLONE)) ? ~~cloneMatch[1] : 1;
 
         prevChildren = children;
-        children = create(curSelector, nClones);
+
+
+        // Always make sure 'Clones' are a valid
+        // number. If not, set to 1
+
+        if (typeof Clones !== 'number') {
+
+            Clones = 1;
+        }
+
+        children = create(curSelector, Clones);
 
         if (prevChildren) {
 
@@ -191,7 +219,15 @@ hAzzle.html = function (selector) {
 
 /* =========================== INTERNAL FUNCTIONS ========================== */
 
+/** 
+ * Create the HTML
+ *
+ * @param {String} part
+ * @param {Number} n
+ */
+
 function create(part, n) {
+
 
     var tag = matchExpr.TAG.exec(part),
         node = doc.createElement(tag && tag[1] !== '*' ? tag[1] : 'div'),
@@ -225,8 +261,16 @@ function create(part, n) {
     }
 
     return fragment;
-
 }
+
+
+/** 
+ * Multi append more then one element
+ *
+ * @param {Object} parents
+ * @param {Object} children
+ */
+
 
 function multiAppend(parents, children) {
 
