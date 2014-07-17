@@ -1,75 +1,84 @@
     var _slice = Array.prototype.slice,
-
-        expr = {
+        call = Function.prototype.call,
+        trim = String.prototype.trim,
+		
+        matchExpr = {
+			repl: /['"]/g,
             operators: /[>+]/g,
             multiplier: /\*(\d+)$/,
-            id: /#[\w-$]+/g,
+            id: /#([\w-$]+)/g,
             tagname: /^\w+/,
             classname: /\.[\w-$]+/g,
             attributes: /\[([^\]]+)\]/g,
             values: /([\w-]+)(\s*=\s*(['"]?)([^,\]]+)(\3))?/g,
             numbering: /[$]+/g,
             text: /\{(.+)\}/
-        };
+        },
 
+        twist = function (arr, fn, scope) {
+            var result = [],
+                i = 0,
+                l = arr.length;
+            for (; i < l; i++)
+                result.push(fn.call(scope, arr[i], i));
+            return result;
+        };
 
     hAzzle.html = function (str, data) {
 
-        var parts = str.split(expr.operators).map(Function.prototype.call, String.prototype.trim),
-            tree = document.createDocumentFragment(),
-            parents,
-        matches;
+        var parts = twist(str.split(matchExpr.operators), call, trim),
+            fragment = document.createDocumentFragment(),
+            aa, i, parents = [fragment], matches, matched,
+			op = (matchExpr.operators.exec(str) || [])[0], attrs = {};
 
-        parents = [tree];
+        hAzzle.each(parts, function (part) {
 
-        hAzzle.each(parts, function (original) {
-
-            var part = original,
-                op = (expr.operators.exec(str) || [])[0],
-                count = 1,
+            var count = 1,
                 tag,
                 id,
                 classes,
                 text,
-                index, _index, element,
-                attrs = {};
+                index, _index, element;
 
-
-            if ((matches = part.match(expr.attributes))) {
-                var matched = matches[matches.length - 1];
-                while ((matches = expr.values.exec(matched))) {
-                    attrs[matches[1]] = (matches[4] || '').replace(/['"]/g, '').trim();
+            if ((matches = part.match(matchExpr.attributes))) {
+				
+                 matched = matches[matches.length - 1];
+				 
+                while ((matches = matchExpr.values.exec(matched))) {
+					
+                    attrs[matches[1]] = (matches[4] || '').replace(matchExpr.repl, '').trim();
                 }
-                part = part.replace(expr.attributes, '');
+				
+                part = part.replace(matchExpr.attributes, '');
             }
 
-            // #### Multipliers
-            if ((matches = part.match(expr.multiplier))) {
+            // Multipliers
+            if ((matches = part.match(matchExpr.multiplier))) {
                 var times = +matches[1];
                 if (times > 0) count = times;
             }
 
-            // #### IDs
-            if ((matches = part.match(expr.id))) {
+            // ID
+            if ((matches = part.match(matchExpr.id))) {
                 id = matches[matches.length - 1].substr(1);
             }
 
-            // #### Tag names
-            if ((matches = part.match(expr.tagname))) {
+            // Tag names
+            if ((matches = part.match(matchExpr.tagname))) {
                 tag = matches[0];
             } else {
                 tag = 'div';
             }
 
-            // #### Class names
-            if ((matches = part.match(expr.classname))) {
-                classes = matches.map(function (c) {
+            // Class
+            if ((matches = part.match(matchExpr.classname))) {
+                classes = map(matches, function (c) {
                     return c.substr(1);
                 }).join(' ');
             }
 
-            // #### Text
-            if ((matches = part.match(expr.text))) {
+            // Text
+            if ((matches = part.match(matchExpr.text))) {
                 text = matches[1];
                 if (data) {
                     text = text.replace(/\$(\w+)/g, function (m, key) {
@@ -78,23 +87,30 @@
                 }
             }
 
-            // Insert `count` copies of the element per parent. If the current operator
-            // is `+` we mark the elements to remove it from `parents` in the next iteration.
-            hAzzle.each(_slice.call(parents, 0), function (parent, parentIndex) {
+            aa = _slice.call(parents, 0);
+            i = aa.length;
+
+            while (i--) {
+
                 for (index = 0; index < count; index++) {
-                    // Use parentIndex if this element has a count of 1
-                    _index = count > 1 ? index : parentIndex;
+               
+			        // Use parentIndex if this element has a count of 1
+               
+			        _index = count > 1 ? index : i;
 
                     element = Element(_index, tag, id, classes, text, attrs);
                     if (op === '+') element._sibling = true;
 
-                    parent.appendChild(element);
+                    aa[i].appendChild(element);
                 }
-            });
+            }
 
             // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
-            if (op === '>') {
+          
+		    if (op === '>') {
+
                 parents = parents.reduce(function (p, c) {
+
                     return p.concat(_slice.call(c.childNodes, 0).filter(function (el) {
                         return el.nodeType === 1 && !el._sibling;
                     }));
@@ -104,15 +120,18 @@
         });
 
         var div = document.createElement('div');
-        div.appendChild(tree.cloneNode(true));
+        div.appendChild(fragment.cloneNode(true));
 
         return hAzzle(div);
     };
 
-
-
-
-    // Pads number `n` with `ln` zeroes.
+	/**
+	 * Pads number `n` with `ln` zeroes.
+	 * @param {Number} n
+	 * @param {Number} ln
+	 * @return {String}
+	 */
+	
     function pad(n, ln) {
         n = n.toString();
         while (n.length < ln) {
@@ -121,15 +140,17 @@
         return n;
     }
 
-    // Replaces ocurrences of '$' with the equivalent padded index.
-    // `$$ == 01`, `$$$$ == 0001`
+    // Replaces ocurrences of '$' with the equivalent padded 
+	// index (e.g  `$$ == 01`, `$$$$ == 0001` )
+
     function numbered(value, n) {
-        return value.replace(expr.numbering, function (m) {
+
+        return value.replace(matchExpr.numbering, function (m) {
             return pad(n + 1, m.length);
         });
     }
 
-	    // Create a DOM element.
+    // Create a DOM element.
     function Element(index, tag, id, className, text, attrs) {
 
         var key, element = document.createElement(tag);
