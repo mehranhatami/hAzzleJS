@@ -433,66 +433,6 @@
         escapeRegexp: function (str) {
             str.replace(escEp, '\\$&');
         },
-
-        size: function (obj, ownPropsOnly) {
-            var count = 0,
-                key;
-
-            if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
-                return obj.length;
-            } else if (hAzzle.isObject(obj)) {
-                for (key in obj)
-                    if (!ownPropsOnly || obj.hasOwnProperty(key))
-                        count++;
-            }
-
-            return count;
-        },
-        /**
-         * Get text
-         */
-
-        getText: function (elem) {
-            var node, ret = '',
-                i = 0,
-                l = elem.length,
-                etc,
-                nodetype = elem.nodeType;
-
-            if (!nodetype) {
-
-                for (; i < l; i++) {
-
-                    node = elem[i++];
-
-                    // Do not traverse comment nodes
-                    ret += hAzzle.getText(node);
-                }
-
-            } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
-
-                etc = elem.textContent;
-
-                if (typeof etc === 'string') {
-
-                    return elem.textContent;
-
-                } else {
-
-                    for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-
-                        ret += hAzzle.getText(elem);
-                    }
-
-                }
-            } else if (nodetype === 3 || nodetype === 4) {
-
-                return elem.nodeValue;
-            }
-
-            return ret;
-        },
-
         /**
          * Check if it's an XML or HTML document
          */
