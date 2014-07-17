@@ -1,7 +1,10 @@
 // Dom ready
 // The ready event handler
 var win = this,
-    doc = win.document;
+    doc = win.document,
+    hack = doc.documentElement.doScroll,
+    // hack for IE9+
+    loaded = (hack ? /^loaded|^c/ : /^loaded|^i|^c/).test(doc.readyState);
 
 hAzzle.domReady = {
     callbacks: [],
@@ -9,41 +12,34 @@ hAzzle.domReady = {
 
     listen: function () {
 
-        if (doc.addEventListener) {
+        if (!loaded) {
 
+            // Use the handy event callback
             doc.addEventListener("DOMContentLoaded", hAzzle.domReady.run, false); //the browsers that play nice.
-
-        } else if (doc.readyState) {
-
-            var timer = setInterval(function () {
-                if (/loaded|complete/.test(doc.readyState)) {
-                    clearInterval(timer);
-                    hAzzle.domReady.run();
-                }
-            }, 50);
-
+            // A fallback to window.onload, that will always work
+            win.addEventListener("load", hAzzle.domReady.run, false);
         }
     },
 
     run: function (forceRun) {
 
-        if (!forceRun && this.loaded) {
+        if (!forceRun && hAzzle.loaded) {
 
             return;
         }
 
         hAzzle.each(hAzzle.domReady.callbacks, function (fn) {
 
-            // Any better solution?
             fn.call(this, doc, hAzzle);
+
+            hAzzle.domReady.loaded = true;
+
+            if (doc.removeEventListener) {
+
+                doc.removeEventListener('DOMContentLoaded', hAzzle.domReady.run, false);
+                win.removeEventListener("load", hAzzle.domReady.run, false);
+            }
         });
-
-        hAzzle.domReady.loaded = true;
-
-        if (doc.removeEventListener) {
-
-            doc.removeEventListener('DOMContentLoaded', hAzzle.domReady.run, false);
-        }
     },
 
     add: function (fn) {
@@ -53,9 +49,4 @@ hAzzle.domReady = {
             hAzzle.domReady.listen();
         }
     }
-};
-
-/****/
-hAzzle.isDomLoaded = function () {
-    return hAzzle.domReady.loaded;
 };

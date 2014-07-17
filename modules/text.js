@@ -41,4 +41,4 @@ hAzzle.getText = function (elem) {
             }
 
             return ret;
-        }
+        };
