@@ -86,10 +86,10 @@
   <li></li>
   <li></li>
   
- #OPERATORS
+ #OPERATORS ( > )
   ----------------------
   
-  hAzzle.html('li*5 > p.n$');  
+  hAzzle.html('div > p > span');  
 
   RESULT: 
   
@@ -98,11 +98,21 @@
       <span></span>
    </p>
   </div>
+
+ #OPERATORS ( + )
+  ----------------------
   
+  hAzzle.html('div + p');  
+
+  RESULT: 
+  
+  <p></p>
+  <div></div>
+
   NUMBERING INHERITED FROM PARENT WHEN SINGLE ELEMENT
   -------------
 
- hAzzle.html('div a');
+ hAzzle.html('li*5 > p.n$');
  
   RESULT:  
   
@@ -343,7 +353,7 @@ hAzzle.html = function (str, data) {
     // Remove wrapper from fragment
 
     nodes = hAzzle.merge(nodes, fragment.childNodes);
-    return hAzzle(nodes);
+
     fragment.innerHTML = "";
     fragment.textContent = "";
 
