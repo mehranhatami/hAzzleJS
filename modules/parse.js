@@ -1,3 +1,186 @@
+/** 
+ * Generate HTML
+ 
+ A FEW EXAMPLES:
+ 
+  #ID
+  ---
+  
+  hAzzle.html('div#hello');  
+
+  RESULT: 
+  
+  <div id="hello"> <div>
+
+  #MULTIPLE ID
+  ---
+  
+  hAzzle.html('div#one#two');  
+
+  RESULT: 
+  
+  <div id="two"> <div>
+
+  #CLASS
+  ------
+  
+  hAzzle.html('div.hello');  
+
+  RESULT: 
+  
+  <div class="hello"> <div>
+
+  #MULTIPLE CLASSES
+  ------
+  
+  hAzzle.html('div.one.two.three.four-five_six');  
+
+  RESULT: 
+  
+  <div class="one two three four-five_six"> <div>
+  
+  #ID AND CLASS
+  ------
+  
+  hAzzle.html('div#hello.test');  
+
+  RESULT: 
+  
+  <div id="hello" class="test"> <div>
+  
+  #ATTRIBUTES
+  -----------
+  
+  hAzzle.html('<div title="hello" data-test="1"></div>');  
+
+  RESULT: 
+  
+  <div id="hello" class="test"> <div>
+
+  #ATTRIBUTES WITH SPACE
+  ----------------------
+  
+  hAzzle.html('div[title=" hello  world ",data-test=1]');  
+
+  RESULT: 
+  
+  <div title="hello world" data-test="1"></div>
+
+  #EMPTY ATTRIBUTES
+  ----------------------
+  
+  hAzzle.html('div[title]');  
+
+  RESULT: 
+  
+  <div title=""></div>
+
+  #REPETITION
+  ----------------------
+  
+  hAzzle.html('li*3');  
+
+  RESULT: 
+  
+  <li></li>
+  <li></li>
+  <li></li>
+  
+ #OPERATORS
+  ----------------------
+  
+  hAzzle.html('li*5 > p.n$');  
+
+  RESULT: 
+  
+  <div>
+    <p>
+      <span></span>
+   </p>
+  </div>
+  
+  NUMBERING INHERITED FROM PARENT WHEN SINGLE ELEMENT
+  -------------
+
+ hAzzle.html('div a');
+ 
+  RESULT:  
+  
+  <li>
+    <p class="n3"></p>
+  </li>
+  <li>
+    <p class="n2"></p>
+  </li>
+   <li>
+    <p class="n1"></p>
+  </li>
+
+
+ TEXT
+ -------------
+
+ hAzzle.html('div{hello}')
+  
+  RESULT:
+  
+  <div>hello</div>
+
+
+ TEXT REPLACEMENT
+ -------------
+
+ hAzzle.html('div{hello $x$y}', { x: 'world', y: '!' }	)
+  
+  RESULT:
+  
+ <div>hello world!</div>
+
+ SECTION
+ -------------
+
+ hAzzle.html('div{hello}>p*2'	)
+  
+  RESULT:
+ 
+<section>
+ <p>
+   <div class="places">
+     <li></li>
+     <li></li>
+     <li></li>
+     <li></li>
+     <li></li>
+  </div>
+</p>
+</section>
+
+ COMPLEX EXAMPLE
+  -------------
+
+ hAzzle.html('div{hello}#main>ul.list.bacon#bacon > li.hello$*4 > a[href=#$]{hello $x}', { x: 'world' })
+  
+  RESULT:
+  
+  <div id="main">
+      hello
+  <ul id="bacon" class="list bacon">
+    <li class="hello1">
+       <a href="#1">hello world</a>
+    </li>
+    <li class="hello2">
+    <a href="#2">hello world</a>
+    </li>
+    <li class="hello3">
+    <a href="#3">hello world</a>
+    </li>
+    <li class="hello4">
+    <a href="#4">hello world</a>
+    </li>
+</ul>
+</div>
+
+**/
 var slice = Array.prototype.slice,
     call = Function.prototype.call,
     trim = String.prototype.trim,
@@ -5,6 +188,7 @@ var slice = Array.prototype.slice,
     // Various regEx
 
     matchExpr = {
+        trimspaces: /^\s*|\s*$/g,
         repl: /['"]/g,
         operators: /[>+]/g,
         multiplier: /\*(\d+)$/,
@@ -49,10 +233,15 @@ var slice = Array.prototype.slice,
 
 hAzzle.html = function (str, data) {
 
+    // Remove whitespace
+
+    str = str.replace(matchExpr.trimspaces, '');
+
     var nodes = [],
         parts = twist(str.split(matchExpr.operators), call, trim),
         fragment = document.createDocumentFragment(),
-        aa, i, parents = [fragment],
+        aa = [],
+        i, parents = [fragment],
         matches, matched,
         op = (matchExpr.operators.exec(str) || [])[0],
         attrs = {};
@@ -91,6 +280,7 @@ hAzzle.html = function (str, data) {
 
         // Tag names
         if ((matches = part.match(matchExpr.tagname))) {
+
             tag = matches[0];
         } else {
             tag = 'div';
@@ -120,12 +310,17 @@ hAzzle.html = function (str, data) {
 
             for (index = 0; index < count; index++) {
 
-              // Use parentIndex if this element has a count of 1
+                // Use parentIndex if this element has a count of 1
 
-               _index = count > 1 ? index : i;
+                _index = count > 1 ? index : i;
 
                 element = createDOMElement(_index, tag, id, classes, text, attrs);
-                if (op === '+') element._sibling = true;
+
+                if (op === '+') {
+
+                    element._sibling = true;
+
+                }
 
                 aa[i].appendChild(element);
             }
@@ -133,7 +328,7 @@ hAzzle.html = function (str, data) {
 
         // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
 
-       if (op === '>') {
+        if (op === '>') {
 
             parents = reduce(parents, function (p, c) {
 
@@ -148,7 +343,7 @@ hAzzle.html = function (str, data) {
     // Remove wrapper from fragment
 
     nodes = hAzzle.merge(nodes, fragment.childNodes);
-
+    return hAzzle(nodes);
     fragment.innerHTML = "";
     fragment.textContent = "";
 
@@ -213,5 +408,6 @@ function createDOMElement(index, tag, id, className, text, attrs) {
             element.setAttribute(key, numbered(attrs[key], index));
         }
     }
+
     return element;
 }
