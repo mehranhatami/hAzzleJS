@@ -257,6 +257,7 @@ var slice = Array.prototype.slice,
     // Various regEx
 
     matchExpr = {
+        white: /\$(\w+)/g,
         trimspaces: /^\s*|\s*$/g,
         repl: /['"]/g,
         operators: /[>+]/g,
@@ -304,7 +305,7 @@ var slice = Array.prototype.slice,
  * Create HTML
  *
  * @param {String} str
- * @param {Undefined/Object}
+ * @param {Undefined/Object} data
  * @return {Object}
  */
 
@@ -378,8 +379,10 @@ hAzzle.html = function (str, data) {
         // Text
         if ((matches = part.match(matchExpr.text))) {
             text = matches[1];
+			
             if (data) {
-                text = text.replace(/\$(\w+)/g, function (m, key) {
+            
+			    text = text.replace(matchExpr.white, function (m, key) {
                     return data[key];
                 });
             }

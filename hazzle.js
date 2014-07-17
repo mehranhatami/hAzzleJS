@@ -39,7 +39,7 @@
             path + 'eventhooks.js',
             path + 'ajax.js',
             path + 'clone.js',
-            path + 'parsing.js',
+            path + 'jsonxml.js',
             path + 'localestorage.js'
 
         ];

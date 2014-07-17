@@ -34,24 +34,3 @@ hAzzle.extend({
     }
 
 }, hAzzle);
-
-hAzzle.extend({
-
-
-    /**
-     * Submits a form as an XML string
-     */
-    form2xml: function () {
-        var formname = this.name || 'form',
-            xml = '',
-            a = this.serializeArray();
-        hAzzle.each(a, function () {
-            var elt = this.name.replace(/\[\]/g, ''),
-                node = this.value || '';
-            xml += '<' + elt + '>' + encodeURIComponent(node) + '</' + elt + '>';
-        });
-        return '<' + formname + '>' + xml + '</' + formname + '>';
-    }
-
-
-});

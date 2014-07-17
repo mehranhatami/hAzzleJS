@@ -48,7 +48,7 @@ var conf = function conf() {
         'eventhooks.js',
         'ajax.js',
         'clone.js',
-        'parsing.js',
+        'jsonxml.js',
         'localestorage.js'
       ],
       modules = [],
