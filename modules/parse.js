@@ -54,8 +54,8 @@
   hAzzle.html('<div title="hello" data-test="1"></div>');  
 
   RESULT: 
-  
-  <div id="hello" class="test"> <div>
+
+  <div title="hello" data-test="1"></div>
 
   #ATTRIBUTES WITH SPACE
   ----------------------
@@ -109,7 +109,57 @@
   <p></p>
   <div></div>
 
-  NUMBERING INHERITED FROM PARENT WHEN SINGLE ELEMENT
+
+ #NUMBERING
+  ----------------------
+  
+  hAzzle.html('li.n$#l$*5');  
+
+  RESULT: 
+  
+  <li id="l5" class="n5"></li>
+  <li id="l4" class="n4"></li>
+  <li id="l3" class="n3"></li>
+  <li id="l2" class="n2"></li>
+  <li id="l1" class="n1"></li>
+
+ #NUMBERING WITH PADDING
+  ----------------------
+  
+  hAzzle.html('li.n$$#l$$$$*27');  
+
+  RESULT: 
+  
+<li id="l0027" class="n27"></li>
+<li id="l0026" class="n26"></li>
+<li id="l0025" class="n25"></li>
+<li id="l0024" class="n24"></li>
+<li id="l0023" class="n23"></li>
+<li id="l0022" class="n22"></li>
+<li id="l0021" class="n21"></li>
+<li id="l0020" class="n20"></li>
+<li id="l0019" class="n19"></li>
+<li id="l0018" class="n18"></li>
+<li id="l0017" class="n17"></li>
+<li id="l0016" class="n16"></li>
+<li id="l0015" class="n15"></li>
+<li id="l0014" class="n14"></li>
+<li id="l0013" class="n13"></li>
+<li id="l0012" class="n12"></li>
+<li id="l0011" class="n11"></li>
+<li id="l0010" class="n10"></li>
+<li id="l0009" class="n09"></li>
+<li id="l0008" class="n08"></li>
+<li id="l0007" class="n07"></li>
+<li id="l0006" class="n06"></li>
+<li id="l0005" class="n05"></li>
+<li id="l0004" class="n04"></li>
+<li id="l0003" class="n03"></li>
+<li id="l0002" class="n02"></li>
+<li id="l0001" class="n01"></li>
+
+
+  NUMBERING INHERITED FROM PARENT WHITH SINGLE ELEMENT
   -------------
 
  hAzzle.html('li*5 > p.n$');
@@ -190,6 +240,15 @@
 </ul>
 </div>
 
+==================================================
+
+Other compinations are also possible, and you can
+create single tags - e.g. div, span, b, img
+
+Just be carefull. This is a powerfull tool.!!
+And suddenly you can end up width
+50 million 'div' tags as I did :( :( :( :( :(
+
 **/
 var slice = Array.prototype.slice,
     call = Function.prototype.call,
@@ -241,7 +300,20 @@ var slice = Array.prototype.slice,
         return result;
     };
 
+/**
+ * Create HTML
+ *
+ * @param {String} str
+ * @param {Undefined/Object}
+ * @return {Object}
+ */
+
 hAzzle.html = function (str, data) {
+
+    if (!str) {
+
+        return;
+    }
 
     // Remove whitespace
 
