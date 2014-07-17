@@ -120,9 +120,9 @@ hAzzle.html = function (str, data) {
 
             for (index = 0; index < count; index++) {
 
-                // Use parentIndex if this element has a count of 1
+              // Use parentIndex if this element has a count of 1
 
-                _index = count > 1 ? index : i;
+               _index = count > 1 ? index : i;
 
                 element = createDOMElement(_index, tag, id, classes, text, attrs);
                 if (op === '+') element._sibling = true;
@@ -133,7 +133,7 @@ hAzzle.html = function (str, data) {
 
         // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
 
-        if (op === '>') {
+       if (op === '>') {
 
             parents = reduce(parents, function (p, c) {
 
