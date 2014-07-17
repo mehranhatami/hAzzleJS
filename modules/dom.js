@@ -57,23 +57,14 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    add: function (other, context) {
-        var selection = hAzzle(other, context),
-            contents = hAzzle.unique(selection.get().concat(this.get())),
-            i = 0,
-            l = contents.length;
-
-        // can't use while-loop here
-        // returned selection will be in reverse
-
-        for (; i < l; ++i) {
-            selection[i] = contents[i];
-        }
-        selection.length = contents.length;
-
-        return selection;
-    },
-
+    add: function( selector, context ) {
+		return hAzzle(
+			hAzzle.unique(
+				hAzzle.merge( this.get(), hAzzle( selector, context ) )
+			)
+		);
+	},
+	
     /**
      * Reduce the set of matched elements to the first in the set,
      * OR to the first Nth elements, if index is specified

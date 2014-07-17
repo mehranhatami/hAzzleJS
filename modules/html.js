@@ -409,7 +409,7 @@ function ManipulationMethod(elem, count, html, chain, method, iah) {
 function injectMethods(elem, html, method) {
 
     return injectHTML.call(elem, html, elem, function (t, el) {
-
+try {
         if (method === 'appendTo') {
 
             t.appendChild(el);
@@ -435,6 +435,7 @@ function injectMethods(elem, html, method) {
                 t.parentElement.appendChild(el);
             }
         }
+		}catch(e) {}
     }, 1);
 }
 

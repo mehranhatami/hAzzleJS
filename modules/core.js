@@ -8,7 +8,7 @@
 var win = this,
     doc = win.document,
     Jiesa = hAzzle.Jiesa,
-    expando = "DOM" + -hAzzle.now(),
+    expando = hAzzle.expando,
 
     // Core methods for DOM
 

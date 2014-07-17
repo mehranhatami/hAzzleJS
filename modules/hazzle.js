@@ -108,7 +108,7 @@
 
     hAzzle.Core = Core.prototype = {
 
-        // The default length of a hAzzle object is 0
+        constructor: hAzzle, 
 
         length: 0,
 
@@ -237,7 +237,9 @@
          */
 
         now: Date.now,
-
+		
+		expando: 'hAzzle' + Math.random() + '-kf',
+		
         /**
          * Error function
          */
@@ -617,7 +619,6 @@
         return fn(elems[0], key);
     };
 
-
     /**
      * Remove empty whitespace from beginning and end of a string
      *
@@ -639,8 +640,6 @@
             return value === 'string' ? value.trim() : value;
         };
     })();
-
-
 
     /* =========================== INTERNAL ========================== */
 
