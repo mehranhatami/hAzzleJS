@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.3a
+ * Version: 0.9.2a
  * Released under the MIT License.
  *
- * Date: 2014-07-17
+ * Date: 2014-07-16
  */
 (function (window, undefined) {
 
@@ -55,11 +55,44 @@
     function Core(selector, context) {
 
         if (!selector) {
-
             return this;
         }
 
-        selector = Identify(selector, context);
+        if (typeof selector === 'string') {
+
+            selector = hAzzle.find(selector, context);
+
+            // document fragment
+        } else if (selector.nodeType === 11) {
+
+            // collect the child nodes
+            selector = selector.childNodes;
+
+            // nodeType			
+
+        } else if (selector.nodeType) {
+
+            selector = [selector];
+
+            // Document Ready
+
+        } else if (hAzzle.isNodeList(selector)) {
+
+            selector = hAzzle.makeArray(selector);
+        } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) {
+            selector = [selector];
+        }
+
+        if (selector.selector !== undefined) {
+
+            selector = selector;
+        }
+
+
+        if (selector.selector !== undefined) {
+
+            selector = selector;
+        }
 
         var i = this.length = this.size = selector.length;
 
@@ -667,42 +700,9 @@
         };
     })();
 
+
+
     /* =========================== INTERNAL ========================== */
-
-    function Identify(selector, context) {
-        if (typeof selector === 'string') {
-
-            selector = hAzzle.find(selector, context);
-
-            // document fragment
-        } else if (selector.nodeType === 11) {
-
-            // collect the child nodes
-            selector = selector.childNodes;
-
-            // nodeType			
-
-        } else if (selector.nodeType) {
-
-            selector = [selector];
-
-            // Document Ready
-
-        } else if (hAzzle.isNodeList(selector)) {
-
-            selector = hAzzle.makeArray(selector);
-        } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) {
-            selector = [selector];
-        }
-
-        if (selector.selector !== undefined) {
-
-            selector = selector;
-        }
-
-        return selector;
-    }
-
 
     function isArraylike(obj) {
         var length = obj.length,

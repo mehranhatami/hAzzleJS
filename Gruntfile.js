@@ -19,6 +19,7 @@ var conf = function conf() {
         'ready.js',
         'shims/pnow.js',
         'document.js',
+        'text.js',
         'core.js',
         'cl3.js',
         'cl4.js',

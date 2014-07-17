@@ -6,6 +6,21 @@
 var slice = Array.prototype.slice;
 
 hAzzle.extend({
+	
+	 size: function (obj, ownPropsOnly) {
+            var count = 0,
+                key;
+
+            if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
+                return obj.length;
+            } else if (hAzzle.isObject(obj)) {
+                for (key in obj)
+                    if (!ownPropsOnly || obj.hasOwnProperty(key))
+                        count++;
+            }
+
+            return count;
+     },
 
     keys: function (obj) {
         var keys = [],
