@@ -558,11 +558,6 @@
         }
     }, hAzzle);
 
-    /* =========================== SELECTOR ENGINE HOLDER ========================== */
-
-    var Jiesa = {};
-    hAzzle.Jiesa = Jiesa;
-
 
     // This one has to be fast...
 

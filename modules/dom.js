@@ -57,14 +57,14 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    add: function( selector, context ) {
-		return hAzzle(
-			hAzzle.unique(
-				hAzzle.merge( this.get(), hAzzle( selector, context ) )
-			)
-		);
-	},
-	
+    add: function (selector, context) {
+        return hAzzle(
+            hAzzle.unique(
+                hAzzle.merge(this.get(), hAzzle(selector, context))
+            )
+        );
+    },
+
     /**
      * Reduce the set of matched elements to the first in the set,
      * OR to the first Nth elements, if index is specified
@@ -295,31 +295,20 @@ hAzzle.extend({
 
         if (typeof selector === 'string') {
 
-            /**
-             * For better performance, are we using
-             * hAzzle.findOne() if we only need to find
-             * one single element, with fallback to .
-             * hAzzle.find() for multiple elements
-             */
+            // Loop through all elements, and check for match
+
+            for (i = 0; i < len; i++) {
+
+                hAzzle.find(selector, self[i], ret);
+            }
+
+            // If more then one element, make sure they are unique
 
             if (len > 1) {
 
-                // Loop through all elements, and check for match
-
-                for (i = 0; i < len; i++) {
-
-                    hAzzle.find(selector, self[i], ret);
-                }
-
-                // If more then one element, make sure they are unique
-
                 ret = hAzzle.unique(ret);
 
-            } else {
-
-                ret = hAzzle.findOne(selector, self[0]);
             }
-
             // return the result
 
             return hAzzle(ret);

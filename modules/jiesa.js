@@ -25,10 +25,8 @@ var win = this,
 
     // Expando
 
-    expando = "hAzzle" + -hAzzle.now(),
+    expando = hAzzle.expando,
 
-    validTags = ['div', 'span', 'b', 'p', 'href', 'img', 'button', 'textarea', 'form', 'table', 'input'],
-	
     push = Array.prototype.push,
 
     // Various regEx
@@ -49,7 +47,7 @@ var win = this,
 
 hAzzle.extend({
 
-    version: '0.0.3a',
+    version: '0.0.3c',
 
     has: {
 
@@ -153,15 +151,8 @@ hAzzle.extend({
         Jiesa.useNative = single ? true : false;
 
         if (documentIsHTML) {
-
-            // Allow creation of one single tag *ONLY*
-            // hAzzle.create() will take care of the rest
-
-            if (selector[0] === "<" && selector[selector.length - 1] === ">" && selector.length >= 3) {
-
-                return selector = fragment(selector).childNodes;
-
-            } else if (quickMatch) {
+            
+			if (quickMatch) {
 
                 if ((m = quickMatch[1])) {
                     if (nodeType === 9) {
@@ -176,7 +167,7 @@ hAzzle.extend({
                         }
                     } else {
 
-                        if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
+                        if (context.ownerDocument && ((elem = context.ownerDocument.getElementById(m))) &&
                             hAzzle.contains(context, elem) && elem.id === m) {
                             results.push(elem);
                             return results;
@@ -195,15 +186,14 @@ hAzzle.extend({
                     push.apply(results, context.getElementsByClassName(quickMatch[3]));
                     return results;
                 }
-            } else
+            }  else
 
             // If querySelectorAll are activated, and not buggy,
             // existing, and no XML doc - use QSA. If not, fallback
             // to the internal selector engine 
 
-            if (Jiesa.useNative) {
+            if (Jiesa.useNative && Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
 
-                if (Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
                     var old = true,
                         nid = expando;
 
@@ -250,7 +240,6 @@ hAzzle.extend({
                         }
                     }
                 }
-            }
         }
         // Run the parser
 
@@ -354,66 +343,6 @@ function checkParent(elem) {
 
     fragment.appendChild(elem);
     return fragment;
-}
-
-
-/**
- * Create single element tags ( e.g. div, span, b)
- *
- *  @param {String} html
- * @return {Object}
- *
- */
-
-function element(tag, props) {
-
-    // Only allow valid HTML tags
-    var p, elem = document.createElement(tag);
-    if (validTags[tag]) {
-        if (hAzzle.isObject(props)) {
-
-            // Copy over the properties
-
-            for (p in props) {
-
-                elem[p] = props[p];
-            }
-        }
-    }
-    return elem;
-
-}
-
-/**
- * Create a document fragment from a string
- *
- * @param {String} html
- * @return {Object}
- */
-
-function fragment(html) {
-
-    var frag = document.createDocumentFragment();
-
-    if (typeof html === 'string') {
-
-        // Get rid of whitespace e.g.
-
-        html = hAzzle.trim(html);
-
-        var cur, elem = element('div', {
-
-            // Danger or not, Mehran??
-
-            innerHTML: html
-        });
-
-        while ((cur = elem.firstElementChild)) {
-            frag.appendChild(cur);
-        }
-
-    }
-    return frag;
 }
 
 // Expand to the global hAzzle object
