@@ -129,8 +129,8 @@ hAzzle.extend({
 
     find: function (selector, context, results, /* INTERNAL */ single) {
 
-        var elem, quickMatch = quickExpr.exec(selector),
-            m, nodeType;
+        var quickMatch = quickExpr.exec(selector),
+            nodeType;
 
         // Set correct document
 
@@ -154,38 +154,7 @@ hAzzle.extend({
 
             if (quickMatch) {
 
-                if ((m = quickMatch[1])) {
-                    if (nodeType === 9) {
-                        elem = context.getElementById(m);
-                        if (elem && elem.parentNode) {
-                            if (elem.id === m) {
-                                results.push(elem);
-                                return results;
-                            }
-                        } else {
-                            return results;
-                        }
-                    } else {
-
-                        if (context.ownerDocument && ((elem = context.ownerDocument.getElementById(m))) &&
-                            hAzzle.contains(context, elem) && elem.id === m) {
-                            results.push(elem);
-                            return results;
-                        }
-                    }
-
-                    // Tag
-
-                } else if (quickMatch[2]) {
-                    push.apply(results, context.getElementsByTagName(selector));
-                    return results;
-
-                    // Class
-
-                } else if (context.getElementsByClassName) {
-                    push.apply(results, context.getElementsByClassName(quickMatch[3]));
-                    return results;
-                }
+                qM(selector, context, quickMatch);
             }
 
             // If querySelectorAll are activated, and not buggy,
@@ -325,7 +294,6 @@ hAzzle.extend({
 
 }, Jiesa);
 
-
 /**
  * Append to fragment
  */
@@ -343,6 +311,43 @@ function checkParent(elem) {
 
     fragment.appendChild(elem);
     return fragment;
+}
+
+function qM(selector, context, quickMatch) {
+    var results = [],
+        m, elem;
+    if ((m = quickMatch[1])) {
+        if (context.nodeType === 9) {
+            elem = context.getElementById(m);
+            if (elem && elem.parentNode) {
+                if (elem.id === m) {
+                    results.push(elem);
+                    return results;
+                }
+            } else {
+                return results;
+            }
+        } else {
+
+            if (context.ownerDocument && ((elem = context.ownerDocument.getElementById(m))) &&
+                hAzzle.contains(context, elem) && elem.id === m) {
+                results.push(elem);
+                return results;
+            }
+        }
+
+        // Tag
+
+    } else if (quickMatch[2]) {
+        push.apply(results, context.getElementsByTagName(selector));
+        return results;
+
+        // Class
+
+    } else if (context.getElementsByClassName) {
+        push.apply(results, context.getElementsByClassName(quickMatch[3]));
+        return results;
+    }
 }
 
 // Expand to the global hAzzle object
