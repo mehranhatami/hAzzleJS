@@ -86,7 +86,7 @@ hAzzle.each(['width', 'height'], function (name) {
         }
 
         // Get width or height on the element
-        if (value === undefined) {
+        if (typeof value === 'undefined') {
 
             return parseFloat(hAzzle.css(elem, name));
         }
@@ -96,8 +96,6 @@ hAzzle.each(['width', 'height'], function (name) {
         hAzzle(elem).css(name, value);
     };
 });
-
-
 
 /**
  * Gets a window from an element

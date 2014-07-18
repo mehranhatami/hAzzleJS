@@ -1,12 +1,15 @@
-// Classes
-var whitespaceRegex = /\S+/g,
-    mal = /(^| )a( |$)/,
-    mar = /(^| )b( |$)/,
+/**
+ * Class manipulation 
+ */ 
+
+var wSpace = /\S+/g,
+    mArgsL = /(^| )a( |$)/,
+    mArgsR = /(^| )b( |$)/,
 
     // class feature container 
     // Contains various supports and bug related info
 
-    clsF = {}; // class features
+    clsF = {};
 
 // Check for classList support. NOTE! IE9 are the only browser
 // who don't support classList
@@ -17,13 +20,13 @@ hAzzle.assert(function (div) {
     clsF['api-classList'] = !!document.documentElement.classList;
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
-    clsF['api-MultiArgs'] = mal.test(div.className) && mar.test(div.className);
+    clsF['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);
 });
 
 hAzzle.extend({
 
     /**
-     * Add class(es) to element collection
+     * Add class(es) to element
      *
      * @param {String} value
      * @return {hAzzle}
@@ -46,7 +49,7 @@ hAzzle.extend({
 
                 // split with regEx are a safer solution
 
-                classes = value.match(whitespaceRegex) || [];
+                classes = value.match(wSpace) || [];
 
                 return this.each(function (elem) {
 
@@ -93,7 +96,7 @@ hAzzle.extend({
 
             if (arguments.length === 0 || type === 'string') {
 
-                classes = value.match(whitespaceRegex) || [];
+                classes = value.match(wSpace) || [];
 
                 return this.each(function (elem) {
 
@@ -126,7 +129,7 @@ hAzzle.extend({
     },
 
     /**
-     * Checks if an element has the given class
+     * Check if element contains class name(s)
      *
      * @param {String} selector(s)
      * @return {Boolean} true if the element contains all classes
@@ -151,28 +154,6 @@ hAzzle.extend({
             }
         }
         return false;
-    },
-
-
-
-    /**
-     * Replace each class name in the set of matched elements
-     *
-     * @param {String} oC
-     * @param {String} nC
-     * @param {Boolean} anc
-     * @return {hAzzle}
-     */
-
-    replaceClass: function (oC, nC, anC) {
-        var el;
-        return this.each(function () {
-            el = hAzzle(this);
-            if (el.hasClass(oC) || anC === true) {
-                el.removeClass(oC);
-                el.addClass(nC);
-            }
-        });
     },
 
     /**
@@ -200,7 +181,7 @@ hAzzle.extend({
                     // Toggle individual class names
                     var className,
                         i = 0,
-                        classNames = value.match(whitespaceRegex) || [];
+                        classNames = value.match(wSpace) || [];
 
                     // Check each className given, space separated list
                     while ((className = classNames[i++])) {

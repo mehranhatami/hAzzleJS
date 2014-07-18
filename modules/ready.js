@@ -46,7 +46,7 @@ hAzzle.domReady = {
             return;
         }
 
-        if (hAzzle.domReady.callbacks.push(fn) == 1) {
+        if (hAzzle.domReady.callbacks.push(fn) === 1) {
 
             hAzzle.domReady.listen();
         }

@@ -1,35 +1,38 @@
 //  External CSS functions
+
 var docElem = hAzzle.docElem;
 
 hAzzle.extend({
 
-
     /**
-     * @param {number=} x
-     * @param {number=} y
+	 * Calculates offset of the current element
+     * @param {number} x
+     * @param {number} y
      * @return {hAzzle|number}
      */
 
-    offset: function (ops) {
+    offset: function (obj) {
+		
         if (arguments.length) {
-            return ops === undefined ?
+			
+            return obj === undefined ?
                 this :
                 this.each(function (el, i) {
-                    xy(el, ops, i);
+                    xy(el, obj, i);
                 });
         }
 
         var el = this[0],
-            d = el && el.ownerDocument,
-            w = hAzzle.getWindow(d),
+            d, w, boundingRect ;
 
-            // getBoundingClientRect() are supported from IE9, and all the 
-            // other major browsers hAzzle are supposed to support
-
-            bcr = el.getBoundingClientRect();
-
-        // If current element don't exist in the document
-        // root, return empty object
+    if (el) {
+        
+		d = el.ownerDocument;
+		boundingRect  = el.getBoundingClientRect();
+		w = hAzzle.getWindow(d);
+		
+        // If current element don't exist in the 
+        // document root, return empty object
 
         if (!hAzzle.contains(docElem, el)) {
 
@@ -42,13 +45,14 @@ hAzzle.extend({
         // Return all angeles of the 'offset'
 
         return {
-            top: bcr.top + w.pageYOffset - docElem.clientTop,
-            left: bcr.left + w.pageXOffset - docElem.clientLeft,
-            right: bcr.right + w.pageXOffset - docElem.clientLeft,
-            bottom: bcr.bottom + w.pageYOffset - docElem.clientTop,
-            height: bcr.bottom - bcr.top,
-            width: bcr.right - bcr.left
+            top: boundingRect .top + w.pageYOffset - docElem.clientTop,
+            left: boundingRect .left + w.pageXOffset - docElem.clientLeft,
+            right: boundingRect .right + w.pageXOffset - docElem.clientLeft,
+            bottom: boundingRect .bottom + w.pageYOffset - docElem.clientTop,
+            height: boundingRect .bottom - boundingRect .top,
+            width: boundingRect .right - boundingRect .left
         };
+	 }
     },
 
     offsetParent: function () {
