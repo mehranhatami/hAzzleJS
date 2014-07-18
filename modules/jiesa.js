@@ -17,7 +17,7 @@ var win = this,
 
     doc = win.document,
 
-    ElemProto = (window.Element || window.Node || window.HTMLElement).prototype,
+    ElemProto = (win.Element || win.Node || win.HTMLElement).prototype,
 
     documentIsHTML = hAzzle.documentIsHTML,
 
@@ -151,8 +151,8 @@ hAzzle.extend({
         Jiesa.useNative = single ? true : false;
 
         if (documentIsHTML) {
-            
-			if (quickMatch) {
+
+            if (quickMatch) {
 
                 if ((m = quickMatch[1])) {
                     if (nodeType === 9) {
@@ -186,7 +186,7 @@ hAzzle.extend({
                     push.apply(results, context.getElementsByClassName(quickMatch[3]));
                     return results;
                 }
-            }  else
+            }
 
             // If querySelectorAll are activated, and not buggy,
             // existing, and no XML doc - use QSA. If not, fallback
@@ -194,52 +194,52 @@ hAzzle.extend({
 
             if (Jiesa.useNative && Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
 
-                    var old = true,
-                        nid = expando;
+                var old = true,
+                    nid = expando;
 
-                    if (context !== doc) {
+                if (context !== doc) {
 
-                        // Thanks to Andrew Dupont for the technique
+                    // Thanks to Andrew Dupont for the technique
 
-                        old = context.getAttribute('id');
+                    old = context.getAttribute('id');
 
-                        if (old) {
+                    if (old) {
 
-                            nid = old.replace(escaped, '\\$&');
+                        nid = old.replace(escaped, '\\$&');
 
-                        } else {
+                    } else {
 
-                            context.setAttribute('id', nid);
-                        }
-
-                        nid = "[id='" + nid + "'] ";
-
-                        context = sibling.test(selector) ? context.parentElement : context;
-                        selector = nid + selector.split(',').join(',' + nid);
+                        context.setAttribute('id', nid);
                     }
 
-                    try {
+                    nid = "[id='" + nid + "'] ";
 
-                        // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
+                    context = sibling.test(selector) ? context.parentElement : context;
+                    selector = nid + selector.split(',').join(',' + nid);
+                }
 
-                        if (single) {
+                try {
 
-                            return [context.querySelector(selector)];
+                    // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
 
-                        } else {
+                    if (single) {
 
-                            push.apply(results, context.querySelectorAll(selector));
-                            return results;
-                        }
+                        return [context.querySelector(selector)];
 
-                    } finally {
+                    } else {
 
-                        if (!old) {
+                        push.apply(results, context.querySelectorAll(selector));
+                        return results;
+                    }
 
-                            context.removeAttribute("id");
-                        }
+                } finally {
+
+                    if (!old) {
+
+                        context.removeAttribute("id");
                     }
                 }
+            }
         }
         // Run the parser
 
