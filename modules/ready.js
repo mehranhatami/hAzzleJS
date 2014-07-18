@@ -34,15 +34,17 @@ hAzzle.domReady = {
 
             hAzzle.domReady.loaded = true;
 
-            if (doc.removeEventListener) {
-
-                doc.removeEventListener('DOMContentLoaded', hAzzle.domReady.run, false);
-                win.removeEventListener("load", hAzzle.domReady.run, false);
-            }
+            doc.removeEventListener('DOMContentLoaded', hAzzle.domReady.run, false);
+            win.removeEventListener("load", hAzzle.domReady.run, false);
         });
     },
 
     add: function (fn) {
+
+        if (typeof fn !== "function") {
+            hAzzle.error("Couldn't load your Javascript code");
+            return;
+        }
 
         if (hAzzle.domReady.callbacks.push(fn) == 1) {
 
