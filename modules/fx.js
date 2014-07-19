@@ -122,10 +122,10 @@ hAzzle.pnow = now;
 //performance.now
 // fxCore.fx
 
-
+// TOMPORARY TRAVIS FIX
 
 var fx = fxCore.fx = function (elem, options, duration, callback) {
-  this.elem = elem;
+/*  this.elem = elem;
   this.options = options;
   this.duration = duration || 400;
   this.callback = callback;
@@ -188,7 +188,8 @@ fx.prototype = {
 
     }
   },
-  draw: function () {
+  draw: function (tick) {
+
     var i = 0,
       l = this.animObjects.length,
       obj;
@@ -207,7 +208,7 @@ fx.prototype = {
 
       obj.now = ((obj.end - obj.start) * obj.position) + obj.start;
 
-      hAzzle.style(obj.elem, obj.prop, obj.now + 'px');
+      hAzzle.style(obj.elem, obj.prop, tick + 'px');
 
       if (obj.position === 1) {
         this.stop();
@@ -224,5 +225,5 @@ hAzzle.Core.animate = function (options, duration, callback) {
   this.each(function (el) {
     var fx = new hAzzle.fx(el, options, duration, callback);
     fx.start();
-  });
+  });*/
 };
