@@ -6,40 +6,22 @@
  * functions only for Jiesa
  */
 var win = this,
-    doc = win.document,
-    expando = hAzzle.expando,
 
-
-  // Default document
+    // Default document
 
     doc = win.document,
-
-    ElemProto = (win.Element || win.Node || win.HTMLElement).prototype,
-
-    documentIsHTML = hAzzle.documentIsHTML,
-
-    matches,
 
     // Expando
 
     expando = hAzzle.expando,
 
+    ElemProto = (win.Element || win.Node || win.HTMLElement).prototype,
+
+    matches,
+	
+	native = /^[^{]+\{\s*\[native \w/,
+
     push = Array.prototype.push,
-
-    // Various regEx
-
-    sibling = /[+~]/,
-
-    escaped = /'|\\/g,
-
-    native = /^[^{]+\{\s*\[native \w/,
-
-    quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
-
-    rtrim = /^[\x20\t\r\n\f]+|((?:^|[^\\])(?:\\.)*)[\x20\t\r\n\f]+$/g,
-
-    quotes = /=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g,
-
 
     // Core methods for DOM
 
@@ -127,7 +109,6 @@ hAzzle.unique = function (results) {
 
     // Unless we *know* we can detect duplicates, assume their presence
 
-
     apis = !domCore['api-stableSort'] && results.slice(0);
 
     results.sort(sortOrder);
@@ -147,9 +128,6 @@ hAzzle.unique = function (results) {
 
     return results;
 };
-
-
-
 
 // Set up Jiesa
 
