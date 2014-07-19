@@ -228,6 +228,8 @@ if(selector) {
 
         now: Date.now,
 		
+		expando: 'hAzzle' + Math.random() + '-kf',
+		
         /**
          * Error function
          */

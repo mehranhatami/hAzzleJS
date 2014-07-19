@@ -10,6 +10,7 @@
             path + 'types.js',
             path + 'ready.js',
             path + 'shims/pnow.js',
+            path + 'document.js',
             path + 'text.js',			
             path + 'core.js',
             path + 'cl3.js',
