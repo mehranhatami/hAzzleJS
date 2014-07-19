@@ -78,7 +78,9 @@ var requestFrame = foreign.requestAnimationFrame = nRAF,
 
             'foreign-domain': foreign ? false : true,
 
-            // Detect if the browser supports native rAF
+            // Detect if the browser supports native rAF, because there are
+            // issues with iOS6, so check if the native rAF and cAF works
+            // http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
 
             'native-rAF': (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
                 foreign.cancelRequestAnimationFrame)) ? true : false,
