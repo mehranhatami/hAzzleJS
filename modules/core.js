@@ -4,14 +4,13 @@ var win = this,
     docElem = winDoc.documentElement,
     setDocument,
     contains,
-    native = /^[^{]+\{\s*\[native \w/,
+    cnative = /^[^{]+\{\s*\[native \w/,
 
     indexOf = Array.prototype.indexOf,
 
-    MAX_NEGATIVE = 1 << 31,
+    me = 1 << 31,
+	
     expando = 'hAzzle' + Math.random() + '-kf',
-
-    ElemProto = (win.Element || win.Node || win.HTMLElement).prototype,
 
     matches,
 
@@ -31,12 +30,19 @@ var win = this,
         'api-stableSort': expando.split("").sort(sortOrder).join("") === expando,
         'api-sortInput': false,
         'bug-detectDuplicates': !!hasDuplicate,
+        'sort-bug': hAzzle.assert(function (div1) {
+                // Should return 1, but returns 4 (following)
+             return div1.compareDocumentPosition(document.createElement("div")) & 1;
+         })
+
     },
 
-    // Set up Jiesa - the selector engine
+    // Core methods for Jiesa
 
     Jiesa = {
-
+     
+	 // Always use a unique version number 
+     // for Jiesa
         version: '0.0.3d',
 
         sortOrder: sortOrder,
@@ -52,16 +58,11 @@ var win = this,
 
             // Feature detect if the browser supports MatchesSelector
 
-            'api-mS': native.test((matches = ElemProto.matches ||
-                ElemProto.webkitMatchesSelector ||
-                ElemProto.mozMatchesSelector ||
-                ElemProto.oMatchesSelector ||
-                ElemProto.msMatchesSelector)),
-
-            'sort-bug': hAzzle.assert(function (div1) {
-                // Should return 1, but returns 4 (following)
-                return div1.compareDocumentPosition(document.createElement("div")) & 1;
-            })
+            'api-mS': cnative.test((matches = docElem.matches ||
+                docElem.webkitMatchesSelector ||
+                docElem.mozMatchesSelector ||
+                docElem.oMatchesSelector ||
+                docElem.msMatchesSelector)),
         }
     };
 
@@ -86,7 +87,7 @@ var setDocument = hAzzle.setDocument = function (node) {
     // Set correct documentElement for hAzzle to use
 
     docElem = doc.documentElement;
-    alert(docElem);
+
     // Checks if this is an XML or HTML doc
     // If XML doc, set to false, else keep it's original value
 
@@ -103,7 +104,7 @@ var setDocument = hAzzle.setDocument = function (node) {
         }, false);
     }
 
-    sortOrder = native.test(docElem.compareDocumentPosition) ?
+    sortOrder = cnative.test(docElem.compareDocumentPosition) ?
         function (a, b) {
 
             // Flag for duplicate removal
@@ -127,7 +128,7 @@ var setDocument = hAzzle.setDocument = function (node) {
 
             // Disconnected nodes
             if (compare & 1 ||
-                (!Jiesa.has['sort-bug'] && b.compareDocumentPosition(a) === compare)) {
+                (!domCore['sort-bug'] && b.compareDocumentPosition(a) === compare)) {
 
                 // Choose the first element that is related to our preferred document
                 if (a === doc || a.ownerDocument === winDoc && contains(winDoc, a)) {
@@ -252,7 +253,6 @@ Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
     return winDoc.getElementsByName > 0 || winDoc.getElementsByName(expando).length;
 });
 
-
 /**
  * Check if an element contains another element
  *
@@ -261,7 +261,7 @@ Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
  *
  */
 
-contains = native.test(docElem.compareDocumentPosition) || native.test(docElem.contains) ? function (a, b) {
+contains = cnative.test(docElem.compareDocumentPosition) || cnative.test(docElem.contains) ? function (a, b) {
 
     var adown,
         bup = b && b.parentNode;
@@ -321,8 +321,8 @@ hAzzle.contains = function (context, elem) {
 function siblingCheck(a, b) {
     var cur = b && a,
         diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
-        (~b.sourceIndex || MAX_NEGATIVE) -
-        (~a.sourceIndex || MAX_NEGATIVE);
+        (~b.sourceIndex || me) -
+        (~a.sourceIndex || me);
 
     // Use IE sourceIndex if available on both nodes
     if (diff) {
