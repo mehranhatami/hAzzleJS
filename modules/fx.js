@@ -13,7 +13,7 @@ try {
     foreign = window;
 }
 
-var perf = foreign.performance,
+var perf = window.performance,
     perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
     now = perfNow ? function () {
         return perfNow.call(perf);
