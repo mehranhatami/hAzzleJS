@@ -2,7 +2,12 @@
  * Mehran animation engine
  */
 var win = this,
-    foreign;
+    foreign,
+    vendors = ['webkit', 'moz', 'ms', 'o'],
+    i = 0,
+    len = vendors.length,
+    nRAF,
+    nCAF;
 
 // Test if we are within a foreign domain. Use raf from the top if possible.
 try {
@@ -20,8 +25,27 @@ var perf = window.performance,
     } : function () {
         return hAzzle.now();
     },
-    lastTime = 0,
-    polyfill = function (callback) {
+    lastTime = 0;
+
+// Grab the native implementation.
+
+nRAF = top.requestAnimationFrame;
+nCAF = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+
+// Feature detection
+// if native failes	
+
+for (; i < len && !nRAF; i++) {
+    nRAF = top[vendors[i] + 'RequestAnimationFrame'];
+    nCAF = top[vendors[i] + 'CancelAnimationFrame'] ||
+        top[vendors[i] + 'CancelRequestAnimationFrame'];
+}
+
+// Polyfill
+
+if (nRAF || nCAF) {
+
+    nRAF = function (callback) {
         var currTime = new Date().getTime(),
             timeToCall = Math.max(0, 16 - (currTime - lastTime)),
             id = win.setTimeout(function () {
@@ -30,63 +54,41 @@ var perf = window.performance,
                 timeToCall);
         lastTime = currTime + timeToCall;
         return id; // return the id for cancellation capabilities
-    },
+    };
 
-    // Checks for iOS6 will only be done if no native frame support
+    nCAF = function (id) {
+        clearTimeout(id);
+    };
+}
 
-    ios6 = /iP(ad|hone|od).*OS 6/.test(win.navigator.userAgent);
+// Overwrite default rAF
 
-// Feature detection
+foreign.cancelAnimationFrame = nRAF;
 
-var requestFrame = foreign.requestAnimationFrame = function () {
-    // native animation frames
-    // http://webstuff.nfshost.com/anim-timing/Overview.html
-    // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
+// Overwrite default cAF
 
-    return foreign.requestAnimationFrame ||
-        // no native rAF support
-        (ios6 ? // iOS6 is buggy
-            foreign.requestAnimationFrame ||
-            foreign.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
-            foreign.mozRequestAnimationFrame ||
-            foreign.msRequestAnimationFrame :
-            // IE <= 9, Android <= 4.3, very old/rare browsers
-            polyfill);
-}();
+var requestFrame = foreign.requestAnimationFrame = nRAF,
+    fxCore = {
 
-foreign.cancelAnimationFrame = function () {
-    return foreign.cancelAnimationFrame ||
-        // no native cAF support
-        (!ios6 ? foreign.cancelAnimationFrame ||
-            foreign.webkitCancelAnimationFrame ||
-            foreign.webkitCancelRequestAnimationFrame ||
-            foreign.mozCancelAnimationFrame :
-            function (id) {
-                clearTimeout(id);
-            });
-}();
+        version: '0.0.1a',
 
-var fxCore = {
+        has: {
 
-    version: '0.0.1a',
+            // Check for foreign domain       
 
-    has: {
+            'foreign-domain': foreign ? false : true,
 
-        // Check for foreign domain       
+            // Detect if the browser supports native rAF
 
-        'foreign-domain': foreign ? false : true,
+            'native-rAF': (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
+                foreign.cancelRequestAnimationFrame)) ? true : false,
 
-        // Detect if the browser supports native rAF
+            // Detect if performance.now() are supported
 
-        'native-rAF': (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
-            foreign.cancelRequestAnimationFrame)) ? true : false,
+            'perfNow': perfNow,
+        },
 
-        // Detect if performance.now() are supported
-
-        'perfNow': perfNow,
-    },
-
-};
+    };
 
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
@@ -113,7 +115,7 @@ hAzzle.requestFrame = function (callback) {
 // Detect if native rAF or not
 
 hAzzle.nativeRAF = fxCore.has['native-rAF'];
-
+alert( hAzzle.nativeRAF )
 // Foreign domain detection
 
 hAzzle.foreignDomain = fxCore.has['foreign-domain'];
