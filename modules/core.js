@@ -7,8 +7,39 @@
  */
 var win = this,
     doc = win.document,
-    Jiesa = hAzzle.Jiesa,
     expando = hAzzle.expando,
+
+
+  // Default document
+
+    doc = win.document,
+
+    ElemProto = (win.Element || win.Node || win.HTMLElement).prototype,
+
+    documentIsHTML = hAzzle.documentIsHTML,
+
+    matches,
+
+    // Expando
+
+    expando = hAzzle.expando,
+
+    push = Array.prototype.push,
+
+    // Various regEx
+
+    sibling = /[+~]/,
+
+    escaped = /'|\\/g,
+
+    native = /^[^{]+\{\s*\[native \w/,
+
+    quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+
+    rtrim = /^[\x20\t\r\n\f]+|((?:^|[^\\])(?:\\.)*)[\x20\t\r\n\f]+$/g,
+
+    quotes = /=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g,
+
 
     // Core methods for DOM
 
@@ -53,7 +84,7 @@ var win = this,
 
 /* =========================== SELECTOR ENGINE HOLDER ========================== */
 
-var Jiesa = {
+var Jiesa = hAzzle.Jiesa = {
 
     sortOrder: sortOrder,
 
@@ -116,3 +147,73 @@ hAzzle.unique = function (results) {
 
     return results;
 };
+
+
+
+
+// Set up Jiesa
+
+hAzzle.extend({
+
+    version: '0.0.3c',
+
+    has: {
+
+        // Detect if the browser supports classList
+        'api-classList': !!document.documentElement.classList,
+
+        // Feature detect if the browser supports QSA
+
+        'api-QSA': !!doc.querySelectorAll,
+
+        // Feature detect if the browser supports MatchesSelector
+
+        'api-mS': native.test((matches = ElemProto.matches ||
+            ElemProto.webkitMatchesSelector ||
+            ElemProto.mozMatchesSelector ||
+            ElemProto.oMatchesSelector ||
+            ElemProto.msMatchesSelector))
+    }
+
+}, Jiesa);
+
+// Feature / Bug detection
+
+// QSA supported, test for bugs
+
+Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function (div) {
+    div.innerHTML = "<p class='QsA'>Jiesa</p>";
+    return div.querySelectorAll(".QsA").length === 0 ? false :
+        // Check for broken :checked pseudo in Webkit/Opera
+        !div.querySelectorAll(":checked").length ? false : true;
+}) : false;
+
+// matchesSelector supported, test for bugs
+
+Jiesa.has['bug-mS'] = Jiesa.has['api-mS'] ? hAzzle.assert(function (div) {
+
+    // IE9 supports matchesSelector, but doesn't work on orphaned elems
+    // check for that
+    return matches.call(div, "div") ? false :
+        // This should fail with an exception
+        // Gecko does not error, returns false instead
+        matches.call(div, "[s!='']:x") ? false : true;
+}) : false;
+
+/**
+ * Check if getElementsByTagName ("*") returns only elements
+ */
+
+Jiesa.has["bug-GEBTN"] = hAzzle.assert(function (div) {
+    div.appendChild(doc.createComment(''));
+    return div.getElementsByTagName('*').length > 0;
+});
+
+/**
+ * Check for getElementById bug
+ * Support: IE<10
+ */
+Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
+    hAzzle.docElem.appendChild(div).id = expando;
+    return doc.getElementsByName > 0 || doc.getElementsByName(expando).length;
+});

@@ -83,24 +83,14 @@
             selector = [selector];
         }
 
-        if (selector.selector !== undefined) {
-
-            selector = selector;
-        }
-
-
-        if (selector.selector !== undefined) {
-
-            selector = selector;
-        }
-
+if(selector) {
         var i = this.length = this.size = selector.length;
 
         while (i--) {
 
             this[i] = selector[i];
         }
-
+}
         return this;
     }
 
