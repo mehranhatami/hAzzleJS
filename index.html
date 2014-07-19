@@ -42,7 +42,7 @@
     <script type="text/javascript" src="modules/clone.js"></script>
     <script type="text/javascript" src="modules/jsonxml.js"></script>
     <script type="text/javascript" src="modules/localestorage.js"></script>
-
+    <script type="text/javascript" src="modules/fx.js"></script>
 
 
 </head>
@@ -81,6 +81,22 @@
             console.log('non-delegation:mousemove: ' + this.id);
         });
     </script>
+    
+    <div class="fxtest-box">
+        <div id="fxbox" style="width:10pt;border:solid 1px blue;height:100px;display:table;">
+        </div>
+        <input id="fxbtn" type="button" value="Start the Animation" />
+        <script type="text/javascript">
+        function animate () {
+          hAzzle('#fxbox').animate({ width:900, height:300 }, 1000, function(){
+            hAzzle('#fxbox').css('background-color', 'red');
+          });
+        }
+        hAzzle('#fxbtn').click(function(){
+          animate();
+        });
+        </script>
+    </div>    
 </body>
 
 </html>
