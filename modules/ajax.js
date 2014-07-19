@@ -4,7 +4,7 @@ var win = window,
 
     slice = Array.prototype.slice,
 
-    expando = 'xmlhttp_' + hAzzle.now(),
+    expando = hAzzle.expando,
 
     lastValue, // data stored by the most recent JSONP callback
 
@@ -74,7 +74,8 @@ var win = window,
             // You fix!!
 
             'api-cors': !!xhr && ("withCredentials" in xhr),
-            'api-ajax': !!xhr
+            'api-ajax': !!xhr,
+			'api-formDataSupport': typeof FormData === "function" || typeof FormData === "object"
         },
 
         /**
@@ -160,7 +161,6 @@ var win = window,
             }
         }
     };
-
 
 /* =========================== AJAX PROTOTYPE CHAIN ========================== */
 
@@ -319,7 +319,7 @@ function getRequest(fn, err) {
         method = (opt.type || 'GET').toUpperCase(),
         headers = opt.headers || {},
         url = hAzzle.isString(opt) ? opt : opt.url,
-        formData,
+        isAFD,
         data = (opt.processData !== false && opt.data && typeof opt.data !== 'string') ?
         AjaxCore.toQueryString(opt.data) : (opt.data || null),
         xhttp, sendWait = false;
@@ -350,7 +350,7 @@ function getRequest(fn, err) {
         xhttp.open(method, url, opt.async === false ? false : true);
     }
 
-    formData = hAzzle.isFunction(FormData) && (opt.data instanceof FormData);
+     isAFD  = AjaxCore.has['api-formDataSupport'] && (opt.data instanceof FormData);
 
     // Set aaccept header
 
@@ -358,7 +358,7 @@ function getRequest(fn, err) {
 
     // Set contentType
 
-    if (!headers.contentType && !formData) {
+    if (!headers.contentType && !isAFD ) {
 
         headers.contentType = opt.contentType;
     }
