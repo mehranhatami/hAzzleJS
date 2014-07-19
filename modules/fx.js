@@ -43,7 +43,7 @@ for (; i < len && !nRAF; i++) {
 
 // Polyfill
 
-if (nRAF || nCAF) {
+if (!nRAF && !nCAF) {
 
     nRAF = function (callback) {
         var currTime = new Date().getTime(),
@@ -115,7 +115,7 @@ hAzzle.requestFrame = function (callback) {
 // Detect if native rAF or not
 
 hAzzle.nativeRAF = fxCore.has['native-rAF'];
-alert( hAzzle.nativeRAF )
+
 // Foreign domain detection
 
 hAzzle.foreignDomain = fxCore.has['foreign-domain'];
@@ -123,6 +123,7 @@ hAzzle.foreignDomain = fxCore.has['foreign-domain'];
 // performance.now()
 
 hAzzle.pnow = now;
+
 
 /* =========================== ANIMATION ENGINE ========================== */
 //performance.now
