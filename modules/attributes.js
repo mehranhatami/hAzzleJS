@@ -1,7 +1,6 @@
 /*!
  * Attributes
  */
-
 var win = this,
     doc = win.document,
     ssv = /\S+/g,
@@ -14,9 +13,11 @@ var win = this,
 
     boolElem = {},
 
-    attrCore = { };
-	
-	// Bug detection
+    attrCore = {},
+
+    concat = Array.prototype.concat;
+
+// Bug / feature detection
 
 (function () {
     var input = doc.createElement("input"),
@@ -36,14 +37,12 @@ var win = this,
     // Support: IE<=11+
     // An input loses its value after becoming a radio
     input = doc.createElement("input");
-	input.setAttribute( "type", "radio" );
-	input.setAttribute( "name", "t" );
+    input.setAttribute("type", "radio");
+    input.setAttribute("name", "t");
 
     attrCore['bug-radioValue'] = input.value === "t";
 
 })();
-
-
 
 hAzzle.extend({
 
@@ -75,14 +74,23 @@ hAzzle.extend({
     },
 
     /**
-     * Check if an element have an attribute
+     * Check if  element has an attribute
      *
      * @param{String} name
      * @return {Boolean}
      */
 
-    hasAttr: function (name) {
-        return name && typeof this.attr(name) !== 'undefined';
+    hasAttr: function (value, name) {
+		
+    // Shortcut for checking attr classNames
+	
+    if(typeof name !== 'undefined' && value === 'class') {
+		
+	   return this[0].className === name ? true : false;
+	}
+        if (name) {
+            return typeof this.attr(name) !== 'undefined';
+        }
     },
 
     /**
@@ -162,9 +170,9 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    removeProp: function (prop) {
+    removeProp: function (name) {
         return this.each(function () {
-            delete this[hAzzle.propFix[prop] || prop];
+            delete this[hAzzle.propFix[name] || name];
         });
     }
 });
@@ -190,10 +198,7 @@ hAzzle.extend({
         'class': 'className'
     },
 
-    nodeHook: {
-
-
-    },
+    nodeHook: {},
 
     boolHook: {
 
@@ -232,15 +237,32 @@ hAzzle.extend({
 
     },
 
+    /**
+     * Remove attributes for each element in a collection
+     *
+     * @param {Object} el
+     * @param {Array|string} value
+     */
+
     removeAttr: function (el, value) {
 
         var name, propName, i = 0,
-            attrNames = typeof value == 'string' ? value.match(ssv) : [].concat(value),
-            l = attrNames.length;
+
+            keys = typeof value == 'string' ?
+
+            // string
+
+            value.match(ssv) :
+
+            // merge arrays
+
+            concat(value),
+
+            l = keys.length;
 
         for (; i < l; i++) {
 
-            name = attrNames[i];
+            name = keys[i];
 
             propName = hAzzle.propFix[name] || name;
 
@@ -254,6 +276,14 @@ hAzzle.extend({
             }
         }
     },
+
+    /**
+	 * Set / Get attributes
+	 *
+     * @param {Object} elem
+     * @param {string|String|Object} name
+     * @param {string|boolean|null} value
+     */    
 
     attr: function (elem, name, value) {
 
@@ -349,7 +379,16 @@ hAzzle.extend({
         }
     },
 
-    anyAttr: function (elem, fn, scope) {
+     /**
+     * Count (or iterate) an element's attributes.
+	 *
+     * @param {Object} elem
+     * @param {Function|number} fn
+     * @param {String} scope
+     * @return {Number} 
+     */
+	 
+	anyAttr: function (elem, fn, scope) {
 
         var a, ela = elem.attributes,
             l = ela && ela.length,
