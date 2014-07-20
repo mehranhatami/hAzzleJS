@@ -26,6 +26,7 @@ var conf = function conf() {
         'compile.js',
         'jiesa.js',
         'funcs.js',
+        'raf.js',
         'fx.js',
         'parse.js',
         'data.js',

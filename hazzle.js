@@ -19,6 +19,7 @@
             path + 'compile.js',
             path + 'jiesa.js',
             path + 'funcs.js',
+            path + 'raf.js',
             path + 'fx.js',
             path + 'parse.js',
             path + 'data.js',
