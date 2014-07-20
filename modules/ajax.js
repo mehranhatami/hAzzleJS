@@ -75,7 +75,7 @@ var win = window,
 
             'api-cors': !!xhr && ("withCredentials" in xhr),
             'api-ajax': !!xhr,
-			'api-formDataSupport': typeof FormData === "function" || typeof FormData === "object"
+            'api-formDataSupport': typeof FormData === "function" || typeof FormData === "object"
         },
 
         /**
@@ -156,6 +156,7 @@ var win = window,
 
             // An object of additional header key/value pairs to send along with the request
             headers: {
+
 
                 'requestedWith': 'XMLHttpRequest'
             }
@@ -350,7 +351,7 @@ function getRequest(fn, err) {
         xhttp.open(method, url, opt.async === false ? false : true);
     }
 
-     isAFD  = AjaxCore.has['api-formDataSupport'] && (opt.data instanceof FormData);
+    isAFD = AjaxCore.has['api-formDataSupport'] && (opt.data instanceof FormData);
 
     // Set aaccept header
 
@@ -358,7 +359,7 @@ function getRequest(fn, err) {
 
     // Set contentType
 
-    if (!headers.contentType && !isAFD ) {
+    if (!headers.contentType && !isAFD) {
 
         headers.contentType = opt.contentType;
     }
@@ -648,7 +649,11 @@ function serial(el, callback) {
             ra = radio.test(el.type);
             val = el.value;
 
-            (!(ch || ra) || el.checked) && callback(n, normalize(ch && val === '' ? 'on' : val));
+            if (!(ch || ra) || el.checked) {
+
+                callback(n, normalize(ch && val === '' ? 'on' : val));
+            }
+
         }
     }
 
@@ -727,7 +732,13 @@ function serializeHash() {
     var hash = {};
     eachFormElement.apply(function (name, value) {
         if (name in hash) {
-            hash[name] && !isArray(hash[name]) && (hash[name] = [hash[name]]);
+
+            if (hash[name] && !isArray(hash[name])) {
+
+                hash[name] = [hash[name]];
+
+            }
+
             hash[name].push(value);
         } else {
             hash[name] = value;
@@ -760,8 +771,16 @@ AjaxCore.serialize = function () {
     var opt, fn, args = slice.call(arguments, 0);
 
     opt = args.pop();
-    opt && opt.nodeType && args.push(opt) && (opt = null);
-    opt && (opt = opt.type);
+
+    if (opt && opt.nodeType) {
+        args.push(opt);
+        opt = null;
+    }
+
+    if (opt) {
+
+        opt = opt.type;
+    }
 
     if (opt === 'map') {
         fn = serializeHash;
