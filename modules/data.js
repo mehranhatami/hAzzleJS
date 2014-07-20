@@ -213,7 +213,7 @@ hAzzle.extend({
 
             if (this.length === 1) {
 
-                return hAzzle.data(this[0], key, value);
+                return hAzzle.data(this[0], key);
 
             } else {
 
@@ -221,7 +221,7 @@ hAzzle.extend({
 
                 return this.map(function (el) {
 
-                    return hAzzle.data(el, key, value);
+                    return hAzzle.data(el, key);
 
                 });
             }
