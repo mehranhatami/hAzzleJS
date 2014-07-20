@@ -33,11 +33,11 @@
   #MULTIPLE CLASSES
   ------
   
-  hAzzle.html('div.one.two.three.four-five_six');  
+  hAzzle.html('div.one.two.three.four-five.six');  
 
   RESULT: 
   
-  <div class="one two three four-five_six"> <div>
+  <div class="one two three four-five.six"> <div>
   
   #ID AND CLASS
   ------
@@ -60,7 +60,7 @@
   #ATTRIBUTES WITH SPACE
   ----------------------
   
-  hAzzle.html('div[title=" hello  world ",data-test=1]');  
+  hAzzle.html('div[title=" hello world ",data-test=1]');  
 
   RESULT: 
   
@@ -245,8 +245,8 @@
 Other compinations are also possible, and you can
 create single tags - e.g. div, span, b, img
 
-Just be carefull. This is a powerfull tool.!!
-And suddenly you can end up width
+Just be carefull. This is a powerfull tool!!
+Suddenly you can end up width
 50 million 'div' tags as I did :( :( :( :( :(
 
 **/
@@ -304,6 +304,11 @@ var slice = Array.prototype.slice,
         }
     };
 
+// Limit for how many DOM elements that can be
+// created at the same time (default: 100);
+
+hAzzle.maxTags = 100;
+
 /**
  * Create HTML
  *
@@ -355,8 +360,17 @@ hAzzle.html = function (str, data) {
 
         // Multipliers
         if ((matches = part.match(matchExpr.multiplier))) {
-            var times = +matches[1];
-            if (times > 0) count = times;
+
+            count = +matches[1];
+
+            // To avoid to create millions of same DOM element, we set an
+            // limit. 
+
+            if (count > hAzzle.maxTags) {
+
+                count = hAzzle.maxTags;
+            }
+
         }
 
         // ID
