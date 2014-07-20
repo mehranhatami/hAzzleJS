@@ -98,13 +98,12 @@ hAzzle.extend({
                 pid = getUID(elem);
                 id = hAzzle._cache[pid] = {};
             }
-
-            // Return all data on the element
-
-            if (typeof key === 'undefined') {
-
-              return id;
+            
+			if(!key || ! value) {
+               
+			   return id
            }
+            // Return all data on the element
 
             if (typeof value === 'undefined') {
 
