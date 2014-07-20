@@ -8,7 +8,6 @@ var fx = function (elem, options, duration, callback) {
   this.callback = callback;
 };
 
-
 fx.prototype = {
   started: false,
 
@@ -20,22 +19,23 @@ fx.prototype = {
     this.setup();
 
     var tick = (function (thisArg) {
-      return function () {
-        thisArg.draw();
+      return function (tk) {
+        thisArg.draw(tk);
       };
     }(this));
 
     var raf = (function (thisArg) {
-      return function raf() {
+      return function raf(tk) {
         if (thisArg.rafId) {
           hAzzle.requestFrame(raf);
-          tick();
+          tick(tk);
         }
       };
     }(this));
 
     if (!this.rafId) {
-      this.rafId = hAzzle.requestFrame(raf);
+
+      this.rafId = hAzzle.requestFrame(raf)
     }
   },
 
@@ -49,7 +49,7 @@ fx.prototype = {
     }
 
     this.stopped = true;
-//
+
 //    if (window.cancelAnimationFrame) {
       window.cancelAnimationFrame(this.rafId);
   //  } else {
@@ -68,7 +68,7 @@ fx.prototype = {
       style = this.elem.style,
       val;
 
-    this.startTime = now();
+    this.startTime = /*animNow || */now();
 
     for (; i < l; i++) {
       prop = props[i];
@@ -92,13 +92,13 @@ fx.prototype = {
     }
   },
   draw: function (tick) {
-    console.log(this.rafId);
+    console.log(tick);
 
     var i = 0,
       l = this.animObjects.length,
       obj;
 
-    var left = this.startTime + this.duration - now(),
+    var left = this.startTime + this.duration - ( /*animNow || */ now()),
       percent = ((left <= 0 ? 0 : left) / this.duration) || 0;
 
     if (this.stopped) {
