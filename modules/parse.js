@@ -250,7 +250,9 @@ Suddenly you can end up width
 50 million 'div' tags as I did :( :( :( :( :(
 
 **/
-var slice = Array.prototype.slice,
+var win = this,
+    doc = win.document,
+    slice = Array.prototype.slice,
     call = Function.prototype.call,
     trim = String.prototype.trim,
 
@@ -260,14 +262,14 @@ var slice = Array.prototype.slice,
         white: /\$(\w+)/g,
         trimspaces: /^\s*|\s*$/g,
         repl: /['"]/g,
-        operators: /[>+]/g,
-        multiplier: /\*(\d+)$/,
         id: /#([\w-$]+)/g,
         tagname: /^\w+/,
         classname: /\.[\w-$]+/g,
+        operators: /[>+]/g,
+        multiplier: /\*(\d+)$/,
         attributes: /\[([^\]]+)\]/g,
         values: /([\w-]+)(\s*=\s*(['"]?)([^,\]]+)(\3))?/g,
-        numbering: /[$]+/g,
+        numbers: /[$]+/g,
         text: /\{(.+)\}/
     },
 
@@ -280,6 +282,7 @@ var slice = Array.prototype.slice,
         return result;
     },
 
+    // MEHRAN!
     // Todo! Add more operators
 
     operators = {
@@ -330,7 +333,7 @@ hAzzle.html = function (str, data) {
 
     var nodes = [],
         parts = twist(str.split(matchExpr.operators), call, trim),
-        fragment = document.createDocumentFragment(),
+        fragment = doc.createDocumentFragment(),
         aa = [],
         i, parents = [fragment],
         matches, matched,
@@ -340,11 +343,8 @@ hAzzle.html = function (str, data) {
     hAzzle.each(parts, function (part) {
 
         var count = 1,
-            tag,
-            id,
-            classes,
-            text,
-            index, _index, element;
+            tag, id,
+            classes, text, index, _index, element;
 
         if ((matches = part.match(matchExpr.attributes))) {
 
@@ -363,14 +363,13 @@ hAzzle.html = function (str, data) {
 
             count = +matches[1];
 
-            // To avoid to create millions of same DOM element, we set an
-            // limit. 
+            // We don't want to create millions of the same DOM element, 
+            // so we set an limit (default:100)
 
             if (count > hAzzle.maxTags) {
 
                 count = hAzzle.maxTags;
             }
-
         }
 
         // ID
@@ -378,7 +377,8 @@ hAzzle.html = function (str, data) {
             id = matches[matches.length - 1].substr(1);
         }
 
-        // Tag names
+        // Tag
+
         if ((matches = part.match(matchExpr.tagname))) {
 
             tag = matches[0];
@@ -411,6 +411,7 @@ hAzzle.html = function (str, data) {
         }
 
         aa = slice.call(parents, 0);
+
         i = aa.length;
 
         while (i--) {
@@ -463,27 +464,66 @@ hAzzle.html = function (str, data) {
  */
 
 function pad(n, ln) {
+
     n = n.toString();
+
     while (n.length < ln) {
+
         n = '0' + n;
     }
+
     return n;
 }
 
-// Replaces ocurrences of '$' with the equivalent padded 
-// index (e.g  `$$ == 01`, `$$$$ == 0001` )
+/**
+ * Replaces ocurrences of '$' with the equivalent padded
+ * index (e.g  `$$ == 01`, `$$$$ == 0001` )
+ *
+ * @param {String} value
+ * @param {number} num
+ *
+ *
+ */
 
-function numbered(value, n) {
 
-    return value.replace(matchExpr.numbering, function (m) {
-        return pad(n + 1, m.length);
+function numbered(value, num) {
+
+    // This should never happen!
+
+    if (typeof index !== 'number') {
+
+        hAzzle.error("Something wen't terrible wrong");
+        return;
+    }
+
+    return value.replace(matchExpr.numbers, function (m) {
+        return pad(num + 1, m.length);
     });
 }
 
-// Create a DOM element.
+/**
+ * Create a DOM element.
+ *
+ * @param {Number} index
+ * @param {string|undefined} tag
+ * @param {string|undefined} id
+ * @param {string|undefined} className
+ * @param {string|undefined} text
+ * @param {Object} attrs
+ *
+ */
+
 function createDOMElement(index, tag, id, className, text, attrs) {
 
-    var key, element = document.createElement(tag);
+    // This should never happen!
+
+    if (!typeof index !== 'number') {
+
+        hAzzle.error("Something wen't terrible wrong");
+        return;
+    }
+
+    var key, element = doc.createElement(tag);
 
     if (id) {
 
@@ -497,7 +537,7 @@ function createDOMElement(index, tag, id, className, text, attrs) {
 
     if (text) {
 
-        element.appendChild(document.createTextNode(text));
+        element.appendChild(doc.createTextNode(text));
     }
 
     if (attrs) {
