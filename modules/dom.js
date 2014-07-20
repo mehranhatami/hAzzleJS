@@ -44,10 +44,11 @@ var arrayProto = Array.prototype,
     };
 
 hAzzle.extend({
-
-    contains: function (target) {
-        return this.has(target).length > 0;
-    },
+	
+	clear: function() {
+	 this.length = 0;
+     return this;	
+	},
 
     /**
      * Adds one element to the set of matched elements.

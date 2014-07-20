@@ -259,6 +259,10 @@ var win = this,
     // Various regEx
 
     matchExpr = {
+        
+		// Should we accept creation of script tags or not??
+		// I put it here in case we decide not to
+        scripttag: /\s*<script +src=['"]([^'"]+)['"]>/,
         white: /\$(\w+)/g,
         trimspaces: /^\s*|\s*$/g,
         repl: /['"]/g,
@@ -488,15 +492,7 @@ function pad(n, ln) {
 
 function numbered(value, num) {
 
-    // This should never happen!
-
-    if (typeof index !== 'number') {
-
-        hAzzle.error("Something wen't terrible wrong");
-        return;
-    }
-
-    return value.replace(matchExpr.numbers, function (m) {
+   return value.replace(matchExpr.numbers, function (m) {
         return pad(num + 1, m.length);
     });
 }
@@ -514,14 +510,6 @@ function numbered(value, num) {
  */
 
 function createDOMElement(index, tag, id, className, text, attrs) {
-
-    // This should never happen!
-
-    if (!typeof index !== 'number') {
-
-        hAzzle.error("Something wen't terrible wrong");
-        return;
-    }
 
     var key, element = doc.createElement(tag);
 

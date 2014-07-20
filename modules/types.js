@@ -22,23 +22,23 @@ hAzzle.extend({
             return obj + '';
         }
 
-        if (type === 'undefined') {
-
-            return 'undefined';
-        }
-
-        if (type === 'object') {
-
+        switch (type) {
+        case 'boolean':
+            return 'boolean';
+        case 'object':
             return 'object';
+        case 'string':
+            return 'string';
+        default:
+
+            var str = toString.call(obj);
+
+            if (natives[str]) {
+                return natives[str];
+            }
+
+            return type;
         }
-
-        var str = toString.call(obj);
-
-        if (natives[str]) {
-            return natives[str];
-        }
-
-        return type;
     },
 
     is: function (kind, obj) {
@@ -81,7 +81,6 @@ hAzzle.extend({
 
     isFunction: function (value) {
         return typeof value === 'function';
-
     },
 
     isEmptyObject: function (obj) {
@@ -109,7 +108,15 @@ hAzzle.extend({
     },
 
     isDocument: function (obj) {
-		return obj.nodeType && obj.nodeType === 9;
+        return obj.nodeType && obj.nodeType === 9;
+    },
+
+    isBody: function (el) {
+        return el && el.nodeName.toUpperCase() === 'BODY';
+    },
+
+    isHtml: function (el) {
+        return el && el.nodeName.toUpperCase() === 'HTML';
     },
 
     isBoolean: function (value) {

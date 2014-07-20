@@ -2,37 +2,50 @@
  * A handfull Usefull functions for the hAzzle Object
  */
 /* =========================== PUBLIC FUNCTIONS ========================== */
-
 var slice = Array.prototype.slice;
 
+
 hAzzle.extend({
-	
-	 size: function (obj, ownPropsOnly) {
-            var count = 0,
-                key;
 
-            if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
-                return obj.length;
-            } else if (hAzzle.isObject(obj)) {
-                for (key in obj)
-                    if (!ownPropsOnly || obj.hasOwnProperty(key))
-                        count++;
-            }
+    // Convert sstr to decimal value	
+    decimal: function (str) {
+        var match = str.match(/^(\d+)%?$/i);
+        if (!match) return null;
+        return (Number(match[1]) / 100);
+    },
 
-            return count;
-     },
+    size: function (obj, ownPropsOnly) {
+        var count = 0,
+            key;
+
+        if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
+            return obj.length;
+        } else if (hAzzle.isObject(obj)) {
+            for (key in obj)
+                if (!ownPropsOnly || obj.hasOwnProperty(key))
+                    count++;
+        }
+
+        return count;
+    },
 
     keys: function (obj) {
-        var keys = [],
+
+        // It has to be an Object
+
+        if (hAzzle.type(obj) !== 'object') {
+            return [];
+        }
+        var results = [],
             key, has = Object.prototype.hasOwnProperty;
 
         for (key in obj) {
             if (has.call(obj, key)) {
-                keys.push(key);
+                results.push(key);
             }
         }
 
-        return keys;
+        return results;
     },
 
 
@@ -82,7 +95,7 @@ hAzzle.extend({
         }
 
         var args = slice.call(arguments, 1);
-		
+
         return function () {
             return fn.apply(null, args.concat(slice.call(arguments)));
         };

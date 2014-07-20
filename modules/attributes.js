@@ -81,13 +81,13 @@ hAzzle.extend({
      */
 
     hasAttr: function (value, name) {
-		
-    // Shortcut for checking attr classNames
-	
-    if(typeof name !== 'undefined' && value === 'class') {
-		
-	   return this[0].className === name ? true : false;
-	}
+
+        // Shortcut for checking attr classNames
+
+        if (typeof name !== 'undefined' && value === 'class') {
+
+            return this[0].className === name ? true : false;
+        }
         if (name) {
             return typeof this.attr(name) !== 'undefined';
         }
@@ -195,7 +195,9 @@ hAzzle.extend({
 
     propFix: {
         'for': 'htmlFor',
-        'class': 'className'
+        'class': 'className',
+        'cellpadding': 'cellPadding',
+        'cellspacing': 'cellSpacing'
     },
 
     nodeHook: {},
@@ -278,12 +280,12 @@ hAzzle.extend({
     },
 
     /**
-	 * Set / Get attributes
-	 *
+     * Set / Get attributes
+     *
      * @param {Object} elem
      * @param {string|String|Object} name
      * @param {string|boolean|null} value
-     */    
+     */
 
     attr: function (elem, name, value) {
 
@@ -379,16 +381,16 @@ hAzzle.extend({
         }
     },
 
-     /**
+    /**
      * Count (or iterate) an element's attributes.
-	 *
+     *
      * @param {Object} elem
      * @param {Function|number} fn
      * @param {String} scope
-     * @return {Number} 
+     * @return {Number}
      */
-	 
-	anyAttr: function (elem, fn, scope) {
+
+    anyAttr: function (elem, fn, scope) {
 
         var a, ela = elem.attributes,
             l = ela && ela.length,
@@ -406,6 +408,11 @@ hAzzle.extend({
             }
         }
         return 0;
+    },
+
+    getAttrNode: function (element, attribute) {
+        var node = element.getAttributeNode(attribute);
+        return node ? node.value : '';
     }
 
 }, hAzzle);

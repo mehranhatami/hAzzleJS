@@ -52,11 +52,14 @@ hAzzle.extend({
             obj = type === 'string' ? {} : prop,
             el = this[0];
 
+        // If 'prop' are an array
+
         if (hAzzle.isArray(prop)) {
             var map = {},
                 styles = getStyles(el),
                 len = prop.length;
             i = 0;
+
             for (; i < len; i++) {
 
                 map[prop[i]] = curCSS(el, prop[i], styles);
@@ -83,7 +86,14 @@ hAzzle.extend({
             }
         }
         return this;
+    },
+
+    opacity: function (value) {
+        return this.each(function (el) {
+            hAzzle.opacity(el, value);
+        });
     }
+
 });
 
 // Go globale!
@@ -123,11 +133,14 @@ hAzzle.extend({
 
     style: function (elem, name, value) {
 
+        var valid = [3, 8],
+            nType = elem.nodeType;
+
         // Check if we're setting a value
 
         if (value !== undefined) {
 
-            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
+            if (elem && valid[nType]) {
 
                 var type = typeof value,
                     p, hooks, ret, style = elem.style;
@@ -226,7 +239,28 @@ hAzzle.extend({
         return val;
     },
 
+    /**
+     * Set opacity
+     *
+     * @param{Object} elem
+     * @param{number} value
+     */
+    opacity: function (element, value) {
 
+        if (typeof value !== 'number') {
+            value = 1;
+        }
+        if (value == 1 || value === '') {
+
+            value = '';
+
+        } else if (value < 0.00001) {
+
+            value = 0;
+        }
+
+        element.style.opacity = value;
+    }
 
 }, hAzzle);
 
@@ -280,57 +314,7 @@ function curCSS(elem, prop, computed) {
 
 /* =========================== INTERNAL ========================== */
 
-// scrollTop and scrollLeft functions
 
-hAzzle.forOwn({
-    scrollLeft: 'pageXOffset',
-    scrollTop: 'pageYOffset'
-}, function (prop, method) {
-
-    var top = 'pageYOffset' === prop;
-
-    hAzzle.Core[method] = function (val) {
-
-        var i = 0,
-            len = this.len || 1,
-            elem, win;
-
-        for (; i < len; i++) {
-
-            elem = this[i];
-
-            if (hAzzle.isWindow(elem)) {
-
-                win = elem;
-
-            } else {
-
-                if (elem.nodeType === 9) {
-
-                    win = elem.defaultView;
-                }
-            }
-
-            if (val === undefined) {
-
-                return win ? win[prop] : elem[method];
-            }
-
-            if (win) {
-
-
-                win.scrollTo(!top ? val : window.pageXOffset,
-                    top ? val : window.pageYOffset
-                );
-
-            } else {
-
-                elem[method] = val;
-
-            }
-        }
-    };
-});
 
 // Margin and padding cssHooks
 

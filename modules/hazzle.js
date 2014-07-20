@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.2a
+ * Version: 0.9.3n
  * Released under the MIT License.
  *
- * Date: 2014-07-16
+ * Date: 2014-07-20
  */
 (function (window, undefined) {
 
@@ -83,14 +83,14 @@
             selector = [selector];
         }
 
-if(selector) {
-        var i = this.length = this.size = selector.length;
+        if (selector) {
+            var i = this.length = this.size = selector.length;
 
-        while (i--) {
+            while (i--) {
 
-            this[i] = selector[i];
+                this[i] = selector[i];
+            }
         }
-}
         return this;
     }
 
@@ -98,7 +98,7 @@ if(selector) {
 
     hAzzle.Core = Core.prototype = {
 
-        constructor: hAzzle, 
+        constructor: hAzzle,
 
         length: 0,
 
@@ -227,7 +227,7 @@ if(selector) {
          */
 
         now: Date.now,
-		
+
         /**
          * Error function
          */
@@ -300,6 +300,15 @@ if(selector) {
 
         decamelize: function (str) {
             return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
+        },
+		
+		capitalize: function(str) {
+         return str.charAt(0).toUpperCase() + str.substring(1).toLowerCase();
+        
+		},
+		
+		blank: function(str) {
+          return /^\s*$/.test(str);
         },
 
         /**
