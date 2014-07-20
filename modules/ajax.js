@@ -157,7 +157,6 @@ var win = window,
             // An object of additional header key/value pairs to send along with the request
             headers: {
 
-
                 'requestedWith': 'XMLHttpRequest'
             }
         }
@@ -239,6 +238,7 @@ AjaxCore.xmlhttp.prototype = {
 };
 
 function gC(data) {
+	
     lastValue = data;
 }
 
@@ -254,11 +254,16 @@ function jsonpReq(options, fn, err, url) {
     if (match) {
 
         if (match[3] === '?') {
+			
             url = url.replace(cbreg, '$1=' + cbval); // wildcard callback func name
+
         } else {
+			
             cbval = match[3]; // provided callback func name
         }
+		
     } else {
+		
         url = urlappend(url, cbkey + '=' + cbval); // no callback details, add 'em
     }
 
@@ -281,7 +286,9 @@ function jsonpReq(options, fn, err, url) {
         }
 
         script.onload = script.onreadystatechange = null;
+		
         if (script.onclick) {
+			
             script.onclick();
         }
 
@@ -301,6 +308,7 @@ function jsonpReq(options, fn, err, url) {
 
     // Enable JSONP timeout
     return {
+		
         abort: function () {
             script.onload = script.onreadystatechange = null;
             err({}, 'Request is aborted: timeout', {});
@@ -681,7 +689,6 @@ function serial(el, callback) {
                 }
             }
         }
-
     }
 }
 
@@ -719,7 +726,6 @@ function eachFormElement() {
 
         serializeSubtags(e, ['input', 'select', 'textarea', 'keygen']);
     }
-
 }
 
 // standard query string style serialization
@@ -727,7 +733,6 @@ function serializeQueryString() {
     return AjaxCore.toQueryString(AjaxCore.serializeArray.apply(null, arguments));
 }
 
-// { 'name': 'value', ... } style serialization
 function serializeHash() {
     var hash = {};
     eachFormElement.apply(function (name, value) {
@@ -758,6 +763,7 @@ AjaxCore.serializeArray = function () {
             value: value
         });
     }, arguments);
+	
     return arr;
 };
 
@@ -783,12 +789,18 @@ AjaxCore.serialize = function () {
     }
 
     if (opt === 'map') {
+		
         fn = serializeHash;
+		
     } else if (opt == 'array') {
+		
         fn = AjaxCore.serializeArray;
+
     } else {
+
         fn = serializeQueryString;
     }
+
     return fn.apply(null, args);
 };
 

@@ -199,7 +199,7 @@
  SECTION
  -------------
 
- hAzzle.html('div{hello}>p*2'	)
+ hAzzle.html('section > p + div.places > li*5')
   
   RESULT:
  
@@ -271,27 +271,6 @@ var slice = Array.prototype.slice,
         text: /\{(.+)\}/
     },
 
-    /**
-     * Faster Reduce then native Prototype
-     *
-     * @param {Array} array
-     * @param {Function} fn
-     * @param {Object} initial value
-     */
-
-    reduce = function (arr, fn, val) {
-        var rval = val,
-            i = 0,
-            l = arr.length;
-
-        for (; i < l; i++) {
-
-            rval = fn(rval, arr[i], i, arr);
-        }
-
-        return rval;
-    },
-
     twist = function (arr, fn, scope) {
         var result = [],
             i = 0,
@@ -299,6 +278,30 @@ var slice = Array.prototype.slice,
         for (; i < l; i++)
             result.push(fn.call(scope, arr[i], i));
         return result;
+    },
+
+    // Todo! Add more operators
+
+    operators = {
+
+        '>': function (parents) {
+
+            return hAzzle.reduce(parents, function (p, c) {
+                return p.concat(slice.call(c.childNodes, 0).filter(function (el) {
+                    return el.nodeType === 1 && !el._sibling;
+                }));
+            }, []);
+        }
+    },
+
+    Adjacents = {
+
+        '+': function (el) {
+            return el._sibling = true;
+        },
+        '-': function (el) {
+            return el._sibling = false;
+        }
     };
 
 /**
@@ -365,24 +368,29 @@ hAzzle.html = function (str, data) {
         if ((matches = part.match(matchExpr.tagname))) {
 
             tag = matches[0];
+
         } else {
+
             tag = 'div';
         }
 
         // Class
+
         if ((matches = part.match(matchExpr.classname))) {
+
             classes = twist(matches, function (c) {
                 return c.substr(1);
             }).join(' ');
         }
 
         // Text
+
         if ((matches = part.match(matchExpr.text))) {
             text = matches[1];
-			
+
             if (data) {
-            
-			    text = text.replace(matchExpr.white, function (m, key) {
+
+                text = text.replace(matchExpr.white, function (m, key) {
                     return data[key];
                 });
             }
@@ -401,26 +409,23 @@ hAzzle.html = function (str, data) {
 
                 element = createDOMElement(_index, tag, id, classes, text, attrs);
 
-                if (op === '+') {
+                // Adjacents selectors
 
-                    element._sibling = true;
-
+                if (Adjacents[op]) {
+                    Adjacents[op];
                 }
 
                 aa[i].appendChild(element);
             }
         }
 
-        // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
+        if (operators[op]) {
+            // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
 
-        if (op === '>') {
+            if (op === '>') {
 
-            parents = reduce(parents, function (p, c) {
-
-                return p.concat(slice.call(c.childNodes, 0).filter(function (el) {
-                    return el.nodeType === 1 && !el._sibling;
-                }));
-            }, []);
+                parents = operators[op](parents) || parents;
+            }
         }
 
     });
