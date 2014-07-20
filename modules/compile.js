@@ -723,7 +723,3 @@ function createPositionalPseudo(nodes, sel) {
     var inf = Jiesa.regex.changer.exec(sel);
     return Jiesa.changers[inf[1]](nodes, inf[2]);
 }
-
-// Some adjustments...
-
-hAzzle.matches = Jiesa.matches;
