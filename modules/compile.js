@@ -581,7 +581,9 @@ function byTagRaw(tag, elem) {
     elements = [],
     next = element.firstChild;
 
-  any || (tag = tag.toUpperCase());
+  if (!any) {
+    tag = tag.toUpperCase();
+  }
 
   while ((element = next)) {
     if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
