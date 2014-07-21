@@ -119,6 +119,30 @@ hAzzle.extend({
         return index ? this.slice(this.length - index) : this.eq(-1);
     },
 
+   /**
+    * Get the immediately following sibling of each element
+    *
+    * @param {Object} elem
+    * @return {hAzzle}
+    */
+
+   next: function(selector) { 
+       return hAzzle(this.pluck('nextElementSibling')).filter(selector || '*');
+	},
+
+    /**
+     * Get the immediately preceding sibling of each element
+     * in the set of matched  elements, optionally filtered by a
+     * selector.
+     *
+     * @param {Object} elem
+     * @return {hAzzle}
+     */
+
+    prev: function(selector) { 
+	  return hAzzle(this.pluck('previousElementSibling')).filter(selector || '*');
+	},
+
     /**
      * Reduce the set of matched elements to a subset specified by a range of indices.
      */
@@ -163,11 +187,14 @@ hAzzle.extend({
     // Get the whole matched element set as a clean array
 
     get: function (num) {
-        if (!num) {
-            return slice.call(this);
-        } else {
-            return this[num < 0 ? (this.length + num) : num];
-        }
+		
+		return num !== null ?
+
+			// Return just the one element from the set
+			( this[num < 0 ? (this.length + num) : num] ) :
+
+			// Return all the elements in a clean array
+			slice.call( this );
     },
 
 
@@ -530,30 +557,6 @@ hAzzle.forOwn({
     },
 
     /**
-     * Get the immediately following sibling of each element
-     *
-     * @param {Object} elem
-     * @return {hAzzle}
-     */
-
-    next: function (elem) {
-        return elem && elem.nextElementSibling;
-    },
-
-    /**
-     * Get the immediately preceding sibling of each element
-     * in the set of matched  elements, optionally filtered by a
-     * selector.
-     *
-     * @param {Object} elem
-     * @return {hAzzle}
-     */
-
-    prev: function (elem) {
-        return elem && elem.previousElementSibling;
-    },
-
-    /**
      * Get all following siblings of each element in the set of matched
      * elements, optionally filtered by a selector.
      */
@@ -630,7 +633,6 @@ hAzzle.forOwn({
         return hAzzle(matched);
     };
 });
-
 
 function isnot(els, selector, not) {
 
