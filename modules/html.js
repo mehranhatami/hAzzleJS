@@ -9,8 +9,6 @@ var win = this,
     riAH = /<script|\[object/i,
     tagName = /<([\w:]+)/,
 
-    isString = hAzzle.isString,
-
     // We have to close these tags to support XHTML	
 
     htmlMap = {
@@ -151,11 +149,7 @@ hAzzle.extend({
         var arg = arguments[0],
             self = this;
         return self.each(function (el, i) {
-
-            // Prevent memory leaks
-
             hAzzle.clearData(el);
-
             hAzzle.each(stabilizeHTML(arg, self, i), function (i) {
                 if (el.parentElement) {
                     el.parentElement.replaceChild(i, el);
@@ -163,7 +157,6 @@ hAzzle.extend({
             });
         });
     }
-
 });
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
@@ -177,11 +170,14 @@ hAzzle.extend({
 
 var stabilizeHTML = hAzzle.stabilizeHTML = function (node, elems, clone) {
 
+    if (!node) {
+        return;
+    }
     var i = 0,
         l = node.length,
         ret;
 
-    if (isString(node)) {
+    if (typeof node === 'string') {
 
         return hAzzle.create(node);
     }
@@ -221,7 +217,7 @@ function injectHTML(target, node, fn, rev) {
         r = [],
         nodes, stabilized;
 
-    if (isString(target) && target.charAt(0) === '<' &&
+    if (typeof target === 'string' && target.charAt(0) === '<' &&
         target[target.length - 1] === '>' &&
         target.length >= 3) {
 
@@ -409,33 +405,33 @@ function ManipulationMethod(elem, count, html, chain, method, iah) {
 function injectMethods(elem, html, method) {
 
     return injectHTML.call(elem, html, elem, function (t, el) {
-try {
-        if (method === 'appendTo') {
+        try {
+            if (method === 'appendTo') {
 
-            t.appendChild(el);
-        }
-        if (method === 'prependTo') {
-
-            t.insertBefore(el, t.firstChild);
-        }
-        if (method === 'insertBefore') {
-
-            t.parentElement.insertBefore(el, t);
-        }
-        if (method === 'insertAfter') {
-
-            var sibling = t.nextElementSibling;
-
-            if (sibling) {
-
-                sibling.parentElement.insertBefore(el, sibling);
-
-            } else {
-
-                t.parentElement.appendChild(el);
+                t.appendChild(el);
             }
-        }
-		}catch(e) {}
+            if (method === 'prependTo') {
+
+                t.insertBefore(el, t.firstChild);
+            }
+            if (method === 'insertBefore') {
+
+                t.parentElement.insertBefore(el, t);
+            }
+            if (method === 'insertAfter') {
+
+                var sibling = t.nextElementSibling;
+
+                if (sibling) {
+
+                    sibling.parentElement.insertBefore(el, sibling);
+
+                } else {
+
+                    t.parentElement.appendChild(el);
+                }
+            }
+        } catch (e) {}
     }, 1);
 }
 

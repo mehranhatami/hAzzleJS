@@ -1,4 +1,4 @@
-//  External CSS functions
+//  Offset
 var docElem = hAzzle.docElem;
 
 hAzzle.extend({
@@ -167,7 +167,6 @@ hAzzle.forOwn({
 
             if (win) {
 
-
                 win.scrollTo(!top ? val : window.pageXOffset,
                     top ? val : window.pageYOffset
                 );
@@ -175,7 +174,6 @@ hAzzle.forOwn({
             } else {
 
                 elem[method] = val;
-
             }
         }
     };

@@ -75,10 +75,10 @@ function isHidden(elem, el) {
 function showHide(elements, show) {
     var display, elem, hidden,
         values = [],
-        index = 0,
+        index,
         length = elements.length;
 
-    for (; index < length; index++) {
+    for (index = 0; index < length; index++) {
         elem = elements[index];
         if (!elem.style) {
             continue;
@@ -116,7 +116,6 @@ function showHide(elements, show) {
 
     return elements;
 }
-
 
 function actualDisplay(name, doc) {
 
@@ -175,3 +174,7 @@ function defaultDisplay(nodeName) {
 
     return display;
 }
+
+// Expose to the global hAzzle Object
+
+hAzzle.isHidden = isHidden;

@@ -62,29 +62,25 @@ hAzzle.extend({
             return index ? arr.slice(arr.length - index) : [arr[arr.length - 1]];
         },
         'odd': function (arr) {
-            return ofType(arr, 0, 2);
+            return arrCalc(arr, 0, 2);
         },
         'even': function (arr) {
-            return ofType(arr, 1, 2);
+            return arrCalc(arr, 1, 2);
         },
         'nth': function (arr, val) {
-            return ofType(arr, val - 1, val);
+            return arrCalc(arr, val - 1, val);
         }
     }
 
 }, hAzzle.Jiesa);
 
-function ofType(arr, start, increment) {
+ /* =========================== PRIVATE FUNCTIONS ========================== */
 
-    var i = start,
-        ret = [],
-        e;
-
+function arrCalc(arr, start, increment) {
+    var i = start, ret = [], e;
     while ((e = arr[i])) {
-
         ret.push(e);
         i += increment;
     }
-
     return ret;
 }

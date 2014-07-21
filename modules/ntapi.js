@@ -1,16 +1,12 @@
-// new Traversal API
-// shim for hAzzle COre
-
-hAzzle.extend({
-	
-        /**
-         * Find next element sibiling.
+// new Traversal API 
+   /**
+   * Find next element sibiling.
          *
          * @param {Object} el
          * @return {hAzzle}
          */
 
-        nextElementSibling: function (el) {
+hAzzle.nextElementSibling = function (el) {
             if (el.nextElementSibling) {
                 return el.nextElementSibling;
             } else {
@@ -18,7 +14,7 @@ hAzzle.extend({
                     if (el.nodeType !== 1) return el;
                 }
             }
-        },
+        };
 
         /**
          * Find previous element sibling.
@@ -28,7 +24,7 @@ hAzzle.extend({
          * @return {hAzzle}
          */
 
-        previousElementSibling: function (el) {
+hAzzle.previousElementSibling = function (el) {
             if (el.previousElementSibling) {
                 return el.previousElementSibling;
             } else {
@@ -36,7 +32,7 @@ hAzzle.extend({
                     if (el.nodeType === 1) return el;
                 }
             }
-        },
+        };
 
         /**
          * Get the first element child of the given element
@@ -45,7 +41,7 @@ hAzzle.extend({
          * @return {hAzzle}
          */
 
-        firstElementChild: function (el) {
+       hAzzle.firstElementChild = function (el) {
             var child = el.firstElementChild;
             if (!child) {
                 child = el.firstChild;
@@ -53,7 +49,7 @@ hAzzle.extend({
                     child = child.nextSibling;
             }
             return child;
-        },
+        };
 
         /**
          * Get the last element child of the given element
@@ -62,7 +58,7 @@ hAzzle.extend({
          * @return {hAzzle}
          */
 
-        lastElementChild: function (el) {
+        hAzzle.lastElementChild = function (el) {
             var child = el.lastElementChild;
             if (!child) {
                 child = el.lastChild;
@@ -72,7 +68,7 @@ hAzzle.extend({
             return child;
         },
 
-        childElementCount: function (el) {
+       hAzzle.childElementCount = function (el) {
             var Count = el.childElementCount;
             if (!Count) {
                 el = el.firstChild || null;
@@ -84,5 +80,4 @@ hAzzle.extend({
                 } while (el);
             }
             return Count;
-        }
-});
+        };

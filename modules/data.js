@@ -1,6 +1,7 @@
 /** 
  * Data
  */
+ 
 var htmlRegEx = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
     charRegEx = /([A-Z])/g,
 
@@ -83,20 +84,15 @@ hAzzle.extend({
 
         if (dataStorage.accepted(elem)) {
 
-            if (!elem instanceof hAzzle) {
-
-                elem = hAzzle(elem);
-            }
-
             // get / create unique ID for this element
 
             var id = dataStorage.getID(elem);
 
-            // Nothing to do if there are no data stored on the elem itself
+            // Nothing to do if there are no data on the element
 
             if (dataStorage.cache[id]) {
 
-                if (typeof key === 'undefined' && elem.nodeType === 1) {
+                if (key === undefined) {
 
                     dataStorage.cache[id] = {};
 

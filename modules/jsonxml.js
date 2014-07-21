@@ -1,36 +1,31 @@
-// Parsing
-hAzzle.extend({
+// Parse JSON
+hAzzle.parseJSON = function (data) {
+    return JSON.parse(data + '');
+};
 
-    /**
-     * Cross-browser JSON parsing
-     *
-     * @param {String} data
-     */
+// Parse XML
 
-    parseJSON: function (data) {
-        return JSON.parse(data + '');
-    },
+hAzzle.parseXML = function (data) {
+    var xml, tmp;
 
-    parseXML: function (data) {
-        var xml, tmp;
+    if (!data || typeof data !== 'string') {
 
-        if (!data || typeof data !== 'string') {
-
-            return null;
-        }
-
-        // Support: IE9
-        try {
-            tmp = new DOMParser();
-            xml = tmp.parseFromString(data, 'text/xml');
-        } catch (e) {
-            xml = undefined;
-        }
-
-        if (!xml || xml.getElementsByTagName('parsererror').length) {
-            return new Error('Invalid XML: ' + data);
-        }
-        return xml;
+        return null;
     }
 
-}, hAzzle);
+    // Support: IE9
+    try {
+        tmp = new DOMParser();
+        xml = tmp.parseFromString(data, 'text/xml');
+
+    } catch (e) {
+
+        xml = undefined;
+    }
+
+    if (!xml || xml.getElementsByTagName('parsererror').length) {
+
+        return hAzzle.error('Invalid XML: ' + data);
+    }
+    return xml;
+};

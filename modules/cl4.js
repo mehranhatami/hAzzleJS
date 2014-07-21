@@ -4,70 +4,58 @@
 var win = this,
     Jiesa = hAzzle.Jiesa,
     pseudos = Jiesa.pseudo_filters,
-
     trimspaces = /^\s*|\s*$/g,
-    radicheck = /radio|checkbox/i;
+    radicheck = /radio|checkbox/i,
+
+    // Validate if the elem are a form element
+    // or not
+
+    isForm = function (elem) {
+        return typeof elem.form !== 'undefined'
+    };
 
 hAzzle.extend({
 
-    // Mehran !!
-    // Test and check that indeterminate are working
-
     'indeterminate': function (elem) {
-        return typeof elem.form !== 'undefined' && (radicheck).test(elem.type) && Jiesa.find(':checked', elem.form).length === 0;
+        return isForm(elem) && (radicheck).test(elem.type) && Jiesa.find(':checked', elem.form).length === 0;
     },
     // HTML5 UI element states (form controls)
     'default': function (elem) {
-        return typeof elem.form !== 'undefined' && ((radicheck).test(elem.type) || /option/i.test(elem.nodeName)) && (elem.defaultChecked || elem.defaultSelected);
+        return isForm(elem) && ((radicheck).test(elem.type) || /option/i.test(elem.nodeName)) && (elem.defaultChecked || elem.defaultSelected);
     },
 
-    /**
-	 * Mehran!!
-	 *
-	 * You have to extend this. Read this: http://dev.w3.org/csswg/selectors4/#negation
-	 *
-	 * As you may see - not can take more then one argument separated by comma. A comma-speperated selector list.
-	 *
-	 * Example:
-	 *
-	 *  E:not(s1, s2, ...)
-	 *
-	 * You fix!!
-	 */
-	 
-	 
     'not': function (elem, sel) {
-          return hAzzle.inArray(Jiesa.find(sel.replace(trimspaces, '')), elem) === -1;
+        return hAzzle.inArray(Jiesa.find(sel.replace(trimspaces, '')), elem) === -1;
     },
     'valid': function (elem) {
-        return typeof elem.form !== 'undefined' && typeof elem.validity === 'object' && elem.validity.valid;
+        return isForm(elem) && typeof elem.validity === 'object' && elem.validity.valid;
     },
     'invalid': function (elem) {
         // only fields for which validity applies
-        return typeof elem.form !== 'undefined' && typeof elem.validity === 'object' && !elem.validity.valid;
+        return isForm(elem) && typeof elem.validity === 'object' && !elem.validity.valid;
     },
 
     'in-range': function (elem, sel) {
-        return typeof elem.form !== 'undefined' &&
+        return isForm(elem) &&
             (sel.getAttribute(elem, 'min') || sel.getAttribute(elem, 'max')) &&
             typeof elem.validity === 'object' && !elem.validity.typeMismatch &&
             !elem.validity.rangeUnderflow && !elem.validity.rangeOverflow;
     },
     'out-of-range': function (elem, sel) {
         // only fields for which validity applies
-        return typeof elem.form !== 'undefined' &&
+        return isForm(elem) &&
             (sel.getAttribute(elem, 'min') || sel.getAttribute(elem, 'max')) &&
             typeof elem.validity === 'object' && (elem.validity.rangeUnderflow || elem.validity.rangeOverflow);
     },
     'required': function (elem) {
-        return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && elem.required;
+        return isForm(elem) && typeof elem.required !== 'undefined' && elem.required;
     },
     'read-only': function (elem) {
         // only fields for which 'readOnly' applies
-        return typeof elem.form !== 'undefined' && typeof elem.readOnly !== 'undefined' && elem.readOnly;
+        return isForm(elem) && typeof elem.readOnly !== 'undefined' && elem.readOnly;
     },
     'read-write': function (elem) {
-        return typeof elem.form !== 'undefined' && typeof elem.readOnly !== 'undefined' && !elem.readOnly;
+        return isForm(elem) && typeof elem.readOnly !== 'undefined' && !elem.readOnly;
     },
 
     'dir': function (el, val) {
@@ -81,7 +69,7 @@ hAzzle.extend({
     },
 
     'optional': function (elem) {
-        return typeof elem.form !== 'undefined' && typeof elem.required !== 'undefined' && !elem.required;
+        return isForm(elem) && typeof elem.required !== 'undefined' && !elem.required;
     },
 
     // What is the point? 

@@ -76,7 +76,6 @@ hAzzle.extend({
         }
     },
 
-
     /**
      * Remove class(es) from element
      *
@@ -214,7 +213,6 @@ hAzzle.extend({
     }
 
 });
-
 
 // Return true/ false if classList are supported
 // This depends of the 'classList shim' are 

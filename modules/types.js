@@ -1,11 +1,10 @@
-/**
- * Holds javascript natives
- */
+// Holds javascript natives
 var natives = {},
 
     toString = Object.prototype.toString;
 
 hAzzle.extend({
+
     /**
      * Determine the type of object being tested.
      *
@@ -147,7 +146,6 @@ hAzzle.extend({
         ], obj);
     }
 }, hAzzle);
-
 
 /* =========================== INTERNAL ========================== */
 

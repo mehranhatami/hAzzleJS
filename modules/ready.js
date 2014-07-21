@@ -9,7 +9,6 @@ var win = this,
 hAzzle.domReady = {
     callbacks: [],
     loaded: false,
-
     listen: function () {
 
         if (!loaded) {

@@ -1,49 +1,44 @@
- /**
-  * Get text
-  */
-
 hAzzle.getText = function (elem) {
-	     
-		 if(!elem) { 
-		 
-		    return; 
-		 }
-            var node, ret = '',
-                i = 0,
-                l = elem.length,
-                etc,
-                nodetype = elem.nodeType;
 
-            if (!nodetype) {
+    if (!elem) {
 
-                for (; i < l; i++) {
+        return;
+    }
+    var node, ret = '',
+        i = 0,
+        l = elem.length,
+        etc, nodetype = elem.nodeType;
 
-                    node = elem[i++];
+    if (!nodetype) {
 
-                    // Do not traverse comment nodes
-                    ret += hAzzle.getText(node);
-                }
+        for (; i < l; i++) {
 
-            } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
+            node = elem[i++];
 
-                etc = elem.textContent;
+            // Do not traverse comment nodes
+            ret += hAzzle.getText(node);
+        }
 
-                if (typeof etc === 'string') {
+    } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
 
-                    return elem.textContent;
+        etc = elem.textContent;
 
-                } else {
+        if (typeof etc === 'string') {
 
-                    for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
+            return elem.textContent;
 
-                        ret += hAzzle.getText(elem);
-                    }
+        } else {
 
-                }
-            } else if (nodetype === 3 || nodetype === 4) {
+            for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
 
-                return elem.nodeValue;
+                ret += hAzzle.getText(elem);
             }
 
-            return ret;
-        };
+        }
+    } else if (nodetype === 3 || nodetype === 4) {
+
+        return elem.nodeValue;
+    }
+
+    return ret;
+};

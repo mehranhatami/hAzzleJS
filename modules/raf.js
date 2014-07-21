@@ -2,12 +2,12 @@
  * rAF and cAF
  */
 var win = this,
-    foreign,
-    vendors = ['webkit', 'moz', 'ms', 'o'],
+    foreign, vendors = ['webkit', 'moz', 'ms', 'o'],
     i = 0,
     len = vendors.length,
-    nRAF,
-    nCAF;
+    nRAF, nCAF,
+    perf = window.performance,
+    lastTime = 0;
 
 // Test if we are within a foreign domain. Use raf from the top if possible.
 try {
@@ -18,14 +18,14 @@ try {
     foreign = window;
 }
 
-var perf = window.performance,
-    perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
+// Performance.now()
+
+var perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
     now = perfNow ? function () {
         return perfNow.call(perf);
     } : function () {
         return hAzzle.now();
-    },
-    lastTime = 0;
+    };
 
 // Grab the native implementation.
 
@@ -49,7 +49,7 @@ if (!nRAF && !nCAF) {
     // RequestAnimationFrame
 
     nRAF = function (callback) {
-        var currTime = new Date().getTime(),
+        var currTime = hAzzle.now(),
             timeToCall = Math.max(0, 16 - (currTime - lastTime)),
             id = win.setTimeout(function () {
                     callback(currTime + timeToCall);

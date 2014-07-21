@@ -10,7 +10,7 @@
             path + 'types.js',
             path + 'ready.js',
             path + 'shims/pnow.js',
-            path + 'document.js',
+            path + 'extra.js',
             path + 'text.js',			
             path + 'core.js',
             path + 'cl3.js',
@@ -18,7 +18,6 @@
             path + 'changers.js',
             path + 'compile.js',
             path + 'jiesa.js',
-            path + 'funcs.js',
             path + 'raf.js',
             path + 'fx.js',
             path + 'parse.js',
@@ -41,9 +40,7 @@
             path + 'eventhooks.js',
             path + 'ajax.js',
             path + 'clone.js',
-            path + 'jsonxml.js',
-            path + 'localestorage.js'
-
+            path + 'jsonxml.js'
         ];
     if (typeof exports === 'object') {
         // node export

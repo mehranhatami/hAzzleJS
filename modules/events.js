@@ -992,22 +992,6 @@ hAzzle.extend({
         });
     },
 
-    hover: function (fnOver, fnOut) {
-        return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
-    },
-
-    focus: function () {
-        return this.each(function (el) {
-            return el.focus();
-        });
-
-    },
-    blur: function () {
-        return this.each(function (el) {
-            return el.blur();
-        });
-    },
-
     /**
      * Clone events attached to elements
      *

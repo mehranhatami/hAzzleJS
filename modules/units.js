@@ -1,6 +1,4 @@
-var win = this,
-    doc = win.document,
-	thousand = 1000,
+var doc = this.document,
     lrmp = /^(left$|right$|margin|padding)/,
     reaf = /^(relative|absolute|fixed)$/,
     topbot = /^(top|bottom)$/;
@@ -72,12 +70,12 @@ hAzzle.units = function (px, unit, elem, prop) {
 
         var units = hAzzle.units.unity = {};
 
-	hAzzle.assert( function(div) {
+        hAzzle.assert(function (div) {
 
-        div.style.width = '100cm';
-        doc.body.appendChild(div);
-        units.mm = div.offsetWidth / thousand;
-	});
+            div.style.width = '100cm';
+            doc.body.appendChild(div);
+            units.mm = div.offsetWidth / 1000;
+        });
 
         units.cm = units.mm * 10;
         units.in = units.cm * 2.54;

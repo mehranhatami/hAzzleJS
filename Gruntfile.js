@@ -18,6 +18,7 @@ var conf = function conf() {
         'types.js',
         'ready.js',
         'shims/pnow.js',
+        'extra.js',
         'text.js',
         'core.js',
         'cl3.js',
@@ -25,7 +26,6 @@ var conf = function conf() {
         'changers.js',
         'compile.js',
         'jiesa.js',
-        'funcs.js',
         'raf.js',
         'fx.js',
         'parse.js',
@@ -50,7 +50,6 @@ var conf = function conf() {
         'ajax.js',
         'clone.js',
         'jsonxml.js',
-        'localestorage.js'
       ],
       modules = [],
       i = 0,

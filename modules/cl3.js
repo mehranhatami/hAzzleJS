@@ -1,13 +1,11 @@
 /*
- *
  * CSS3 pseudo-classes extension for Jiesa
  *
  * Contains all CSS Level 3 selectors
  *
  */
 var win = this,
-    doc = win.document,
-    i,
+    doc = win.document, i,
     Jiesa = hAzzle.Jiesa,
     rinputs = /^(?:input|select|textarea|button)$/i,
     rheader = /^h\d$/i,
@@ -35,31 +33,7 @@ hAzzle.extend({
 
     pseudo_filters: {
 
-        // Mehran! You fix this. Couldn't get it to work just now
-        "lang": function (el, lang) {
-
-            if (!ridentifier.test(lang || "")) {
-                hAzzle.error("unsupported lang: " + lang);
-            }
-
-            lang = lang.replace(runescape, funescape).toLowerCase();
-
-            var elemLang;
-            do {
-                if ((elemLang = hAzzle.documentIsHTML ?
-                    elem.lang :
-                    elem.getAttribute("xml:lang") || elem.getAttribute("lang"))) {
-
-                    elemLang = elemLang.toLowerCase();
-                    return elemLang === lang || elemLang.indexOf(lang + "-") === 0;
-                }
-            } while ((elem = elem.parentNode) && elem.nodeType === 1);
-            return false;
-
-        },
-
-
-        'only-of-type': function (el) {
+       'only-of-type': function (el) {
 
             return Jiesa.pseudo_filters['first-of-type'](el) && Jiesa.pseudo_filters['last-of-type'](el);
         },
@@ -285,11 +259,11 @@ function createButtonPseudo(type) {
 }
 
 function children(node, ofType) {
-    var r = [],
-        i, l,
-        nodes = node.childNodes;
+    var r = [], i, l,
+        nodes = node.childNodes,
+		i = 0, l = nodes.length;
 
-    for (i = 0, l = nodes.length; i < l; i++) {
+    for (; i < l; i++) {
         if (nodes[i].nodeType == 1 && (!ofType || nodes[i].nodeName == ofType)) {
             r.push(nodes[i]);
         }

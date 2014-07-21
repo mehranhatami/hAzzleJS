@@ -2,26 +2,24 @@
  * Removeable.js
  */
 
-hAzzle.extend({ 
 
 /**
- * removes the data associated with an element
- * @param {Element} el
+ * Removes the data associated with an element
+ * @param {Object} elem
  * @return {hAzzle}
  */
 
-  clearData: function(el) {
-    hAzzle.removeData(el);
-    hAzzle.event.removeEvent(el);
- },
-
-}, hAzzle);
+hAzzle.clearData = function(elem) {
+    hAzzle.removeData(elem);
+    hAzzle.event.removeEvent(elem);
+ };
 
 
 hAzzle.extend({
 
     /**
      * Remove the set of matched elements from the DOM.
+     * @param {hAzzle}
      * @return {hAzzle}
      */
 
@@ -29,7 +27,7 @@ hAzzle.extend({
 
         // Filters the set of matched elements to be removed.
        
-	    var elem = selector ? hAzzle.select(selector, null, null, this) : this;
+	    var elem = selector ? hAzzle.find(selector, this) : this;
 
         hAzzle.each(elem, function (el) {
 
@@ -47,6 +45,7 @@ hAzzle.extend({
     },
 
     /**
+	 * Remove all child nodes of the set of matched elements from the DOM.
      * @return {hAzzle}
      */
 
@@ -69,7 +68,8 @@ hAzzle.extend({
     },
 
     /**
-     * @return {hAzzle}
+     * Remove the set of matched elements from the DOM.
+	 * @return {hAzzle}
      */
 
 	detach: function (selector) {
