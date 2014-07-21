@@ -265,8 +265,7 @@ hAzzle.extend({
             l = this.length,
             matched = [],
             pos = typeof selectors !== "string" ?
-            hAzzle(selectors, context || this.context) :
-            0;
+            hAzzle(selectors, context) : 0;
 
         for (; i < l; i++) {
 
@@ -287,29 +286,43 @@ hAzzle.extend({
     },
 
     /**
-     * Find the closest childs in the element collection
+     * Find the first element(s) that matches the selector by traversing down
+     * through its descendants in the DOM tree level by level.
      *
-     * @param {String} selector
+     * @param {String|Object} selector
      * @return {hAzzle}
      *
      */
 
     closestChild: function (selector) {
 
-        if (typeof selector === 'string' && selector !== '') {
+        if ((typeof selector === 'string' ||
+            typeof selector === 'object') && selector !== '') {
+
             var queue = [],
                 node, children, i = 0,
                 child;
+
             queue.push(this);
+
             while (queue.length > 0) {
+
                 node = queue.shift();
+
                 children = node.children();
+
                 for (; i < children.length; ++i) {
+
                     child = hAzzle(children[i]);
+
+                    // We find the child, stop processing
+
                     if (child.is(selector)) {
+
                         return child;
                     }
-                    queue.push(child);
+
+                    queue.push(child); //go deeper
                 }
             }
         }
@@ -317,6 +330,44 @@ hAzzle.extend({
         return this;
     },
 
+    query: function (selector, count) {
+
+        var self = this.each ? this : [this],
+            list = [],
+            i = 0,
+            m = self.length,
+            nodes, node,
+            j = 0,
+            l;
+
+        for (; i < m && (!count || list.length < count); i++) {
+
+            if (count === list.length + 1) {
+
+                node = hAzzle.find(selector, self[i]);
+
+                if (node) {
+
+                    list.push(node);
+                }
+
+            } else {
+
+                nodes = hAzzle.find(selector, self[i]);
+
+                for (l = nodes.length; j < l && (!count || list.length < count); j++) {
+                    list.push(nodes[j]);
+                }
+            }
+        }
+
+        return hAzzle(list);
+    },
+
+    /**
+     * Deprecated but kept due to consistency with the jQuery API
+     *
+     */
     find: function (selector) {
         var i,
             len = this.length,
@@ -389,14 +440,13 @@ hAzzle.extend({
     }
 });
 
+
 hAzzle.extend({
     dir: function (elem, dir, until) {
         var matched = [],
-            cur = elem[dir],
-            truncate = until !== undefined;
-
+            cur = elem[dir];
         while (cur && cur !== document) {
-            if (truncate && hAzzle(cur).is(until)) {
+            if (typeof until !== 'undefined' && hAzzle(cur).is(until)) {
                 break;
             }
             matched.push(cur);
@@ -575,21 +625,24 @@ hAzzle.forOwn({
 });
 
 
-function isnot(elements, selector, not) {
+function isnot(els, selector, not) {
 
     var type = typeof selector;
 
     if (type === "string") {
-        selector = hAzzle.matches(selector, elements);
-        return hAzzle.grep(elements, function (elem) {
+        selector = hAzzle.matches(selector, els);
+        return hAzzle.grep(els, function (elem) {
             return (indexOf.call(selector, elem) >= 0) !== not;
         });
     }
+
     return type === 'function' ?
-        hAzzle.grep(elements, function (elem, i) {
+        hAzzle.grep(els, function (elem, i) {
             return !!selector.call(elem, i, elem) !== not;
         }) : selector.nodeType ?
-        hAzzle.grep(elements, function (elem) {
+        hAzzle.grep(els, function (elem) {
             return (elem === selector) !== not;
-        }) : [];
+        }) : hAzzle.grep(els, function (elem) {
+            return (indexOf.call(selector, elem) >= 0) !== not;
+        });
 }
