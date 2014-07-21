@@ -55,14 +55,14 @@ hAzzle.matches = function (selector, context) {
 
         if (!l) {
 
-            return hooks[selector] || hAzzle.matchesSelector(context, selector);
+            return hAzzle.matchesSelector(context, selector);
         }
 
         // loop through
 
         for (; i < l; i++) {
 
-            if (hooks[selector] || hAzzle.matchesSelector(context[i], selector)) {
+            if (hAzzle.matchesSelector(context[i], selector)) {
 
                 result.push(context[i]);
             }

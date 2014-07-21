@@ -44,11 +44,11 @@ var arrayProto = Array.prototype,
     };
 
 hAzzle.extend({
-	
-	clear: function() {
-	 this.length = 0;
-     return this;	
-	},
+
+    clear: function () {
+        this.length = 0;
+        return this;
+    },
 
     /**
      * Adds one element to the set of matched elements.
@@ -286,6 +286,37 @@ hAzzle.extend({
         return hAzzle(matched.length > 1 ? hAzzle.unique(matched) : matched);
     },
 
+    /**
+     * Find the closest childs in the element collection
+     *
+     * @param {String} selector
+     * @return {hAzzle}
+     *
+     */
+
+    closestChild: function (selector) {
+
+        if (typeof selector === 'string' && selector !== '') {
+            var queue = [],
+                node, children, i = 0,
+                child;
+            queue.push(this);
+            while (queue.length > 0) {
+                node = queue.shift();
+                children = node.children();
+                for (; i < children.length; ++i) {
+                    child = hAzzle(children[i]);
+                    if (child.is(selector)) {
+                        return child;
+                    }
+                    queue.push(child);
+                }
+            }
+        }
+        // If no selector, return all nodes
+        return this;
+    },
+
     find: function (selector) {
         var i,
             len = this.length,
@@ -438,7 +469,7 @@ hAzzle.forOwn({
      */
 
     children: function (elem) {
-        return hAzzle.sibling(elem, true);
+        return elem && hAzzle.sibling(elem, true);
     },
 
     /**
@@ -449,7 +480,7 @@ hAzzle.forOwn({
      */
 
     next: function (elem) {
-        return elem.nextElementSibling;
+        return elem && elem.nextElementSibling;
     },
 
     /**
@@ -462,7 +493,7 @@ hAzzle.forOwn({
      */
 
     prev: function (elem) {
-        return elem.previousElementSibling;
+        return elem && elem.previousElementSibling;
     },
 
     /**

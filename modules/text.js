@@ -3,6 +3,11 @@
   */
 
 hAzzle.getText = function (elem) {
+	     
+		 if(!elem) { 
+		 
+		    return; 
+		 }
             var node, ret = '',
                 i = 0,
                 l = elem.length,

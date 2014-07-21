@@ -18,7 +18,6 @@ var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
         if (el) {
 
             return (el.hAzzle_id || (el.hAzzle_id = uid.next()));
-
         }
     };
 
@@ -26,7 +25,7 @@ var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
 
 hAzzle.extend({
 
-    _cache: {},
+    _data: {},
 
     /**
      * Check if an element contains data
@@ -37,8 +36,20 @@ hAzzle.extend({
      */
 
     hasData: function (elem) {
-        return elem.nodeType && hAzzle._cache[getUID(elem)] ? true : false;
+
+        if (elem.nodeType) {
+
+            if (hAzzle._data[getUID(elem)]) {
+
+                return true;
+
+            } else {
+
+                return false;
+            }
+        }
     },
+
     /**
      * Remove data from an element
      *
@@ -49,7 +60,9 @@ hAzzle.extend({
 
     removeData: function (elem, key) {
 
-        if (_validate(elem)) {
+        var valid = [1, 9];
+
+        if (valid[elem.nodeType] || !elem.hasOwnProperty('nodeType')) {
 
             if (!elem instanceof hAzzle) {
 
@@ -62,21 +75,18 @@ hAzzle.extend({
 
             // Nothing to do if there are no data stored on the elem itself
 
-            if (hAzzle._cache[id]) {
+            if (hAzzle._data[id]) {
 
                 if (typeof key === 'undefined' && elem.nodeType === 1) {
 
-                    hAzzle._cache[id] = {};
+                    hAzzle._data[id] = {};
 
                 } else {
 
-                    if (hAzzle._cache[id]) {
-
-                        delete hAzzle._cache[id][key];
-
+                    if (hAzzle._data[id]) {
+                        delete hAzzle._data[id][key];
                     } else {
-
-                        hAzzle._cache[id] = null;
+                        hAzzle._data[id] = null;
                     }
                 }
 
@@ -86,24 +96,29 @@ hAzzle.extend({
 
     data: function (elem, key, value) {
 
-        if (_validate(elem)) {
+        if (!elem) {
 
-            var pid,
-                id = hAzzle._cache[getUID(elem)];
+            return;
+        }
+        var valid = [1, 9];
+
+        if (valid[elem.nodeType] || !elem.hasOwnProperty('nodeType')) {
+
+            var id = hAzzle._data[getUID(elem)];
 
             // Create and unique ID for this elem
 
             if (!id && elem.nodeType) {
-
-                pid = getUID(elem);
-                id = hAzzle._cache[pid] = {};
+                var pid = getUID(elem);
+                id = hAzzle._data[pid] = {};
             }
-            
-			if(!key || ! value) {
-               
-			   return id
-           }
-            // Return all data on the element
+
+            // Return all data on saved on the element
+
+            if (typeof key === 'undefined') {
+
+                return id;
+            }
 
             if (typeof value === 'undefined') {
 
@@ -147,10 +162,11 @@ hAzzle.extend({
      */
 
     data: function (key, value) {
+        var len = arguments.length;
 
-        // If no params, try to get the data from the HTML5 data- attribute
+        // If no arguments, try to get the data from the HTML5 data- attribute
 
-        if (key === undefined) {
+        if (!len) {
 
             var data = hAzzle.data(this[0]),
                 elem = this[0];
@@ -209,7 +225,7 @@ hAzzle.extend({
 
             // 'key' defined, but no 'data'.
 
-        } else if (typeof key !== 'undefined') {
+        } else if (len === 1) {
 
             if (this.length === 1) {
 
@@ -233,13 +249,3 @@ hAzzle.extend({
     }
 
 });
-
-
-/* =========================== INTERNAL ========================== */
-
-function _validate(elem) {
-    if (elem.nodeType === 1 || elem.nodeType === 9 || !elem.hasOwnProperty('nodeType')) {
-        return true;
-    }
-    return false;
-}

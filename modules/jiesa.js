@@ -9,7 +9,6 @@
  *
  * - Various bug checks
  */
-
 var win = this,
 
     Jiesa = hAzzle.Jiesa,
@@ -196,7 +195,10 @@ hAzzle.extend({
             } else {
 
                 checkParent(elem);
-                return matches.call(elem, selector);
+                try {
+                    return matches.call(elem, selector);
+                } catch (e) {}
+
             }
 
         } else {
@@ -238,15 +240,21 @@ function checkParent(elem) {
 
     // not needed if already has parent
 
-    if (elem.parentNode) {
+    if (!elem || elem.parentNode) {
 
         return;
     }
 
     var fragment = document.createDocumentFragment();
 
-    fragment.appendChild(elem);
-    return fragment;
+    try {
+        fragment.appendChild(elem);
+        return fragment;
+    } catch (e) {} finally {
+        return "";
+    }
+
+
 }
 
 function qM(selector, context, quickMatch) {
