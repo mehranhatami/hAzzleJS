@@ -585,6 +585,13 @@ function byTagRaw(tag, elem) {
     tag = tag.toUpperCase();
   }
 
+  function getNext(next, element, elem) {
+    while (!next && (element = element.parentNode) && element !== elem) {
+      next = element.nextSibling;
+    }
+    return next;
+  }
+
   while ((element = next)) {
     if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
       elements[elements.length] = element;
@@ -592,9 +599,7 @@ function byTagRaw(tag, elem) {
     if ((next = element.firstChild || element.nextSibling)) {
       continue;
     }
-    while (!next && (element = element.parentNode) && element !== elem) {
-      next = element.nextSibling;
-    }
+    next = getNext(next, element, elem);
   }
   return elements;
 }
