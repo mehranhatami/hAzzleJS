@@ -1,31 +1,52 @@
 /** 
  * Data
  */
+ 
 var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
 
-    // Unique ID
+    // We use dataStorage Object to avoid  exposing 
+    // of internal data to the global hAzzle Object
 
-    uid = {
-        current: 0,
-        next: function () {
-            var id = ++this.current + '';
-            return 'hAzzle_' + id;
-        }
-    },
+    dataStorage = {
 
-    getUID = function (el) {
+        UID: 1,
 
-        if (el) {
+        cache: {},
 
-            return (el.hAzzle_id || (el.hAzzle_id = uid.next()));
+        // Set / Get Unique ID
+
+        getID: function (el) {
+
+            // Always return 0 if el === window
+
+            if (el === window) {
+
+                return 0;
+            }
+
+            if (typeof el.hAzzleID === 'undefined') {
+
+                el.hAzzleID = 'hAzzle_' + dataStorage.UID++;
+            }
+
+            return el.hAzzleID;
+        },
+
+        // Accepted nodeTypes
+
+        accepted: function (elem) {
+
+            if (elem && (elem.nodeType === 1 ||
+                elem.nodeType === 9 ||
+                !elem.hasOwnProperty('nodeType'))) {
+                return true;
+            }
+
+            return false;
         }
     };
 
-// Extend the hAzzle object
-
 hAzzle.extend({
-
-    _data: {},
 
     /**
      * Check if an element contains data
@@ -39,7 +60,7 @@ hAzzle.extend({
 
         if (elem.nodeType) {
 
-            if (hAzzle._data[getUID(elem)]) {
+            if (dataStorage.cache[dataStorage.getID(elem)]) {
 
                 return true;
 
@@ -60,9 +81,7 @@ hAzzle.extend({
 
     removeData: function (elem, key) {
 
-        var valid = [1, 9];
-
-        if (valid[elem.nodeType] || !elem.hasOwnProperty('nodeType')) {
+        if (dataStorage.accepted(elem)) {
 
             if (!elem instanceof hAzzle) {
 
@@ -71,46 +90,42 @@ hAzzle.extend({
 
             // get / create unique ID for this element
 
-            var id = getUID(elem);
+            var id = dataStorage.getID(elem);
 
             // Nothing to do if there are no data stored on the elem itself
 
-            if (hAzzle._data[id]) {
+            if (dataStorage.cache[id]) {
 
                 if (typeof key === 'undefined' && elem.nodeType === 1) {
 
-                    hAzzle._data[id] = {};
+                    dataStorage.cache[id] = {};
 
                 } else {
 
-                    if (hAzzle._data[id]) {
-                        delete hAzzle._data[id][key];
+                    if (dataStorage.cache[id]) {
+
+                        delete dataStorage.cache[id][key];
+
                     } else {
-                        hAzzle._data[id] = null;
+
+                        dataStorage.cache[id] = null;
                     }
                 }
-
             }
         }
     },
 
     data: function (elem, key, value) {
 
-        if (!elem) {
+        if (dataStorage.accepted(elem)) {
 
-            return;
-        }
-        var valid = [1, 9];
-
-        if (valid[elem.nodeType] || !elem.hasOwnProperty('nodeType')) {
-
-            var id = hAzzle._data[getUID(elem)];
+            var id = dataStorage.cache[dataStorage.getID(elem)];
 
             // Create and unique ID for this elem
 
             if (!id && elem.nodeType) {
-                var pid = getUID(elem);
-                id = hAzzle._data[pid] = {};
+                var pid = dataStorage.getID(elem);
+                id = dataStorage.cache[pid] = {};
             }
 
             // Return all data on saved on the element
@@ -233,12 +248,11 @@ hAzzle.extend({
 
             } else {
 
-                // Sets multiple values
+                // Set multiple values
 
                 return this.map(function (el) {
 
                     return hAzzle.data(el, key);
-
                 });
             }
 
