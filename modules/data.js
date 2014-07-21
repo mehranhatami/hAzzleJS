@@ -1,8 +1,8 @@
 /** 
  * Data
  */
- 
-var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
+var htmlRegEx = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
+    charRegEx = /([A-Z])/g,
 
     // We use dataStorage Object to avoid  exposing 
     // of internal data to the global hAzzle Object
@@ -15,21 +15,21 @@ var html5Json = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
 
         // Set / Get Unique ID
 
-        getID: function (el) {
+        getID: function (elem) {
 
             // Always return 0 if el === window
 
-            if (el === window) {
+            if (elem === window) {
 
                 return 0;
             }
 
-            if (typeof el.hAzzleID === 'undefined') {
+            if (typeof elem.hAzzleID === 'undefined') {
 
-                el.hAzzleID = 'hAzzle_' + dataStorage.UID++;
+                elem.hAzzleID = 'hAzzle_' + dataStorage.UID++;
             }
 
-            return el.hAzzleID;
+            return elem.hAzzleID;
         },
 
         // Accepted nodeTypes
@@ -201,43 +201,13 @@ hAzzle.extend({
                         if (name.indexOf("data-") === 0) {
 
                             name = hAzzle.camelize(name.substr(5));
-
-                            data = data[name];
-
-                            // Try to fetch data from the HTML5 data- attribute
-
-                            if (typeof data === 'undefined' && elem.nodeType === 1) {
-
-                                name = "data-" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
-
-                                data = elem.getAttribute(name);
-
-                                if (typeof data === "string") {
-                                    try {
-                                        data = data === "true" ? true :
-                                            data === "false" ? false :
-                                            data === "null" ? null :
-                                            +data + "" === data ? +data :
-                                            html5Json.test(data) ? JSON.parse(data + "") : data;
-
-                                    } catch (e) {}
-
-                                    // Make sure we set the data so it isn't changed later
-
-                                    hAzzle.data(elem, key, data);
-
-                                } else {
-                                    data = undefined;
-                                }
-                            }
-                            return data;
+                            getDataAttr(elem, name, data[name]);
                         }
                     }
                 }
 
                 hAzzle.data(elem, "parsedAttrs", true);
             }
-
             // 'key' defined, but no 'data'.
 
         } else if (len === 1) {
@@ -263,3 +233,34 @@ hAzzle.extend({
     }
 
 });
+
+/* =========================== INTERNAL ========================== */
+
+function getDataAttr(elem, key, data) {
+    var name;
+
+    if (data === undefined && elem.nodeType === 1) {
+        name = "data-" + key.replace(charRegEx, "-$1").toLowerCase();
+        data = elem.getAttribute(name);
+
+        if (typeof data === "string") {
+            try {
+                data = data === "true" ? true :
+                    data === "false" ? false :
+                    data === "null" ? null :
+                    // Only convert to a number if it doesn't change the string
+                    +data + "" === data ? +data :
+                    htmlRegEx.test(data) ? hAzzle.parseJSON(data) :
+                    data;
+            } catch (e) {}
+
+            // Make sure we set the data so it isn't changed later
+            hAzzle.data(elem, key, data);
+
+        } else {
+
+            data = undefined;
+        }
+    }
+    return data;
+}
