@@ -109,8 +109,7 @@ hAzzle.extend({
     var i = 0,
       pieceStore = [],
       nodes,
-      l, piece, piece1, j = 0,
-      k,
+      l, piece,
       chunks, kf;
 
     // Set / Adjust correct context
@@ -419,16 +418,27 @@ hAzzle.extend({
           return RegExp(value, modifiers[1]).test(attr);
         }
 
-        return value && operator === '==' ? attr === value :
-          operator === '=' ? attr === value :
-          operator === '!=' ? attr !== value :
-          operator === '^=' ? attr.indexOf(value) === 0 :
-          operator === '*=' ? attr.indexOf(value) > -1 :
-          operator === '$=' ? attr.slice(-value.length) === value :
-          operator === '~=' ? (' ' + attr + ' ').indexOf(value) > -1 :
-          operator === '|=' ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
-          false;
-
+        if (value) {
+          switch (operator) {
+          case '==':
+          case '=':
+            return (attr === value);
+          case '!=':
+            return (attr !== value);
+          case '^=':
+            return (attr.indexOf(value) === 0);
+          case '*=':
+            return (attr.indexOf(value) > -1);
+          case '$=':
+            return (attr.slice(-value.length) === value);
+          case '~=':
+            return ((' ' + attr + ' ').indexOf(value) > -1);
+          case '|=':
+            return (attr === value || attr.slice(0, value.length + 1) === value + '-');
+          default:
+            return false;
+          }
+        }
       }
       return false;
     },
@@ -585,13 +595,6 @@ function byTagRaw(tag, elem) {
     tag = tag.toUpperCase();
   }
 
-  function getNext(next, element, elem) {
-    while (!next && (element = element.parentNode) && element !== elem) {
-      next = element.nextSibling;
-    }
-    return next;
-  }
-
   while ((element = next)) {
     if (element.tagName > '@' && (any || element.tagName.toUpperCase() == tag)) {
       elements[elements.length] = element;
@@ -599,7 +602,9 @@ function byTagRaw(tag, elem) {
     if ((next = element.firstChild || element.nextSibling)) {
       continue;
     }
-    next = getNext(next, element, elem);
+    while (!next && (element = element.parentNode) && element !== elem) {
+      next = element.nextSibling;
+    }
   }
   return elements;
 }
@@ -630,6 +635,7 @@ function getAttribute(elem, attribute) {
     return elem.attributes[attribute] &&
       elem.attributes[attribute].value || '';
   }
+
   return (
     attribute === 'type' ? elem.getAttribute(attribute) || '' :
     boolElem[attribute] ? elem.getAttribute(attribute, 2) || '' :
