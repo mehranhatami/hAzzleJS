@@ -65,7 +65,7 @@
 
         // Instanceof hAzzle          
 		
-		} else if (selector instanceof List) {
+		} else if (selector instanceof hAzzle) {
         
 		     return selector;
          
@@ -93,6 +93,10 @@
         }
 
         if (selector) {
+			
+		  // Initialize a new hAzzle Object with the
+          // given `selector`
+		  
             var i = this.length = this.size = selector.length;
 
             while (i--) {
