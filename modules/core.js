@@ -1,6 +1,5 @@
 var win = this,
     winDoc = win.document,
-    contains,
     docElem = winDoc.documentElement,
     setDocument,
     contains,
@@ -9,7 +8,7 @@ var win = this,
     indexOf = Array.prototype.indexOf,
 
     me = 1 << 31,
-	
+
     expando = 'hAzzle' + Math.random() + '-kf',
 
     matches,
@@ -31,18 +30,18 @@ var win = this,
         'api-sortInput': false,
         'bug-detectDuplicates': !!hasDuplicate,
         'sort-bug': hAzzle.assert(function (div1) {
-                // Should return 1, but returns 4 (following)
-             return div1.compareDocumentPosition(document.createElement("div")) & 1;
-         })
+            // Should return 1, but returns 4 (following)
+            return div1.compareDocumentPosition(document.createElement("div")) & 1;
+        })
 
     },
 
     // Core methods for Jiesa
 
     Jiesa = {
-     
-	 // Always use a unique version number 
-     // for Jiesa
+
+        // Always use a unique version number 
+        // for Jiesa
         version: '0.0.3d',
 
         sortOrder: sortOrder,
@@ -104,103 +103,6 @@ var setDocument = hAzzle.setDocument = function (node) {
         }, false);
     }
 
-    sortOrder = cnative.test(docElem.compareDocumentPosition) ?
-        function (a, b) {
-
-            // Flag for duplicate removal
-            if (a === b) {
-                hasDuplicate = true;
-                return 0;
-            }
-
-            // Sort on method existence if only one input has compareDocumentPosition
-            var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-            if (compare) {
-                return compare;
-            }
-
-            // Calculate position if both inputs belong to the same document
-            compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                a.compareDocumentPosition(b) :
-
-                // Otherwise we know they are disconnected
-                1;
-
-            // Disconnected nodes
-            if (compare & 1 ||
-                (!domCore['sort-bug'] && b.compareDocumentPosition(a) === compare)) {
-
-                // Choose the first element that is related to our preferred document
-                if (a === doc || a.ownerDocument === winDoc && contains(winDoc, a)) {
-                    return -1;
-                }
-                if (b === doc || b.ownerDocument === winDoc && contains(winDoc, b)) {
-                    return 1;
-                }
-
-                // Maintain original order
-                return domCore['api-sortInput'] ?
-                    (indexOf.call(domCore['api-sortInput'], a) - indexOf.call(domCore['api-sortInput'], b)) :
-                    0;
-            }
-
-            return compare & 4 ? -1 : 1;
-        } :
-        function (a, b) {
-            // Exit early if the nodes are identical
-            if (a === b) {
-                hasDuplicate = true;
-                return 0;
-            }
-
-            var cur,
-                i = 0,
-                aup = a.parentNode,
-                bup = b.parentNode,
-                ap = [a],
-                bp = [b];
-
-            // Parentless nodes are either documents or disconnected
-            if (!aup || !bup) {
-                return a === doc ? -1 :
-                    b === doc ? 1 :
-                    aup ? -1 :
-                    bup ? 1 :
-                    domCore['api-sortInput'] ?
-                    (indexOf.call(domCore['api-sortInput'], a) - indexOf.call(domCore['api-sortInput'], b)) :
-                    0;
-
-                // If the nodes are siblings, we can do a quick check
-            } else if (aup === bup) {
-                return siblingCheck(a, b);
-            }
-
-            // Otherwise we need full lists of their ancestors for comparison
-            cur = a;
-            while ((cur = cur.parentNode)) {
-                ap.unshift(cur);
-            }
-            cur = b;
-            while ((cur = cur.parentNode)) {
-                bp.unshift(cur);
-            }
-
-            // Walk down the tree looking for a discrepancy
-            while (ap[i] === bp[i]) {
-                i++;
-            }
-
-            return i ?
-                // Do a sibling check if the nodes have a common ancestor
-                siblingCheck(ap[i], bp[i]) :
-
-                // Otherwise nodes in our document sort first
-                ap[i] === winDoc ? -1 :
-                bp[i] === winDoc ? 1 :
-                0;
-        };
-
-
     // Return the document
 
     return doc;
@@ -261,36 +163,129 @@ Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
  *
  */
 
-contains = cnative.test(docElem.compareDocumentPosition) || cnative.test(docElem.contains) ? function (a, b) {
+contains = (docElem.contains || docElem.compareDocumentPosition) ? function (parent, node) {
 
-    var adown,
-        bup = b && b.parentNode;
+    var adown, bup = node && node.parentNode;
 
-    if (a.nodeType === 9) {
+    if (parent.nodeType === 9) {
 
-        adown = a.documentElement;
+        adown = parent.documentElement;
 
     } else {
 
-        adown = a;
+        adown = parent;
     }
 
-    return a === bup || !!(bup && bup.nodeType === 1 && (
+    return parent === bup || !!(bup && bup.nodeType === 1 && (
         adown.contains ?
         adown.contains(bup) :
-        a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+        parent.compareDocumentPosition && parent.compareDocumentPosition(bup) & 16
     ));
-} : function (a, b) {
-
-    if (b) {
-        while ((b = b.parentElement)) {
-            if (b === a) {
-                return true;
-            }
-        }
-    }
-    return false;
+} : function (parent, node) {
+    while (node && (node = node.parentNode))
+        if (node === parent) return true
+    return false
 };
+
+// Sort
+
+Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
+
+    function (a, b) {
+
+        // Flag for duplicate removal
+
+        if (a === b) {
+            hasDuplicate = true;
+            return 0;
+        }
+
+        // Sort on method existence if only one input has compareDocumentPosition
+        var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+        if (compare) {
+            return compare;
+        }
+
+        // Calculate position if both inputs belong to the same document
+        compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
+            a.compareDocumentPosition(b) :
+
+            // Otherwise we know they are disconnected
+            1;
+
+        // Disconnected nodes
+        if (compare & 1 ||
+            (!domCore['sort-bug'] && b.compareDocumentPosition(a) === compare)) {
+
+            // Choose the first element that is related to our preferred document
+            if (a === winDoc || a.ownerDocument === winDoc && contains(winDoc, a)) {
+                return -1;
+            }
+            if (b === winDoc || b.ownerDocument === winDoc && contains(winDoc, b)) {
+                return 1;
+            }
+
+            // Maintain original order
+            return domCore['api-sortInput'] ?
+                (indexOf.call(domCore['api-sortInput'], a) - indexOf.call(domCore['api-sortInput'], b)) :
+                0;
+        }
+
+        return compare & 4 ? -1 : 1;
+    } :
+    function (a, b) {
+        // Exit early if the nodes are identical
+        if (a === b) {
+            hasDuplicate = true;
+            return 0;
+        }
+
+        var cur,
+            i = 0,
+            aup = a.parentNode,
+            bup = b.parentNode,
+            ap = [a],
+            bp = [b];
+
+        // Parentless nodes are either documents or disconnected
+        if (!aup || !bup) {
+            return a === winDoc ? -1 :
+                b === winDoc ? 1 :
+                aup ? -1 :
+                bup ? 1 :
+                domCore['api-sortInput'] ?
+                (indexOf.call(domCore['api-sortInput'], a) - indexOf.call(domCore['api-sortInput'], b)) :
+                0;
+
+            // If the nodes are siblings, we can do a quick check
+        } else if (aup === bup) {
+            return siblingCheck(a, b);
+        }
+
+        // Otherwise we need full lists of their ancestors for comparison
+        cur = a;
+        while ((cur = cur.parentNode)) {
+            ap.unshift(cur);
+        }
+        cur = b;
+        while ((cur = cur.parentNode)) {
+            bp.unshift(cur);
+        }
+
+        // Walk down the tree looking for a discrepancy
+        while (ap[i] === bp[i]) {
+            i++;
+        }
+
+        return i ?
+            // Do a sibling check if the nodes have a common ancestor
+            siblingCheck(ap[i], bp[i]) :
+
+            // Otherwise nodes in our document sort first
+            ap[i] === winDoc ? -1 :
+            bp[i] === winDoc ? 1 :
+            0;
+    };
 
 /**
  * Check if element is inside of context
