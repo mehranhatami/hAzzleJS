@@ -172,7 +172,7 @@ hAzzle.extend({
 
     removeProp: function (name) {
         return this.each(function () {
-            delete this[hAzzle.propFix[name] || name];
+            delete this[hAzzle.propMap[name] || name];
         });
     }
 });
@@ -193,11 +193,19 @@ hAzzle.extend({
         }
     },
 
-    propFix: {
+    propMap: {
         'for': 'htmlFor',
         'class': 'className',
         'cellpadding': 'cellPadding',
-        'cellspacing': 'cellSpacing'
+        'cellspacing': 'cellSpacing',
+        'tabindex': 'tabIndex',
+        'readonly': 'readOnly',
+        'maxlength': 'maxLength',
+        'rowspan': 'rowSpan',
+        'colspan': 'colSpan',
+        'usemap': 'useMap',
+        'frameborder': 'frameBorder',
+        'contenteditable': 'contentEditable'
     },
 
     nodeHook: {},
@@ -266,7 +274,7 @@ hAzzle.extend({
 
             name = keys[i];
 
-            propName = hAzzle.propFix[name] || name;
+            propName = hAzzle.propMap[name] || name;
 
             if (getBooleanAttrName(el, name)) {
 
@@ -363,7 +371,7 @@ hAzzle.extend({
         if (nType !== 1 || hAzzle.documentIsHTML) {
 
             // Fix name and attach hooks
-            name = hAzzle.propFix[name] || name;
+            name = hAzzle.propMap[name] || name;
             hooks = hAzzle.propHooks[name];
         }
 

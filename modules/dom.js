@@ -50,6 +50,12 @@ hAzzle.extend({
         return this;
     },
 
+    pluck: function (property) {
+        return hAzzle.map(this, function (el) {
+            return el[property];
+        });
+    },
+
     /**
      * Adds one element to the set of matched elements.
      *
@@ -407,6 +413,7 @@ hAzzle.extend({
             });
         }
     },
+
     /**
      * NOTE!! In the upcoming DOM level 4, the nextElementSibling and
      * previousElementSibling have been removed from the
@@ -442,7 +449,7 @@ hAzzle.extend({
 
 
 hAzzle.extend({
-    dir: function (elem, dir, until) {
+    traverse: function (elem, dir, until) {
         var matched = [],
             cur = elem[dir];
         while (cur && cur !== document) {
@@ -492,7 +499,7 @@ hAzzle.forOwn({
      */
 
     parents: function (elem) {
-        return hAzzle.dir(elem, "parentElement");
+        return hAzzle.traverse(elem, "parentElement");
     },
 
     /**
@@ -501,7 +508,7 @@ hAzzle.forOwn({
      */
 
     parentsUntil: function (elem, i, until) {
-        return hAzzle.dir(elem, "parentElement", until);
+        return hAzzle.traverse(elem, "parentElement", until);
     },
 
     /**
@@ -552,7 +559,7 @@ hAzzle.forOwn({
      */
 
     nextAll: function (elem) {
-        return hAzzle.dir(elem, "nextElementSibling");
+        return hAzzle.traverse(elem, "nextElementSibling");
     },
 
     /**
@@ -561,7 +568,7 @@ hAzzle.forOwn({
      */
 
     prevAll: function (elem) {
-        return hAzzle.dir(elem, "previousElementSibling");
+        return hAzzle.traverse(elem, "previousElementSibling");
     },
 
     /**
@@ -571,7 +578,7 @@ hAzzle.forOwn({
 
     nextUntil: function (elem, i, until) {
 
-        return hAzzle.dir(elem, "nextElementSibling", until);
+        return hAzzle.traverse(elem, "nextElementSibling", until);
     },
 
     /**
@@ -581,7 +588,7 @@ hAzzle.forOwn({
 
     prevUntil: function (elem, i, until) {
 
-        return hAzzle.dir(elem, "previousElementSibling", until);
+        return hAzzle.traverse(elem, "previousElementSibling", until);
     },
 
 

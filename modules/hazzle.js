@@ -82,13 +82,14 @@
 
             selector = [selector];
 
-            // Document Ready
-
         } else if (hAzzle.isNodeList(selector)) {
 
             selector = hAzzle.makeArray(selector);
-			
+
+		 // Wrap DOM nodes.
+
         } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) {
+
             selector = [selector];
         }
 
