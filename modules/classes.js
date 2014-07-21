@@ -129,10 +129,10 @@ hAzzle.extend({
     },
 
     /**
-     * Check if element contains class name(s)
+     * Check if the given element contains class name(s)
      *
-     * @param {String} selector(s)
-     * @return {Boolean} true if the element contains all classes
+     * @param {String} value
+     * @return {Boolean} 
      */
 
     hasClass: function (value) {
@@ -157,21 +157,24 @@ hAzzle.extend({
     },
 
     /**
-     * Toggle class(es) on element
+	 * Toggle class(es) on element
+     * optionally a `bool` may be given
+     * to indicate that the class should
+     * be added when truthy.
      *
      * @param {String} value
      * @param {Boolean} state
      * @return {Boolean}
      */
 
-    toggleClass: function (value, stateVal) {
+    toggleClass: function (value, state) {
 
         var type = typeof value,
-            isBool = typeof stateVal === 'boolean';
+            isBool = typeof state === 'boolean';
 
         if (typeof value === 'function') {
             return this.each(function (el, count) {
-                hAzzle(el).toggleClass(value.call(el, count, el.className, stateVal), stateVal);
+                hAzzle(el).toggleClass(value.call(el, count, el.className, state), state);
             });
         }
 
@@ -187,7 +190,7 @@ hAzzle.extend({
                     while ((className = classNames[i++])) {
                         if (isBool) {
                             // IE10+ doesn't support the toggle boolean flag.
-                            if (stateVal) {
+                            if (state) {
                                 el.classList.add(className);
                             } else {
                                 el.classList.remove(className);

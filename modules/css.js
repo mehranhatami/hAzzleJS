@@ -9,7 +9,11 @@ var numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
         stylePrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
-        cssNT: {
+        /**
+         * CSS Normal Transforms
+         */
+		 
+		cssNormalTransform : {
 
             letterSpacing: '0',
             fontWeight: '400'
@@ -133,6 +137,11 @@ hAzzle.extend({
 
     style: function (elem, name, value) {
 
+		if(!elem) { 
+		
+		   return; 
+		}
+		
         var valid = [3, 8],
             nType = elem.nodeType;
 
@@ -231,9 +240,9 @@ hAzzle.extend({
 
         //convert 'normal' to computed value
 
-        if (val === 'normal' && prop in cssCore.cssNT) {
+        if (val === 'normal' && prop in cssCore.cssNormalTransform ) {
 
-            val = cssCore.cssNT[prop];
+            val = cssCore.cssNormalTransform [prop];
         }
 
         return val;

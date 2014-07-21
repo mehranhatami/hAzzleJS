@@ -4,8 +4,9 @@
  * Version: 0.9.3n
  * Released under the MIT License.
  *
- * Date: 2014-07-20
+ * Date: 2014-07-22
  */
+ 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -30,8 +31,8 @@
 
         indexOf = ArrayProto.indexOf,
         concat = ArrayProto.concat,
-
-        // Left and right regEx for hAzzle.trim()
+       
+	   // Left and right whitespace regexp for hAzzle.trim()
 
         trwl = /^\s\s*/,
         trwr = /\s\s*$/,
@@ -62,7 +63,14 @@
 
             selector = hAzzle.find(selector, context);
 
-            // document fragment
+        // Instanceof hAzzle          
+		
+		} else if (selector instanceof List) {
+        
+		     return selector;
+         
+	        // document fragment
+			
         } else if (selector.nodeType === 11) {
 
             // collect the child nodes
@@ -79,6 +87,7 @@
         } else if (hAzzle.isNodeList(selector)) {
 
             selector = hAzzle.makeArray(selector);
+			
         } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) {
             selector = [selector];
         }
@@ -310,6 +319,12 @@
 		blank: function(str) {
           return /^\s*$/.test(str);
         },
+		
+		/**
+         * toString
+         */
+
+         str: Object.prototype.toString,
 
         /**
          *  Convert dashed to camelCase
@@ -320,8 +335,8 @@
 
         camelize: function (str) {
 
-            return str.replace(/-(.)/g, function (m, m1) {
-                return m1.toUpperCase();
+            return str.replace(/-(.)/g, function (matches, letter) {
+                return letter.toUpperCase();
             });
         },
 
