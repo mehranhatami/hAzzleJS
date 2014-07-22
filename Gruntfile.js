@@ -1,6 +1,34 @@
 'use strict';
 
-var conf = function conf() {
+function complexityInfo(files, brief) {
+  return {
+    src: files,
+    options: {
+      breakOnErrors: false,
+
+      jsLintXML: 'report/report.xml',
+      checkstyleXML: 'report/checkstyle.xml',
+      errorsOnly: false, // show only maintainability errors
+
+      //number of cycles in the program flow control graph
+      cyclomatic: 3,
+
+      //number of distinct operators, the number of distinct operands,
+      //the total number of operators and the total number of operands in each function
+      halstead: 8,
+
+      maintainability: 100,
+
+      // only display maintainability
+      hideComplexFunctions: brief === undefined ? false : brief,
+
+      // broadcast data over event-bus
+      broadcast: true
+    }
+  };
+}
+
+function conf(grunt) {
   if (conf.info) {
     return conf.info;
   } else {
@@ -38,7 +66,7 @@ var conf = function conf() {
         'removeable.js',
         'units.js',
         'css.js',
-		'topleft.js',
+        'topleft.js',
         'position.js',
         'offset.js',
         'showhide.js',
@@ -60,24 +88,28 @@ var conf = function conf() {
 
     conf.info = {
       config: config,
-      modules: modules
+      modules: modules,
+      pkg: grunt.file.readJSON('package.json'),
+      complexity: complexityInfo(modules),
+      briefComplexity: complexityInfo(modules, true)
     };
     return conf.info;
   }
-};
+}
 
 module.exports = function (grunt) {
 
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
-    config: conf().config,
+    pkg: conf(grunt).pkg,
+    config: conf(grunt).config,
+    modules: conf(grunt).modules,
 
     concat: {
       options: {
         separator: ';'
       },
       dist: {
-        src: conf().modules,
+        src: conf(grunt).modules,
         dest: '<%= config.dist %>/<%= pkg.name %>.js'
       }
     },
@@ -94,7 +126,7 @@ module.exports = function (grunt) {
     },
 
     jshint: {
-      files: ['Gruntfile.js', 'test/modules/*.js', 'test/**/spec/*.js'].concat(conf().modules),
+      files: ['Gruntfile.js', 'test/modules/*.js', 'test/**/spec/*.js'].concat(conf(grunt).modules),
 
       options: {
         globals: {
@@ -118,10 +150,15 @@ module.exports = function (grunt) {
         force: true,
         recursive: true
       }
+    },
+
+    complexity: {
+      generic: conf(grunt).complexity,
+      brief: conf(grunt).briefComplexity
     }
   });
 
-
+  grunt.loadNpmTasks('grunt-complexity');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
@@ -130,6 +167,10 @@ module.exports = function (grunt) {
 
   //test task should be also added here
   grunt.registerTask('test', ['jshint']);
+
+  grunt.registerTask('metrics', ['complexity:generic']);
+  grunt.registerTask('metrics:brief', ['complexity:brief']);
+
   grunt.registerTask('build', ['concat', 'uglify']);
   grunt.registerTask('default', ['jshint', 'concat', 'uglify']);
 
