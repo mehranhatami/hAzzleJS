@@ -170,7 +170,24 @@ hAzzle.extend({
             pieceStore.push(piece);
           }
 
-          nodes = Jiesa.collect(nodes, pieceStore, context);
+          // Collect everything
+
+          nodes = Execute(nodes, piece1, context);
+
+          k = pieceStore.length;
+
+          // filter the nodes
+
+          for (; j < k; j++) {
+
+            // Not everyone has a filter :) 
+
+            if (Jiesa.filters[pieceStore[j].type]) {
+
+              nodes = filter(nodes, pieceStore[j]);
+            }
+
+          }
 
           // If  any positional pseudos, we have to create them
 
@@ -183,35 +200,6 @@ hAzzle.extend({
         }
       }
     }
-    return nodes;
-  },
-
-  collect: function (nodes, pieceStore, context) {
-    // Grab the first piece, as the starting point, then perform the filters on the nodes.
-
-    var piece1 = pieceStore.shift(),
-      k,
-      j = 0;
-
-    // Collect everything
-
-    nodes = Execute(nodes, piece1, context);
-
-    k = pieceStore.length;
-
-    // filter the nodes
-
-    for (; j < k; j++) {
-
-      // Not everyone has a filter :) 
-
-      if (Jiesa.filters[pieceStore[j].type]) {
-
-        nodes = filter(nodes, pieceStore[j]);
-      }
-
-    }
-
     return nodes;
   },
 
@@ -582,13 +570,6 @@ function all(elem) {
   return elem.all ? elem.all : elem.getElementsByTagName('*');
 }
 
-function getNext(next, element, elem) {
-  while (!next && (element = element.parentNode) && element !== elem) {
-    next = element.nextSibling;
-  }
-  return next;
-}
-
 /** 
  * Mehran!
  *
@@ -613,8 +594,9 @@ function byTagRaw(tag, elem) {
     if ((next = element.firstChild || element.nextSibling)) {
       continue;
     }
-
-    next = getNext(next, element, elem);
+    while (!next && (element = element.parentNode) && element !== elem) {
+      next = element.nextSibling;
+    }
   }
   return elements;
 }
