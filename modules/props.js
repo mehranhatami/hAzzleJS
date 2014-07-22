@@ -4,7 +4,6 @@
  * Note! This is extendable through plugins
  *
  */
-
 var keyRegex = /key/i,
     mouseRegex = /click|mouse(?!(.*wheel|scroll))|menu|drag|drop/i,
     textRegex = /^text/i,
@@ -26,109 +25,122 @@ var keyRegex = /key/i,
 
 hAzzle.props = {
 
-    typeFixers: [{ // key events
+    hookers: [{ // key events
         reg: keyRegex,
         props: keyProps,
-        filter: function (event, original) {
+        filter: function (evt, original) {
 
             // Add which for key events
-            if (event.which === null) {
-                event.which = original.charCode !== null ? original.charCode : original.keyCode;
+            if (evt.which === null) {
+                evt.which = original.charCode !== null ? original.charCode : original.keyCode;
             }
 
-            return event;
+            return evt;
         }
     }, { // mouse events
         reg: mouseRegex,
         props: mouseProps,
-        filter: function (event, original) {
+        filter: function (evt, original) {
 
-            var eventDoc, doc, body,
+            var evtDoc, doc, body,
                 button = original.button;
 
             // Calculate pageX/Y if missing and clientX/Y available
-            if (event.pageX === null && original.clientX !== null) {
-                eventDoc = event.target.ownerDocument || document;
-                doc = eventDoc.documentElement;
-                body = eventDoc.body;
+            if (evt.pageX === null && original.clientX !== null) {
+                evtDoc = evt.target.ownerDocument || document;
+                doc = evtDoc.documentElement;
+                body = evtDoc.body;
 
-                event.pageX = original.clientX +
+                evt.pageX = original.clientX +
                     (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
                     (doc && doc.clientLeft || body && body.clientLeft || 0);
-                event.pageY = original.clientY +
+                evt.pageY = original.clientY +
                     (doc && doc.scrollTop || body && body.scrollTop || 0) -
                     (doc && doc.clientTop || body && body.clientTop || 0);
             }
 
-            if (!event.which && button !== undefined) {
-                event.which = (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
+            if (!evt.which && button !== undefined) {
+                evt.which = (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
             }
 
-            return event;
+            return evt;
         }
     }, { // TextEvent
         reg: textRegex,
         props: textProps,
-        filter: function (event) { return event; }
+        filter: function (evt) {
+            return evt;
+        }
     }, { // touch and gesture events
         reg: touchRegex,
         props: touchProps,
-        filter: function (event) { return event; }
+        filter: function (evt) {
+            return evt;
+        }
     }, { // message events
         reg: msgRegex,
         props: messageProps,
-        filter: function (event) { return event; }
+        filter: function (evt) {
+            return evt;
+        }
     }, { // popstate events
         reg: popstateRegex,
         props: stateProps,
-        filter: function (event) { return event; }
+        filter: function (evt) {
+            return evt;
+        }
     }],
 
-    fixHooks: {},
+    fixedEvents: {},
 
-    propFix: function (event) {
-		
-        if (event[hAzzle.expando]) {
-            return event;
+    propFix: function (evt) {
+
+        if (evt[hAzzle.expando]) {
+
+            return evt;
         }
 
-        var i = 0, l = this.typeFixers.length, prop, copy,
-            type = event.type,
-            originalEvent = event,
-            fixHook = this.fixHooks[type];
+        var i = 0,
+            l = this.hookers.length,
+            prop, copy,
+            type = evt.type,
+            target, originalEvent = evt,
+            fE = this.fixedEvents,
+            fixHook = fE[type];
 
         if (!fixHook) {
-            
+
             for (; i < l; i++) {
-                if (this.typeFixers[i].reg.test(type)) { 
-                    this.fixHooks[type] = this.typeFixers[i];
+                if (this.hookers[i].reg.test(type)) {
+                    fixHook = this.hookers[i];
                     break;
                 }
             }
         }
 
-        copy = this.fixHooks.props ? commonProps.concat(fixHook.props) : commonProps;
+        copy = fE.props ? commonProps.concat(fixHook.props) : commonProps;
 
-        event = new hAzzle.Event(originalEvent);
+        evt = new hAzzle.Event(originalEvent);
 
-        i = copy.length;
+        target = evt.target,
+            i = copy.length;
 
         while (i--) {
-			
+
             prop = copy[i];
-			
-            event[prop] = originalEvent[prop];
+
+            evt[prop] = originalEvent[prop];
         }
 
-       if (!event.target) {
-            
-			event.target = document;
+        if (!target) {
+
+            target = document;
         }
 
-        if (event.target.nodeType === 3) {
-            event.target = event.target.parentNode;
+        if (target.nodeType === 3) {
+            target = target.parentNode;
         }
 
-        return this.fixHooks.filter ? this.fixHooks.filter(event, originalEvent) : event;
+        return fE.filter ? fE.filter(evt, originalEvent) : evt;
     }
 };
