@@ -258,11 +258,9 @@ hAzzle.extend({
 
     index: function (selector) {
 
-        var haystack, needle;
-
         if (!selector) {
 
-            haystack = this.parentElement();
+         var haystack = this.parentElement(),
             needle = this[0];
 
             // index in selector
@@ -279,8 +277,9 @@ hAzzle.extend({
             needle = selector.length ? selector[0] : selector;
         }
 
-        // Locate the position of the desired element
-        return haystack.get().indexOf(needle);
+    return indexOf.call( this,
+			selector.hAzzle ? selector[ 0 ] : selector
+		);
     },
 
     /**
