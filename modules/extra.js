@@ -48,7 +48,6 @@ hAzzle.extend({
         return results;
     },
 
-
     sortKeys: function (obj) {
         var keys = [],
             key;
@@ -65,7 +64,6 @@ hAzzle.extend({
             iteratorFn(key, value);
         };
     },
-
 
     lastIndexOf: function (array, item, from) {
         if (array === null) {
@@ -106,32 +104,70 @@ hAzzle.extend({
      * to another object
      */
 
-    shallowCopy: function (src, target) {
-        var i = 0;
+    shallowCopy: function () {
 
-        if (hAzzle.isArray(src)) {
+        var options, name, src, copy, copyIsArray, clone,
+            target = arguments[0] || {},
+            i = 1,
+            length = arguments.length,
+            deep = false;
 
-            target = target || [];
+        // Handle a deep copy situation
+        if (typeof target === 'boolean') {
 
-            for (; i < src.length; i++) {
+            deep = target;
 
-                target[i] = src[i];
-            }
+            target = arguments[i] || {};
+            i++;
+        }
 
-        } else if (hAzzle.isObject(src)) {
+        if (typeof target !== 'object' && !hAzzle.isFunction(target)) {
 
-            target = target || {};
+            target = {};
+        }
 
-            var keys = Object.keys(src),
-                key, l = keys.length;
+        if (i === length) {
+            target = this;
+            i--;
+        }
 
-            for (; i < l; i++) {
-                key = keys[i];
-                target[key] = src[key];
+        for (; i < length; i++) {
+
+            if ((options = arguments[i]) !== null) {
+                // Extend the base object
+                for (name in options) {
+                    src = target[name];
+                    copy = options[name];
+
+                    // Prevent never-ending loop
+                    if (target === copy) {
+                        continue;
+                    }
+
+                    // Recurse if we're merging plain objects or arrays
+                    if (deep && copy && (hAzzle.isPlainObject(copy) || (copyIsArray = hAzzle.isArray(copy)))) {
+                        if (copyIsArray) {
+                            copyIsArray = false;
+                            clone = src && hAzzle.isArray(src) ? src : [];
+
+                        } else {
+                            clone = src && hAzzle.isPlainObject(src) ? src : {};
+                        }
+
+
+                        // Never move original objects, clone them
+                        target[name] = hAzzle.extend(deep, clone, copy);
+
+                        // Don't bring in undefined values
+                    } else if (copy !== undefined) {
+                        target[name] = copy;
+                    }
+                }
             }
         }
 
-        return target || src;
+        // Return the modified object
+        return target;
     },
 
     pluck: function (array, property) {
@@ -191,18 +227,5 @@ hAzzle.extend({
         }
 
         return false;
-    },
-
-    /**
-     * Return the number of elements in an object.
-     */
-
-    size: function (obj) {
-        if (obj === null) {
-
-            return 0;
-        }
-        return (obj.length === +obj.length) ? obj.length : Object.keys(obj).length;
-    },
-
+    }
 }, hAzzle);
