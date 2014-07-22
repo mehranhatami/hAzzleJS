@@ -15,6 +15,8 @@ var win = this,
 
   doc = win.document,
 
+  hAzzle = win.hAzzle,
+
   // Verify if the doc are HTML
 
   documentIsHTML = hAzzle.documentIsHTML,
@@ -64,6 +66,18 @@ var win = this,
 
   PseudoCache = {},
   PseudoInfoCache = {},
+  createCache = function createCache() {
+    var keys = [];
+
+    function cache(key, value) {
+      if (keys.push(key + ' ') > 70) {
+        delete cache[keys.shift()];
+      }
+      cache[key + ' '] = value;
+      return value;
+    }
+    return cache;
+  },
   chunkCache = createCache(),
   exeCache = createCache(),
   filterCache = createCache(),
@@ -109,7 +123,8 @@ hAzzle.extend({
     var i = 0,
       pieceStore = [],
       nodes,
-      l, piece,
+      l, piece, piece1, j = 0,
+      k,
       chunks, kf;
 
     // Set / Adjust correct context
@@ -418,27 +433,16 @@ hAzzle.extend({
           return RegExp(value, modifiers[1]).test(attr);
         }
 
-        if (value) {
-          switch (operator) {
-          case '==':
-          case '=':
-            return (attr === value);
-          case '!=':
-            return (attr !== value);
-          case '^=':
-            return (attr.indexOf(value) === 0);
-          case '*=':
-            return (attr.indexOf(value) > -1);
-          case '$=':
-            return (attr.slice(-value.length) === value);
-          case '~=':
-            return ((' ' + attr + ' ').indexOf(value) > -1);
-          case '|=':
-            return (attr === value || attr.slice(0, value.length + 1) === value + '-');
-          default:
-            return false;
-          }
-        }
+        return value && operator === '==' ? attr === value :
+          operator === '=' ? attr === value :
+          operator === '!=' ? attr !== value :
+          operator === '^=' ? attr.indexOf(value) === 0 :
+          operator === '*=' ? attr.indexOf(value) > -1 :
+          operator === '$=' ? attr.slice(-value.length) === value :
+          operator === '~=' ? (' ' + attr + ' ').indexOf(value) > -1 :
+          operator === '|=' ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
+          false;
+
       }
       return false;
     },
@@ -578,6 +582,13 @@ function all(elem) {
   return elem.all ? elem.all : elem.getElementsByTagName('*');
 }
 
+function getNext(next, element, elem) {
+  while (!next && (element = element.parentNode) && element !== elem) {
+    next = element.nextSibling;
+  }
+  return next;
+}
+
 /** 
  * Mehran!
  *
@@ -602,9 +613,8 @@ function byTagRaw(tag, elem) {
     if ((next = element.firstChild || element.nextSibling)) {
       continue;
     }
-    while (!next && (element = element.parentNode) && element !== elem) {
-      next = element.nextSibling;
-    }
+
+    next = getNext(next, element, elem);
   }
   return elements;
 }
@@ -646,20 +656,6 @@ function getAttribute(elem, attribute) {
 
     ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
-
-function createCache() {
-  var keys = [];
-
-  function cache(key, value) {
-    if (keys.push(key + ' ') > 70) {
-      delete cache[keys.shift()];
-    }
-    cache[key + ' '] = value;
-    return value;
-  }
-  return cache;
-}
-
 
 function filter(nodes, pieceStore) {
 
