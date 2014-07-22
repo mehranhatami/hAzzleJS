@@ -22,19 +22,19 @@ hAzzle.extend({
 
             'setup': function (data) {
 
-                var _data = hAzzle.shallowCopy({
+                var timer,
+                    self = this,
+                    args,
+                    _data = hAzzle.shallowCopy({
 
                         latency: hAzzle.eventHooks.special.scrollstop.latency
 
                     }, data),
 
-                    timer,
-                    self = this,
-                    args,
                     handler = function (evt) {
 
-                        self = this,
-                            args = arguments;
+                        self = this;
+                        args = arguments;
 
                         if (timer) {
 
@@ -57,7 +57,7 @@ hAzzle.extend({
                 hAzzle(this).off('scroll', null, hAzzle(this).data('D' + hAzzle.now()));
             }
         },
-		
+
         // scrollstop
 
         'scrollstop': {
@@ -159,11 +159,6 @@ hAzzle.extend({
 
 }, hAzzle.eventHooks);
 
-
-
-
-// Create mouseenter/leave events using mouseover/out and event-time checks
-// Support: Chrome 15+
 hAzzle.forOwn({
     mouseenter: "mouseover",
     mouseleave: "mouseout",
