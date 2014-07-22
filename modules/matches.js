@@ -14,8 +14,7 @@ hAzzle.matches = function (selector, context) {
         result = [];
 
     if (quick) {
-        //   0  1    2   3          4
-        // [ _, tag, id, attribute, class ]
+
         if (quick[1]) {
 
             quick[1] = quick[1].toLowerCase();
@@ -43,9 +42,7 @@ hAzzle.matches = function (selector, context) {
             (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
         );
 
-        // Fallback to hAzzle.matchesSelector
-
-    } else {
+    } else {  // Fallback to hAzzle.matchesSelector
 
         // Do a quick look-up if no array-context
         //
