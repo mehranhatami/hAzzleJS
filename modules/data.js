@@ -31,19 +31,6 @@ var htmlRegEx = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
             }
 
             return elem.hAzzleID;
-        },
-
-        // Accepted nodeTypes
-
-        accepted: function (elem) {
-
-            if (elem && (elem.nodeType === 1 ||
-                elem.nodeType === 9 ||
-                !elem.hasOwnProperty('nodeType'))) {
-                return true;
-            }
-
-            return false;
         }
     };
 
@@ -82,7 +69,7 @@ hAzzle.extend({
 
     removeData: function (elem, key) {
 
-        if (dataStorage.accepted(elem)) {
+        if (hAzzle.legalTypes(elem)) {
 
             // get / create unique ID for this element
 
@@ -113,7 +100,7 @@ hAzzle.extend({
 
     data: function (elem, key, value) {
 
-        if (dataStorage.accepted(elem)) {
+        if (hAzzle.legalTypes(elem)) {
 
             var id = dataStorage.cache[dataStorage.getID(elem)];
 
@@ -123,6 +110,10 @@ hAzzle.extend({
                 var pid = dataStorage.getID(elem);
                 id = dataStorage.cache[pid] = {};
             }
+            if (typeof id !== 'undefined') {
+
+
+
 
             // Return all data on saved on the element
 
@@ -143,7 +134,7 @@ hAzzle.extend({
                 id[key] = value;
 
                 return id[key];
-            }
+            }             }
         }
     }
 }, hAzzle);

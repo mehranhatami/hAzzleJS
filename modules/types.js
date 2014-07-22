@@ -1,7 +1,5 @@
 // Holds javascript natives
-var natives = {},
-
-    toString = Object.prototype.toString;
+var natives = {};
 
 hAzzle.extend({
 
@@ -30,7 +28,7 @@ hAzzle.extend({
             return 'string';
         default:
 
-            var str = toString.call(obj);
+            var str = hAzzle.str.call(obj);
 
             if (natives[str]) {
                 return natives[str];
@@ -38,6 +36,16 @@ hAzzle.extend({
 
             return type;
         }
+    },
+    legalTypes: function (elem) {
+
+        if (elem && (elem.nodeType === 1 ||
+            elem.nodeType === 9 ||
+            !elem.hasOwnProperty('nodeType'))) {
+            return true;
+        }
+
+        return false;
     },
 
     is: function (kind, obj) {
@@ -137,6 +145,9 @@ hAzzle.extend({
     isElement: function (elem) {
         return elem && (elem.nodeType === 1 || elem.nodeType === 9);
     },
+    isNull: function (elem) {
+        return elem && elem == 'null';
+    },
 
     isNodeList: function (obj) {
         return obj && hAzzle.is([
@@ -144,7 +155,10 @@ hAzzle.extend({
             'htmlcollection',
             'htmlformcontrolscollection'
         ], obj);
-    }
+    },
+
+    hasOwn: natives.hasOwnProperty
+
 }, hAzzle);
 
 /* =========================== INTERNAL ========================== */
@@ -157,6 +171,6 @@ hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.s
 // Add some isType methods
 hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments'], function (name) {
     hAzzle['is' + name] = function (o) {
-        return toString.call(o) === '[object ' + name + ']';
+        return hAzzle.str.call(o) === '[object ' + name + ']';
     };
 });
