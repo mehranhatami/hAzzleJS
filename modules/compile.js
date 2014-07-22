@@ -15,8 +15,6 @@ var win = this,
 
   doc = win.document,
 
-  hAzzle = win.hAzzle,
-
   // Verify if the doc are HTML
 
   documentIsHTML = hAzzle.documentIsHTML,
@@ -66,18 +64,6 @@ var win = this,
 
   PseudoCache = {},
   PseudoInfoCache = {},
-  createCache = function createCache() {
-    var keys = [];
-
-    function cache(key, value) {
-      if (keys.push(key + ' ') > 70) {
-        delete cache[keys.shift()];
-      }
-      cache[key + ' '] = value;
-      return value;
-    }
-    return cache;
-  },
   chunkCache = createCache(),
   exeCache = createCache(),
   filterCache = createCache(),
@@ -170,24 +156,7 @@ hAzzle.extend({
             pieceStore.push(piece);
           }
 
-          // Collect everything
-
-          nodes = Execute(nodes, piece1, context);
-
-          k = pieceStore.length;
-
-          // filter the nodes
-
-          for (; j < k; j++) {
-
-            // Not everyone has a filter :) 
-
-            if (Jiesa.filters[pieceStore[j].type]) {
-
-              nodes = filter(nodes, pieceStore[j]);
-            }
-
-          }
+          nodes = Jiesa.collect(nodes, pieceStore, context);
 
           // If  any positional pseudos, we have to create them
 
@@ -200,6 +169,35 @@ hAzzle.extend({
         }
       }
     }
+    return nodes;
+  },
+
+  collect: function (nodes, pieceStore, context) {
+    // Grab the first piece, as the starting point, then perform the filters on the nodes.
+
+    var piece1 = pieceStore.shift(),
+      k,
+      j = 0;
+
+    // Collect everything
+
+    nodes = Execute(nodes, piece1, context);
+
+    k = pieceStore.length;
+
+    // filter the nodes
+
+    for (; j < k; j++) {
+
+      // Not everyone has a filter :) 
+
+      if (Jiesa.filters[pieceStore[j].type]) {
+
+        nodes = filter(nodes, pieceStore[j]);
+      }
+
+    }
+
     return nodes;
   },
 
@@ -365,7 +363,7 @@ hAzzle.extend({
 
     'Class': function (elem, sel) {
 
-      // If ClassList are supported by the browser, use it !!	
+      // If ClassList are supported by the browser, use it !! 
 
       var className = sel.replace('.', ''),
         cn = elem.className,
@@ -488,7 +486,7 @@ function AdjustDocument(context) {
     doc = hAzzle.setDocument(context);
   }
 
-  // Default window.document / hAzzle.document	 
+  // Default window.document / hAzzle.document   
 
   var nodes = [doc];
 
@@ -619,7 +617,7 @@ function getAttribute(elem, attribute) {
     doc = hAzzle.setDocument(elem);
   }
 
-  // Lower case are always a good thing !!	 
+  // Lower case are always a good thing !!   
 
   attribute = attribute.toLowerCase();
 
@@ -627,7 +625,6 @@ function getAttribute(elem, attribute) {
     return elem.attributes[attribute] &&
       elem.attributes[attribute].value || '';
   }
-
   return (
     attribute === 'type' ? elem.getAttribute(attribute) || '' :
     boolElem[attribute] ? elem.getAttribute(attribute, 2) || '' :
@@ -638,6 +635,20 @@ function getAttribute(elem, attribute) {
 
     ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
+
+function createCache() {
+  var keys = [];
+
+  function cache(key, value) {
+    if (keys.push(key + ' ') > 70) {
+      delete cache[keys.shift()];
+    }
+    cache[key + ' '] = value;
+    return value;
+  }
+  return cache;
+}
+
 
 function filter(nodes, pieceStore) {
 
