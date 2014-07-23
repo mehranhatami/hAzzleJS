@@ -11,6 +11,7 @@
  */
 var win = this,
 
+  hAzzle = win.hAzzle,
   // Current document
 
   doc = win.document,
@@ -64,6 +65,18 @@ var win = this,
 
   PseudoCache = {},
   PseudoInfoCache = {},
+  createCache = function createCache() {
+    var keys = [];
+
+    function cache(key, value) {
+      if (keys.push(key + ' ') > 70) {
+        delete cache[keys.shift()];
+      }
+      cache[key + ' '] = value;
+      return value;
+    }
+    return cache;
+  },
   chunkCache = createCache(),
   exeCache = createCache(),
   filterCache = createCache(),
@@ -77,6 +90,41 @@ var win = this,
   special = /\s?([\+~\>])\s?/g,
   identifier = '(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+',
   chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
+
+/**
+ * Adjust document
+ *
+ * @param {string} context
+ * @return {Object}
+ */
+
+function adjustDocument(context) {
+
+  // Make sure we always are using the correct documents 
+
+  if ((context ? context.ownerDocument || context : doc) !== document) {
+
+    // Override the already defined document
+    doc = hAzzle.setDocument(context);
+  }
+
+  // Default window.document / hAzzle.document   
+
+  var nodes = [doc];
+
+  if (context) { //context can be a node, nodelist, array, document
+    if (context instanceof Array) {
+      nodes = context;
+    } else if (context.length) {
+      nodes = toArray(nodes);
+    } else if (context.nodeType === 1) {
+      nodes = [context];
+    }
+    //throw error for invalid context? 
+  }
+
+  return nodes;
+}
 
 hAzzle.extend({
 
@@ -115,7 +163,7 @@ hAzzle.extend({
 
     // Set / Adjust correct context
 
-    nodes = AdjustDocument(context);
+    nodes = adjustDocument(context);
 
     selector = selector.replace(trimspaces, '').replace(special, ' $1');
 
@@ -125,7 +173,7 @@ hAzzle.extend({
 
     // Collect all the chunks, and identify them
 
-    chunks = Collector(kf);
+    chunks = collector(kf);
 
 
     l = chunks.length;
@@ -156,7 +204,28 @@ hAzzle.extend({
             pieceStore.push(piece);
           }
 
-          nodes = Jiesa.collect(nodes, pieceStore, context);
+          // Grab the first piece, as the starting point, then perform the filters on the nodes.
+
+          piece1 = pieceStore.shift();
+
+          // Collect everything
+
+          nodes = Execute(nodes, piece1, context);
+
+          k = pieceStore.length;
+
+          // filter the nodes
+
+          for (; j < k; j++) {
+
+            // Not everyone has a filter :) 
+
+            if (Jiesa.filters[pieceStore[j].type]) {
+
+              nodes = filter(nodes, pieceStore[j]);
+            }
+
+          }
 
           // If  any positional pseudos, we have to create them
 
@@ -169,35 +238,6 @@ hAzzle.extend({
         }
       }
     }
-    return nodes;
-  },
-
-  collect: function (nodes, pieceStore, context) {
-    // Grab the first piece, as the starting point, then perform the filters on the nodes.
-
-    var piece1 = pieceStore.shift(),
-      k,
-      j = 0;
-
-    // Collect everything
-
-    nodes = Execute(nodes, piece1, context);
-
-    k = pieceStore.length;
-
-    // filter the nodes
-
-    for (; j < k; j++) {
-
-      // Not everyone has a filter :) 
-
-      if (Jiesa.filters[pieceStore[j].type]) {
-
-        nodes = filter(nodes, pieceStore[j]);
-      }
-
-    }
-
     return nodes;
   },
 
@@ -469,41 +509,6 @@ hAzzle.extend({
 
 }, Jiesa);
 
-/**
- * Adjust document
- *
- * @param {string} context
- * @return {Object}
- */
-
-function AdjustDocument(context) {
-
-  // Make sure we always are using the correct documents 
-
-  if ((context ? context.ownerDocument || context : doc) !== document) {
-
-    // Override the already defined document
-    doc = hAzzle.setDocument(context);
-  }
-
-  // Default window.document / hAzzle.document   
-
-  var nodes = [doc];
-
-  if (context) { //context can be a node, nodelist, array, document
-    if (context instanceof Array) {
-      nodes = context;
-    } else if (context.length) {
-      nodes = toArray(nodes);
-    } else if (context.nodeType === 1) {
-      nodes = [context];
-    }
-    //throw error for invalid context? 
-  }
-
-  return nodes;
-}
-
 function IranianWalker(nodes, mode, fn) {
   if (nodes) {
     var i = 0,
@@ -636,20 +641,6 @@ function getAttribute(elem, attribute) {
     ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
 
-function createCache() {
-  var keys = [];
-
-  function cache(key, value) {
-    if (keys.push(key + ' ') > 70) {
-      delete cache[keys.shift()];
-    }
-    cache[key + ' '] = value;
-    return value;
-  }
-  return cache;
-}
-
-
 function filter(nodes, pieceStore) {
 
   var i = 0,
@@ -684,7 +675,7 @@ function filter(nodes, pieceStore) {
  *
  */
 
-function Collector(nodes) {
+function collector(nodes) {
 
   var i = 0,
     ret = [],
