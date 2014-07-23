@@ -1,12 +1,11 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.4a RC2
+ * Version: 0.9.4b
  * Released under the MIT License.
  *
- * Date: 2014-07-22
+ * Date: 2014-07-23
  */
- 
 (function (window, undefined) {
 
     // hAzzle already defined, leave now
@@ -31,8 +30,8 @@
 
         indexOf = ArrayProto.indexOf,
         concat = ArrayProto.concat,
-       
-	   // Left and right whitespace regexp for hAzzle.trim()
+
+        // Left and right whitespace regexp for hAzzle.trim()
 
         trwl = /^\s\s*/,
         trwr = /\s\s*$/,
@@ -63,14 +62,14 @@
 
             selector = hAzzle.find(selector, context);
 
-        // Instanceof hAzzle          
-		
-		} else if (selector instanceof hAzzle) {
-        
-		     return selector;
-         
-	        // document fragment
-			
+            // Instanceof hAzzle          
+
+        } else if (selector instanceof hAzzle) {
+
+            return selector;
+
+            // document fragment
+
         } else if (selector.nodeType === 11) {
 
             // collect the child nodes
@@ -86,7 +85,7 @@
 
             selector = hAzzle.makeArray(selector);
 
-		 // Wrap DOM nodes.
+            // Wrap DOM nodes.
 
         } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) {
 
@@ -94,10 +93,10 @@
         }
 
         if (selector) {
-			
-		  // Initialize a new hAzzle Object with the
-          // given `selector`
-		  
+
+            // Initialize a new hAzzle Object with the
+            // given `selector`
+
             var i = this.length = this.size = selector.length;
 
             while (i--) {
@@ -315,21 +314,21 @@
         decamelize: function (str) {
             return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
         },
-		
-		capitalize: function(str) {
-         return str.charAt(0).toUpperCase() + str.substring(1).toLowerCase();
-        
-		},
-		
-		blank: function(str) {
-          return /^\s*$/.test(str);
+
+        capitalize: function (str) {
+            return str.charAt(0).toUpperCase() + str.substring(1).toLowerCase();
+
         },
-		
-		/**
+
+        blank: function (str) {
+            return /^\s*$/.test(str);
+        },
+
+        /**
          * toString
          */
 
-         str: Object.prototype.toString,
+        str: Object.prototype.toString,
 
         /**
          *  Convert dashed to camelCase
@@ -390,7 +389,7 @@
             var value,
                 i = 0,
                 length = elems.length,
-                isArray = isArraylike(elems),
+                isArray = hAzzle.isArraylike(elems),
                 ret = [];
 
             // Go through the array, translating each of the items to their new values
@@ -496,6 +495,7 @@
          *
          * @param {String|nodeType|Function} sel
          * @return {Array}
+
          *
          */
 
@@ -652,24 +652,6 @@
             return value === 'string' ? value.trim() : value;
         };
     })();
-
-    /* =========================== INTERNAL ========================== */
-
-    function isArraylike(obj) {
-        var length = obj.length,
-            type = hAzzle.type(obj);
-
-        if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
-            return false;
-        }
-
-        if (obj.nodeType === 1 && length) {
-            return true;
-        }
-
-        return type === 'array' || length === 0 ||
-            typeof length === 'number' && length > 0 && (length - 1) in obj;
-    }
 
     // Expose hAzzle to the global object
 

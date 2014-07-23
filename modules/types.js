@@ -157,6 +157,24 @@ hAzzle.extend({
         ], obj);
     },
 
+    isArraylike: function (obj) {
+        var length = obj.length,
+            type;
+
+        if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
+            return false;
+        }
+
+        if (obj.nodeType === 1 && length) {
+            return true;
+        }
+
+        type = hAzzle.type(obj);
+
+        return type === 'array' || length === 0 ||
+            typeof length === 'number' && length > 0 && (length - 1) in obj;
+    },
+
     hasOwn: natives.hasOwnProperty
 
 }, hAzzle);

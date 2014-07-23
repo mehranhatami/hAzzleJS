@@ -1,11 +1,29 @@
 /**
  * A handfull Usefull functions for the hAzzle Object
  */
-/* =========================== PUBLIC FUNCTIONS ========================== */
-var slice = Array.prototype.slice;
 
+
+var slice = Array.prototype.slice,
+    push = Array.prototype.push;
 
 hAzzle.extend({
+
+    mergeArray: function (arr, results) {
+        alert(arr);
+        var ret = results || [];
+
+        if (arr !== null) {
+            if (hAzzle.isArraylike(Object(arr))) {
+                hAzzle.merge(ret,
+                    typeof arr === "string" ? [arr] : arr
+                );
+            } else {
+                push.call(ret, arr);
+            }
+        }
+
+        return ret;
+    },
 
     // Convert sstr to decimal value	
     decimal: function (str) {
