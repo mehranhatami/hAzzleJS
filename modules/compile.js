@@ -92,23 +92,13 @@ var win = this,
   chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g;
 
 /**
- * Adjust document
+ * get nodes
  *
  * @param {string} context
  * @return {Object}
  */
 
-function adjustDocument(context) {
-
-  // Make sure we always are using the correct documents 
-
-  if ((context ? context.ownerDocument || context : doc) !== document) {
-
-    // Override the already defined document
-    doc = hAzzle.setDocument(context);
-  }
-
-  // Default window.document / hAzzle.document   
+function getNodes(context) {
 
   var nodes = [doc];
 
@@ -161,9 +151,7 @@ hAzzle.extend({
       k,
       chunks, kf;
 
-    // Set / Adjust correct context
-
-    nodes = adjustDocument(context);
+    nodes = getNodes(context);
 
     selector = selector.replace(trimspaces, '').replace(special, ' $1');
 
