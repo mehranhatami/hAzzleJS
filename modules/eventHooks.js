@@ -4,138 +4,142 @@
  * jQuery API, our eventHooks are almost following
  * the same pattern.
  */
+// Special
 hAzzle.extend({
 
-    'special': {
+    /**
+     * ScrollStart and ScrollStop special events
+     *
+     * Mehran!!  Here can you add in rAF you know :)
+     *
+     * 'latency' is the minimum time between the last scroll event and when the scrollstop event fires.
+     * should be replaced with performance.now() and rAF
+     *
+     */
 
-        /**
-         * ScrollStart and ScrollStop special events
-         *
-         * Mehran!!  Here can you add in rAF you know :)
-         *
-         * 'latency' is the minimum time between the last scroll event and when the scrollstop event fires.
-         * should be replaced with performance.now() and rAF
-         *
-         */
+    'scrollstart': {
 
-        'scrollstart': {
+        'setup': function (data) {
 
-            'setup': function (data) {
+            var timer,
+                self = this,
+                args,
+                _data = hAzzle.shallowCopy({
 
-                var timer,
-                    self = this,
-                    args,
-                    _data = hAzzle.shallowCopy({
-
-                        latency: hAzzle.eventHooks.special.scrollstop.latency
-
-                    }, data),
-
-                    handler = function (evt) {
-
-                        self = this;
-                        args = arguments;
-
-                        if (timer) {
-
-                            clearTimeout(timer);
-
-                        } else {
-
-                            evt.type = 'scrollstart';
-                            hAzzle.event.preparation.apply(self, args);
-                        }
-
-                        timer = setTimeout(function () {
-                            timer = null;
-                        }, _data.latency);
-                    };
-
-                hAzzle(this).on('scroll', null, handler).data('D' + hAzzle.now(), handler);
-            },
-            'shutdown': function () {
-                hAzzle(this).off('scroll', null, hAzzle(this).data('D' + hAzzle.now()));
-            }
-        },
-
-        // scrollstop
-
-        'scrollstop': {
-            latency: 250,
-            setup: function (data) {
-                var _data = hAzzle.shallowCopy({
                     latency: hAzzle.eventHooks.special.scrollstop.latency
-                }, data);
 
-                var timer,
-                    handler = function (evt) {
-                        var _self = this,
-                            _args = arguments;
+                }, data),
 
-                        if (timer) {
-                            clearTimeout(timer);
-                        }
+                handler = function (evt) {
 
-                        timer = setTimeout(function () {
-                            timer = null;
-                            evt.type = 'scrollstop';
-                            hAzzle.event.preparation.apply(_self, _args);
-                        }, _data.latency);
-                    };
+                    self = this;
+                    args = arguments;
 
-                hAzzle(this).on('scroll', null, handler).data('D' + hAzzle.now() + 1, handler);
-            },
-            'shutdown': function () {
-                hAzzle(this).off('scroll', null, hAzzle(this).data('D' + hAzzle.now() + 1));
-            }
+                    if (timer) {
+
+                        clearTimeout(timer);
+
+                    } else {
+
+                        evt.type = 'scrollstart';
+                        hAzzle.event.preparation.apply(self, args);
+                    }
+
+                    timer = setTimeout(function () {
+                        timer = null;
+                    }, _data.latency);
+                };
+
+            hAzzle(this).on('scroll', null, handler).data('D' + hAzzle.now(), handler);
         },
-
-        'load': {
-            'noBubble': true
-        },
-        'focus': {
-            'trigger': function () {
-
-                if (this !== safeActiveElement() && this.focus) {
-                    this.focus();
-                    return false;
-                }
-            },
-            'delegateType': 'focusin'
-        },
-        'blur': {
-            'trigger': function () {
-                if (this === safeActiveElement() && this.blur) {
-                    this.blur();
-                    return false;
-                }
-            },
-            'delegateType': 'focusout'
-        },
-        'click': {
-
-            // For checkbox, fire native event so checked state will be right
-            trigger: function () {
-                if (this.type === 'checkbox' && this.click && hAzzle.nodeName(this, 'input')) {
-                    this.click();
-                    return false;
-                }
-            },
-
-            // For cross-browser consistency, don't fire native .click() on links
-            '_default': function (evt) {
-                return hAzzle.nodeName(evt.target, 'a');
-            }
-        },
-
-        'beforeunload': {
-            'postPrep': function (evt) {
-                if (evt.result !== undefined && evt.originalEvent) {
-                    evt.originalEvent.returnValue = evt.result;
-                }
-            }
+        'shutdown': function () {
+            hAzzle(this).off('scroll', null, hAzzle(this).data('D' + hAzzle.now()));
         }
     },
+
+    // scrollstop
+
+    'scrollstop': {
+        latency: 250,
+        setup: function (data) {
+            var _data = hAzzle.shallowCopy({
+                latency: hAzzle.eventHooks.special.scrollstop.latency
+            }, data);
+
+            var timer,
+                handler = function (evt) {
+                    var _self = this,
+                        _args = arguments;
+
+                    if (timer) {
+                        clearTimeout(timer);
+                    }
+
+                    timer = setTimeout(function () {
+                        timer = null;
+                        evt.type = 'scrollstop';
+                        hAzzle.event.preparation.apply(_self, _args);
+                    }, _data.latency);
+                };
+
+            hAzzle(this).on('scroll', null, handler).data('D' + hAzzle.now() + 1, handler);
+        },
+        'shutdown': function () {
+            hAzzle(this).off('scroll', null, hAzzle(this).data('D' + hAzzle.now() + 1));
+        }
+    },
+
+    'load': {
+        'noBubble': true
+    },
+    'focus': {
+        'trigger': function () {
+
+            if (this !== safeActiveElement() && this.focus) {
+                this.focus();
+                return false;
+            }
+        },
+        'delegateType': 'focusin'
+    },
+    'blur': {
+        'trigger': function () {
+            if (this === safeActiveElement() && this.blur) {
+                this.blur();
+                return false;
+            }
+        },
+        'delegateType': 'focusout'
+    },
+    'click': {
+
+        // For checkbox, fire native event so checked state will be right
+        trigger: function () {
+            if (this.type === 'checkbox' && this.click && hAzzle.nodeName(this, 'input')) {
+                this.click();
+                return false;
+            }
+        },
+
+        // For cross-browser consistency, don't fire native .click() on links
+        '_default': function (evt) {
+            return hAzzle.nodeName(evt.target, 'a');
+        }
+    },
+
+    'beforeunload': {
+        'postPrep': function (evt) {
+            if (evt.result !== undefined && evt.originalEvent) {
+                evt.originalEvent.returnValue = evt.result;
+            }
+        }
+    }
+
+}, hAzzle.eventHooks.special);
+
+// Simulate
+
+hAzzle.extend({
 
     'simulate': function (type, elem, evt, bubble) {
 
@@ -187,7 +191,7 @@ hAzzle.forOwn({
 
 /* =========================== INTERNAL ========================== */
 
-if (hAzzle.eventCore && !hAzzle.eventCore.has['api-bubbles']) {
+if (hAzzle.bubbles) {
 
     hAzzle.forOwn({
         focus: 'focusin',
