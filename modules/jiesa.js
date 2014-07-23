@@ -12,33 +12,33 @@
 
 var Jiesa = hAzzle.Jiesa,
 
-    // Default document
+  // Default document
 
-    doc = this.document,
+  doc = this.document,
 
-    documentIsHTML = hAzzle.documentIsHTML,
+  documentIsHTML = hAzzle.documentIsHTML,
 
-    matches,
+  matches,
 
-    // Expando
+  // Expando
 
-    expando = hAzzle.expando,
+  expando = hAzzle.expando,
 
-    push = Array.prototype.push,
+  push = Array.prototype.push,
 
-    // Various regEx
+  // Various regEx
 
-    sibling = /[+~]/,
+  sibling = /[+~]/,
 
-    escaped = /'|\\/g,
+  escaped = /'|\\/g,
 
-    native = /^[^{]+\{\s*\[native \w/,
+  native = /^[^{]+\{\s*\[native \w/,
 
-    quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+  quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
-    rtrim = /^[\x20\t\r\n\f]+|((?:^|[^\\])(?:\\.)*)[\x20\t\r\n\f]+$/g,
+  rtrim = /^[\x20\t\r\n\f]+|((?:^|[^\\])(?:\\.)*)[\x20\t\r\n\f]+$/g,
 
-    quotes = /=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g;
+  quotes = /=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g;
 
 
 
@@ -61,98 +61,97 @@ hAzzle.extend({
 
     find: function (selector, context, results, /* INTERNAL */ single) {
 
-        var quickMatch = quickExpr.exec(selector),
-            nodeType,
-            parseResult;
+      var quickMatch = quickExpr.exec(selector),
+        nodeType;
 
-        // Set correct document
+      // Set correct document
 
-        if ((context ? context.ownerDocument || context : doc) !== document) {
-            // Overwrite if needed
-            doc = hAzzle.setDocument(context);
+      if ((context ? context.ownerDocument || context : doc) !== document) {
+        // Overwrite if needed
+        doc = hAzzle.setDocument(context);
+      }
+
+      context = context || doc;
+      results = results || [];
+
+      if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
+        return [];
+      }
+
+      // Activate QSA if 'single' {true}
+
+      Jiesa.useNative = single ? true : false;
+
+      if (documentIsHTML) {
+
+        if (quickMatch) {
+
+          qM(selector, context, quickMatch);
         }
 
-        context = context || doc;
-        results = results || [];
+        // If querySelectorAll are activated, and not buggy,
+        // existing, and no XML doc - use QSA. If not, fallback
+        // to the internal selector engine 
 
-        if ((nodeType = context.nodeType) !== 1 && nodeType !== 9) {
-            return [];
-        }
+        if (Jiesa.useNative && Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
 
-        // Activate QSA if 'single' {true}
+          var old = true,
+            nid = expando;
 
-        Jiesa.useNative = single ? true : false;
+          if (context !== doc) {
 
-        if (documentIsHTML) {
+            // Thanks to Andrew Dupont for the technique
 
-            if (quickMatch) {
+            old = context.getAttribute('id');
 
-                qM(selector, context, quickMatch);
+            if (old) {
+
+              nid = old.replace(escaped, '\\$&');
+
+            } else {
+
+              context.setAttribute('id', nid);
             }
 
-            // If querySelectorAll are activated, and not buggy,
-            // existing, and no XML doc - use QSA. If not, fallback
-            // to the internal selector engine 
+            nid = "[id='" + nid + "'] ";
 
-            if (Jiesa.useNative && Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
+            context = sibling.test(selector) ? context.parentElement : context;
+            selector = nid + selector.split(',').join(',' + nid);
+          }
 
-                var old = true,
-                    nid = expando;
+          try {
 
-                if (context !== doc) {
+            // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
 
-                    // Thanks to Andrew Dupont for the technique
+            if (single) {
 
-                    old = context.getAttribute('id');
+              return [context.querySelector(selector)];
 
-                    if (old) {
+            } else {
 
-                        nid = old.replace(escaped, '\\$&');
-
-                    } else {
-
-                        context.setAttribute('id', nid);
-                    }
-
-                    nid = "[id='" + nid + "'] ";
-
-                    context = sibling.test(selector) ? context.parentElement : context;
-                    selector = nid + selector.split(',').join(',' + nid);
-                }
-
-                try {
-
-                    // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
-
-                    if (single) {
-
-                        return [context.querySelector(selector)];
-
-                    } else {
-
-                        push.apply(results, context.querySelectorAll(selector));
-                        return results;
-                    }
-
-                } finally {
-
-                    if (!old) {
-
-                        context.removeAttribute("id");
-                    }
-                }
+              push.apply(results, context.querySelectorAll(selector));
+              return results;
             }
-        }
-        // Run the parser
-        parseResult = Jiesa.parse(selector.replace(rtrim, "$1"), context);
 
-        return hAzzle.merge(results, parseResult);
+          } finally {
+
+            if (!old) {
+
+              context.removeAttribute("id");
+            }
+          }
+        }
+      }
+      // Run the parser
+
+      return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
+      `
     },
 
     /**
      * Find the first matched element by selector
      * @param {String} selector
-     * @param {String/Object/Array}	context
+     * @param {String/Object/Array} context
      * @return {hAzzle}
      */
 
@@ -163,7 +162,7 @@ hAzzle.extend({
     /**
      * Find element matched by selector
      * @param {String} selector
-     * @param {Object}	elem
+     * @param {Object}  elem
      * @return {Boolean}
      */
 
