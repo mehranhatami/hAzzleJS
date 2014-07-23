@@ -13,16 +13,16 @@ var keyRegex = /key/i,
     msgRegex = /^message$/i,
 
     // a whitelist of properties for different event types
-    commonProps = ('altKey attrChange cancelable attrName bubbles cancelable ctrlKey currentTarget ' +
+    commonProps = ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
         'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
         'srcElement target timeStamp type view which propertyName').split(' '),
-    keyProps = ('char charCode key keyCode keyIdentifier keyLocation location').split(' '),
+    keyProps = ('char charCode key keyCode keyIdentifier keyLocation location clipboardData').split(' '),
     mouseProps = ('button buttons clientX clientY offsetX offsetY pageX pageY ' +
         'screenX screenY toElement dataTransfer fromElement').split(' '),
     mouseWheelProps = mouseProps.concat(('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ ' +
         'axis').split(' ')),
     touchProps = ('touches targetTouches changedTouches scale rotation').split(' '),
-    messageProps = ('data origin source').split(' '),
+    messageProps = ('data origin source lastEventId').split(' '),
     textProps = ('data').split(' '),
     stateProps = ('state').split(' ');
 
@@ -111,7 +111,6 @@ hAzzle.props = {
 
             for (; i < l; i++) {
                 if (this.hookers[i].reg.test(type)) {
-                    //alert(this.hookers[i].props)
                     this.fixedEvents[type] = this.hookers[i];
                     break;
                 }
@@ -153,7 +152,6 @@ function mousescroll(evt, original) {
 
     var evtDoc, doc, body,
         button = original.button;
-
 
     // Calculate pageX/Y if missing and clientX/Y available
     if (evt.pageX === null && original.clientX !== null) {
