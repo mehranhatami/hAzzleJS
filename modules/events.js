@@ -1,18 +1,12 @@
 // events.js
 var doc = this.document,
-
-    // minimal usage of global functions
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
     Jiesa = hAzzle.Jiesa,
-
-    isString = hAzzle.isString,
-    isObject = hAzzle.isObject,
-    // Various regEx
-
     whiteRegex = (/\S+/g),
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/,
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
+
     own = hAzzle.hasOwn,
 
     // Public object for eventHooks
@@ -111,7 +105,7 @@ hAzzle.event = {
             eventHandler = eventData.handle = Listener();
         }
 
-        // Get types
+        // Handle multiple events separated by a space
 
         types = getTypes(types);
 
@@ -173,6 +167,7 @@ hAzzle.event = {
             if (special.add) {
 
 
+
                 special.add.call(elem, handleObj);
 
                 if (!handleObj.handler.hid) {
@@ -224,10 +219,9 @@ hAzzle.event = {
             return;
         }
 
-        // Get types
+        // Handle multiple events separated by a space
 
         types = getTypes(types);
-
         t = types.length;
 
         while (t--) {
@@ -302,20 +296,16 @@ hAzzle.event = {
     trigger: function (evt, data, elem, handlers) {
 
         var i, cur, tmp, bubbleType, ontype, handle, special,
-            nType = elem.nodeType,
             eventPath = [elem || doc],
             type = own.call(evt, 'type') ? evt.type : evt,
             namespaces = own.call(evt, 'namespace') ? evt.namespace.split('.') : [];
 
         cur = tmp = elem = elem || doc;
 
-        // Check if we can continue
-
         if (!valid(elem, type)) {
+
             return;
         }
-
-        // hAzzle.inArray much faster then native indexOf
 
         if (inArray(type, '.') >= 0) {
             namespaces = type.split('.');
@@ -331,14 +321,12 @@ hAzzle.event = {
 
         special = eventHooks.special[type] || {};
 
-        // If no valid handlers, return
-
         if (!validHandlers(elem, handlers, data, special)) {
-
             return;
         }
 
         if (!handlers && !special.noBubble && !hAzzle.isWindow(elem)) {
+
 
             bubbleType = special.delegateType || type;
 
@@ -358,6 +346,7 @@ hAzzle.event = {
             }
         }
 
+        // Fire handlers on the event path
         i = 0;
 
         while ((cur = eventPath[i++]) && !evt.isPropagationStopped()) {
@@ -505,6 +494,7 @@ hAzzle.event = {
                     }
 
                     if (matches.length) {
+
                         queue.push({
                             elem: cur,
                             handlers: matches
@@ -538,7 +528,6 @@ hAzzle.Event = function (src, props) {
             returnFalse;
 
     } else {
-
         this.type = src;
     }
 
@@ -547,10 +536,11 @@ hAzzle.Event = function (src, props) {
         hAzzle.shallowCopy(this, props);
     }
 
+    // Create a timestamp if incoming event doesn't have one
     this.timeStamp = src && src.timeStamp || hAzzle.now();
 
     // Mark it as fixed
-    this[hAzzle.expando] = true;
+    this[expando] = true;
 };
 
 // hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
@@ -611,15 +601,19 @@ hAzzle.Event.prototype = {
     }
 };
 
+
+
 hAzzle.extend({
 
     on: function (types, selector, data, fn, /*INTERNAL*/ one) {
 
         var origFn, type;
 
-        if (isObject(types)) {
 
-            if (!isString(selector)) {
+
+        if (typeof types === 'object') {
+
+            if (typeof selector !== 'string') {
 
                 data = data || selector;
                 selector = undefined;
@@ -642,7 +636,7 @@ hAzzle.extend({
 
         } else if (fn == null) {
 
-            if (isString(selector)) {
+            if (typeof selector === 'string') {
 
                 fn = data;
                 data = undefined;
@@ -696,7 +690,7 @@ hAzzle.extend({
             );
             return this;
         }
-        if (isObject(types)) {
+        if (typeof types === 'object') {
             // ( types-object [, selector] )
             for (type in types) {
                 this.off(type, selector, types[type]);
@@ -772,7 +766,7 @@ function newNS(ns) {
 
 function getEvent(elem, evt, handler, ns, type) {
 
-    evt = evt[hAzzle.expando] ? evt : new hAzzle.Event(type, isObject(evt) && evt);
+    evt = evt[expando] ? evt : new hAzzle.Event(type, typeof evt === 'object' && evt);
     evt.isTrigger = handler ? 2 : 3;
     evt.namespace = ns.join('.');
     evt.namespace_re = evt.namespace ? newNS(ns) : null;
@@ -789,6 +783,7 @@ function getEvent(elem, evt, handler, ns, type) {
  * Listener
  * @return {Function}
  */
+
 
 function Listener() {
     return function (e) {
