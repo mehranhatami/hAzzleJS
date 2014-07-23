@@ -16,26 +16,27 @@ var keyRegex = /key/i,
     commonProps = ('altKey attrChange cancelable attrName bubbles cancelable ctrlKey currentTarget ' +
         'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
         'srcElement target timeStamp type view which propertyName').split(' '),
-    keyProps = 'char charCode key keyCode keyIdentifier keyLocation location'.split(' '),
-    mouseProps = 'button buttons clientX clientY offsetX offsetY pageX pageY ' +
-    'screenX screenY toElement dataTransfer fromElement'.split(' '),
-    mouseWheelProps = mouseProps.concat('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ' +
-        'axis'.split(' ')),
-    touchProps = 'touches targetTouches changedTouches scale rotation'.split(' '),
-    messageProps = 'data origin source'.split(' '),
-    textProps = 'data',
-    stateProps = 'state';
+    keyProps = ('char charCode key keyCode keyIdentifier keyLocation location').split(' '),
+    mouseProps = ('button buttons clientX clientY offsetX offsetY pageX pageY ' +
+        'screenX screenY toElement dataTransfer fromElement').split(' '),
+    mouseWheelProps = mouseProps.concat(('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ ' +
+        'axis').split(' ')),
+    touchProps = ('touches targetTouches changedTouches scale rotation').split(' '),
+    messageProps = ('data origin source').split(' '),
+    textProps = ('data').split(' '),
+    stateProps = ('state').split(' ');
 
-// Mozilla and webKit have special events
+// Damn! Mozilla and webKit have special events, let us deal with it ....!
 
 // Firefox
 
 if (hAzzle.isFirefox) {
-    mouseProps = mouseProps.concat(' mozMovementY mozMovementX'.split(' '))
+    mouseProps = mouseProps.concat('mozMovementY mozMovementX'.split(' '));
 }
+
 // webKit 
 if (hAzzle.isChrome || hAzzle.isOpera) {
-    mouseProps = mouseProps.concat(' webkitMovementY webkitMovementX'.split(' '))
+    mouseProps = mouseProps.concat(('webkitMovementY webkitMovementX').split(' '));
 }
 
 hAzzle.props = {
@@ -104,23 +105,24 @@ hAzzle.props = {
             type = evt.type,
             target, originalEvent = evt,
             fE = this.fixedEvents,
-            fixHook = fE[type];
+            fixHook = this.fixedEvents[type];
 
         if (!fixHook) {
 
             for (; i < l; i++) {
                 if (this.hookers[i].reg.test(type)) {
-                    fixHook = this.hookers[i];
+                    //alert(this.hookers[i].props)
+                    this.fixedEvents[type] = this.hookers[i];
                     break;
                 }
             }
         }
 
-        copy = fE.props ? commonProps.concat(fixHook.props) : commonProps;
+        copy = this.fixedEvents[type].props ? commonProps.concat(this.fixedEvents[type].props) : commonProps;
 
         evt = new hAzzle.Event(originalEvent);
 
-        target = evt.target,
+        target = evt.target;
             i = copy.length;
 
         while (i--) {
@@ -147,8 +149,8 @@ hAzzle.props = {
 
 // Same for mouse, mouseWheel and mouseScroll
 
-var mousescroll = function (evt, original) {
-    alert(evt)
+function mousescroll(evt, original) {
+
     var evtDoc, doc, body,
         button = original.button;
 
