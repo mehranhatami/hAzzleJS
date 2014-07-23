@@ -148,9 +148,9 @@ hAzzle.event = {
                 if (!special.setup ||
                     special.setup.call(elem, data, namespaces, eventHandle) === false) {
                  
-				  // Add the listener
+                  // Add the listener
                   
-				    if (elem.addEventListener) {
+                  if (elem.addEventListener) {
                         elem.addEventListener(type, eventHandle, false);
                     }
                 }
@@ -301,7 +301,7 @@ hAzzle.event = {
 
         evt = getEvent(elem, evt, handlers, namespaces, type);
 
-        data = data == null ? [evt] : hAzzle.mergeArray(data, [event]);
+        data = data !== null ? [evt] : hAzzle.mergeArray(data, [event]);
 
         special = eventHooks.special[type] || {};
 
@@ -448,8 +448,8 @@ hAzzle.event = {
     handlers: function (evt, handlers) {
         var i, matches, sel, handleObj,
             queue = [],
-            cur = evt.target
-        delegateCount = handlers.delegateCount;
+            cur = evt.target,
+            delegateCount = handlers.delegateCount;
 
         if (delegateCount && cur.nodeType && (!evt.button || evt.type !== 'click')) {
 
@@ -613,12 +613,12 @@ hAzzle.extend({
             return this;
         }
 
-        if (data == null && fn == null) {
+        if (data === null && fn === null) {
 
             fn = selector;
             data = selector = undefined;
 
-        } else if (fn == null) {
+        } else if (fn !== null) {
 
             if (typeof selector === 'string') {
 
