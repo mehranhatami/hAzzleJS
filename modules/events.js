@@ -1,15 +1,15 @@
 // events.js
 var doc = this.document,
-   
-   // minimal usage of global functions
+
+    // minimal usage of global functions
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
     Jiesa = hAzzle.Jiesa,
-   
-   isString = hAzzle.isString,
-   isObject = hAzzle.isObject, 
-   // Various regEx
-   
+
+    isString = hAzzle.isString,
+    isObject = hAzzle.isObject,
+    // Various regEx
+
     whiteRegex = (/\S+/g),
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/,
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
@@ -223,11 +223,11 @@ hAzzle.event = {
         if (!eventData || !(events = eventData.events)) {
             return;
         }
-		
+
         // Get types
 
         types = getTypes(types);
-		
+
         t = types.length;
 
         while (t--) {
@@ -237,9 +237,9 @@ hAzzle.event = {
             namespaces = (tmp[2] || '').split('.').sort();
 
             if (!type) {
-				
+
                 for (type in events) {
-					
+
                     hAzzle.event.remove(elem, type + types[t], handler, selector, true);
                 }
 
@@ -257,7 +257,7 @@ hAzzle.event = {
             origCount = j = handlers.length;
 
             while (j--) {
-				
+
                 handleObj = handlers[j];
 
                 if ((mappedTypes || origType === handleObj.origType) &&
@@ -268,12 +268,12 @@ hAzzle.event = {
                     handlers.splice(j, 1);
 
                     if (handleObj.selector) {
-						
+
                         handlers.delegateCount--;
                     }
-					
+
                     if (special.remove) {
-						
+
                         special.remove.call(elem, handleObj);
                     }
                 }
@@ -287,7 +287,7 @@ hAzzle.event = {
                         elem.removeEventListener(type, eventData.handle, false);
                     }
                 }
-				
+
                 delete events[type];
             }
         }
@@ -308,12 +308,14 @@ hAzzle.event = {
             namespaces = own.call(evt, 'namespace') ? evt.namespace.split('.') : [];
 
         cur = tmp = elem = elem || doc;
-        
-		// Check if we can continue
-		
-		if(! valid( elem, type)) { return; }
-       
-	   // hAzzle.inArray much faster then native indexOf
+
+        // Check if we can continue
+
+        if (!valid(elem, type)) {
+            return;
+        }
+
+        // hAzzle.inArray much faster then native indexOf
 
         if (inArray(type, '.') >= 0) {
             namespaces = type.split('.');
@@ -329,14 +331,14 @@ hAzzle.event = {
 
         special = eventHooks.special[type] || {};
 
-        if (!handlers &&
-            special.trigger &&
-            special.trigger.apply(elem, data) === false) {
+        // If no valid handlers, return
+
+        if (!validHandlers(elem, handlers, data, special)) {
+
             return;
         }
 
         if (!handlers && !special.noBubble && !hAzzle.isWindow(elem)) {
-
 
             bubbleType = special.delegateType || type;
 
@@ -536,7 +538,7 @@ hAzzle.Event = function (src, props) {
             returnFalse;
 
     } else {
-		
+
         this.type = src;
     }
 
@@ -800,14 +802,22 @@ function Listener() {
 // to avoid multiple regEx checks
 
 function getTypes(types) {
- return (types || '').match(whiteRegex) || [''];
+    return (types || '').match(whiteRegex) || [''];
 }
 
 function valid(elem, type) {
-	alert(eventCore.triggered)
- if ((elem.nodeType === 3 || elem.nodeType=== 8) || 
-     focusinoutblur.test(type + eventCore.triggered)) {
-         return false;
-   }
-  return true;
+    if ((elem.nodeType === 3 || elem.nodeType === 8) ||
+        focusinoutblur.test(type + eventCore.triggered)) {
+        return false;
+    }
+    return true;
+}
+
+// Check if valid handlers
+function validHandlers(elem, fn, data, special) {
+    if (!fn && special.trigger &&
+        special.trigger.apply(elem, data) === false) {
+        return false;
+    }
+    return true;
 }
