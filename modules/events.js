@@ -2,7 +2,7 @@
 
 var doc = this.document,
     rnotwhite = (/\S+/g),
-    rfocusMorph = /^(?:focusinfocus|focusoutblur)$/,
+    focusinoutblur = /^(?:focusinfocus|focusoutblur)$/,
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
     
 	own = hAzzle.hasOwn,
@@ -56,9 +56,9 @@ var doc = this.document,
         add: function (elem, types, handler, data, selector) {
 
             var handleObjIn, eventHandle, tmp,
-                events, t, handleObj,
                 special, handlers, type, namespaces, origType,
-                elemData = hAzzle.data(elem);
+                elemData = hAzzle.data(elem),
+				events = elemData.events, t, handleObj;
 
             if (!elemData) {
                 return;
@@ -77,7 +77,7 @@ var doc = this.document,
             }
 
             // Init the element's event structure and main handler, if this is the first
-            if (!(events = elemData.events)) {
+            if (!events) {
                 events = elemData.events = {};
             }
             if (!(eventHandle = elemData.handle)) {
@@ -129,8 +129,10 @@ var doc = this.document,
                 }, handleObjIn);
 
                 // Init the event handler queue if we're the first
+                  
+				  handlers = events[type];
 
-                if (!(handlers = events[type])) {
+                if (!handlers) {
                     handlers = events[type] = [];
                     handlers.delegateCount = 0;
 
@@ -155,8 +157,11 @@ var doc = this.document,
 
                 // Add to the element's handler list, delegates in front
                 if (selector) {
+					
                     handlers.splice(handlers.delegateCount++, 0, handleObj);
+
                 } else {
+					
                     handlers.push(handleObj);
                 }
 
@@ -273,13 +278,7 @@ var doc = this.document,
 
                 cur = tmp = elem = elem || doc;
 
-            if (nType === 3 || nType === 8) {
-				
-                return;
-            }
-
-
-            if (rfocusMorph.test(type + eventCore.triggered)) {
+            if ( (nType === 3 || nType === 8) || focusinoutblur.test(type + eventCore.triggered)) {
 				
                 return;
             }
@@ -312,7 +311,9 @@ var doc = this.document,
 
 			special = eventHooks.special[type] || {};
 			
-            if (!onlyHandlers && special.trigger && special.trigger.apply(elem, data) === false) {
+            if (!onlyHandlers && 
+			    special.trigger && 
+				special.trigger.apply(elem, data) === false) {
                 return;
             }
 
@@ -320,7 +321,7 @@ var doc = this.document,
 
                 bubbleType = special.delegateType || type;
 				
-                if (!rfocusMorph.test(bubbleType + type)) {
+                if (!focusinoutblur.test(bubbleType + type)) {
 					
                     cur = cur.parentElement;
                 }
