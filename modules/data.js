@@ -1,7 +1,6 @@
 /** 
  * Data
  */
- 
 var htmlRegEx = /(?:\{[\s\S]*\}|\[[\s\S]*\])$/,
     charRegEx = /([A-Z])/g,
 
@@ -107,34 +106,40 @@ hAzzle.extend({
             // Create and unique ID for this elem
 
             if (!id && elem.nodeType) {
+
                 var pid = dataStorage.getID(elem);
                 id = dataStorage.cache[pid] = {};
             }
+
+
+            if (typeof key === "object" || typeof key === "function") {
+
+                return hAzzle.shallowCopy(id, key);
+            }
+
             if (typeof id !== 'undefined') {
 
+                // Return all data on saved on the element
 
+                if (typeof key === 'undefined') {
 
+                    return id;
+                }
 
-            // Return all data on saved on the element
+                if (typeof value === 'undefined') {
 
-            if (typeof key === 'undefined') {
+                    return id[key];
+                }
 
-                return id;
+                if (typeof value !== 'undefined') {
+
+                    // Set and return the value
+
+                    id[key] = value;
+
+                    return id[key];
+                }
             }
-
-            if (typeof value === 'undefined') {
-
-                return id[key];
-            }
-
-            if (typeof value !== 'undefined') {
-
-                // Set and return the value
-
-                id[key] = value;
-
-                return id[key];
-            }             }
         }
     }
 }, hAzzle);
