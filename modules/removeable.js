@@ -1,8 +1,3 @@
-/*!
- * Removeable.js
- */
-
-
 /**
  * Removes the data associated with an element
  * @param {Object} elem
@@ -11,7 +6,7 @@
 
 hAzzle.clearData = function(elem) {
     hAzzle.removeData(elem);
-    hAzzle.event.removeEvent(elem);
+    hAzzle.event.remove(elem);
  };
 
 
@@ -33,7 +28,7 @@ hAzzle.extend({
 
             if (el.nodeType === 1) {
                 hAzzle.removeData(el);
-                hAzzle.event.removeEvent(el);
+                hAzzle.event.remove(el);
             }
 
             if (el.parentNode && el.tagName !== 'BODY') {
