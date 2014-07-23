@@ -236,7 +236,7 @@ hAzzle.event = {
             type = origType = tmp[1];
             namespaces = (tmp[2] || '').split('.').sort();
 
-		    if (!type) {
+            if (!type) {
 				
                 for (type in events) {
 					
@@ -308,11 +308,12 @@ hAzzle.event = {
             namespaces = own.call(evt, 'namespace') ? evt.namespace.split('.') : [];
 
         cur = tmp = elem = elem || doc;
-
-        if ((nType === 3 || nType === 8) || focusinoutblur.test(type + eventCore.triggered)) {
-
-            return;
-        }
+        
+		// Check if we can continue
+		
+		if(! valid( elem, type)) { return; }
+       
+	   // hAzzle.inArray much faster then native indexOf
 
         if (inArray(type, '.') >= 0) {
             namespaces = type.split('.');
@@ -800,4 +801,13 @@ function Listener() {
 
 function getTypes(types) {
  return (types || '').match(whiteRegex) || [''];
+}
+
+function valid(elem, type) {
+	alert(eventCore.triggered)
+ if ((elem.nodeType === 3 || elem.nodeType=== 8) || 
+     focusinoutblur.test(type + eventCore.triggered)) {
+         return false;
+   }
+  return true;
 }
