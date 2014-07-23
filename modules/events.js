@@ -2,7 +2,7 @@
 var doc = this.document,
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
-	Jiesa = hAzzle.Jiesa,
+    Jiesa = hAzzle.Jiesa,
     rnotwhite = (/\S+/g),
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/,
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
@@ -57,7 +57,7 @@ hAzzle.bubbles = eventCore.has['api-bubbles'];
 // hAzzle event
 
 hAzzle.event = {
-	
+
     /**
      * Add event to element.
      *
@@ -65,7 +65,7 @@ hAzzle.event = {
      * @param {String|Object} types
      * @param {Function} handler
      * @param {String|Undefined} data
-     * @param {String|Undefined} selector	 
+     * @param {String|Undefined} selector
      */
 
     add: function (elem, types, handler, data, selector) {
@@ -73,7 +73,8 @@ hAzzle.event = {
         var objHandler, eventHandler, tmp,
             special, handlers, type, namespaces, origType,
             eventData = hAzzle.data(elem),
-            events = eventData.events, handleObj, t;
+            events = eventData.events,
+            handleObj, t;
 
         if (!eventData) {
             return;
@@ -88,12 +89,12 @@ hAzzle.event = {
         // Attach a unique ID on the handler
 
         if (!handler.hid) {
-			
+
             handler.hid = eventCore.setID();
         }
 
         // Init the element's event structure and main handler, if this is the first
-		
+
         if (!events) {
 
             events = eventData.events = {};
@@ -121,7 +122,7 @@ hAzzle.event = {
             // There *must* be a type, no attaching namespace-only handlers
 
             if (!type) {
-				
+
                 continue;
             }
 
@@ -130,8 +131,8 @@ hAzzle.event = {
             type = (selector ? special.delegateType : special.bindType) || type;
 
             special = eventHooks.special[type] || {};
-           
-		   // Take a shallowCopy of the object
+
+            // Take a shallowCopy of the object
 
             handleObj = hAzzle.shallowCopy({
                 type: type,
@@ -154,10 +155,10 @@ hAzzle.event = {
 
                 if (!special.setup ||
                     special.setup.call(elem, data, namespaces, eventHandler) === false) {
-                 
-				  // Add the listener
-                  
-				    if (elem.addEventListener) {
+
+                    // Add the listener
+
+                    if (elem.addEventListener) {
                         elem.addEventListener(type, eventHandler, false);
                     }
                 }
@@ -165,15 +166,15 @@ hAzzle.event = {
 
             if (special.add) {
 
+
                 special.add.call(elem, handleObj);
 
                 if (!handleObj.handler.hid) {
-					
+
                     handleObj.handler.hid = handler.hid;
                 }
             }
 
-            // Add to the element's handler list, delegates in front
             if (selector) {
 
                 handlers.splice(handlers.delegateCount++, 0, handleObj);
@@ -183,7 +184,6 @@ hAzzle.event = {
                 handlers.push(handleObj);
             }
 
-            // Keep track of which events have ever been used, for event optimization
             eventCore.global[type] = true;
         }
 
@@ -218,7 +218,8 @@ hAzzle.event = {
             return;
         }
 
-        // Once for each type.namespace in types; type may be omitted
+        // Handle multiple events separated by a space
+		  
         types = (types || '').match(rnotwhite) || [''];
         t = types.length;
 
@@ -228,11 +229,13 @@ hAzzle.event = {
             type = origType = tmp[1];
             namespaces = (tmp[2] || '').split('.').sort();
 
-            // Unbind all events (on this namespace, if provided) for the element
-            if (!type) {
+		    if (!type) {
+				
                 for (type in events) {
+					
                     hAzzle.event.remove(elem, type + types[t], handler, selector, true);
                 }
+				
                 continue;
             }
 
@@ -247,6 +250,7 @@ hAzzle.event = {
             origCount = j = handlers.length;
 
             while (j--) {
+				
                 handleObj = handlers[j];
 
                 if ((mappedTypes || origType === handleObj.origType) &&
@@ -257,9 +261,12 @@ hAzzle.event = {
                     handlers.splice(j, 1);
 
                     if (handleObj.selector) {
+						
                         handlers.delegateCount--;
                     }
+					
                     if (special.remove) {
+						
                         special.remove.call(elem, handleObj);
                     }
                 }
@@ -273,12 +280,13 @@ hAzzle.event = {
                         elem.removeEventListener(type, eventData.handle, false);
                     }
                 }
+				
                 delete events[type];
             }
         }
 
         if (hAzzle.isEmptyObject(events)) {
-			
+
             delete eventData.handle;
             hAzzle.removeData(elem, 'events');
         }
@@ -409,7 +417,6 @@ hAzzle.event = {
             handlers = (hAzzle.data(this, 'events') || {})[evt.type] || [],
             special = eventHooks.special[evt.type] || {};
 
-        // Use the fix-ed hAzzle.Event rather than the (read-only) native event
         args[0] = evt;
         evt.delegateTarget = this;
 
@@ -620,11 +627,11 @@ hAzzle.extend({
             }
             return this;
         }
-     
-	  // Has to be boolean values, else
-      // everything break. So keep '==' and not '==='
-      
-	    if (data == null && fn == null) {
+
+        // Has to be boolean values, else
+        // everything break. So keep '==' and not '==='
+
+        if (data == null && fn == null) {
 
             fn = selector;
             data = selector = undefined;
