@@ -34,8 +34,6 @@ var doc = this.document,
 
     slice = Array.prototype.slice,
 
-    own = hAzzle.hasOwn,
-
     // Public object for eventHooks
 
     eventHooks = hAzzle.eventHooks = {
@@ -329,15 +327,18 @@ hAzzle.event = {
 
         var i, cur, tmp, bubbleType, ontype, handle, special,
             eventPath = [elem || doc],
-            type = own.call(evt, 'type') ? evt.type : evt,
-            namespaces = own.call(evt, 'namespace') ? evt.namespace.split('.') : [];
+            type = callType(evt),
+            namespaces = callNamespaces(evt);
 
         cur = tmp = elem = elem || doc;
 
-        if (!valid(elem, type)) {
+        // Check if valid type
 
+        if (!valid(elem, type)) {
             return;
         }
+
+        // Check for namespace
 
         if (inArray(type, '.') >= 0) {
             namespaces = type.split('.');
@@ -347,11 +348,15 @@ hAzzle.event = {
 
         ontype = inArray(type, ':') < 0 && 'on' + type;
 
+        // Get event
+
         evt = getEvent(elem, evt, handlers, namespaces, type);
 
         data = data === null ? [evt] : hAzzle.mergeArray(data, [evt]);
 
         special = eventHooks.special[type] || {};
+
+        // Check for valid handlers
 
         if (!validHandlers(elem, handlers, data, special)) {
             return;
@@ -362,10 +367,8 @@ hAzzle.event = {
 
             bubbleType = special.delegateType || type;
 
-            if (!focusinoutblur.test(bubbleType + type)) {
+            cur = getCur(cur, type, bubbleType);
 
-                cur = cur.parentElement;
-            }
             for (; cur; cur = cur.parentElement) {
 
                 eventPath.push(cur);
@@ -373,7 +376,6 @@ hAzzle.event = {
             }
 
             if (tmp === getDocument(elem)) {
-
                 eventPath.push(tmp.defaultView || tmp.parentWindow || window);
             }
         }
@@ -510,9 +512,9 @@ hAzzle.event = {
                 if (cur.disabled !== true || evt.type !== 'click') {
 
                     matches = [];
-					
+
                     for (i = 0; i < delegateCount; i++) {
-						
+
                         handleObj = handlers[i];
 
                         // Don't conflict with Object.prototype properties
@@ -544,7 +546,7 @@ hAzzle.event = {
         }
 
         if (delegateCount < handlers.length) {
-			
+
             queue.push({
                 elem: this,
                 handlers: handlers.slice(delegateCount)
@@ -558,20 +560,20 @@ hAzzle.event = {
 hAzzle.Event = function (src, props) {
 
     if (src && src.type) {
-		
+
         this.originalEvent = src;
-        
-		this.type = src.type;
-        
-		this.isDefaultPrevented = src.defaultPrevented ||
+
+        this.type = src.type;
+
+        this.isDefaultPrevented = src.defaultPrevented ||
             src.defaultPrevented === undefined &&
             src.returnValue === false ?
             returnTrue :
             returnFalse;
 
     } else {
-    
-	    this.type = src;
+
+        this.type = src;
     }
 
     if (props) {
@@ -580,11 +582,11 @@ hAzzle.Event = function (src, props) {
     }
 
     // Create a timestamp if incoming event doesn't have one
-    
-	this.timeStamp = src && src.timeStamp || hAzzle.now();
+
+    this.timeStamp = src && src.timeStamp || hAzzle.now();
 
     // Mark it as fixed
-	
+
     this[expando] = true;
 };
 
@@ -682,10 +684,10 @@ function newNS(ns) {
  *
  * @param {Object} elem
  * @param {String} evt
- * @param {Function|Undefined} handler  
+ * @param {Function|Undefined} handler
  * @param {Object|Undefined} ns
  * @param {String} type
- * @return {Object}  
+ * @return {Object}
  */
 
 function getEvent(elem, evt, handler, ns, type) {
@@ -742,4 +744,19 @@ function validHandlers(elem, fn, data, special) {
         return false;
     }
     return true;
+}
+
+function callType(evt) {
+    return hAzzle.hasOwn.call(evt, 'type') ? evt.type : evt;
+}
+
+function callNamespaces(evt) {
+    return hAzzle.hasOwn.call(evt, 'namespace') ? evt.namespace.split('.') : [];
+}
+
+function getCur(cur, type, bubbleType) {
+    if (!focusinoutblur.test(bubbleType + type)) {
+        return cur.parentElement;
+    }
+    return cur;
 }
