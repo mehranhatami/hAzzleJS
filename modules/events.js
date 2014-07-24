@@ -21,11 +21,9 @@
  * - http://dean.edwards.name/weblog/2005/10/add-event/
  * - http://dean.edwards.name/weblog/2005/10/add-event2/
  * - http://stackoverflow.com/questions/4034742/understanding-dean-edwards-addevent-javascript
- * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js 
+ * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
- 
- 
 var doc = this.document,
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
@@ -33,6 +31,8 @@ var doc = this.document,
     whiteRegex = (/\S+/g),
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/,
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
+
+    slice = Array.prototype.slice,
 
     own = hAzzle.hasOwn,
 
@@ -59,6 +59,8 @@ var doc = this.document,
     eventCore = {
 
         version: 'hAzzleEvents-0.45a',
+
+        // A counter used to create unique IDs
 
         UID: 1,
 
@@ -115,19 +117,21 @@ hAzzle.event = {
             selector = objHandler.selector;
         }
 
-        // Attach a unique ID on the handler
+        // Assign each event handler a unique ID
 
-        if (!handler.hid) {
+        if (!handler.guid) {
 
-            handler.hid = eventCore.setID();
+            handler.guid = eventCore.setID();
         }
 
-        // Init the element's event structure and main handler, if this is the first
+        // Create a hash table of event types for the element
 
         if (!events) {
 
             events = eventData.events = {};
         }
+
+        // Create a hash table of event handlers for each element/event pair
 
         if (!(eventHandler = eventData.handle)) {
 
@@ -168,7 +172,7 @@ hAzzle.event = {
                 origType: origType,
                 data: data,
                 handler: handler,
-                hid: handler.hid,
+                guid: handler.guid,
                 selector: selector,
                 needsContext: selector && Jiesa.regex.changer.test(selector),
                 namespace: namespaces.join('.')
@@ -197,9 +201,9 @@ hAzzle.event = {
 
                 special.add.call(elem, handleObj);
 
-                if (!handleObj.handler.hid) {
+                if (!handleObj.handler.guid) {
 
-                    handleObj.handler.hid = handler.hid;
+                    handleObj.handler.guid = handler.guid;
                 }
             }
 
@@ -239,6 +243,7 @@ hAzzle.event = {
         // If no data exist on the object, save it
 
         if (hAzzle.hasData(elem)) {
+
             eventData = hAzzle.data(elem);
         }
 
@@ -282,7 +287,7 @@ hAzzle.event = {
                 handleObj = handlers[j];
 
                 if ((mt || origType === handleObj.origType) &&
-                    (!handler || handler.hid === handleObj.hid) &&
+                    (!handler || handler.guid === handleObj.guid) &&
                     (!tmp || tmp.test(handleObj.namespace)) &&
                     (!selector || selector === handleObj.selector ||
                         selector === 'sub' && handleObj.selector)) {
@@ -432,7 +437,9 @@ hAzzle.event = {
         return evt.result;
     },
 
-    preparation: function (evt) {
+    handle: function (evt) {
+
+        // Grab the event object
 
         evt = hAzzle.props.propFix(evt);
 
@@ -708,7 +715,7 @@ hAzzle.extend({
             fn = once(fn);
 
             // Use same guid so caller can remove using origFn
-            fn.hid = origFn.hid || (origFn.hid = eventCore.setID());
+            fn.guid = origFn.guid || (origFn.guid = eventCore.setID());
         }
 
         return this.each(function () {
@@ -836,7 +843,7 @@ function getEvent(elem, evt, handler, ns, type) {
 function Listener() {
     return function (e) {
         return typeof hAzzle !== undefined && eventCore.triggered !== e.type ?
-            hAzzle.event.preparation.apply(this, arguments) : undefined;
+            hAzzle.event.handle.apply(this, arguments) : undefined;
     };
 }
 

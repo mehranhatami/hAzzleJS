@@ -42,7 +42,7 @@ hAzzle.extend({
                     } else {
 
                         evt.type = 'scrollstart';
-                        hAzzle.event.preparation.apply(self, args);
+                        hAzzle.event.handle.apply(self, args);
                     }
 
                     timer = setTimeout(function () {
@@ -61,7 +61,7 @@ hAzzle.extend({
 
     'scrollstop': {
         latency: 250,
-        setup: function (data) {
+        'setup': function (data) {
             var _data = hAzzle.shallowCopy({
                 latency: hAzzle.eventHooks.special.scrollstop.latency
             }, data);
@@ -78,7 +78,7 @@ hAzzle.extend({
                     timer = setTimeout(function () {
                         timer = null;
                         evt.type = 'scrollstop';
-                        hAzzle.event.preparation.apply(_self, _args);
+                        hAzzle.event.handle.apply(_self, _args);
                     }, _data.latency);
                 };
 
@@ -154,7 +154,7 @@ hAzzle.extend({
         if (bubble) {
             hAzzle.event.trigger(e, null, elem);
         } else {
-            hAzzle.event.preparation.call(elem, e);
+            hAzzle.event.handle.call(elem, e);
         }
         if (e.isDefaultPrevented()) {
             event.preventDefault();
