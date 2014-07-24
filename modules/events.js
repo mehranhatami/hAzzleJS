@@ -85,6 +85,7 @@ hAzzle.bubbles = eventCore.has['api-bubbles'];
 
 // hAzzle event
 
+   
 hAzzle.event = {
 
     /**
@@ -347,12 +348,8 @@ hAzzle.event = {
             type = namespaces.shift();
             namespaces.sort();
         }
-
-        ontype = inArray(type, ':') < 0 && 'on' + type;
-
-        // Get event
-
-        evt = getEvent(elem, evt, handlers, namespaces, type);
+            ontype = type.indexOf(':') < 0 && 'on' + type;
+ evt = getEvent(elem, evt, handlers, namespaces, type);
 
         data = data === null ? [evt] : hAzzle.mergeArray(data, [evt]);
 
@@ -364,7 +361,7 @@ hAzzle.event = {
             return;
         }
 
-        if (!handlers && !special.noBubble && !hAzzle.isWindow(elem)) {
+           if (!handlers && !special.noBubble && !hAzzle.isWindow(elem)) {
 
             bubbleType = special.delegateType || type;
 
@@ -381,7 +378,7 @@ hAzzle.event = {
             }
         }
 
-        // Fire handlers on the event path
+             // Fire handlers on the event path
         i = 0;
 
         while ((cur = eventPath[i++]) && !evt.isPropagationStopped()) {
@@ -417,7 +414,7 @@ hAzzle.event = {
         }
         evt.type = type;
 
-        // If nobody prevented the default action, do it now
+           // If nobody prevented the default action, do it now
 
         if (!handlers && !evt.isDefaultPrevented()) {
 
@@ -449,7 +446,7 @@ hAzzle.event = {
         return evt.result;
     },
 
-    handle: function (evt) {
+      handle: function (evt) {
 
         if (!evt) {
 
@@ -511,8 +508,7 @@ hAzzle.event = {
 
         return evt.result;
     },
-
-    handlers: function (evt, handlers) {
+        handlers: function (evt, handlers) {
         var i, matches, sel, handleObj,
             queue = [],
             cur = evt.target,
@@ -572,14 +568,12 @@ hAzzle.event = {
     }
 };
 
+
 hAzzle.Event = function (src, props) {
 
     if (src && src.type) {
-
         this.originalEvent = src;
-
         this.type = src.type;
-
         this.isDefaultPrevented = src.defaultPrevented ||
             src.defaultPrevented === undefined &&
             src.returnValue === false ?
@@ -587,25 +581,20 @@ hAzzle.Event = function (src, props) {
             returnFalse;
 
     } else {
-
         this.type = src;
     }
 
     if (props) {
-
+		
         hAzzle.shallowCopy(this, props);
     }
 
     // Create a timestamp if incoming event doesn't have one
-
     this.timeStamp = src && src.timeStamp || hAzzle.now();
 
     // Mark it as fixed
-
-    this[expando] = true;
+    this[hAzzle.expando] = true;
 };
-
-// Event prototype
 
 hAzzle.Event.prototype = {
 
@@ -671,6 +660,7 @@ hAzzle.Event.prototype = {
         }
     }
 };
+
 
 /* ============================ UTILITY METHODS =========================== */
 
