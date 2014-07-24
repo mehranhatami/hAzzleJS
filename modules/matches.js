@@ -1,56 +1,18 @@
-var rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/;
+
+// MEHRAN !!! Merge this with compiler.js
 
 
 hAzzle.matches = function (selector, context) {
 
     if (typeof selector !== 'string') {
-
         return null;
     }
 
-    var quick = rquickIs.exec(selector),
-        i = 0,
+    var i = 0,
         l = context.length,
         result = [];
 
-    if (quick) {
-
-        if (quick[1]) {
-
-            quick[1] = quick[1].toLowerCase();
-        }
-
-        if (quick[3]) {
-
-            quick[3] = quick[3].split('=');
-        }
-
-        if (quick[4]) {
-
-            quick[4] = ' ' + quick[4] + ' ';
-        }
-    }
-
-    // Always make sure we have a nodeName
-
-    if (quick && context.nodeName) {
-
-        result = (
-            (!quick[1] || context.nodeName.toLowerCase() === quick[1]) &&
-            (!quick[2] || context.id === quick[2]) &&
-            (!quick[3] || (quick[3][1] ? context.getAttribute(quick[3][0]) === quick[3][1] : context.hasAttribute(quick[3][0]))) &&
-            (!quick[4] || (' ' + context.className + ' ').indexOf(quick[4]) >= 0)
-        );
-
-    } else {  // Fallback to hAzzle.matchesSelector
-
-        // Do a quick look-up if no array-context
-        //
-        // matchesSelector can't be run on XML docs,
-        // but we are solving this inside the 
-        // matchesSelector.js module
-
-        if (!l) {
+        if (!l) { // if no length
 
             return hAzzle.matchesSelector(context, selector);
         }
@@ -64,7 +26,6 @@ hAzzle.matches = function (selector, context) {
                 result.push(context[i]);
             }
         }
-    }
-
+ 
     return result;
 }

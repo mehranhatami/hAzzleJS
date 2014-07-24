@@ -18,6 +18,8 @@
             path + 'changers.js',
             path + 'compile.js',
             path + 'jiesa.js',
+            path + 'matchesselector.js',
+            path + 'matches.js',		
             path + 'raf.js',
             path + 'fx.js',
             path + 'parse.js',

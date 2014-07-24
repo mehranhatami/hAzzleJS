@@ -54,6 +54,8 @@ function conf(grunt) {
         'changers.js',
         'compile.js',
         'jiesa.js',
+		'matchesselector.js',
+		'matches.js',		
         'raf.js',
         'fx.js',
         'parse.js',
