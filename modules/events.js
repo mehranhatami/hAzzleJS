@@ -364,7 +364,6 @@ hAzzle.event = {
 
         if (!handlers && !special.noBubble && !hAzzle.isWindow(elem)) {
 
-
             bubbleType = special.delegateType || type;
 
             cur = getCur(cur, type, bubbleType);
@@ -389,18 +388,27 @@ hAzzle.event = {
                 bubbleType :
                 special.bindType || type;
 
-            // hAzzle handler
-            handle = (hAzzle.data(cur, 'events') || {})[evt.type] &&
-                hAzzle.data(cur, 'handle');
+            // Get the hAzzle handler
+
+            handle = getHandler(cur, evt);
+
+            // If handler exist, 'apply' data to it
+
             if (handle) {
+
                 handle.apply(cur, data);
             }
 
             // Native handler
+
             handle = ontype && cur[ontype];
+
             if (handle && handle.apply && hAzzle.legalTypes(cur)) {
+
                 evt.result = handle.apply(cur, data);
+
                 if (evt.result === false) {
+
                     evt.preventDefault();
                 }
             }
@@ -746,17 +754,30 @@ function validHandlers(elem, fn, data, special) {
     return true;
 }
 
+// Call for event type
+
 function callType(evt) {
     return hAzzle.hasOwn.call(evt, 'type') ? evt.type : evt;
 }
 
+// Call for namespaces
+
 function callNamespaces(evt) {
     return hAzzle.hasOwn.call(evt, 'namespace') ? evt.namespace.split('.') : [];
 }
+
+// Call for current element
 
 function getCur(cur, type, bubbleType) {
     if (!focusinoutblur.test(bubbleType + type)) {
         return cur.parentElement;
     }
     return cur;
+}
+
+// Get event handler
+
+function getHandler(cur, evt) {
+    return (hAzzle.data(cur, 'events') || {})[evt.type] &&
+        hAzzle.data(cur, 'handle');
 }
