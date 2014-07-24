@@ -120,7 +120,7 @@ hAzzle.props = {
             }
         }
 
-        copy = this.fixedEvents[type].props ? commonProps.concat(this.fixedEvents[type].props) : commonProps;
+        copy = this.fixedEvents[type] ? commonProps.concat(this.fixedEvents[type].props) : commonProps;
 
         evt = new hAzzle.Event(originalEvent);
 
@@ -143,7 +143,7 @@ hAzzle.props = {
             target = target.parentNode;
         }
 
-        return this.fixedEvents[type].filter ? this.fixedEvents[type].filter(evt, originalEvent) : evt;
+        return this.fixedEvents[type] ? this.fixedEvents[type].filter(evt, originalEvent) : evt;
     }
 };
 
