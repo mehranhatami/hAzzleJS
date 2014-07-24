@@ -95,7 +95,7 @@ hAzzle.extend({
     'focus': {
         'trigger': function () {
 
-            if (this !== safeActiveElement() && this.focus) {
+            if (this !== document.activeElement && this.focus) {
                 this.focus();
                 return false;
             }
@@ -104,7 +104,7 @@ hAzzle.extend({
     },
     'blur': {
         'trigger': function () {
-            if (this === safeActiveElement() && this.blur) {
+            if (this === document.activeElement && this.blur) {
                 this.blur();
                 return false;
             }
@@ -114,7 +114,7 @@ hAzzle.extend({
     'click': {
 
         // For checkbox, fire native event so checked state will be right
-        trigger: function () {
+        'trigger': function () {
             if (this.type === 'checkbox' && this.click && hAzzle.nodeName(this, 'input')) {
                 this.click();
                 return false;
@@ -226,10 +226,4 @@ if (hAzzle.bubbles) {
             }
         };
     });
-}
-
-function safeActiveElement() {
-    try {
-        return document.activeElement;
-    } catch (e) {}
 }

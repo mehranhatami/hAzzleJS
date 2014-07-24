@@ -1,4 +1,21 @@
-// events.js
+/** 
+ * events.js - hAzzle Event Manager
+ *
+ * Desktop browsers support:
+ *
+ *    Chrome 9+
+ *    Safari 5.0+
+ *    Firefox 16+
+ *    Opera 15.0+
+ *    Internet Explorer 9+
+ *
+ * Mobile browsers support:
+ *
+ *    Google Android 4.1+
+ *    Apple iOS 6+
+ *    ChromiumOS
+ *    FirefoxOS
+ */
 var doc = this.document,
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
@@ -31,13 +48,15 @@ var doc = this.document,
 
     eventCore = {
 
+        version: 'hAzzleEvents-0.45a',
+
         UID: 1,
 
         // Feature / bug detection
 
         has: {
 
-            'api-bubbles': 'onfocusin' in window
+            'api-bubbles': 'onfocusin' in window,
         },
 
         global: {},
@@ -105,7 +124,7 @@ hAzzle.event = {
             eventHandler = eventData.handle = Listener();
         }
 
-        // Handle multiple events separated by a space
+        // Get multiple events
 
         types = getTypes(types);
 
@@ -166,8 +185,6 @@ hAzzle.event = {
 
             if (special.add) {
 
-
-
                 special.add.call(elem, handleObj);
 
                 if (!handleObj.handler.hid) {
@@ -197,12 +214,12 @@ hAzzle.event = {
      * @param {String} types
      * @param {Function} handler
      * @param {String} selector
-     * @param {String} mappedTypes
+     * @param {String} mt
      * @param {Function} fn
      *
      */
 
-    remove: function (elem, types, handler, selector, mappedTypes) {
+    remove: function (elem, types, handler, selector, mt) {
 
         var j, origCount, tmp,
             events, t, handleObj,
@@ -219,7 +236,7 @@ hAzzle.event = {
             return;
         }
 
-        // Handle multiple events separated by a space
+        // Get multiple events
 
         types = getTypes(types);
         t = types.length;
@@ -254,7 +271,7 @@ hAzzle.event = {
 
                 handleObj = handlers[j];
 
-                if ((mappedTypes || origType === handleObj.origType) &&
+                if ((mt || origType === handleObj.origType) &&
                     (!handler || handler.hid === handleObj.hid) &&
                     (!tmp || tmp.test(handleObj.namespace)) &&
                     (!selector || selector === handleObj.selector ||
@@ -428,6 +445,9 @@ hAzzle.event = {
 
         i = 0;
         while ((matched = queue[i++]) && !evt.isPropagationStopped()) {
+
+            // bound element (listening the event)
+
             evt.currentTarget = matched.elem;
 
             j = 0;
@@ -550,6 +570,8 @@ hAzzle.Event.prototype = {
 
     constructor: hAzzle.Event,
 
+    /* =========================== EVENT PROPAGATION ========================== */
+
     isDefaultPrevented: returnFalse,
 
     isPropagationStopped: returnFalse,
@@ -597,11 +619,20 @@ hAzzle.Event.prototype = {
 
         this.stopped = true;
         this.preventDefault();
-        this.stopPropagation();
+
+        if (this.stopPropagation) {
+
+            this.stopPropagation();
+
+        } else {
+
+            this.cancelBubble = true;
+        }
+
     }
 };
 
-
+/* ============================ CORE FUNCTIONS =========================== */
 
 hAzzle.extend({
 
@@ -723,6 +754,8 @@ hAzzle.extend({
     }
 });
 
+/* ============================ UTILITY METHODS =========================== */
+
 function returnTrue() {
     return true;
 }
@@ -752,6 +785,7 @@ function newNS(ns) {
     return new RegExp('(^|\\.)' + ns.join('\\.(?:.*\\.|)') + '(\\.|$)');
 }
 
+
 /**
  * Get correct 'event' for the trigger() function
  *
@@ -773,7 +807,11 @@ function getEvent(elem, evt, handler, ns, type) {
     evt.result = undefined;
 
     if (!evt.target) {
-        evt.target = elem;
+
+        // try to use evt.srcElement if we can
+
+        evt.target = evt.srcElement || elem;
+
     }
 
     return evt;
