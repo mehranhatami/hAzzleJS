@@ -38,6 +38,7 @@
             path + 'showhide.js',
             path + 'detection.js',
             path + 'events.js',
+            path + 'trigger.js',			
             path + 'aliases.js',			
             path + 'eventhooks.js',
             path + 'ajax.js',

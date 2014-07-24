@@ -74,6 +74,7 @@ function conf(grunt) {
         'showhide.js',
         'detection.js',
         'events.js',
+        'trigger.js',		
         'aliases.js',
         'eventhooks.js',
         'ajax.js',

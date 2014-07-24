@@ -24,12 +24,8 @@
  * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
-var doc = this.document,
-    expando = hAzzle.expando,
-    inArray = hAzzle.inArray,
-    Jiesa = hAzzle.Jiesa,
+var Jiesa = hAzzle.Jiesa,
     whiteRegex = (/\S+/g),
-    focusinoutblur = /^(?:focusinfocus|focusoutblur)$/,
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
 
     slice = Array.prototype.slice,
@@ -73,7 +69,7 @@ var doc = this.document,
 
         // Set unique ID for each handler
 
-        setID: function () {
+        setID: function() {
 
             return 'hEvt_' + eventCore.UID++;
         }
@@ -85,7 +81,7 @@ hAzzle.bubbles = eventCore.has['api-bubbles'];
 
 // hAzzle event
 
-   
+
 hAzzle.event = {
 
     /**
@@ -98,7 +94,7 @@ hAzzle.event = {
      * @param {String|Undefined} selector
      */
 
-    add: function (elem, types, handler, data, selector) {
+    add: function(elem, types, handler, data, selector) {
 
         var objHandler, eventHandler, tmp,
             special, handlers, type, namespaces, origType,
@@ -179,6 +175,7 @@ hAzzle.event = {
                 namespace: namespaces.join('.')
             }, objHandler);
 
+
             // Init the event handler queue if we're the first
 
             handlers = events[type];
@@ -234,7 +231,7 @@ hAzzle.event = {
      *
      */
 
-    remove: function (elem, types, handler, selector, mt) {
+    remove: function(elem, types, handler, selector, mt) {
 
         var j, origCount, tmp,
             events, t, handleObj,
@@ -326,127 +323,8 @@ hAzzle.event = {
         }
     },
 
-    trigger: function (evt, data, elem, handlers) {
 
-        var i, cur, tmp, bubbleType, ontype, handle, special,
-            eventPath = [elem || doc],
-            type = callType(evt),
-            namespaces = callNamespaces(evt);
-
-        cur = tmp = elem = elem || doc;
-
-        // Check if valid type
-
-        if (!valid(elem, type)) {
-            return;
-        }
-
-        // Check for namespace
-
-        if (inArray(type, '.') >= 0) {
-            namespaces = type.split('.');
-            type = namespaces.shift();
-            namespaces.sort();
-        }
-            ontype = type.indexOf(':') < 0 && 'on' + type;
- evt = getEvent(elem, evt, handlers, namespaces, type);
-
-        data = data === null ? [evt] : hAzzle.mergeArray(data, [evt]);
-
-        special = eventHooks.special[type] || {};
-
-        // Check for valid handlers
-
-        if (!validHandlers(elem, handlers, data, special)) {
-            return;
-        }
-
-           if (!handlers && !special.noBubble && !hAzzle.isWindow(elem)) {
-
-            bubbleType = special.delegateType || type;
-
-            cur = getCur(cur, type, bubbleType);
-
-            for (; cur; cur = cur.parentElement) {
-
-                eventPath.push(cur);
-                tmp = cur;
-            }
-
-            if (tmp === getDocument(elem)) {
-                eventPath.push(tmp.defaultView || tmp.parentWindow || window);
-            }
-        }
-
-             // Fire handlers on the event path
-        i = 0;
-
-        while ((cur = eventPath[i++]) && !evt.isPropagationStopped()) {
-
-            evt.type = i > 1 ?
-                bubbleType :
-                special.bindType || type;
-
-            // Get the hAzzle handler
-
-            handle = getHandler(cur, evt);
-
-            // If handler exist, 'apply' data to it
-
-            if (handle) {
-
-                handle.apply(cur, data);
-            }
-
-            // Native handler
-
-            handle = ontype && cur[ontype];
-
-            if (handle && handle.apply && hAzzle.legalTypes(cur)) {
-
-                evt.result = handle.apply(cur, data);
-
-                if (evt.result === false) {
-
-                    evt.preventDefault();
-                }
-            }
-        }
-        evt.type = type;
-
-           // If nobody prevented the default action, do it now
-
-        if (!handlers && !evt.isDefaultPrevented()) {
-
-            if ((!special._default || special._default.apply(eventPath.pop(), data) === false) &&
-
-                hAzzle.legalTypes(elem)) {
-
-                if (ontype && hAzzle.isFunction(elem[type]) && !hAzzle.isWindow(elem)) {
-
-                    tmp = elem[ontype];
-
-                    if (tmp) {
-
-                        elem[ontype] = null;
-                    }
-
-                    eventCore.triggered = type;
-                    elem[type]();
-                    eventCore.triggered = undefined;
-
-                    if (tmp) {
-
-                        elem[ontype] = tmp;
-                    }
-                }
-            }
-        }
-
-        return evt.result;
-    },
-
-      handle: function (evt) {
+    handle: function(evt) {
 
         if (!evt) {
 
@@ -508,7 +386,7 @@ hAzzle.event = {
 
         return evt.result;
     },
-        handlers: function (evt, handlers) {
+    handlers: function(evt, handlers) {
         var i, matches, sel, handleObj,
             queue = [],
             cur = evt.target,
@@ -569,7 +447,7 @@ hAzzle.event = {
 };
 
 
-hAzzle.Event = function (src, props) {
+hAzzle.Event = function(src, props) {
 
     if (src && src.type) {
         this.originalEvent = src;
@@ -585,7 +463,7 @@ hAzzle.Event = function (src, props) {
     }
 
     if (props) {
-		
+
         hAzzle.shallowCopy(this, props);
     }
 
@@ -610,7 +488,7 @@ hAzzle.Event.prototype = {
 
     // Prevent default action
 
-    preventDefault: function () {
+    preventDefault: function() {
         var e = this.originalEvent;
 
         this.isDefaultPrevented = returnTrue;
@@ -622,7 +500,7 @@ hAzzle.Event.prototype = {
 
     // Stop event propagation
 
-    stopPropagation: function () {
+    stopPropagation: function() {
         var e = this.originalEvent;
 
         this.isPropagationStopped = returnTrue;
@@ -631,7 +509,7 @@ hAzzle.Event.prototype = {
             e.stopPropagation();
         }
     },
-    stopImmediatePropagation: function () {
+    stopImmediatePropagation: function() {
         var e = this.originalEvent;
 
         this.isImmediatePropagationStopped = returnTrue;
@@ -645,7 +523,7 @@ hAzzle.Event.prototype = {
 
     // Block any further event processing
 
-    stop: function () {
+    stop: function() {
 
         this.stopped = true;
         this.preventDefault();
@@ -672,46 +550,12 @@ function returnFalse() {
     return false;
 }
 
-// Get document from element
-
-function getDocument(elem) {
-    return (elem.ownerDocument || doc);
-}
-
 // Create new namespace
 
 function newNS(ns) {
     return new RegExp('(^|\\.)' + ns.join('\\.(?:.*\\.|)') + '(\\.|$)');
 }
 
-/**
- * Get correct 'event' for the trigger() function
- *
- * @param {Object} elem
- * @param {String} evt
- * @param {Function|Undefined} handler
- * @param {Object|Undefined} ns
- * @param {String} type
- * @return {Object}
- */
-
-function getEvent(elem, evt, handler, ns, type) {
-
-    evt = evt[expando] ? evt : new hAzzle.Event(type, typeof evt === 'object' && evt);
-    evt.isTrigger = handler ? 2 : 3;
-    evt.namespace = ns.join('.');
-    evt.namespace_re = evt.namespace ? newNS(ns) : null;
-    evt.result = undefined;
-
-    if (!evt.target) {
-
-        // try to use evt.srcElement if we can
-
-        evt.target = evt.srcElement || elem;
-    }
-
-    return evt;
-}
 
 /**
  * Listener
@@ -719,7 +563,7 @@ function getEvent(elem, evt, handler, ns, type) {
  */
 
 function Listener() {
-    return function (e) {
+    return function(e) {
         return typeof hAzzle !== undefined && eventCore.triggered !== e.type ?
             hAzzle.event.handle.apply(this, arguments) : undefined;
     };
@@ -729,52 +573,4 @@ function Listener() {
 
 function getTypes(types) {
     return (types || '').match(whiteRegex) || [''];
-}
-
-// Check for valid nodeType, and not triggered before
-
-function valid(elem, type) {
-    if ((elem.nodeType === 3 || elem.nodeType === 8) ||
-        focusinoutblur.test(type + eventCore.triggered)) {
-        return false;
-    }
-    return true;
-}
-
-// Check for valid handlers
-
-function validHandlers(elem, fn, data, special) {
-    if (!fn && special.trigger &&
-        special.trigger.apply(elem, data) === false) {
-        return false;
-    }
-    return true;
-}
-
-// Call for event type
-
-function callType(evt) {
-    return hAzzle.hasOwn.call(evt, 'type') ? evt.type : evt;
-}
-
-// Call for namespaces
-
-function callNamespaces(evt) {
-    return hAzzle.hasOwn.call(evt, 'namespace') ? evt.namespace.split('.') : [];
-}
-
-// Call for current element
-
-function getCur(cur, type, bubbleType) {
-    if (!focusinoutblur.test(bubbleType + type)) {
-        return cur.parentElement;
-    }
-    return cur;
-}
-
-// Get event handler
-
-function getHandler(cur, evt) {
-    return (hAzzle.data(cur, 'events') || {})[evt.type] &&
-        hAzzle.data(cur, 'handle');
 }
