@@ -25,13 +25,6 @@ hAzzle.extend({
         return ret;
     },
 
-    // Convert sstr to decimal value	
-    decimal: function (str) {
-        var match = str.match(/^(\d+)%?$/i);
-        if (!match) return null;
-        return (Number(match[1]) / 100);
-    },
-
     size: function (obj, ownPropsOnly) {
         var count = 0,
             key;
@@ -45,76 +38,6 @@ hAzzle.extend({
         }
 
         return count;
-    },
-
-    keys: function (obj) {
-
-        // It has to be an Object
-
-        if (hAzzle.type(obj) !== 'object') {
-            return [];
-        }
-        var results = [],
-            key, has = Object.prototype.hasOwnProperty;
-
-        for (key in obj) {
-            if (has.call(obj, key)) {
-                results.push(key);
-            }
-        }
-
-        return results;
-    },
-
-    sortKeys: function (obj) {
-        var keys = [],
-            key;
-        for (key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                keys.push(key);
-            }
-        }
-        return keys.sort();
-    },
-
-    reverseParams: function (iteratorFn) {
-        return function (value, key) {
-            iteratorFn(key, value);
-        };
-    },
-
-    lastIndexOf: function (array, item, from) {
-        if (array === null) {
-            return -1;
-        }
-        var hasIndex = from !== null,
-            i = (hasIndex ? from : array.length);
-        while (i--) {
-            if (array[i] === item) {
-                return i;
-            }
-        }
-        return -1;
-    },
-
-    bind: function (scope, fn) {
-        var args = arguments.length > 2 ? slice.call(arguments, 2) : null;
-        return function () {
-            return fn.apply(scope, args ? args.concat(slice.call(arguments)) : arguments);
-        };
-    },
-
-    curry: function curry(fn) {
-
-        if (arguments.length == 1) {
-            return fn;
-        }
-
-        var args = slice.call(arguments, 1);
-
-        return function () {
-            return fn.apply(null, args.concat(slice.call(arguments)));
-        };
     },
 
     /**
@@ -188,20 +111,6 @@ hAzzle.extend({
         return target;
     },
 
-    pluck: function (array, property) {
-        return array.map(function (item) {
-            return item[property];
-        });
-    },
-
-    rand: function (x, y) {
-        if (typeof x === 'undefined') {
-            y = +x;
-            x = 0;
-        }
-        return Math.rand(x, y);
-    },
-
     /*
      * Finds the elements of an array which satisfy a filter function.
      */
@@ -223,27 +132,5 @@ hAzzle.extend({
         }
 
         return matches;
-    },
-
-    /**
-     * @param {hAzzle|Array} ar
-     * @param {function(Object, number, (hAzzle|Array))} fn
-     * @param {Object=} scope
-     * @return {boolean||nothing}
-     */
-
-    some: function (ar, fn, scope) {
-        var i = 0,
-            j = ar.length;
-
-        for (; i < j; ++i) {
-
-            if (fn.call(scope || null, ar[i], i, ar)) {
-
-                return true;
-            }
-        }
-
-        return false;
     }
 }, hAzzle);

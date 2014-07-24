@@ -1,4 +1,5 @@
 // aliases.js - hAzzle.Core functions
+
 hAzzle.extend({
 
     /**
@@ -71,7 +72,6 @@ hAzzle.extend({
 
             fn = once(fn);
 
-            // Use same guid so caller can remove using origFn
             fn.guid = origFn.guid || (origFn.guid = hAzzle.eventCore.setID());
         }
 
@@ -164,15 +164,6 @@ hAzzle.extend({
 	},
 	unbind: function( types, fn ) {
 		return this.off( types, null, fn );
-	},
-
-	delegate: function( selector, types, data, fn ) {
-		return this.on( types, selector, data, fn );
-	},
-	undelegate: function( selector, types, fn ) {
-		return arguments.length === 1 ?
-			this.off( selector, "**" ) :
-			this.off( types, selector || "**", fn );
 	}
 });
 

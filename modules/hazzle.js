@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.4b
+ * Version: 0.9.5a
  * Released under the MIT License.
  *
- * Date: 2014-07-23
+ * Date: 2014-07-25
  */
 (function (window, undefined) {
 
@@ -193,12 +193,7 @@
             if (typeof fn === 'function') {
                 return hAzzle.ready(fn);
             }
-        },
-
-        size: function () {
-            return this.length;
-        },
-
+        }
     };
 
     /**

@@ -1,23 +1,16 @@
 /*!
  * Attributes
  */
-var win = this,
-    doc = win.document,
+var doc = this.document,
     ssv = /\S+/g,
-
-    // Boolean attributes
-
-    boolAttr = {},
-
-    // Boolean elements
-
-    boolElem = {},
-
+	inseteb = /^(?:input|select|textarea|button)$/i,
+    boolAttr = {}, // Boolean attributes
+    boolElem = {}, // Boolean elements
     attrCore = {},
 
     concat = Array.prototype.concat;
 
-// Bug / feature detection
+/* ============================ BUG / FEATURE DETECTION =========================== */
 
 (function () {
     var input = doc.createElement("input"),
@@ -51,7 +44,6 @@ hAzzle.extend({
      *
      * @param {String} name
      * @param {String|Object} value
-
      *
      * @return {Object|String}
      */
@@ -84,61 +76,12 @@ hAzzle.extend({
 
         // Shortcut for checking attr classNames
 
-        if (typeof name !== 'undefined' && value === 'class') {
+        if (typeof name !== 'undefined' && 
+		          alue === 'class') {
 
             return this[0].className === name ? true : false;
         }
-        if (name) {
-            return typeof this.attr(name) !== 'undefined';
-        }
-    },
-
-    /**
-     * Toggle attributes
-     *
-     * @param{String} attr
-     * @param{Boolean} toggle
-     * @return {hAzzle}
-     */
-
-    toggleAttr: function (attr, toggle) {
-
-        var self = this,
-            args = arguments.length;
-
-        // Do nothing if no params provided: (ie fail safely)
-        if (args === 0) {
-
-            return self;
-
-            // When toggle arg not provided, add attribute where not present, remove it where prosent:
-
-        } else if (args === 1) {
-
-            return self.each(function (el) {
-
-                hAzzle(el)[hAzzle(el).attr(attr) ? 'removeAttr' : 'addAttr'](attr, attr);
-            });
-
-            // Otherwise when both attr & toggle arguments have been provided:
-        } else {
-
-            // When toggle is a function, apply it to each element:
-
-            if (typeof toggle === 'function') {
-
-                return self.each(function (el) {
-
-                    hAzzle(el)[toggle.call(el) ? 'addAttr' : 'removeAttr'](attr, attr);
-
-                });
-
-                // Or add attr if toggle is true, remove attr if toggle is false:
-            } else {
-
-                return self[toggle ? 'addAttr' : 'removeAttr'](attr, attr);
-            }
-        }
+       return name && typeof this.attr(name) !== 'undefined';
     },
 
     /**
@@ -177,7 +120,6 @@ hAzzle.extend({
     }
 });
 
-
 // Extend the globale hAzzle Object
 
 hAzzle.extend({
@@ -187,7 +129,7 @@ hAzzle.extend({
         tabIndex: {
             get: function (elem) {
                 return elem.hasAttribute('tabindex') ||
-                    /^(?:input|select|textarea|button)$/i.test(elem.nodeName) ||
+                    inseteb.test(elem.nodeName) ||
                     elem.href ? elem.tabIndex : -1;
             }
         }
@@ -213,13 +155,17 @@ hAzzle.extend({
     boolHook: {
 
         set: function (elem, value, name) {
-            if (value === false) {
-                // Remove boolean attributes when set to false
-                hAzzle.removeAttr(elem, name);
-            } else {
-                elem.setAttribute(name, name);
+    
+	        if (value === false) {
+    
+	            hAzzle.removeAttr(elem, name);
+    
+	        } else {
+    
+	            elem.setAttribute(name, name);
             }
-            return name;
+    
+	        return name;
         }
 
     },
@@ -228,8 +174,9 @@ hAzzle.extend({
         type: {
             set: function (elem, value) {
 
-                if (!attrCore['bug-radioValue'] && value === 'radio' &&
-                    hAzzle.nodeName(elem, 'input')) {
+                if (!attrCore['bug-radioValue'] && 
+                     value === 'radio' &&
+                     hAzzle.nodeName(elem, 'input')) {
 
                     var val = elem.value;
 
@@ -244,7 +191,6 @@ hAzzle.extend({
                 }
             }
         }
-
     },
 
     /**
@@ -297,8 +243,7 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
 
-        var hooks, ret,
-            valid = [2, 3, 8],
+        var hooks, ret, valid = [2, 3, 8],
             nType = elem.nodeType;
 
         if (elem && (valid[nType])) {
