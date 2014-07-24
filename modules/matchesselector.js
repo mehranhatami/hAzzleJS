@@ -19,16 +19,9 @@ hAzzle.matchesSelector = function (elem, selector) {
 
         if ((m = quickMatch.exec(selector))) {
 
-            if (m[1]) m[1] = m[1].toLowerCase();
-            if (m[3]) m[3] = m[3].split("=");
-            if (m[4]) m[4] = " " + m[4] + " ";
+            // Find a match, Mehran !!
 
-            return (
-                (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
-                (!m[2] || elem.id === m[2]) &&
-                (!m[3] || (m[3][1] ? elem.getAttribute(m[3][0]) === m[3][1] : elem.hasAttribute(m[3][0]))) &&
-                (!m[4] || (' ' + elem.className + ' ').indexOf(m[4]) >= 0)
-            );
+            return findAMatchMehran(elem, m);
 
             // Fallback to MatchesSelector
 
@@ -91,6 +84,22 @@ hAzzle.matchesSelector = function (elem, selector) {
 
     return hAzzle.inArray(results.join('|'), 'false') < 0;
 };
+
+/* ============================ INTERNAL FUNCTIONS =========================== */
+
+
+function findAMatchMehran(elem, m) {
+    if (m[1]) m[1] = m[1].toLowerCase();
+    if (m[3]) m[3] = m[3].split("=");
+    if (m[4]) m[4] = " " + m[4] + " ";
+
+    return (
+        (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
+        (!m[2] || elem.id === m[2]) &&
+        (!m[3] || (m[3][1] ? elem.getAttribute(m[3][0]) === m[3][1] : elem.hasAttribute(m[3][0]))) &&
+        (!m[4] || (' ' + elem.className + ' ').indexOf(m[4]) >= 0)
+    );
+}
 
 /* ============================ INTERNAL =========================== */
 
