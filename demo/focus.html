@@ -1,0 +1,74 @@
+<!DOCTYPE html >
+<html>
+
+<head>
+    <title>hAzzleJS</title>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="modules/hazzle.js"></script>
+    <script type="text/javascript" src="modules/ntapi.js"></script>
+    <script type="text/javascript" src="modules/types.js"></script>
+    <script type="text/javascript" src="modules/ready.js"></script>
+    <script type="text/javascript" src="modules/shims/pnow.js"></script>
+    <script type="text/javascript" src="modules/extra.js"></script>
+    <script type="text/javascript" src="modules/text.js"></script>
+    <script type="text/javascript" src="modules/core.js"></script>
+    <script type="text/javascript" src="modules/cl3.js"></script>
+    <script type="text/javascript" src="modules/cl4.js"></script>
+    <script type="text/javascript" src="modules/changers.js"></script>
+    <script type="text/javascript" src="modules/compile.js"></script>
+    <script type="text/javascript" src="modules/jiesa.js"></script>
+    <script type="text/javascript" src="modules/raf.js"></script>
+    <script type="text/javascript" src="modules/fx.js"></script>
+    <script type="text/javascript" src="modules/parse.js"></script>
+    <script type="text/javascript" src="modules/data.js"></script>
+    <script type="text/javascript" src="modules/shims/classlist.js"></script>
+    <script type="text/javascript" src="modules/classes.js"></script>
+    <script type="text/javascript" src="modules/html.js"></script>
+    <script type="text/javascript" src="modules/manipulation.js"></script>
+    <script type="text/javascript" src="modules/attributes.js"></script>
+    <script type="text/javascript" src="modules/removeable.js"></script>
+    <script type="text/javascript" src="modules/units.js"></script>
+    <script type="text/javascript" src="modules/css.js"></script>
+    <script type="text/javascript" src="modules/shims/topleft.js"></script>
+    <script type="text/javascript" src="modules/position.js"></script>
+    <script type="text/javascript" src="modules/offset.js"></script>
+    <script type="text/javascript" src="modules/showhide.js"></script>
+    <script type="text/javascript" src="modules/detection.js"></script>
+    <script type="text/javascript" src="modules/events.js"></script>
+    <script type="text/javascript" src="modules/aliases.js"></script>
+    <script type="text/javascript" src="modules/eventHooks.js"></script>
+    <script type="text/javascript" src="modules/ajax.js"></script>
+    <script type="text/javascript" src="modules/clone.js"></script>
+    <script type="text/javascript" src="modules/jsonxml.js"></script>
+
+</head>
+
+<body>
+    <div id="container">
+        <div id="box1-container" class="box box1" style="width:400px;height:150px;border:solid 1px blue;">
+            <div id="box1" class="box" style="width:200px;height:100px;border:solid 1px red;">
+                <div>
+                    <input type="text" />
+                </div>
+            </div>
+        </div>
+        <div id="box2-container" class="box box2" style="width:400px;height:150px;border:solid 1px blue;">
+            <div id="box2" class="box" style="width:200px;height:100px;border:solid 1px red;">
+                <div>
+                    <input id="txt2" type="text" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="text" />
+    <script type="text/javascript">
+        hAzzle('.box').on('focusin', function () {
+            console.log('focusin: ' + this.id);
+        });
+        hAzzle('.box').on('focusout', function () {
+            console.log('focusout: ' + this.id);
+        });
+    </script>
+</body>
+
+</html>
