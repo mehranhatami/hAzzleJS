@@ -9,7 +9,7 @@ var win = this,
 
     me = 1 << 31,
 
-    expando = 'hAzzle' + Math.random() + '-kf',
+    expando = 'hAzzle' + Math.random() + '-Kenny Flashlight',
 
     matches,
 
@@ -113,8 +113,11 @@ var setDocument = hAzzle.setDocument = function (node) {
 
 winDoc = hAzzle.setDocument();
 
+// Always let this feature be undocumentet - internal usage
 
-// Feature / Bug detection
+Jiesa.mS = matches;
+
+/* ============================ FEATURE / BUG DETECTION =========================== */
 
 // QSA supported, test for bugs
 
@@ -183,8 +186,10 @@ contains = (docElem.contains || docElem.compareDocumentPosition) ? function (par
     ));
 } : function (parent, node) {
     while (node && (node = node.parentNode))
-        if (node === parent) return true
-    return false
+        if (node === parent) {
+            return true;
+        }
+    return false;
 };
 
 // Sort
