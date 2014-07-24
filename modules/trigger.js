@@ -1,7 +1,12 @@
-
+/**
+ * trigger.js - triggers an event of specific type
+ */
+ 
 var doc = this.document,
     eventCore = hAzzle.eventCore,
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/;
+
+// Extend hAzzle.event
 
 hAzzle.event.trigger = function(evt, data, elem, handlers) {
     var i, cur, tmp, bubbleType, ontype, handle, special,
@@ -187,7 +192,6 @@ function getEvent(elem, evt, handler, ns, type) {
     return evt;
 }
 
-
 // Check for valid handlers
 
 function validHandlers(elem, fn, data, special) {
@@ -197,7 +201,6 @@ function validHandlers(elem, fn, data, special) {
     }
     return true;
 }
-
 
 // Get document from element
 
@@ -210,7 +213,6 @@ function getDocument(elem) {
 function newNS(ns) {
     return new RegExp('(^|\\.)' + ns.join('\\.(?:.*\\.|)') + '(\\.|$)');
 }
-
 
 // Get event handler
 
