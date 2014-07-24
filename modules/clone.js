@@ -6,6 +6,9 @@
  * - data cloning
  * - event cloning
  */
+
+/* ============================ FEATURE / BUG DETECTION =========================== */
+
 var rcheckableType = /^(?:checkbox|radio)$/i,
 
     // Support: IE<=11+
@@ -20,6 +23,100 @@ var rcheckableType = /^(?:checkbox|radio)$/i,
         return !!div.cloneNode(true).lastChild.defaultValue;
     });
 
+/* ============================ GLOBAL FUNCTIONS =========================== */
+
+hAzzle.cloneNode = function (elem, shallow, deep) {
+
+    var i, l, srcElements, destElements,
+        clone = elem.cloneNode(true),
+        nType = elem.nodeType;
+
+    if (!noCC && (nType === 1 || nType === 11) &&
+        !hAzzle.isXML(elem)) {
+
+        destElements = grab(clone);
+        srcElements = grab(elem);
+
+        for (i = 0, l = srcElements.length; i < l; i++) {
+            fixInput(srcElements[i], destElements[i]);
+        }
+    }
+
+    if (shallow) {
+
+        if (deep) {
+
+            srcElements = srcElements || grab(elem);
+            destElements = destElements || grab(clone);
+
+            for (i = 0, l = srcElements.length; i < l; i++) {
+
+                cloneCopyEvent(srcElements[i], destElements[i]);
+            }
+
+        } else {
+            cloneCopyEvent(elem, clone);
+        }
+    }
+
+    // Return the cloned set
+    return clone;
+};
+
+/* ============================ CORE FUNCTIONS =========================== */
+
+hAzzle.Core.clone = function (shallow, deep) {
+    shallow = shallow === null ? false : shallow;
+    deep = deep === null ? shallow : deep;
+    return this.twist(function (el) {
+        return hAzzle.cloneNode(el, shallow, deep);
+    });
+};
+
+/* ============================ PRIVATE FUNCTIONS =========================== */
+
+// Clone and copy events
+
+function cloneCopyEvent(src, dest) {
+    var i, l, type, pdataOld, pdataCur, udataOld, udataCur, events;
+
+    if (dest.nodeType !== 1) {
+        return;
+    }
+
+    if (hAzzle.data(src)) {
+
+        pdataOld = hAzzle.data(src);
+        pdataCur = hAzzle.data(dest, pdataOld);
+
+        events = pdataOld.events;
+
+        if (events) {
+            delete pdataCur.handle;
+            pdataCur.events = {};
+
+            for (type in events) {
+                for (i = 0, l = events[type].length; i < l; i++) {
+                    hAzzle.event.add(dest, type, events[type][i]);
+                }
+            }
+        }
+    }
+    if (hAzzle.hasData(src)) {
+        udataOld = hAzzle.data(src);
+        udataCur = hAzzle.shallowCopy({}, udataOld);
+        hAzzle.data(dest, udataCur);
+    }
+}
+
+// Grab childnodes
+
+function grab(context) {
+    return hAzzle.merge([context], hAzzle.find('*', context));
+}
+
+// Fix the input
+
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
     // checkbox / radio
@@ -30,75 +127,3 @@ function fixInput(src, dest) {
         dest.defaultValue = src.defaultValue;
     }
 }
-
-hAzzle.cloneNode = function (el, deep) {
-
-    if (!el) {
-
-        return;
-    }
-
-    var c = el.cloneNode(deep || true),
-        cloneElems, elElems;
-
-    hAzzle(c).cloneEvents(el);
-
-    // Copy the events from the original to the clone
-    // We could have used Jiesa.parse() here,
-    // but we don't know if native QSA are used
-    // or not. 
-
-    cloneElems = hAzzle.find('*', c);
-    elElems = hAzzle.find('*', el);
-
-    var i = 0,
-        len = elElems.length;
-
-    // Copy Events
-
-    for (; i < len; i++) {
-
-        hAzzle(cloneElems[i]).cloneEvents(elElems[i]);
-    }
-    // hAzzle.documentIsHTML are not helping us here
-    // we need to check directly with current DOM node
-    // This also fixes the IE cloning issues
-
-    if (!noCC && el.nodeType === 1 || el.nodeType === 11 && hAzzle.isXML(el)) {
-
-        for (; i < len; i++) {
-
-            fixInput(elElems[i], cloneElems[i]);
-        }
-
-    } else {
-
-        // Clone job done! Clone the textarea if it exist...
-
-        var cloneTextareas = hAzzle.find('textarea', c),
-            elTextareas = hAzzle.find('textarea', el),
-            a = 0,
-            b = elTextareas.length;
-
-        // Copy over textarea content
-
-        if (b) {
-
-            for (; a < b; ++a) {
-
-                hAzzle(cloneTextareas[b]).val(hAzzle(elTextareas[b]).val());
-            }
-        }
-    }
-
-    // Return the cloned set
-
-    return c;
-};
-
-// Extend the hAzzle Core
-hAzzle.Core.clone = function (deep) {
-    return this.twist(function (el) {
-        return hAzzle.cloneNode(el, deep);
-    });
-};

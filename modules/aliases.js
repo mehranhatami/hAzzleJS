@@ -1,17 +1,16 @@
-hAzzle.each( ("blur focus focusin focusout load resize scroll unload click dblclick " +
-	"mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
-	"change select submit keydown keypress keyup error contextmenu").split(" "),
-	function( name ) {
-
-	// Handle event binding
-	hAzzle.Core[ name ] = function( data, fn ) {
-		return arguments.length > 0 ?
-			this.on( name, null, data, fn ) :
-			this.trigger( name );
-	};
-});
-
+// aliases.js - hAzzle.Core functions
 hAzzle.extend({
+
+    /**
+     * Bind a DOM event
+     *
+     * @param {String|Object} types
+     * @param {String} selector
+     * @param {String} data
+     * @param {Function} fn
+     * @param {Boolean} on
+     * @return {hAzzle}
+     */
 
     on: function (types, selector, data, fn, /*INTERNAL*/ one) {
 
@@ -80,9 +79,30 @@ hAzzle.extend({
             hAzzle.event.add(this, types, fn, data, selector);
         });
     },
+
+    /**
+     * Bind a DOM event but fire once before being removed
+     *
+     * @param {String} events
+     * @param {String} selector
+     * @param {String} data
+     * @param {Function} fn
+     * @return {hAzzle}
+     */
+
     one: function (types, selector, data, fn) {
         return this.on(types, selector, data, fn, 1);
     },
+
+    /**
+     * Unbind an event from the element
+     *
+     * @param {String} types
+     * @param {String} selector
+     * @param {Function} fn
+     * @return {hAzzle}
+     */
+
     off: function (types, selector, fn) {
         var handleObj, type;
         if (types && types.preventDefault && types.handleObj) {
@@ -116,6 +136,14 @@ hAzzle.extend({
         });
     },
 
+    /**
+     * Triggers an event of specific type with optional extra arguments
+     *
+     * @param {String} type
+     * @param {String} data
+     * @return {hAzzle}
+     */
+
     trigger: function (type, data) {
         return this.each(function () {
             hAzzle.event.trigger(type, data, this);
@@ -128,10 +156,24 @@ hAzzle.extend({
         }
     },
 
-	hover: function( fnOver, fnOut ) {
-		return this.mouseenter( fnOver ).mouseleave( fnOut || fnOver );
-	}
+    hover: function (fnOver, fnOut) {
+        return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+    },
+	bind: function( types, data, fn ) {
+		return this.on( types, null, data, fn );
+	},
+	unbind: function( types, fn ) {
+		return this.off( types, null, fn );
+	},
 
+	delegate: function( selector, types, data, fn ) {
+		return this.on( types, selector, data, fn );
+	},
+	undelegate: function( selector, types, fn ) {
+		return arguments.length === 1 ?
+			this.off( selector, "**" ) :
+			this.off( types, selector || "**", fn );
+	}
 });
 
 /* ============================ UTILITY METHODS =========================== */
@@ -141,10 +183,23 @@ function returnFalse() {
 }
 
 function once(fn) {
-
     return function (evt) {
         // wrap the handler in a handler that does a remove as well
         hAzzle().off(evt);
         return fn.apply(this, arguments);
     };
 }
+
+/* ============================ INTERNAL =========================== */
+
+hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
+        'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
+        'change select submit keydown keypress keyup error contextmenu').split(' '),
+    function (name) {
+
+        hAzzle.Core[name] = function (data, fn) {
+            return arguments.length > 0 ?
+                this.on(name, null, data, fn) :
+                this.trigger(name);
+        };
+    });
