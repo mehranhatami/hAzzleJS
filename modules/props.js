@@ -97,8 +97,11 @@ hAzzle.props = {
     fixedEvents: {},
 
     propFix: function (evt) {
-
-        if (evt[hAzzle.expando]) {
+if(!evt) {
+	
+	return;
+	}
+        if (evt && evt[hAzzle.expando]) {
 
             return evt;
         }
@@ -157,28 +160,26 @@ function mousescroll(evt, original) {
         button = original.button;
 
     // Calculate pageX/Y if missing and clientX/Y available
+
     if (evt.pageX === null && original.clientX !== null) {
         evtDoc = evt.target.ownerDocument || document;
         doc = evtDoc.documentElement;
         body = evtDoc.body;
-
-        evt.pageX = original.clientX +
-            (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
-            (doc && doc.clientLeft || body && body.clientLeft || 0);
-        evt.pageY = original.clientY +
-            (doc && doc.scrollTop || body && body.scrollTop || 0) -
-            (doc && doc.clientTop || body && body.clientTop || 0);
+        docBody = doc || body;
+        evt.pageX = original.clientX + docBody.scrollLeft - docBody.clientLeft || 0;
+        evt.pageY = original.clientY + docBody.scrollTop - docBody.clientTop  || 0;
     }
 
     if (!evt.which && button !== undefined) {
-        evt.which = (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
+
+        evt.which = button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0));
     }
 
     evt.pos = {
         x: 0,
         y: 0
     };
-	
+
     evt.rightClick = original.which === 3 || original.button === 2;
 
     return evt;

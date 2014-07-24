@@ -24,6 +24,7 @@
  * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
+ 
 var doc = this.document,
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
@@ -448,7 +449,12 @@ hAzzle.event = {
     },
 
     handle: function (evt) {
-
+       
+	   if(!evt) { 
+	   
+	      return;
+	   }
+	   
         // Grab the event object
 
         evt = hAzzle.props.propFix(evt);
