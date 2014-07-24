@@ -95,7 +95,7 @@ var win = window,
 
             // prepeare for xmlhttp requests
 
-            init.apply(this, arguments);
+            ajaxInit.apply(this, arguments);
         },
 
         /**
@@ -157,6 +157,7 @@ var win = window,
             // An object of additional header key/value pairs to send along with the request
             headers: {
 
+
                 'requestedWith': 'XMLHttpRequest'
             }
         }
@@ -171,12 +172,13 @@ AjaxCore.xmlhttp.prototype = {
     abort: function () {
         this._aborted = true;
         this.request.abort();
+		
     },
 
     // Try again!
 
     retry: function () {
-        init.call(this, this.options, this.fn);
+        ajaxInit.call(this, this.options, this.fn);
     },
     // Add handlers to be called when the request is resolved, rejected, or still in progress.
     then: function (ajaxHandleResponses, fail) {
@@ -238,7 +240,7 @@ AjaxCore.xmlhttp.prototype = {
 };
 
 function gC(data) {
-	
+
     lastValue = data;
 }
 
@@ -254,16 +256,16 @@ function jsonpReq(options, fn, err, url) {
     if (match) {
 
         if (match[3] === '?') {
-			
+
             url = url.replace(cbreg, '$1=' + cbval); // wildcard callback func name
 
         } else {
-			
+
             cbval = match[3]; // provided callback func name
         }
-		
+
     } else {
-		
+
         url = urlappend(url, cbkey + '=' + cbval); // no callback details, add 'em
     }
 
@@ -286,9 +288,9 @@ function jsonpReq(options, fn, err, url) {
         }
 
         script.onload = script.onreadystatechange = null;
-		
+
         if (script.onclick) {
-			
+
             script.onclick();
         }
 
@@ -308,7 +310,7 @@ function jsonpReq(options, fn, err, url) {
 
     // Enable JSONP timeout
     return {
-		
+
         abort: function () {
             script.onload = script.onreadystatechange = null;
             err({}, 'Request is aborted: timeout', {});
@@ -323,7 +325,7 @@ function urlappend(url, s) {
     return s && (url + (query.test(url) ? '&' : '?') + s);
 }
 
-function getRequest(fn, err) {
+function gettRequest(fn, err) {
     var opt = this.options,
         method = (opt.type || 'GET').toUpperCase(),
         headers = opt.headers || {},
@@ -482,7 +484,7 @@ function SendRequest(xhttp, data) {
  * @param{Function} fn
  */
 
-function init(options, fn) {
+function ajaxInit(options, fn) {
 
     var self = this,
         opt;
@@ -624,7 +626,7 @@ function init(options, fn) {
         complete(resp);
     }
 
-    this.request = getRequest.call(this, ajaxHandleResponses, error);
+    this.request = gettRequest.call(this, ajaxHandleResponses, error);
 }
 
 function normalize(s) {
@@ -763,7 +765,7 @@ AjaxCore.serializeArray = function () {
             value: value
         });
     }, arguments);
-	
+
     return arr;
 };
 
@@ -789,11 +791,11 @@ AjaxCore.serialize = function () {
     }
 
     if (opt === 'map') {
-		
+
         fn = serializeHash;
-		
+
     } else if (opt == 'array') {
-		
+
         fn = AjaxCore.serializeArray;
 
     } else {
