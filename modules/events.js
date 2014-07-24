@@ -15,7 +15,17 @@
  *    Apple iOS 6+
  *    ChromiumOS
  *    FirefoxOS
+ *
+ * Sources:
+ *
+ * - http://dean.edwards.name/weblog/2005/10/add-event/
+ * - http://dean.edwards.name/weblog/2005/10/add-event2/
+ * - http://stackoverflow.com/questions/4034742/understanding-dean-edwards-addevent-javascript
+ * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js 
+ * - jQuery
  */
+ 
+ 
 var doc = this.document,
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
@@ -786,6 +796,7 @@ function newNS(ns) {
 }
 
 
+
 /**
  * Get correct 'event' for the trigger() function
  *
@@ -822,7 +833,6 @@ function getEvent(elem, evt, handler, ns, type) {
  * @return {Function}
  */
 
-
 function Listener() {
     return function (e) {
         return typeof hAzzle !== undefined && eventCore.triggered !== e.type ?
@@ -831,12 +841,12 @@ function Listener() {
 }
 
 // Handle multiple events separated by a space
-// Cache, and try to use the cached type if we can
-// to avoid multiple regEx checks
 
 function getTypes(types) {
     return (types || '').match(whiteRegex) || [''];
 }
+
+// Check for valid nodeType, and not triggered before
 
 function valid(elem, type) {
     if ((elem.nodeType === 3 || elem.nodeType === 8) ||
@@ -846,7 +856,8 @@ function valid(elem, type) {
     return true;
 }
 
-// Check if valid handlers
+// Check for valid handlers
+
 function validHandlers(elem, fn, data, special) {
     if (!fn && special.trigger &&
         special.trigger.apply(elem, data) === false) {
