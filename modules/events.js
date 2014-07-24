@@ -24,7 +24,6 @@
  * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
- 
 var doc = this.document,
     expando = hAzzle.expando,
     inArray = hAzzle.inArray,
@@ -103,12 +102,14 @@ hAzzle.event = {
         var objHandler, eventHandler, tmp,
             special, handlers, type, namespaces, origType,
             eventData = hAzzle.data(elem),
-            events = eventData.events,
+            events,
             handleObj, t;
 
         if (!eventData) {
             return;
         }
+
+        events = eventData.events;
 
         if (handler.handler) {
             objHandler = handler;
@@ -449,12 +450,12 @@ hAzzle.event = {
     },
 
     handle: function (evt) {
-       
-	   if(!evt) { 
-	   
-	      return;
-	   }
-	   
+
+        if (!evt) {
+
+            return;
+        }
+
         // Grab the event object
 
         evt = hAzzle.props.propFix(evt);
