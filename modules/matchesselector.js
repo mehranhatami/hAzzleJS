@@ -2,62 +2,37 @@
 var documentIsHTML = hAzzle.documentIsHTML,
     Jiesa = hAzzle.Jiesa,
     matches = Jiesa.mS,
-
-    // Various regEx we are using
-
-    regExpr = {
-
-        'id': /#([^\.]+)/,
-        'tagName': /^([^#\.]+)/,
-        'className': /\.([^#]+)/,
-        'all': /^[\.\-\#\w]+$/,
-        'simplematch': /^(?:\*|[.#]?-?[_a-zA-Z]{1}(?:[-\w]|[^\x00-\xa0]|\\.)*)$/
-    },
-
+    quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
     ntapi = {};
 
 // Expose to the global hAzzle Object
 
-hAzzle.matchesSelector = function (element, selector) {
+hAzzle.matchesSelector = function (elem, selector) {
 
-    var d, j, id, tagName, className,
-        m, matched = false,
+    var j, m,
+        matched = false,
         results = [];
-
-    d = element.ownerDocument || element;
 
     if (typeof selector === 'string') {
 
-        if (regExpr.simplematch.test(selector)) {
+        // Always make sure we have a nodeName
 
-            // use a simple selector match (id, tag, class)
+        if ((m = quickMatch.exec(selector))) {
 
-            if (selector.match(regExpr.all)) {
+            if (m[1]) m[1] = m[1].toLowerCase();
+            if (m[3]) m[3] = m[3].split("=");
+            if (m[4]) m[4] = " " + m[4] + " ";
 
-                m = selector.match(regExpr.tagName);
+            return (
+                (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
+                (!m[2] || elem.id === m[2]) &&
+                (!m[3] || (m[3][1] ? elem.getAttribute(m[3][0]) === m[3][1] : elem.hasAttribute(m[3][0]))) &&
+                (!m[4] || (' ' + elem.className + ' ').indexOf(m[4]) >= 0)
+            );
 
-                // Tagname
+            // Fallback to MatchesSelector
 
-                tagName = m ? m[1] : '*';
-
-                m = selector.match(regExpr.id);
-
-                // ID
-
-                id = m ? m[1] : null;
-
-                m = selector.match(regExpr.className);
-
-                // CLASS               
-
-                className = m ? m[1] : null;
-
-                if ((!id || id === element.id) &&
-                    (!tagName || tagName === '*' || (new RegExp(tagName, 'i')).test(element.nodeName)) &&
-                    (!className || (' ' + element.className.replace(/\s+/g, ' ') + ' ').indexOf(' ' + className + ' ') > -1)) {
-                    matched = true;
-                }
-            }
+        } else if (Jiesa.has['api-mS'] && documentIsHTML) {
 
             /**
              * MEHRAN!!!
@@ -67,13 +42,9 @@ hAzzle.matchesSelector = function (element, selector) {
              * and return a boolean true / false
              */
 
-            // MatchesSelector if any
+            if (Jiesa.has['bug-mS'] || elem.nodeType !== 11) {
 
-        } else if (Jiesa.has['api-mS'] && documentIsHTML) {
-
-            if (Jiesa.has['bug-mS'] || element.nodeType !== 11) {
-
-                return matches.call(element, selector);
+                return matches.call(elem, selector);
             }
         }
 
@@ -89,26 +60,26 @@ hAzzle.matchesSelector = function (element, selector) {
 
                 if (j === 'className') {
 
-                    if ((' ' + element.className.replace(/\s+/g, ' ') + ' ').indexOf(' ' + selector[j] + ' ') > -1) {
+                    if ((' ' + elem.className.replace(/\s+/g, ' ') + ' ').indexOf(' ' + selector[j] + ' ') > -1) {
                         matched = true;
                     }
 
                 } else if (j === 'nodeName' || j === 'tagName') {
 
-                    if (element[j].toLowerCase() === selector[j].toLowerCase()) {
+                    if (elem[j].toLowerCase() === selector[j].toLowerCase()) {
                         matched = true;
                     }
 
                 } else if (ntapi[j]) {
 
                     // handle matching nested objects ntapi
-                    matched = hAzzle.matchesSelector(element[j], selector[j]);
+                    matched = hAzzle.matchesSelector(elem[j], selector[j]);
 
                 } else {
 
                     // handle matching other properties
 
-                    if (element[j] === selector[j]) {
+                    if (elem[j] === selector[j]) {
 
                         matched = true;
                     }
