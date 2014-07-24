@@ -51,6 +51,10 @@ hAzzle.props = {
                     evt.which = original.charCode !== null ? original.charCode : original.keyCode;
                 }
 
+                // Add keyCode
+
+                evt.keyCode = original.keyCode || original.which;
+
                 return evt;
             }
         }, { // mouse events
@@ -104,7 +108,6 @@ hAzzle.props = {
             prop, copy,
             type = evt.type,
             target, originalEvent = evt,
-            fE = this.fixedEvents,
             fixHook = this.fixedEvents[type];
 
         if (!fixHook) {
@@ -122,7 +125,7 @@ hAzzle.props = {
         evt = new hAzzle.Event(originalEvent);
 
         target = evt.target;
-            i = copy.length;
+        i = copy.length;
 
         while (i--) {
 
@@ -140,7 +143,7 @@ hAzzle.props = {
             target = target.parentNode;
         }
 
-        return fE.filter ? fE.filter(evt, originalEvent) : evt;
+        return this.fixedEvents[type].filter ? this.fixedEvents[type].filter(evt, originalEvent) : evt;
     }
 };
 
@@ -170,6 +173,13 @@ function mousescroll(evt, original) {
     if (!evt.which && button !== undefined) {
         evt.which = (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
     }
+
+    evt.pos = {
+        x: 0,
+        y: 0
+    };
+	
+    evt.rightClick = original.which === 3 || original.button === 2;
 
     return evt;
 }
