@@ -510,7 +510,9 @@ hAzzle.event = {
                 if (cur.disabled !== true || evt.type !== 'click') {
 
                     matches = [];
+					
                     for (i = 0; i < delegateCount; i++) {
+						
                         handleObj = handlers[i];
 
                         // Don't conflict with Object.prototype properties
@@ -541,8 +543,8 @@ hAzzle.event = {
             }
         }
 
-        // Add the remaining (directly-bound) handlers
         if (delegateCount < handlers.length) {
+			
             queue.push({
                 elem: this,
                 handlers: handlers.slice(delegateCount)
@@ -556,16 +558,20 @@ hAzzle.event = {
 hAzzle.Event = function (src, props) {
 
     if (src && src.type) {
+		
         this.originalEvent = src;
-        this.type = src.type;
-        this.isDefaultPrevented = src.defaultPrevented ||
+        
+		this.type = src.type;
+        
+		this.isDefaultPrevented = src.defaultPrevented ||
             src.defaultPrevented === undefined &&
             src.returnValue === false ?
             returnTrue :
             returnFalse;
 
     } else {
-        this.type = src;
+    
+	    this.type = src;
     }
 
     if (props) {
@@ -574,14 +580,15 @@ hAzzle.Event = function (src, props) {
     }
 
     // Create a timestamp if incoming event doesn't have one
-    this.timeStamp = src && src.timeStamp || hAzzle.now();
+    
+	this.timeStamp = src && src.timeStamp || hAzzle.now();
 
     // Mark it as fixed
+	
     this[expando] = true;
 };
 
-// hAzzle.Event is based on DOM3 Events as specified by the ECMAScript Language Binding
-// http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
+// Event prototype
 
 hAzzle.Event.prototype = {
 
