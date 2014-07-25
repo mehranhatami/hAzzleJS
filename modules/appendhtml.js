@@ -201,9 +201,8 @@ hAzzle.extend({
         return self.each(function(el, i) {
             hAzzle.clearData(el);
             hAzzle.each(stabilizeHTML(arg, self, i), function(i) {
-                if (el.parentElement) {
-                    el.parentElement.replaceChild(i, el);
-                }
+				// Call DOM Level 4 replace() 
+				el.replace(i)
             });
         });
     }

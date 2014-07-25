@@ -15,6 +15,7 @@ hAzzle.extend({
      * Remove the set of matched elements from the DOM.
      * @param {hAzzle}
      * @return {hAzzle}
+	 *
      */
 
     remove: function(selector) {
@@ -29,7 +30,13 @@ hAzzle.extend({
                 hAzzle.event.remove(el);
             }
 
-            if (el.parentNode && el.tagName !== 'BODY') {
+	 // In DOM Level 4 we have remove() with same effect 
+	 // as this code, but we cant' use it. Using
+	 // el.remove() will just call hAzzle.Core.remove
+	 // and we will sit back with no removing of
+	 // parentNodes and memory leak 
+
+     if (el.parentNode && el.tagName !== 'BODY') {
                 el.parentNode.removeChild(el);
             }
         });
