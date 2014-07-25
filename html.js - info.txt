@@ -1,0 +1,262 @@
+============ HTML.js =============
+
+HTML.js a a module for generating HTML in fast and efficiently. It's so complex,
+so it needs a separate readme file explaining how to use this module.
+
+You can create HTML in two ways:
+
+-  hAzzle.html( str, /* optional */  data) 
+
+Here are som examples:
+
+
+  #ID
+  ---
+  
+  hAzzle.html('div#hello');  
+
+  RESULT: 
+  
+  <div id="hello"> <div>
+
+  #MULTIPLE ID
+  ---
+  
+  hAzzle.html('div#one#two');  
+
+  RESULT: 
+  
+  <div id="two"> <div>
+
+  #CLASS
+  ------
+  
+  hAzzle.html('div.hello');  
+
+  RESULT: 
+  
+  <div class="hello"> <div>
+
+  #MULTIPLE CLASSES
+  ------
+  
+  hAzzle.html('div.one.two.three.four-five.six');  
+
+  RESULT: 
+  
+  <div class="one two three four-five.six"> <div>
+  
+  #ID AND CLASS
+  ------
+  
+  hAzzle.html('div#hello.test');  
+
+  RESULT: 
+  
+  <div id="hello" class="test"> <div>
+  
+  #ATTRIBUTES
+  -----------
+  
+  hAzzle.html('<div title="hello" data-test="1"></div>');  
+
+  RESULT: 
+
+  <div title="hello" data-test="1"></div>
+
+  #ATTRIBUTES WITH SPACE
+  ----------------------
+  
+  hAzzle.html('div[title=" hello world ",data-test=1]');  
+
+  RESULT: 
+  
+  <div title="hello world" data-test="1"></div>
+
+  #EMPTY ATTRIBUTES
+  ----------------------
+  
+  hAzzle.html('div[title]');  
+
+  RESULT: 
+  
+  <div title=""></div>
+
+  #REPETITION
+  ----------------------
+  
+  hAzzle.html('li*3');  
+
+  RESULT: 
+  
+  <li></li>
+  <li></li>
+  <li></li>
+  
+ #OPERATORS ( > )
+  ----------------------
+  
+  hAzzle.html('div > p > span');  
+
+  RESULT: 
+  
+  <div>
+    <p>
+      <span></span>
+   </p>
+  </div>
+
+ #OPERATORS ( + )
+  ----------------------
+  
+  hAzzle.html('div + p');  
+
+  RESULT: 
+  
+  <p></p>
+  <div></div>
+
+
+ #NUMBERING
+  ----------------------
+  
+  hAzzle.html('li.n$#l$*5');  
+
+  RESULT: 
+  
+  <li id="l5" class="n5"></li>
+  <li id="l4" class="n4"></li>
+  <li id="l3" class="n3"></li>
+  <li id="l2" class="n2"></li>
+  <li id="l1" class="n1"></li>
+
+ #NUMBERING WITH PADDING
+  ----------------------
+  
+  hAzzle.html('li.n$$#l$$$$*27');  
+
+  RESULT: 
+  
+<li id="l0027" class="n27"></li>
+<li id="l0026" class="n26"></li>
+<li id="l0025" class="n25"></li>
+<li id="l0024" class="n24"></li>
+<li id="l0023" class="n23"></li>
+<li id="l0022" class="n22"></li>
+<li id="l0021" class="n21"></li>
+<li id="l0020" class="n20"></li>
+<li id="l0019" class="n19"></li>
+<li id="l0018" class="n18"></li>
+<li id="l0017" class="n17"></li>
+<li id="l0016" class="n16"></li>
+<li id="l0015" class="n15"></li>
+<li id="l0014" class="n14"></li>
+<li id="l0013" class="n13"></li>
+<li id="l0012" class="n12"></li>
+<li id="l0011" class="n11"></li>
+<li id="l0010" class="n10"></li>
+<li id="l0009" class="n09"></li>
+<li id="l0008" class="n08"></li>
+<li id="l0007" class="n07"></li>
+<li id="l0006" class="n06"></li>
+<li id="l0005" class="n05"></li>
+<li id="l0004" class="n04"></li>
+<li id="l0003" class="n03"></li>
+<li id="l0002" class="n02"></li>
+<li id="l0001" class="n01"></li>
+
+
+  NUMBERING INHERITED FROM PARENT WHITH SINGLE ELEMENT
+  -------------
+
+ hAzzle.html('li*5 > p.n$');
+ 
+  RESULT:  
+  
+  <li>
+    <p class="n3"></p>
+  </li>
+  <li>
+    <p class="n2"></p>
+  </li>
+   <li>
+    <p class="n1"></p>
+  </li>
+
+
+ TEXT
+ -------------
+
+ hAzzle.html('div{hello}')
+  
+  RESULT:
+  
+  <div>hello</div>
+
+
+ TEXT REPLACEMENT
+ -------------
+
+ hAzzle.html('div{hello $x$y}', { x: 'world', y: '!' }	)
+  
+  RESULT:
+  
+ <div>hello world!</div>
+
+ SECTION
+ -------------
+
+ hAzzle.html('section > p + div.places > li*5')
+  
+  RESULT:
+ 
+<section>
+ <p>
+   <div class="places">
+     <li></li>
+     <li></li>
+     <li></li>
+     <li></li>
+     <li></li>
+  </div>
+</p>
+</section>
+
+ COMPLEX EXAMPLE
+  -------------
+
+ hAzzle.html('div{hello}#main>ul.list.bacon#bacon > li.hello$*4 > a[href=#$]{hello $x}', { x: 'world' })
+  
+  RESULT:
+  
+  <div id="main">
+      hello
+  <ul id="bacon" class="list bacon">
+    <li class="hello1">
+       <a href="#1">hello world</a>
+    </li>
+    <li class="hello2">
+    <a href="#2">hello world</a>
+    </li>
+    <li class="hello3">
+    <a href="#3">hello world</a>
+    </li>
+    <li class="hello4">
+    <a href="#4">hello world</a>
+    </li>
+</ul>
+</div>
+
+==================================================
+
+Other compinations are also possible, and you can
+create single tags - e.g. div, span, b, img
+
+Just be carefull. This is a powerfull tool!!
+Suddenly you can end up width
+50 million 'div' tags as I did :( :( :( :( :(
+
+
+Regards,
+
+K.F
