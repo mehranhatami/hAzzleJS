@@ -1,4 +1,4 @@
-# hAzzleJS v. 0.9.4a RC2
+# hAzzleJS v. 0.9.5b RC2
 [![Build Status](https://travis-ci.org/hazzlejs/hAzzleJS.svg?branch=master)](https://travis-ci.org/hazzlejs/hAzzleJS) [![Code Climate](https://codeclimate.com/github/hazzlejs/hAzzleJS.png)](https://codeclimate.com/github/hazzlejs/hAzzleJS) [![Coverage Status](https://coveralls.io/repos/mehranhatami/hAzzleJS/badge.png?branch=master)](https://coveralls.io/r/mehranhatami/hAzzleJS?branch=master)
 
 **hAzzle** aims to be the fastest JavaScript library, but still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
@@ -19,6 +19,15 @@ hAzzle supports all the new features on the marked that has been there for years
 - XMLHttp v. 2
 - CORS
 
+NOTE!! hAzzle now also support DOM Level 4 with it's build in pollify. Following DL4 methods are supported and used:
+
+- append
+- prepend
+- after
+- before
+- replace
+- remove
+- matches
 
 
 Browser compatiblity
