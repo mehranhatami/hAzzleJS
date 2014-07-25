@@ -26,7 +26,7 @@ var arrayProto = Array.prototype,
      * @param {hAzzle}
      *
      */
-    map = function (arr, fn, scope) {
+    map = function(arr, fn, scope) {
         var value,
             i = arr.length,
             ret = [];
@@ -45,13 +45,19 @@ var arrayProto = Array.prototype,
 
 hAzzle.extend({
 
-    clear: function () {
+    clean: function() {
+        return this.filter(function(itm) {
+            return itm !== null;
+        });
+    },
+
+    empty: function() {
         this.length = 0;
         return this;
     },
 
-    pluck: function (property) {
-        return hAzzle.map(this, function (el) {
+    pluck: function(property) {
+        return hAzzle.map(this, function(el) {
             return el[property];
         });
     },
@@ -64,7 +70,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    add: function (selector, context) {
+    add: function(selector, context) {
         return hAzzle(
             hAzzle.unique(
                 hAzzle.merge(this.get(), hAzzle(selector, context))
@@ -92,7 +98,7 @@ hAzzle.extend({
      *
      */
 
-    first: function (index) {
+    first: function(index) {
 
         return index ? this.slice(0, index) : this.eq(0);
     },
@@ -114,21 +120,21 @@ hAzzle.extend({
      *
      */
 
-    last: function (index) {
+    last: function(index) {
 
         return index ? this.slice(this.length - index) : this.eq(-1);
     },
 
-   /**
-    * Get the immediately following sibling of each element
-    *
-    * @param {Object} elem
-    * @return {hAzzle}
-    */
+    /**
+     * Get the immediately following sibling of each element
+     *
+     * @param {Object} elem
+     * @return {hAzzle}
+     */
 
-   next: function(selector) { 
-       return hAzzle(this.pluck('nextElementSibling')).filter(selector || '*');
-	},
+    next: function(selector) {
+        return hAzzle(this.pluck('nextElementSibling')).filter(selector || '*');
+    },
 
     /**
      * Get the immediately preceding sibling of each element
@@ -139,15 +145,15 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    prev: function(selector) { 
-	  return hAzzle(this.pluck('previousElementSibling')).filter(selector || '*');
-	},
+    prev: function(selector) {
+        return hAzzle(this.pluck('previousElementSibling')).filter(selector || '*');
+    },
 
     /**
      * Reduce the set of matched elements to a subset specified by a range of indices.
      */
 
-    slice: function () {
+    slice: function() {
 
         return hAzzle(slice.apply(this, arguments));
     },
@@ -158,7 +164,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    eq: function (index) {
+    eq: function(index) {
 
         index = +index;
 
@@ -178,7 +184,7 @@ hAzzle.extend({
 
     },
 
-    toArray: function () {
+    toArray: function() {
 
         return slice.call(this);
     },
@@ -186,19 +192,19 @@ hAzzle.extend({
     // Get the Nth element in the matched element set OR
     // Get the whole matched element set as a clean array
 
-    get: function (num) {
-		
-		return num !== null ?
+    get: function(num) {
 
-			// Return just the one element from the set
-			( this[num < 0 ? (this.length + num) : num] ) :
+        return num !== null ?
 
-			// Return all the elements in a clean array
-			slice.call( this );
+            // Return just the one element from the set
+            (this[num < 0 ? (this.length + num) : num]) :
+
+            // Return all the elements in a clean array
+            slice.call(this);
     },
 
 
-    filter: function (selector) {
+    filter: function(selector) {
         return hAzzle(isnot(this, selector || [], false));
     },
 
@@ -210,7 +216,7 @@ hAzzle.extend({
      *
      */
 
-    not: function (selector) {
+    not: function(selector) {
         return hAzzle(isnot(this, selector || [], true));
     },
 
@@ -221,7 +227,7 @@ hAzzle.extend({
      * @return {Boolean}
      */
 
-    is: function (selector) {
+    is: function(selector) {
         return !!isnot(
             this,
             selector || [],
@@ -237,10 +243,10 @@ hAzzle.extend({
      *
      */
 
-    has: function (target) {
+    has: function(target) {
         var targets = hAzzle(target, this),
             l = targets.length;
-        return this.filter(function () {
+        return this.filter(function() {
             var i = 0;
             for (; i < l; i++) {
                 if (hAzzle.contains(this, targets[i])) {
@@ -256,12 +262,12 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    index: function (selector) {
+    index: function(selector) {
 
         if (!selector) {
 
-         var haystack = this.parentElement(),
-            needle = this[0];
+            var haystack = this.parentElement(),
+                needle = this[0];
 
             // index in selector
 
@@ -277,9 +283,9 @@ hAzzle.extend({
             needle = selector.length ? selector[0] : selector;
         }
 
-    return indexOf.call( this,
-			selector.hAzzle ? selector[ 0 ] : selector
-		);
+        return indexOf.call(this,
+            selector.hAzzle ? selector[0] : selector
+        );
     },
 
     /**
@@ -291,7 +297,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    closest: function (selectors, context) {
+    closest: function(selectors, context) {
         var cur,
             i = 0,
             l = this.length,
@@ -326,7 +332,7 @@ hAzzle.extend({
      *
      */
 
-    closestChild: function (selector) {
+    closestChild: function(selector) {
 
         if ((typeof selector === 'string' ||
             typeof selector === 'object') && selector !== '') {
@@ -362,7 +368,7 @@ hAzzle.extend({
         return this;
     },
 
-    query: function (selector, count) {
+    query: function(selector, count) {
 
         var self = this.each ? this : [this],
             list = [],
@@ -400,7 +406,7 @@ hAzzle.extend({
      * Deprecated but kept due to consistency with the jQuery API
      *
      */
-    find: function (selector) {
+    find: function(selector) {
         var i,
             len = this.length,
             ret = [],
@@ -430,7 +436,7 @@ hAzzle.extend({
 
         } else { // Object
 
-            return hAzzle(selector).filter(function () {
+            return hAzzle(selector).filter(function() {
                 for (i = 0; i < len; i++) {
                     if (hAzzle.contains(self[i], this)) {
                         return true;
@@ -449,33 +455,33 @@ hAzzle.extend({
      * API
      */
 
-    parentElement: function () {
+    parentElement: function() {
         return this.parent().children();
     },
-    firstElementChild: function () {
+    firstElementChild: function() {
         return this.children().first();
     },
 
-    lastElementChild: function () {
+    lastElementChild: function() {
         return this.children().last();
     },
 
-    previousElementSibling: function () {
+    previousElementSibling: function() {
         return this.prev().last();
     },
 
-    nextElementSibling: function () {
+    nextElementSibling: function() {
         return this.next().first();
     },
 
-    childElementCount: function () {
+    childElementCount: function() {
         return this.children().length;
     }
 });
 
 
 hAzzle.extend({
-    traverse: function (elem, dir, until) {
+    traverse: function(elem, dir, until) {
         var matched = [],
             cur = elem[dir];
         while (cur && cur !== document) {
@@ -488,7 +494,7 @@ hAzzle.extend({
         return matched;
     },
 
-    sibling: function (elem, skip) {
+    sibling: function(elem, skip) {
 
         var ret = [],
             tmp = elem.children,
@@ -514,7 +520,7 @@ hAzzle.forOwn({
      * elements, optionally filtered by a selector.
      */
 
-    parent: function (elem) {
+    parent: function(elem) {
         var parent = elem.parentElement;
         return parent && parent.nodeType !== 11 ? parent : null;
     },
@@ -524,7 +530,7 @@ hAzzle.forOwn({
      *elements, optionally filtered by a selector.
      */
 
-    parents: function (elem) {
+    parents: function(elem) {
         return hAzzle.traverse(elem, "parentElement");
     },
 
@@ -533,7 +539,7 @@ hAzzle.forOwn({
      * but not including the element matched by the selector, DOM node, or hAzzle object.
      */
 
-    parentsUntil: function (elem, i, until) {
+    parentsUntil: function(elem, i, until) {
         return hAzzle.traverse(elem, "parentElement", until);
     },
 
@@ -542,7 +548,7 @@ hAzzle.forOwn({
      * filtered by a selector.
      */
 
-    siblings: function (elem) {
+    siblings: function(elem) {
         return hAzzle.sibling(elem.parentElement, elem);
     },
 
@@ -551,7 +557,7 @@ hAzzle.forOwn({
      * filtered by a selector.
      */
 
-    children: function (elem) {
+    children: function(elem) {
         return elem && hAzzle.sibling(elem, true);
     },
 
@@ -560,7 +566,7 @@ hAzzle.forOwn({
      * elements, optionally filtered by a selector.
      */
 
-    nextAll: function (elem) {
+    nextAll: function(elem) {
         return hAzzle.traverse(elem, "nextElementSibling");
     },
 
@@ -569,7 +575,7 @@ hAzzle.forOwn({
      * optionally filtered by a selector.
      */
 
-    prevAll: function (elem) {
+    prevAll: function(elem) {
         return hAzzle.traverse(elem, "previousElementSibling");
     },
 
@@ -578,7 +584,7 @@ hAzzle.forOwn({
      * element matched by the selector, DOM node, or jQuery object passed.
      */
 
-    nextUntil: function (elem, i, until) {
+    nextUntil: function(elem, i, until) {
 
         return hAzzle.traverse(elem, "nextElementSibling", until);
     },
@@ -588,7 +594,7 @@ hAzzle.forOwn({
      * element matched by the selector, DOM node, or hAzzle object.
      */
 
-    prevUntil: function (elem, i, until) {
+    prevUntil: function(elem, i, until) {
 
         return hAzzle.traverse(elem, "previousElementSibling", until);
     },
@@ -599,12 +605,12 @@ hAzzle.forOwn({
      * including text and comment nodes.
      */
 
-    contents: function (elem) {
+    contents: function(elem) {
         return elem.contentDocument || hAzzle.merge([], elem.childNodes);
     }
-}, function (fn, name) {
+}, function(fn, name) {
 
-    hAzzle.Core[name] = function (until, selector) {
+    hAzzle.Core[name] = function(until, selector) {
 
         var matched = map(this, fn, until);
 
@@ -639,18 +645,18 @@ function isnot(els, selector, not) {
 
     if (type === "string") {
         selector = hAzzle.matches(selector, els);
-        return hAzzle.grep(els, function (elem) {
+        return hAzzle.grep(els, function(elem) {
             return (indexOf.call(selector, elem) >= 0) !== not;
         });
     }
 
     return type === 'function' ?
-        hAzzle.grep(els, function (elem, i) {
+        hAzzle.grep(els, function(elem, i) {
             return !!selector.call(elem, i, elem) !== not;
         }) : selector.nodeType ?
-        hAzzle.grep(els, function (elem) {
+        hAzzle.grep(els, function(elem) {
             return (elem === selector) !== not;
-        }) : hAzzle.grep(els, function (elem) {
+        }) : hAzzle.grep(els, function(elem) {
             return (indexOf.call(selector, elem) >= 0) !== not;
         });
 }

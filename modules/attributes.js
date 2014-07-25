@@ -136,6 +136,7 @@ hAzzle.extend({
     },
 
     propMap: {
+    // properties renamed to avoid clashes with reserved words
         'for': 'htmlFor',
         'class': 'className',
         'cellpadding': 'cellPadding',
@@ -146,10 +147,13 @@ hAzzle.extend({
         'usemap': 'useMap',
         'frameborder': 'frameBorder',
         'contenteditable': 'contentEditable',
-		// for IE
-        'tabindex': 'tabIndex',
-        'readonly': 'readOnly'
+        'textcontent': 'textContent',
+        'valuetype': 'valueType',
 
+		// for IE
+
+        'tabindex': 'tabIndex',
+        'readonly': 'readOnly',
     },
 
     nodeHook: {},
