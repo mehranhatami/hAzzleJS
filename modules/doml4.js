@@ -17,19 +17,27 @@
 
     var property,
 
-        ElementPrototype = (window.Element || window.Node || window.HTMLElement).prototype,
+        ElementPrototype = (window.Element ||
+            window.Node ||
+            window.HTMLElement).prototype,
 
         properties = [
             'append',
             function append() {
-                this.appendChild(applyToFragment(arguments));
+                this.appendChild(
+                    applyToFragment(arguments)
+                );
             },
             'prepend',
             function prepend() {
                 if (this.firstChild) {
-                    this.insertBefore(applyToFragment(arguments), this.firstChild);
+                    this.insertBefore(
+                        applyToFragment(arguments), this.firstChild
+                    );
                 } else {
-                    this.appendChild(applyToFragment(arguments));
+                    this.appendChild(
+                        applyToFragment(arguments)
+                    );
                 }
             },
             'before',
@@ -45,16 +53,22 @@
             function after() {
                 if (this.parentNode) {
                     if (this.nextSibling) {
-                        this.parentNode.insertBefore(applyToFragment(arguments), this.nextSibling);
+                        this.parentNode.insertBefore(
+                            applyToFragment(arguments), this.nextSibling
+                        );
                     } else {
-                        this.parentNode.appendChild(applyToFragment(arguments));
+                        this.parentNode.appendChild(
+                            applyToFragment(arguments)
+                        );
                     }
                 }
             },
             'replace',
             function replace() {
                 if (this.parentNode) {
-                    this.parentNode.replaceChild(applyToFragment(arguments), this);
+                    this.parentNode.replaceChild(
+                        applyToFragment(arguments), this
+                    );
                 }
             },
             'remove',
