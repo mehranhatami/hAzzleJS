@@ -92,7 +92,6 @@ hAzzle.extend({
 	    // Run the parser
 
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
-
     },
 
     /**
@@ -133,13 +132,13 @@ function qM(selector, context, quickMatch) {
             }
         }
 
-        // Tag
+    // Tag
 
     } else if (quickMatch[2]) {
         push.apply(results, context.getElementsByTagName(selector));
         return results;
 
-        // Class
+    // Class
 
     } else if (context.getElementsByClassName) {
         push.apply(results, context.getElementsByClassName(quickMatch[3]));

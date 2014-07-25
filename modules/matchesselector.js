@@ -1,18 +1,21 @@
 // hAzzle.matchesselector
 var documentIsHTML = hAzzle.documentIsHTML,
-docElem = hAzzle.docElem,
+    docElem = hAzzle.docElem,
     Jiesa = hAzzle.Jiesa,
-    matches = docElem.matches ||
-        docElem.webkitMatchesSelector ||
-        docElem.mozMatchesSelector ||
-        docElem.oMatchesSelector ||
-        docElem.msMatchesSelector,
     quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
-    ntapi = {};
+    ntapi = {},
+    matches = Jiesa.has['api-mS'] ? function(node, selector) {
+        return !Jiesa.has['bug-mS'] ? (docElem.matches ||
+            docElem.webkitMatchesSelector ||
+            docElem.mozMatchesSelector ||
+            docElem.oMatchesSelector ||
+            docElem.msMatchesSelector).call(node, selector) : hAzzle.find();
+    } : hAzzle.find();
+
 
 // Expose to the global hAzzle Object
 
-hAzzle.matchesSelector = function (elem, selector) {
+hAzzle.matchesSelector = function(elem, selector) {
 
     var j, found,
         matched = false,
@@ -27,26 +30,18 @@ hAzzle.matchesSelector = function (elem, selector) {
             // Find a match, Mehran !!
 
             return findAMatchMehran(elem, found);
-
-            // Fallback to MatchesSelector
-
-        } else if (Jiesa.has['api-mS'] && documentIsHTML) {
-
-            /**
-             * MEHRAN!!!
-             *
-             * If XML document, OR if the matchesselector can't find complex
-             * selectors. You need to fix it so it fall back to compiler.js
-             * and return a boolean true / false
-             */
-
-            if (Jiesa.has['bug-mS'] || elem.nodeType !== 11) {
-
-                return matches.call(elem, selector);
-            }
         }
 
-        return matched;
+        // If no XML doc, and not a document fragment, use
+        // Matchesselector
+
+        if (documentIsHTML && elem.nodeType !== 11) {
+
+            return matches(elem, selector);
+        }
+
+        // Fall back to compiler.js
+        return hAzzle.find();
 
     } else { // Object
 
@@ -109,6 +104,6 @@ function findAMatchMehran(elem, m) {
 /* ============================ INTERNAL =========================== */
 
 hAzzle.each(('parentNode lastChild firstChild nextSibling previousSibling lastElementChild ' +
-    'firstElementChild nextElementSibling previousElementSibling').split(' '), function (value) {
+    'firstElementChild nextElementSibling previousElementSibling').split(' '), function(value) {
     ntapi[value] = true;
 });
