@@ -26,7 +26,7 @@
             path + 'data.js',
             path + 'shims/classlist.js',
             path + 'classes.js',
-            path + 'html.js',
+            path + 'appendhtml.js',
             path + 'manipulation.js',
             path + 'attributes.js',
             path + 'removeable.js',

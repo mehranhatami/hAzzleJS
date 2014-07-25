@@ -3,7 +3,7 @@
  */
 var doc = this.document,
     ssv = /\S+/g,
-	inseteb = /^(?:input|select|textarea|button)$/i,
+    inseteb = /^(?:input|select|textarea|button)$/i,
     boolAttr = {}, // Boolean attributes
     boolElem = {}, // Boolean elements
     attrCore = {},
@@ -12,7 +12,7 @@ var doc = this.document,
 
 /* ============================ BUG / FEATURE DETECTION =========================== */
 
-(function () {
+(function() {
     var input = doc.createElement("input"),
         select = doc.createElement("select"),
         opt = select.appendChild(doc.createElement("option"));
@@ -48,7 +48,7 @@ hAzzle.extend({
      * @return {Object|String}
      */
 
-    attr: function (name, value) {
+    attr: function(name, value) {
         return hAzzle.setter(this, hAzzle.attr, name, value, true);
     },
 
@@ -59,8 +59,8 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    removeAttr: function (value) {
-        return this.each(function (el) {
+    removeAttr: function(value) {
+        return this.each(function(el) {
             hAzzle.removeAttr(el, value);
         });
     },
@@ -72,16 +72,16 @@ hAzzle.extend({
      * @return {Boolean}
      */
 
-    hasAttr: function (value, name) {
+    hasAttr: function(value, name) {
 
         // Shortcut for checking attr classNames
 
-        if (typeof name !== 'undefined' && 
-		          alue === 'class') {
+        if (typeof name !== 'undefined' ||
+            value === 'class') {
 
             return this[0].className === name ? true : false;
         }
-       return name && typeof this.attr(name) !== 'undefined';
+        return name && typeof this.attr(name) !== 'undefined';
     },
 
     /**
@@ -92,7 +92,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    prop: function (name, value) {
+    prop: function(name, value) {
         return hAzzle.setter(this, hAzzle.prop, name, value, true);
     },
 
@@ -100,8 +100,8 @@ hAzzle.extend({
      * Toggle properties on DOM elements
      */
 
-    toggleProp: function (prop) {
-        return this.each(function (el) {
+    toggleProp: function(prop) {
+        return this.each(function(el) {
             return el.prop(prop, !el.prop(prop));
         });
     },
@@ -113,8 +113,8 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    removeProp: function (name) {
-        return this.each(function () {
+    removeProp: function(name) {
+        return this.each(function() {
             delete this[hAzzle.propMap[name] || name];
         });
     }
@@ -127,7 +127,7 @@ hAzzle.extend({
     propHooks: {
 
         tabIndex: {
-            get: function (elem) {
+            get: function(elem) {
                 return elem.hasAttribute('tabindex') ||
                     inseteb.test(elem.nodeName) ||
                     elem.href ? elem.tabIndex : -1;
@@ -136,7 +136,7 @@ hAzzle.extend({
     },
 
     propMap: {
-    // properties renamed to avoid clashes with reserved words
+        // properties renamed to avoid clashes with reserved words
         'for': 'htmlFor',
         'class': 'className',
         'cellpadding': 'cellPadding',
@@ -150,39 +150,39 @@ hAzzle.extend({
         'textcontent': 'textContent',
         'valuetype': 'valueType',
 
-		// for IE
-
+        // for IE
         'tabindex': 'tabIndex',
-        'readonly': 'readOnly',
+        'readonly': 'readOnly'
+
     },
 
     nodeHook: {},
 
     boolHook: {
 
-        set: function (elem, value, name) {
-    
-	        if (value === false) {
-    
-	            hAzzle.removeAttr(elem, name);
-    
-	        } else {
-    
-	            elem.setAttribute(name, name);
+        set: function(elem, value, name) {
+
+            if (value === false) {
+
+                hAzzle.removeAttr(elem, name);
+
+            } else {
+
+                elem.setAttribute(name, name);
             }
-    
-	        return name;
+
+            return name;
         }
 
     },
     attrHooks: {
 
         type: {
-            set: function (elem, value) {
+            set: function(elem, value) {
 
-                if (!attrCore['bug-radioValue'] && 
-                     value === 'radio' &&
-                     hAzzle.nodeName(elem, 'input')) {
+                if (!attrCore['bug-radioValue'] &&
+                    value === 'radio' &&
+                    hAzzle.nodeName(elem, 'input')) {
 
                     var val = elem.value;
 
@@ -206,7 +206,7 @@ hAzzle.extend({
      * @param {Array|string} value
      */
 
-    removeAttr: function (el, value) {
+    removeAttr: function(el, value) {
 
         var name, propName, i = 0,
 
@@ -247,71 +247,71 @@ hAzzle.extend({
      * @param {string|boolean|null} value
      */
 
-    attr: function (elem, name, value) {
+    attr: function(elem, name, value) {
 
         var hooks, ret,
             nType = elem.nodeType;
-       
-	   if ( !elem || nType === 3 || nType === 8 || nType === 2 ) {
-			return;
-		}
-            // Fallback to prop when attributes are not supported
-            if (typeof elem.getAttribute === undefined ||
-			    name === 'textContext') {
-					
-                return hAzzle.prop(elem, name, value);
-            }
 
-            if (nType !== 1 || hAzzle.documentIsHTML) {
+        if (!elem || nType === 3 || nType === 8 || nType === 2) {
+            return;
+        }
+        // Fallback to prop when attributes are not supported
+        if (typeof elem.getAttribute === undefined ||
+            name === 'textContext') {
 
-                name = name.toLowerCase();
+            return hAzzle.prop(elem, name, value);
+        }
 
-                hooks = hAzzle.attrHooks[name] ||
-                    getBooleanAttrName(elem, name) ? hAzzle.boolHook : hAzzle.nodeHook;
-            }
+        if (nType !== 1 || hAzzle.documentIsHTML) {
 
-            if (value !== undefined) {
+            name = name.toLowerCase();
 
-                if (value === null) {
+            hooks = hAzzle.attrHooks[name] ||
+                getBooleanAttrName(elem, name) ? hAzzle.boolHook : hAzzle.nodeHook;
+        }
 
-                    hAzzle.removeAttr(elem, name);
+        if (value !== undefined) {
 
-                } else {
+            if (value === null) {
 
-                    if (hooks && 'set' in hooks) {
-
-                        ret = hooks.set(elem, value, name);
-
-                        if (ret) {
-
-                            return ret;
-                        }
-                    }
-
-                    elem.setAttribute(name, value + '');
-                    return value;
-                }
+                hAzzle.removeAttr(elem, name);
 
             } else {
 
-                if (hooks && 'get' in hooks) {
-                    ret = hooks.get(elem, name);
-                    if (ret !== null) {
+                if (hooks && 'set' in hooks) {
+
+                    ret = hooks.set(elem, value, name);
+
+                    if (ret) {
+
                         return ret;
                     }
                 }
-                ret = elem.getAttribute(name, 2);
 
-                return ret === null ?
-                    undefined :
-                    ret;
-
+                elem.setAttribute(name, value + '');
+                return value;
             }
+
+        } else {
+
+            if (hooks && 'get' in hooks) {
+                ret = hooks.get(elem, name);
+                if (ret !== null) {
+                    return ret;
+                }
+            }
+            ret = elem.getAttribute(name, 2);
+
+            return ret === null ?
+                undefined :
+                ret;
+
+        }
     },
 
     // Props to jQuery
 
-    prop: function (elem, name, value) {
+    prop: function(elem, name, value) {
 
         var ret, hooks,
             nType = elem.nodeType;
@@ -351,7 +351,7 @@ hAzzle.extend({
      * @return {Number}
      */
 
-    anyAttr: function (elem, fn, scope) {
+    anyAttr: function(elem, fn, scope) {
 
         var a, ela = elem.attributes,
             l = ela && ela.length,
@@ -370,7 +370,7 @@ hAzzle.extend({
         }
         return 0;
     }
-	
+
 }, hAzzle);
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
@@ -390,7 +390,7 @@ function getBooleanAttrName(element, name) {
 
 if (!attrCore['bug-optSelected']) {
     hAzzle.propHooks.selected = {
-        get: function (elem) {
+        get: function(elem) {
             var parent = elem.parentNode;
             if (parent && parent.parentNode) {
                 parent.parentNode.selectedIndex;
@@ -403,10 +403,14 @@ if (!attrCore['bug-optSelected']) {
 // Boolean attributes and elements
 
 hAzzle.each(('multiple selected checked disabled readOnly required async autofocus ' +
-    'autoplay controls defer hidden ismap loop scoped open').split(' '), function (value) {
+    'compact nowrap declare noshade noresize defaultChecked ' +
+    'autoplay controls defer hidden ismap loop scoped open').split(' '), function(value) {
     boolAttr[value] = value;
 });
 
-hAzzle.each('input select option textarea button form details'.split(' '), function (value) {
+
+
+
+hAzzle.each('input select option textarea button form details'.split(' '), function(value) {
     boolElem[value.toUpperCase()] = true;
 });

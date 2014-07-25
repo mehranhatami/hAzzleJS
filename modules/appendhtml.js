@@ -1,6 +1,7 @@
 /*!
- * HTML
+ * appendHTML.js
  */
+ 
 var win = this,
     doc = win.document,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
@@ -55,7 +56,6 @@ var win = this,
                 t.parentElement.appendChild(el);
             }
         }
-
     },
 
     // We have to close these tags to support XHTML	
@@ -151,7 +151,7 @@ hAzzle.extend({
      */
 
     appendTo: function(node) {
-        return injectMethods(this, node, 'appendTo');
+        return InjectionMethod(this, node, 'appendTo');
     },
 
     /**
@@ -163,7 +163,7 @@ hAzzle.extend({
      */
 
     prependTo: function(node) {
-        return injectMethods(this, node, 'prependTo');
+        return InjectionMethod(this, node, 'prependTo');
     },
 
     /**
@@ -173,7 +173,7 @@ hAzzle.extend({
      */
 
     insertBefore: function(node) {
-        return injectMethods(this, node, 'insertBefore');
+        return InjectionMethod(this, node, 'insertBefore');
     },
 
     /**
@@ -183,7 +183,7 @@ hAzzle.extend({
      */
 
     insertAfter: function(node) {
-        return injectMethods(this, node, 'insertAfter');
+        return InjectionMethod(this, node, 'insertAfter');
     },
 
     /**
@@ -415,7 +415,7 @@ hAzzle.create = function(html, context) {
 };
 
 // Append, prepend, before and after manipulation methods
-// insertAdjutantHTML (iAH) are only used for this methoids
+// insertAdjutantHTML (iAH) are only used for this methods
 
 function ManipulationMethod(elem, count, html, chain, method) {
     if (!iAh(elem, html, iAHInserters[method])) {
@@ -427,10 +427,9 @@ function ManipulationMethod(elem, count, html, chain, method) {
     }
 }
 
-
 // appendTo, prependTo, insertBefore, insertAfter manipulation methods
 
-function injectMethods(elem, html, method) {
+function InjectionMethod(elem, html, method) {
     return injectHTML.call(elem, html, elem, function(t, el) {
         try {
             Hi[method](el, t);

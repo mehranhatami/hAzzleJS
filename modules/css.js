@@ -12,8 +12,8 @@ var numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
         /**
          * CSS Normal Transforms
          */
-		 
-		cssNormalTransform : {
+
+        cssNormalTransform: {
 
             letterSpacing: '0',
             fontWeight: '400'
@@ -25,7 +25,7 @@ var numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
         }
     },
 
-    getStyles = function (elem) {
+    getStyles = function(elem) {
         var view = elem.ownerDocument.defaultView;
         return cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
             window.getComputedStyle(elem, null)) : elem.style;
@@ -33,7 +33,7 @@ var numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
 // Bug detection
 
-hAzzle.assert(function (div) {
+hAzzle.assert(function(div) {
     cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
 });
 
@@ -48,7 +48,7 @@ hAzzle.extend({
      * @return {hAzzle|string}
      */
 
-    css: function (prop, value) {
+    css: function(prop, value) {
 
         var type = typeof prop,
             i = 0,
@@ -92,8 +92,8 @@ hAzzle.extend({
         return this;
     },
 
-    opacity: function (value) {
-        return this.each(function (el) {
+    opacity: function(value) {
+        return this.each(function(el) {
             hAzzle.opacity(el, value);
         });
     }
@@ -111,7 +111,7 @@ hAzzle.extend({
     cssHooks: {
 
         opacity: {
-            get: function (el, computed) {
+            get: function(el, computed) {
 
                 if (computed) {
                     var ret = curCSS(el, 'opacity');
@@ -135,13 +135,13 @@ hAzzle.extend({
      * @return {String|hAzzle}
      */
 
-    style: function (elem, name, value) {
+    style: function(elem, name, value) {
 
-		if(!elem) { 
-		
-		   return; 
-		}
-		
+        if (!elem) {
+
+            return;
+        }
+
         var valid = [3, 8],
             nType = elem.nodeType;
 
@@ -212,7 +212,7 @@ hAzzle.extend({
      * @return {String|Object|Array}
      */
 
-    css: function (elem, prop) {
+    css: function(elem, prop) {
 
         var val,
             hooks,
@@ -240,9 +240,9 @@ hAzzle.extend({
 
         //convert 'normal' to computed value
 
-        if (val === 'normal' && prop in cssCore.cssNormalTransform ) {
+        if (val === 'normal' && prop in cssCore.cssNormalTransform) {
 
-            val = cssCore.cssNormalTransform [prop];
+            val = cssCore.cssNormalTransform[prop];
         }
 
         return val;
@@ -254,7 +254,7 @@ hAzzle.extend({
      * @param{Object} elem
      * @param{number} value
      */
-    opacity: function (element, value) {
+    opacity: function(element, value) {
 
         if (typeof value !== 'number') {
             value = 1;
@@ -269,6 +269,21 @@ hAzzle.extend({
         }
 
         element.style.opacity = value;
+    },
+
+    // Quick functions for setting, getting and 
+    // erase CSS styles with cssText
+
+    setCSS: function(elem, style) {
+        elem.style.cssText = style;
+    },
+
+    getCSS: function(elem) {
+        return elem.style.cssText;
+    },
+
+    eraseCSS: function(elem) {
+        elem.style.cssText = '';
     }
 
 }, hAzzle);
@@ -327,14 +342,14 @@ function curCSS(elem, prop, computed) {
 
 // Margin and padding cssHooks
 
-hAzzle.each(['margin', 'padding'], function (hook) {
+hAzzle.each(['margin', 'padding'], function(hook) {
     hAzzle.cssHooks[hook] = {
-        get: function (elem) {
-            return hAzzle.map(cssCore.directions, function (dir) {
+        get: function(elem) {
+            return hAzzle.map(cssCore.directions, function(dir) {
                 return hAzzle.css(elem, hook + dir);
             }).join(' ');
         },
-        set: function (elem, value) {
+        set: function(elem, value) {
             var parts = value.split(/\s/),
                 values = {
                     'Top': parts[0],
@@ -342,7 +357,7 @@ hAzzle.each(['margin', 'padding'], function (hook) {
                     'Bottom': parts[2] || parts[0],
                     'Left': parts[3] || parts[1] || parts[0]
                 };
-            hAzzle.each(cssCore.directions, function (dir) {
+            hAzzle.each(cssCore.directions, function(dir) {
                 elem.style[hook + dir] = values[dir];
             });
         }
@@ -363,6 +378,6 @@ hAzzle.each(['lineHeight', 'zoom', 'zIndex', 'opacity', 'boxFlex',
         'transformStyle', 'perspective',
         'perspectiveOrigin', 'backfaceVisibility'
     ],
-    function (name) {
+    function(name) {
         hAzzle.unitless[name] = true;
     });

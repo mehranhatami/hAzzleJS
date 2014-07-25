@@ -3,11 +3,10 @@
  * @param {Object} elem
  * @return {hAzzle}
  */
-
 hAzzle.clearData = function(elem) {
     hAzzle.removeData(elem);
     hAzzle.event.remove(elem);
- };
+};
 
 
 hAzzle.extend({
@@ -18,13 +17,12 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    remove: function (selector) {
+    remove: function(selector) {
 
         // Filters the set of matched elements to be removed.
-       
-	    var elem = selector ? hAzzle.find(selector, this) : this;
 
-        hAzzle.each(elem, function (el) {
+        var elem = selector ? hAzzle.find(selector, this) : this;
+        hAzzle.each(elem, function(el) {
 
             if (el.nodeType === 1) {
                 hAzzle.removeData(el);
@@ -40,13 +38,13 @@ hAzzle.extend({
     },
 
     /**
-	 * Remove all child nodes of the set of matched elements from the DOM.
+     * Remove all child nodes of the set of matched elements from the DOM.
      * @return {hAzzle}
      */
 
-    empty: function () {
+    empty: function() {
 
-        return this.each(function (el) {
+        return this.each(function(el) {
 
             if (el && el.nodeType === 1) {
 
@@ -64,10 +62,14 @@ hAzzle.extend({
 
     /**
      * Remove the set of matched elements from the DOM.
-	 * @return {hAzzle}
+     * @return {hAzzle}
      */
 
-	detach: function (selector) {
+    detach: function(selector) {
         return this.remove(selector, true);
+    },
+
+    dispose: function() {
+        return this.parentNode ? this.parentNode.removeChild(this) : this;
     }
 });

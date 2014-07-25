@@ -62,7 +62,7 @@ function conf(grunt) {
         'data.js',
         'shims/classlist.js',
         'classes.js',
-        'html.js',
+        'appendhtml.js',
         'manipulation.js',
         'attributes.js',
         'removeable.js',

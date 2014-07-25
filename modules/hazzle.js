@@ -1,12 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.5a
+ * Version: 0.9.5b
  * Released under the MIT License.
  *
- * Date: 2014-07-25
+ * Date: 2014-07-26
  */
-(function (window, undefined) {
+(function(window, undefined) {
 
     // hAzzle already defined, leave now
 
@@ -40,7 +40,7 @@
 
         // Define a local copy of hAzzle
 
-        hAzzle = function (selector, context) {
+        hAzzle = function(selector, context) {
 
             // Force domReady if the selector is a
             // function
@@ -121,7 +121,7 @@
          * @return {hAzzle}
          */
 
-        twist: function (fn) {
+        twist: function(fn) {
             var elems = this,
                 i = 0,
                 len = elems.length;
@@ -138,7 +138,7 @@
          * @return {hAzzle}
          */
 
-        forOwn: function (fn, obj) {
+        forOwn: function(fn, obj) {
             return hAzzle.forOwn(this, fn, obj);
         },
 
@@ -148,7 +148,7 @@
          * @return {hAzzle}
          */
 
-        each: function (fn, obj) {
+        each: function(fn, obj) {
             return hAzzle.each(this, fn, obj);
         },
 
@@ -158,7 +158,7 @@
          * @return {hAzzle}
          */
 
-        deepEach: function (fn, obj) {
+        deepEach: function(fn, obj) {
 
             return hAzzle.deepEach(this, fn, obj);
         },
@@ -169,7 +169,7 @@
          * @return {Array}
          */
 
-        map: function (callback, func) {
+        map: function(callback, func) {
             var m = [],
                 n, i = 0,
                 self = this,
@@ -189,7 +189,7 @@
             return m;
         },
 
-        ready: function (fn) {
+        ready: function(fn) {
             if (typeof fn === 'function') {
                 return hAzzle.ready(fn);
             }
@@ -200,7 +200,7 @@
      * Extend the contents of two objects
      */
 
-    hAzzle.extend = function () {
+    hAzzle.extend = function() {
         var destination = arguments[0],
             source = arguments[1],
             property;
@@ -240,15 +240,15 @@
          * Error function
          */
 
-        error: function (msg) {
+        error: function(msg) {
             throw new Error(msg);
         },
 
-        lowercase: function (string) {
+        lowercase: function(string) {
             return typeof string === 'string' ? string.toLowerCase() : string;
         },
 
-        uppercase: function (string) {
+        uppercase: function(string) {
             return typeof string === 'string' ? string.toUpperCase() : string;
         },
 
@@ -263,7 +263,7 @@
          * @return {hAzzle|Array}
          */
 
-        each: function (ar, callback, fn, args) {
+        each: function(ar, callback, fn, args) {
 
             var ind, i = 0,
                 l = ar.length;
@@ -291,7 +291,7 @@
          * @return {hAzzle|Array}
          */
 
-        deepEach: function (ar, fn, scope) {
+        deepEach: function(ar, fn, scope) {
             var i = 0,
                 l = ar.length;
             for (; i < l; i++) {
@@ -306,16 +306,16 @@
         // Convert camelCase to  CSS-style
         // e.g. boxSizing -> box-sizing
 
-        decamelize: function (str) {
+        decamelize: function(str) {
             return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
         },
 
-        capitalize: function (str) {
+        capitalize: function(str) {
             return str.charAt(0).toUpperCase() + str.substring(1).toLowerCase();
 
         },
 
-        blank: function (str) {
+        blank: function(str) {
             return /^\s*$/.test(str);
         },
 
@@ -332,14 +332,14 @@
          * @return {string}
          */
 
-        camelize: function (str) {
+        camelize: function(str) {
 
-            return str.replace(/-(.)/g, function (matches, letter) {
+            return str.replace(/-(.)/g, function(matches, letter) {
                 return letter.toUpperCase();
             });
         },
 
-        arrayLike: function (obj) {
+        arrayLike: function(obj) {
 
             if (obj === null || hAzzle.isWindow(obj)) {
                 return false;
@@ -355,7 +355,7 @@
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
         },
 
-        indexOf: function (elem, arr, i) {
+        indexOf: function(elem, arr, i) {
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
 
@@ -364,7 +364,7 @@
          */
 
 
-        inArray: function (array, value, index) {
+        inArray: function(array, value, index) {
 
             var i = (index || 0),
                 m = array.length;
@@ -380,7 +380,7 @@
             return -1;
         },
 
-        map: function (elems, callback, arg) {
+        map: function(elems, callback, arg) {
             var value,
                 i = 0,
                 length = elems.length,
@@ -422,7 +422,7 @@
          * @param {Object} initial value
          */
 
-        reduce: function (arr, fn, val) {
+        reduce: function(arr, fn, val) {
             var rval = val,
                 i = 0,
                 l = arr.length;
@@ -432,7 +432,7 @@
             return rval;
         },
 
-        isNode: function (node) {
+        isNode: function(node) {
             return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 9 || node.nodeType === 11);
         },
 
@@ -443,14 +443,14 @@
          * @return {String}
          */
 
-        escapeRegexp: function (str) {
+        escapeRegexp: function(str) {
             str.replace(escEp, '\\$&');
         },
         /**
          * Check if it's an XML or HTML document
          */
 
-        isXML: function (elem) {
+        isXML: function(elem) {
             var documentElement = elem && (elem.ownerDocument || elem).documentElement;
             return documentElement ? documentElement.nodeName !== 'HTML' : false;
         },
@@ -459,11 +459,11 @@
          * Return the elements nodeName
          */
 
-        nodeName: function (el, name) {
+        nodeName: function(el, name) {
             return el.nodeName && el.nodeName.toLowerCase() === name.toLowerCase();
         },
 
-        merge: function (first, second) {
+        merge: function(first, second) {
             if (second) {
                 var len = +second.length,
                     j = 0,
@@ -483,7 +483,7 @@
         // Nothing
 
 
-        noop: function () {},
+        noop: function() {},
 
         /**
          * Return only nodes matching the filter
@@ -494,7 +494,7 @@
          *
          */
 
-        filter: function (obj, predicate, context) {
+        filter: function(obj, predicate, context) {
 
             var results = [];
 
@@ -502,7 +502,7 @@
                 return results;
             }
 
-            hAzzle.each(obj, function (value, index, list) {
+            hAzzle.each(obj, function(value, index, list) {
 
                 if (predicate.call(context, value, index, list)) {
 
@@ -515,7 +515,7 @@
 
 
         // Happy now??? -really happy
-        makeArray: function (nodeList) {
+        makeArray: function(nodeList) {
             if (nodeList instanceof Array) {
                 return nodeList;
             }
@@ -533,7 +533,7 @@
         // Note ! A for-in loop won't guarantee property iteration order and
         // they'll iterate over anything added to the Array.prototype
 
-        forOwn: function (obj, iterator, context) {
+        forOwn: function(obj, iterator, context) {
             var key;
             if (obj === null) return obj;
             for (key in obj) {
@@ -551,7 +551,7 @@
          * @return {Boolean}
          */
 
-        assert: function (fn) {
+        assert: function(fn) {
 
             var div = doc.createElement('div');
 
@@ -573,7 +573,7 @@
 
     // This one has to be fast...
 
-    var setter = hAzzle.setter = function (elems, fn, key, value, exec) {
+    var setter = hAzzle.setter = function(elems, fn, key, value, exec) {
 
         var len = elems.length,
             k,
@@ -632,18 +632,16 @@
      * @param{String} str
      * @return{String}
      *
-
      * String.prototype.trim() are only supported in IE9+ Standard mode.
      */
 
-
-    hAzzle.trim = (function () {
+    hAzzle.trim = (function() {
         if (!String.prototype.trim) {
-            return function (value) {
+            return function(value) {
                 return typeof value === 'string' ? value.replace(trwl, '').replace(trwr, '') : value;
             };
         }
-        return function (value) {
+        return function(value) {
             return value === 'string' ? value.trim() : value;
         };
     })();
