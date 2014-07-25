@@ -5,11 +5,7 @@
 
 **hAzzle** support all modern browsers and features - such as HTML 5, and new Traversal API. In its selector engine it supports both CSS Level 3 selectors and CSS Level 4 selectors. 
 
-However, hAzzle are not going to support or add any support for DOM Level 4 at this stage because there are not so much pros to use it in this library. hAzzle are already supporting features and specs in Dom Level 2 (DL2) and Dom Level 3 (DL3) that few other libraries support.
-
-jQuery, Zepto, Underscore, Loadash, AngularJS e.g. are more or less supporting the 'old' DOM standard. Except AngularJS who now supports XMLHttp v. 2 and jQuery / Zepto don't.
-
-hAzzle supports all the new features on the marked that has been there for years, and other libs to scared to include. List is to long to list it all here, but short - hAzzle support some of this features:
+Basicly - hAzzle supports all the new features on the marked that has been there for years, and other libs to scared to include. List is to long to list it all here, but short - hAzzle support some of this features:
 
 - insertAdjacentHTML, 
 - new Traversal API such as nextElementSibling, parentElement e.g.
