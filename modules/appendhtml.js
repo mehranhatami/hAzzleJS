@@ -1,8 +1,13 @@
 /*!
  * appendHTML.js
  *
- * - using DOM Level 4
+ * NOTE!!
  *
+ * This module are using DOM Level 4. Document fragment are not
+ * used in this code because its all inside DL4.
+ *
+ * See DOML4.js module for the DL4 pollify. That pollify will be
+ * deleted soon as DL4 become standard in all browsers.
  */
 var win = this,
     doc = win.document,
@@ -18,7 +23,7 @@ var win = this,
         append: 'beforeEnd'
     },
 
-    DL4 = { // DOM Level 4
+    JI = {
 
         'append': function(elem, html) {
             elem.append(html);
@@ -34,7 +39,7 @@ var win = this,
         },
     },
 
-    DL3 = { // DOM Level 3
+    HI = {
 
         'appendTo': function(el, html) {
             html.appendChild(el);
@@ -43,19 +48,10 @@ var win = this,
             html.insertBefore(el, html.firstChild);
         },
         'insertBefore': function(el, html) {
-            html.parentElement.insertBefore(el, html);
+            html.before(el);
         },
         'insertAfter': function(el, html) {
-            var sibling = html.nextElementSibling;
-
-            if (sibling) {
-
-                sibling.parentElement.insertBefore(el, sibling);
-
-            } else {
-
-                html.parentElement.appendChild(el);
-            }
+            el.after(html, el);
         }
     },
 
@@ -214,13 +210,13 @@ hAzzle.extend({
 // insertAdjutantHTML (iAH) are only used for this methods
 
 function ManipulationMethod(elem, count, html, chain, method) {
-    //      if (!iAh(elem, html, iAHInserters[method])) {
+   if (!iAh(elem, html, iAHInserters[method])) {
     if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
         hAzzle.each(stabilizeHTML(html, chain, count), function(html) {
-            DL4[method](elem, html);
+            JI[method](elem, html);
         });
     }
-    //   }
+   }
 }
 
 // appendTo, prependTo, insertBefore, insertAfter manipulation methods
@@ -228,7 +224,7 @@ function ManipulationMethod(elem, count, html, chain, method) {
 function InjectionMethod(elem, html, method) {
     return injectHTML.call(elem, html, elem, function(html, el) {
         try {
-            DL3[method](el, html);
+            HI[method](el, html);
         } catch (e) {}
     }, 1);
 }
@@ -328,6 +324,7 @@ function injectHTML(target, node, fn, rev) {
 
     return node;
 }
+
 
 /**
  * Create HTML
