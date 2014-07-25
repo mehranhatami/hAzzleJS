@@ -1,7 +1,12 @@
 // hAzzle.matchesselector
 var documentIsHTML = hAzzle.documentIsHTML,
+docElem = hAzzle.docElem,
     Jiesa = hAzzle.Jiesa,
-    matches = Jiesa.mS,
+    matches = docElem.matches ||
+        docElem.webkitMatchesSelector ||
+        docElem.mozMatchesSelector ||
+        docElem.oMatchesSelector ||
+        docElem.msMatchesSelector,
     quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
     ntapi = {};
 
@@ -9,7 +14,7 @@ var documentIsHTML = hAzzle.documentIsHTML,
 
 hAzzle.matchesSelector = function (elem, selector) {
 
-    var j, m,
+    var j, found,
         matched = false,
         results = [];
 
@@ -17,11 +22,11 @@ hAzzle.matchesSelector = function (elem, selector) {
 
         // Always make sure we have a nodeName
 
-        if ((m = quickMatch.exec(selector))) {
+        if ((found = quickMatch.exec(selector))) {
 
             // Find a match, Mehran !!
 
-            return findAMatchMehran(elem, m);
+            return findAMatchMehran(elem, found);
 
             // Fallback to MatchesSelector
 

@@ -8,6 +8,7 @@
  *
  * - Various bug checks
  */
+ 
 var Jiesa = hAzzle.Jiesa,
 
     // Default document
@@ -16,23 +17,15 @@ var Jiesa = hAzzle.Jiesa,
 
     documentIsHTML = hAzzle.documentIsHTML,
 
-    // Expando
-
-    expando = hAzzle.expando,
-
     push = Array.prototype.push,
 
     // Various regEx
 
     sibling = /[+~]/,
 
-    escaped = /'|\\/g,
-
     quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
     rtrim = /^[\x20\t\r\n\f]+|((?:^|[^\\])(?:\\.)*)[\x20\t\r\n\f]+$/g;
-
-
 
 // Extend the Jiesa Object
 
@@ -51,7 +44,7 @@ hAzzle.extend({
      * querySelector and not querySelectorAll
      */
 
-    find: function (selector, context, results, /* INTERNAL */ single) {
+    find: function(selector, context, results, /* INTERNAL */ single) {
 
         var quickMatch = quickExpr.exec(selector),
             nodeType;
@@ -76,6 +69,8 @@ hAzzle.extend({
 
         if (documentIsHTML) {
 
+            // Quick match
+
             if (quickMatch) {
 
                 qM(selector, context, quickMatch);
@@ -85,56 +80,16 @@ hAzzle.extend({
             // existing, and no XML doc - use QSA. If not, fallback
             // to the internal selector engine 
 
-            if (Jiesa.useNative && Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
+            if (Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
 
-                var old = true,
-                    nid = expando;
-
-                if (context !== doc) {
-
-                    // Thanks to Andrew Dupont for the technique
-
-                    old = context.getAttribute('id');
-
-                    if (old) {
-
-                        nid = old.replace(escaped, '\\$&');
-
-                    } else {
-
-                        context.setAttribute('id', nid);
-                    }
-
-                    nid = "[id='" + nid + "'] ";
-
-                    context = sibling.test(selector) ? context.parentElement : context;
-                    selector = nid + selector.split(',').join(',' + nid);
-                }
-
-                try {
-
-                    // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
-
-                    if (single) {
-
-                        return [context.querySelector(selector)];
-
-                    } else {
-
-                        push.apply(results, context.querySelectorAll(selector));
-                        return results;
-                    }
-
-                } finally {
-
-                    if (!old) {
-
-                        context.removeAttribute("id");
-                    }
-                }
+                // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
+                return buggyQSA(context, selector, single ?
+                    context.querySelector :
+                    context.querySelectorAll);
             }
         }
-        // Run the parser
+       
+	    // Run the parser
 
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
 
@@ -147,19 +102,13 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    findOne: function (selector, context) {
+    findOne: function(selector, context) {
         return this.find(selector, context, null, true);
     },
 
-    /**
-     * Find element matched by selector
-     * @param {String} selector
-     * @param {Object}  elem
-     * @return {Boolean}
-     */
-
-
 }, Jiesa);
+
+// Do a quick match on the frequently used selectors
 
 function qM(selector, context, quickMatch) {
     var results = [],
@@ -198,11 +147,50 @@ function qM(selector, context, quickMatch) {
     }
 }
 
+// Fixes buggy QSA
+// Thanks to Andrew Dupont for the technique
+
+var buggyQSA = function(context, selector, method) {
+
+    var old = true,
+        nid = "__hAzzle__";
+
+    if (context !== doc) {
+
+        old = context.getAttribute('id');
+
+        if (old) {
+
+            nid = old.replace(/'/g, "\\$&");
+
+        } else {
+
+            context.setAttribute('id', nid);
+        }
+
+        nid = "[id='" + nid + "'] ";
+
+        context = sibling.test(selector) ? context.parentElement : context;
+        selector = nid + selector.split(',').join(',' + nid);
+    }
+
+    try {
+
+        return method.call(context, selector);
+
+    } finally {
+
+        if (!old) {
+
+            context.removeAttribute("id");
+        }
+    }
+};
+
 // Expand to the global hAzzle object
 
 hAzzle.find = Jiesa.find;
 hAzzle.findOne = Jiesa.findOne;
-hAzzle.matchesSelector = Jiesa.matchesSelector;
 
 // Boolean true / false
 // If 'true', QSA got activated

@@ -17,7 +17,7 @@ var win = this,
 
     hasDuplicate,
 
-    sortOrder = function (a, b) {
+    sortOrder = function(a, b) {
         if (a === b) {
             hasDuplicate = true;
         }
@@ -31,7 +31,7 @@ var win = this,
         'api-stableSort': expando.split("").sort(sortOrder).join("") === expando,
         'api-sortInput': false,
         'bug-detectDuplicates': !!hasDuplicate,
-        'sort-bug': hAzzle.assert(function (div1) {
+        'sort-bug': hAzzle.assert(function(div1) {
             // Should return 1, but returns 4 (following)
             return div1.compareDocumentPosition(document.createElement("div")) & 1;
         })
@@ -48,21 +48,13 @@ var win = this,
 
             // Feature detect if the browser supports QSA
 
-            'api-QSA': !!winDoc.querySelectorAll,
-
-            // Feature detect if the browser supports MatchesSelector
-
-            'api-mS': cnative.test((matches = docElem.matches ||
-                docElem.webkitMatchesSelector ||
-                docElem.mozMatchesSelector ||
-                docElem.oMatchesSelector ||
-                docElem.msMatchesSelector)),
+            'api-QSA': !!winDoc.querySelectorAll
         }
     };
 
 // Convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
 
-var setDocument = hAzzle.setDocument = function (node) {
+var setDocument = hAzzle.setDocument = function(node) {
 
     var doc = node ? node.ownerDocument || node : winDoc,
         parent = doc.defaultView;
@@ -91,7 +83,7 @@ var setDocument = hAzzle.setDocument = function (node) {
 
     if (parent && parent !== parent.top) {
 
-        parent.addEventListener("unload", function () {
+        parent.addEventListener("unload", function() {
 
             setDocument();
 
@@ -108,28 +100,32 @@ var setDocument = hAzzle.setDocument = function (node) {
 
 winDoc = hAzzle.setDocument();
 
-// Always let this feature be undocumentet - internal usage
-
-Jiesa.mS = matches;
-
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
-// Check for classList support
+// Feature detect if the browser supports MatchesSelector,
+// and check for classList support
 
 hAzzle.assert(function(div) {
+
     div.classList.add('a', 'b');
     // Detect if the browser supports classList
-   Jiesa.has['api-classList'] = !!winDoc.documentElement.classList;
+    Jiesa.has['api-classList'] = !!winDoc.documentElement.classList;
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
-   Jiesa.has['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);
+    Jiesa.has['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);
+
+    Jiesa.has['api-mS'] = cnative.test((Jiesa.matches = docElem.matches ||
+        docElem.webkitMatchesSelector ||
+        docElem.mozMatchesSelector ||
+        docElem.oMatchesSelector ||
+        docElem.msMatchesSelector));
 });
 
 
 
 // QSA supported, test for bugs
 
-Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function (div) {
+Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function(div) {
     div.innerHTML = "<p class='QsA'>Jiesa</p>";
     return div.querySelectorAll(".QsA").length === 0 ? false :
         // Check for broken :checked pseudo in Webkit/Opera
@@ -138,7 +134,7 @@ Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function (div) {
 
 // matchesSelector supported, test for bugs
 
-Jiesa.has['bug-mS'] = Jiesa.has['api-mS'] ? hAzzle.assert(function (div) {
+Jiesa.has['bug-mS'] = Jiesa.has['api-mS'] ? hAzzle.assert(function(div) {
 
     // IE9 supports matchesSelector, but doesn't work on orphaned elems
     // check for that
@@ -152,7 +148,7 @@ Jiesa.has['bug-mS'] = Jiesa.has['api-mS'] ? hAzzle.assert(function (div) {
  * Check if getElementsByTagName ("*") returns only elements
  */
 
-Jiesa.has["bug-GEBTN"] = hAzzle.assert(function (div) {
+Jiesa.has["bug-GEBTN"] = hAzzle.assert(function(div) {
     div.appendChild(winDoc.createComment(''));
     return div.getElementsByTagName('*').length > 0;
 });
@@ -161,7 +157,7 @@ Jiesa.has["bug-GEBTN"] = hAzzle.assert(function (div) {
  * Check for getElementById bug
  * Support: IE<10
  */
-Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
+Jiesa.has["bug-GEBI"] = hAzzle.assert(function(div) {
     hAzzle.docElem.appendChild(div).id = expando;
     return winDoc.getElementsByName > 0 || winDoc.getElementsByName(expando).length;
 });
@@ -174,7 +170,7 @@ Jiesa.has["bug-GEBI"] = hAzzle.assert(function (div) {
  *
  */
 
-contains = (docElem.contains || docElem.compareDocumentPosition) ? function (parent, node) {
+contains = (docElem.contains || docElem.compareDocumentPosition) ? function(parent, node) {
 
     var adown, bup = node && node.parentNode;
 
@@ -192,7 +188,7 @@ contains = (docElem.contains || docElem.compareDocumentPosition) ? function (par
         adown.contains(bup) :
         parent.compareDocumentPosition && parent.compareDocumentPosition(bup) & 16
     ));
-} : function (parent, node) {
+} : function(parent, node) {
     while (node && (node = node.parentNode))
         if (node === parent) {
             return true;
@@ -204,7 +200,7 @@ contains = (docElem.contains || docElem.compareDocumentPosition) ? function (par
 
 Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
 
-    function (a, b) {
+    function(a, b) {
 
         // Flag for duplicate removal
 
@@ -246,7 +242,7 @@ Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
 
         return compare & 4 ? -1 : 1;
     } :
-    function (a, b) {
+    function(a, b) {
         // Exit early if the nodes are identical
         if (a === b) {
             hasDuplicate = true;
@@ -307,7 +303,7 @@ Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
  * @param {Object} elem
  * @return {Boolean}
  */
-hAzzle.contains = function (context, elem) {
+hAzzle.contains = function(context, elem) {
     // Set document vars if needed
     if ((context.ownerDocument || context) !== document) {
         setDocument(context);
@@ -356,7 +352,7 @@ hAzzle.extend({
 
     whitespace: "[\\x20\\t\\r\\n\\f]",
     runescape: new RegExp("\\\\([\\da-f]{1,6}" + this.whitespace + "?|(" + this.whitespace + ")|.)", "ig"),
-    funescape: function (_, escaped, escapedWhitespace) {
+    funescape: function(_, escaped, escapedWhitespace) {
         var high = "0x" + escaped - 0x10000;
         // NaN means non-codepoint
         // Support: Firefox<24
@@ -386,8 +382,7 @@ hAzzle.Jiesa = Jiesa;
 
 hAzzle.classList = Jiesa.has['api-classList'];
 hAzzle.MultiArgs = Jiesa.has['api-MultiArgs'];
-
-hAzzle.unique = function (results) {
+hAzzle.unique = function(results) {
     var elem,
         duplicates = [],
         j = 0,
