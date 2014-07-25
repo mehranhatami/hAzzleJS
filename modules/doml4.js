@@ -9,6 +9,7 @@
  * - after
  * - replace
  * - remove
+ * - matches
  */
 (function(window) {
 
@@ -61,7 +62,22 @@
                 if (this.parentNode) {
                     this.parentNode.removeChild(this);
                 }
-            }
+            },
+            'matches', (
+                ElementPrototype.matchesSelector ||
+                ElementPrototype.webkitMatchesSelector ||
+                ElementPrototype.khtmlMatchesSelector ||
+                ElementPrototype.mozMatchesSelector ||
+                ElementPrototype.msMatchesSelector ||
+                ElementPrototype.oMatchesSelector ||
+                function matches(selector) {
+                    var parentNode = this.parentNode;
+                    return !!parentNode && -1 < indexOf.call(
+                        parentNode.querySelectorAll(selector),
+                        this
+                    );
+                }
+            ),
         ],
         slice = properties.slice,
         i = properties.length;

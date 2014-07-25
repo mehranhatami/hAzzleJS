@@ -5,11 +5,9 @@ var documentIsHTML = hAzzle.documentIsHTML,
     quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
     ntapi = {},
     matches = Jiesa.has['api-mS'] ? function(node, selector) {
-        return !Jiesa.has['bug-mS'] ? (docElem.matches ||
-            docElem.webkitMatchesSelector ||
-            docElem.mozMatchesSelector ||
-            docElem.oMatchesSelector ||
-            docElem.msMatchesSelector).call(node, selector) : hAzzle.find();
+		// 'matches' standard in DOM Level 4 and replacement for
+		// matchesselector
+        return !Jiesa.has['bug-mS'] ? node.matches(selector) : hAzzle.find();
     } : hAzzle.find();
 
 
