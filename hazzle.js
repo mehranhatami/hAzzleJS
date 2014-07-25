@@ -1,5 +1,5 @@
 /*! hazzle v0.9.3a - MIT license */
-(function (win) {
+(function(win) {
     function moduleDefinition() {
         return win.hAzzle;
     }
@@ -7,11 +7,12 @@
         hazzleModules = [
             path + 'hazzle.js',
             path + 'ntapi.js',
+            path + 'doml4.js',
             path + 'types.js',
             path + 'ready.js',
             path + 'shims/pnow.js',
             path + 'extra.js',
-            path + 'text.js',			
+            path + 'text.js',
             path + 'core.js',
             path + 'cl3.js',
             path + 'cl4.js',
@@ -19,7 +20,7 @@
             path + 'compile.js',
             path + 'jiesa.js',
             path + 'matchesselector.js',
-            path + 'matches.js',		
+            path + 'matches.js',
             path + 'raf.js',
             path + 'fx.js',
             path + 'html.js',
@@ -38,8 +39,8 @@
             path + 'showhide.js',
             path + 'detection.js',
             path + 'events.js',
-            path + 'trigger.js',			
-            path + 'aliases.js',			
+            path + 'trigger.js',
+            path + 'aliases.js',
             path + 'eventhooks.js',
             path + 'ajax.js',
             path + 'clone.js',

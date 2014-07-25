@@ -42,6 +42,7 @@ function conf(grunt) {
       },
       hAzzleModules = [
         'hazzle.js',
+        'doml4.js',
         'ntapi.js',
         'types.js',
         'ready.js',
