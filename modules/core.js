@@ -4,6 +4,8 @@ var win = this,
     setDocument,
     contains,
     cnative = /^[^{]+\{\s*\[native \w/,
+    mArgsL = /(^| )a( |$)/,
+    mArgsR = /(^| )b( |$)/,
 
     indexOf = Array.prototype.indexOf,
 
@@ -40,16 +42,9 @@ var win = this,
 
     Jiesa = {
 
-        // Always use a unique version number 
-        // for Jiesa
-        version: '0.0.3d',
-
         sortOrder: sortOrder,
 
         has: {
-
-            // Detect if the browser supports classList
-            'api-classList': !!winDoc.documentElement.classList,
 
             // Feature detect if the browser supports QSA
 
@@ -118,6 +113,19 @@ winDoc = hAzzle.setDocument();
 Jiesa.mS = matches;
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
+
+// Check for classList support
+
+hAzzle.assert(function(div) {
+    div.classList.add('a', 'b');
+    // Detect if the browser supports classList
+   Jiesa.has['api-classList'] = !!winDoc.documentElement.classList;
+    // Detect if the classList API supports multiple arguments
+    // IE11-- don't support it
+   Jiesa.has['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);
+});
+
+
 
 // QSA supported, test for bugs
 
@@ -370,6 +378,15 @@ hAzzle.extend({
 hAzzle.docElem = docElem;
 hAzzle.expando = expando;
 hAzzle.Jiesa = Jiesa;
+
+// Return true/ false if classList are supported
+// This depends of the 'classList shim' are 
+// included in the build or not. If not, it
+// will only return false on IE9
+
+hAzzle.classList = Jiesa.has['api-classList'];
+hAzzle.MultiArgs = Jiesa.has['api-MultiArgs'];
+
 hAzzle.unique = function (results) {
     var elem,
         duplicates = [],

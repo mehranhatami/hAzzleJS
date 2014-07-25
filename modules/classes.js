@@ -1,29 +1,35 @@
 /**
- * Class manipulation 
- */ 
-
+ * Class manipulation
+ */
 var wSpace = /\S+/g,
-    mArgsL = /(^| )a( |$)/,
-    mArgsR = /(^| )b( |$)/,
-
-    // class feature container 
-    // Contains various supports and bug related info
-
-    clsF = {};
-
-// Check for classList support. NOTE! IE9 are the only browser
-// who don't support classList
-
-hAzzle.assert(function (div) {
-    div.classList.add('a', 'b');
-    // Detect if the browser supports classList
-    clsF['api-classList'] = !!document.documentElement.classList;
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
-    clsF['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);
-});
+    MultiArgs = hAzzle.MultiArgs;
 
 hAzzle.extend({
+    /** 
+     * Remove classes that have given prefix
+     *
+     * @param {String} prefix
+     * @return {hAzzle}
+     *
+     * Example:
+     *
+     * hAzzle( ELEM ).addClass( "js hAzzleCore hAzzleClasses html" );
+     * hAzzle( ELEM ).removeClassPrefix('hAzzle');
+     *
+     * The resulting classes are "js html"
+     *
+     */
+
+    removeClassPrefix: function(prefix) {
+        return this.each(function(elem) {
+            var classes = hAzzle.map(elem.className.split(' '), function(itm) {
+                return itm.indexOf(prefix) === 0 ? '' : itm;
+            });
+            elem.className = classes.join(' ');
+        });
+    },
 
     /**
      * Add class(es) to element
@@ -32,7 +38,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    addClass: function (value) {
+    addClass: function(value) {
 
         if (value) {
 
@@ -40,7 +46,7 @@ hAzzle.extend({
                 l, type = typeof value;
 
             if (type === 'function') {
-                return this.each(function (el, count) {
+                return this.each(function(el, count) {
                     hAzzle(el).addClass(value.call(el, count, el.className));
                 });
             }
@@ -51,13 +57,13 @@ hAzzle.extend({
 
                 classes = value.match(wSpace) || [];
 
-                return this.each(function (elem) {
+                return this.each(function(elem) {
 
                     if (elem.nodeType === 1) {
 
                         // Multiple arguments
 
-                        if (clsF['api-MultiArgs']) {
+                        if (MultiArgs) {
 
                             elem.classList.add.apply(elem.classList, classes);
 
@@ -82,13 +88,13 @@ hAzzle.extend({
      * @param {String} value
      */
 
-    removeClass: function (value) {
+    removeClass: function(value) {
         if (value) {
             var classes, cls, i = 0,
                 l, type = typeof value;
 
             if (type === 'function') {
-                return this.each(function (el, count) {
+                return this.each(function(el, count) {
                     hAzzle(el).removeClass(value.call(el, count, el.className));
                 });
             }
@@ -97,7 +103,7 @@ hAzzle.extend({
 
                 classes = value.match(wSpace) || [];
 
-                return this.each(function (elem) {
+                return this.each(function(elem) {
 
                     if (elem.nodeType === 1 && elem.className) {
 
@@ -108,7 +114,7 @@ hAzzle.extend({
 
                         // Check if we are supporting multiple arguments
 
-                        if (clsF['api-MultiArgs']) {
+                        if (MultiArgs) {
 
                             elem.classList.remove.apply(elem.classList, classes);
 
@@ -131,10 +137,10 @@ hAzzle.extend({
      * Check if the given element contains class name(s)
      *
      * @param {String} value
-     * @return {Boolean} 
+     * @return {Boolean}
      */
 
-    hasClass: function (value) {
+    hasClass: function(value) {
 
         var self = this,
             i = self.length;
@@ -156,7 +162,7 @@ hAzzle.extend({
     },
 
     /**
-	 * Toggle class(es) on element
+     * Toggle class(es) on element
      * optionally a `bool` may be given
      * to indicate that the class should
      * be added when truthy.
@@ -166,18 +172,18 @@ hAzzle.extend({
      * @return {Boolean}
      */
 
-    toggleClass: function (value, state) {
+    toggleClass: function(value, state) {
 
         var type = typeof value,
             isBool = typeof state === 'boolean';
 
         if (typeof value === 'function') {
-            return this.each(function (el, count) {
+            return this.each(function(el, count) {
                 hAzzle(el).toggleClass(value.call(el, count, el.className, state), state);
             });
         }
 
-        return this.each(function (el) {
+        return this.each(function(el) {
             if (el.nodeType === 1) {
                 if (type === 'string') {
                     // Toggle individual class names
@@ -210,13 +216,28 @@ hAzzle.extend({
                 }
             }
         });
+    },
+    alterClass: function(removals, additions) {
+
+        var self = this;
+
+        if (removals.indexOf('*') === -1) {
+            self.removeClass(removals);
+            return !additions ? self : self.addClass(additions);
+        }
+
+        var patt = new RegExp('\\s' +
+            removals.replace(/\*/g, '[A-Za-z0-9-_]+').split(' ').join('\\s|\\s') +
+            '\\s', 'g');
+
+        self.each(function(elem) {
+            var cn = ' ' + elem.className + ' ';
+            while (patt.test(cn)) {
+                cn = cn.replace(patt, ' ');
+            }
+            elem.className = hAzzle.trim(cn);
+        });
+
+        return !additions ? self : self.addClass(additions);
     }
-
 });
-
-// Return true/ false if classList are supported
-// This depends of the 'classList shim' are 
-// included in the build or not. If not, it
-// will only return false on IE9
-
-hAzzle.classList = clsF['api-classList'];

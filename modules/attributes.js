@@ -140,14 +140,16 @@ hAzzle.extend({
         'class': 'className',
         'cellpadding': 'cellPadding',
         'cellspacing': 'cellSpacing',
-        'tabindex': 'tabIndex',
-        'readonly': 'readOnly',
         'maxlength': 'maxLength',
         'rowspan': 'rowSpan',
         'colspan': 'colSpan',
         'usemap': 'useMap',
         'frameborder': 'frameBorder',
-        'contenteditable': 'contentEditable'
+        'contenteditable': 'contentEditable',
+		// for IE
+        'tabindex': 'tabIndex',
+        'readonly': 'readOnly'
+
     },
 
     nodeHook: {},
@@ -194,7 +196,7 @@ hAzzle.extend({
     },
 
     /**
-     * Remove attributes for each element in a collection
+     * Removes an attribute from an HTML element
      *
      * @param {Object} el
      * @param {Array|string} value
@@ -243,13 +245,16 @@ hAzzle.extend({
 
     attr: function (elem, name, value) {
 
-        var hooks, ret, valid = [2, 3, 8],
+        var hooks, ret,
             nType = elem.nodeType;
-
-        if (elem && (valid[nType])) {
-
+       
+	   if ( !elem || nType === 3 || nType === 8 || nType === 2 ) {
+			return;
+		}
             // Fallback to prop when attributes are not supported
-            if (typeof elem.getAttribute === undefined) {
+            if (typeof elem.getAttribute === undefined ||
+			    name === 'textContext') {
+					
                 return hAzzle.prop(elem, name, value);
             }
 
@@ -298,7 +303,6 @@ hAzzle.extend({
                     ret;
 
             }
-        }
     },
 
     // Props to jQuery
@@ -361,13 +365,8 @@ hAzzle.extend({
             }
         }
         return 0;
-    },
-
-    getAttrNode: function (element, attribute) {
-        var node = element.getAttributeNode(attribute);
-        return node ? node.value : '';
     }
-
+	
 }, hAzzle);
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
