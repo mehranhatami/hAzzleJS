@@ -19,7 +19,7 @@ hAzzle supports all the new features on the marked that has been there for years
 - XMLHttp v. 2
 - CORS
 
-NOTE!! hAzzle now also support DOM Level 4 with it's build in pollify. Following DL4 methods are supported and used:
+ hAzzle now also support DOM Level 4 with it's build in pollify. Following DL4 methods are supported and used:
 
 - append
 - prepend
