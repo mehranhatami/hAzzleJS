@@ -22,7 +22,7 @@
             path + 'matches.js',		
             path + 'raf.js',
             path + 'fx.js',
-            path + 'parse.js',
+            path + 'html.js',
             path + 'data.js',
             path + 'shims/classlist.js',
             path + 'classes.js',

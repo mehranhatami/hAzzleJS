@@ -58,7 +58,7 @@ function conf(grunt) {
 		'matches.js',		
         'raf.js',
         'fx.js',
-        'parse.js',
+        'html.js',
         'data.js',
         'shims/classlist.js',
         'classes.js',

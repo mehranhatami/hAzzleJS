@@ -1,12 +1,10 @@
 /*!
  * appendHTML.js
  */
- 
 var win = this,
     doc = win.document,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
-    simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
     riAH = /<script|\[object/i,
     tagName = /<([\w:]+)/,
 
@@ -19,33 +17,33 @@ var win = this,
 
     Ji = {
 
-        'append': function(elem, count) {
-            elem.appendChild(count);
+        'append': function(elem, html) {
+            elem.appendChild(html);
         },
-        'prepend': function(elem, count) {
-            elem.insertBefore(count, elem.firstChild, true);
+        'prepend': function(elem, html) {
+            elem.insertBefore(html, elem.firstChild, true);
         },
-        'after': function(elem, count) {
-            elem.parentElement.insertBefore(count, elem.nextSibling);
+        'after': function(elem, html) {
+            elem.parentElement.insertBefore(html, elem.nextSibling);
         },
-        'before': function(elem, count) {
-            elem.parentElement.insertBefore(count, elem);
+        'before': function(elem, html) {
+            elem.parentElement.insertBefore(html, elem);
         },
     },
 
     Hi = {
 
-        'appendTo': function(el, t) {
-            t.appendChild(el);
+        'appendTo': function(el, html) {
+            html.appendChild(el);
         },
-        'prependTo': function(el, t) {
-            t.insertBefore(el, t.firstChild);
+        'prependTo': function(el, html) {
+            html.insertBefore(el, html.firstChild);
         },
-        'insertBefore': function(el, t) {
-            t.parentElement.insertBefore(el, t);
+        'insertBefore': function(el, html) {
+            html.parentElement.insertBefore(el, html);
         },
-        'insertAfter': function(el, t) {
-            var sibling = t.nextElementSibling;
+        'insertAfter': function(el, html) {
+            var sibling = html.nextElementSibling;
 
             if (sibling) {
 
@@ -53,7 +51,7 @@ var win = this,
 
             } else {
 
-                t.parentElement.appendChild(el);
+                html.parentElement.appendChild(el);
             }
         }
     },
@@ -209,6 +207,52 @@ hAzzle.extend({
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
+// Append, prepend, before and after manipulation methods
+// insertAdjutantHTML (iAH) are only used for this methods
+
+function ManipulationMethod(elem, count, html, chain, method) {
+      if (!iAh(elem, html, iAHInserters[method])) {
+    if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
+        hAzzle.each(stabilizeHTML(html, chain, count), function(html) {
+            Ji[method](elem, html);
+        });
+    }
+   }
+}
+
+// appendTo, prependTo, insertBefore, insertAfter manipulation methods
+
+function InjectionMethod(elem, html, method) {
+    return injectHTML.call(elem, html, elem, function(html, el) {
+        try {
+            Hi[method](el, html);
+        } catch (e) {}
+    }, 1);
+}
+
+/**
+ * insertAdjacentHTML method
+ *
+ * @param {Object} elem
+ * @param {String} html
+ * @param {String} dir
+ * @return {hAzzle}
+ */
+
+function iAh(elem, html, dir) {
+    var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase(),
+        pNode = elem.parentElement;
+    if (typeof html === 'string' && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
+        if (elem.insertAdjacentHTML && pNode && pNode.nodeType === 1) {
+            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
+            return true;
+        }
+        return false;
+    }
+    return false;
+}
+
+
 /**
  * Stabilize HTML
  * @param {Object} node
@@ -216,43 +260,16 @@ hAzzle.extend({
  * @param {Numbers} clone
  */
 
-var stabilizeHTML = hAzzle.stabilizeHTML = function(node, elems, clone) {
-
-    if (!node) {
-        return;
-    }
-    var i = 0,
-        l = node.length,
-        ret;
-
-    if (typeof node === 'string') {
-
-        return hAzzle.create(node);
-    }
-
-    if (hAzzle.isNode(node)) {
-
-        node = [node];
-    }
-
-    // temporary solution
+var stabilizeHTML = hAzzle.stabilizeHTML = function(node) {
+    if (typeof node == 'string') {
+	   return createHTML(node);
+	} 
     if (node.nodeType === 3) {
-        return [node];
-    }
-
-    if (clone) {
-
-        ret = [];
-
-        // don't change original array
-
-        for (; i < l; i++) {
-
-            ret[i] = hAzzle.cloneNode(elems[i], node[i]);
-        }
-
-        return ret;
-    }
+        node = [node];
+    } // Temporary
+    if (hAzzle.isNode(node)) {
+	node = [node];
+	}
     return node;
 };
 
@@ -309,7 +326,6 @@ function injectHTML(target, node, fn, rev) {
     return node;
 }
 
-
 /**
  * Create HTML
  *
@@ -317,144 +333,39 @@ function injectHTML(target, node, fn, rev) {
  *  @param {string} context
  *  @return {hAzzle}
  *
- * 'context' are just an extra parameter so
- * we can create html on CSS nodes as well
+ * NOTE!! This function are *only* internal. For creation 
+ * of HTML. Use the code in html.js
  * as document.
  *
- * LEFT TO DO!!
- *
- * - use of documentFragment
- *
- * - Add an similar function to jQuery's keepScript
- *
- * - re-factoring
- *
  */
 
-hAzzle.create = function(html, context) {
-
-    if (html === '') {
-        return;
-    }
-
+function createHTML(html) {
 
     var tag = html.match(singleTag),
-        matches,
+        el = doc.createElement('div'),
+        els = [],
+        p = tag ? htmlMap[tag[1].toLowerCase()] : null,
+        dep = p ? p[2] + 1 : 1,
+        ns = p && p[3],
+        pn = 'parentNode';
 
-        // Prevent XSS vulnerability
-
-        defaultContext = typeof doc.implementation.createHTMLDocument === 'function' ?
-        doc.implementation.createHTMLDocument() :
-        doc;
-
-
-    context = context || defaultContext;
-
-    if (typeof html === 'string') {
-
-        // Create single script tag
-
-        if (simpleScriptTagRe.test(html)) {
-            matches = html.match(simpleScriptTagRe);
-            doc.createElement('script').src = matches[1];
-            return [doc.createElement('script')];
+    el.innerHTML = p ? (p[0] + html + p[1]) : html;
+    
+	while (dep--) {
+	  el = el.firstChild;
+	}
+    
+    if (ns && el && el.nodeType !== 1) {
+	el = el.nextElementSibling;
+	}
+    do {
+        if (!tag || el.nodeType == 1) {
+            els.push(el);
         }
+    } while (el = el.nextElementSibling);
 
-        // Single tag
-
-        if (tag) return [context.createElement(tag[1])];
-
-        var el = context.createElement('div'),
-            els = [],
-            p = tag ? htmlMap[tag[1].toLowerCase()] : null,
-            dep = p ? p[2] + 1 : 1,
-            ns = p && p[3],
-            pn = 'parentNode';
-
-
-        if (p) el.innerHTML = (p[0] + html + p[1]);
-
-
-        else el.innerHTML = html;
-
-        while (dep--) {
-
-            if (el.firstChild) {
-
-                el = el.firstChild;
-            }
-        }
-
-        if (ns && el && el.nodeType !== 1) {
-
-            el = el.nextElementSibling;
-        }
-
-        do {
-
-            if (!tag || el.nodeType == 1) {
-
-                els.push(el);
-            }
-
-        } while ((el = el.nextSibling));
-
-        hAzzle.each(els, function(el) {
-
-            if (el[pn]) {
-                el[pn].removeChild(el);
-            }
-        });
-
-        return els;
-
-    } else {
-
-        return hAzzle.isNode(html) ? [html.cloneNode(true)] : [];
-    }
-};
-
-// Append, prepend, before and after manipulation methods
-// insertAdjutantHTML (iAH) are only used for this methods
-
-function ManipulationMethod(elem, count, html, chain, method) {
-    if (!iAh(elem, html, iAHInserters[method])) {
-        if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
-            hAzzle.each(stabilizeHTML(html, chain, count), function(count) {
-                Ji[method](elem, count);
-            });
-        }
-    }
-}
-
-// appendTo, prependTo, insertBefore, insertAfter manipulation methods
-
-function InjectionMethod(elem, html, method) {
-    return injectHTML.call(elem, html, elem, function(t, el) {
-        try {
-            Hi[method](el, t);
-        } catch (e) {}
-    }, 1);
-}
-
-/**
- * insertAdjacentHTML method
- *
- * @param {Object} elem
- * @param {String} html
- * @param {String} dir
- * @return {hAzzle}
- */
-
-function iAh(elem, html, dir) {
-    var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase(),
-        pNode = elem.parentElement;
-    if (typeof html === 'string' && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
-        if (elem.insertAdjacentHTML && pNode && pNode.nodeType === 1) {
-            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
-            return true;
-        }
-        return false;
-    }
-    return false;
+    hAzzle.each(els, function(el) {
+        el[pn] && el[pn].removeChild(el);
+    });
+    return els;
 }
