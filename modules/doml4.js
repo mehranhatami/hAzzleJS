@@ -1,7 +1,7 @@
 /**
- * DOM Level 4 pollify for hAzzle
+ * DOM 4 shim / polify for hAzzle
  *
- * This pollify only covers the
+ * This shim only covers the
  *
  * - append
  * - prepend
@@ -52,14 +52,15 @@
             },
             'replace',
             function replace() {
-                this.parentNode &&
+                if (this.parentNode) {
                     this.parentNode.replaceChild(applyToFragment(arguments), this);
-
+                }
             },
             'remove',
             function remove() {
-                this.parentNode &&
+                if (this.parentNode) {
                     this.parentNode.removeChild(this);
+                }
             }
         ],
         slice = properties.slice,
