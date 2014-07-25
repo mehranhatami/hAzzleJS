@@ -8,7 +8,12 @@
  *
  * See DOML4.js module for the DL4 pollify. That pollify will be
  * deleted soon as DL4 become standard in all browsers.
+ *
+ * In most cases we are not using DL4 either because if pure strings,
+ * we are using insertAdjacentHTML() for better performance. DL4 are used
+ * as an fallback if no strings given.
  */
+ 
 var win = this,
     doc = win.document,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
