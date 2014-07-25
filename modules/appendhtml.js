@@ -1,5 +1,8 @@
 /*!
  * appendHTML.js
+ *
+ * - using DOM Level 4
+ *
  */
 var win = this,
     doc = win.document,
@@ -15,23 +18,23 @@ var win = this,
         append: 'beforeEnd'
     },
 
-    Ji = {
+    DL4 = { // DOM Level 4
 
         'append': function(elem, html) {
-            elem.appendChild(html);
+            elem.append(html);
         },
         'prepend': function(elem, html) {
-            elem.insertBefore(html, elem.firstChild, true);
+            elem.prepend(html);
         },
         'after': function(elem, html) {
-            elem.parentElement.insertBefore(html, elem.nextSibling);
+            elem.after(html);
         },
         'before': function(elem, html) {
-            elem.parentElement.insertBefore(html, elem);
+            elem.before(html);
         },
     },
 
-    Hi = {
+    DL3 = { // DOM Level 3
 
         'appendTo': function(el, html) {
             html.appendChild(el);
@@ -211,13 +214,13 @@ hAzzle.extend({
 // insertAdjutantHTML (iAH) are only used for this methods
 
 function ManipulationMethod(elem, count, html, chain, method) {
-      if (!iAh(elem, html, iAHInserters[method])) {
+    //      if (!iAh(elem, html, iAHInserters[method])) {
     if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
         hAzzle.each(stabilizeHTML(html, chain, count), function(html) {
-            Ji[method](elem, html);
+            DL4[method](elem, html);
         });
     }
-   }
+    //   }
 }
 
 // appendTo, prependTo, insertBefore, insertAfter manipulation methods
@@ -225,7 +228,7 @@ function ManipulationMethod(elem, count, html, chain, method) {
 function InjectionMethod(elem, html, method) {
     return injectHTML.call(elem, html, elem, function(html, el) {
         try {
-            Hi[method](el, html);
+            DL3[method](el, html);
         } catch (e) {}
     }, 1);
 }
@@ -262,14 +265,14 @@ function iAh(elem, html, dir) {
 
 var stabilizeHTML = hAzzle.stabilizeHTML = function(node) {
     if (typeof node == 'string') {
-	   return createHTML(node);
-	} 
+        return createHTML(node);
+    }
     if (node.nodeType === 3) {
         node = [node];
     } // Temporary
     if (hAzzle.isNode(node)) {
-	node = [node];
-	}
+        node = [node];
+    }
     return node;
 };
 
@@ -333,7 +336,7 @@ function injectHTML(target, node, fn, rev) {
  *  @param {string} context
  *  @return {hAzzle}
  *
- * NOTE!! This function are *only* internal. For creation 
+ * NOTE!! This function are *only* internal. For creation
  * of HTML. Use the code in html.js
  * as document.
  *
@@ -350,14 +353,14 @@ function createHTML(html) {
         pn = 'parentNode';
 
     el.innerHTML = p ? (p[0] + html + p[1]) : html;
-    
-	while (dep--) {
-	  el = el.firstChild;
-	}
-    
+
+    while (dep--) {
+        el = el.firstChild;
+    }
+
     if (ns && el && el.nodeType !== 1) {
-	el = el.nextElementSibling;
-	}
+        el = el.nextElementSibling;
+    }
     do {
         if (!tag || el.nodeType == 1) {
             els.push(el);
