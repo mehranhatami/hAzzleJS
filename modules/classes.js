@@ -4,33 +4,11 @@
 var wSpace = /\S+/g,
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
-    MultiArgs = hAzzle.MultiArgs;
+    MultiArgs = hAzzle.MultiArgs,
+	classCache = [];
 
 hAzzle.extend({
-    /** 
-     * Remove classes that have given prefix
-     *
-     * @param {String} prefix
-     * @return {hAzzle}
-     *
-     * Example:
-     *
-     * hAzzle( ELEM ).addClass( "js hAzzleCore hAzzleClasses html" );
-     * hAzzle( ELEM ).removeClassPrefix('hAzzle');
-     *
-     * The resulting classes are "js html"
-     *
-     */
-
-    removeClassPrefix: function(prefix) {
-        return this.each(function(elem) {
-            var classes = hAzzle.map(elem.className.split(' '), function(itm) {
-                return itm.indexOf(prefix) === 0 ? '' : itm;
-            });
-            elem.className = classes.join(' ');
-        });
-    },
-
+   
     /**
      * Add class(es) to element
      *
@@ -43,21 +21,15 @@ hAzzle.extend({
         if (value) {
 
             var classes, cls, i = 0,
-                l, type = typeof value;
-
-            if (type === 'function') {
-                return this.each(function(el, count) {
-                    hAzzle(el).addClass(value.call(el, count, el.className));
-                });
-            }
+                type = typeof value, l = this.length, elem, multi;
 
             if (type === 'string') {
 
-                // split with regEx are a safer solution
+                classes =  (value || '').match(wSpace)  || [];
 
-                classes = value.match(wSpace) || [];
-
-                return this.each(function(elem) {
+				while(l--) {
+				
+				elem = this[l];
 
                     if (elem.nodeType === 1) {
 
@@ -65,20 +37,29 @@ hAzzle.extend({
 
                         if (MultiArgs) {
 
-                            elem.classList.add.apply(elem.classList, classes);
+                     elem = elem.classList;
+                     elem.add.apply(elem, classes);							
+							
 
                         } else {
 
                             l = classes.length;
 
-                            for (; i < l; i++) {
+                            for (i = 0; i < l; i++) {
                                 cls = classes[i];
                                 elem.classList.add(cls);
                             }
                         }
                     }
+                }
+            }
+			
+	      if (type === 'function') {
+                return this.each(function(el, count) {
+                    hAzzle(el).addClass(value.call(el, count, el.className));
                 });
             }
+
         }
     },
 
@@ -217,27 +198,28 @@ hAzzle.extend({
             }
         });
     },
-    alterClass: function(removals, additions) {
+	
+ /** 
+     * Remove classes that have given prefix
+     *
+     * @param {String} prefix
+     * @return {hAzzle}
+     *
+     * Example:
+     *
+     * hAzzle( ELEM ).addClass( "js hAzzleCore hAzzleClasses html" );
+     * hAzzle( ELEM ).removeClassPrefix('hAzzle');
+     *
+     * The resulting classes are "js html"
+     *
+     */
 
-        var self = this;
-
-        if (removals.indexOf('*') === -1) {
-            self.removeClass(removals);
-            return !additions ? self : self.addClass(additions);
-        }
-
-        var patt = new RegExp('\\s' +
-            removals.replace(/\*/g, '[A-Za-z0-9-_]+').split(' ').join('\\s|\\s') +
-            '\\s', 'g');
-
-        self.each(function(elem) {
-            var cn = ' ' + elem.className + ' ';
-            while (patt.test(cn)) {
-                cn = cn.replace(patt, ' ');
-            }
-            elem.className = hAzzle.trim(cn);
+    removeClassPrefix: function(prefix) {
+        return this.each(function(elem) {
+            var classes = hAzzle.map(elem.className.split(' '), function(itm) {
+                return itm.indexOf(prefix) === 0 ? '' : itm;
+            });
+            elem.className = classes.join(' ');
         });
-
-        return !additions ? self : self.addClass(additions);
-    }
+    }	
 });

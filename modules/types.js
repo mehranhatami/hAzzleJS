@@ -8,36 +8,41 @@ hAzzle.extend({
      *
      * @param {Mixed} object
      * @return {String} object type
+	 *
+	 * NOTE! Use of switch{} here will slow down the 
+	 * performance with 1 -2% in all browsers 
+	 *
      */
 
-    type: function (obj) {
+    type: function(obj) {
 
-        var type = typeof obj;
+        var type = typeof obj, str;
 
         if (obj === null) {
 
             return obj + '';
         }
 
-        switch (type) {
-        case 'boolean':
+        if (type === 'boolean') {
             return 'boolean';
-        case 'object':
-            return 'object';
-        case 'string':
-            return 'string';
-        default:
-
-            var str = hAzzle.str.call(obj);
-
-            if (natives[str]) {
-                return natives[str];
-            }
-
-            return type;
         }
+        if (type === 'object') {
+            return 'object';
+        }
+        if (type === 'string') {
+            return 'string';
+        }
+
+        str = hAzzle.str.call(obj);
+
+        if (natives[str]) {
+            return natives[str];
+        }
+
+        return type;
+
     },
-    legalTypes: function (elem) {
+    legalTypes: function(elem) {
 
         if (elem && (elem.nodeType === 1 ||
             elem.nodeType === 9 ||
@@ -48,7 +53,7 @@ hAzzle.extend({
         return false;
     },
 
-    is: function (kind, obj) {
+    is: function(kind, obj) {
 
         if (hAzzle.isArray(kind)) {
 
@@ -60,49 +65,49 @@ hAzzle.extend({
         return typeof obj === kind;
     },
 
-    isEmpty: function (value) {
+    isEmpty: function(value) {
 
         return typeof value === 'undefined' || value === '' || value === null || value !== value;
     },
 
     // Determines if a reference is an `Object`
 
-    isObject: function (value) {
+    isObject: function(value) {
 
         return value !== null && typeof value === 'object';
     },
 
     // Determines if a reference is a `Number`.
 
-    isNumber: function (value) {
+    isNumber: function(value) {
         return typeof value === 'number';
     },
 
     // Determines if a reference is a `String`.
 
-    isString: function (value) {
+    isString: function(value) {
         return typeof value === 'string';
     },
 
     // Determines if a reference is a `Function`.
 
-    isFunction: function (value) {
+    isFunction: function(value) {
         return typeof value === 'function';
     },
 
-    isEmptyObject: function (obj) {
+    isEmptyObject: function(obj) {
         var name;
         for (name in obj) {
             return false;
         }
         return true;
     },
-    isNumeric: function (obj) {
+    isNumeric: function(obj) {
         return !hAzzle.isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
 
     },
 
-    isBlank: function (str) {
+    isBlank: function(str) {
         return hAzzle.trim(str).length === 0;
     },
 
@@ -110,46 +115,46 @@ hAzzle.extend({
 
     //  Checks if `obj` is a window object.
 
-    isWindow: function (obj) {
+    isWindow: function(obj) {
         return obj !== null && obj === obj.window;
     },
 
-    isDocument: function (obj) {
+    isDocument: function(obj) {
         return obj.nodeType && obj.nodeType === 9;
     },
 
-    isBody: function (el) {
+    isBody: function(el) {
         return el && el.nodeName.toUpperCase() === 'BODY';
     },
 
-    isHtml: function (el) {
+    isHtml: function(el) {
         return el && el.nodeName.toUpperCase() === 'HTML';
     },
 
-    isBoolean: function (value) {
+    isBoolean: function(value) {
         return value === true || value === false;
     },
 
-    isDefined: function (value) {
+    isDefined: function(value) {
         return typeof value !== 'undefined';
     },
 
-    isUndefined: function (value) {
+    isUndefined: function(value) {
         return typeof value === 'undefined';
     },
 
-    IsNaN: function (val) {
+    IsNaN: function(val) {
         return typeof val === 'number' && val !== +val;
     },
 
-    isElement: function (elem) {
+    isElement: function(elem) {
         return elem && (elem.nodeType === 1 || elem.nodeType === 9);
     },
-    isNull: function (elem) {
-        return elem && elem == 'null';
+    isNull: function(elem) {
+        return elem == 'null';
     },
 
-    isNodeList: function (obj) {
+    isNodeList: function(obj) {
         return obj && hAzzle.is([
             'nodelist',
             'htmlcollection',
@@ -157,7 +162,7 @@ hAzzle.extend({
         ], obj);
     },
 
-    isArraylike: function (obj) {
+    isArraylike: function(obj) {
         var length = obj.length,
             type;
 
@@ -182,13 +187,13 @@ hAzzle.extend({
 /* =========================== INTERNAL ========================== */
 
 // Populate the native list
-hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.split(' '), function (name) {
+hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.split(' '), function(name) {
     natives['[object ' + name + ']'] = name.toLowerCase();
 });
 
 // Add some isType methods
-hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments'], function (name) {
-    hAzzle['is' + name] = function (o) {
+hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments'], function(name) {
+    hAzzle['is' + name] = function(o) {
         return hAzzle.str.call(o) === '[object ' + name + ']';
     };
 });
