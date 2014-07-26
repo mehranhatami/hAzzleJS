@@ -1,7 +1,7 @@
 {
     "name": "hazzle",
     "description": "",
-    "version": "1.6.3-BETA",
+    "version": "0.9.5b-RC2",
     "dependencies": {
         "grunt": "0.4.2",
         "grunt-complexity": "^0.1.x",
