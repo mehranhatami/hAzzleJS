@@ -35,7 +35,7 @@ hAzzle.extend({
 
                 // Try to get the id
 
-                var uid = node.getAttribute(this.UID);
+                var uid = node.getAttribute(hAzzle.UID);
 
                 if (!uid) {
 
@@ -49,13 +49,19 @@ hAzzle.extend({
                 return uid;
             }
 
-            if (typeof node.hAzzleID === 'undefined') {
+            if (typeof node.hiD === 'undefined') {
 
                 // Attach the UID directly on a Object
 
-                node.hAzzleID = name + this.UID++;
+                node.hiD = name + hAzzle.UID++;
             }
-            return node.hAzzleID;
+
+            // What we do if someone tamper with this shit??
+            // Yep, fix it!
+
+            // tamperFix(node, name);
+
+            return node.hiD;
         }
 
         // If no boolean or Object, return false;
@@ -64,3 +70,14 @@ hAzzle.extend({
     }
 
 }, hAzzle);
+
+/* ============================ UTILITY METHODS =========================== */
+
+function tamperFix(node, name) {
+    var tmp = node.hiD;
+    if (typeof tmp.replace(name, '') !== 'number') {
+        // set a new valid number
+        node.hiD = name + hAzzle.UID++;
+    }
+    return node.hiD;
+}
