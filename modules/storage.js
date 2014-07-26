@@ -161,6 +161,14 @@ var hAzzleData = new Storage();
 
 hAzzle.extend({
 
+    /**
+     * Check if an element contains data
+     *
+     * @param{String/Object} elem
+     * @param{String} key
+     * @return {Object}
+     */
+
     hasData: function(elem) {
         return hAzzleData.hasData(elem);
     },
@@ -168,6 +176,14 @@ hAzzle.extend({
     data: function(elem, name, data) {
         return hAzzleData.access(elem, name, data);
     },
+
+    /**
+     * Remove data from an element
+     *
+     * @param {String/Object} elem
+     * @param {String} key
+     * @return {Object}
+     */
 
     removeData: function(elem, name) {
         hAzzleData.erease(elem, name);
@@ -179,6 +195,15 @@ hAzzle.extend({
 
 hAzzle.extend({
 
+    /**
+     * Getter/setter of a data entry value on the hAzzle Object.
+     * HTML5 data-* attribute if it exists
+     *
+     * @param  {String|Object|Array}  key(s)
+     * @param  {Object}               value
+     * @return {Object|String }
+     */
+
     data: function(key, value) {
 
         var i, name, data,
@@ -186,16 +211,15 @@ hAzzle.extend({
             attrs = elem && elem.attributes;
 
         // Gets all values
+
         if (key === undefined) {
             if (this.length) {
                 data = hAzzleData.get(elem);
 
                 if (elem.nodeType === 1 && !hAzzleData.get(elem, "hasDataAttrs")) {
                     i = attrs.length;
-                    while (i--) {
 
-                        // Support: IE11+
-                        // The attrs elements can be null (#14894)
+                    while (i--) {
                         if (attrs[i]) {
                             name = attrs[i].name;
                             if (name.indexOf("data-") === 0) {
@@ -212,6 +236,7 @@ hAzzle.extend({
         }
 
         // Sets multiple values
+
         if (typeof key === "object") {
             return this.each(function() {
                 hAzzleData.set(this, key);
@@ -222,24 +247,18 @@ hAzzle.extend({
             var data,
                 camelKey = camelize(key);
 
-
             if (elem && value === undefined) {
-                // Attempt to get data from the cache
-                // with the key as-is
+
                 data = hAzzleData.get(elem, key);
                 if (data !== undefined) {
                     return data;
                 }
 
-                // Attempt to get data from the cache
-                // with the key camelized
                 data = hAzzleData.get(elem, camelKey);
                 if (data !== undefined) {
                     return data;
                 }
 
-                // Attempt to "discover" the data in
-                // HTML5 custom data-* attrs
                 data = dataAttr(elem, camelKey, undefined);
                 if (data !== undefined) {
                     return data;
@@ -250,25 +269,24 @@ hAzzle.extend({
             }
 
             // Set the data...
+
             this.each(function() {
-                // First, attempt to store a copy or reference of any
-                // data that might've been store with a camelCased key.
                 var data = hAzzleData.get(this, camelKey);
-
-                // For HTML5 data-* attribute interop, we have to
-                // store property names with dashes in a camelCase form.
-                // This might not apply to all properties...*
                 hAzzleData.set(this, camelKey, value);
-
-                // *... In the case of properties that might _actually_
-                // have dashes, we need to also store a copy of that
-                // unchanged property.
                 if (key.indexOf("-") !== -1 && data !== undefined) {
                     hAzzleData.set(this, key, value);
                 }
             });
         }, null, value, arguments.length > 1, null, true);
     },
+
+    /**
+     * Remove attributes from element collection
+     *
+     * @param {String} key
+     *
+     * @return {Object}
+     */
 
     removeData: function(key) {
         return this.each(function() {
@@ -278,17 +296,14 @@ hAzzle.extend({
 });
 
 
-
-
 /* =========================== INTERNAL ========================== */
 
 function dataAttr(elem, key, data) {
     var name;
 
-    // If nothing was found internally, try to fetch any
-    // data from the HTML5 data-* attribute
     if (data === undefined && elem.nodeType === 1) {
         name = "data-" + key.replace(charRegEx, "-$1").toLowerCase();
+
         data = elem.getAttribute(name);
 
         if (typeof data === "string") {
