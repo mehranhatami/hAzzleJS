@@ -1,11 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.5b
+ * Version: 0.9.5c
  * Released under the MIT License.
  *
- * Date: 2014-07-26
+ * Date: 2014-07-27
  */
+ 
 (function(window, undefined) {
 
     // hAzzle already defined, leave now
@@ -363,7 +364,6 @@
          * Check if an element exist in an array
          */
 
-
         inArray: function(array, value, index) {
 
             var i = (index || 0),
@@ -464,20 +464,17 @@
         },
 
         merge: function(first, second) {
-            if (second) {
-                var len = +second.length,
-                    j = 0,
-                    i = first.length;
+        var len = +second.length,
+			j = 0,
+			i = first.length;
 
-                for (; j < len; j++) {
+		for ( ; j < len; j++ ) {
+			first[ i++ ] = second[ j ];
+		}
 
-                    first[i++] = second[j];
-                }
+		first.length = i;
 
-                first.length = i;
-
-                return first;
-            }
+		return first;
         },
 
         // Nothing
@@ -569,62 +566,6 @@
             }
         }
     }, hAzzle);
-
-
-    // This one has to be fast...
-
-    var setter = hAzzle.setter = function(elems, fn, key, value, exec) {
-
-        var len = elems.length,
-            k,
-            i = 0;
-
-        // Setting many attributes
-        if (hAzzle.type(key) === 'object') {
-
-            for (k in key) {
-
-                setter(elems, fn, k, key[k], exec);
-            }
-
-            // Return the elements
-
-            return elems;
-
-            // No value 
-
-        } else if (value !== undefined) {
-
-            if (typeof value === 'function') {
-
-                for (; i < len; i++) {
-
-                    fn(elems[i], key, value.call(elems[i], i, fn(elems[i], key)));
-                }
-
-                // Return the elements
-
-                return elems;
-            }
-
-            // Getting an attribute
-
-            if (fn) {
-
-                for (; i < len; i++) {
-
-
-                    fn(elems[i], key, value);
-                }
-
-                // Return the elements
-
-                return elems;
-            }
-        }
-
-        return fn(elems[0], key);
-    };
 
     /**
      * Remove empty whitespace from beginning and end of a string

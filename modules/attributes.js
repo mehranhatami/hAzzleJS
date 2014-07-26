@@ -49,7 +49,7 @@ hAzzle.extend({
      */
 
     attr: function(name, value) {
-        return hAzzle.setter(this, hAzzle.attr, name, value, true);
+        return hAzzle.setter(this, hAzzle.attr, name, value, arguments.length > 1);
     },
 
     /**
@@ -93,7 +93,7 @@ hAzzle.extend({
      */
 
     prop: function(name, value) {
-        return hAzzle.setter(this, hAzzle.prop, name, value, true);
+        return hAzzle.setter(this, hAzzle.prop, name, value, arguments.length > 1);
     },
 
     /**

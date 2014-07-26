@@ -1,7 +1,7 @@
 // Unique ID
 hAzzle.extend({
 
-    // A global GUID counter for objects
+    // A global UID counter for objects
 
     UID: 1,
 
@@ -29,7 +29,8 @@ hAzzle.extend({
         } else if (typeof node === 'object') {
 
             // If 'exposed' are true, we are setting the UID as
-            // an attribute value on the Object
+            // an attribute value on the node,
+			// This could be tampered with
 
             if (exposed) {
 
@@ -56,7 +57,7 @@ hAzzle.extend({
                 node.hiD = name + hAzzle.UID++;
             }
 
-            // What we do if someone tamper with this shit??
+            // What we do if someone tamper with the UID??
             // Yep, fix it!
 
             // tamperFix(node, name);
@@ -74,8 +75,9 @@ hAzzle.extend({
 /* ============================ UTILITY METHODS =========================== */
 
 function tamperFix(node, name) {
-    var tmp = node.hiD;
-    if (typeof tmp.replace(name, '') !== 'number') {
+    var tmp = node.hiD.replace(name, '');
+	// The counter should be a number
+    if (typeof tmp !== 'number') {
         // set a new valid number
         node.hiD = name + hAzzle.UID++;
     }
