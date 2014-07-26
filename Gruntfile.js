@@ -51,6 +51,7 @@ function conf(grunt) {
         'extra.js',
         'text.js',
         'core.js',
+        'setter.js',
         'storage.js',
         'cl3.js',
         'cl4.js',

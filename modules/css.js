@@ -48,48 +48,31 @@ hAzzle.extend({
      * @return {hAzzle|string}
      */
 
-    css: function(prop, value) {
+    css: function(name, value) {
+		
+		return hAzzle.setter( this, function( elem, name, value ) {
+			var styles, len,
+				map = {},
+				i = 0;
 
-        var type = typeof prop,
-            i = 0,
-            key, l = this.length,
-            obj = type === 'string' ? {} : prop,
-            el = this[0];
+			if ( hAzzle.isArray( name ) ) {
+				styles = getStyles( elem );
+				len = name.length;
 
-        // If 'prop' are an array
+				for ( ; i < len; i++ ) {
+					map[ name[ i ] ] = hAzzle.css( elem, name[ i ], false, styles );
+				}
 
-        if (hAzzle.isArray(prop)) {
-            var map = {},
-                styles = getStyles(el),
-                len = prop.length;
-            i = 0;
+				return map;
+			}
 
-            for (; i < len; i++) {
+			return value !== undefined ?
+				hAzzle.style( elem, name, value ) :
+				hAzzle.css( elem, name );
+		}, name, value, arguments.length > 1 );
+		
+		
 
-                map[prop[i]] = curCSS(el, prop[i], styles);
-            }
-            return map;
-        }
-
-        // Both values set, get CSS value
-
-        if (typeof value === 'undefined' && type === 'string') {
-
-            return hAzzle.css(el, prop);
-        }
-
-        if (type === 'string') {
-            obj[prop] = value;
-        }
-
-        for (; i < l; i++) {
-
-            for (key in obj) {
-
-                hAzzle.style(this[i], key, obj[key]);
-            }
-        }
-        return this;
     },
 
     opacity: function(value) {
