@@ -1,66 +1,51 @@
-/*
- * classList.js: Cross-browser full element.classList implementation.
- * 2014-07-23
- *
- * By Eli Grey, http://eligrey.com
- * Public Domain.
- * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
- */
-/*global self, document, DOMException */
-/*! @source http://purl.eligrey.com/github/classList.js/blob/master/classList.js*/
-if ("document" in self) {
+// classList pollify for hAzzle - only needed for IE9 and a few 
+// other  browsers (mobile platform)
 
-    // Full polyfill for browsers with no classList support
-    if (!("classList" in document.createElement("_"))) {
+if ('document' in self) {
+
+    if (!('classList' in document.createElement('_'))) {
 
         (function(view) {
 
-            "use strict";
+            'use strict';
 
-            if (!('Element' in view)) return;
+            if (!('Element' in view)) {
+			      
+				  return;
+			} 
 
-            var classListProp = "classList",
-                protoProp = "prototype",
+            var classListProp = 'classList',
+                protoProp = 'prototype',
                 elemCtrProto = view.Element[protoProp],
                 objCtr = Object,
                 strTrim = String[protoProp].trim || function() {
-                    return this.replace(/^\s+|\s+$/g, "");
+                    return this.replace(/^\s+|\s+$/g, '');
                 },
-                arrIndexOf = Array[protoProp].indexOf || function(item) {
-                    var
-                        i = 0,
-                        len = this.length;
-                    for (; i < len; i++) {
-                        if (i in this && this[i] === item) {
-                            return i;
-                        }
-                    }
-                    return -1;
-                },
-                // Vendors: please allow content code to instantiate DOMExceptions
+                arrIndexOf = Array[protoProp].indexOf,
+
                 DOMEx = function(type, message) {
                     this.name = type;
                     this.code = DOMException[type];
                     this.message = message;
                 },
                 checkTokenAndGetIndex = function(classList, token) {
-                    if (token === "") {
+                    if (token === '') {
                         throw new DOMEx(
-                            "SYNTAX_ERR",
-                            "An invalid or illegal string was specified"
+                            'SYNTAX_ERR',
+                            'An invalid or illegal string was specified'
                         );
                     }
                     if (/\s/.test(token)) {
                         throw new DOMEx(
-                            "INVALID_CHARACTER_ERR",
-                            "String contains an invalid character"
+                            'INVALID_CHARACTER_ERR',
+                            'String contains an invalid character'
                         );
                     }
                     return arrIndexOf.call(classList, token);
                 },
                 ClassList = function(elem) {
 
-                    var trimmedClasses = strTrim.call(elem.getAttribute("class") || ""),
+                    var trimmedClasses = strTrim.call(elem.getAttribute('class') || ''),
                         classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [],
                         i = 0,
                         len = classes.length;
@@ -68,21 +53,20 @@ if ("document" in self) {
                         this.push(classes[i]);
                     }
                     this._updateClassName = function() {
-                        elem.setAttribute("class", this.toString());
+                        elem.setAttribute('class', this.toString());
                     };
                 },
                 classListProto = ClassList[protoProp] = [],
                 classListGetter = function() {
                     return new ClassList(this);
                 };
-            // Most DOMException implementations don't allow calling DOMException's toString()
-            // on non-DOMExceptions. Error's toString() is sufficient here.
+
             DOMEx[protoProp] = Error[protoProp];
             classListProto.item = function(i) {
                 return this[i] || null;
             };
             classListProto.contains = function(token) {
-                token += "";
+                token += '';
                 return checkTokenAndGetIndex(this, token) !== -1;
             };
             classListProto.add = function() {
@@ -93,7 +77,7 @@ if ("document" in self) {
                     token,
                     updated = false;
                 do {
-                    token = tokens[i] + "";
+                    token = tokens[i] + '';
                     if (checkTokenAndGetIndex(this, token) === -1) {
                         this.push(token);
                         updated = true;
@@ -114,7 +98,7 @@ if ("document" in self) {
                     updated = false,
                     index;
                 do {
-                    token = tokens[i] + "";
+                    token = tokens[i] + '';
                     index = checkTokenAndGetIndex(this, token);
                     while (index !== -1) {
                         this.splice(index, 1);
@@ -129,12 +113,12 @@ if ("document" in self) {
                 }
             };
             classListProto.toggle = function(token, force) {
-                token += "";
+                token += '';
 
                 var result = this.contains(token),
                     method = result ?
-                    force !== true && "remove" :
-                    force !== false && "add";
+                    force !== true && 'remove' :
+                    force !== false && 'add';
 
                 if (method) {
                     this[method](token);
@@ -147,7 +131,7 @@ if ("document" in self) {
                 }
             };
             classListProto.toString = function() {
-                return this.join(" ");
+                return this.join(' ');
             };
 
             if (objCtr.defineProperty) {
@@ -171,19 +155,15 @@ if ("document" in self) {
         }(self));
 
     } else {
-        // There is full or partial native classList support, so just check if we need
-        // to normalize the add/remove and toggle APIs.
 
         (function() {
-            "use strict";
+            'use strict';
 
-            var testElement = document.createElement("_");
+            var testElement = document.createElement('_');
 
-            testElement.classList.add("c1", "c2");
+            testElement.classList.add('c1', 'c2');
 
-            // Polyfill for IE 10/11 and Firefox <26, where classList.add and
-            // classList.remove exist but support only one argument at a time.
-            if (!testElement.classList.contains("c2")) {
+            if (!testElement.classList.contains('c2')) {
                 var createMethod = function(method) {
                     var original = DOMTokenList.prototype[method];
 
@@ -200,11 +180,9 @@ if ("document" in self) {
                 createMethod('remove');
             }
 
-            testElement.classList.toggle("c3", false);
+            testElement.classList.toggle('c3', false);
 
-            // Polyfill for IE 10 and Firefox <24, where classList.toggle does not
-            // support the second argument.
-            if (testElement.classList.contains("c3")) {
+            if (testElement.classList.contains('c3')) {
                 var _toggle = DOMTokenList.prototype.toggle;
 
                 DOMTokenList.prototype.toggle = function(token, force) {
@@ -214,7 +192,6 @@ if ("document" in self) {
                         return _toggle.call(this, token);
                     }
                 };
-
             }
 
             testElement = null;
