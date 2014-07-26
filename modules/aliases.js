@@ -72,7 +72,7 @@ hAzzle.extend({
 
             fn = once(fn);
 
-            fn.guid = origFn.guid || (origFn.guid = hAzzle.eventCore.setID());
+            fn.guid = origFn.guid || (origFn.guid = hAzzle.getID(true, 'hEvt_'));
         }
 
         return this.each(function () {

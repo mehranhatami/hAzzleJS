@@ -53,11 +53,7 @@ var Jiesa = hAzzle.Jiesa,
     eventCore = hAzzle.eventCore = {
 
         version: 'hAzzleEvents-0.45a',
-
-        // A counter used to create unique IDs
-
-        UID: 1,
-
+        
         // Feature / bug detection
 
         has: {
@@ -66,13 +62,6 @@ var Jiesa = hAzzle.Jiesa,
         },
 
         global: {},
-
-        // Set unique ID for each handler
-
-        setID: function() {
-
-            return 'hEvt_' + eventCore.UID++;
-        }
     };
 
 // Expose to the global scope
@@ -118,7 +107,7 @@ hAzzle.event = {
 
         if (!handler.guid) {
 
-            handler.guid = eventCore.setID();
+            handler.guid = hAzzle.getID(true, 'hEvt_');
         }
 
         // Create a hash table of event types for the element
