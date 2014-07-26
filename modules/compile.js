@@ -112,8 +112,9 @@ function getNodes(context) {
     }
     //throw error for invalid context? 
   }
-
-  return nodes;
+// Temporary fix Allways make sure we have a nodes to return
+// else code breaks
+  return nodes && nodes;
 }
 
 hAzzle.extend({
@@ -122,7 +123,7 @@ hAzzle.extend({
     'id': new RegExp('^#(' + identifier + ')'),
     'tag': new RegExp('^(' + identifier + '|[*])'),
     'Class': new RegExp('^\\.(' + identifier + ')'),
-    'rel': /^\>|\>|\+|~$/,
+    'rel': /^\>|\>|\+|~$/, // BUGGY!!! Not working!!
 
     'nth': new RegExp('^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(' + whitespace +
       '*(even|odd|(([+-]|)(\\d*)n|)' + whitespace + '*(?:([+-]|)' + whitespace +
@@ -144,13 +145,21 @@ hAzzle.extend({
 
   parse: function (selector, context) {
 
+// Temporary fix 
+// Allways make sure we have a selector
+// else code breaks
+
+if(!selector) {
+	
+	return;
+	}
     var i = 0,
       pieceStore = [],
       nodes,
       l, piece, piece1, j = 0,
       k,
       chunks, kf;
-
+// I think this nodes are buggy as well
     nodes = getNodes(context);
 
     selector = selector.replace(trimspaces, '').replace(special, ' $1');

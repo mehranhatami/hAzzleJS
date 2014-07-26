@@ -8,7 +8,6 @@
  *
  * - Various bug checks
  */
- 
 var Jiesa = hAzzle.Jiesa,
 
     // Default document
@@ -80,16 +79,57 @@ hAzzle.extend({
             // existing, and no XML doc - use QSA. If not, fallback
             // to the internal selector engine 
 
-            if (Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
+            if (Jiesa.useNative && Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
 
-                // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
-                return buggyQSA(context, selector, single ?
-                    context.querySelector :
-                    context.querySelectorAll);
+                var old = true,
+                    nid = expando;
+
+                if (context !== doc) {
+
+                    // Thanks to Andrew Dupont for the technique
+
+                    old = context.getAttribute('id');
+
+                    if (old) {
+
+                        nid = old.replace(escaped, '\\$&');
+
+                    } else {
+
+                        context.setAttribute('id', nid);
+                    }
+
+                    nid = "[id='" + nid + "'] ";
+
+                    context = sibling.test(selector) ? context.parentElement : context;
+                    selector = nid + selector.split(',').join(',' + nid);
+                }
+
+                try {
+
+                    // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
+
+                    if (single) {
+
+                        return [context.querySelector(selector)];
+
+                    } else {
+
+                        push.apply(results, context.querySelectorAll(selector));
+                        return results;
+                    }
+
+                } finally {
+
+                    if (!old) {
+
+                        context.removeAttribute("id");
+                    }
+                }
             }
         }
-       
-	    // Run the parser
+
+        // Run the parser
 
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
     },
@@ -132,59 +172,19 @@ function qM(selector, context, quickMatch) {
             }
         }
 
-    // Tag
+        // Tag
 
     } else if (quickMatch[2]) {
         push.apply(results, context.getElementsByTagName(selector));
         return results;
 
-    // Class
+        // Class
 
     } else if (context.getElementsByClassName) {
         push.apply(results, context.getElementsByClassName(quickMatch[3]));
         return results;
     }
 }
-
-// Fixes buggy QSA
-// Thanks to Andrew Dupont for the technique
-
-var buggyQSA = function(context, selector, method) {
-
-    var old = true,
-        nid = "__hAzzle__";
-
-    if (context !== doc) {
-
-        old = context.getAttribute('id');
-
-        if (old) {
-
-            nid = old.replace(/'/g, "\\$&");
-
-        } else {
-
-            context.setAttribute('id', nid);
-        }
-
-        nid = "[id='" + nid + "'] ";
-
-        context = sibling.test(selector) ? context.parentElement : context;
-        selector = nid + selector.split(',').join(',' + nid);
-    }
-
-    try {
-
-        return method.call(context, selector);
-
-    } finally {
-
-        if (!old) {
-
-            context.removeAttribute("id");
-        }
-    }
-};
 
 // Expand to the global hAzzle object
 
