@@ -53,165 +53,234 @@
  * then if it is not a key object for another object it will generate a unique key for you
  *
  */
+// Mehran!! For objects sent into this module / script, you need to make sure it's
+// an Object and not a look-a-like. 
+// 
+// You can do it like this:
+// 
+// if(hAzzle.type(Mehran) === "object") OBJECT
+//
 var win = this,
 
-  hAzzle = win.hAzzle;
+    // This will get trouble with grunt - REMOVE!!
 
-var cacheKey = '___cachekey___',
-  objKeyPrefix = 'obj:',
-  storePrototype = {
-    'undefined': undefined,
-    'null': null,
-    'false': false,
-    'true': true
-  };
+    hAzzle = win.hAzzle;
+
+var types = {},
+    cacheKey = '___cachekey___',
+
+    objKeyPrefix = 'obj:',
+
+    storePrototype = {
+        'undefined': undefined,
+        'null': null,
+        'false': false,
+        'true': true
+    };
 
 function mapProperty(value) {
-  //Prevent it from duplication
-  var prop = mapProperty.prop;
-  if (prop === undefined) {
-    prop = {
-      enumerable: false,
-      writable: false,
-      configurable: false,
-      value: null
-    };
-    mapProperty.prop = prop;
-  }
-  prop.value = value;
-  return prop;
+
+    //Prevent it from duplication
+
+    var prop = mapProperty.prop;
+
+    if (prop === undefined) {
+
+        prop = {
+            enumerable: false,
+            writable: false,
+            configurable: false,
+            value: null
+        };
+
+        mapProperty.prop = prop;
+    }
+
+    prop.value = value;
+
+    return prop;
 }
 
 function createMapStorage() {
-  //There will be more code here
-  return Object.create(storePrototype);
+
+    //There will be more code here
+
+    // Mehran! I look forward to see that code :)
+
+    return Object.create(storePrototype);
 }
 
 function createCacheMap() {
 
-  function cacheMap(key, value) {
-    var storage = cacheMap.__storage__,
-      keyType = typeof key,
-      valueType = typeof value,
-      val,
-      keyObj,
-      obj;
+    function cacheMap(key, value) {
+        var storage = cacheMap.__storage__,
+            keyType = typeof key,
+            valueType = typeof value,
+            val,
+            keyObj,
+            obj;
 
-    if (storage === undefined) {
-      storage = createMapStorage();
-      cacheMap.__storage__ = storage;
+        if (storage === undefined) {
 
-      cacheMap.key = function (obj) {
-        var k;
-        if ((k = obj[cacheKey])) {
-          if (k.indexOf(objKeyPrefix) === 0) {
-            k = k.substring(objKeyPrefix.length);
-            return cacheMap.val(k);
-          }
-          return obj[cacheKey];
-        }
-        return null;
-      };
+            storage = createMapStorage();
 
-      cacheMap.val = function (key) {
-        var keyObj, ktype;
+            cacheMap.__storage__ = storage;
 
-        if (key === null) {
-          return null;
-        }
+            cacheMap.key = function(obj) {
 
-        ktype = typeof key;
+                var k = obj[cacheKey];
 
-        if (ktype === 'object' || ktype === 'function') {
-          keyObj = cacheMap.key(key);
-          if (keyObj) {
-            key = objKeyPrefix + keyObj;
-          }
-        }
+                if (k) {
 
-        if (storage.hasOwnProperty(key)) {
-          return storage[key];
-        }
+                    if (k.indexOf(objKeyPrefix) === 0) {
 
-        return null;
-      };
-    }
+                        k = k.substring(objKeyPrefix.length);
 
-    if (arguments.length === 1) {
-
-      if (keyType === 'string' || keyType === 'number') {
-        return cacheMap.val(key);
-      }
-
-      if (keyType === 'boolean' || keyType === null || keyType === undefined) {
-        return key;
-      }
-
-      if (keyType === 'object' || keyType === 'function') {
-
-        keyObj = cacheMap.key(key);
-        if (keyObj) {
-          obj = cacheMap.val(objKeyPrefix + keyObj);
-          if (obj) {
-            return obj;
-          } else {
-            return keyObj;
-          }
-        }
-
-        value = key;
-
-        //Kenny! Here I needed a way to create a unique key so if you have any faster way of acheiving 
-        key = hAzzle.pnow() + '';
-
-        //Kenny it is a temporary solution to define a non enumerable and non configurable property on an existing object
-        //I probably have to create a mehod to make cross-browser
-        //In terms of performance as far as it happens just once when we store an object or a function in cache
-        //I don't think it is a performance killer
-        //The other point is about not modifying the object that we don't own,
-        //although here the new property gets defined on the value object is not enumerable and writable
-        //but it is still a kind of modifying the object
-        //I have a solution for that as well, to define a property for an object without modifying the object
-        //which will be done in the!
-        //I like to here your feedback
-        Object.defineProperty(value, cacheKey, mapProperty(key));
-
-        storage[key] = value;
-
-        return key;
-      }
-    } else {
-      //These are all hardcoded here but the main solution
-      //will be having all the types on top of the module definition
-      if (valueType === 'boolean' ||
-        valueType === null ||
-        valueType === undefined ||
-        valueType === 'string' ||
-        valueType === 'number') {
-        val = value;
-
-        //Kenny! I know it is not a really good practice and I will fix it later
-        //but the main idea is preventing primitive values from getting stored directly
-        value = {
-          valueOf: (function (val) {
-            return function () {
-              return val;
+                        return cacheMap.val(k);
+                    }
+                    return obj[cacheKey];
+                }
+                return null;
             };
-          }(val))
-        };
-      }
 
-      if (keyType === 'object' || keyType === 'function') {
-        key = objKeyPrefix + cacheMap(key);
-      }
+            cacheMap.val = function(key) {
+                var keyObj, ktype;
 
-      Object.defineProperty(value, cacheKey, mapProperty(key));
 
-      storage[key] = value;
+                // Mehan !! Why?? If the key already are NULL, so only return that key. It's NULL!!!
 
-      return key;
+                if (key === null) {
+                    //   return null;
+                    // Already null
+                    return key;
+                }
+
+                ktype = typeof key;
+
+                if (ktype === 'object' ||
+                    ktype === 'function') {
+
+                    keyObj = cacheMap.key(key);
+
+                    if (keyObj) {
+
+                        key = objKeyPrefix + keyObj;
+                    }
+                }
+
+                if (storage.hasOwnProperty(key)) {
+
+                    return storage[key];
+                }
+
+                return null;
+            };
+        }
+
+        if (arguments.length === 1) {
+
+            // Awfull !! :( :(  Wrap it up inside an object or do some makeover!!
+
+            if (keyType === 'string' ||
+                keyType === 'number') {
+                return cacheMap.val(key);
+            }
+
+            if (keyType === 'boolean' ||
+                keyType === null ||
+                keyType === undefined) {
+
+                return key;
+            }
+
+            if (keyType === 'object' ||
+                keyType === 'function') {
+
+                keyObj = cacheMap.key(key);
+
+                if (keyObj) {
+
+                    obj = cacheMap.val(objKeyPrefix + keyObj);
+
+                    if (obj) {
+
+                        return obj;
+
+                    } else {
+
+                        return keyObj;
+                    }
+                }
+
+                value = key;
+
+                //Kenny! Here I needed a way to create a unique key so if you have any faster way of acheiving 
+                //        key = hAzzle.pnow() + '';
+
+                // Mehran!  Is this solution better for you???
+
+                key = hAzzle.getID(true, 'cache_')
+
+
+                //Kenny it is a temporary solution to define a non enumerable and non configurable property on an existing object
+                //I probably have to create a mehod to make cross-browser
+                //In terms of performance as far as it happens just once when we store an object or a function in cache
+                //I don't think it is a performance killer
+                //The other point is about not modifying the object that we don't own,
+                //although here the new property gets defined on the value object is not enumerable and writable
+                //but it is still a kind of modifying the object
+                //I have a solution for that as well, to define a property for an object without modifying the object
+                //which will be done in the!
+                //I like to here your feedback
+
+                // Mehan!! This is already cross-browser. Have a look at the storage.js and you will see I do the same there
+
+                Object.defineProperty(value, cacheKey, mapProperty(key));
+
+                storage[key] = value;
+
+                return key;
+            }
+        } else {
+            //These are all hardcoded here but the main solution
+            //will be having all the types on top of the module definition
+
+            // Mehran, why do it so hard?? Look at the bottom and top of this file too see the magic I did :)
+
+            if (types[valueType]) {
+
+                val = value;
+
+                //Kenny! I know it is not a really good practice and I will fix it later
+                //but the main idea is preventing primitive values from getting stored directly
+                value = {
+                    valueOf: (function(val) {
+                        return function() {
+                            return val;
+                        };
+                    }(val))
+                };
+            }
+
+            if (keyType === 'object' || keyType === 'function') {
+                key = objKeyPrefix + cacheMap(key);
+            }
+
+            Object.defineProperty(value, cacheKey, mapProperty(key));
+
+            storage[key] = value;
+
+            return key;
+        }
     }
-  }
 
-  return cacheMap;
+    return cacheMap;
 }
+
+
+// Expand the 'type' object
+
+hAzzle.each(['null', 'boolean', 'undefined', 'string', 'number'], function(name) {
+
+    types[name] = true;
+});
