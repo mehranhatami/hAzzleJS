@@ -13,13 +13,13 @@
  * we are using insertAdjacentHTML() for better performance. DL4 are used
  * as an fallback if no strings given.
  */
- 
 var win = this,
     doc = win.document,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
     riAH = /<script|\[object/i,
     tagName = /<([\w:]+)/,
+    documentIsHTML = hAzzle.documentIsHTML,
 
     iAHInserters = {
         before: 'beforeBegin',
@@ -201,8 +201,8 @@ hAzzle.extend({
         return self.each(function(el, i) {
             hAzzle.clearData(el);
             hAzzle.each(stabilizeHTML(arg, self, i), function(i) {
-				// Call DOM Level 4 replace() 
-				el.replace(i)
+                // Call DOM Level 4 replace() 
+                el.replace(i)
             });
         });
     }
@@ -214,13 +214,13 @@ hAzzle.extend({
 // insertAdjutantHTML (iAH) are only used for this methods
 
 function ManipulationMethod(elem, count, html, chain, method) {
-   if (!iAh(elem, html, iAHInserters[method])) {
-    if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
-        hAzzle.each(stabilizeHTML(html, chain, count), function(html) {
-            JI[method](elem, html);
-        });
+    if (!iAh(elem, html, iAHInserters[method])) {
+        if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
+            hAzzle.each(stabilizeHTML(html, chain, count), function(html) {
+                JI[method](elem, html);
+            });
+        }
     }
-   }
 }
 
 // appendTo, prependTo, insertBefore, insertAfter manipulation methods
@@ -243,14 +243,18 @@ function InjectionMethod(elem, html, method) {
  */
 
 function iAh(elem, html, dir) {
-    var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase(),
-        pNode = elem.parentElement;
-    if (typeof html === 'string' && hAzzle.documentIsHTML && !riAH.test(tag) && !htmlMap[tag]) {
-        if (elem.insertAdjacentHTML && pNode && pNode.nodeType === 1) {
-            elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
-            return true;
+// Allways check for string and XML first	
+    if (typeof html === 'string' && documentIsHTML) {
+        var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase(),
+            pNode = elem.parentElement;
+        if (!riAH.test(tag) && !htmlMap[tag]) {
+            elem.insertAdjacentHTML
+            if (elem && pNode && pNode.nodeType === 1) {
+                elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
+                return true;
+            }
+            return false;
         }
-        return false;
     }
     return false;
 }

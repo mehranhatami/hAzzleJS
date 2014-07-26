@@ -4,11 +4,10 @@
 var wSpace = /\S+/g,
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
-    MultiArgs = hAzzle.MultiArgs,
-	classCache = [];
+    MultiArgs = hAzzle.MultiArgs;
 
 hAzzle.extend({
-   
+
     /**
      * Add class(es) to element
      *
@@ -21,15 +20,17 @@ hAzzle.extend({
         if (value) {
 
             var classes, cls, i = 0,
-                type = typeof value, l = this.length, elem, multi;
+                type = typeof value,
+                l = this.length,
+                elem, multi;
 
             if (type === 'string') {
 
-                classes =  (value || '').match(wSpace)  || [];
+                classes = (value || '').match(wSpace) || [];
 
-				while(l--) {
-				
-				elem = this[l];
+                while (l--) {
+
+                    elem = this[l];
 
                     if (elem.nodeType === 1) {
 
@@ -37,9 +38,9 @@ hAzzle.extend({
 
                         if (MultiArgs) {
 
-                     elem = elem.classList;
-                     elem.add.apply(elem, classes);							
-							
+                            elem = elem.classList;
+                            elem.add.apply(elem, classes);
+
 
                         } else {
 
@@ -53,8 +54,8 @@ hAzzle.extend({
                     }
                 }
             }
-			
-	      if (type === 'function') {
+
+            if (type === 'function') {
                 return this.each(function(el, count) {
                     hAzzle(el).addClass(value.call(el, count, el.className));
                 });
@@ -72,19 +73,16 @@ hAzzle.extend({
     removeClass: function(value) {
         if (value) {
             var classes, cls, i = 0,
-                l, type = typeof value;
+                l = this.length,
+                elem, type = typeof value;
 
-            if (type === 'function') {
-                return this.each(function(el, count) {
-                    hAzzle(el).removeClass(value.call(el, count, el.className));
-                });
-            }
-
-            if (arguments.length === 0 || type === 'string') {
+            if (type === 'string' || arguments.length === 0) {
 
                 classes = value.match(wSpace) || [];
 
-                return this.each(function(elem) {
+                while (l--) {
+
+                    elem = this[l];
 
                     if (elem.nodeType === 1 && elem.className) {
 
@@ -109,6 +107,11 @@ hAzzle.extend({
                             }
                         }
                     }
+                }
+            }
+            if (type === 'function') {
+                return this.each(function(el, count) {
+                    hAzzle(el).removeClass(value.call(el, count, el.className));
                 });
             }
         }
@@ -198,8 +201,8 @@ hAzzle.extend({
             }
         });
     },
-	
- /** 
+
+    /** 
      * Remove classes that have given prefix
      *
      * @param {String} prefix
@@ -221,5 +224,5 @@ hAzzle.extend({
             });
             elem.className = classes.join(' ');
         });
-    }	
+    }
 });
