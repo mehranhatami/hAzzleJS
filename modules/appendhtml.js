@@ -19,7 +19,6 @@ var win = this,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
     riAH = /<script|\[object/i,
     tagName = /<([\w:]+)/,
-    documentIsHTML = hAzzle.documentIsHTML,
 
     iAHInserters = {
         before: 'beforeBegin',
@@ -202,7 +201,7 @@ hAzzle.extend({
             hAzzle.clearData(el);
             hAzzle.each(stabilizeHTML(arg, self, i), function(i) {
                 // Call DOM Level 4 replace() 
-                el.replace(i)
+                el.replace(i);
             });
         });
     }
@@ -214,7 +213,17 @@ hAzzle.extend({
 // insertAdjutantHTML (iAH) are only used for this methods
 
 function ManipulationMethod(elem, count, html, chain, method) {
-    if (!iAh(elem, html, iAHInserters[method])) {
+
+    if (typeof html === 'string' &&
+        elem.insertAdjacentHTML &&
+        elem.parentNode && elem.parentNode.nodeType === 1) {
+        var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase();
+        // Object or HTML-string with declaration of a script element 
+        // must not be passed to iAH	
+        if (!riAH.test(tag) && !htmlMap[tag]) {
+            elem.insertAdjacentHTML(iAHInserters[method], html.replace(uniqueTags, '<$1></$2>'));
+        }
+    } else {
         if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
             hAzzle.each(stabilizeHTML(html, chain, count), function(html) {
                 JI[method](elem, html);
@@ -232,33 +241,6 @@ function InjectionMethod(elem, html, method) {
         } catch (e) {}
     }, 1);
 }
-
-/**
- * insertAdjacentHTML method
- *
- * @param {Object} elem
- * @param {String} html
- * @param {String} dir
- * @return {hAzzle}
- */
-
-function iAh(elem, html, dir) {
-// Allways check for string and XML first	
-    if (typeof html === 'string' && documentIsHTML) {
-        var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase(),
-            pNode = elem.parentElement;
-        if (!riAH.test(tag) && !htmlMap[tag]) {
-            elem.insertAdjacentHTML
-            if (elem && pNode && pNode.nodeType === 1) {
-                elem.insertAdjacentHTML(dir, html.replace(uniqueTags, '<$1></$2>'));
-                return true;
-            }
-            return false;
-        }
-    }
-    return false;
-}
-
 
 /**
  * Stabilize HTML
@@ -279,7 +261,6 @@ var stabilizeHTML = hAzzle.stabilizeHTML = function(node) {
     }
     return node;
 };
-
 
 // Inject HTML
 
@@ -332,7 +313,6 @@ function injectHTML(target, node, fn, rev) {
 
     return node;
 }
-
 
 /**
  * Create HTML
