@@ -1,3 +1,4 @@
+// Unique ID
 hAzzle.extend({
 
     // A global GUID counter for objects
@@ -5,34 +6,61 @@ hAzzle.extend({
     UID: 1,
 
     /**
-	 * Set / Get Unique ID
-	 *
-	 * @param {Object|Boolean} elem
-	 * @param {String} name
-	 * @return {Number|Object}
-	 */ 
+     * Set / Get Unique ID
+     *
+     * @param {Object|Boolean} node
+     * @param {String} name
+     * @return {Number|Object}
+     */
 
-    getID: function(elem, name) {
-
+    getID: function(node, name, /* OPTIONAL */ exposed) {
 
         name = name || 'hAzzle_';
 
-        if (typeof elem === 'boolean') {
+        // if boolean true / false value, we are returning
+        // a new UID without attaching it to a object
+
+        if (typeof node === 'boolean') {
+
             return hAzzle.UID++;
 
-        } else { // Attach the UID directly on a Object
-		
-        // Always return 0 if el === window
+            // If we are dealing with a Object, we are happy :)
 
-        //     if (elem === window) {
-        //                return 0;
-        //         }
+        } else if (typeof node === 'object') {
 
-            if (typeof elem.hAzzleID === 'undefined') {
-                elem.hAzzleID = name + hAzzle.UID++;
+            // If 'exposed' are true, we are setting the UID as
+            // an attribute value on the Object
+
+            if (exposed) {
+
+                // Try to get the id
+
+                var uid = node.getAttribute(this.UID);
+
+                if (!uid) {
+
+                    uid = hAzzle.UID++;
+
+                    // Set the new ID
+
+                    node.setAttribute(name, uid);
+                }
+
+                return uid;
             }
-            return elem.hAzzleID;
+
+            if (typeof node.hAzzleID === 'undefined') {
+
+                // Attach the UID directly on a Object
+
+                node.hAzzleID = name + this.UID++;
+            }
+            return node.hAzzleID;
         }
+
+        // If no boolean or Object, return false;
+
+        return false;
     }
 
 }, hAzzle);
