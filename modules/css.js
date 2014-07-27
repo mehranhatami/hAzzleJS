@@ -1,43 +1,124 @@
-/*!
- * CSS
- */
-var numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+// css.js
+// Holds all css related code - isolated from the 
+// global scope
+var cssCore = {
 
-    cssCore = {
+    // Feature / bug detection
 
-        directions: ['Top', 'Right', 'Bottom', 'Left'],
+    has: {
 
-        stylePrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
+        // Check for getComputedStyle support
 
-        /**
-         * CSS Normal Transforms
-         */
-
-        cssNormalTransform: {
-
-            letterSpacing: '0',
-            fontWeight: '400'
-        },
-
-        has: {
-
-            'api-gCS': !!document.defaultView.getComputedStyle
-        }
+        'api-gCS': !!document.defaultView.getComputedStyle
     },
 
-    getStyles = function(elem) {
-        var view = elem.ownerDocument.defaultView;
-        return cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
-            window.getComputedStyle(elem, null)) : elem.style;
-    };
+    // Various regex
 
-// Bug detection
+    numbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+
+    directions: ['Top', 'Right', 'Bottom', 'Left'],
+
+    stylePrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
+
+    /**
+     * CSS Normal Transforms
+     */
+
+    cssNormalTransform: {
+
+        letterSpacing: '0',
+        fontWeight: '400'
+    },
+
+};
+
+/* ============================ FEATURE / BUG DETECTION =========================== */
 
 hAzzle.assert(function(div) {
+
+    // Support: IE9-11+
+
     cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
+
+    var pixelPositionVal, boxSizingReliableVal,
+        container = document.createElement("div");
+
+    container.style.cssText = "border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;" +
+        "position:absolute";
+
+    container.appendChild(div);
+
+    function computePixelPositionAndBoxSizingReliable() {
+        div.style.cssText =
+            // Support: Firefox<29, Android 2.3
+            // Vendor-prefix box-sizing
+            "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;" +
+            "box-sizing:border-box;display:block;margin-top:1%;top:1%;" +
+            "border:1px;padding:1px;width:4px;position:absolute";
+        div.innerHTML = "";
+        hAzzle.docElem.appendChild(container);
+
+        var divStyle = window.getComputedStyle(div, null);
+        pixelPositionVal = divStyle.top !== "1%";
+        boxSizingReliableVal = divStyle.width === "4px";
+
+        hAzzle.docElem.removeChild(container);
+    }
+
+    // Check if we support getComputedStyle
+
+    if (cssCore.has['api-gCS']) {
+
+        cssCore.has['api-pixelPosition'] = (function() {
+            computePixelPositionAndBoxSizingReliable();
+            return pixelPositionVal;
+        })();
+
+        cssCore.has['api-boxSizingReliable'] = (function() {
+            if (boxSizingReliableVal === null) {
+                computePixelPositionAndBoxSizingReliable();
+            }
+            return boxSizingReliableVal;
+        })();
+
+        cssCore.has['api-reliableMarginRight'] = (function() {
+            var ret, marginDiv = div.appendChild(document.createElement("div"));
+            marginDiv.style.cssText = div.style.cssText =
+                "-webkit-box-sizing:content-box;-moz-box-sizing:content-box;" +
+                "box-sizing:content-box;display:block;margin:0;border:0;padding:0";
+            marginDiv.style.marginRight = marginDiv.style.width = "0";
+            div.style.width = "1px";
+            hAzzle.docElem.appendChild(container);
+            ret = !parseFloat(window.getComputedStyle(marginDiv, null).marginRight);
+            hAzzle.docElem.removeChild(container);
+            return ret;
+        })();
+    }
 });
 
-// Extend the hAzzle Core
+// Expose to the global hAzzle Object
+
+hAzzle.clearCloneStyle = cssCore.has['bug-clearCloneStyle']
+hAzzle.pixelPosition = cssCore.has['api-pixelPosition']
+hAzzle.boxSizingReliable = cssCore.has['api-boxSizingReliable']
+hAzzle.reliableMarginRight = cssCore.has['api-reliableMarginRight']
+
+/**
+ * Get native CSS styles
+ *
+ * @param {Object} elem
+ * @return {Object}
+ */
+
+var getStyles = hAzzle.getStyles = function(elem) {
+    var view = elem.ownerDocument.defaultView;
+    return cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
+        window.getComputedStyle(elem, null)) : elem.style;
+};
+
+
+// Extend hAzzle.Core
+
 hAzzle.extend({
 
     /**
@@ -49,30 +130,27 @@ hAzzle.extend({
      */
 
     css: function(name, value) {
-		
-		return hAzzle.setter( this, function( elem, name, value ) {
-			var styles, len,
-				map = {},
-				i = 0;
 
-			if ( hAzzle.isArray( name ) ) {
-				styles = getStyles( elem );
-				len = name.length;
+        return hAzzle.setter(this, function(elem, name, value) {
+            var styles, len,
+                map = {},
+                i = 0;
 
-				for ( ; i < len; i++ ) {
-					map[ name[ i ] ] = hAzzle.css( elem, name[ i ], false, styles );
-				}
+            if (hAzzle.isArray(name)) {
+                styles = getStyles(elem);
+                len = name.length;
 
-				return map;
-			}
+                for (; i < len; i++) {
+                    map[name[i]] = hAzzle.css(elem, name[i], false, styles);
+                }
 
-			return value !== undefined ?
-				hAzzle.style( elem, name, value ) :
-				hAzzle.css( elem, name );
-		}, name, value, arguments.length > 1 );
-		
-		
+                return map;
+            }
 
+            return value !== undefined ?
+                hAzzle.style(elem, name, value) :
+                hAzzle.css(elem, name);
+        }, name, value, arguments.length > 1);
     },
 
     opacity: function(value) {
@@ -80,7 +158,6 @@ hAzzle.extend({
             hAzzle.opacity(el, value);
         });
     }
-
 });
 
 // Go globale!
@@ -118,71 +195,74 @@ hAzzle.extend({
      * @return {String|hAzzle}
      */
 
-    style: function(elem, name, value) {
+    style: function(elem, name, value, extra) {
 
-        if (!elem) {
-
+        // Don't set styles on text and comment nodes
+        if (!elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style) {
             return;
         }
 
-        var valid = [3, 8],
-            nType = elem.nodeType;
+        // Make sure that we're working with the right name
+
+        var ret, type, hooks,
+            origName = hAzzle.camelize(name),
+            style = elem.style;
+
+        name = hAzzle.cssProps[origName] ||
+            (hAzzle.cssProps[origName] = vendorPropName(style, origName));
+
+        // Gets hook for the prefixed version, then unprefixed version
+
+        hooks = hAzzle.cssHooks[name] ||
+            hAzzle.cssHooks[origName];
 
         // Check if we're setting a value
 
         if (value !== undefined) {
 
-            if (elem && valid[nType]) {
+            // convert relative number strings
 
-                var type = typeof value,
-                    p, hooks, ret, style = elem.style;
+            if (type === 'string' && (ret = cssCore.numbs.exec(value))) {
 
-                // Camelize the name
+                value = hAzzle.units(parseFloat(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                type = 'number';
+            }
 
-                p = hAzzle.camelize(name);
+            // Make sure that null and NaN values aren't set.
 
-                name = hAzzle.cssProps[p] || (hAzzle.cssProps[p] = vendorPrefixed(style, p));
+            if (value === null || value !== value) {
 
-                // Props to jQuery
+                return;
+            }
 
-                hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[p];
+            // If a number was passed in, add 'px' to the (except for certain CSS properties)
 
-                // convert relative number strings
+            if (type === 'number' && !hAzzle.unitless[name]) {
 
-                if (type === 'string' && (ret = numbs.exec(value))) {
+                value += ret && ret[3] ? ret[3] : 'px';
+            }
 
-                    value = hAzzle.units(parseFloat(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
-                    type = 'number';
-                }
+            if (!cssCore.has['bug-clearCloneStyle'] && value === '' && name.indexOf('background') === 0) {
 
-                // Make sure that null and NaN values aren't set.
+                style[hAzzle.camelize(name)] = 'inherit';
+            }
 
-                if (value === null || value !== value) {
+            // If a hook was provided, use that value, otherwise just set the specified value
 
-                    return;
-                }
-
-                // If a number was passed in, add 'px' to the (except for certain CSS properties)
-
-                if (type === 'number' && !hAzzle.unitless[name]) {
-
-                    value += ret && ret[3] ? ret[3] : 'px';
-                }
-
-                if (!cssCore.has['bug-clearCloneStyle'] && value === '' && name.indexOf('background') === 0) {
-
-                    style[hAzzle.camelize(name)] = 'inherit';
-                }
-
-                // If a hook was provided, use that value, otherwise just set the specified value
-
-                if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
-                    style[p] = value;
-                }
+            if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
+                style[name] = value;
             }
 
         } else {
 
+            // If a hook was provided get the non-computed value from there
+            if (hooks && "get" in hooks &&
+                (ret = hooks.get(elem, false, extra)) !== undefined) {
+
+                return ret;
+            }
+
+            // Otherwise just get the value from the style object
             return elem && elem.style[name];
         }
     },
@@ -195,37 +275,65 @@ hAzzle.extend({
      * @return {String|Object|Array}
      */
 
-    css: function(elem, prop) {
+    css: function(elem, name, extra, styles) {
 
-        var val,
-            hooks,
-            origName = hAzzle.camelize(prop);
+        var val, num, hooks,
+            mTop, mRight, mBottom, mLeft,
+            origName = hAzzle.camelize(name);
 
-        // If no element, return
+        // Make sure that we're working with the right name
+        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorPropName(elem.style, origName));
 
-        if (!elem) return null;
-
-        hooks = hAzzle.cssHooks[prop] || hAzzle.cssHooks[origName];
+        // gets hook for the prefixed version
+        // followed by the unprefixed version
+        hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
 
         // If a hook was provided get the computed value from there
-
-        if (hooks && 'get' in hooks) {
-
-            val = hooks.get(elem, true);
+        if (hooks && "get" in hooks) {
+            val = hooks.get(elem, true, extra);
         }
 
         // Otherwise, if a way to get the computed value exists, use that
-
         if (val === undefined) {
-
-            val = curCSS(elem, prop);
+            val = curCSS(elem, name, styles);
         }
 
-        //convert 'normal' to computed value
+        // Convert "normal" to computed value
+        if (val === "normal" && name in cssCore.cssNormalTransform) {
+            val = cssCore.cssNormalTransform[name];
+        }
 
-        if (val === 'normal' && prop in cssCore.cssNormalTransform) {
+        // Convert the ""|"auto" values in a correct pixel value (for IE and Firefox)
+        if (extra !== "auto" && /^margin/.test(name) && /^$|auto/.test(val)) {
+            if (/Top|Bottom/.test(name)) {
+                val = "0px";
+            } else if (val !== "" && /absolute|fixed/.test(hAzzle.css(elem, "position"))) {
+                val = val.replace(/auto/g, "0px");
+            } else if (/Left|Right/.test(name)) {
+                mTop = hAzzle.css(elem, name === "marginLeft" ? "marginRight" : "marginLeft", "auto");
+                val = hAzzle.css(elem.parentNode, "width", "") - hAzzle(elem).outerWidth();
+                val = (mTop === "auto" ? parseInt(val / 2) : val - mTop) + "px";
+            } else {
+                val =
+                    mTop = hAzzle.css(elem, "marginTop");
+                mRight = hAzzle.css(elem, "marginRight");
+                mBottom = hAzzle.css(elem, "marginBottom");
+                mLeft = hAzzle.css(elem, "marginLeft");
+                if (mLeft !== mRight) {
+                    val += " " + mRight + " " + mBottom + " " + mLeft;
+                } else if (mTop !== mBottom) {
+                    val += " " + mLeft + " " + mBottom;
+                } else if (mTop !== mLeft) {
+                    val += " " + mLeft;
+                }
+            }
+        }
 
-            val = cssCore.cssNormalTransform[prop];
+        // Make numeric if forced or a qualifier was provided and val looks numeric
+
+        if (extra === "" || extra) {
+            num = parseFloat(val);
+            return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
         }
 
         return val;
@@ -273,16 +381,15 @@ hAzzle.extend({
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
+// Return a css property mapped to a potentially vendor prefixed property
+function vendorPropName(style, name) {
 
-
-function vendorPrefixed(style, name) {
-
-    // shortcut for names that are not vendor prefixed
+    // Shortcut for names that are not vendor prefixed
     if (name in style) {
         return name;
     }
 
-    // check for vendor prefixed names
+    // Check for vendor prefixed names
     var capName = name[0].toUpperCase() + name.slice(1),
         origName = name,
         i = cssCore.stylePrefixes.length;
@@ -296,9 +403,6 @@ function vendorPrefixed(style, name) {
 
     return origName;
 }
-
-
-
 
 function curCSS(elem, prop, computed) {
     var ret;
@@ -316,12 +420,11 @@ function curCSS(elem, prop, computed) {
 
     return ret !== undefined ?
         ret + '' :
+
         ret;
 }
 
 /* =========================== INTERNAL ========================== */
-
-
 
 // Margin and padding cssHooks
 
@@ -347,7 +450,7 @@ hAzzle.each(['margin', 'padding'], function(hook) {
     };
 });
 
-// Unitless properties
+// Populate the unitless list
 
 hAzzle.each(['lineHeight', 'zoom', 'zIndex', 'opacity', 'boxFlex',
         'WebkitBoxFlex', 'MozBoxFlex',
