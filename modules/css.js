@@ -1,36 +1,56 @@
 // css.js
 // Holds all css related code - isolated from the 
 // global scope
-var cssCore = {
+var
 
-    // Feature / bug detection
+  topBottomRegEx =  /Top|Bottom/,
+  absoluteRegex =  /absolute|fixed/,
+  autoRegex = /auto/g,
+  leftrightRegex = /Left|Right/,
 
-    has: {
+    cssCore = {
 
-        // Check for getComputedStyle support
+        // Feature / bug detection
 
-        'api-gCS': !!document.defaultView.getComputedStyle
+        has: {
+
+            // Check for getComputedStyle support
+
+            'api-gCS': !!document.defaultView.getComputedStyle
+        },
+
+        // Various regex
+
+        numbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+
+        directions: ['Top', 'Right', 'Bottom', 'Left'],
+
+        stylePrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
+
+        /**
+         * CSS Normal Transforms
+         */
+
+        cssNormalTransform: {
+
+            letterSpacing: '0',
+            fontWeight: '400'
+        }
     },
-
-    // Various regex
-
-    numbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
-
-    directions: ['Top', 'Right', 'Bottom', 'Left'],
-
-    stylePrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
     /**
-     * CSS Normal Transforms
+     * Get native CSS styles
+     *
+     * @param {Object} elem
+     * @return {Object}
      */
 
-    cssNormalTransform: {
+    getStyles = hAzzle.getStyles = function(elem) {
+        var view = elem.ownerDocument.defaultView;
+        return cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
+            window.getComputedStyle(elem, null)) : elem.style;
+    };
 
-        letterSpacing: '0',
-        fontWeight: '400'
-    },
-
-};
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
@@ -98,23 +118,10 @@ hAzzle.assert(function(div) {
 
 // Expose to the global hAzzle Object
 
-hAzzle.clearCloneStyle = cssCore.has['bug-clearCloneStyle']
-hAzzle.pixelPosition = cssCore.has['api-pixelPosition']
-hAzzle.boxSizingReliable = cssCore.has['api-boxSizingReliable']
-hAzzle.reliableMarginRight = cssCore.has['api-reliableMarginRight']
-
-/**
- * Get native CSS styles
- *
- * @param {Object} elem
- * @return {Object}
- */
-
-var getStyles = hAzzle.getStyles = function(elem) {
-    var view = elem.ownerDocument.defaultView;
-    return cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
-        window.getComputedStyle(elem, null)) : elem.style;
-};
+hAzzle.clearCloneStyle = cssCore.has['bug-clearCloneStyle'];
+hAzzle.pixelPosition = cssCore.has['api-pixelPosition'];
+hAzzle.boxSizingReliable = cssCore.has['api-boxSizingReliable'];
+hAzzle.reliableMarginRight = cssCore.has['api-reliableMarginRight'];
 
 
 // Extend hAzzle.Core
@@ -203,7 +210,6 @@ hAzzle.extend({
         }
 
         // Make sure that we're working with the right name
-
         var ret, type, hooks,
             origName = hAzzle.camelize(name),
             style = elem.style;
@@ -305,30 +311,10 @@ hAzzle.extend({
 
         // Convert the ""|"auto" values in a correct pixel value (for IE and Firefox)
         if (extra !== "auto" && /^margin/.test(name) && /^$|auto/.test(val)) {
-            if (/Top|Bottom/.test(name)) {
-                val = "0px";
-            } else if (val !== "" && /absolute|fixed/.test(hAzzle.css(elem, "position"))) {
-                val = val.replace(/auto/g, "0px");
-            } else if (/Left|Right/.test(name)) {
-                mTop = hAzzle.css(elem, name === "marginLeft" ? "marginRight" : "marginLeft", "auto");
-                val = hAzzle.css(elem.parentNode, "width", "") - hAzzle(elem).outerWidth();
-                val = (mTop === "auto" ? parseInt(val / 2) : val - mTop) + "px";
-            } else {
-                val =
-                    mTop = hAzzle.css(elem, "marginTop");
-                mRight = hAzzle.css(elem, "marginRight");
-                mBottom = hAzzle.css(elem, "marginBottom");
-                mLeft = hAzzle.css(elem, "marginLeft");
-                if (mLeft !== mRight) {
-                    val += " " + mRight + " " + mBottom + " " + mLeft;
-                } else if (mTop !== mBottom) {
-                    val += " " + mLeft + " " + mBottom;
-                } else if (mTop !== mLeft) {
-                    val += " " + mLeft;
-                }
-            }
-        }
-
+			
+			val = calculateCorrect(elem, name, val);
+				
+      }
         // Make numeric if forced or a qualifier was provided and val looks numeric
 
         if (extra === "" || extra) {
@@ -423,6 +409,46 @@ function curCSS(elem, prop, computed) {
 
         ret;
 }
+
+
+/* ============================ UTILITY METHODS =========================== */
+  
+ /**
+  * Detect correct margin properties for IE9 and Firefox
+  *
+  * @param {Object} elem
+  * @param {String} val
+  * @param {String} name
+  * @param {Object}
+  */
+  
+  
+ function calculateCorrect(elem, name, val) {
+			
+            if (topBottomRegEx.test(name)) {
+                val = "0px";
+            } else if (val !== "" && absoluteRegex.test(hAzzle.css(elem, "position"))) {
+                val = val.replace(autoRegex, "0px");
+            } else if (leftrightRegex.test(name)) {
+                mTop = hAzzle.css(elem, name === "marginLeft" ? "marginRight" : "marginLeft", "auto");
+                val = hAzzle.css(elem.parentNode, "width", "") - hAzzle(elem).outerWidth();
+                val = (mTop === "auto" ? parseInt(val / 2) : val - mTop) + "px";
+            } else {
+                val =
+                    mTop = hAzzle.css(elem, "marginTop");
+                mRight = hAzzle.css(elem, "marginRight");
+                mBottom = hAzzle.css(elem, "marginBottom");
+                mLeft = hAzzle.css(elem, "marginLeft");
+                if (mLeft !== mRight) {
+                    val += " " + mRight + " " + mBottom + " " + mLeft;
+                } else if (mTop !== mBottom) {
+                    val += " " + mLeft + " " + mBottom;
+                } else if (mTop !== mLeft) {
+                    val += " " + mLeft;
+                }
+            }
+			return val;
+        }
 
 /* =========================== INTERNAL ========================== */
 

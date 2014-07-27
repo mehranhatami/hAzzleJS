@@ -189,7 +189,7 @@ hAzzle.extend({
                         }
                     }
 
-                } else if (type === 'undefined' || type === 'boolean') { // toggle whole class name
+                } else if (value === undefined || type === 'boolean') { // toggle whole class name
                     if (el.className) {
                         // store className if set
                         hAzzle.data(this, '__cln__', el.className);

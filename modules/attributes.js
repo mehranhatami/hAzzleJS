@@ -256,8 +256,7 @@ hAzzle.extend({
             return;
         }
         // Fallback to prop when attributes are not supported
-        if (typeof elem.getAttribute === undefined ||
-            name === 'textContext') {
+        if (!elem.getAttribute || name === 'textContext') {
 
             return hAzzle.prop(elem, name, value);
         }
