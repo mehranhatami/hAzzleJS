@@ -3,10 +3,28 @@
 // global scope
 
 var doc = this.document,
+
+    // Various regex
+
+    numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
     leftrightRegex = /Left|Right/,
+	
+    directions = ['Top', 'Right', 'Bottom', 'Left'],
+
+    stylePrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
+	
+	/**
+     * CSS Normal Transforms
+     */
+
+    cssNormalTransform = {
+
+            letterSpacing: '0',
+            fontWeight: '400'
+    },
 
     cssCore = {
 
@@ -17,24 +35,6 @@ var doc = this.document,
             // Check for getComputedStyle support
 
             'api-gCS': !!document.defaultView.getComputedStyle
-        },
-
-        // Various regex
-
-        numbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
-
-        directions: ['Top', 'Right', 'Bottom', 'Left'],
-
-        stylePrefixes: ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
-
-        /**
-         * CSS Normal Transforms
-         */
-
-        cssNormalTransform: {
-
-            letterSpacing: '0',
-            fontWeight: '400'
         }
     },
 
@@ -54,36 +54,36 @@ var doc = this.document,
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
+// Return true / false for support of a few CSS properties
+// Other properties can be added through plugins
+
 hAzzle.assert(function(div) {
+
     var style = div.style;
 
-    cssCore.has['backgroundPosition'] = div.style.backgroundPosition === "3px 5px" ? true : false;
-    cssCore.has['backgroundPositionX'] = div.style.backgroundPositionX === "3px" ? true : false;
-
     // BorderImage support
-    cssCore.has['borderImage'] =
-        style.borderImage === '' ? 'borderImage' :
-        (style.MozBorderImage === '' ? 'MozBorderImage' :
-            (style.WebkitBorderImage === '' ? 'WebkitBorderImage' : false));
 
-    cssCore.has['boxShadow'] =
-        style.MozBoxShadow === '' ? 'MozBoxShadow' :
-        (style.MsBoxShadow === '' ? 'MsBoxShadow' :
-            (style.WebkitBoxShadow === '' ? 'WebkitBoxShadow' :
-                (style.OBoxShadow === '' ? 'OBoxShadow' :
-                    (style.boxShadow === '' ? 'BoxShadow' :
-                        false))));
+    cssCore.has['borderImage'] = style.borderImage !== undefined || 
+                            style.MozBorderImage !== undefined || 
+							style.WebkitBorderImage !== undefined || 
+							style.msBorderImage !== undefined;
+    // BoxShadow
 
-    cssCore.has['transition'] =
-        divStyle.MozTransition === '' ? 'MozTransition' :
-        (divStyle.MsTransition === '' ? 'MsTransition' :
-            (divStyle.WebkitTransition === '' ? 'WebkitTransition' :
-                (divStyle.OTransition === '' ? 'OTransition' :
-                    (divStyle.transition === '' ? 'Transition' :
-                        false))));
+    cssCore.has['boxShadow'] = style.BoxShadow !== undefined || 
+                            style.MsBoxShadow !== undefined || 
+							style.WebkitBoxShadow !== undefined || 
+							style.OBoxShadow !== undefined;
+
+    // Transition
+	
+	cssCore.has['transition'] = style.transition !== undefined || 
+                            style.WebkitTransition !== undefined || 
+							style.MozTransition !== undefined || 
+							style.MsTransition !== undefined || 
+							style.OTransition !== undefined;
 
     // textShadow support
-
+    
     cssCore.has['textShadow'] = (style.textShadow === '');
 });
 
@@ -96,7 +96,7 @@ hAzzle.assert(function(div) {
  *
  */
 
-function applyCSSSupport(name, value) {
+hAzzle.applyCSSSupport = function(name, value) {
 
     cssCore.has[name] = value;
 
@@ -261,14 +261,14 @@ hAzzle.extend({
     cssHooks: {
 
         opacity: {
-            get: function(el, computed) {
+            get: function(elem, computed) {
 
                 if (computed) {
 
                     var opacity = elem.style.opacity ||
                         curCSS(elem, 'opacity');
 
-                    return (opacity == '') ? 1 : opacity.toFloat();
+                    return (opacity === '') ? 1 : opacity.toFloat();
                 }
             },
             set: function(el, value) {
@@ -334,7 +334,7 @@ hAzzle.extend({
 
             // convert relative number strings
 
-            if (type === 'string' && (ret = cssCore.numbs.exec(value))) {
+            if (type === 'string' && (ret = numbs.exec(value))) {
 
                 value = hAzzle.units(parseFloat(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = 'number';
@@ -389,10 +389,7 @@ hAzzle.extend({
 
     css: function(elem, name, extra, styles) {
 
-        if (property == 'opacity') return getOpacity(this);
-
         var val, num, hooks,
-            mTop, mRight, mBottom, mLeft,
             origName = hAzzle.camelize(name);
 
         // Make sure that we're working with the right name
@@ -413,8 +410,8 @@ hAzzle.extend({
         }
 
         // Convert "normal" to computed value
-        if (val === "normal" && name in cssCore.cssNormalTransform) {
-            val = cssCore.cssNormalTransform[name];
+        if (val === "normal" && name in cssNormalTransform) {
+            val = cssNormalTransform[name];
         }
 
         // Convert the ""|"auto" values in a correct pixel value (for IE and Firefox)
@@ -441,7 +438,7 @@ hAzzle.extend({
      */
     opacity: function(elem, value) {
 
-        cssHooks('opacity').set(elem, value);
+        hAzzle.cssHooks('opacity').set(elem, value);
     },
 
     // Quick functions for setting, getting and 
@@ -474,10 +471,10 @@ function vendorPropName(style, name) {
     // Check for vendor prefixed names
     var capName = name[0].toUpperCase() + name.slice(1),
         origName = name,
-        i = cssCore.stylePrefixes.length;
+        i = stylePrefixes.length;
 
     while (i--) {
-        name = cssCore.stylePrefixes[i] + capName;
+        name = stylePrefixes[i] + capName;
         if (name in style) {
             return name;
         }
@@ -520,6 +517,8 @@ function curCSS(elem, prop, computed) {
 
 
 function calculateCorrect(elem, name, val) {
+  
+  var mTop, mRight, mBottom, mLeft;
 
     if (topBottomRegEx.test(name)) {
         val = "0px";
@@ -553,7 +552,7 @@ function calculateCorrect(elem, name, val) {
 hAzzle.each(['margin', 'padding'], function(hook) {
     hAzzle.cssHooks[hook] = {
         get: function(elem) {
-            return hAzzle.map(cssCore.directions, function(dir) {
+            return hAzzle.map(directions, function(dir) {
                 return hAzzle.css(elem, hook + dir);
             }).join(' ');
         },
@@ -565,7 +564,7 @@ hAzzle.each(['margin', 'padding'], function(hook) {
                     'Bottom': parts[2] || parts[0],
                     'Left': parts[3] || parts[1] || parts[0]
                 };
-            hAzzle.each(cssCore.directions, function(dir) {
+            hAzzle.each(directions, function(dir) {
                 elem.style[hook + dir] = values[dir];
             });
         }
