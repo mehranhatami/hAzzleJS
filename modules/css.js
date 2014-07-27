@@ -1,4 +1,5 @@
 // css.js
+//
 // Holds all css related code - isolated from the 
 // global scope
 
@@ -61,22 +62,27 @@ hAzzle.assert(function(div) {
 
     var style = div.style;
 
+
+	// BackgroundPositionXY 
+
+	cssCore.has.bgposXY = div.style.backgroundPositionX !== null;
+
     // BorderImage support
 
-    cssCore.has['borderImage'] = style.borderImage !== undefined || 
+    cssCore.has.borderImage = style.borderImage !== undefined || 
                             style.MozBorderImage !== undefined || 
 							style.WebkitBorderImage !== undefined || 
 							style.msBorderImage !== undefined;
     // BoxShadow
 
-    cssCore.has['boxShadow'] = style.BoxShadow !== undefined || 
+    cssCore.has.boxShadow = style.BoxShadow !== undefined || 
                             style.MsBoxShadow !== undefined || 
 							style.WebkitBoxShadow !== undefined || 
 							style.OBoxShadow !== undefined;
 
     // Transition
 	
-	cssCore.has['transition'] = style.transition !== undefined || 
+	cssCore.has.transition = style.transition !== undefined || 
                             style.WebkitTransition !== undefined || 
 							style.MozTransition !== undefined || 
 							style.MsTransition !== undefined || 
@@ -84,7 +90,7 @@ hAzzle.assert(function(div) {
 
     // textShadow support
     
-    cssCore.has['textShadow'] = (style.textShadow === '');
+    cssCore.has.textShadow = (style.textShadow === '');
 });
 
 /**
@@ -103,29 +109,28 @@ hAzzle.applyCSSSupport = function(name, value) {
     // Expost to the global hAzzle object
 
     hAzzle[name] = cssCore.has[name];
-}
+};
 
 // Expose to the global hAzzle Object
 
-hAzzle.transition = cssCore.has['transition'];
-hAzzle.borderImage = cssCore.has['borderImage'];
-hAzzle.boxShadow = cssCore.has['boxShadow'];
-hAzzle.backgroundPosition = cssCore.has['backgroundPosition'];
-hAzzle.backgroundPositionX = cssCore.has['backgroundPositionX'];
-
+hAzzle.transition = cssCore.has.transition;
+hAzzle.borderImage = cssCore.has.borderImage;
+hAzzle.boxShadow = cssCore.has.boxShadow;
+hAzzle.BackgroundPositionXY = cssCore.has.bgposXY;
+	
 // Bug detection
 
 hAzzle.assert(function(div) {
 
     // Support: IE9-11+
 
-    cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
+    cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === 'content-box';
 
     var pixelPositionVal, boxSizingReliableVal,
-        container = document.createElement("div");
+        container = document.createElement('div');
 
-    container.style.cssText = "border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;" +
-        "position:absolute";
+    container.style.cssText = 'border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;' +
+        'position:absolute';
 
     container.appendChild(div);
 
@@ -133,15 +138,15 @@ hAzzle.assert(function(div) {
         div.style.cssText =
             // Support: Firefox<29, Android 2.3
             // Vendor-prefix box-sizing
-            "-webkit-box-sizing:border-box;-moz-box-sizing:border-box;" +
-            "box-sizing:border-box;display:block;margin-top:1%;top:1%;" +
-            "border:1px;padding:1px;width:4px;position:absolute";
-        div.innerHTML = "";
+            '-webkit-box-sizing:border-box;-moz-box-sizing:border-box;' +
+            'box-sizing:border-box;display:block;margin-top:1%;top:1%;' +
+            'border:1px;padding:1px;width:4px;position:absolute';
+        div.innerHTML = '';
         hAzzle.docElem.appendChild(container);
 
         var divStyle = window.getComputedStyle(div, null);
-        pixelPositionVal = divStyle.top !== "1%";
-        boxSizingReliableVal = divStyle.width === "4px";
+        pixelPositionVal = divStyle.top !== '1%';
+        boxSizingReliableVal = divStyle.width === '4px';
 
         hAzzle.docElem.removeChild(container);
     }
@@ -163,12 +168,12 @@ hAzzle.assert(function(div) {
         })();
 
         cssCore.has['api-reliableMarginRight'] = (function() {
-            var ret, marginDiv = div.appendChild(document.createElement("div"));
+            var ret, marginDiv = div.appendChild(document.createElement('div'));
             marginDiv.style.cssText = div.style.cssText =
-                "-webkit-box-sizing:content-box;-moz-box-sizing:content-box;" +
-                "box-sizing:content-box;display:block;margin:0;border:0;padding:0";
-            marginDiv.style.marginRight = marginDiv.style.width = "0";
-            div.style.width = "1px";
+                '-webkit-box-sizing:content-box;-moz-box-sizing:content-box;' +
+                'box-sizing:content-box;display:block;margin:0;border:0;padding:0';
+            marginDiv.style.marginRight = marginDiv.style.width = '0';
+            div.style.width = '1px';
             hAzzle.docElem.appendChild(container);
             ret = !parseFloat(window.getComputedStyle(marginDiv, null).marginRight);
             hAzzle.docElem.removeChild(container);
@@ -229,16 +234,16 @@ hAzzle.extend({
 
     zIndex: function(val) {
         if (val !== undefined) {
-            return this.css("zIndex", val);
+            return this.css('zIndex', val);
         }
 
         if (this.length) {
             var elem = hAzzle(this[0]),
                 position, value;
             while (elem.length && elem[0] !== doc) {
-                position = elem.css("position");
-                if (position === "absolute" || position === "relative" || position === "fixed") {
-                    value = parseInt(elem.css("zIndex"), 10);
+                position = elem.css('position');
+                if (position === 'absolute' || position === 'relative' || position === 'fixed') {
+                    value = parseInt(elem.css('zIndex'), 10);
                     if (!isNaN(value) && value !== 0) {
                         return value;
                     }
@@ -368,7 +373,7 @@ hAzzle.extend({
         } else {
 
             // If a hook was provided get the non-computed value from there
-            if (hooks && "get" in hooks &&
+            if (hooks && 'get' in hooks &&
                 (ret = hooks.get(elem, false, extra)) !== undefined) {
 
                 return ret;
@@ -400,7 +405,7 @@ hAzzle.extend({
         hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
 
         // If a hook was provided get the computed value from there
-        if (hooks && "get" in hooks) {
+        if (hooks && 'get' in hooks) {
             val = hooks.get(elem, true, extra);
         }
 
@@ -409,20 +414,20 @@ hAzzle.extend({
             val = curCSS(elem, name, styles);
         }
 
-        // Convert "normal" to computed value
-        if (val === "normal" && name in cssNormalTransform) {
+        // Convert 'normal' to computed value
+        if (val === 'normal' && name in cssNormalTransform) {
             val = cssNormalTransform[name];
         }
 
-        // Convert the ""|"auto" values in a correct pixel value (for IE and Firefox)
-        if (extra !== "auto" && /^margin/.test(name) && /^$|auto/.test(val)) {
+        // Convert the ''|'auto' values in a correct pixel value (for IE and Firefox)
+        if (extra !== 'auto' && /^margin/.test(name) && /^$|auto/.test(val)) {
 
             val = calculateCorrect(elem, name, val);
 
         }
         // Make numeric if forced or a qualifier was provided and val looks numeric
 
-        if (extra === "" || extra) {
+        if (extra === '' || extra) {
             num = parseFloat(val);
             return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
         }
@@ -439,21 +444,6 @@ hAzzle.extend({
     opacity: function(elem, value) {
 
         hAzzle.cssHooks('opacity').set(elem, value);
-    },
-
-    // Quick functions for setting, getting and 
-    // erase CSS styles with cssText
-
-    setCSS: function(elem, style) {
-        elem.style.cssText = style;
-    },
-
-    getCSS: function(elem) {
-        return elem.style.cssText;
-    },
-
-    eraseCSS: function(elem) {
-        elem.style.cssText = '';
     }
 
 }, hAzzle);
@@ -521,29 +511,38 @@ function calculateCorrect(elem, name, val) {
   var mTop, mRight, mBottom, mLeft;
 
     if (topBottomRegEx.test(name)) {
-        val = "0px";
-    } else if (val !== "" && absoluteRegex.test(hAzzle.css(elem, "position"))) {
-        val = val.replace(autoRegex, "0px");
+        val = '0px';
+    } else if (val !== '' && absoluteRegex.test(hAzzle.css(elem, 'position'))) {
+        val = val.replace(autoRegex, '0px');
     } else if (leftrightRegex.test(name)) {
-        mTop = hAzzle.css(elem, name === "marginLeft" ? "marginRight" : "marginLeft", "auto");
-        val = hAzzle.css(elem.parentNode, "width", "") - hAzzle(elem).outerWidth();
-        val = (mTop === "auto" ? parseInt(val / 2) : val - mTop) + "px";
+        mTop = hAzzle.css(elem, name === 'marginLeft' ? 'marginRight' : 'marginLeft', 'auto');
+        val = hAzzle.css(elem.parentNode, 'width', '') - hAzzle(elem).outerWidth();
+        val = (mTop === 'auto' ? parseInt(val / 2) : val - mTop) + 'px';
     } else {
         val =
-            mTop = hAzzle.css(elem, "marginTop");
-        mRight = hAzzle.css(elem, "marginRight");
-        mBottom = hAzzle.css(elem, "marginBottom");
-        mLeft = hAzzle.css(elem, "marginLeft");
+            mTop = hAzzle.css(elem, 'marginTop');
+        mRight = hAzzle.css(elem, 'marginRight');
+        mBottom = hAzzle.css(elem, 'marginBottom');
+        mLeft = hAzzle.css(elem, 'marginLeft');
         if (mLeft !== mRight) {
-            val += " " + mRight + " " + mBottom + " " + mLeft;
+            val += ' ' + mRight + ' ' + mBottom + ' ' + mLeft;
         } else if (mTop !== mBottom) {
-            val += " " + mLeft + " " + mBottom;
+            val += ' ' + mLeft + ' ' + mBottom;
         } else if (mTop !== mLeft) {
-            val += " " + mLeft;
+            val += ' ' + mLeft;
         }
     }
     return val;
 }
+
+function parseBgPos(bgPos) {
+        var parts  = bgPos.split(/\s/),
+            values = {
+                'X': parts[0],
+                'Y': parts[1]
+            };
+        return values;
+    }
 
 /* =========================== INTERNAL ========================== */
 
@@ -570,6 +569,23 @@ hAzzle.each(['margin', 'padding'], function(hook) {
         }
     };
 });
+
+
+if (hAzzle.BackgroundPositionXY) {
+    hAzzle.cssHooks.backgroundPosition = {
+            get: function( elem, computed, extra ) {
+                return hAzzle.map(['X','Y'], function( l, i ) {
+                    return hAzzle.css(elem, 'backgroundPosition' + l);
+                }).join(' ');
+            },
+            set: function( elem, value ) {
+                hAzzle.each(['X','Y'], function( l ) {
+                    var values = parseBgPos(value);
+                    elem.style[ 'backgroundPosition' + l ] = values[ l ];
+                });
+            }
+        };
+    }
 
 // Populate the unitless list
 
