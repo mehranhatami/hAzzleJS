@@ -45,8 +45,7 @@ module.exports = function (config) {
     'eventHooks.js',
     'ajax.js',
     'clone.js',
-    'parsing.js',
-    'localestorage.js'
+    'parsing.js'
   ];
 
   for (l = modules.length; i < l; i++) {
