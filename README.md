@@ -1,4 +1,4 @@
-hAzzleJS v. 0.9.6b RC2
+# hAzzleJS v. 0.9.6b RC2
 
 =========
 
