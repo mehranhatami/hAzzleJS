@@ -13,7 +13,7 @@ var doc = this.document,
     autoRegex = /auto/g,
     leftrightRegex = /Left|Right/,
 	
-    directions = ['Top', 'Right', 'Bottom', 'Left'],
+    
 
     stylePrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 	
@@ -62,24 +62,6 @@ hAzzle.assert(function(div) {
 
     var style = div.style;
 
-
-	// BackgroundPositionXY 
-
-	cssCore.has.bgposXY = div.style.backgroundPositionX !== null;
-
-    // BorderImage support
-
-    cssCore.has.borderImage = style.borderImage !== undefined || 
-                            style.MozBorderImage !== undefined || 
-							style.WebkitBorderImage !== undefined || 
-							style.msBorderImage !== undefined;
-    // BoxShadow
-
-    cssCore.has.boxShadow = style.BoxShadow !== undefined || 
-                            style.MsBoxShadow !== undefined || 
-							style.WebkitBoxShadow !== undefined || 
-							style.OBoxShadow !== undefined;
-
     // Transition
 	
 	cssCore.has.transition = style.transition !== undefined || 
@@ -114,9 +96,6 @@ hAzzle.applyCSSSupport = function(name, value) {
 // Expose to the global hAzzle Object
 
 hAzzle.transition = cssCore.has.transition;
-hAzzle.borderImage = cssCore.has.borderImage;
-hAzzle.boxShadow = cssCore.has.boxShadow;
-hAzzle.BackgroundPositionXY = cssCore.has.bgposXY;
 	
 // Bug detection
 
@@ -535,57 +514,9 @@ function calculateCorrect(elem, name, val) {
     return val;
 }
 
-function parseBgPos(bgPos) {
-        var parts  = bgPos.split(/\s/),
-            values = {
-                'X': parts[0],
-                'Y': parts[1]
-            };
-        return values;
-    }
+
 
 /* =========================== INTERNAL ========================== */
-
-// Margin and padding cssHooks
-
-hAzzle.each(['margin', 'padding'], function(hook) {
-    hAzzle.cssHooks[hook] = {
-        get: function(elem) {
-            return hAzzle.map(directions, function(dir) {
-                return hAzzle.css(elem, hook + dir);
-            }).join(' ');
-        },
-        set: function(elem, value) {
-            var parts = value.split(/\s/),
-                values = {
-                    'Top': parts[0],
-                    'Right': parts[1] || parts[0],
-                    'Bottom': parts[2] || parts[0],
-                    'Left': parts[3] || parts[1] || parts[0]
-                };
-            hAzzle.each(directions, function(dir) {
-                elem.style[hook + dir] = values[dir];
-            });
-        }
-    };
-});
-
-
-if (hAzzle.BackgroundPositionXY) {
-    hAzzle.cssHooks.backgroundPosition = {
-            get: function( elem, computed, extra ) {
-                return hAzzle.map(['X','Y'], function( l, i ) {
-                    return hAzzle.css(elem, 'backgroundPosition' + l);
-                }).join(' ');
-            },
-            set: function( elem, value ) {
-                hAzzle.each(['X','Y'], function( l ) {
-                    var values = parseBgPos(value);
-                    elem.style[ 'backgroundPosition' + l ] = values[ l ];
-                });
-            }
-        };
-    }
 
 // Populate the unitless list
 
