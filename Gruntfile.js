@@ -70,6 +70,7 @@ function conf(grunt) {
         'attributes.js',
         'removeable.js',
         'units.js',
+        'styles.js',
         'css.js',
         'topleft.js',
         'position.js',
