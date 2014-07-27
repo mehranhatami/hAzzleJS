@@ -42,7 +42,7 @@ module.exports = function (config) {
     'showhide.js',
     'detection.js',
     'events.js',
-    'eventhooks.js',
+    'eventHooks.js',
     'ajax.js',
     'clone.js',
     'parsing.js',
