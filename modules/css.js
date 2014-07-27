@@ -1,12 +1,12 @@
 // css.js
 // Holds all css related code - isolated from the 
 // global scope
-var
 
-  topBottomRegEx =  /Top|Bottom/,
-  absoluteRegex =  /absolute|fixed/,
-  autoRegex = /auto/g,
-  leftrightRegex = /Left|Right/,
+var doc = this.document,
+    topBottomRegEx = /Top|Bottom/,
+    absoluteRegex = /absolute|fixed/,
+    autoRegex = /auto/g,
+    leftrightRegex = /Left|Right/,
 
     cssCore = {
 
@@ -53,6 +53,67 @@ var
 
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
+
+hAzzle.assert(function(div) {
+    var style = div.style;
+
+    cssCore.has['backgroundPosition'] = div.style.backgroundPosition === "3px 5px" ? true : false;
+    cssCore.has['backgroundPositionX'] = div.style.backgroundPositionX === "3px" ? true : false;
+
+    // BorderImage support
+    cssCore.has['borderImage'] =
+        style.borderImage === '' ? 'borderImage' :
+        (style.MozBorderImage === '' ? 'MozBorderImage' :
+            (style.WebkitBorderImage === '' ? 'WebkitBorderImage' : false));
+
+    cssCore.has['boxShadow'] =
+        style.MozBoxShadow === '' ? 'MozBoxShadow' :
+        (style.MsBoxShadow === '' ? 'MsBoxShadow' :
+            (style.WebkitBoxShadow === '' ? 'WebkitBoxShadow' :
+                (style.OBoxShadow === '' ? 'OBoxShadow' :
+                    (style.boxShadow === '' ? 'BoxShadow' :
+                        false))));
+
+    cssCore.has['transition'] =
+        divStyle.MozTransition === '' ? 'MozTransition' :
+        (divStyle.MsTransition === '' ? 'MsTransition' :
+            (divStyle.WebkitTransition === '' ? 'WebkitTransition' :
+                (divStyle.OTransition === '' ? 'OTransition' :
+                    (divStyle.transition === '' ? 'Transition' :
+                        false))));
+
+    // textShadow support
+
+    cssCore.has['textShadow'] = (style.textShadow === '');
+});
+
+/**
+ * Quick function for adding supported CSS properties
+ * to the 'cssCore'
+ *
+ * @param {String} name
+ * @param {String} value
+ *
+ */
+
+function applyCSSSupport(name, value) {
+
+    cssCore.has[name] = value;
+
+    // Expost to the global hAzzle object
+
+    hAzzle[name] = cssCore.has[name];
+}
+
+// Expose to the global hAzzle Object
+
+hAzzle.transition = cssCore.has['transition'];
+hAzzle.borderImage = cssCore.has['borderImage'];
+hAzzle.boxShadow = cssCore.has['boxShadow'];
+hAzzle.backgroundPosition = cssCore.has['backgroundPosition'];
+hAzzle.backgroundPositionX = cssCore.has['backgroundPositionX'];
+
+// Bug detection
 
 hAzzle.assert(function(div) {
 
@@ -164,6 +225,28 @@ hAzzle.extend({
         return this.each(function(el) {
             hAzzle.opacity(el, value);
         });
+    },
+
+    zIndex: function(val) {
+        if (val !== undefined) {
+            return this.css("zIndex", val);
+        }
+
+        if (this.length) {
+            var elem = hAzzle(this[0]),
+                position, value;
+            while (elem.length && elem[0] !== doc) {
+                position = elem.css("position");
+                if (position === "absolute" || position === "relative" || position === "fixed") {
+                    value = parseInt(elem.css("zIndex"), 10);
+                    if (!isNaN(value) && value !== 0) {
+                        return value;
+                    }
+                }
+                elem = elem.parent();
+            }
+        }
+        return 0;
     }
 });
 
@@ -181,9 +264,32 @@ hAzzle.extend({
             get: function(el, computed) {
 
                 if (computed) {
-                    var ret = curCSS(el, 'opacity');
-                    return ret === '' ? '1' : ret;
+
+                    var opacity = elem.style.opacity ||
+                        curCSS(elem, 'opacity');
+
+                    return (opacity == '') ? 1 : opacity.toFloat();
                 }
+            },
+            set: function(el, value) {
+
+                if (typeof value !== 'number') {
+
+                    value = 1;
+                }
+
+                if (value == 1 || value === '') {
+
+                    value = '';
+
+                } else if (value < 0.00001) {
+
+                    value = 0;
+                }
+
+                el.style.opacity = value;
+
+
             }
         }
     },
@@ -283,6 +389,8 @@ hAzzle.extend({
 
     css: function(elem, name, extra, styles) {
 
+        if (property == 'opacity') return getOpacity(this);
+
         var val, num, hooks,
             mTop, mRight, mBottom, mLeft,
             origName = hAzzle.camelize(name);
@@ -311,10 +419,10 @@ hAzzle.extend({
 
         // Convert the ""|"auto" values in a correct pixel value (for IE and Firefox)
         if (extra !== "auto" && /^margin/.test(name) && /^$|auto/.test(val)) {
-			
-			val = calculateCorrect(elem, name, val);
-				
-      }
+
+            val = calculateCorrect(elem, name, val);
+
+        }
         // Make numeric if forced or a qualifier was provided and val looks numeric
 
         if (extra === "" || extra) {
@@ -331,21 +439,9 @@ hAzzle.extend({
      * @param{Object} elem
      * @param{number} value
      */
-    opacity: function(element, value) {
+    opacity: function(elem, value) {
 
-        if (typeof value !== 'number') {
-            value = 1;
-        }
-        if (value == 1 || value === '') {
-
-            value = '';
-
-        } else if (value < 0.00001) {
-
-            value = 0;
-        }
-
-        element.style.opacity = value;
+        cssHooks('opacity').set(elem, value);
     },
 
     // Quick functions for setting, getting and 
@@ -412,43 +508,43 @@ function curCSS(elem, prop, computed) {
 
 
 /* ============================ UTILITY METHODS =========================== */
-  
- /**
-  * Detect correct margin properties for IE9 and Firefox
-  *
-  * @param {Object} elem
-  * @param {String} val
-  * @param {String} name
-  * @param {Object}
-  */
-  
-  
- function calculateCorrect(elem, name, val) {
-			
-            if (topBottomRegEx.test(name)) {
-                val = "0px";
-            } else if (val !== "" && absoluteRegex.test(hAzzle.css(elem, "position"))) {
-                val = val.replace(autoRegex, "0px");
-            } else if (leftrightRegex.test(name)) {
-                mTop = hAzzle.css(elem, name === "marginLeft" ? "marginRight" : "marginLeft", "auto");
-                val = hAzzle.css(elem.parentNode, "width", "") - hAzzle(elem).outerWidth();
-                val = (mTop === "auto" ? parseInt(val / 2) : val - mTop) + "px";
-            } else {
-                val =
-                    mTop = hAzzle.css(elem, "marginTop");
-                mRight = hAzzle.css(elem, "marginRight");
-                mBottom = hAzzle.css(elem, "marginBottom");
-                mLeft = hAzzle.css(elem, "marginLeft");
-                if (mLeft !== mRight) {
-                    val += " " + mRight + " " + mBottom + " " + mLeft;
-                } else if (mTop !== mBottom) {
-                    val += " " + mLeft + " " + mBottom;
-                } else if (mTop !== mLeft) {
-                    val += " " + mLeft;
-                }
-            }
-			return val;
+
+/**
+ * Detect correct margin properties for IE9 and Firefox
+ *
+ * @param {Object} elem
+ * @param {String} val
+ * @param {String} name
+ * @param {Object}
+ */
+
+
+function calculateCorrect(elem, name, val) {
+
+    if (topBottomRegEx.test(name)) {
+        val = "0px";
+    } else if (val !== "" && absoluteRegex.test(hAzzle.css(elem, "position"))) {
+        val = val.replace(autoRegex, "0px");
+    } else if (leftrightRegex.test(name)) {
+        mTop = hAzzle.css(elem, name === "marginLeft" ? "marginRight" : "marginLeft", "auto");
+        val = hAzzle.css(elem.parentNode, "width", "") - hAzzle(elem).outerWidth();
+        val = (mTop === "auto" ? parseInt(val / 2) : val - mTop) + "px";
+    } else {
+        val =
+            mTop = hAzzle.css(elem, "marginTop");
+        mRight = hAzzle.css(elem, "marginRight");
+        mBottom = hAzzle.css(elem, "marginBottom");
+        mLeft = hAzzle.css(elem, "marginLeft");
+        if (mLeft !== mRight) {
+            val += " " + mRight + " " + mBottom + " " + mLeft;
+        } else if (mTop !== mBottom) {
+            val += " " + mLeft + " " + mBottom;
+        } else if (mTop !== mLeft) {
+            val += " " + mLeft;
         }
+    }
+    return val;
+}
 
 /* =========================== INTERNAL ========================== */
 
