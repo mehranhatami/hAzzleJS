@@ -1,7 +1,7 @@
 {
     "name": "hazzle",
     "description": "hAzzle aims to be the fastest JavaScript library, but still be a lightweight alternative. It has built in support for DOM manipulation and events with support for all modern browsers, including IE9+.",
-    "version": "0.9.5b-RC2",
+    "version": "0.9.7b-RC2",
     "dependencies": {
         "grunt": "0.4.2",
         "grunt-complexity": "^0.1.x",
