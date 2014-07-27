@@ -3,8 +3,6 @@ hAzzleJS v. 0.9.7b RC2
 
 [![Build Status](https://travis-ci.org/hazzlejs/hAzzleJS.svg?branch=master)](https://travis-ci.org/hazzlejs/hAzzleJS) [![Code Climate](https://codeclimate.com/github/hazzlejs/hAzzleJS.png)](https://codeclimate.com/github/hazzlejs/hAzzleJS) [![Coverage Status](https://coveralls.io/repos/mehranhatami/hAzzleJS/badge.png?branch=master)](https://coveralls.io/r/mehranhatami/hAzzleJS?branch=master)
 
-[![NPM Package](https://nodei.co/npm/hazzle.svg)](https://www.npmjs.org/package/hazzle)
-
 **hAzzle** aims to be the fastest JavaScript library, but still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+. 
 
 **hAzzle** support all modern browsers and features - such as HTML 5, and new Traversal API. In its selector engine it supports both CSS Level 3 selectors and CSS Level 4 selectors. 
