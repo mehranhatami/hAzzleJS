@@ -568,6 +568,47 @@
                 // release memory in IE
                 div = null;
             }
+        },
+
+        /**
+         * Determine the type of object being tested.
+         *
+         * @param {Mixed} object
+         * @return {String} object type
+         *
+         * NOTE! Use of switch{} here will slow down the
+         * performance with 1 -2% in all browsers
+         *
+         */
+
+        type: function(obj) {
+
+            var type = typeof obj,
+                str;
+
+            if (obj === null) {
+
+                return obj + '';
+            }
+
+            if (type === 'boolean') {
+                return 'boolean';
+            }
+            if (type === 'object') {
+                return 'object';
+            }
+            if (type === 'string') {
+                return 'string';
+            }
+
+            str = hAzzle.str.call(obj);
+
+            if (natives[str]) {
+                return natives[str];
+            }
+
+            return type;
+
         }
     }, hAzzle);
 
@@ -590,31 +631,31 @@
             return value === 'string' ? value.trim() : value;
         };
     })();
-	
-	
-   //  Checks if `obj` is a window object.
 
- var isWindow = hAzzle.isWindow = function(obj) {
-        return obj !== null && obj === obj.window;
-    },
-	
-	isArraylike = hAzzle.isArraylike = function(obj) {
-        var length = obj.length,
-            type;
 
-        if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
-            return false;
-        }
+    //  Checks if `obj` is a window object.
 
-        if (obj.nodeType === 1 && length) {
-            return true;
-        }
+    var isWindow = hAzzle.isWindow = function(obj) {
+            return obj !== null && obj === obj.window;
+        },
 
-        type = hAzzle.type(obj);
+        isArraylike = hAzzle.isArraylike = function(obj) {
+            var length = obj.length,
+                type;
 
-        return type === 'array' || length === 0 ||
-            typeof length === 'number' && length > 0 && (length - 1) in obj;
-    };
+            if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
+                return false;
+            }
+
+            if (obj.nodeType === 1 && length) {
+                return true;
+            }
+
+            type = hAzzle.type(obj);
+
+            return type === 'array' || length === 0 ||
+                typeof length === 'number' && length > 0 && (length - 1) in obj;
+        };
 
 
     // Expose hAzzle to the global object
