@@ -16,6 +16,7 @@ module.exports = function (config) {
   var modules = [
      'hazzle.js',
         'uniqueid.js',		
+        'cache.js',
         'doml4.js',
         'ntapi.js',
         'types.js',
