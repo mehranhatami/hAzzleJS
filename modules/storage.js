@@ -5,94 +5,86 @@ var expando = hAzzle.expando,
     htmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     charRegEx = /([A-Z])/g;
 
-/* =========================== PROTOTYPE ========================== */
-
-function Storage() {
-
-    Object.defineProperty(this.cache = {}, 0, {
-        get: function() {
-            return {};
-        }
-    });
-}
+function Storage() {}
 
 /* =========================== PROTOTYPE CHAIN ========================== */
 
 Storage.prototype = {
 
-    key: function(owner) {
+    register: function(owner, initial) {
+        var descriptor = {};
+
+        try {
+            descriptor[expando] = {
+                value: initial || {},
+                writable: true,
+                configurable: true
+            };
+            Object.defineProperties(owner, descriptor);
+
+        } catch (e) {
+            descriptor[this.expando] = initial || {};
+            hAzzle.shallowCopy(owner, descriptor);
+        }
+
+        return owner[expando];
+    },
+    cache: function(owner, initial) {
 
         if (!hAzzle.legalTypes(owner)) {
 
-            return 0;
+            return {};
         }
 
-        var descriptor = {},
-            unlock = owner[expando];
+        var cache = owner[expando];
 
-        if (!unlock) {
-
-            unlock = Storage.uid++;
-
-            descriptor[expando] = {
-                value: unlock
-            };
-
-            Object.defineProperties(owner, descriptor);
+        if (cache) {
+            return cache;
         }
 
-        if (!this.cache[unlock]) {
-
-            this.cache[unlock] = {};
-        }
-
-        return unlock;
+        return this.register(owner, initial);
     },
-    set: function(owner, data, value) {
 
+
+    set: function(owner, data, value) {
         var prop,
-            unlock = this.key(owner),
-            cache = this.cache[unlock];
+            cache = this.cache(owner);
 
         if (typeof data === "string") {
-
             cache[data] = value;
 
         } else {
 
             if (hAzzle.isEmptyObject(cache)) {
 
-                hAzzle.shallowCopy(this.cache[unlock], data);
+                hAzzle.extend(cache, data);
 
             } else {
-
                 for (prop in data) {
-
                     cache[prop] = data[prop];
                 }
             }
         }
         return cache;
     },
-    get: function(owner, key) {
 
-        var cache = this.cache[this.key(owner)];
+    get: function(owner, key) {
+        var cache = this.cache(owner);
 
         return key === undefined ?
             cache : cache[key];
     },
-    access: function(owner, key, value) {
 
+    access: function(owner, key, value) {
         var stored;
 
         if (key === undefined ||
-
             ((key && typeof key === "string") && value === undefined)) {
 
             stored = this.get(owner, key);
 
             return stored !== undefined ?
-                stored : this.get(owner, camelize(key));
+                stored : this.get(owner, hAzzle.camelize(key));
         }
 
         this.set(owner, key, value);
@@ -100,26 +92,21 @@ Storage.prototype = {
         return value !== undefined ? value : key;
     },
     erease: function(owner, key) {
-
         var i, name, camel,
-            unlock = this.key(owner),
-            cache = this.cache[unlock];
+            cache = this.cache(owner);
 
         if (key === undefined) {
-
-            this.cache[unlock] = {};
+            this.register(owner);
 
         } else {
 
             if (hAzzle.isArray(key)) {
 
-                name = key.concat(key.map(camelize));
+                name = key.concat(key.map(hAzzle.camelize));
 
             } else {
 
-                camel = camelize(key);
-
-                // Try the string as a key before any manipulation
+                camel = hAzzle.camelize(key);
 
                 if (key in cache) {
 
@@ -133,6 +120,7 @@ Storage.prototype = {
             }
 
             i = name.length;
+
             while (i--) {
                 delete cache[name[i]];
             }
@@ -140,12 +128,12 @@ Storage.prototype = {
     },
     hasData: function(owner) {
         return !hAzzle.isEmptyObject(
-            this.cache[owner[expando]] || {}
+            owner[expando] || {}
         );
     },
     discard: function(owner) {
         if (owner[expando]) {
-            delete this.cache[owner[expando]];
+            delete owner[expando];
         }
     }
 };

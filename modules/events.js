@@ -308,7 +308,6 @@ hAzzle.event = {
         if (hAzzle.isEmptyObject(events)) {
 
             delete eventData.handle;
-            hAzzle.removeData(elem, 'events');
         }
     },
 
