@@ -15,6 +15,7 @@
             path + 'extra.js',
             path + 'text.js',
             path + 'core.js',
+            path + 'cache.js',			
             path + 'setter.js',			
             path + 'storage.js',
             path + 'cl3.js',
