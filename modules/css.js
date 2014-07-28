@@ -5,6 +5,10 @@ var
     autoRegex = /auto/g,
     leftrightRegex = /Left|Right/,
 
+    // Don't set styles on text and comment nodes
+
+    valid = [3, 8],
+
     computeStyle = hAzzle.computeStyle,
     cssStyles = hAzzle.cssStyles,
     stylePrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
@@ -121,10 +125,10 @@ hAzzle.extend({
 
     style: function(elem, name, value, extra) {
 
-        // Don't set styles on text and comment nodes
+        var ret, type, nType = elem.nodeType,
+            hooks, style;
 
-        if (!elem || elem.nodeType === 3 ||
-            elem.nodeType === 8 ||
+        if (!elem || !valid[nType] ||
             !elem.style) {
 
             return;
@@ -132,14 +136,11 @@ hAzzle.extend({
 
         // Make sure that we're working with the right name
 
-        var hooks,
-            style = elem.style;
+        style = elem.style;
 
         if (value !== undefined) {
 
-            var ret, type, hook;
-
-            style = elem.style;
+            var hook;
 
             hook = cssStyles.get[name];
 
@@ -154,12 +155,8 @@ hAzzle.extend({
                 return;
             }
 
-            // camelize the name	
-
-            name = hAzzle.camelize(name);
-
-            name = hAzzle.cssProps[name] ||
-                (hAzzle.cssProps[name] = vendorPropName(style, name));
+            name = hAzzle.camelize(name) ;
+			name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorPropName(style, name));
 
             // Check if we're setting a value
 
@@ -196,20 +193,8 @@ hAzzle.extend({
 
                 if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
                     style[name] = value;
-                    //  }
-
-                } else {
-
-                    // If a hook was provided get the non-computed value from there
-                    if (hooks && 'get' in hooks &&
-                        (ret = hooks.get(elem, false, extra)) !== undefined) {
-
-                        return ret;
-                    }
-
-                    // Otherwise just get the value from the style object
-                    return elem && elem.style[name];
                 }
+
             }
 
         } else {
@@ -223,11 +208,11 @@ hAzzle.extend({
             hooks = cssHooks[name];
 
             // If a hook was provided get the non-computed value from there
-            var aa;
-            if (hooks && 'get' in hooks &&
-                (aa = hooks.get(elem, false, extra)) !== undefined) {
 
-                return aa;
+            if (hooks && 'get' in hooks &&
+                (ret = hooks.get(elem, false, extra)) !== undefined) {
+
+                return ret;
             }
 
             // Otherwise just get the value from the style object
