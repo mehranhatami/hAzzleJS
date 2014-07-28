@@ -11,7 +11,7 @@
  */
 var win = this,
 
-    hAzzle = win.hAzzle,
+   // hAzzle = win.hAzzle,
     // Current document
 
     doc = win.document,
