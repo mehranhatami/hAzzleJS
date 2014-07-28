@@ -1,9 +1,6 @@
-// Holds javascript natives
-var natives = {};
-
 hAzzle.extend({
 
-     legalTypes: function(elem) {
+    legalTypes: function(elem) {
 
         if (elem && (elem.nodeType === 1 ||
             elem.nodeType === 9 ||
@@ -115,18 +112,11 @@ hAzzle.extend({
             'htmlcollection',
             'htmlformcontrolscollection'
         ], obj);
-    },
-
-    hasOwn: natives.hasOwnProperty
+    }
 
 }, hAzzle);
 
 /* =========================== INTERNAL ========================== */
-
-// Populate the native list
-hAzzle.each('Boolean String Function Array Date RegExp Object Error Arguments'.split(' '), function(name) {
-    natives['[object ' + name + ']'] = name.toLowerCase();
-});
 
 // Add some isType methods
 hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments'], function(name) {

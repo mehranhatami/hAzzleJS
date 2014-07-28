@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.6b RC2
+ * Version: 0.9.7a RC2
  * Released under the MIT License.
  *
- * Date: 2014-07-28
+ * Date: 2014-07-29
  */
 (function(window, undefined) {
 
@@ -30,6 +30,23 @@
 
         indexOf = ArrayProto.indexOf,
         concat = ArrayProto.concat,
+
+        // Holds javascript natives
+
+        natives = {},
+
+        nl = ['Boolean',
+            'String',
+            'Function',
+            'Array',
+            'Date',
+            'RegExp',
+            'Object',
+            'Error',
+            'Arguments'
+        ],
+
+        i = nl.length,
 
         // Left and right whitespace regexp for hAzzle.trim()
 
@@ -270,10 +287,12 @@
 
             // Iterate through array	
 
-            if (hAzzle.isArraylike(obj)) {
+            if (isArraylike(obj)) {
 
                 for (; i < l; i++) {
-                    iterator.call(obj[i], obj[i], i);
+                    if (iterator.call(obj[i], obj[i], i) === false) {
+                        break;
+                    }
                 }
 
                 // Iterate through functions
@@ -286,7 +305,10 @@
                         i != 'name' && (!obj.hasOwnProperty ||
                             obj.hasOwnProperty(i))) {
 
-                        iterator.call(context, obj[i], i);
+                        if (iterator.call(context, obj[i], i) === false) {
+
+                            break;
+                        }
                     }
                 }
 
@@ -296,7 +318,9 @@
 
                 for (i in obj) {
                     if (obj.hasOwnProperty(i)) {
-                        iterator.call(context, obj[i], i);
+                        if (iterator.call(context, obj[i], i) === false) {
+                            break;
+                        }
                     }
                 }
 
@@ -388,7 +412,7 @@
             var value,
                 i = 0,
                 length = elems.length,
-                isArray = hAzzle.isArraylike(elems),
+                isArray = isArraylike(elems),
                 ret = [];
 
             // Go through the array, translating each of the items to their new values
@@ -609,7 +633,8 @@
 
             return type;
 
-        }
+        },
+        hasOwn: natives.hasOwnProperty
     }, hAzzle);
 
     /**
@@ -643,7 +668,7 @@
             var length = obj.length,
                 type;
 
-            if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
+            if (typeof obj === 'function' || isWindow(obj)) {
                 return false;
             }
 
@@ -657,6 +682,12 @@
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
         };
 
+    /* =========================== INTERNAL ========================== */
+
+
+    while (i--) {
+        natives['[object ' + nl[i] + ']'] = nl[i].toLowerCase();
+    }
 
     // Expose hAzzle to the global object
 
