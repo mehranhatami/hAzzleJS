@@ -191,9 +191,6 @@ hAzzle.extend({
 hAzzle.extend({
 
 
-    // Properties that shouldn't have units behind 
-
-    unitless: {},
 
     cssHooks: {
 
@@ -549,22 +546,3 @@ function calculateCorrect(elem, name, val) {
 
 
 
-/* =========================== INTERNAL ========================== */
-
-// Populate the unitless list
-
-hAzzle.each(['lineHeight', 'zoom', 'zIndex', 'opacity', 'boxFlex',
-        'WebkitBoxFlex', 'MozBoxFlex',
-        'columns', 'counterReset', 'counterIncrement',
-        'fontWeight', 'float', 'volume', 'stress',
-        'overflow', 'fillOpacity',
-        'flexGrow', 'columnCount',
-        'flexShrink', 'order',
-        'orphans', 'widows',
-        'transform', 'transformOrigin',
-        'transformStyle', 'perspective',
-        'perspectiveOrigin', 'backfaceVisibility'
-    ],
-    function(name) {
-        hAzzle.unitless[name] = true;
-    });

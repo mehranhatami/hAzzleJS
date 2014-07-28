@@ -1,33 +1,137 @@
+var cssHooks = {
 
-var directions = ["Top", "Right", "Bottom", "Left"],
+        opacity: {
+            get: function(elem, computed) {
+
+                if (computed) {
+
+                    var opacity = elem.style.opacity ||
+                        curCSS(elem, 'opacity');
+
+                    return (opacity === '') ? 1 : opacity.toFloat();
+                }
+            },
+            set: function(el, value) {
+
+                if (typeof value !== 'number') {
+
+                    value = 1;
+                }
+
+                if (value == 1 || value === '') {
+
+                    value = '';
+
+                } else if (value < 0.00001) {
+
+                    value = 0;
+                }
+
+                el.style.opacity = value;
+            }
+        }
+    },
+    directions = ["Top", "Right", "Bottom", "Left"],
     reDash = /\-./g,
-	docElem = hAzzle.docElem,
-    computeStyle = hAzzle.computeStyle = function(elem) {
+    docElem = hAzzle.docElem,
+
+    excludedProps = [
+        'zoom',
+        'box-flex',
+        'columns',
+        'counter-reset',
+        'volume',
+        'stress',
+        'overflow',
+        'flex-grow',
+        'column-count',
+        'flex-shrink',
+        'order',
+        'orphans',
+        'widows',
+        'transform',
+        'transform-origin',
+        'transform-style',
+        'perspective',
+        'perspective-origin',
+        'backface-visibility'
+    ];
+
+// Expand the global hAzzle Object
+
+hAzzle.extend({
+
+    // Properties that shouldn't have units behind 
+
+    unitless: {},
+
+    /**
+     * Add cssHooks
+     *
+     * The name has to be camlized, else we will get
+     * conflicts with other parts of the hAzzle Core.
+     *
+     * @param {String} name
+     * @param {Function} Object
+     *
+     *
+     * Example:
+     *
+     * hAzzle.installCSSHook('test', {
+     *
+     *	'get': function(){},
+     *	'set': function(){}
+     *
+     *	});
+     */
+
+    addCSSHook: function(name, obj) {
+
+        if (typeof name !== 'string' ||
+            hAzzle.type(obj) !== 'object') {
+            return;
+        }
+
+        // Set up the hook
+        cssHooks[hAzzle.camelize(name)] = obj;
+
+    },
+
+    cssStyles: {
+
+        get: {},
+        set: {}
+    }
+
+}, hAzzle);
+
+// Get computed styles
+
+var computeStyle = hAzzle.computeStyle = function(elem) {
         var view = elem.ownerDocument.defaultView;
         return !!document.defaultView.getComputedStyle ? (view.opener ? view.getComputedStyle(elem, null) :
             window.getComputedStyle(elem, null)) : elem.style;
     },
 
-    // Expose the cssStyles object to the global scope
-
-    cssStyles = hAzzle.cssStyles = {
-
-        get: {},
-        set: {}
-    },
+    cssStyles = hAzzle.cssStyles,
 
     computed = computeStyle(docElem),
 
     props = hAzzle.makeArray(computed);
 
-  hAzzle.each(props, function(propName) {
+hAzzle.each(props, function(propName) {
 
     var prefix = propName[0] === "-" ?
+
         propName.substring(1, propName.indexOf("-", 1) - 1) : null,
+
         unprefixedName = prefix ? propName.substring(prefix.length + 2) : propName,
+
         stylePropName = propName.replace(reDash, function(str) {
+
             return str[1].toUpperCase();
         });
+
     // most of browsers starts vendor specific props in lowercase
 
     if (!(stylePropName in computed)) {
@@ -48,7 +152,7 @@ var directions = ["Top", "Right", "Bottom", "Left"],
 });
 
 // Exclude the following css properties from adding px
-hAzzle.each('float fill-opacity font-weight line-height opacity orphans widows z-index zoom '.split(' '), function(propName) {
+hAzzle.each(excludedProps, function(propName) {
 
     var stylePropName = propName.replace(reDash, function(str) {
         return str[1].toUpperCase();
@@ -66,7 +170,6 @@ hAzzle.each('float fill-opacity font-weight line-height opacity orphans widows z
         style["cssText" in style ? stylePropName : propName] = value.toString();
     };
 });
-
 
 
 // Normalize property shortcuts
@@ -106,4 +209,13 @@ hAzzle.forOwn({
             });
         }
     };
+});
+
+
+/* =========================== INTERNAL ========================== */
+
+// Populate the unitless list
+
+hAzzle.each(excludedProps, function(name) {
+    hAzzle.unitless[hAzzle.camelize(name)] = true;
 });
