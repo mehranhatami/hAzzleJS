@@ -70,11 +70,16 @@ hAzzle.extend({
             }
         );
         if (bubble) {
+			
             hAzzle.event.trigger(e, null, elem);
+			
         } else {
+			
             hAzzle.event.handle.call(elem, e);
         }
+		
         if (e.isDefaultPrevented()) {
+			
             event.preventDefault();
         }
     }
@@ -87,6 +92,7 @@ hAzzle.forOwn({
     pointerenter: 'pointerover',
     pointerleave: 'pointerout'
 }, function (fix, orig) {
+	
     hAzzle.eventHooks.special[orig] = {
         delegateType: fix,
         bindType: fix,

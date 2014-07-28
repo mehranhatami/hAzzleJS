@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.7a RC2
+ * Version: 0.9.7b RC2
  * Released under the MIT License.
  *
  * Date: 2014-07-29
@@ -28,9 +28,7 @@
 
     var document = window.document,
 
-        /**
-         * Prototype references.
-         */
+        // Prototype references.
 
         ArrayProto = Array.prototype,
 

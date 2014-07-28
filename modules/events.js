@@ -24,6 +24,7 @@
  * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
+ 
 var Jiesa = hAzzle.Jiesa,
     whiteRegex = (/\S+/g),
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,

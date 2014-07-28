@@ -1,21 +1,22 @@
 /*!
  * DOM walker & getters
  */
-var arrayProto = Array.prototype,
-    indexOf = arrayProto.indexOf,
-    slice = arrayProto.slice,
-    concat = arrayProto.concat,
+var
+// Prototype references.
 
-    rparentsprev = /^(?:parents|prev(?:Until|All))/,
+    ArrayProto = Array.prototype,
 
-    // Methods guaranteed to produce a unique set when starting from a unique set
+    // Save a reference to some core methods
 
-    guaranteedUnique = {
-        children: 1,
-        contents: 1,
-        next: 1,
-        prev: 1
-    },
+    indexOf = ArrayProto.indexOf,
+    slice = ArrayProto.slice,
+    concat = ArrayProto.concat,
+
+    // Usefull regex
+
+    parpreunall = /^(?:parents|prev(?:Until|All))/,
+
+    specials = {},
 
     /**
      * Optimized map method for selector filtering
@@ -624,12 +625,11 @@ hAzzle.forOwn({
 
         if (this.length > 1) {
             // Remove duplicates
-            if (!guaranteedUnique[name]) {
+            if (!specials[name]) {
                 hAzzle.unique(matched);
             }
 
-            // Reverse order for parents* and prev-derivatives
-            if (rparentsprev.test(name)) {
+            if (parpreunall.test(name)) {
 
                 matched.reverse();
             }
@@ -660,3 +660,9 @@ function isnot(els, selector, not) {
             return (indexOf.call(selector, elem) >= 0) !== not;
         });
 }
+
+
+hAzzle.each(['children contents next prev'.split(' ')], function(prop) {
+    console.log(prop)
+    specials[prop] = true;
+});

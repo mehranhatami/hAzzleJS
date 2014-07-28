@@ -1,4 +1,7 @@
-// Traversal API shim for hAzzle Core
+// ntapi.js
+//
+// Is this shim needed in 2014 with all major
+// browsers supporting this??
 
 hAzzle.extend({
 	
@@ -23,7 +26,6 @@ hAzzle.extend({
          * Find previous element sibling.
          *
          * @param {Object} el
-         
          * @return {hAzzle}
          */
 

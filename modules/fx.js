@@ -1,4 +1,6 @@
-
+/**
+ * UNDER DEVELOPMENT!!!  Animation engine!
+ **/
 var now = hAzzle.pnow;
 
 var fx = function (elem, options, duration, callback) {

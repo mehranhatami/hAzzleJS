@@ -2,7 +2,7 @@
  * rAF and cAF
  */
 var win = this,
-    foreign, vendors = ['webkit', 'moz', 'ms', 'o'],
+    top , vendors = ['webkit', 'moz', 'ms', 'o'],
     i = 0,
     len = vendors.length,
     nRAF, nCAF,
@@ -12,10 +12,10 @@ var win = this,
 // Test if we are within a foreign domain. Use raf from the top if possible.
 try {
     // Accessing .name will throw SecurityError within a foreign domain.
-    window.top.name;
-    foreign = window.top;
+    var name = window.top.name
+        top = window.top
 } catch (e) {
-    foreign = window;
+      top  = window;
 }
 
 // Performance.now()
@@ -81,14 +81,14 @@ var rAF = {
 
         // Check for foreign domain       
 
-        'foreign-domain': foreign ? false : true,
+        'foreign-domain': top  ? false : true,
 
         // Detect if the browser supports native rAF, because there are
         // issues with iOS6, so check if the native rAF and cAF works
         // http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
 
-        'native-rAF': (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
-            foreign.cancelRequestAnimationFrame)) ? true : false,
+        'native-rAF': (top .requestAnimationFrame && (top .cancelAnimationFrame ||
+            top .cancelRequestAnimationFrame)) ? true : false,
 
         // Detect if performance.now() are supported
 

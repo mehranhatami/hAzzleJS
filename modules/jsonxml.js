@@ -1,12 +1,16 @@
+// jsonxml.js
 // Parse JSON
-hAzzle.parseJSON = function (data) {
+hAzzle.parseJSON = function(data) {
     return JSON.parse(data + '');
 };
 
 // Parse XML
 
-hAzzle.parseXML = function (data) {
+hAzzle.parseXML = function(data) {
+
     var xml, tmp;
+
+    // If no string, return null 
 
     if (!data || typeof data !== 'string') {
 
@@ -15,6 +19,7 @@ hAzzle.parseXML = function (data) {
 
     // Support: IE9
     try {
+
         tmp = new DOMParser();
         xml = tmp.parseFromString(data, 'text/xml');
 
