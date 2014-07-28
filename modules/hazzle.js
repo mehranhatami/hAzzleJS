@@ -6,7 +6,26 @@
  *
  * Date: 2014-07-29
  */
-(function(window, undefined) {
+(function(global, factory) {
+
+    if (typeof module === "object" && typeof module.exports === "object") {
+        module.exports = global.document ?
+            factory(global, true) :
+            function(w) {
+                if (!w.document) {
+                    throw new Error("hAzzle requires a window with a document");
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+
+    // Pass this if window is not defined yet
+}(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
+
+
+    //(function(window, undefined) {
 
     // hAzzle already defined, leave now
 
@@ -691,6 +710,10 @@
 
     // Expose hAzzle to the global object
 
-    window.hAzzle = hAzzle;
+    if (typeof noGlobal === 'undefined') {
+        window.hAzzle = window.hAzzle = hAzzle;
+    }
 
-})(this);
+    return hAzzle;
+
+}));
