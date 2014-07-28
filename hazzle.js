@@ -38,7 +38,6 @@
             path + 'csssupport.js',
             path + 'styles.js',
             path + 'css.js',
-            path + 'topleft.js',
             path + 'position.js',
             path + 'offset.js',
             path + 'showhide.js',
