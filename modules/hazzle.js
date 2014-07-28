@@ -1,12 +1,11 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.5c
+ * Version: 0.9.6b RC2
  * Released under the MIT License.
  *
- * Date: 2014-07-27
+ * Date: 2014-07-28
  */
- 
 (function(window, undefined) {
 
     // hAzzle already defined, leave now
@@ -264,25 +263,45 @@
          * @return {hAzzle|Array}
          */
 
-        each: function(ar, callback, fn, args) {
+        each: function(obj, iterator, context) {
 
-            var ind, i = 0,
-                l = ar.length;
+            var i = 0,
+                l = obj.length;
 
-            for (; i < l; i++) {
+            // Iterate through array	
 
-                if (args) {
+            if (hAzzle.isArraylike(obj)) {
 
-                    ind = ar.length - i - 1;
-
-                } else {
-
-                    ind = i;
+                for (; i < l; i++) {
+                    iterator.call(obj[i], obj[i], i);
                 }
-                callback.call(fn || ar[ind], ar[ind], ind, ar);
-            }
-            return ar;
 
+                // Iterate through functions
+
+            } else if (typeof obj === 'function') {
+
+                for (i in obj) {
+
+                    if (i != 'prototype' && i != 'length' &&
+                        i != 'name' && (!obj.hasOwnProperty ||
+                            obj.hasOwnProperty(i))) {
+
+                        iterator.call(context, obj[i], i);
+                    }
+                }
+
+                // Iterate through objects
+
+            } else {
+
+                for (i in obj) {
+                    if (obj.hasOwnProperty(i)) {
+                        iterator.call(context, obj[i], i);
+                    }
+                }
+
+            }
+            return obj;
         },
 
         /**
@@ -312,6 +331,7 @@
         },
 
         capitalize: function(str) {
+
             return str.charAt(0).toUpperCase() + str.substring(1).toLowerCase();
 
         },
@@ -464,17 +484,17 @@
         },
 
         merge: function(first, second) {
-        var len = +second.length,
-			j = 0,
-			i = first.length;
+            var len = +second.length,
+                j = 0,
+                i = first.length;
 
-		for ( ; j < len; j++ ) {
-			first[ i++ ] = second[ j ];
-		}
+            for (; j < len; j++) {
+                first[i++] = second[j];
+            }
 
-		first.length = i;
+            first.length = i;
 
-		return first;
+            return first;
         },
 
         // Nothing
