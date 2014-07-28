@@ -10,13 +10,13 @@ hAzzle.extend({
      * @return {hAzzle|number}
      */
 
-    offset: function (obj) {
+    offset: function(obj) {
 
         if (arguments.length) {
 
             return obj === undefined ?
                 this :
-                this.each(function (el, i) {
+                this.each(function(el, i) {
                     xy(el, obj, i);
                 });
         }
@@ -28,7 +28,7 @@ hAzzle.extend({
 
             d = el.ownerDocument;
             boundingRect = el.getBoundingClientRect();
-            w = hAzzle.getWindow(d);
+            w = getWindow(d);
 
             // If current element don't exist in the 
             // document root, return empty object
@@ -54,8 +54,8 @@ hAzzle.extend({
         }
     },
 
-    offsetParent: function () {
-        return hAzzle(this.map(function (el) {
+    offsetParent: function() {
+        return hAzzle(this.map(function(el) {
             var offsetParent = el.offsetParent || docElem;
             if (offsetParent) {
                 while ((!hAzzle.nodeName(offsetParent, 'html') && hAzzle.css(offsetParent, 'position') === 'static')) {
@@ -76,11 +76,10 @@ hAzzle.extend({
  */
 function xy(elem, ops, i) {
 
-    var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft,
+    var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
         position = hAzzle.css(elem, 'position'),
+        curElem = hAzzle(elem),
         props = {};
-
-    elem = hAzzle(elem);
 
     // Set position first, in-case top/left are set even on static elem
     if (position === 'static') {
@@ -88,34 +87,31 @@ function xy(elem, ops, i) {
         elem.style.position = 'relative';
     }
 
-    curOffset = elem.offset();
+    curOffset = curElem.offset();
 
     curCSSTop = hAzzle.css(elem, 'top');
     curCSSLeft = hAzzle.css(elem, 'left');
 
-    // Need to be able to calculate position if either top or left is auto and position is either absolute or fixed
+    calculatePosition = (position === 'absolute' || position === 'fixed') &&
+        (curCSSTop + curCSSLeft).indexOf('auto') > -1;
 
-    if ((position === 'absolute' || position === 'fixed') &&
-        hAzzle.inArray((curCSSTop + curCSSLeft), 'auto') > -1) {
-        curPosition = elem.position();
+    if (calculatePosition) {
+        curPosition = curElem.position();
         curTop = curPosition.top;
         curLeft = curPosition.left;
 
     } else {
-
         curTop = parseFloat(curCSSTop) || 0;
         curLeft = parseFloat(curCSSLeft) || 0;
     }
 
-    if (typeof ops === 'function') {
-
+    if (hAzzle.isFunction(ops)) {
         ops = ops.call(elem, i, curOffset);
     }
 
     if (ops.top !== null) {
         props.top = (ops.top - curOffset.top) + curTop;
     }
-
     if (ops.left !== null) {
         props.left = (ops.left - curOffset.left) + curLeft;
     }
@@ -124,57 +120,44 @@ function xy(elem, ops, i) {
         ops.using.call(elem, props);
 
     } else {
-        elem.css(props);
+        curElem.css(props);
     }
 }
 
 
 // scrollTop and scrollLeft functions
 
-hAzzle.forOwn({
-    scrollLeft: 'pageXOffset',
-    scrollTop: 'pageYOffset'
-}, function (prop, method) {
+hAzzle.each({
+    scrollLeft: "pageXOffset",
+    scrollTop: "pageYOffset"
+}, function(prop, method) {
+    var top = "pageYOffset" === prop;
 
-    var top = 'pageYOffset' === prop;
-
-    hAzzle.Core[method] = function (val) {
-
-        var i = 0,
-            len = this.len || 1,
-            elem, win;
-
-        for (; i < len; i++) {
-
-            elem = this[i];
-
-            if (hAzzle.isWindow(elem)) {
-
-                win = elem;
-
-            } else {
-
-                if (elem.nodeType === 9) {
-
-                    win = elem.defaultView;
-                }
-            }
+    hAzzle.Core[method] = function(val) {
+        return hAzzle.setter(this, function(elem, method, val) {
+            var win = getWindow(elem);
 
             if (val === undefined) {
-
                 return win ? win[prop] : elem[method];
             }
 
             if (win) {
-
                 win.scrollTo(!top ? val : window.pageXOffset,
                     top ? val : window.pageYOffset
                 );
 
             } else {
-
                 elem[method] = val;
             }
-        }
+        }, method, val, arguments.length, null);
     };
 });
+
+/**
+ * Gets a window from an element
+ */
+
+function getWindow(elem) {
+    return hAzzle.isWindow(elem) ? elem :
+        elem.nodeType === 9 && elem.defaultView;
+}

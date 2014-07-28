@@ -75,6 +75,9 @@ hAzzle.assert(function(div) {
 
         div.style.cssText = 'border:1px;padding:1px;width:4px;position:absolute';
         var divStyle = window.getComputedStyle(div, null);
+
+        cssSupport['api-boxSizing'] = divStyle.boxSizing === "border-box";
+
         pixelPositionVal = divStyle.top !== '1%';
         boxSizingReliableVal = divStyle.width === '4px';
         cssSupport['api-pixelPosition'] = pixelPositionVal;
@@ -87,3 +90,4 @@ hAzzle.assert(function(div) {
 hAzzle.clearCloneStyle = cssSupport['bug-clearCloneStyle'];
 hAzzle.pixelPosition = cssSupport['api-pixelPosition'];
 hAzzle.boxSizingReliable = cssSupport['api-boxSizingReliable'];
+hAzzle.boxSizing = cssSupport['api-boxSizing'];
