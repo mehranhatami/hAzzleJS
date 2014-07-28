@@ -5,6 +5,8 @@ var expando = hAzzle.expando,
     htmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     charRegEx = /([A-Z])/g;
 
+// Dummy holder
+
 function Storage() {}
 
 /* =========================== PROTOTYPE CHAIN ========================== */
@@ -57,9 +59,10 @@ Storage.prototype = {
 
             if (hAzzle.isEmptyObject(cache)) {
 
-                hAzzle.extend(cache, data);
+                hAzzle.shallowCopy(cache, data);
 
             } else {
+				
                 for (prop in data) {
                     cache[prop] = data[prop];
                 }
@@ -69,6 +72,7 @@ Storage.prototype = {
     },
 
     get: function(owner, key) {
+		
         var cache = this.cache(owner);
 
         return key === undefined ?
@@ -122,18 +126,22 @@ Storage.prototype = {
             i = name.length;
 
             while (i--) {
+				
                 delete cache[name[i]];
             }
         }
     },
     hasData: function(owner) {
+		
         return !hAzzle.isEmptyObject(
             owner[expando] || {}
         );
     },
     discard: function(owner) {
+		
         if (owner[expando]) {
-            delete owner[expando];
+        
+		    delete owner[expando];
         }
     }
 };
