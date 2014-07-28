@@ -8,12 +8,12 @@
  */
 (function(global, factory) {
 
-    if (typeof module === "object" && typeof module.exports === "object") {
+    if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
             factory(global, true) :
             function(w) {
                 if (!w.document) {
-                    throw new Error("hAzzle requires a window with a document");
+                    throw new Error('hAzzle requires a window with a document');
                 }
                 return factory(w);
             };
@@ -22,22 +22,11 @@
     }
 
     // Pass this if window is not defined yet
-}(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
-
-
-    //(function(window, undefined) {
-
-    // hAzzle already defined, leave now
-
-    if (window.hAzzle) {
-
-        return;
-    }
+}(typeof window !== 'undefined' ? window : this, function(window, noGlobal) {
 
     // Usefull variabels
 
-    var win = window,
-        doc = win.document,
+    var document = window.document,
 
         /**
          * Prototype references.
@@ -184,6 +173,7 @@
          * @return {hAzzle}
          */
 
+
         each: function(fn, obj) {
             return hAzzle.each(this, fn, obj);
         },
@@ -223,12 +213,6 @@
             }
 
             return m;
-        },
-
-        ready: function(fn) {
-            if (typeof fn === 'function') {
-                return hAzzle.ready(fn);
-            }
         }
     };
 
@@ -258,7 +242,7 @@
         // Note! This can / will be overwritten 
         // by the document.js module
 
-        docElem: doc.documentElement,
+        docElem: window.document.documentElement,
 
         // Tells if the document are XML or HTML
         // Set to true as default, but it can be
@@ -597,7 +581,7 @@
 
         assert: function(fn) {
 
-            var div = doc.createElement('div');
+            var div = document.createElement('div');
 
             try {
                 return !!fn(div);
