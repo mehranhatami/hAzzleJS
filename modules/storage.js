@@ -1,13 +1,15 @@
 // Storage.js
-var expando = hAzzle.expando,
-    camelize = hAzzle.camelize,
+var camelize = hAzzle.camelize,
     WhiteRegex = (/\S+/g),
     htmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     charRegEx = /([A-Z])/g;
 
 // Dummy holder
 
-function Storage() {}
+function Storage() {
+	
+	this.expando = hAzzle.expando;
+	}
 
 /* =========================== PROTOTYPE CHAIN ========================== */
 
@@ -17,7 +19,7 @@ Storage.prototype = {
         var descriptor = {};
 
         try {
-            descriptor[expando] = {
+            descriptor[this.expando] = {
                 value: initial || {},
                 writable: true,
                 configurable: true
@@ -29,7 +31,7 @@ Storage.prototype = {
             hAzzle.shallowCopy(owner, descriptor);
         }
 
-        return owner[expando];
+        return owner[this.expando];
     },
     cache: function(owner, initial) {
 
@@ -38,7 +40,7 @@ Storage.prototype = {
             return {};
         }
 
-        var cache = owner[expando];
+        var cache = owner[this.expando];
 
         if (cache) {
             return cache;
@@ -134,20 +136,17 @@ Storage.prototype = {
     hasData: function(owner) {
 		
         return !hAzzle.isEmptyObject(
-            owner[expando] || {}
+            owner[this.expando] || {}
         );
     },
     discard: function(owner) {
 		
-        if (owner[expando]) {
+        if (owner[this.expando]) {
         
-		    delete owner[expando];
+		    delete owner[this.expando];
         }
     }
 };
-
-Storage.uid = 1;
-Storage.accepts = hAzzle.acceptData;
 
 // Make it accessible
 

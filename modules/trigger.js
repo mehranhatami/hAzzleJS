@@ -18,7 +18,7 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
 
     // Check if valid type
 
-    if (!valid(elem, type)) {
+    if (!dritassa(elem, type)) {
         return;
     }
 
@@ -134,7 +134,7 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
 
 // Check for valid nodeType, and not triggered before
 
-function valid(elem, type) {
+function dritassa(elem, type) {
     if ((elem.nodeType === 3 || elem.nodeType === 8) ||
         focusinoutblur.test(type + eventCore.triggered)) {
         return false;
