@@ -29,7 +29,8 @@ hAzzle.assert(function(div) {
 // Margin and padding cssHooks
 
 hAzzle.each(['margin', 'padding'], function(hook) {
-    hAzzle.cssHooks[hook] = {
+
+    hAzzle.addCSSHook(hook, {
         get: function(elem) {
             return hAzzle.map(directions, function(dir) {
                 return hAzzle.css(elem, hook + dir);
@@ -47,13 +48,14 @@ hAzzle.each(['margin', 'padding'], function(hook) {
                 elem.style[hook + dir] = values[dir];
             });
         }
-    };
+    });
 });
 
 // BackgroundPositionXY cssHooks
 
 if (hAzzle.BackgroundPositionXY) {
-    hAzzle.cssHooks.backgroundPosition = {
+
+    hAzzle.addCSSHook('backgroundPosition', {
         get: function(elem, computed, extra) {
             return hAzzle.map(['X', 'Y'], function(l, i) {
                 return hAzzle.css(elem, 'backgroundPosition' + l);
@@ -65,7 +67,7 @@ if (hAzzle.BackgroundPositionXY) {
                 elem.style['backgroundPosition' + l] = values[l];
             });
         }
-    };
+    });
 }
 
 /* ============================ UTILITY METHODS =========================== */
