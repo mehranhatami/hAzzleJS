@@ -35,6 +35,7 @@
             path + 'attributes.js',
             path + 'removeable.js',
             path + 'units.js',
+            path + 'csssupport.js',
             path + 'styles.js',
             path + 'css.js',
             path + 'topleft.js',

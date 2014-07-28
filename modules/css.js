@@ -1,11 +1,12 @@
-var docElem = hAzzle.docElem,
-
+var
     numbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
     leftrightRegex = /Left|Right/,
 
+    computeStyle = hAzzle.computeStyle,
+    cssStyles = hAzzle.cssStyles,
     stylePrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
     /**
@@ -16,127 +17,9 @@ var docElem = hAzzle.docElem,
 
         letterSpacing: '0',
         fontWeight: '400'
-    },
-
-    reDash = /\-./g,
-
-    directions = ["Top", "Right", "Bottom", "Left"],
-
-    cssCore = {
-
-        // Feature / bug detection
-
-        has: {
-
-            // Check for getComputedStyle support
-
-            'api-gCS': !!document.defaultView.getComputedStyle
-        }
     };
 
-/* ============================ FEATURE / BUG DETECTION =========================== */
-
-/**
- * Quick function for adding supported CSS properties
- * to the 'cssCore'
- *
- * @param {String} name
- * @param {String} value
- *
- */
-
-hAzzle.applyCSSSupport = function(name, value) {
-
-    cssCore.has[name] = value;
-
-    // Expost to the global hAzzle object
-
-    hAzzle[name] = cssCore.has[name];
-};
-
-// Expose to the global hAzzle Object
-
-hAzzle.transition = cssCore.has.transition;
-
-// Bug detection
-
-hAzzle.assert(function(div) {
-
-    // Support: IE9-11+
-
-    cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === 'content-box';
-
-    var pixelPositionVal, boxSizingReliableVal,
-        container = document.createElement('div');
-
-    container.style.cssText = 'border:0;width:0;height:0;top:0;left:-9999px;margin-top:1px;' +
-        'position:absolute';
-
-    container.appendChild(div);
-
-    function computePixelPositionAndBoxSizingReliable() {
-        div.style.cssText =
-            // Support: Firefox<29, Android 2.3
-            // Vendor-prefix box-sizing
-            '-webkit-box-sizing:border-box;-moz-box-sizing:border-box;' +
-            'box-sizing:border-box;display:block;margin-top:1%;top:1%;' +
-            'border:1px;padding:1px;width:4px;position:absolute';
-        div.innerHTML = '';
-        docElem.appendChild(container);
-
-        var divStyle = window.getComputedStyle(div, null);
-        pixelPositionVal = divStyle.top !== '1%';
-        boxSizingReliableVal = divStyle.width === '4px';
-
-        docElem.removeChild(container);
-    }
-
-    // Check if we support getComputedStyle
-
-    if (cssCore.has['api-gCS']) {
-
-        cssCore.has['api-pixelPosition'] = (function() {
-            computePixelPositionAndBoxSizingReliable();
-            return pixelPositionVal;
-        })();
-
-        cssCore.has['api-boxSizingReliable'] = (function() {
-            if (boxSizingReliableVal === null) {
-                computePixelPositionAndBoxSizingReliable();
-            }
-            return boxSizingReliableVal;
-        })();
-
-        cssCore.has['api-reliableMarginRight'] = (function() {
-            var ret, marginDiv = div.appendChild(document.createElement('div'));
-            marginDiv.style.cssText = div.style.cssText =
-                '-webkit-box-sizing:content-box;-moz-box-sizing:content-box;' +
-                'box-sizing:content-box;display:block;margin:0;border:0;padding:0';
-            marginDiv.style.marginRight = marginDiv.style.width = '0';
-            div.style.width = '1px';
-            docElem.appendChild(container);
-            ret = !parseFloat(window.getComputedStyle(marginDiv, null).marginRight);
-            docElem.removeChild(container);
-            return ret;
-        })();
-    }
-});
-
-// Expose to the global hAzzle Object
-
-hAzzle.clearCloneStyle = cssCore.has['bug-clearCloneStyle'];
-hAzzle.pixelPosition = cssCore.has['api-pixelPosition'];
-hAzzle.boxSizingReliable = cssCore.has['api-boxSizingReliable'];
-hAzzle.reliableMarginRight = cssCore.has['api-reliableMarginRight'];
-
-
-
 hAzzle.extend({
-
-    cssHooks: {
-
-
-    },
 
     /**
      * Set / get CSS style
@@ -146,131 +29,66 @@ hAzzle.extend({
      * @return {hAzzle|string}
      */
 
-    css: function(prop, value) {
+    css: function(name, value) {
 
-        var type = typeof prop,
-            i = 0,
-            key, l = this.length,
-            obj = type === 'string' ? {} : prop,
-            el = this[0];
+        return hAzzle.setter(this, function(elem, name, value) {
+            var styles, len,
+                map = {},
+                i = 0;
 
-        if (hAzzle.isArray(prop)) {
-            var map = {},
-                styles = computeStyle(el),
-                len = prop.length;
-            i = 0;
-            for (; i < len; i++) {
+            if (hAzzle.isArray(name)) {
+                styles = getStyles(elem);
+                len = name.length;
 
-                map[prop[i]] = curCSS(el, prop[i], styles);
+                for (; i < len; i++) {
+                    map[name[i]] = hAzzle.css(elem, name[i], false, styles);
+                }
+
+                return map;
             }
-            return map;
-        }
 
-        // Both values set, get CSS value
-
-        if (typeof value === 'undefined' && type === 'string') {
-
-            return hAzzle.css(el, prop);
-        }
-
-        if (type === 'string') {
-            obj[prop] = value;
-        }
-
-        for (; i < l; i++) {
-
-            for (key in obj) {
-
-                hAzzle.style(this[i], key, obj[key]);
-            }
-        }
-        return this;
-    },
+            return value !== undefined ?
+                hAzzle.style(elem, name, value) :
+                hAzzle.css(elem, name);
+        }, name, value, arguments.length > 1);
+    }
 });
 
 hAzzle.extend({
 
+    getStyle: function(elem, value) {
 
+        var hook, computed, style = elem.style;
 
-    cssHooks: {
+        if (arguments.length === 2 &&
+            (hook = cssStyles.get[name])) {
 
-        opacity: {
-            get: function(elem, computed) {
+            value = hook ? hook(style) : style[name];
+            if (!computed && !value) {
+                style = computeStyle(elem);
+                value = hook ? hook(style) : style[name];
 
-                if (computed) {
-
-                    var opacity = elem.style.opacity ||
-                        curCSS(elem, 'opacity');
-
-                    return (opacity === '') ? 1 : opacity.toFloat();
-                }
-            },
-            set: function(el, value) {
-
-                if (typeof value !== 'number') {
-
-                    value = 1;
-                }
-
-                if (value == 1 || value === '') {
-
-                    value = '';
-
-                } else if (value < 0.00001) {
-
-                    value = 0;
-                }
-
-                el.style.opacity = value;
-
-
+                computed = true;
             }
+
+            return value;
         }
-    },
-
-    cssProps: {
-
-        'float': 'cssFloat'
     },
 
     css: function(elem, name, extra, styles) {
 
         var val, num, hooks,
-            origName, hook,
-            style = elem.style;
-
-        // No extra, no styles
-        /*   
-	if (arguments.length === 2 && 
-	   (hook = cssStyles.get[name])) {
-
-		    value = hook ? hook(style) : style[name];
-                if (!computed && !value) {
-                    style = computeStyle(elem);
-                    value = hook ? hook(style) : style[name];
-
-                    computed = true;
-                }	
-					
-            return value;				
-	 }
-	 */
-        // Prefixed
-
-        origName = hAzzle.camelize(name)
+            origName = hAzzle.camelize(name);
 
         // Make sure that we're working with the right name
-
-        name = hAzzle.cssProps[origName] ||
-            (hAzzle.cssProps[origName] = vendorPropName(style, origName));
+        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorPropName(elem.style, origName));
 
         // gets hook for the prefixed version
         // followed by the unprefixed version
-        hooks = hAzzle.cssHooks[name] ||
-            hAzzle.cssHooks[origName];
+        hooks = cssHooks[name];
 
         // If a hook was provided get the computed value from there
-        if (hooks && 'get' in hooks) {
+        if (hooks && "get" in hooks) {
             val = hooks.get(elem, true, extra);
         }
 
@@ -279,21 +97,20 @@ hAzzle.extend({
             val = curCSS(elem, name, styles);
         }
 
-        // Convert 'normal' to computed value
-        if (val === 'normal' && name in cssNormalTransform) {
+        // Convert "normal" to computed value
+        if (val === "normal" && name in cssNormalTransform) {
             val = cssNormalTransform[name];
         }
 
-
-        // Convert the ''|'auto' values in a correct pixel value (for IE and Firefox)
-        if (extra !== 'auto' && /^margin/.test(name) && /^$|auto/.test(val)) {
+        // Convert the ""|"auto" values in a correct pixel value (for IE and Firefox)
+        if (extra !== "auto" && /^margin/.test(name) && /^$|auto/.test(val)) {
 
             val = calculateCorrect(elem, name, val);
 
         }
         // Make numeric if forced or a qualifier was provided and val looks numeric
 
-        if (extra === '' || extra) {
+        if (extra === "" || extra) {
             num = parseFloat(val);
             return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
         }
@@ -320,8 +137,7 @@ hAzzle.extend({
 
         if (value !== undefined) {
 
-            var ret, type,
-                style, hook;
+            var ret, type, hook;
 
             style = elem.style;
 
@@ -371,7 +187,7 @@ hAzzle.extend({
                     value += ret && ret[3] ? ret[3] : 'px';
                 }
 
-                if (!cssCore.has['bug-clearCloneStyle'] && value === '' && name.indexOf('background') === 0) {
+                if (hAzzle.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
 
                     style[hAzzle.camelize(name)] = 'inherit';
                 }
@@ -404,14 +220,14 @@ hAzzle.extend({
 
             // Check for cssHooks
 
-            hooks = hAzzle.cssHooks[name];
+            hooks = cssHooks[name];
 
             // If a hook was provided get the non-computed value from there
-            var ret;
+            var aa;
             if (hooks && 'get' in hooks &&
-                (ret = hooks.get(elem, false, extra)) !== undefined) {
+                (aa = hooks.get(elem, false, extra)) !== undefined) {
 
-                return ret;
+                return aa;
             }
 
             // Otherwise just get the value from the style object
@@ -474,7 +290,7 @@ var curCSS = hAzzle.curCSS = function(elem, prop, computed) {
             ret + '' :
             ret;
     }
-}
+};
 
 // Return a css property mapped to a potentially vendor prefixed property
 
@@ -543,6 +359,3 @@ function calculateCorrect(elem, name, val) {
     }
     return val;
 }
-
-
-

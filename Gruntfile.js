@@ -71,6 +71,7 @@ function conf(grunt) {
         'attributes.js',
         'removeable.js',
         'units.js',
+        'csssupport.js',
         'styles.js',
         'css.js',
         'topleft.js',
