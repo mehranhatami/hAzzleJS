@@ -3,46 +3,7 @@ var natives = {};
 
 hAzzle.extend({
 
-    /**
-     * Determine the type of object being tested.
-     *
-     * @param {Mixed} object
-     * @return {String} object type
-	 *
-	 * NOTE! Use of switch{} here will slow down the 
-	 * performance with 1 -2% in all browsers 
-	 *
-     */
-
-    type: function(obj) {
-
-        var type = typeof obj, str;
-
-        if (obj === null) {
-
-            return obj + '';
-        }
-
-        if (type === 'boolean') {
-            return 'boolean';
-        }
-        if (type === 'object') {
-            return 'object';
-        }
-        if (type === 'string') {
-            return 'string';
-        }
-
-        str = hAzzle.str.call(obj);
-
-        if (natives[str]) {
-            return natives[str];
-        }
-
-        return type;
-
-    },
-    legalTypes: function(elem) {
+     legalTypes: function(elem) {
 
         if (elem && (elem.nodeType === 1 ||
             elem.nodeType === 9 ||
