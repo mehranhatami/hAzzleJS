@@ -1,30 +1,4 @@
-// cssHooks.js
-var directions = ['Top', 'Right', 'Bottom', 'Left'];
 
-hAzzle.assert(function(div) {
-
-    var style = div.style;
-
-    // BackgroundPositionXY 
-
-    hAzzle.applyCSSSupport('borderImage', div.style.backgroundPositionX !== null);
-
-    // BorderImage support
-    hAzzle.applyCSSSupport('borderImage', style.borderImage !== undefined ||
-        style.MozBorderImage !== undefined ||
-        style.WebkitBorderImage !== undefined ||
-        style.msBorderImage !== undefined);
-    // BoxShadow
-
-    hAzzle.applyCSSSupport('boxShadow', style.BoxShadow !== undefined ||
-        style.MsBoxShadow !== undefined ||
-        style.WebkitBoxShadow !== undefined ||
-        style.OBoxShadow !== undefined);
-
-    // textShadow support
-
-    hAzzle.applyCSSSupport('textShadow', (style.textShadow === ''));
-});
 
 // Margin and padding cssHooks
 
@@ -69,6 +43,38 @@ if (hAzzle.BackgroundPositionXY) {
         }
     });
 }
+
+
+var win = this,
+    pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i;
+
+
+if (!hAzzle.pixelPosition) {
+
+hAzzle.each( [ "top", "left", "bottom", "right" ], function( prop ) {
+			hAzzle.addCSSHook(prop, {
+				get: function( elem, computed ) {
+				  var elStyles = hAzzle.computeStyle( elem );
+					if ( computed ) {
+						computed = curCSS( elem, prop );
+						// if curCSS returns percentage, fallback to offset
+						if ( pxchk.test( computed ) ) {
+					    // Since we can't handle right and bottom with offset, let's work around it
+						  var elemPosition = hAzzle( elem ).position();
+						  if ( prop === "bottom" ) {
+						    return elemPosition.top + parseFloat( elStyles.height ) + "px";
+						  } else if ( prop === "right" ) {
+						    return elemPosition.left + parseFloat( elStyles.width ) + "px";
+						  }
+						  return elemPosition[ prop ] + "px";
+						}
+						return computed;
+					}
+				}
+			});
+		});
+    }
+
 
 /* ============================ UTILITY METHODS =========================== */
 

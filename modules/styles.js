@@ -1,4 +1,30 @@
-var cssHooks = {
+var directions = ["Top", "Right", "Bottom", "Left"],
+    reDash = /\-./g,
+    docElem = hAzzle.docElem,
+
+    excludedProps = [
+        'zoom',
+        'box-flex',
+        'columns',
+        'counter-reset',
+        'volume',
+        'stress',
+        'overflow',
+        'flex-grow',
+        'column-count',
+        'flex-shrink',
+        'order',
+        'orphans',
+        'widows',
+        'transform',
+        'transform-origin',
+        'transform-style',
+        'perspective',
+        'perspective-origin',
+        'backface-visibility'
+    ],
+
+    cssHooks = {
 
         opacity: {
             get: function(elem, computed) {
@@ -30,36 +56,16 @@ var cssHooks = {
                 el.style.opacity = value;
             }
         }
-    },
-    directions = ["Top", "Right", "Bottom", "Left"],
-    reDash = /\-./g,
-    docElem = hAzzle.docElem,
-
-    excludedProps = [
-        'zoom',
-        'box-flex',
-        'columns',
-        'counter-reset',
-        'volume',
-        'stress',
-        'overflow',
-        'flex-grow',
-        'column-count',
-        'flex-shrink',
-        'order',
-        'orphans',
-        'widows',
-        'transform',
-        'transform-origin',
-        'transform-style',
-        'perspective',
-        'perspective-origin',
-        'backface-visibility'
-    ];
+    };
 
 // Expand the global hAzzle Object
 
 hAzzle.extend({
+
+    cssProps: {
+
+        'float': 'cssFloat'
+    },
 
     // Properties that shouldn't have units behind 
 
@@ -77,7 +83,7 @@ hAzzle.extend({
      *
      * Example:
      *
-     * hAzzle.installCSSHook('test', {
+     * hAzzle.addCSSHook('test', {
      *
      *	'get': function(){},
      *	'set': function(){}
@@ -171,7 +177,6 @@ hAzzle.each(excludedProps, function(propName) {
     };
 });
 
-
 // Normalize property shortcuts
 hAzzle.forOwn({
     font: ["fontStyle", "fontSize", "/", "lineHeight", "fontFamily"],
@@ -210,7 +215,6 @@ hAzzle.forOwn({
         }
     };
 });
-
 
 /* =========================== INTERNAL ========================== */
 
