@@ -113,12 +113,6 @@ hAzzle.extend({
 
     isArray: Array.isArray,
 
-    //  Checks if `obj` is a window object.
-
-    isWindow: function(obj) {
-        return obj !== null && obj === obj.window;
-    },
-
     isDocument: function(obj) {
         return obj.nodeType && obj.nodeType === 9;
     },
@@ -160,24 +154,6 @@ hAzzle.extend({
             'htmlcollection',
             'htmlformcontrolscollection'
         ], obj);
-    },
-
-    isArraylike: function(obj) {
-        var length = obj.length,
-            type;
-
-        if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
-            return false;
-        }
-
-        if (obj.nodeType === 1 && length) {
-            return true;
-        }
-
-        type = hAzzle.type(obj);
-
-        return type === 'array' || length === 0 ||
-            typeof length === 'number' && length > 0 && (length - 1) in obj;
     },
 
     hasOwn: natives.hasOwnProperty

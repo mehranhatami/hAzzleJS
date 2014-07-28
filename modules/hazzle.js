@@ -360,22 +360,6 @@
             });
         },
 
-        arrayLike: function(obj) {
-
-            if (obj === null || hAzzle.isWindow(obj)) {
-                return false;
-            }
-
-            var length = obj.length;
-
-            if (obj.nodeType === 1 && length) {
-                return true;
-            }
-
-            return hAzzle.isString(obj) || hAzzle.isArray(obj) || length === 0 ||
-                typeof length === 'number' && length > 0 && (length - 1) in obj;
-        },
-
         indexOf: function(elem, arr, i) {
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
@@ -606,6 +590,32 @@
             return value === 'string' ? value.trim() : value;
         };
     })();
+	
+	
+   //  Checks if `obj` is a window object.
+
+ var isWindow = hAzzle.isWindow = function(obj) {
+        return obj !== null && obj === obj.window;
+    },
+	
+	isArraylike = hAzzle.isArraylike = function(obj) {
+        var length = obj.length,
+            type;
+
+        if (typeof obj === 'function' || hAzzle.isWindow(obj)) {
+            return false;
+        }
+
+        if (obj.nodeType === 1 && length) {
+            return true;
+        }
+
+        type = hAzzle.type(obj);
+
+        return type === 'array' || length === 0 ||
+            typeof length === 'number' && length > 0 && (length - 1) in obj;
+    };
+
 
     // Expose hAzzle to the global object
 
