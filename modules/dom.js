@@ -663,6 +663,6 @@ function isnot(els, selector, not) {
 
 
 hAzzle.each(['children contents next prev'.split(' ')], function(prop) {
-    console.log(prop)
+
     specials[prop] = true;
 });
