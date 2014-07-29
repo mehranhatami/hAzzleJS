@@ -6,6 +6,7 @@
  *
  * Date: 2014-07-30
  */
+ 
 (function(global, factory) {
 
     if (typeof module === 'object' && typeof module.exports === 'object') {

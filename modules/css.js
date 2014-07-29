@@ -177,7 +177,7 @@ hAzzle.extend({
                     return;
                 }
 
-                // If a number was passed in, add 'px' to the (except for certain CSS properties)
+				// If a number was passed in, add 'px' to the number (except for certain CSS properties)
 
                 if (type === 'number' && !hAzzle.unitless[name]) {
 

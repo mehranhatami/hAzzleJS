@@ -1,5 +1,4 @@
 // aliases.js - hAzzle.Core functions
-
 hAzzle.extend({
 
     /**
@@ -13,7 +12,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    on: function (types, selector, data, fn, /*INTERNAL*/ one) {
+    on: function(types, selector, data, fn, /*INTERNAL*/ one) {
 
         var origFn, type;
 
@@ -75,7 +74,7 @@ hAzzle.extend({
             fn.guid = origFn.guid || (origFn.guid = hAzzle.getID(true, 'hEvt_'));
         }
 
-        return this.each(function () {
+        return this.each(function() {
             hAzzle.event.add(this, types, fn, data, selector);
         });
     },
@@ -90,7 +89,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    one: function (types, selector, data, fn) {
+    one: function(types, selector, data, fn) {
         return this.on(types, selector, data, fn, 1);
     },
 
@@ -103,7 +102,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    off: function (types, selector, fn) {
+    off: function(types, selector, fn) {
         var handleObj, type;
         if (types && types.preventDefault && types.handleObj) {
             handleObj = types.handleObj;
@@ -131,7 +130,7 @@ hAzzle.extend({
         if (fn === false) {
             fn = returnFalse;
         }
-        return this.each(function () {
+        return this.each(function() {
             hAzzle.event.remove(this, types, fn, selector);
         });
     },
@@ -144,27 +143,27 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    trigger: function (type, data) {
-        return this.each(function () {
+    trigger: function(type, data) {
+        return this.each(function() {
             hAzzle.event.trigger(type, data, this);
         });
     },
-    triggerHandler: function (type, data) {
+    triggerHandler: function(type, data) {
         var elem = this[0];
         if (elem) {
             return hAzzle.event.trigger(type, data, elem, true);
         }
     },
 
-    hover: function (fnOver, fnOut) {
+    hover: function(fnOver, fnOut) {
         return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
     },
-	bind: function( types, data, fn ) {
-		return this.on( types, null, data, fn );
-	},
-	unbind: function( types, fn ) {
-		return this.off( types, null, fn );
-	}
+    bind: function(types, data, fn) {
+        return this.on(types, null, data, fn);
+    },
+    unbind: function(types, fn) {
+        return this.off(types, null, fn);
+    }
 });
 
 /* ============================ UTILITY METHODS =========================== */
@@ -174,7 +173,7 @@ function returnFalse() {
 }
 
 function once(fn) {
-    return function (evt) {
+    return function(evt) {
         // wrap the handler in a handler that does a remove as well
         hAzzle().off(evt);
         return fn.apply(this, arguments);
@@ -186,9 +185,9 @@ function once(fn) {
 hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
         'change select submit keydown keypress keyup error contextmenu').split(' '),
-    function (name) {
+    function(name) {
 
-        hAzzle.Core[name] = function (data, fn) {
+        hAzzle.Core[name] = function(data, fn) {
             return arguments.length > 0 ?
                 this.on(name, null, data, fn) :
                 this.trigger(name);

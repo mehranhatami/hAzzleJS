@@ -1,5 +1,4 @@
-var directions = ["Top", "Right", "Bottom", "Left"],
-    reDash = /\-./g,
+var reDash = /\-./g,
     docElem = hAzzle.docElem,
 
     excludedProps = [
@@ -57,6 +56,9 @@ var directions = ["Top", "Right", "Bottom", "Left"],
             }
         }
     };
+
+
+var directions = hAzzle.directions = ['Top', 'Right', 'Bottom', 'Left'];
 
 // Expand the global hAzzle Object
 
@@ -134,7 +136,7 @@ hAzzle.extend({
 
 var computeStyle = hAzzle.computeStyle = function(elem) {
         var view = elem.ownerDocument.defaultView;
-        return !!document.defaultView.getComputedStyle ? (view.opener ? view.getComputedStyle(elem, null) :
+        return hAzzle.ComputedStyle ? (view.opener ? view.getComputedStyle(elem, null) :
             window.getComputedStyle(elem, null)) : elem.style;
     },
 
@@ -146,9 +148,9 @@ var computeStyle = hAzzle.computeStyle = function(elem) {
 
 hAzzle.each(props, function(propName) {
 
-    var prefix = propName[0] === "-" ?
+    var prefix = propName[0] === '-' ?
 
-        propName.substring(1, propName.indexOf("-", 1) - 1) : null,
+        propName.substring(1, propName.indexOf('-', 1) - 1) : null,
 
         unprefixedName = prefix ? propName.substring(prefix.length + 2) : propName,
 
@@ -171,8 +173,8 @@ hAzzle.each(props, function(propName) {
 
     cssStyles.set[unprefixedName] = function(style, value) {
 
-        value = typeof value === "number" ? value + "px" : value.toString();
-        style["cssText" in style ? stylePropName : propName] = value;
+        value = typeof value === 'number' ? value + 'px' : value.toString();
+        style['cssText' in style ? stylePropName : propName] = value;
     };
 });
 
@@ -183,8 +185,8 @@ hAzzle.each(excludedProps, function(propName) {
         return str[1].toUpperCase();
     });
 
-    if (propName === "float") {
-        stylePropName = "cssFloat" in computed ? "cssFloat" : "styleFloat";
+    if (propName === 'float') {
+        stylePropName = 'cssFloat' in computed ? 'cssFloat' : 'styleFloat';
         // normalize float css property
         cssStyles.get[propName] = function(style) {
             return style[stylePropName];
@@ -192,44 +194,44 @@ hAzzle.each(excludedProps, function(propName) {
     }
 
     cssStyles.set[propName] = function(style, value) {
-        style["cssText" in style ? stylePropName : propName] = value.toString();
+        style['cssText' in style ? stylePropName : propName] = value.toString();
     };
 });
 
 // Normalize property shortcuts
 hAzzle.forOwn({
-    font: ["fontStyle", "fontSize", "/", "lineHeight", "fontFamily"],
+    font: ['fontStyle', 'fontSize', '/', 'lineHeight', 'fontFamily'],
     padding: hAzzle.map(directions, function(dir) {
-        return "padding" + dir;
+        return 'padding' + dir;
     }),
     margin: hAzzle.map(directions, function(dir) {
-        return "margin" + dir;
+        return 'margin' + dir;
     }),
-    "border-width": directions.map(function(dir) {
-        return "border" + dir + "Width";
+    'border-width': directions.map(function(dir) {
+        return 'border' + dir + 'Width';
     }),
-    "border-style": directions.map(function(dir) {
-        return "border" + dir + "Style";
+    'border-style': directions.map(function(dir) {
+        return 'border' + dir + 'Style';
     })
 }, function(key, props) {
 
     cssStyles.get[key] = function(style) {
         var result = [],
             hasEmptyStyleValue = function(prop, index) {
-                result.push(prop === "/" ? prop : style[prop]);
+                result.push(prop === '/' ? prop : style[prop]);
 
                 return !result[index];
             };
 
-        return props.some(hasEmptyStyleValue) ? "" : result.join(" ");
+        return props.some(hasEmptyStyleValue) ? '' : result.join(' ');
     };
     cssStyles.set[key] = function(style, value) {
-        if (value && "cssText" in style) {
+        if (value && 'cssText' in style) {
             // normalize setting complex property across browsers
-            style.cssText += ";" + key + ":" + value;
+            style.cssText += ';' + key + ':' + value;
         } else {
             props.forEach(function(name) {
-                return style[name] = typeof value === "number" ? value + "px" : value.toString();
+                return style[name] = typeof value === 'number' ? value + 'px' : value.toString();
             });
         }
     };

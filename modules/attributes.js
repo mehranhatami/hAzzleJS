@@ -6,34 +6,41 @@ var doc = this.document,
     inseteb = /^(?:input|select|textarea|button)$/i,
     boolAttr = {}, // Boolean attributes
     boolElem = {}, // Boolean elements
-    attrCore = {},
+    attrSupport = {},
 
-    concat = Array.prototype.concat;
+    concat = Array.prototype.concat,
+
+    // Booleans
+
+    bools = [
+        'multiple', 'selected', 'checked', 'disabled', 'readOnly', 'required',
+        'async', 'autofocus', 'compact', 'nowrap', 'declare', 'noshade',
+        'noresize', 'defaultChecked', 'autoplay', 'controls', 'defer',
+        'hidden', 'ismap', 'loop', 'scoped', 'open'
+    ];
 
 /* ============================ BUG / FEATURE DETECTION =========================== */
 
 (function() {
-    var input = doc.createElement("input"),
-        select = doc.createElement("select"),
-        opt = select.appendChild(doc.createElement("option"));
+    var input = doc.createElement('input'),
+        select = doc.createElement('select'),
+        opt = select.appendChild(doc.createElement('option'));
 
-    input.type = "checkbox";
+    input.type = 'checkbox';
 
-    // Support: iOS<=5.1, Android<=4.2+
-    // Default value for a checkbox should be "on"
-    attrCore['bug-checkbox'] = input.value !== "";
+    attrSupport['bug-checkbox'] = input.value !== '';
 
     // Support: IE<=11+
     // Must access selectedIndex to make default options select
-    attrCore['bug-optSelected'] = opt.selected;
+    attrSupport['bug-optSelected'] = opt.selected;
 
     // Support: IE<=11+
     // An input loses its value after becoming a radio
-    input = doc.createElement("input");
-    input.setAttribute("type", "radio");
-    input.setAttribute("name", "t");
+    input = doc.createElement('input');
+    input.setAttribute('type', 'radio');
+    input.setAttribute('name', 't');
 
-    attrCore['bug-radioValue'] = input.value === "t";
+    attrSupport['bug-radioValue'] = input.value === 't';
 
 })();
 
@@ -60,8 +67,8 @@ hAzzle.extend({
      */
 
     removeAttr: function(value) {
-        return this.each(function(el) {
-            hAzzle.removeAttr(el, value);
+        return this.each(function() {
+            hAzzle.removeAttr(this, value);
         });
     },
 
@@ -72,16 +79,8 @@ hAzzle.extend({
      * @return {Boolean}
      */
 
-    hasAttr: function(value, name) {
-
-        // Shortcut for checking attr classNames
-
-        if (typeof name !== 'undefined' ||
-            value === 'class') {
-
-            return this[0].className === name ? true : false;
-        }
-        return name && typeof this.attr(name) !== 'undefined';
+    hasAttr: function(name) {
+      return name && typeof this.attr(name) !== 'undefined';
     },
 
     /**
@@ -101,8 +100,8 @@ hAzzle.extend({
      */
 
     toggleProp: function(prop) {
-        return this.each(function(el) {
-            return el.prop(prop, !el.prop(prop));
+        return this.each(function() {
+            return this.prop(prop, !this.prop(prop));
         });
     },
 
@@ -120,8 +119,6 @@ hAzzle.extend({
     }
 });
 
-// Extend the globale hAzzle Object
-
 hAzzle.extend({
 
     propHooks: {
@@ -135,26 +132,9 @@ hAzzle.extend({
         }
     },
 
-    propMap: {
-        // properties renamed to avoid clashes with reserved words
-        'for': 'htmlFor',
-        'class': 'className',
-        'cellpadding': 'cellPadding',
-        'cellspacing': 'cellSpacing',
-        'maxlength': 'maxLength',
-        'rowspan': 'rowSpan',
-        'colspan': 'colSpan',
-        'usemap': 'useMap',
-        'frameborder': 'frameBorder',
-        'contenteditable': 'contentEditable',
-        'textcontent': 'textContent',
-        'valuetype': 'valueType',
+    // properties renamed to avoid clashes with reserved words
 
-        // for IE
-        'tabindex': 'tabIndex',
-        'readonly': 'readOnly'
-
-    },
+    propMap: {},
 
     nodeHook: {},
 
@@ -180,7 +160,7 @@ hAzzle.extend({
         type: {
             set: function(elem, value) {
 
-                if (!attrCore['bug-radioValue'] &&
+                if (!attrSupport['bug-radioValue'] &&
                     value === 'radio' &&
                     hAzzle.nodeName(elem, 'input')) {
 
@@ -387,7 +367,7 @@ function getBooleanAttrName(element, name) {
 
 // Support: IE9+
 
-if (!attrCore['bug-optSelected']) {
+if (!attrSupport['bug-optSelected']) {
     hAzzle.propHooks.selected = {
         get: function(elem) {
             var parent = elem.parentNode;
@@ -401,15 +381,17 @@ if (!attrCore['bug-optSelected']) {
 
 // Boolean attributes and elements
 
-hAzzle.each(('multiple selected checked disabled readOnly required async autofocus ' +
-    'compact nowrap declare noshade noresize defaultChecked ' +
-    'autoplay controls defer hidden ismap loop scoped open').split(' '), function(value) {
-    boolAttr[value] = value;
+hAzzle.each(bools, function() {
+    boolAttr[this] = this;
 });
 
+hAzzle.each(['input', 'select', 'option', 'textarea', 'button', 'form', 'details'], function() {
+    boolElem[this.toUpperCase()] = true;
+});
 
-
-
-hAzzle.each('input select option textarea button form details'.split(' '), function(value) {
-    boolElem[value.toUpperCase()] = true;
+hAzzle.each(['htmlFor', 'className', 'cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
+    'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',
+    'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex'
+], function() {
+    hAzzle.propMap[this.toLowerCase()] = this;
 });

@@ -69,6 +69,7 @@ hAzzle.assert(function(div) {
 
     div.style.backgroundClip = "content-box";
     div.cloneNode(true).style.backgroundClip = "";
+
     cssSupport['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
 
     if (cssSupport['api-gCS']) {
@@ -91,3 +92,5 @@ hAzzle.clearCloneStyle = cssSupport['bug-clearCloneStyle'];
 hAzzle.pixelPosition = cssSupport['api-pixelPosition'];
 hAzzle.boxSizingReliable = cssSupport['api-boxSizingReliable'];
 hAzzle.boxSizing = cssSupport['api-boxSizing'];
+// Check for getComputedStyle
+hAzzle.ComputedStyle = cssSupport['api-gCS']
