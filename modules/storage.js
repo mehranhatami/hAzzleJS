@@ -1,8 +1,10 @@
-// Storage.js
-//
-// Inspired from jQuery Data module
-// Saves data on the object private and public
-var WhiteRegex = (/\S+/g),
+/**
+ * Storage.js
+ *
+ * Saves data on the object private and public
+ */
+var camelize = hAzzle.camelize,
+    WhiteRegex = (/\S+/g),
     htmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     charRegEx = /([A-Z])/g;
 
@@ -107,7 +109,7 @@ Storage.prototype = {
             stored = this.get(owner, key);
 
             return stored !== undefined ?
-                stored : this.get(owner, hAzzle.camelize(key));
+                stored : this.get(owner, camelize(key));
         }
 
         this.set(owner, key, value);
@@ -128,11 +130,11 @@ Storage.prototype = {
 
             if (hAzzle.isArray(key)) {
 
-                name = key.concat(key.map(hAzzle.camelize));
+                name = key.concat(key.map(camelize));
 
             } else {
 
-                camel = hAzzle.camelize(key);
+                camel = camelize(key);
 
                 if (key in cache) {
 
@@ -175,84 +177,32 @@ Storage.prototype = {
     }
 };
 
-// This one shall never be documented!!
-
-var _privateData = new Storage();
-
-// Public and exposed through the hAzzle Object
-
-var _userData = new Storage();
+var _privateData = new Storage(),
+    _userData = new Storage();
 
 // Expand the global hAzzle Object
 
-hAzzle.extend({
+hAzzle.each({
+    'Private': _privateData,
+    'Data': _userData
+}, function(prop, name) {
+    hAzzle['get' + name] = function(elem, data) {
+        return prop.get(elem, data);
+    };
+    hAzzle['set' + name] = function(elem, data, value) {
+        return prop.set(elem, data, value);
+    };
+    hAzzle['has' + name] = function(elem) {
+        return prop.hasData(elem);
+    };
+    hAzzle[name.toLowerCase()] = function(elem, name, data) {
+        return prop.access(elem, name, data);
+    };
+    hAzzle['remove' + name] = function(elem, name) {
+        return prop.release(elem, name);
+    };
 
-    /* =========================== PRIVATE ========================== */
-
-    getPrivate: function(elem, dta) {
-
-        return _privateData.get(elem, dta);
-
-    },
-
-    setPrivate: function(elem, data, value) {
-        _privateData.set(elem, data, value);
-    },
-
-    hasPrivate: function(elem) {
-        return _privateData.hasData(elem);
-    },
-
-    private: function(elem, name, data) {
-        return _privateData.access(elem, name, data);
-    },
-
-    removePrivate: function(elem, name) {
-        _privateData.release(elem, name);
-    },
-
-    /* =========================== PUBLIC ========================== */
-
-    getData: function(elem, dta) {
-
-        return _userData.get(elem, dta);
-
-    },
-
-    setData: function(elem, data, value) {
-        _userData.set(elem, data, value);
-    },
-
-    /**
-     * Check if an element contains data
-     *
-     * @param{String/Object} elem
-     * @param{String} key
-     * @return {Object}
-     */
-
-    hasData: function(elem) {
-
-        return _userData.hasData(elem) || _privateData.hasData(elem);
-    },
-
-    data: function(elem, name, data) {
-        return _userData.access(elem, name, data);
-    },
-
-    /**
-     * Remove data from an element
-     *
-     * @param {String/Object} elem
-     * @param {String} key
-     * @return {Object}
-     */
-
-    removeData: function(elem, name) {
-        _userData.release(elem, name);
-    }
-
-}, hAzzle);
+});
 
 // Expand hAzzle Core
 
@@ -293,7 +243,7 @@ hAzzle.extend({
 
                             if (name.indexOf('data-') === 0) {
 
-                                name = hAzzle.camelize(name.slice(5));
+                                name = camelize(name.slice(5));
                                 dataAttr(elem, name, data[name]);
                             }
                         }
@@ -317,7 +267,7 @@ hAzzle.extend({
 
         return hAzzle.setter(this, function(value) {
 
-            var data, camelKey = hAzzle.camelize(key);
+            var data, camelKey = camelize(key);
 
             if (elem && value === undefined) {
 
@@ -398,6 +348,7 @@ function dataAttr(elem, key, data) {
 
             // Make sure we set the data so it isn't changed later
             _userData.set(elem, key, data);
+
         } else {
             data = undefined;
         }
