@@ -17,10 +17,10 @@ function Storage() {
 
 Storage.prototype = {
 
-    // Registrer
-
     registrer: function(owner, initial) {
         var descriptor = {};
+
+        // Secure it in a non-enumerable, writable property
 
         try {
             descriptor[this.expando] = {
@@ -38,8 +38,6 @@ Storage.prototype = {
 
         return owner[this.expando];
     },
-
-    // Cache
 
     cache: function(owner, initial) {
 
@@ -61,8 +59,6 @@ Storage.prototype = {
 
         return this.registrer(owner, initial);
     },
-
-    // Set
 
     set: function(owner, data, value) {
         var prop,
@@ -88,8 +84,6 @@ Storage.prototype = {
         return cache;
     },
 
-    // Get
-
     get: function(owner, key) {
 
         var cache = this.cache(owner);
@@ -97,9 +91,6 @@ Storage.prototype = {
         return key === undefined ?
             cache : cache[key];
     },
-
-    // Access
-
     access: function(owner, key, value) {
         var stored;
 
@@ -116,9 +107,6 @@ Storage.prototype = {
 
         return value !== undefined ? value : key;
     },
-
-    // Release
-
     release: function(owner, key) {
         var i, name, camel,
             cache = this.cache(owner);
@@ -156,19 +144,13 @@ Storage.prototype = {
             }
         }
     },
-
-    // Check if has data
-
     hasData: function(owner) {
 
         return !hAzzle.isEmptyObject(
             owner[this.expando] || {}
         );
     },
-
-    // Discard data on the object
-
-    discard: function(owner) {
+    flush: function(owner) {
 
         if (owner[this.expando]) {
 
@@ -186,18 +168,36 @@ hAzzle.each({
     'Private': _privateData,
     'Data': _userData
 }, function(prop, name) {
+
+    // Flush user / private data
+
+    hAzzle['flush' + name] = function(elem) {
+        return prop.flush(elem);
+    };
+
+    // Get user / private data	
+
     hAzzle['get' + name] = function(elem, data) {
         return prop.get(elem, data);
     };
+
+    // Set user / private data
+
     hAzzle['set' + name] = function(elem, data, value) {
         return prop.set(elem, data, value);
     };
+
+    // Check if 'elem' has user / private data
+
     hAzzle['has' + name] = function(elem) {
         return prop.hasData(elem);
     };
     hAzzle[name.toLowerCase()] = function(elem, name, data) {
         return prop.access(elem, name, data);
     };
+
+    // Remove user / private data
+
     hAzzle['remove' + name] = function(elem, name) {
         return prop.release(elem, name);
     };
@@ -209,8 +209,9 @@ hAzzle.each({
 hAzzle.extend({
 
     /**
-     * Getter/setter of a data entry value on the hAzzle Object.
-     * HTML5 data-* attribute if it exists
+     * Store arbitrary data associated with the matched elements or return the
+     * value at the named data store for the first element in the set of matched
+     * elements.
      *
      * @param  {String|Object|Array}  key(s)
      * @param  {Object}               value
@@ -293,6 +294,7 @@ hAzzle.extend({
                 }
 
                 // We tried really hard, but the data doesn't exist.
+
                 return;
             }
 
@@ -327,6 +329,7 @@ hAzzle.extend({
 /* =========================== INTERNAL ========================== */
 
 function dataAttr(elem, key, data) {
+
     var name;
 
     if (data === undefined && elem.nodeType === 1) {
@@ -342,16 +345,17 @@ function dataAttr(elem, key, data) {
                     data === 'null' ? null :
                     // Only convert to a number if it doesn't change the string
                     +data + '' === data ? +data :
-                    htmlRegEx.test(data) ? hAzzle.parseJSON(data) :
-                    data;
+                    htmlRegEx.test(data) ? JSON.parse(data + '') : data;
             } catch (e) {}
 
             // Make sure we set the data so it isn't changed later
             _userData.set(elem, key, data);
 
         } else {
+
             data = undefined;
         }
     }
+
     return data;
 }
