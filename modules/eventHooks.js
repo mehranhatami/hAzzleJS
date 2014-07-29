@@ -5,61 +5,62 @@
  * the same pattern.
  */
 
+var focusinBubbles = 'onfocusin' in window;
+
 hAzzle.extend({
+    'special': {
+        'load': {
+            'noBubble': true
+        },
+        'focus': {
+            'trigger': function() {
 
-    'load': {
-        'noBubble': true
-    },
-    'focus': {
-        'trigger': function () {
+                if (this !== document.activeElement && this.focus) {
+                    this.focus();
+                    return false;
+                }
+            },
+            'delegateType': 'focusin'
+        },
+        'blur': {
+            'trigger': function() {
+                if (this === document.activeElement && this.blur) {
+                    this.blur();
+                    return false;
+                }
+            },
+            'delegateType': 'focusout'
+        },
+        'click': {
 
-            if (this !== document.activeElement && this.focus) {
-                this.focus();
-                return false;
+            // For checkbox, fire native event so checked state will be right
+            
+			'trigger': function() {
+                if (this.type === 'checkbox' && this.click && hAzzle.nodeName(this, 'input')) {
+                    this.click();
+                    return false;
+                }
+            },
+
+            // For cross-browser consistency, don't fire native .click() on links
+            
+			'_default': function(evt) {
+                return hAzzle.nodeName(evt.target, 'a');
             }
         },
-        'delegateType': 'focusin'
-    },
-    'blur': {
-        'trigger': function () {
-            if (this === document.activeElement && this.blur) {
-                this.blur();
-                return false;
-            }
-        },
-        'delegateType': 'focusout'
-    },
-    'click': {
 
-        // For checkbox, fire native event so checked state will be right
-        'trigger': function () {
-            if (this.type === 'checkbox' && this.click && hAzzle.nodeName(this, 'input')) {
-                this.click();
-                return false;
+        'beforeunload': {
+            'postPrep': function(evt) {
+                if (evt.result !== undefined && evt.originalEvent) {
+                    evt.originalEvent.returnValue = evt.result;
+                }
             }
-        },
-
-        // For cross-browser consistency, don't fire native .click() on links
-        '_default': function (evt) {
-            return hAzzle.nodeName(evt.target, 'a');
         }
     },
 
-    'beforeunload': {
-        'postPrep': function (evt) {
-            if (evt.result !== undefined && evt.originalEvent) {
-                evt.originalEvent.returnValue = evt.result;
-            }
-        }
-    }
+    // Simulate
 
-}, hAzzle.eventHooks.special);
-
-// Simulate
-
-hAzzle.extend({
-
-    'simulate': function (type, elem, evt, bubble) {
+    'simulate': function(type, elem, evt, bubble) {
 
         var e = hAzzle.shallowCopy(
             new hAzzle.Event(),
@@ -69,18 +70,19 @@ hAzzle.extend({
                 originalEvent: {}
             }
         );
+		
         if (bubble) {
-			
+
             hAzzle.event.trigger(e, null, elem);
-			
+
         } else {
-			
+
             hAzzle.event.handle.call(elem, e);
         }
-		
+
         if (e.isDefaultPrevented()) {
-			
-            event.preventDefault();
+
+            evt.preventDefault();
         }
     }
 
@@ -91,13 +93,13 @@ hAzzle.forOwn({
     mouseleave: 'mouseout',
     pointerenter: 'pointerover',
     pointerleave: 'pointerout'
-}, function (fix, orig) {
-	
+}, function(fix, orig) {
+
     hAzzle.eventHooks.special[orig] = {
         delegateType: fix,
         bindType: fix,
 
-        handle: function (evt) {
+        handle: function(evt) {
             var ret,
                 target = this,
                 related = evt.relatedTarget,
@@ -115,37 +117,46 @@ hAzzle.forOwn({
 
 /* =========================== INTERNAL ========================== */
 
-if (hAzzle.bubbles) {
+
+
+if (!focusinBubbles) {
 
     hAzzle.forOwn({
         focus: 'focusin',
         blur: 'focusout'
-    }, function (fix, orig) {
+    }, function(fix, orig) {
 
-        var handler = function (evt) {
+        var handler = function(evt) {
             hAzzle.eventHooks.simulate(fix, evt.target, hAzzle.props.propFix(evt), true);
         };
 
         hAzzle.eventHooks.special[fix] = {
-            setup: function () {
+			
+            setup: function() {
+				
                 var doc = this.ownerDocument || this,
-                    attaches = hAzzle.data(doc, fix);
+                    attaches = hAzzle.private(doc, fix);
 
                 if (!attaches) {
+					
                     doc.addEventListener(orig, handler, true);
                 }
-                hAzzle.data(doc, fix, (attaches || 0) + 1);
+				
+                hAzzle.private(doc, fix, (attaches || 0) + 1);
             },
-            shutdown: function () {
+            shutdown: function() {
+				
                 var doc = this.ownerDocument || this,
-                    attaches = hAzzle.data(doc, fix) - 1;
+                    attaches = hAzzle.private(doc, fix) - 1;
 
                 if (!attaches) {
+					
                     doc.removeEventListener(orig, handler, true);
-                    hAzzle.dataRemove(doc, fix);
+                    hAzzle.removePrivate(doc, fix);
 
                 } else {
-                    hAzzle.data(doc, fix, attaches);
+					
+                    hAzzle.private(doc, fix, attaches);
                 }
             }
         };

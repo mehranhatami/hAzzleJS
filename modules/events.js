@@ -33,46 +33,14 @@ var Jiesa = hAzzle.Jiesa,
 
     // Public object for eventHooks
 
-    eventHooks = hAzzle.eventHooks = {
-
-        // Private object for special events / handlers
-
-        special: {}
-    },
-
-    /**
-     * Holder for eventCore
-     * Kept in an isolated Object so we don't
-     * expose it to the global scope
-     *
-     * Contains:
-     *
-     * - uniqueId
-     * - feature / bug checks
-     */
-
-    eventCore = hAzzle.eventCore = {
-
-        version: 'hAzzleEvents-0.45a',
-        
-        // Feature / bug detection
-
-        has: {
-
-            'api-bubbles': 'onfocusin' in window,
-        },
-
-        global: {},
-    };
-
-// Expose to the global scope
-
-hAzzle.bubbles = eventCore.has['api-bubbles'];
+    eventHooks = hAzzle.eventHooks = {};
 
 // hAzzle event
 
 
-hAzzle.event = {
+var _event = hAzzle.event = {
+
+    global: {},
 
     /**
      * Add event to element.
@@ -88,7 +56,7 @@ hAzzle.event = {
 
         var objHandler, eventHandler, tmp,
             special, handlers, type, namespaces, origType,
-            eventData = hAzzle.data(elem),
+            eventData = hAzzle.getPrivate(elem),
             events,
             handleObj, t;
 
@@ -204,7 +172,7 @@ hAzzle.event = {
                 handlers.push(handleObj);
             }
 
-            eventCore.global[type] = true;
+            _event.global[type] = true;
         }
 
     },
@@ -226,14 +194,7 @@ hAzzle.event = {
         var j, origCount, tmp,
             events, t, handleObj,
             special, handlers, type, namespaces, origType,
-            eventData = hAzzle.hasData(elem) && hAzzle.data(elem);
-
-        // If no data exist on the object, save it
-
-        if (hAzzle.hasData(elem)) {
-
-            eventData = hAzzle.data(elem);
-        }
+            eventData = hAzzle.hasPrivate(elem) && hAzzle.getPrivate(elem);
 
         if (!eventData || !(events = eventData.events)) {
             return;
@@ -254,7 +215,7 @@ hAzzle.event = {
 
                 for (type in events) {
 
-                    hAzzle.event.remove(elem, type + types[t], handler, selector, true);
+                    _event.remove(elem, type + types[t], handler, selector, true);
                 }
 
                 continue;
@@ -309,7 +270,7 @@ hAzzle.event = {
         if (hAzzle.isEmptyObject(events)) {
 
             delete eventData.handle;
-			delete eventData.events;
+            delete eventData.events;
         }
     },
 
@@ -328,7 +289,7 @@ hAzzle.event = {
         var i, j, ret, matched, handleObj,
             queue = [],
             args = slice.call(arguments),
-            handlers = (hAzzle.data(this, 'events') || {})[evt.type] || [],
+            handlers = (hAzzle.getPrivate(this, 'events') || {})[evt.type] || [],
             special = eventHooks.special[evt.type] || {};
 
         args[0] = evt;
@@ -340,16 +301,19 @@ hAzzle.event = {
         }
 
         // Determine handlers
-        queue = hAzzle.event.handlers.call(this, evt, handlers);
 
-        i = 0;
-        while ((matched = queue[i++]) && !evt.isPropagationStopped()) {
+        queue = _event.handlers.call(this, evt, handlers);
 
-            // bound element (listening the event)
+        i = queue.length;
+
+        while (i-- && !evt.isPropagationStopped()) {
+
+            matched = queue[i];
 
             evt.currentTarget = matched.elem;
 
             j = 0;
+
             while ((handleObj = matched.handlers[j++]) &&
                 !evt.isImmediatePropagationStopped()) {
                 if (!evt.namespace_re || evt.namespace_re.test(handleObj.namespace)) {
@@ -376,13 +340,15 @@ hAzzle.event = {
 
         return evt.result;
     },
+
     handlers: function(evt, handlers) {
+
         var i, matches, sel, handleObj,
             queue = [],
             cur = evt.target,
-            delegateCount = handlers.delegateCount;
+            dC = handlers.delegateCount;
 
-        if (delegateCount && cur.nodeType && (!evt.button || evt.type !== 'click')) {
+        if (dC && cur.nodeType && (!evt.button || evt.type !== 'click')) {
 
             for (; cur !== this; cur = cur.parentElement || this) {
 
@@ -392,7 +358,9 @@ hAzzle.event = {
 
                     matches = [];
 
-                    for (i = 0; i < delegateCount; i++) {
+                    i = dC;
+
+                    while (i--) {
 
                         handleObj = handlers[i];
 
@@ -424,11 +392,11 @@ hAzzle.event = {
             }
         }
 
-        if (delegateCount < handlers.length) {
+        if (dC < handlers.length) {
 
             queue.push({
                 elem: this,
-                handlers: handlers.slice(delegateCount)
+                handlers: handlers.slice(dC)
             });
         }
 
@@ -554,8 +522,8 @@ function newNS(ns) {
 
 function Listener() {
     return function(e) {
-        return typeof hAzzle !== undefined && eventCore.triggered !== e.type ?
-            hAzzle.event.handle.apply(this, arguments) : undefined;
+        return typeof hAzzle !== undefined && _event.triggered !== e.type ?
+            _event.handle.apply(this, arguments) : undefined;
     };
 }
 

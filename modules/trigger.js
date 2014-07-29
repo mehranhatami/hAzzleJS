@@ -1,9 +1,7 @@
 /**
  * trigger.js - triggers an event of specific type
  */
- 
 var doc = this.document,
-    eventCore = hAzzle.eventCore,
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/;
 
 // Extend hAzzle.event
@@ -38,7 +36,7 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
 
     special = hAzzle.eventHooks.special[type] || {};
 
-        // Check for valid handlers
+    // Check for valid handlers
 
     if (!validHandlers(elem, handlers, data, special)) {
         return;
@@ -114,9 +112,9 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
                     elem[ontype] = null;
                 }
 
-                eventCore.triggered = type;
+                hAzzle.event.triggered = type;
                 elem[type]();
-                eventCore.triggered = undefined;
+                hAzzle.event.triggered = undefined;
 
                 if (tmp) {
 
@@ -136,7 +134,7 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
 
 function dritassa(elem, type) {
     if ((elem.nodeType === 3 || elem.nodeType === 8) ||
-        focusinoutblur.test(type + eventCore.triggered)) {
+        focusinoutblur.test(type + hAzzle.event.triggered)) {
         return false;
     }
     return true;
@@ -217,6 +215,6 @@ function newNS(ns) {
 // Get event handler
 
 function getHandler(cur, evt) {
-    return (hAzzle.data(cur, 'events') || {})[evt.type] &&
-        hAzzle.data(cur, 'handle');
+    return (dataPriv.get(cur, 'events') || {})[evt.type] &&
+        dataPriv.get(cur, 'handle');
 }

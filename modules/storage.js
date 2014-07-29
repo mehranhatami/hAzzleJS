@@ -1,6 +1,8 @@
 // Storage.js
-var camelize = hAzzle.camelize,
-    WhiteRegex = (/\S+/g),
+//
+// Inspired from jQuery Data module
+// Saves data on the object private and public
+var WhiteRegex = (/\S+/g),
     htmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     charRegEx = /([A-Z])/g;
 
@@ -13,7 +15,9 @@ function Storage() {
 
 Storage.prototype = {
 
-    register: function(owner, initial) {
+    // Registrer
+
+    registrer: function(owner, initial) {
         var descriptor = {};
 
         try {
@@ -25,12 +29,16 @@ Storage.prototype = {
             Object.defineProperties(owner, descriptor);
 
         } catch (e) {
+
             descriptor[this.expando] = initial || {};
             hAzzle.shallowCopy(owner, descriptor);
         }
 
         return owner[this.expando];
     },
+
+    // Cache
+
     cache: function(owner, initial) {
 
         if (!hAzzle.legalTypes(owner)) {
@@ -38,21 +46,27 @@ Storage.prototype = {
             return {};
         }
 
+        // Check if the owner object already has a cache
+
         var cache = owner[this.expando];
 
+        // If so, return it
+
         if (cache) {
+
             return cache;
         }
 
-        return this.register(owner, initial);
+        return this.registrer(owner, initial);
     },
 
+    // Set
 
     set: function(owner, data, value) {
         var prop,
             cache = this.cache(owner);
 
-        if (typeof data === "string") {
+        if (typeof data === 'string') {
             cache[data] = value;
 
         } else {
@@ -64,12 +78,15 @@ Storage.prototype = {
             } else {
 
                 for (prop in data) {
+
                     cache[prop] = data[prop];
                 }
             }
         }
         return cache;
     },
+
+    // Get
 
     get: function(owner, key) {
 
@@ -79,11 +96,13 @@ Storage.prototype = {
             cache : cache[key];
     },
 
+    // Access
+
     access: function(owner, key, value) {
         var stored;
 
         if (key === undefined ||
-            ((key && typeof key === "string") && value === undefined)) {
+            ((key && typeof key === 'string') && value === undefined)) {
 
             stored = this.get(owner, key);
 
@@ -95,12 +114,15 @@ Storage.prototype = {
 
         return value !== undefined ? value : key;
     },
-    erease: function(owner, key) {
+
+    // Release
+
+    release: function(owner, key) {
         var i, name, camel,
             cache = this.cache(owner);
 
         if (key === undefined) {
-            this.register(owner);
+            this.registrer(owner);
 
         } else {
 
@@ -119,7 +141,8 @@ Storage.prototype = {
                 } else {
 
                     name = camel;
-                    name = name in cache ? [name] : (name.match(WhiteRegex) || []);
+                    name = name in cache ? [name] :
+                        (name.match(WhiteRegex) || []);
                 }
             }
 
@@ -131,12 +154,18 @@ Storage.prototype = {
             }
         }
     },
+
+    // Check if has data
+
     hasData: function(owner) {
 
         return !hAzzle.isEmptyObject(
             owner[this.expando] || {}
         );
     },
+
+    // Discard data on the object
+
     discard: function(owner) {
 
         if (owner[this.expando]) {
@@ -146,13 +175,43 @@ Storage.prototype = {
     }
 };
 
-// Make it accessible
+// This one shall never be documented!!
 
-var hAzzleData = new Storage();
+var dataPriv = hAzzle.dataPriv = new Storage();
+
+// Public and exposed through the hAzzle Object
+
+var dataUser = hAzzle.dataUser = new Storage();
 
 // Expand the global hAzzle Object
 
 hAzzle.extend({
+
+    /* =========================== PRIVATE ========================== */
+
+    getPrivate: function(elem, dta) {
+
+        return dataPriv.get(elem, dta);
+
+    },
+
+    setPrivate: function(elem, data, value) {
+        dataPriv.set(elem, data, value);
+    },
+
+    hasPrivate: function(elem) {
+        return dataPriv.hasData(elem);
+    },
+
+    private: function(elem, name, data) {
+        return dataPriv.access(elem, name, data);
+    },
+
+    removePrivate: function(elem, name) {
+        dataPriv.release(elem, name);
+    },
+
+    /* =========================== PUBLIC ========================== */
 
     /**
      * Check if an element contains data
@@ -163,11 +222,12 @@ hAzzle.extend({
      */
 
     hasData: function(elem) {
-        return hAzzleData.hasData(elem);
+
+        return dataUser.hasData(elem) || dataPriv.hasData(elem);
     },
 
     data: function(elem, name, data) {
-        return hAzzleData.access(elem, name, data);
+        return dataUser.access(elem, name, data);
     },
 
     /**
@@ -179,7 +239,7 @@ hAzzle.extend({
      */
 
     removeData: function(elem, name) {
-        hAzzleData.erease(elem, name);
+        dataUser.release(elem, name);
     }
 
 }, hAzzle);
@@ -206,22 +266,30 @@ hAzzle.extend({
         // Gets all values
 
         if (key === undefined) {
-            if (this.length) {
-                data = hAzzleData.get(elem);
 
-                if (elem.nodeType === 1 && !hAzzleData.get(elem, "hasDataAttrs")) {
+            if (this.length) {
+
+                data = dataUser.get(elem);
+
+                if (elem.nodeType === 1 && !dataPriv.get(elem, 'hasDataAttrs')) {
+
                     i = attrs.length;
 
                     while (i--) {
+
                         if (attrs[i]) {
+
                             name = attrs[i].name;
-                            if (name.indexOf("data-") === 0) {
-                                name = camelize(name.slice(5));
+
+                            if (name.indexOf('data-') === 0) {
+
+                                name = hAzzle.camelize(name.slice(5));
                                 dataAttr(elem, name, data[name]);
                             }
                         }
                     }
-                    hAzzleData.set(elem, "hasDataAttrs", true);
+
+                    dataPriv.set(elem, 'hasDataAttrs', true);
                 }
             }
 
@@ -230,30 +298,37 @@ hAzzle.extend({
 
         // Sets multiple values
 
-        if (typeof key === "object") {
+        if (typeof key === 'object') {
+
             return this.each(function() {
-                hAzzleData.set(this, key);
+                dataUser.set(this, key);
             });
         }
 
         return hAzzle.setter(this, function(value) {
-            var data,
-                camelKey = camelize(key);
+
+            var data, camelKey = hAzzle.camelize(key);
 
             if (elem && value === undefined) {
 
-                data = hAzzleData.get(elem, key);
+                data = dataUser.get(elem, key);
+
                 if (data !== undefined) {
+
                     return data;
                 }
 
-                data = hAzzleData.get(elem, camelKey);
+                data = dataUser.get(elem, camelKey);
+
                 if (data !== undefined) {
+
                     return data;
                 }
 
                 data = dataAttr(elem, camelKey, undefined);
+
                 if (data !== undefined) {
+
                     return data;
                 }
 
@@ -264,10 +339,10 @@ hAzzle.extend({
             // Set the data...
 
             this.each(function() {
-                var data = hAzzleData.get(this, camelKey);
-                hAzzleData.set(this, camelKey, value);
-                if (key.indexOf("-") !== -1 && data !== undefined) {
-                    hAzzleData.set(this, key, value);
+                var data = dataUser.get(this, camelKey);
+                dataUser.set(this, camelKey, value);
+                if (key.indexOf('-') !== -1 && data !== undefined) {
+                    dataUser.set(this, key, value);
                 }
             });
         }, null, value, arguments.length > 1, null, true);
@@ -283,7 +358,7 @@ hAzzle.extend({
 
     removeData: function(key) {
         return this.each(function() {
-            hAzzleData.erease(this, key);
+            dataUser.release(this, key);
         });
     }
 });
@@ -295,23 +370,24 @@ function dataAttr(elem, key, data) {
     var name;
 
     if (data === undefined && elem.nodeType === 1) {
-        name = "data-" + key.replace(charRegEx, "-$1").toLowerCase();
+
+        name = 'data-' + key.replace(charRegEx, '-$1').toLowerCase();
 
         data = elem.getAttribute(name);
 
-        if (typeof data === "string") {
+        if (typeof data === 'string') {
             try {
-                data = data === "true" ? true :
-                    data === "false" ? false :
-                    data === "null" ? null :
+                data = data === 'true' ? true :
+                    data === 'false' ? false :
+                    data === 'null' ? null :
                     // Only convert to a number if it doesn't change the string
-                    +data + "" === data ? +data :
+                    +data + '' === data ? +data :
                     htmlRegEx.test(data) ? hAzzle.parseJSON(data) :
                     data;
             } catch (e) {}
 
             // Make sure we set the data so it isn't changed later
-            hAzzleData.set(elem, key, data);
+            dataUser.set(elem, key, data);
         } else {
             data = undefined;
         }

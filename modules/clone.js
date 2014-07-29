@@ -6,26 +6,20 @@
  * - data cloning
  * - event cloning
  */
-
 /* ============================ FEATURE / BUG DETECTION =========================== */
-
 var rcheckableType = /^(?:checkbox|radio)$/i,
 
     // Support: IE<=11+
     // Make sure textarea (and checkbox) defaultValue is properly cloned
 
-    noCC = hAzzle.assert(function (div) {
-
-        var fragment = document.createDocumentFragment(),
-            d = fragment.appendChild(div);
-
-        d.innerHTML = "<textarea>x</textarea>";
-        return !!div.cloneNode(true).lastChild.defaultValue;
-    });
+    noCC = hAzzle.assert(function(div) {
+        div.innerHTML = "<textarea>the unknown</textarea>";
+        return !!div.cloneNode(true).firstChild.defaultValue;
+    })
 
 /* ============================ GLOBAL FUNCTIONS =========================== */
 
-hAzzle.cloneNode = function (elem, shallow, deep) {
+hAzzle.cloneNode = function(elem, shallow, deep) {
 
     var i, l, srcElements, destElements,
         clone = elem.cloneNode(true),
@@ -65,13 +59,39 @@ hAzzle.cloneNode = function (elem, shallow, deep) {
 
 /* ============================ CORE FUNCTIONS =========================== */
 
-hAzzle.Core.clone = function (shallow, deep) {
-    shallow = shallow === null ? false : shallow;
-    deep = deep === null ? shallow : deep;
-    return this.twist(function (el) {
-        return hAzzle.cloneNode(el, shallow, deep);
-    });
-};
+hAzzle.extend({
+
+    /**
+     * Clone events
+     *
+     * @param {Object} source
+     * @param {String} filter
+     *
+     */
+    cloneEvent: function(source, filter) {
+        if (this.length) {
+            var source = typeof source === 'string' ? hAzzle(source) : source,
+                eventList = getEventList(source, filter);
+            this.each(hAzzle.proxy(copyEvent, this, eventList));
+        }
+
+        return this;
+
+    },
+
+    clone: function(shallow, deep) {
+        shallow = shallow === null ? false : shallow;
+        deep = deep === null ? shallow : deep;
+        return this.map(function() {
+            return hAzzle.cloneNode(this, shallow, deep);
+        });
+    }
+
+
+
+
+});
+
 
 /* ============================ PRIVATE FUNCTIONS =========================== */
 
@@ -84,11 +104,9 @@ function cloneCopyEvent(src, dest) {
         return;
     }
 
-    if (hAzzle.data(src)) {
-
-        pdataOld = hAzzle.data(src);
-        pdataCur = hAzzle.data(dest, pdataOld);
-
+    if (dataPriv.hasData(src)) {
+        pdataOld = dataPriv.access(src);
+        pdataCur = dataPriv.set(dest, pdataOld);
         events = pdataOld.events;
 
         if (events) {
@@ -102,10 +120,11 @@ function cloneCopyEvent(src, dest) {
             }
         }
     }
-    if (hAzzle.hasData(src)) {
-        udataOld = hAzzle.data(src);
+
+    if (dataUser.hasData(src)) {
+        udataOld = dataUser.access(src);
         udataCur = hAzzle.shallowCopy({}, udataOld);
-        hAzzle.data(dest, udataCur);
+        dataUser.set(dest, udataCur);
     }
 }
 
@@ -125,5 +144,70 @@ function fixInput(src, dest) {
         // textarea
     } else if (nodeName === 'input' || 'textarea' === nodeName) {
         dest.defaultValue = src.defaultValue;
+    }
+}
+
+
+
+function getEventList(source, filter) {
+
+    // Make a copy of source event list to avoid delete
+
+    var eventKey, eventList = hAzzle.shallowCopy({}, dataPriv.access(source[0], 'events')),
+        selectedEventList = {};
+
+    if (filter && filter !== true) {
+        selectedEventList = (filter instanceof Array) ?
+            filter :
+            filter.replace(/\s+/gi, ' ').split(' ');
+
+
+        for (eventKey in eventList) {
+
+            if (!eventList.hasOwnProperty(eventKey)) {
+
+                continue;
+            }
+
+            if (selectedEventList.indexOf(eventKey) === -1) {
+
+                eventList[eventKey] = null;
+
+                delete eventList[eventKey];
+            }
+        }
+    }
+
+    return eventList;
+}
+
+/**
+ * Copy events
+ *
+ * @param {Object} eventList
+ */
+ 
+function copyEvent(eventList) {
+
+    if (!eventList) {
+
+        return;
+    }
+
+    var eventKey, i;
+
+    for (eventKey in eventList) {
+
+        if (!eventList.hasOwnProperty(eventKey)) {
+
+            continue;
+        }
+
+        i = eventList[eventKey].length;
+
+        while (i--) {
+
+            hAzzle.event.add(this[0], eventKey, eventList[eventKey][i]);
+        }
     }
 }
