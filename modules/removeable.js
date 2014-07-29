@@ -3,14 +3,14 @@
  * @param {Object} elem
  * @return {hAzzle}
  */
-
 hAzzle.clearData = function(elems) {
 
     var data, elem, type,
         special = hAzzle.eventHooks.special,
         i = 0;
 
-    for (; (elem = elems[i]) !== undefined; i++) {
+    for (;
+        (elem = elems[i]) !== undefined; i++) {
 
         if (hAzzle.legalTypes(elem) && (data = elem[hAzzleData.expando])) {
 
@@ -31,7 +31,7 @@ hAzzle.clearData = function(elems) {
                     }
                 }
             }
-			
+
             delete data.events;
         }
     }
@@ -52,9 +52,11 @@ hAzzle.extend({
         // Filters the set of matched elements to be removed.
 
         var elem = selector ? hAzzle.find(selector, this) : this;
+
         hAzzle.each(elem, function(el) {
 
             if (el.nodeType === 1) {
+
                 hAzzle.clearData(hAzzle.merge([el], hAzzle.find('*', el)));
             }
 

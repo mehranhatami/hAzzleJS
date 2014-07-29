@@ -1,6 +1,7 @@
 /*!
- * Attributes
+ * attributes.js
  */
+ 
 var doc = this.document,
     ssv = /\S+/g,
     inseteb = /^(?:input|select|textarea|button)$/i,
@@ -80,7 +81,7 @@ hAzzle.extend({
      */
 
     hasAttr: function(name) {
-      return name && typeof this.attr(name) !== 'undefined';
+        return name && typeof this.attr(name) !== 'undefined';
     },
 
     /**
@@ -121,6 +122,12 @@ hAzzle.extend({
 
 hAzzle.extend({
 
+    // properties renamed to avoid clashes with reserved words
+
+    propMap: {},
+
+    nodeHook: {},
+
     propHooks: {
 
         tabIndex: {
@@ -132,18 +139,12 @@ hAzzle.extend({
         }
     },
 
-    // properties renamed to avoid clashes with reserved words
-
-    propMap: {},
-
-    nodeHook: {},
-
     boolHook: {
 
         set: function(elem, value, name) {
 
             if (value === false) {
-
+                // Remove boolean attributes when set to false
                 hAzzle.removeAttr(elem, name);
 
             } else {
@@ -223,8 +224,8 @@ hAzzle.extend({
      * Set / Get attributes
      *
      * @param {Object} elem
-     * @param {string|String|Object} name
-     * @param {string|boolean|null} value
+     * @param {String|String|Object} name
+     * @param {String|Boolean|Null} value
      */
 
     attr: function(elem, name, value) {
@@ -232,16 +233,17 @@ hAzzle.extend({
         var hooks, ret,
             nType = elem.nodeType;
 
-        if (!elem || nType === 3 || nType === 8 || nType === 2) {
+        if (!elem || nType === 2 || nType === 3 || nType === 8) {
+
             return;
         }
-        // Fallback to prop when attributes are not supported
-        if (!elem.getAttribute || name === 'textContext') {
+
+        if (!elem.getAttribute) {
 
             return hAzzle.prop(elem, name, value);
         }
 
-        if (nType !== 1 || hAzzle.documentIsHTML) {
+        if (nType !== 1 || hAzzle.isXML(elem)) {
 
             name = name.toLowerCase();
 
@@ -249,29 +251,16 @@ hAzzle.extend({
                 getBooleanAttrName(elem, name) ? hAzzle.boolHook : hAzzle.nodeHook;
         }
 
-        if (value !== undefined) {
+        // Get attribute
 
-            if (value === null) {
+        if (value === undefined) {
 
-                hAzzle.removeAttr(elem, name);
+            // Set document vars if needed
+            if ((elem.ownerDocument || elem) !== document) {
 
-            } else {
+                hAzzle.setDocument(elem);
 
-                if (hooks && 'set' in hooks) {
-
-                    ret = hooks.set(elem, value, name);
-
-                    if (ret) {
-
-                        return ret;
-                    }
-                }
-
-                elem.setAttribute(name, value + '');
-                return value;
             }
-
-        } else {
 
             if (hooks && 'get' in hooks) {
                 ret = hooks.get(elem, name);
@@ -279,12 +268,36 @@ hAzzle.extend({
                     return ret;
                 }
             }
-            ret = elem.getAttribute(name, 2);
+
+            ret = !hAzzle.documentIsHTML ? elem.getAttribute(name, 2) :
+
+                ret = elem.getAttribute(name, 2);
 
             return ret === null ?
                 undefined :
                 ret;
 
+            // Set attribute
+
+        }
+        if (value === null) {
+
+            hAzzle.removeAttr(elem, name);
+
+        } else {
+
+            if (hooks && 'set' in hooks) {
+
+                ret = hooks.set(elem, value, name);
+
+                if (ret) {
+
+                    return ret;
+                }
+            }
+
+            elem.setAttribute(name, value + '');
+            return value;
         }
     },
 
