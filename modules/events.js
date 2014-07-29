@@ -24,7 +24,6 @@
  * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
- 
 var Jiesa = hAzzle.Jiesa,
     whiteRegex = (/\S+/g),
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
@@ -57,14 +56,12 @@ var _event = hAzzle.event = {
         var objHandler, eventHandler, tmp,
             special, handlers, type, namespaces, origType,
             eventData = hAzzle.getPrivate(elem),
-            events,
-            handleObj, t;
+            events, handleObj, t;
 
         if (!eventData) {
+			
             return;
         }
-
-        events = eventData.events;
 
         if (handler.handler) {
             objHandler = handler;
@@ -81,7 +78,7 @@ var _event = hAzzle.event = {
 
         // Create a hash table of event types for the element
 
-        if (!events) {
+      if ( !(events = eventData.events) ) {
 
             events = eventData.events = {};
         }
@@ -133,12 +130,10 @@ var _event = hAzzle.event = {
                 namespace: namespaces.join('.')
             }, objHandler);
 
-
             // Init the event handler queue if we're the first
 
-            handlers = events[type];
+            if ( !(handlers = events[ type ]) ) {
 
-            if (!handlers) {
                 handlers = events[type] = [];
                 handlers.delegateCount = 0;
 
@@ -224,9 +219,7 @@ var _event = hAzzle.event = {
             special = eventHooks.special[type] || {};
             type = (selector ? special.delegateType : special.bindType) || type;
             handlers = events[type] || [];
-
-            tmp = tmp[2] && newNS(namespaces);
-
+            tmp = tmp[2] && new RegExp( "(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)" );
             // Remove matching events
 
             origCount = j = handlers.length;
@@ -507,13 +500,6 @@ function returnTrue() {
 function returnFalse() {
     return false;
 }
-
-// Create new namespace
-
-function newNS(ns) {
-    return new RegExp('(^|\\.)' + ns.join('\\.(?:.*\\.|)') + '(\\.|$)');
-}
-
 
 /**
  * Listener
