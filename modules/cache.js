@@ -22,6 +22,21 @@ var types = {
     'true': true
   };
 
+function hAzzleDummy(val) {
+  var obj = {
+    valueOf: function () {
+      return val;
+    }
+  };
+
+  hAzzle.private(obj, '[[hAzzleDummy]]', true);
+
+  return obj;
+}
+
+function isDummy(obj) {
+  return !!hAzzle.private(obj, '[[hAzzleDummy]]');
+}
 
 function Cache() {
 
@@ -34,37 +49,43 @@ Cache.prototype = {
 
   key: function (obj) {
 
-    // Mehran!!  You have to verify this one. If its a value or
-    // not
-    var k = obj[cacheKey];
+    var otype = hAzzle.type(obj),
+      keyObj;
 
-    if (k) {
-
-      // Mehran! Try to use hAzzle.inArray for better performance
-
-      if (k.indexOf(objKeyPrefix) === 0) {
-
-        k = k.slice(objKeyPrefix.length);
-
-        return this.val(k);
-      }
-      return obj[cacheKey];
+    if (otype !== 'object' && otype !== 'function') {
+      return null;
     }
+
+    keyObj = hAzzle.private(obj, cacheKey);
+
+    if (keyObj) {
+
+      if (keyObj.indexOf(objKeyPrefix) === 0) {
+
+        keyObj = keyObj.slice(objKeyPrefix.length);
+
+        return this.val(keyObj);
+      }
+
+      return keyObj;
+    }
+
     return null;
   },
 
   val: function (key) {
 
     var keyObj,
-      htype = hAzzle.type(key),
-      storage = this.storage;
+      ktype = hAzzle.type(key),
+      storage = this.storage,
+      val;
 
-    if (hAzzle.isEmptyObject(key) || key === null) {
+    if (key === null) {
       return null;
     }
 
-    if (htype === 'object' ||
-      key === 'function') {
+    if (ktype === 'object' ||
+      ktype === 'function') {
 
       keyObj = this.key(key);
 
@@ -75,8 +96,13 @@ Cache.prototype = {
     }
 
     if (storage.hasOwnProperty(key)) {
+      val = storage[key];
 
-      return storage[key];
+      if (isDummy(val)) {
+        return val.valueOf();
+      }
+
+      return val;
     }
 
     return null;
@@ -128,7 +154,7 @@ Cache.prototype = {
 
         key = '[[' + hAzzle.getID(true, 'cache_') + ']]';
 
-        Object.defineProperty(value, cacheKey, mapProperty(key));
+        hAzzle.private(value, cacheKey, key);
 
         storage[key] = value;
 
@@ -140,11 +166,8 @@ Cache.prototype = {
 
         val = value;
 
-        value = {
-          valueOf: function () {
-            return val;
-          }
-        };
+        //This case needs 
+        value = hAzzleDummy(val);
       }
 
       if (keyType === 'object' ||
@@ -153,7 +176,7 @@ Cache.prototype = {
         key = objKeyPrefix + this.cache(key);
       }
 
-      Object.defineProperty(value, cacheKey, mapProperty(key));
+      hAzzle.private(value, cacheKey, key);
 
       storage[key] = value;
 
@@ -163,32 +186,6 @@ Cache.prototype = {
 };
 
 /* ============================ PRIVATE FUNCTIONS =========================== */
-
-// Map properties
-
-function mapProperty(value) {
-
-  // Prevent duplication
-
-  var prop = mapProperty.prop;
-
-  if (typeof prop === 'undefined') {
-
-    prop = {
-      enumerable: false,
-      writable: false,
-      configurable: false,
-      value: null
-    };
-
-    mapProperty.prop = prop;
-  }
-
-  prop.value = value;
-
-  return prop;
-}
-
 // Create Map Storage
 
 function createMapStorage() {
@@ -196,11 +193,11 @@ function createMapStorage() {
   return Object.create(storePrototype);
 }
 
-// Expand to the global hAzzle Object
-
 function createCache() {
   return new Cache();
 }
+
+// Expand to the global hAzzle Object
 
 hAzzle.createCache = createCache;
 hAzzle.Cache = Cache;
