@@ -9,6 +9,7 @@ var keyRegex = /key/i,
     mousewheelRegex = /mouse.*(wheel|scroll)/i,
     textRegex = /^text/i,
     touchRegex = /^touch|^gesture/i,
+    pointerRegex = /^pointer/i,
     popstateRegex = /^popstate$/i,
     msgRegex = /^message$/i,
 
@@ -21,7 +22,8 @@ var keyRegex = /key/i,
         'screenX screenY toElement dataTransfer fromElement').split(' '),
     mouseWheelProps = mouseProps.concat(('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ ' +
         'axis').split(' ')),
-    touchProps = ('touches targetTouches changedTouches scale rotation').split(' '),
+    touchProps = mouseProps.concat(('touches targetTouches changedTouches scale rotation ').split(' ')),
+    pointerProps = touchProps, // Its the same, isn't it!?
     messageProps = ('data origin source lastEventId').split(' '),
     textProps = ('data').split(' '),
     stateProps = ('state').split(' ');
@@ -44,7 +46,7 @@ hAzzle.props = {
     hookers: [{ // key events
             reg: keyRegex,
             props: keyProps,
-            filter: function (evt, original) {
+            filter: function(evt, original) {
 
                 // Add which for key events
                 if (evt.which === null) {
@@ -70,25 +72,41 @@ hAzzle.props = {
         }, { // TextEvent
             reg: textRegex,
             props: textProps,
-            filter: function (evt) {
+            filter: function(evt) {
                 return evt;
             }
         }, { // Touch and gesture events
             reg: touchRegex,
             props: touchProps,
-            filter: function (evt) {
+            filter: function(evt, original) {
+
+                var touch = original.changedTouches[0];
+
+                evt.pageX = touch.pageX;
+                evt.pageY = touch.pageY;
+                evt.screenX = touch.screenX;
+                evt.screenY = touch.screenY;
+                evt.clientX = touch.clientX;
+                evt.clientY = touch.clientY;
+
+                return evt;
+            }
+        }, { // IE11+ pointer events
+            reg: pointerRegex,
+            props: pointerProps,
+            filter: function(evt) {
                 return evt;
             }
         }, { // Message events
             reg: msgRegex,
             props: messageProps,
-            filter: function (evt) {
+            filter: function(evt) {
                 return evt;
             }
         }, { // Popstate events
             reg: popstateRegex,
             props: stateProps,
-            filter: function (evt) {
+            filter: function(evt) {
                 return evt;
             }
         }
@@ -96,11 +114,11 @@ hAzzle.props = {
 
     fixedEvents: {},
 
-    propFix: function (evt) {
-if(!evt) {
-	
-	return;
-	}
+    propFix: function(evt) {
+        if (!evt) {
+
+            return;
+        }
         if (evt && evt[hAzzle.expando]) {
 
             return evt;
@@ -167,7 +185,7 @@ function mousescroll(evt, original) {
         body = evtDoc.body;
         docBody = doc || body;
         evt.pageX = original.clientX + docBody.scrollLeft - docBody.clientLeft || 0;
-        evt.pageY = original.clientY + docBody.scrollTop - docBody.clientTop  || 0;
+        evt.pageY = original.clientY + docBody.scrollTop - docBody.clientTop || 0;
     }
 
     if (!evt.which && button !== undefined) {
