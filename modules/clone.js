@@ -86,10 +86,6 @@ hAzzle.extend({
             return hAzzle.cloneNode(this, shallow, deep);
         });
     }
-
-
-
-
 });
 
 
@@ -104,9 +100,9 @@ function cloneCopyEvent(src, dest) {
         return;
     }
 
-    if (dataPriv.hasData(src)) {
-        pdataOld = dataPriv.access(src);
-        pdataCur = dataPriv.set(dest, pdataOld);
+    if (hAzzle.hasPrivate(src)) {
+        pdataOld = hAzzle.private(src);
+        pdataCur = hAzzle.setPrivate(dest, pdataOld);
         events = pdataOld.events;
 
         if (events) {
@@ -121,10 +117,10 @@ function cloneCopyEvent(src, dest) {
         }
     }
 
-    if (dataUser.hasData(src)) {
-        udataOld = dataUser.access(src);
+    if (hAzzle.hasData(src)) {
+        udataOld = hAzzle.data(src);
         udataCur = hAzzle.shallowCopy({}, udataOld);
-        dataUser.set(dest, udataCur);
+        hAzzle.setData.set(dest, udataCur);
     }
 }
 
@@ -147,13 +143,11 @@ function fixInput(src, dest) {
     }
 }
 
-
-
 function getEventList(source, filter) {
 
     // Make a copy of source event list to avoid delete
 
-    var eventKey, eventList = hAzzle.shallowCopy({}, dataPriv.access(source[0], 'events')),
+    var eventKey, eventList = hAzzle.shallowCopy({}, hAzzle.private(source[0], 'events')),
         selectedEventList = {};
 
     if (filter && filter !== true) {

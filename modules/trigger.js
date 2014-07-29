@@ -215,6 +215,6 @@ function newNS(ns) {
 // Get event handler
 
 function getHandler(cur, evt) {
-    return (dataPriv.get(cur, 'events') || {})[evt.type] &&
-        dataPriv.get(cur, 'handle');
+    return (hAzzle.getPrivate(cur, 'events') || {})[evt.type] &&
+        hAzzle.getPrivate(cur, 'handle');
 }

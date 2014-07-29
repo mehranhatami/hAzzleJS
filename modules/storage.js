@@ -177,11 +177,11 @@ Storage.prototype = {
 
 // This one shall never be documented!!
 
-var dataPriv = hAzzle.dataPriv = new Storage();
+var _privateData = new Storage();
 
 // Public and exposed through the hAzzle Object
 
-var dataUser = hAzzle.dataUser = new Storage();
+var _userData = new Storage();
 
 // Expand the global hAzzle Object
 
@@ -191,27 +191,37 @@ hAzzle.extend({
 
     getPrivate: function(elem, dta) {
 
-        return dataPriv.get(elem, dta);
+        return _privateData.get(elem, dta);
 
     },
 
     setPrivate: function(elem, data, value) {
-        dataPriv.set(elem, data, value);
+        _privateData.set(elem, data, value);
     },
 
     hasPrivate: function(elem) {
-        return dataPriv.hasData(elem);
+        return _privateData.hasData(elem);
     },
 
     private: function(elem, name, data) {
-        return dataPriv.access(elem, name, data);
+        return _privateData.access(elem, name, data);
     },
 
     removePrivate: function(elem, name) {
-        dataPriv.release(elem, name);
+        _privateData.release(elem, name);
     },
 
     /* =========================== PUBLIC ========================== */
+
+    getData: function(elem, dta) {
+
+        return _userData.get(elem, dta);
+
+    },
+
+    setData: function(elem, data, value) {
+        _userData.set(elem, data, value);
+    },
 
     /**
      * Check if an element contains data
@@ -223,11 +233,11 @@ hAzzle.extend({
 
     hasData: function(elem) {
 
-        return dataUser.hasData(elem) || dataPriv.hasData(elem);
+        return _userData.hasData(elem) || _privateData.hasData(elem);
     },
 
     data: function(elem, name, data) {
-        return dataUser.access(elem, name, data);
+        return _userData.access(elem, name, data);
     },
 
     /**
@@ -239,7 +249,7 @@ hAzzle.extend({
      */
 
     removeData: function(elem, name) {
-        dataUser.release(elem, name);
+        _userData.release(elem, name);
     }
 
 }, hAzzle);
@@ -269,9 +279,9 @@ hAzzle.extend({
 
             if (this.length) {
 
-                data = dataUser.get(elem);
+                data = _userData.get(elem);
 
-                if (elem.nodeType === 1 && !dataPriv.get(elem, 'hasDataAttrs')) {
+                if (elem.nodeType === 1 && !_privateData.get(elem, 'hasDataAttrs')) {
 
                     i = attrs.length;
 
@@ -289,7 +299,7 @@ hAzzle.extend({
                         }
                     }
 
-                    dataPriv.set(elem, 'hasDataAttrs', true);
+                    _privateData.set(elem, 'hasDataAttrs', true);
                 }
             }
 
@@ -301,7 +311,7 @@ hAzzle.extend({
         if (typeof key === 'object') {
 
             return this.each(function() {
-                dataUser.set(this, key);
+                _userData.set(this, key);
             });
         }
 
@@ -311,14 +321,14 @@ hAzzle.extend({
 
             if (elem && value === undefined) {
 
-                data = dataUser.get(elem, key);
+                data = _userData.get(elem, key);
 
                 if (data !== undefined) {
 
                     return data;
                 }
 
-                data = dataUser.get(elem, camelKey);
+                data = _userData.get(elem, camelKey);
 
                 if (data !== undefined) {
 
@@ -339,10 +349,10 @@ hAzzle.extend({
             // Set the data...
 
             this.each(function() {
-                var data = dataUser.get(this, camelKey);
-                dataUser.set(this, camelKey, value);
+                var data = _userData.get(this, camelKey);
+                _userData.set(this, camelKey, value);
                 if (key.indexOf('-') !== -1 && data !== undefined) {
-                    dataUser.set(this, key, value);
+                    _userData.set(this, key, value);
                 }
             });
         }, null, value, arguments.length > 1, null, true);
@@ -358,7 +368,7 @@ hAzzle.extend({
 
     removeData: function(key) {
         return this.each(function() {
-            dataUser.release(this, key);
+            _userData.release(this, key);
         });
     }
 });
@@ -387,7 +397,7 @@ function dataAttr(elem, key, data) {
             } catch (e) {}
 
             // Make sure we set the data so it isn't changed later
-            dataUser.set(elem, key, data);
+            _userData.set(elem, key, data);
         } else {
             data = undefined;
         }
