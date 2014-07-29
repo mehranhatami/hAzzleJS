@@ -8,6 +8,7 @@
  *
  * - Various bug checks
  */
+ 
 var Jiesa = hAzzle.Jiesa,
 
     // Default document
@@ -20,6 +21,8 @@ var Jiesa = hAzzle.Jiesa,
 
     // Various regEx
 
+    escaped = /'|\\/g,
+	
     sibling = /[+~]/,
 
     quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
@@ -79,57 +82,57 @@ hAzzle.extend({
             // existing, and no XML doc - use QSA. If not, fallback
             // to the internal selector engine 
 
-            if (Jiesa.useNative && Jiesa.has['api-QSA'] && !Jiesa.has['bug-QSA']) {
+    
 
-                var old = true,
-                    nid = expando;
+        var old = true,
+          nid = expando;
 
-                if (context !== doc) {
+        if (context !== doc) {
 
-                    // Thanks to Andrew Dupont for the technique
+          // Thanks to Andrew Dupont for the technique
 
-                    old = context.getAttribute('id');
+          old = context.getAttribute('id');
 
-                    if (old) {
+          if (old) {
 
-                        nid = old.replace(escaped, '\\$&');
+            nid = old.replace(escaped, '\\$&');
 
-                    } else {
+          } else {
 
-                        context.setAttribute('id', nid);
-                    }
+            context.setAttribute('id', nid);
+          }
 
-                    nid = "[id='" + nid + "'] ";
+          nid = "[id='" + nid + "'] ";
 
-                    context = sibling.test(selector) ? context.parentElement : context;
-                    selector = nid + selector.split(',').join(',' + nid);
-                }
-
-                try {
-
-                    // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
-
-                    if (single) {
-
-                        return [context.querySelector(selector)];
-
-                    } else {
-
-                        push.apply(results, context.querySelectorAll(selector));
-                        return results;
-                    }
-
-                } finally {
-
-                    if (!old) {
-
-                        context.removeAttribute("id");
-                    }
-                }
-            }
+          context = sibling.test(selector) ? context.parentElement : context;
+          selector = nid + selector.split(',').join(',' + nid);
         }
 
-        // Run the parser
+        try {
+
+          // Use 'querySelector' if single{true}, otherwise use 'querySelectorAll'
+
+          if (single) {
+
+            return [context.querySelector(selector)];
+
+          } else {
+
+            push.apply(results, context.querySelectorAll(selector));
+            return results;
+          }
+
+        } finally {
+
+          if (!old) {
+
+            context.removeAttribute("id");
+          }
+        }
+      }
+      
+       
+	    // Run the parser
 
         return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
     },
@@ -172,13 +175,13 @@ function qM(selector, context, quickMatch) {
             }
         }
 
-        // Tag
+    // Tag
 
     } else if (quickMatch[2]) {
         push.apply(results, context.getElementsByTagName(selector));
         return results;
 
-        // Class
+    // Class
 
     } else if (context.getElementsByClassName) {
         push.apply(results, context.getElementsByClassName(quickMatch[3]));
