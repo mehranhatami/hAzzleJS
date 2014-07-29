@@ -4,7 +4,7 @@
  * Version: 0.9.7b RC2
  * Released under the MIT License.
  *
- * Date: 2014-07-29
+ * Date: 2014-07-30
  */
 (function(global, factory) {
 
@@ -27,6 +27,7 @@
     // Usefull variabels
 
     var document = window.document,
+
 
         // Prototype references.
 
@@ -59,8 +60,6 @@
         trwl = /^\s\s*/,
         trwr = /\s\s*$/,
 
-        escEp = /[-\\^$*+?.()|[\]{}]/g,
-
         // Define a local copy of hAzzle
 
         hAzzle = function(selector, context) {
@@ -73,7 +72,7 @@
                 new Core(selector, context);
         };
 
-    // access to main function.
+    // Access to main function.
 
     function Core(selector, context) {
 
@@ -154,63 +153,35 @@
         },
 
         /**
-         * Loop through objects
-         *
-         * @param {function} fn
-         * @param {Object} obj
+         * @param {function} callback
+         * @param {Object} args
          * @return {hAzzle}
          */
 
-        forOwn: function(fn, obj) {
-            return hAzzle.forOwn(this, fn, obj);
-        },
-
-        /**
-         * @param {function} fn
-         * @param {Object} obj
-         * @return {hAzzle}
-         */
-
-
-        each: function(fn, obj) {
-            return hAzzle.each(this, fn, obj);
-        },
-
-        /**
-         * @param {Function} fn
-         * @param {Object} obj
-         * @return {hAzzle}
-         */
-
-        deepEach: function(fn, obj) {
-
-            return hAzzle.deepEach(this, fn, obj);
+        each: function(callback, args) {
+            return hAzzle.each(this, callback, args);
         },
 
         /**
          * @param {Function} callback
-         * @param {Function} func
+         * @param {Object} args
+         * @return {hAzzle}
+         */
+
+        deepEach: function(callback, args) {
+
+            return hAzzle.deepEach(this, callback, args);
+        },
+
+        /**
+         * @param {Function} callback
          * @return {Array}
          */
 
-        map: function(callback, func) {
-            var m = [],
-                n, i = 0,
-                self = this,
-                l = self.length;
-
-            for (; i < l; i++) {
-
-                n = callback.call(self, self[i], i);
-
-                if (func) {
-
-                    func(n);
-                }
-                m.push(n);
-            }
-
-            return m;
+        map: function(callback) {
+            return hAzzle(hAzzle.map(this, function(elem, i) {
+                return callback.call(elem, i, elem);
+            }));
         }
     };
 
@@ -262,26 +233,15 @@
             throw new Error(msg);
         },
 
-        lowercase: function(string) {
-            return typeof string === 'string' ? string.toLowerCase() : string;
-        },
-
-        uppercase: function(string) {
-            return typeof string === 'string' ? string.toUpperCase() : string;
-        },
-
-        /* =========================== PUBLIC FUNCTIONS ========================== */
-
         /**
          * Run callback for each element in the collection
-         * @param {hAzzle|Array} ar
-         * @param {function(Object, number, (hAzzle|Array))} fn
-         * @param {Object} scope
-         * @param {boolean} arg
-         * @return {hAzzle|Array}
+         * @param {Array|Function|Object} obj
+         * @param {Function} callback
+         * @param {String} context
+         * @return {hAzzle}
          */
 
-        each: function(obj, iterator, context) {
+        each: function(obj, callback, context) {
 
             var i = 0,
                 l = obj.length;
@@ -291,7 +251,7 @@
             if (isArraylike(obj)) {
 
                 for (; i < l; i++) {
-                    if (iterator.call(obj[i], obj[i], i) === false) {
+                    if (callback.call(obj[i], obj[i], i) === false) {
                         break;
                     }
                 }
@@ -306,7 +266,7 @@
                         i != 'name' && (!obj.hasOwnProperty ||
                             obj.hasOwnProperty(i))) {
 
-                        if (iterator.call(context, obj[i], i) === false) {
+                        if (callback.call(context, obj[i], i) === false) {
 
                             break;
                         }
@@ -319,7 +279,7 @@
 
                 for (i in obj) {
                     if (obj.hasOwnProperty(i)) {
-                        if (iterator.call(context, obj[i], i) === false) {
+                        if (callback.call(context, obj[i], i) === false) {
                             break;
                         }
                     }
@@ -330,46 +290,36 @@
         },
 
         /**
-         * @param {hAzzle|Array} ar
-         * @param {function(Object, number, (hAzzle|Array))} fn
-         * @param {Object} scope
+         * @param {Array} obj
+         * @param {function} callback
+         * @param {Object} context
          * @return {hAzzle|Array}
          */
 
-        deepEach: function(ar, fn, scope) {
+        deepEach: function(obj, callback, context) {
             var i = 0,
-                l = ar.length;
+                l = obj.length;
+
             for (; i < l; i++) {
-                if (ar[i].nodeName && (ar[i].nodeType === 1 || ar[i].nodeType === 11)) {
-                    hAzzle.deepEach(ar[i].childNodes, fn, scope);
-                    fn.call(scope || ar[i], ar[i], i, ar);
+
+                if (obj[i].nodeName && (obj[i].nodeType === 1 ||
+                    obj[i].nodeType === 11)) {
+
+                    hAzzle.deepEach(obj[i].childNodes, callback, context);
+
+                    callback.call(context || obj[i], obj[i], i, obj);
                 }
             }
-            return ar;
+            return obj;
         },
 
         // Convert camelCase to  CSS-style
         // e.g. boxSizing -> box-sizing
 
         decamelize: function(str) {
+
             return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
         },
-
-        capitalize: function(str) {
-
-            return str.charAt(0).toUpperCase() + str.substring(1).toLowerCase();
-
-        },
-
-        blank: function(str) {
-            return /^\s*$/.test(str);
-        },
-
-        /**
-         * toString
-         */
-
-        str: Object.prototype.toString,
 
         /**
          *  Convert dashed to camelCase
@@ -385,7 +335,14 @@
             });
         },
 
+        /**
+         * toString
+         */
+
+        str: Object.prototype.toString,
+
         indexOf: function(elem, arr, i) {
+
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
 
@@ -394,6 +351,11 @@
          */
 
         inArray: function(array, value, index) {
+
+            if (!array) {
+
+                return;
+            }
 
             var i = (index || 0),
                 m = array.length;
@@ -410,6 +372,7 @@
         },
 
         map: function(elems, callback, arg) {
+
             var value,
                 i = 0,
                 length = elems.length,
@@ -421,6 +384,7 @@
             if (isArray) {
 
                 for (; i < length; i++) {
+
                     value = callback(elems[i], i, arg);
 
                     if (value !== null) {
@@ -428,8 +392,10 @@
                     }
                 }
 
-                // Go through every key on the object,
+                // Go through every key on the object
+
             } else {
+
                 for (i in elems) {
                     value = callback(elems[i], i, arg);
 
@@ -440,6 +406,7 @@
             }
 
             // Flatten any nested arrays
+
             return concat.apply([], ret);
         },
 
@@ -451,30 +418,26 @@
          * @param {Object} initial value
          */
 
-        reduce: function(arr, fn, val) {
+        reduce: function(arr, callback, val) {
+
             var rval = val,
                 i = 0,
                 l = arr.length;
+
             for (; i < l; i++) {
-                rval = fn(rval, arr[i], i, arr);
+
+                rval = callback(rval, arr[i], i, arr);
             }
             return rval;
         },
 
         isNode: function(node) {
-            return node && node.nodeName && (node.nodeType === 1 || node.nodeType === 9 || node.nodeType === 11);
+
+            return node && node.nodeName && (node.nodeType === 1 ||
+                node.nodeType === 9 ||
+                node.nodeType === 11);
         },
 
-        /**
-         * Escape regular expression characters in `str`.
-         *
-         * @param {String} str
-         * @return {String}
-         */
-
-        escapeRegexp: function(str) {
-            str.replace(escEp, '\\$&');
-        },
         /**
          * Check if it's an XML or HTML document
          */
@@ -525,6 +488,7 @@
             var results = [];
 
             if (obj === null) {
+
                 return results;
             }
 
@@ -539,9 +503,8 @@
             return hAzzle(results);
         },
 
-
-        // Happy now??? -really happy
         makeArray: function(nodeList) {
+
             if (nodeList instanceof Array) {
                 return nodeList;
             }
@@ -556,8 +519,6 @@
         },
 
         // Loop through Objects
-        // Note ! A for-in loop won't guarantee property iteration order and
-        // they'll iterate over anything added to the Array.prototype
 
         forOwn: function(obj, iterator, context) {
             var key;
@@ -582,10 +543,15 @@
             var div = document.createElement('div');
 
             try {
+
                 return !!fn(div);
+
             } catch (e) {
+
                 return false;
+
             } finally {
+
                 // Remove from its parent by default
                 if (div.parentNode) {
                     div.parentNode.removeChild(div);
@@ -617,18 +583,22 @@
             }
 
             if (type === 'boolean') {
+
                 return 'boolean';
             }
             if (type === 'object') {
+
                 return 'object';
             }
             if (type === 'string') {
+
                 return 'string';
             }
 
             str = hAzzle.str.call(obj);
 
             if (natives[str]) {
+
                 return natives[str];
             }
 
@@ -648,6 +618,7 @@
      */
 
     hAzzle.trim = (function() {
+
         if (!String.prototype.trim) {
             return function(value) {
                 return typeof value === 'string' ? value.replace(trwl, '').replace(trwr, '') : value;
@@ -662,6 +633,7 @@
     //  Checks if `obj` is a window object.
 
     var isWindow = hAzzle.isWindow = function(obj) {
+
             return obj !== null && obj === obj.window;
         },
 
@@ -685,8 +657,10 @@
 
     /* =========================== INTERNAL ========================== */
 
+    // Populate the native list
 
     while (i--) {
+
         natives['[object ' + nl[i] + ']'] = nl[i].toLowerCase();
     }
 
@@ -695,6 +669,7 @@
     if (typeof noGlobal === 'undefined') {
         window.hAzzle = window.hAzzle = hAzzle;
     }
+
 
     return hAzzle;
 
