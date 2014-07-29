@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Clone Event</title>
+
+ <style>
+
+</style>
+
+<script type="text/javascript" src="modules/hAzzle.js"></script>
+
+<script type="text/javascript" src="modules/uniqueid.js"></script>
+
+<script type="text/javascript" src="modules/setter.js"></script>
+
+<script type="text/javascript" src="modules/detection.js"></script>
+
+<script type="text/javascript" src="modules/doml4.js"></script>
+
+<script type="text/javascript" src="modules/ntapi.js"></script>
+
+<script type="text/javascript" src="modules/types.js"></script>
+
+<script type="text/javascript" src="modules/ready.js"></script>
+
+<script type="text/javascript" src="modules/extra.js"></script>
+
+<script type="text/javascript" src="modules/core.js"></script>
+
+<script type="text/javascript" src="modules/storage.js"></script>
+
+<script type="text/javascript" src="modules/parse.js"></script>
+
+<script type="text/javascript" src="modules/cl3.js"></script>
+
+<script type="text/javascript" src="modules/cl4.js"></script>
+
+<script type="text/javascript" src="modules/changers.js"></script>
+
+<script type="text/javascript" src="modules/compile.js"></script>
+
+<script type="text/javascript" src="modules/jiesa.js"></script>
+
+<script type="text/javascript" src="modules/text.js"></script>
+
+<script type="text/javascript" src="modules/shims/pnow.js"></script>
+
+<script type="text/javascript" src="modules/raf.js"></script>
+
+<script type="text/javascript" src="modules/fx.js"></script>
+
+<script type="text/javascript" src="modules/matchesselector.js"></script>
+
+<script type="text/javascript" src="modules/matches.js"></script>
+
+<script type="text/javascript" src="modules/detection.js"></script>
+
+<script type="text/javascript" src="modules/events.js"></script>
+
+<script type="text/javascript" src="modules/trigger.js"></script>
+
+<script type="text/javascript" src="modules/props.js"></script>
+
+<script type="text/javascript" src="modules/aliases.js"></script>
+
+<script type="text/javascript" src="modules/eventHooks.js"></script>
+
+<script type="text/javascript" src="modules/clone.js"></script>
+
+<script type="text/javascript" src="modules/showhide.js"></script>
+
+<script type="text/javascript" src="modules/dom.js"></script>
+
+<script type="text/javascript" src="modules/styles.js"></script>
+
+<script type="text/javascript" src="modules/csssupport.js"></script>
+
+<script type="text/javascript" src="modules/csshooks.js"></script>
+
+<script type="text/javascript" src="modules/css.js"></script>
+
+<script type="text/javascript" src="modules/position.js"></script>
+
+<script type="text/javascript" src="modules/offset.js"></script>
+
+<script type="text/javascript" src="modules/shims/classlist.js"></script>
+
+<script type="text/javascript" src="modules/classes.js"></script>
+
+<script type="text/javascript" src="modules/manipulation.js"></script>
+
+<script type="text/javascript" src="modules/appendhtml.js"></script>
+
+<script type="text/javascript" src="modules/attributes.js"></script>
+
+<script type="text/javascript" src="modules/removeable.js"></script>
+
+<script type="text/javascript" src="modules/ajax.js"></script>
+
+
+</head>
+
+<body>
+
+<button id="foo">foo</button>
+<button id="bar">bar</button>
+
+   </body></html>
+    
+    <script type="text/javascript">
+	var $ = hAzzle;
+
+	$('#foo').on('click', function() {
+	    alert('Event cloned - works on both buttons!');
+	});
+
+	$('#bar').cloneEvent($('#foo')); //copy all events from #foo
+    </script>
+</body>
+
+</html>
