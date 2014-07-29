@@ -5,30 +5,8 @@ var slice = Array.prototype.slice,
     push = Array.prototype.push;
 
 hAzzle.extend({
-	
-	str2array: function (s){
-		if(typeof s == "string" || s instanceof String){
-			if(s && !spaces.test(s)){
-				a1[0] = s;
-				return a1;
-			}
-			var a = s.split(spaces);
-			if(a.length && !a[0]){
-				a.shift();
-			}
-			if(a.length && !a[a.length - 1]){
-				a.pop();
-			}
-			return a;
-		}
-		// assumed to be an array
-		if(!s){
-			return [];
-		}
-		return array.filter(s, function(x){ return x; });
-	},
 
-    mergeArray: function (arr, results) {
+    mergeArray: function(arr, results) {
 
         var ret = results || [];
 
@@ -47,7 +25,7 @@ hAzzle.extend({
         return ret;
     },
 
-    size: function (obj, ownPropsOnly) {
+    size: function(obj, ownPropsOnly) {
         var count = 0,
             key;
 
@@ -67,7 +45,7 @@ hAzzle.extend({
      * to another object
      */
 
-    shallowCopy: function () {
+    shallowCopy: function() {
 
         var options, name, src, copy, copyIsArray, clone,
             target = arguments[0] || {},
@@ -137,7 +115,7 @@ hAzzle.extend({
      * Finds the elements of an array which satisfy a filter function.
      */
 
-    grep: function (elems, callback, invert) {
+    grep: function(elems, callback, invert) {
         var cbi,
             matches = [],
             i = 0,
@@ -154,5 +132,42 @@ hAzzle.extend({
         }
 
         return matches;
+    },
+
+    /**
+     * Bind a function to a context, optionally partially applying any
+     *
+     * @param {Function} fn
+     * @param {Object} context
+     */
+
+    proxy: function(fn, context) {
+
+        var tmp, args, proxy;
+
+        if (typeof context === 'string') {
+
+            tmp = fn[context];
+            context = fn;
+            fn = tmp;
+        }
+
+        if (typeof fn !== 'function') {
+
+            return undefined;
+        }
+
+        // Simulated bind
+        args = slice.call(arguments, 2);
+
+        proxy = function() {
+
+            return fn.apply(context || this, args.concat(slice.call(arguments)));
+        };
+
+        proxy.guid = fn.guid = fn.guid || hAzzle.getID(true, 'proxy_') + ' ';
+
+        return proxy;
     }
+
 }, hAzzle);
