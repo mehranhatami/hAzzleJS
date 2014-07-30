@@ -141,7 +141,6 @@ hAzzle.Callbacks = function(options) {
     return Callbacks;
 };
 
-
 function createOptions(options) {
     var object = optionsCache[options] = {};
     hAzzle.each(options.match((/\S+/g)) || [], function() {
