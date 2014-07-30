@@ -144,7 +144,7 @@ hAzzle.Callbacks = function(options) {
 
 function createOptions(options) {
     var object = optionsCache[options] = {};
-    hAzzle.each(options.match(rnotwhite) || [], function() {
+    hAzzle.each(options.match((/\S+/g)) || [], function() {
         object[this] = true;
     });
     return object;
