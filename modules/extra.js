@@ -5,6 +5,7 @@ var slice = Array.prototype.slice,
     push = Array.prototype.push;
 
 hAzzle.extend({
+	
 
     mergeArray: function(arr, results) {
 
