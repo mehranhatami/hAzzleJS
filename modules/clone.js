@@ -6,70 +6,83 @@
  * - data cloning
  * - event cloning
  */
+ 
+var filterSpace = /\s+/gi,
+    rcheckableType = /^(?:checkbox|radio)$/i;
 
-var rcheckableType = /^(?:checkbox|radio)$/i;
-
-  /**
-   * Clone events - copy events from an element to another 
-   *
-   * @param {Object} source
-   * @param {String} filter
-   * @return {hAzzle}
-   */
+/**
+ * Clone events - copy events from an element to another
+ *
+ * @param {Object} source
+ * @param {String} filter
+ * @return {hAzzle}
+ */
 
 hAzzle.Core.cloneEvent = function(source, filter) {
 
-        if (this.length) {
-			
-			// Wrap the hAzzle Object around the 'source' to gain
-			// access to the Core.prototype if a 'string'
-			
-            var source = typeof source === 'string' ? hAzzle(source) : source,
-                eventList = getEventList(source, filter);
-				
-           return this.each(hAzzle.proxy(copyEvent, this, eventList));
+        if (this.length && source && filter) {
+
+            var eventList = getEventList(source, filter);
+
+            // Wrap the hAzzle Object around the 'source' to gain
+            // access to the Core.prototype if a 'string'
+
+            if (typeof source === 'string') {
+
+                source = hAzzle(source);
+            }
+
+            return this.each(hAzzle.proxy(copyEvent, this, eventList));
         }
 
         return this;
-
     },
- /**
-  * Create a deep copy of the set of matched elements.
-  *
-  * @param {Boolean} shallow
-  * @param {Boolean} deep
-  * @return {hAzzle}
-  *
-  */
 
-hAzzle.Core.clone = function(shallow, deep) {
-        shallow = shallow === null ? false : shallow;
-        deep = deep === null ? shallow : deep;
+    /**
+     * Create a deep copy of the set of matched elements.
+     *
+     * @param {Boolean} shallow
+     * @param {Boolean} deep
+     * @return {hAzzle}
+     *
+     */
+
+    hAzzle.Core.clone = function(shallow, deep) {
+
+        if (shallow === null) {
+
+            shallow = false;
+        }
+
+        if (deep === null) {
+
+            deep = shallow;
+        }
+
         return this.map(function() {
             return cloneNode(this, shallow, deep);
         });
-    }
-
+    };
 
 /* ============================ PRIVATE FUNCTIONS =========================== */
 
 function getEventList(source, filter) {
 
-    var eventKey, 
-	 
-	 // ShallowCopy the source eventList to avoid delete
-	 
-	 eventList = hAzzle.shallowCopy({}, hAzzle.private(source[0], 'events')),
-     
-	 // Holder for selected events
-	 
-	 selectedEventList = {};
+    var eventKey,
+
+        // ShallowCopy the source eventList to avoid delete
+
+        eventList = hAzzle.shallowCopy({}, hAzzle.private(source[0], 'events')),
+
+        // Holder for selected events
+
+        selectedEventList = {};
 
     if (filter && filter !== true) {
-		
+
         selectedEventList = hAzzle.isArray(filter) ?
             filter :
-            filter.replace(/\s+/gi, ' ').split(' ');
+            filter.replace(filterSpace, ' ').split(' ');
 
         for (eventKey in eventList) {
 
@@ -95,7 +108,7 @@ function getEventList(source, filter) {
  *
  * @param {Object} eventList
  */
- 
+
 function copyEvent(eventList) {
 
     if (!eventList) {
@@ -135,6 +148,7 @@ function cloneNode(elem, shallow, deep) {
         srcElements = grab(elem);
 
         for (i = 0, l = srcElements.length; i < l; i++) {
+
             fixInput(srcElements[i], destElements[i]);
         }
     }
@@ -148,38 +162,85 @@ function cloneNode(elem, shallow, deep) {
 
             for (i = 0, l = srcElements.length; i < l; i++) {
 
+                // Clone textareas and select elements
+
+                cloneTextSel(srcElements[i], destElements[i]);
+
+                // Clone Events
+
                 cloneCopyEvent(srcElements[i], destElements[i]);
             }
 
         } else {
+
+            // Clone textareas and select elements
+
+            cloneTextSel(elem, clone);
+
+            // Clone Events
             cloneCopyEvent(elem, clone);
         }
     }
 
     // Return the cloned set
     return clone;
-};
+}
 
+function cloneTextSel(src, dest) {
 
+    var i, j, l, m,
 
+        // Textareas
+
+        srcTextarea = hAzzle.find('textarea', src),
+        destTextarea = hAzzle.find('textarea', dest),
+
+        // Select
+
+        srcSelects = hAzzle.find('select', src),
+        destSelects = hAzzle.find('select', dest);
+
+    i = srcTextarea.length;
+
+    if (i) {
+        while (i--) {
+
+            hAzzle(destTextarea[i]).val(hAzzle(srcTextarea[i]).val());
+        }
+    }
+
+    i = 0;
+    l = srcSelects.length;
+
+    if (l) {
+        for (; i < l; ++i) {
+            for (j = 0, m = srcSelects[i].options.length; j < m; ++j) {
+                if (srcSelects[i].options[j].selected === true) {
+                    destSelects[i].options[j].selected = true;
+                }
+            }
+        }
+    }
+}
 
 // Clone and copy events
 
 function cloneCopyEvent(src, dest) {
-    var i, l, type, pdataOld, pdataCur, udataOld, udataCur, events;
+
+    var i, l, type, dO, dC, udO, udC, events;
 
     if (dest.nodeType !== 1) {
         return;
     }
 
     if (hAzzle.hasPrivate(src)) {
-        pdataOld = hAzzle.private(src);
-        pdataCur = hAzzle.setPrivate(dest, pdataOld);
-        events = pdataOld.events;
+        dO = hAzzle.private(src);
+        dC = hAzzle.setPrivate(dest, dO);
+        events = dO.events;
 
         if (events) {
-            delete pdataCur.handle;
-            pdataCur.events = {};
+            delete dC.handle;
+            dC.events = {};
 
             for (type in events) {
                 for (i = 0, l = events[type].length; i < l; i++) {
@@ -190,9 +251,9 @@ function cloneCopyEvent(src, dest) {
     }
 
     if (hAzzle.hasData(src)) {
-        udataOld = hAzzle.data(src);
-        udataCur = hAzzle.shallowCopy({}, udataOld);
-        hAzzle.setData(dest, udataCur);
+        udO = hAzzle.data(src);
+        udC = hAzzle.shallowCopy({}, udO);
+        hAzzle.setData(dest, udC);
     }
 }
 
