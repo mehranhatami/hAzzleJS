@@ -24,8 +24,7 @@
  * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
-var Jiesa = hAzzle.Jiesa,
-    whiteRegex = (/\S+/g),
+var whiteRegex = (/\S+/g),
     namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
 
     slice = Array.prototype.slice,
@@ -59,7 +58,7 @@ var _event = hAzzle.event = {
             events, handleObj, t;
 
         if (!eventData) {
-			
+
             return;
         }
 
@@ -72,13 +71,12 @@ var _event = hAzzle.event = {
         // Assign each event handler a unique ID
 
         if (!handler.guid) {
-
             handler.guid = hAzzle.getID(true, 'hEvt_');
         }
 
         // Create a hash table of event types for the element
 
-      if ( !(events = eventData.events) ) {
+        if (!(events = eventData.events)) {
 
             events = eventData.events = {};
         }
@@ -126,13 +124,13 @@ var _event = hAzzle.event = {
                 handler: handler,
                 guid: handler.guid,
                 selector: selector,
-                needsContext: selector && Jiesa.regex.changer.test(selector),
+                needsContext: selector && hAzzle.Jiesa.regex.changer.test(selector),
                 namespace: namespaces.join('.')
             }, objHandler);
 
             // Init the event handler queue if we're the first
 
-            if ( !(handlers = events[ type ]) ) {
+            if (!(handlers = events[type])) {
 
                 handlers = events[type] = [];
                 handlers.delegateCount = 0;
@@ -141,10 +139,7 @@ var _event = hAzzle.event = {
                     special.setup.call(elem, data, namespaces, eventHandler) === false) {
 
                     // Add the listener
-
-                    if (elem.addEventListener) {
-                        elem.addEventListener(type, eventHandler, false);
-                    }
+                    hAzzle.addEvent(type, eventHandler, false)
                 }
             }
 
@@ -219,7 +214,7 @@ var _event = hAzzle.event = {
             special = eventHooks.special[type] || {};
             type = (selector ? special.delegateType : special.bindType) || type;
             handlers = events[type] || [];
-            tmp = tmp[2] && new RegExp( "(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)" );
+            tmp = tmp[2] && new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)");
             // Remove matching events
 
             origCount = j = handlers.length;
@@ -251,9 +246,7 @@ var _event = hAzzle.event = {
                 if (!special.shutdown ||
                     special.shutdown.call(elem, namespaces, eventData.handle) === false) {
 
-                    if (elem.removeEventListener) {
-                        elem.removeEventListener(type, eventData.handle, false);
-                    }
+                    hAzzle.removeEven(type, eventData.handle, false);
                 }
 
                 delete events[type];
@@ -472,6 +465,7 @@ hAzzle.Event.prototype = {
         this.stopPropagation();
     },
 
+
     // Block any further event processing
 
     stop: function() {
@@ -518,3 +512,18 @@ function Listener() {
 function getTypes(types) {
     return (types || '').match(whiteRegex) || [''];
 }
+
+
+// Globalize it
+
+hAzzle.addEvent = function(type, handler, bubble) {
+    if (elem.addEventListener) {
+        elem.addEventListener(type, eventHandler, false);
+    }
+}
+
+hAzzle.removeEvent = function(elem, type, handle) {
+    if (elem.removeEventListener) {
+        elem.removeEventListener(type, handle, false);
+    }
+};
