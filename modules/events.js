@@ -85,7 +85,10 @@ var _event = hAzzle.event = {
 
         if (!(eventHandler = eventData.handle)) {
 
-            eventHandler = eventData.handle = Listener();
+            eventHandler = eventData.handle = function(e) {
+                return typeof hAzzle !== 'undefined' && _event.triggered !== e.type ?
+                    _event.handle.apply(this, arguments) : undefined;
+            };
         }
 
         // Get multiple events
@@ -139,7 +142,8 @@ var _event = hAzzle.event = {
                     special.setup.call(elem, data, namespaces, eventHandler) === false) {
 
                     // Add the listener
-                    hAzzle.addEvent(type, eventHandler, false)
+
+                    hAzzle.addEvent(elem, type, eventHandler)
                 }
             }
 
@@ -495,18 +499,6 @@ function returnFalse() {
     return false;
 }
 
-/**
- * Listener
- * @return {Function}
- */
-
-function Listener() {
-    return function(e) {
-        return typeof hAzzle !== undefined && _event.triggered !== e.type ?
-            _event.handle.apply(this, arguments) : undefined;
-    };
-}
-
 // Handle multiple events separated by a space
 
 function getTypes(types) {
@@ -516,9 +508,9 @@ function getTypes(types) {
 
 // Globalize it
 
-hAzzle.addEvent = function(type, handler, bubble) {
+hAzzle.addEvent = function(elem, type, handler) {
     if (elem.addEventListener) {
-        elem.addEventListener(type, eventHandler, false);
+        elem.addEventListener(type, handler, false);
     }
 }
 
