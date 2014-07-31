@@ -22,48 +22,28 @@ hAzzle.units = function (px, unit, elem, prop) {
     }
 
     if (unit === '%') {
+		
+		if ( lrmp.test( prop ) ) {
+ 				prop = "width";
+ 			} else if ( /^(top|bottom)$/.test( prop ) ) {
+ 				prop = "height";
+ 			}
+ 			elem = topbot.test( c.css( elem, "position" ) ) ?
+ 				elem.offsetParent : elem.parentElement;
+ 			if ( elem ) {
+ 				prop = topbot.css( elem, prop, true );
+ 				if ( prop !== 0 ) {
+ 					return px / prop * 100;
+ 				}
+ 			}
+ 			return 0;
+		
+		
 
-        if (lrmp.test(prop)) {
-            prop = 'width';
-
-        } else if (topbot.test(prop)) {
-
-            prop = 'height';
-        }
-
-        if (reaf.test(hAzzle.css(elem, 'position'))) {
-
-            elem = elem.offsetParent;
-
-        } else {
-
-            elem = elem.parentNode;
-        }
-
-        if (elem) {
-
-            val = hAzzle.css(elem, prop);
-            num = num = parseFloat(val);
-
-            prop = hAzzle.isNumeric(num) ? num || 0 : val;
-
-            if (prop !== 0) {
-
-                return px / prop * 100;
-            }
-        }
-        return 0;
     }
 
     if (unit === 'em') {
-
-
-        val = hAzzle.css(elem, 'fontSize');
-        num = parseFloat(val);
-
-        prop = hAzzle.isNumeric(num) ? num || 0 : val;
-
-        return px / prop;
+	    return px / hAzzle.css( elem, "fontSize", "" ); 
     }
 
     if (hAzzle.units.unity === undefined) {

@@ -193,8 +193,8 @@ hAzzle.extend({
             // convert relative number strings
 
             if (type === 'string' && (ret = numbs.exec(value))) {
-
-                value = hAzzle.units(parseFloat(hAzzle.css(elem, name)), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+				value = hAzzle.css( elem, name, "" );
+				value = hAzzle.units( value, ret[3], elem, name ) + ( ret[1] + 1 ) * ret[2];
                 type = 'number';
             }
 

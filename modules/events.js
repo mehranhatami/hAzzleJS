@@ -250,7 +250,7 @@ var _event = hAzzle.event = {
                 if (!special.shutdown ||
                     special.shutdown.call(elem, namespaces, eventData.handle) === false) {
 
-                    hAzzle.removeEven(type, eventData.handle, false);
+                    hAzzle.removeEvent(type, eventData.handle, false);
                 }
 
                 delete events[type];

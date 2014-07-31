@@ -1,6 +1,6 @@
 //  CSS position, width and height
 var
-    dir = hAzzle.directions,
+    dir = [ "Top", "Right", "Bottom", "Left" ],
 
     splitRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
     numRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
