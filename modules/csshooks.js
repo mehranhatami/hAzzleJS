@@ -1,3 +1,32 @@
+// Transition
+
+hAzzle.cssHooks.transformOrigin = {
+    get: function(elem) {
+        return elem.style[cssSupport.transformOrigin];
+    },
+    set: function(elem, value) {
+        elem.style[cssSupport.transformOrigin] = value;
+    }
+};
+
+hAzzle.cssHooks.transition = {
+    get: function(elem) {
+        return elem.style[cssSupport.transition];
+    },
+    set: function(elem, value) {
+        elem.style[cssSupport.transition] = value;
+    }
+};
+hAzzle.cssHooks.filter = {
+    get: function(elem) {
+        return elem.style[support.filter];
+    },
+    set: function(elem, value) {
+        elem.style[cssSupport.filter] = value;
+    }
+};
+
+
 // Margin and padding cssHooks
 
 hAzzle.each(['margin', 'padding'], function(hook) {
