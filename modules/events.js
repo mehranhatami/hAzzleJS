@@ -143,7 +143,7 @@ var _event = hAzzle.event = {
 
                     // Add the listener
 
-                    hAzzle.addEvent(elem, type, eventHandler)
+                    hAzzle.addEvent(elem, type, eventHandler);
                 }
             }
 
@@ -512,7 +512,7 @@ hAzzle.addEvent = function(elem, type, handler) {
     if (elem.addEventListener) {
         elem.addEventListener(type, handler, false);
     }
-}
+};
 
 hAzzle.removeEvent = function(elem, type, handle) {
     if (elem.removeEventListener) {
