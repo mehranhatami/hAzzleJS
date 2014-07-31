@@ -99,11 +99,16 @@ hAzzle.html = function (str, data) {
             tag, id,
             classes, text, index, _index, element;
 
+        // Check for attribute match
+
         if ((matches = part.match(matchExpr.attributes))) {
 
             matched = matches[matches.length - 1];
-
-            while ((matches = matchExpr.values.exec(matched))) {
+        
+		// Mehran!!
+        // Make sure regEx check are not happening inside a while-loop
+        
+		while ((matches = matchExpr.values.exec(matched))) {
 
                 attrs[matches[1]] = (matches[4] || '').replace(matchExpr.repl, '').trim();
             }
@@ -112,6 +117,7 @@ hAzzle.html = function (str, data) {
         }
 
         // Multipliers
+		
         if ((matches = part.match(matchExpr.multiplier))) {
 
             count = +matches[1];
@@ -126,8 +132,10 @@ hAzzle.html = function (str, data) {
         }
 
         // ID
+		
         if ((matches = part.match(matchExpr.id))) {
-            id = matches[matches.length - 1].substr(1);
+			
+            id = matches[matches.length - 1].slice(1);
         }
 
         // Tag
@@ -146,7 +154,7 @@ hAzzle.html = function (str, data) {
         if ((matches = part.match(matchExpr.classname))) {
 
             classes = twist(matches, function (c) {
-                return c.substr(1);
+                return c.slice(1);
             }).join(' ');
         }
 
@@ -202,8 +210,8 @@ hAzzle.html = function (str, data) {
 
     nodes = hAzzle.merge(nodes, fragment.childNodes);
 
-    fragment.innerHTML = "";
-    fragment.textContent = "";
+    fragment.innerHTML = '';
+    fragment.textContent = '';
 
     return hAzzle(nodes);
 
@@ -257,6 +265,9 @@ function numbered(value, num) {
  * @param {Object} attrs
  *
  */
+
+		// Mehran!!
+       // If you create a img tag, it doesent close. You need to fix that
 
 function createDOMElement(index, tag, id, className, text, attrs) {
 
