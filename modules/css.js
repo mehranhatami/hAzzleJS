@@ -21,6 +21,8 @@ var
         'order',
         'orphans',
         'widows',
+		'rotate3d',
+		'flipped',
         'transform',
         'transform-origin',
         'transform-style',
@@ -212,7 +214,7 @@ hAzzle.extend({
                 value += ret && ret[3] ? ret[3] : 'px';
             }
 
-            if (hAzzle.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+            if (hAzzle.cssSupport.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
 
                 style[hAzzle.camelize(name)] = 'inherit';
             }
