@@ -61,26 +61,27 @@ hAzzle.extend({
 
     css: function(name, value) {
 
-        return hAzzle.setter(this, function(elem, name, value) {
-            var styles, len, map = {},
-                i = 0;
+        return hAzzle.setter( this, function( elem, name, value ) {
+			var styles, len,
+				map = {},
+				i = 0;
 
-            if (hAzzle.isArray(name)) {
-                styles = computeStyle(elem);
-                len = name.length;
+			if ( hAzzle.isArray( name ) ) {
+				styles = computeStyle( elem );
+				len = name.length;
 
-                for (; i < len; i++) {
-                    map[name[i]] = hAzzle.css(elem, name[i], false, styles);
-                }
+				for ( ; i < len; i++ ) {
+					map[ name[ i ] ] = hAzzle.css( elem, name[ i ], false, styles );
+				}
 
-                return map;
-            }
+				return map;
+			}
 
-            return value !== undefined ?
-                hAzzle.style(elem, name, value) :
-                hAzzle.css(elem, name);
-        }, name, value, arguments.length > 1);
-    }
+			return value !== undefined ?
+				hAzzle.style( elem, name, value ) :
+				hAzzle.css( elem, name );
+		}, name, value, arguments.length > 1 );
+	}
 });
 
 hAzzle.extend({

@@ -574,6 +574,7 @@
      */
 
     type: function (obj) {
+		
 
       var type = typeof obj,
         str;
@@ -587,10 +588,7 @@
 
         return 'boolean';
       }
-      if (type === 'object') {
-
-        return 'object';
-      }
+    
       if (type === 'string') {
 
         return 'string';

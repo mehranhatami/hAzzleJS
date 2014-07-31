@@ -1,59 +1,55 @@
 // setter.js
-var setter = hAzzle.setter = function(elems, fn, key, value, chainable, eG, raw) {
+var setter = hAzzle.setter = function(elems, fn, key, value, chainable, emptyGet, raw) {
 
-    var i = 0,
-        l = elems.length,
-        elem, bulk = key === null;
+ var i = 0,
+		len = elems.length,
+		bulk = key == null;
 
-    // Set multiple values
+	// Sets many values
+	if ( hAzzle.type( key ) === 'object' ) {
+		chainable = true;
+		for ( i in key ) {
+			setter( elems, fn, i, key[i], true, emptyGet, raw );
+		}
 
-    if (hAzzle.type(key) === 'object') {
+	// Sets one value
+	} else if ( value !== undefined ) {
+		chainable = true;
 
-        chainable = true;
+		if ( hAzzle.type( value ) !== 'function' ) { 
+			raw = true;
+		}
 
-        for (i in key) {
-            setter(elems, fn, i, key[i], true, eG, raw);
-        }
+		if ( bulk ) {
+			// Bulk operations run against the entire set
+			if ( raw ) {
 
-        // Sets one value
+				fn.call( elems, value );
+				fn = null;
 
-    } else if (typeof value !== 'undefined') {
+			// ...except when executing function values
+			} else {
+				bulk = fn;
+				fn = function( elem, key, value ) {
+					return bulk.call( hAzzle( elem ), value );
+				};
+			}
+		}
 
-        chainable = true;
+		if ( fn ) {
 
-        if (typeof value !== 'function') {
+			for ( ; i < len; i++ ) {
+				
+				fn( elems[i], key, raw ? value : value.call( elems[i], i, fn( elems[i], key ) ) );
+			}
+		}
+	}
 
-            raw = true;
-        }
+	return chainable ?
+		elems :
 
-        if (bulk) {
-
-            if (raw) {
-
-                fn.call(elems, value);
-                fn = null;
-
-            } else {
-
-                bulk = fn;
-                fn = function(elem, key, value) {
-                    return bulk.call(hAzzle(elem), value);
-                };
-            }
-        }
-
-        if (fn) {
-
-            while (l--) {
-                elem = elems[l];
-                fn(elems[l], key, raw ?
-                    value :
-                    value.call(elem, l, fn(elem, key)));
-            }
-        }
-    }
-
-    return chainable ? elems : bulk ?
-        fn.call(elems) : l ?
-        fn(elems[0], key) : eG;
+		// Gets
+		bulk ?
+			fn.call( elems ) :
+			len ? fn( elems[0], key ) : emptyGet;
 };
