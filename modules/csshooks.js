@@ -1,35 +1,3 @@
-// Transitions
-var transition = hAzzle.assert(function(div) {
-    (div.style.MsTransition === '' ? 'MsTransition' :
-        (div.style.WebkitTransition === '' ? 'WebkitTransition' :
-            (div.style.OTransition === '' ? 'OTransition' :
-                (div.style.transition === '' ? 'Transition' :
-                    false))));
-});
-if(transition){
-var transProp = ['Property', 'Duration', 'TimingFunction'];
-
-hAzzle.cssHooks["transition" + prop] = {
-    get: function(elem, computed, extra) {
-        return hAzzle.map(props, function(prop, i) {
-            return hAzzle.css(elem, transition + prop);
-        }).join(" ");
-    },
-    set: function(elem, value) {
-        elem.style[support.transition] = value;
-    }
-};
-hAzzle.each(props, function(i, prop) {
-    hAzzle.cssHooks["transition" + prop] = {
-        get: function(elem, computed, extra) {
-            return hAzzle.css(elem, transition + prop);
-        },
-        set: function(elem, value) {
-            elem.style[transition + prop] = value;
-        }
-    };
-});
-}
 // Margin and padding cssHooks
 
 hAzzle.each(['margin', 'padding'], function(hook) {
