@@ -1,31 +1,19 @@
 // Transition
 
-hAzzle.cssHooks.transformOrigin = {
-    get: function(elem) {
-        return elem.style[cssSupport.transformOrigin];
-    },
-    set: function(elem, value) {
-        elem.style[cssSupport.transformOrigin] = value;
-    }
-};
+var  pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
+     directions = [ "Top", "Right", "Bottom", "Left" ];
 
-hAzzle.cssHooks.transition = {
-    get: function(elem) {
-        return elem.style[cssSupport.transition];
-    },
-    set: function(elem, value) {
-        elem.style[cssSupport.transition] = value;
-    }
-};
-hAzzle.cssHooks.filter = {
-    get: function(elem) {
-        return elem.style[support.filter];
-    },
-    set: function(elem, value) {
-        elem.style[cssSupport.filter] = value;
-    }
-};
+hAzzle.each(['transformOrigin', 'transition', 'filter'], function() {
+    hAzzle.cssHooks[this] = {
+        get: function(elem) {
+            return elem.style[hAzzle.cssSupport[this]];
+        },
+        set: function(elem, value) {
+            elem.style[hAzzle.cssSupport[this]] = value;
+        }
+    };
 
+});
 
 // Margin and padding cssHooks
 
@@ -49,19 +37,15 @@ hAzzle.each(['margin', 'padding'], function(hook) {
                 elem.style[hook + dir] = values[dir];
             });
         }
-
-
-
-    }
+    };
 });
 
 // BackgroundPositionXY cssHooks
 
 if (hAzzle.BackgroundPositionXY) {
-
     hAzzle.cssHooks.backgroundPosition = {
-        get: function(elem, computed, extra) {
-            return hAzzle.map(['X', 'Y'], function(l, i) {
+        get: function(elem) {
+            return hAzzle.map(['X', 'Y'], function(l) {
                 return hAzzle.css(elem, 'backgroundPosition' + l);
             }).join(' ');
         },
@@ -71,13 +55,8 @@ if (hAzzle.BackgroundPositionXY) {
                 elem.style['backgroundPosition' + l] = values[l];
             });
         }
-    }
+    };
 }
-
-
-var win = this,
-    pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i;
-
 
 if (!hAzzle.pixelPosition) {
 
@@ -101,7 +80,7 @@ if (!hAzzle.pixelPosition) {
                     return computed;
                 }
             }
-        }
+        };
     });
 }
 
