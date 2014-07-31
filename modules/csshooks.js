@@ -3,13 +3,13 @@
 var  pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
      directions = [ "Top", "Right", "Bottom", "Left" ];
 
-hAzzle.each(['transformOrigin', 'transition', 'filter'], function() {
-    hAzzle.cssHooks[this] = {
+hAzzle.each(['transformOrigin', 'transition', 'filter'], function(prop) {
+    hAzzle.cssHooks[prop] = {
         get: function(elem) {
-            return elem.style[hAzzle.cssSupport[this]];
+            return elem.style[hAzzle.cssSupport[prop]];
         },
         set: function(elem, value) {
-            elem.style[hAzzle.cssSupport[this]] = value;
+            elem.style[hAzzle.cssSupport[prop]] = value;
         }
     };
 
