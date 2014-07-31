@@ -668,7 +668,7 @@
   // Expose hAzzle to the global object
 
   if (typeof noGlobal === 'undefined') {
-    window.hAzzle = window.hAzzle = hAzzle;
+    window.hAzzle = hAzzle;
   }
 
 

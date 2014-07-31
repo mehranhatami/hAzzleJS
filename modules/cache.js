@@ -199,6 +199,6 @@ function createCache() {
 
 // Expand to the global hAzzle Object
 
-hAzzle.createCache = createCache();
+hAzzle.createCache = createCache;
 hAzzle.Cache = Cache;
-hAzzle.localCache = createCache();
+hAzzle.localCache = createCache;
