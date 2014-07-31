@@ -1,8 +1,6 @@
 //  CSS position, width and height
-var
-    dir = [ "Top", "Right", "Bottom", "Left" ],
 
-    splitRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
+var splitRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
     numRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     displayRegex = /^(none|table(?!-c[ea]).+)/,
 
@@ -10,7 +8,9 @@ var
         position: 'absolute',
         visibility: 'hidden',
         display: 'block'
-    };
+    },
+	
+    dir = [ 'Top', 'Right', 'Bottom', 'Left' ];
 
 hAzzle.extend({
 

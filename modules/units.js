@@ -14,8 +14,6 @@ var doc = this.document,
 
 hAzzle.units = function (px, unit, elem, prop) {
 
-    var val, num;
-
     if (unit === '' || unit === 'px') {
 
         return px; // Return if already 'px' or blank
@@ -24,11 +22,11 @@ hAzzle.units = function (px, unit, elem, prop) {
     if (unit === '%') {
 		
 		if ( lrmp.test( prop ) ) {
- 				prop = "width";
- 			} else if ( /^(top|bottom)$/.test( prop ) ) {
- 				prop = "height";
+ 				prop = 'width';
+ 			} else if ( topbot.test( prop ) ) {
+ 				prop = 'height';
  			}
- 			elem = topbot.test( c.css( elem, "position" ) ) ?
+ 			elem = reaf.test( hAzzle.css( elem, 'position' ) ) ?
  				elem.offsetParent : elem.parentElement;
  			if ( elem ) {
  				prop = topbot.css( elem, prop, true );
@@ -36,14 +34,11 @@ hAzzle.units = function (px, unit, elem, prop) {
  					return px / prop * 100;
  				}
  			}
- 			return 0;
-		
-		
-
+          return 0;
     }
 
     if (unit === 'em') {
-	    return px / hAzzle.css( elem, "fontSize", "" ); 
+	    return px / hAzzle.css( elem, 'fontSize', '' ); 
     }
 
     if (hAzzle.units.unity === undefined) {
