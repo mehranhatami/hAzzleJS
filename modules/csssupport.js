@@ -38,6 +38,8 @@ hAzzle.assert(function(div) {
     cssSupport.textShadow = style.textShadow === '';
 });
 
+var support = {};
+
 hAzzle.assert(function(div) {
 
 
@@ -62,13 +64,12 @@ hAzzle.assert(function(div) {
         }
     }
 
-
     // Check for the browser's transitions support.
-    cssSupport.transition = getVendorPropertyName('transition');
-    cssSupport.transitionDelay = getVendorPropertyName('transitionDelay');
-    cssSupport.transform = getVendorPropertyName('transform');
-    cssSupport.transformOrigin = getVendorPropertyName('transformOrigin');
-    cssSupport.filter = getVendorPropertyName('Filter');
+    support.transition = getVendorPropertyName('transition');
+    support.transitionDelay = getVendorPropertyName('transitionDelay');
+    support.transform = getVendorPropertyName('transform');
+    support.transformOrigin = getVendorPropertyName('transformOrigin');
+    support.filter = getVendorPropertyName('Filter');
 
     function checkTransform3dSupport() {
         div.style[cssSupport.transform] = '';
@@ -76,10 +77,29 @@ hAzzle.assert(function(div) {
         return div.style[cssSupport.transform] !== '';
     }
 
+    support.transform3d = checkTransform3dSupport();
+	
+	 var eventNames = {
+    'transition':       'transitionend',
+    'MozTransition':    'transitionend',
+    'OTransition':      'oTransitionEnd',
+    'WebkitTransition': 'webkitTransitionEnd',
+    'msTransition':     'MSTransitionEnd'
+  };
+  
+   // Detect the 'transitionend' event needed.
+  var transitionEnd = support.transitionEnd = eventNames[support.transition] || null;
 
-    cssSupport.transform3d = checkTransform3dSupport();
-
+  for (var key in support) {
+	  
+    if (support.hasOwnProperty(key) && typeof cssSupport[key] === 'undefined') {
+		
+     cssSupport[key] = support[key];
+	 
+    }
+  }
 });
+
 
 /**
  * Quick function for adding supported CSS properties
