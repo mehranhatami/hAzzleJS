@@ -8,9 +8,29 @@ var
     // Don't set styles on text and comment nodes
 
     valid = [3, 8],
+	
+	    excludedProps = [
+        'zoom',
+        'box-flex',
+        'columns',
+        'counter-reset',
+        'volume',
+        'stress',
+        'overflow',
+        'flex-grow',
+        'column-count',
+        'flex-shrink',
+        'order',
+        'orphans',
+        'widows',
+        'transform',
+        'transform-origin',
+        'transform-style',
+        'perspective',
+        'perspective-origin',
+        'backface-visibility'
+    ],
 
-    computeStyle = hAzzle.computeStyle,
-    cssStyles = hAzzle.cssStyles,
     stylePrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
     /**
@@ -21,6 +41,12 @@ var
 
         letterSpacing: '0',
         fontWeight: '400'
+    };
+	
+	var computeStyle = hAzzle.computeStyle = function(elem) {
+        var view = elem.ownerDocument.defaultView;
+        return hAzzle.ComputedStyle ? (view.opener ? view.getComputedStyle(elem, null) :
+            window.getComputedStyle(elem, null)) : elem.style;
     };
 
 hAzzle.extend({
@@ -59,25 +85,47 @@ hAzzle.extend({
 });
 
 hAzzle.extend({
+	
+	 cssProps: {
 
-    getStyle: function(elem, value) {
-
-        var hook, computed, style = elem.style;
-
-        if (arguments.length === 2 &&
-            (hook = cssStyles.get[name])) {
-
-            value = hook ? hook(style) : style[name];
-            if (!computed && !value) {
-                style = computeStyle(elem);
-                value = hook ? hook(style) : style[name];
-
-                computed = true;
-            }
-
-            return value;
-        }
+        'float': 'cssFloat'
     },
+	
+	unitless: {},
+	
+	cssHooks: {
+
+        opacity: {
+            get: function(elem, computed) {
+
+                if (computed) {
+
+                    var opacity = elem.style.opacity ||
+                        curCSS(elem, 'opacity');
+
+                    return (opacity === '') ? 1 : opacity.toFloat();
+                }
+            },
+            set: function(el, value) {
+
+                if (typeof value !== 'number') {
+
+                    value = 1;
+                }
+
+                if (value == 1 || value === '') {
+
+                    value = '';
+
+                } else if (value < 0.00001) {
+
+                    value = 0;
+                }
+
+                el.style.opacity = value;
+            }
+		}
+     },
 
     css: function(elem, name, extra, styles) {
 
@@ -89,7 +137,7 @@ hAzzle.extend({
 
         // gets hook for the prefixed version
         // followed by the unprefixed version
-        hooks = cssHooks[name];
+        hooks = hAzzle.cssHooks[name];
 
         // If a hook was provided get the computed value from there
         if (hooks && "get" in hooks) {
@@ -139,21 +187,6 @@ hAzzle.extend({
         style = elem.style;
 
         if (value !== undefined) {
-
-            var hook;
-
-            hook = cssStyles.get[name];
-
-            // Check for unprefixed CSS styles
-
-            if (name in cssStyles.set) {
-
-                hook = cssStyles.set[name];
-
-                hook(elem.style, value === null ? "" : value);
-
-                return;
-            }
 
             name = hAzzle.camelize(name) ;
 			name = hAzzle.cssProps[name] || (hAzzle.cssProps[name] = vendorPropName(style, name));
@@ -205,7 +238,7 @@ hAzzle.extend({
 
             // Check for cssHooks
 
-            hooks = cssHooks[name];
+            hooks = hAzzle.cssHooks[name];
 
             // If a hook was provided get the non-computed value from there
 
@@ -229,35 +262,10 @@ hAzzle.extend({
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
 
-
-/**
- * Get current CSS style on the node. For speed performance - if unprefixed -
- * we get the value from the cssStyle without any extra checks.
- *
- * However there are pro and cons here. Native and native, so example:
- *
- *  style="background-color:rgb(15,99,30);"
- *
- * - for un-prefixed it will return the value as it is
- *
- * - if prefixed, it return "blue" in the jQuery way of doing things.
- *
- * TODO!? Change this to be equal maybe??
- */
-
 var curCSS = hAzzle.curCSS = function(elem, prop, computed) {
 
-    var ret, hook = cssStyles.get[prop];
+    var ret;
 
-    // unprefixed?
-
-    if (hook) {
-
-        return hook(elem.style);
-
-        // Prefixed
-
-    } else {
 
         computed = computed || computeStyle(elem);
 
@@ -274,7 +282,6 @@ var curCSS = hAzzle.curCSS = function(elem, prop, computed) {
         return ret !== undefined ?
             ret + '' :
             ret;
-    }
 };
 
 // Return a css property mapped to a potentially vendor prefixed property
@@ -344,3 +351,11 @@ function calculateCorrect(elem, name, val) {
     }
     return val;
 }
+
+
+
+// Populate the unitless list
+
+hAzzle.each(excludedProps, function(name) {
+    hAzzle.unitless[hAzzle.camelize(name)] = true;
+});

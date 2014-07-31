@@ -57,7 +57,7 @@ hAzzle.extend({
 /* ============================ CSS HOOKS FOR POSITIONS =========================== */
 
 hAzzle.each(['height', 'width'], function(name) {
-    hAzzle.addCSSHook(name, {
+    hAzzle.cssHooks[name] = {
         get: function(elem, computed, extra) {
             if (computed) {
                 return elem.offsetWidth === 0 && displayRegex.test(hAzzle.css(elem, 'display')) ?
@@ -80,7 +80,7 @@ hAzzle.each(['height', 'width'], function(name) {
                 ) : 0
             );
         }
-    });
+    }
 });
 
 

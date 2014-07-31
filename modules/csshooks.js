@@ -4,7 +4,7 @@
 
 hAzzle.each(['margin', 'padding'], function(hook) {
 
-    hAzzle.addCSSHook(hook, {
+    hAzzle.cssHooks[hook] = {
         get: function(elem) {
             return hAzzle.map(directions, function(dir) {
                 return hAzzle.css(elem, hook + dir);
@@ -22,14 +22,17 @@ hAzzle.each(['margin', 'padding'], function(hook) {
                 elem.style[hook + dir] = values[dir];
             });
         }
-    });
+
+
+
+}
 });
 
 // BackgroundPositionXY cssHooks
 
 if (hAzzle.BackgroundPositionXY) {
 
-    hAzzle.addCSSHook('backgroundPosition', {
+    hAzzle.cssHooks.backgroundPosition = { 
         get: function(elem, computed, extra) {
             return hAzzle.map(['X', 'Y'], function(l, i) {
                 return hAzzle.css(elem, 'backgroundPosition' + l);
@@ -41,7 +44,7 @@ if (hAzzle.BackgroundPositionXY) {
                 elem.style['backgroundPosition' + l] = values[l];
             });
         }
-    });
+    }
 }
 
 
@@ -52,7 +55,7 @@ var win = this,
 if (!hAzzle.pixelPosition) {
 
 hAzzle.each( [ "top", "left", "bottom", "right" ], function( prop ) {
-			hAzzle.addCSSHook(prop, {
+			hAzzle.cssHooks[prop] = {
 				get: function( elem, computed ) {
 				  var elStyles = hAzzle.computeStyle( elem );
 					if ( computed ) {
@@ -71,9 +74,10 @@ hAzzle.each( [ "top", "left", "bottom", "right" ], function( prop ) {
 						return computed;
 					}
 				}
-			});
+			}
 		});
     }
+
 
 
 /* ============================ UTILITY METHODS =========================== */
