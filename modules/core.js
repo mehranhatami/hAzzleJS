@@ -121,13 +121,13 @@ hAzzle.assert(function(div) {
         docElem.msMatchesSelector));
 });
 
-
-
 // QSA supported, test for bugs
 
 Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function(div) {
+	
     div.innerHTML = "<p class='QsA'>Jiesa</p>";
-    return div.querySelectorAll(".QsA").length === 0 ? false :
+    
+	return div.querySelectorAll(".QsA").length === 0 ? false :
         // Check for broken :checked pseudo in Webkit/Opera
         !div.querySelectorAll(":checked").length ? false : true;
 }) : false;
@@ -311,11 +311,6 @@ hAzzle.contains = function(context, elem) {
     return contains(context, elem);
 };
 
-// Initialize against the default document
-
-
-
-
 /**
  * Checks document order of two siblings
  * @param {Element} a
@@ -345,30 +340,6 @@ function siblingCheck(a, b) {
     return a ? 1 : -1;
 }
 
-/* =========================== EXTEND JIESA ========================== */
-
-hAzzle.extend({
-    // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
-
-    whitespace: "[\\x20\\t\\r\\n\\f]",
-    runescape: new RegExp("\\\\([\\da-f]{1,6}" + this.whitespace + "?|(" + this.whitespace + ")|.)", "ig"),
-    funescape: function(_, escaped, escapedWhitespace) {
-        var high = "0x" + escaped - 0x10000;
-        // NaN means non-codepoint
-        // Support: Firefox<24
-        // Workaround erroneous numeric interpretation of +"0x"
-        return high !== high || escapedWhitespace ?
-            escaped :
-            high < 0 ?
-            // BMP codepoint
-            String.fromCharCode(high + 0x10000) :
-            // Supplemental Plane codepoint (surrogate pair)
-            String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
-    }
-
-}, Jiesa);
-
-
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
 hAzzle.docElem = docElem;
@@ -377,8 +348,7 @@ hAzzle.Jiesa = Jiesa;
 
 // Return true/ false if classList are supported
 // This depends of the 'classList shim' are 
-// included in the build or not. If not, it
-// will only return false on IE9
+// included in the build or not
 
 hAzzle.classList = Jiesa.has['api-classList'];
 hAzzle.MultiArgs = Jiesa.has['api-MultiArgs'];

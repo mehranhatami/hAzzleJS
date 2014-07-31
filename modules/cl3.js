@@ -1,11 +1,13 @@
 /*
+ *
  * CSS3 pseudo-classes extension for Jiesa
  *
  * Contains all CSS Level 3 selectors
  *
  */
 var win = this,
-    doc = win.document, i,
+    doc = win.document,
+    i,
     Jiesa = hAzzle.Jiesa,
     rinputs = /^(?:input|select|textarea|button)$/i,
     rheader = /^h\d$/i,
@@ -16,9 +18,21 @@ var win = this,
 
     ridentifier = new RegExp("^" + identifier + "$"),
 
-    runescape = Jiesa.runescape,
-
-    funescape = Jiesa.funescape,
+    whitespace = "[\\x20\\t\\r\\n\\f]",
+    runescape = new RegExp("\\\\([\\da-f]{1,6}" + whitespace + "?|(" + whitespace + ")|.)", "ig"),
+    funescape = function(_, escaped, escapedWhitespace) {
+        var high = "0x" + escaped - 0x10000;
+        // NaN means non-codepoint
+        // Support: Firefox<24
+        // Workaround erroneous numeric interpretation of +"0x"
+        return high !== high || escapedWhitespace ?
+            escaped :
+            high < 0 ?
+            // BMP codepoint
+            String.fromCharCode(high + 0x10000) :
+            // Supplemental Plane codepoint (surrogate pair)
+            String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
+    },
 
     linkNodes = {
         'a': 1,
@@ -33,7 +47,31 @@ hAzzle.extend({
 
     pseudo_filters: {
 
-       'only-of-type': function (el) {
+        // Mehran! You fix this. Couldn't get it to work just now
+        "lang": function (el, lang) {
+
+            if (!ridentifier.test(lang || "")) {
+                hAzzle.error("unsupported lang: " + lang);
+            }
+
+            lang = lang.replace(runescape, funescape).toLowerCase();
+
+            var elemLang;
+            do {
+                if ((elemLang = hAzzle.documentIsHTML ?
+                    elem.lang :
+                    elem.getAttribute("xml:lang") || elem.getAttribute("lang"))) {
+
+                    elemLang = elemLang.toLowerCase();
+                    return elemLang === lang || elemLang.indexOf(lang + "-") === 0;
+                }
+            } while ((elem = elem.parentNode) && elem.nodeType === 1);
+            return false;
+
+        },
+
+
+        'only-of-type': function (el) {
 
             return Jiesa.pseudo_filters['first-of-type'](el) && Jiesa.pseudo_filters['last-of-type'](el);
         },
@@ -259,11 +297,11 @@ function createButtonPseudo(type) {
 }
 
 function children(node, ofType) {
-    var r = [], i, l,
-        nodes = node.childNodes,
-		i = 0, l = nodes.length;
+    var r = [],
+        i, l,
+        nodes = node.childNodes;
 
-    for (; i < l; i++) {
+    for (i = 0, l = nodes.length; i < l; i++) {
         if (nodes[i].nodeType == 1 && (!ofType || nodes[i].nodeName == ofType)) {
             r.push(nodes[i]);
         }
