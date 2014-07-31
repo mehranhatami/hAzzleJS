@@ -85,7 +85,7 @@ var win = this,
    */
 
   trimspaces = /^\s*|\s*$/g,
-  whitespace = new RegExp(Jiesa.whitespace),
+  whitespace = '[\\x20\\t\\r\\n\\f]',
   special = /\s?([\+~\>])\s?/g,
   identifier = '(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+',
   chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g,
@@ -124,20 +124,6 @@ function getNodes(context) {
 
 hAzzle.extend({
 
-  rgx: {
-    'id': new RegExp('^#(' + identifier + ')'),
-    'tag': new RegExp('^(' + identifier + '|[*])'),
-    'Class': new RegExp('^\\.(' + identifier + ')'),
-    'rel': /^\>|\>|\+|~$/, // BUGGY!!! Not working!!
-
-    'nth': new RegExp('^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(' + whitespace +
-      '*(even|odd|(([+-]|)(\\d*)n|)' + whitespace + '*(?:([+-]|)' + whitespace +
-      '*(\\d+)|))' + whitespace + '*\\)|)', 'i'),
-    'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
-
-    'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/
-  },
-
   regex: {
     'id': new RegExp('^#(' + identifier + ')'),
     'tag': new RegExp('^(' + identifier + '|[*])'),
@@ -151,7 +137,7 @@ hAzzle.extend({
 
     'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
     'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
-    'whitespace': whitespace,
+    'whitespace': new RegExp(whitespace),
   },
 
   /**
@@ -820,7 +806,7 @@ specialCases = {
     var excess,
       unquoted = !match[6] && match[2];
 
-    if (Jiesa.rgx.nth.test(match[0])) {
+    if (Jiesa.regex.nth.test(match[0])) {
       return null;
     }
 
@@ -848,7 +834,7 @@ specialCases = {
 function tokenize(selector, parseOnly) {
   var matched, match, tokens, type,
     parsed, groups,
-    cached = tokenCache.cache(selector + ' ');
+    cached = tokenCache.cache(selector + '');
 
   if (cached) {
     return parseOnly ? 0 : cached.slice(0);
@@ -879,13 +865,15 @@ function tokenize(selector, parseOnly) {
       parsed = parsed.slice(matched.length);
     }
 
-    for (type in Jiesa.rgx) {
-      match = Jiesa.rgx[type].exec(parsed);
-      if (match) {
+    for (type in Jiesa.regex) {
 
-        if (specialCases[type]) {
-          match = specialCases[type](match);
-        }
+      match = Jiesa.regex[type].exec(parsed);
+
+      if (match && specialCases[type]) {
+        match = specialCases[type](match);
+      }
+
+      if (match) {
 
         matched = match.shift();
 
@@ -905,11 +893,9 @@ function tokenize(selector, parseOnly) {
   }
 
   if (parseOnly) {
-    if (parsed.length) {
-      return parsed;
-    } else {
-      throw new Error('Syntax error, unrecognized selector: ' + selector);
-    }
+    return parsed.length;
+  } else if (parsed) {
+    throw new Error('Syntax error, unrecognized selector: ' + selector);
   } else {
     tokenCache.cache(selector, groups);
     return groups.slice(0);
