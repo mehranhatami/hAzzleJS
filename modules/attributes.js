@@ -5,20 +5,11 @@
 var doc = this.document,
     ssv = /\S+/g,
     inseteb = /^(?:input|select|textarea|button)$/i,
-    boolAttr = {}, // Boolean attributes
-    boolElem = {}, // Boolean elements
+    boolAttr = hAzzle.boolAttr, // Boolean attributes
+    boolElem = hAzzle.boolElem, // Boolean elements
     attrSupport = {},
 
-    concat = Array.prototype.concat,
-
-    // Booleans
-
-    bools = [
-        'multiple', 'selected', 'checked', 'disabled', 'readOnly', 'required',
-        'async', 'autofocus', 'compact', 'nowrap', 'declare', 'noshade',
-        'noresize', 'defaultChecked', 'autoplay', 'controls', 'defer',
-        'hidden', 'ismap', 'loop', 'scoped', 'open'
-    ];
+    concat = Array.prototype.concat;
 
 /* ============================ BUG / FEATURE DETECTION =========================== */
 
@@ -392,15 +383,6 @@ if (!attrSupport['bug-optSelected']) {
     };
 }
 
-// Boolean attributes and elements
-
-hAzzle.each(bools, function() {
-    boolAttr[this] = this;
-});
-
-hAzzle.each(['input', 'select', 'option', 'textarea', 'button', 'form', 'details'], function() {
-    boolElem[this.toUpperCase()] = true;
-});
 
 hAzzle.each(['htmlFor', 'className', 'cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
     'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',

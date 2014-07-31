@@ -31,36 +31,8 @@ var win = this,
   // regEx are slow, so let us do it
   // differently then Sizzle
 
-  boolElem = {
-    action: 2,
-    cite: 2,
-    codebase: 2,
-    data: 2,
-    href: 2,
-    longdesc: 2,
-    lowsrc: 2,
-    src: 2,
-    usemap: 2
-  },
-
-  booleans = {
-    checked: 1,
-    disabled: 1,
-    async: 1,
-    autofocus: 1,
-    aitoplay: 1,
-    controls: 1,
-    defer: 1,
-    hidden: 1,
-    loop: 1,
-    multiple: 1,
-    open: 1,
-    required: 1,
-    scoped: 1,
-    ismap: 1,
-    readonly: 1,
-    selected: 1
-  },
+  boolElem = hAzzle.boolElem,
+  boolAttr = hAzzle.boolAttr,
 
   PseudoCache = {},
   PseudoInfoCache = {},
@@ -634,7 +606,7 @@ function getAttribute(elem, attribute) {
   return (
     attribute === 'type' ? elem.getAttribute(attribute) || '' :
     boolElem[attribute] ? elem.getAttribute(attribute, 2) || '' :
-    booleans[attribute] ? elem.getAttribute(attribute) ? attribute : 'false' :
+    boolAttr[attribute] ? elem.getAttribute(attribute) ? attribute : 'false' :
 
     // Support: IE<9
     // Use getAttributeNode to fetch booleans when getAttribute lies

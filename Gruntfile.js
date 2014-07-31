@@ -43,6 +43,7 @@ function conf(grunt) {
             hAzzleModules = [
                 'hazzle.js',
                 'uniqueid.js',
+                'booleans.js',
                 'doml4.js',
                 'ntapi.js',
                 'types.js',

@@ -7,6 +7,7 @@
         hazzleModules = [
             path + 'hazzle.js',
             path + 'uniqueid.js',
+            path + 'booleans.js',
             path + 'ntapi.js',
             path + 'doml4.js',
             path + 'types.js',
