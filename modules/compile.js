@@ -759,19 +759,19 @@ var runescape = new RegExp('\\\\([\\da-f]{1,6}' + whitespace + '?|(' + whitespac
   rpseudo = new RegExp(pseudos);
 
 specialCases = {
-  'attr': function (match) {
-    match[1] = match[1].replace(runescape, funescape);
+  'attr': function (rgxResult) {
+    rgxResult[1] = rgxResult[1].replace(runescape, funescape);
 
-    // Move the given value to match[3] whether quoted or unquoted
-    match[3] = (match[3] || match[4] || match[5] || '').replace(runescape, funescape);
+    // Move the given value to rgxResult[3] whether quoted or unquoted
+    rgxResult[3] = (rgxResult[3] || rgxResult[4] || rgxResult[5] || '').replace(runescape, funescape);
 
-    if (match[2] === '~=') {
-      match[3] = ' ' + match[3] + ' ';
+    if (rgxResult[2] === '~=') {
+      rgxResult[3] = ' ' + rgxResult[3] + ' ';
     }
 
-    return match.slice(0, 4);
+    return rgxResult.slice(0, 4);
   },
-  'child': function (match) {
+  'child': function (rgxResult) {
     /* matches from matchExpr['CHILD']
         1 type (only|nth|...)
         2 what (child|of-type)
@@ -782,37 +782,37 @@ specialCases = {
         7 sign of y-component
         8 y of y-component
     */
-    match[1] = match[1].toLowerCase();
+    rgxResult[1] = rgxResult[1].toLowerCase();
 
-    if (match[1].slice(0, 3) === 'nth') {
+    if (rgxResult[1].slice(0, 3) === 'nth') {
       // nth-* requires argument
-      if (!match[3]) {
-        throw new Error('Syntax error, unrecognized expression: ' + match[0]);
+      if (!rgxResult[3]) {
+        throw new Error('Syntax error, unrecognized expression: ' + rgxResult[0]);
       }
 
       // numeric x and y parameters for Expr.filter.CHILD
       // remember that false/true cast respectively to 0/1
-      match[4] = +(match[4] ? match[5] + (match[6] || 1) : 2 * (match[3] === 'even' || match[3] === 'odd'));
-      match[5] = +((match[7] + match[8]) || match[3] === 'odd');
+      rgxResult[4] = +(rgxResult[4] ? rgxResult[5] + (rgxResult[6] || 1) : 2 * (rgxResult[3] === 'even' || rgxResult[3] === 'odd'));
+      rgxResult[5] = +((rgxResult[7] + rgxResult[8]) || rgxResult[3] === 'odd');
 
       // other types prohibit arguments
-    } else if (match[3]) {
-      throw new Error('Syntax error, unrecognized expression: ' + match[0]);
+    } else if (rgxResult[3]) {
+      throw new Error('Syntax error, unrecognized expression: ' + rgxResult[0]);
     }
 
-    return match;
+    return rgxResult;
   },
-  'pseudo': function (match) {
+  'pseudo': function (rgxResult) {
     var excess,
-      unquoted = !match[6] && match[2];
+      unquoted = !rgxResult[6] && rgxResult[2];
 
-    if (Jiesa.regex.nth.test(match[0])) {
+    if (Jiesa.regex.nth.test(rgxResult[0])) {
       return null;
     }
 
     // Accept quoted arguments as-is
-    if (match[3]) {
-      match[2] = match[4] || match[5] || '';
+    if (rgxResult[3]) {
+      rgxResult[2] = rgxResult[4] || rgxResult[5] || '';
 
       // Strip excess characters from unquoted arguments
     } else if (unquoted && rpseudo.test(unquoted) &&
@@ -822,17 +822,17 @@ specialCases = {
       (excess = unquoted.indexOf(')', unquoted.length - excess) - unquoted.length)) {
 
       // excess is a negative index
-      match[0] = match[0].slice(0, excess);
-      match[2] = unquoted.slice(0, excess);
+      rgxResult[0] = rgxResult[0].slice(0, excess);
+      rgxResult[2] = unquoted.slice(0, excess);
     }
 
     // Return only captures needed by the pseudo filter method (type and argument)
-    return match.slice(0, 3);
+    return rgxResult.slice(0, 3);
   }
 };
 
 function tokenize(selector, parseOnly) {
-  var matched, match, tokens, type,
+  var result, rgxResult, tokens, type,
     parsed, groups,
     cached = tokenCache.cache(selector + '');
 
@@ -846,48 +846,48 @@ function tokenize(selector, parseOnly) {
   while (parsed) {
 
     // Comma and first run
-    if (!matched || (match = comma.exec(parsed))) {
-      if (match) {
+    if (!result || (rgxResult = comma.exec(parsed))) {
+      if (rgxResult) {
         // Don't consume trailing commas as valid
-        parsed = parsed.slice(match[0].length) || parsed;
+        parsed = parsed.slice(rgxResult[0].length) || parsed;
       }
       groups.push((tokens = []));
     }
 
-    matched = false;
+    result = false;
 
-    if ((match = combinators.exec(parsed))) {
-      matched = match.shift();
+    if ((rgxResult = combinators.exec(parsed))) {
+      result = rgxResult.shift();
       tokens.push({
-        value: matched,
-        type: match[0].replace(trim, ' ')
+        value: result,
+        type: rgxResult[0].replace(trim, ' ')
       });
-      parsed = parsed.slice(matched.length);
+      parsed = parsed.slice(result.length);
     }
 
     for (type in Jiesa.regex) {
 
-      match = Jiesa.regex[type].exec(parsed);
+      rgxResult = Jiesa.regex[type].exec(parsed);
 
-      if (match && specialCases[type]) {
-        match = specialCases[type](match);
+      if (rgxResult && specialCases[type]) {
+        rgxResult = specialCases[type](rgxResult);
       }
 
-      if (match) {
+      if (rgxResult) {
 
-        matched = match.shift();
+        result = rgxResult.shift();
 
         tokens.push({
-          value: matched,
+          value: result,
           type: type,
-          matches: match
+          matches: rgxResult
         });
 
-        parsed = parsed.slice(matched.length);
+        parsed = parsed.slice(result.length);
       }
     }
 
-    if (!matched) {
+    if (!result) {
       break;
     }
   }
