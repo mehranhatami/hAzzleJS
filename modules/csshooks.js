@@ -1,5 +1,35 @@
+// Transitions
+var transition = hAzzle.assert(function(div) {
+    (div.style.MsTransition === '' ? 'MsTransition' :
+        (div.style.WebkitTransition === '' ? 'WebkitTransition' :
+            (div.style.OTransition === '' ? 'OTransition' :
+                (div.style.transition === '' ? 'Transition' :
+                    false))));
+});
+if(transition){
+var transProp = ['Property', 'Duration', 'TimingFunction'];
 
-
+hAzzle.cssHooks["transition" + prop] = {
+    get: function(elem, computed, extra) {
+        return hAzzle.map(props, function(prop, i) {
+            return hAzzle.css(elem, transition + prop);
+        }).join(" ");
+    },
+    set: function(elem, value) {
+        elem.style[support.transition] = value;
+    }
+};
+hAzzle.each(props, function(i, prop) {
+    hAzzle.cssHooks["transition" + prop] = {
+        get: function(elem, computed, extra) {
+            return hAzzle.css(elem, transition + prop);
+        },
+        set: function(elem, value) {
+            elem.style[transition + prop] = value;
+        }
+    };
+});
+}
 // Margin and padding cssHooks
 
 hAzzle.each(['margin', 'padding'], function(hook) {
@@ -25,14 +55,14 @@ hAzzle.each(['margin', 'padding'], function(hook) {
 
 
 
-}
+    }
 });
 
 // BackgroundPositionXY cssHooks
 
 if (hAzzle.BackgroundPositionXY) {
 
-    hAzzle.cssHooks.backgroundPosition = { 
+    hAzzle.cssHooks.backgroundPosition = {
         get: function(elem, computed, extra) {
             return hAzzle.map(['X', 'Y'], function(l, i) {
                 return hAzzle.css(elem, 'backgroundPosition' + l);
@@ -54,31 +84,29 @@ var win = this,
 
 if (!hAzzle.pixelPosition) {
 
-hAzzle.each( [ "top", "left", "bottom", "right" ], function( prop ) {
-			hAzzle.cssHooks[prop] = {
-				get: function( elem, computed ) {
-				  var elStyles = hAzzle.computeStyle( elem );
-					if ( computed ) {
-						computed = curCSS( elem, prop );
-						// if curCSS returns percentage, fallback to offset
-						if ( pxchk.test( computed ) ) {
-					    // Since we can't handle right and bottom with offset, let's work around it
-						  var elemPosition = hAzzle( elem ).position();
-						  if ( prop === "bottom" ) {
-						    return elemPosition.top + parseFloat( elStyles.height ) + "px";
-						  } else if ( prop === "right" ) {
-						    return elemPosition.left + parseFloat( elStyles.width ) + "px";
-						  }
-						  return elemPosition[ prop ] + "px";
-						}
-						return computed;
-					}
-				}
-			}
-		});
-    }
-
-
+    hAzzle.each(["top", "left", "bottom", "right"], function(prop) {
+        hAzzle.cssHooks[prop] = {
+            get: function(elem, computed) {
+                var elStyles = hAzzle.computeStyle(elem);
+                if (computed) {
+                    computed = curCSS(elem, prop);
+                    // if curCSS returns percentage, fallback to offset
+                    if (pxchk.test(computed)) {
+                        // Since we can't handle right and bottom with offset, let's work around it
+                        var elemPosition = hAzzle(elem).position();
+                        if (prop === "bottom") {
+                            return elemPosition.top + parseFloat(elStyles.height) + "px";
+                        } else if (prop === "right") {
+                            return elemPosition.left + parseFloat(elStyles.width) + "px";
+                        }
+                        return elemPosition[prop] + "px";
+                    }
+                    return computed;
+                }
+            }
+        }
+    });
+}
 
 /* ============================ UTILITY METHODS =========================== */
 

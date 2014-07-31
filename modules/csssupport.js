@@ -1,4 +1,4 @@
-var cssSupport = {
+var cssSupport = hAzzle.cssSupport = {
 
     // Check for getComputedStyle support
 
@@ -38,6 +38,48 @@ hAzzle.assert(function(div) {
     cssSupport.textShadow = style.textShadow === '';
 });
 
+hAzzle.assert(function(div) {
+
+
+    function getVendorPropertyName(prop) {
+        // Handle unprefixed versions (FF16+, for example)
+        if (prop in div.style) {
+
+            return prop;
+        }
+
+        var i = 0,
+            prefixes = ['Moz', 'Webkit', 'O', 'ms'],
+            pl = prefixes.length,
+            vendorProp,
+            prop_ = prop.charAt(0).toUpperCase() + prop.substr(1);
+
+        for (; i < pl; ++i) {
+            vendorProp = prefixes[i] + prop_;
+            if (vendorProp in div.style) {
+                return vendorProp;
+            }
+        }
+    }
+
+
+    // Check for the browser's transitions support.
+    cssSupport.transition = getVendorPropertyName('transition');
+    cssSupport.transitionDelay = getVendorPropertyName('transitionDelay');
+    cssSupport.transform = getVendorPropertyName('transform');
+    cssSupport.transformOrigin = getVendorPropertyName('transformOrigin');
+    cssSupport.filter = getVendorPropertyName('Filter');
+
+    function checkTransform3dSupport() {
+        div.style[cssSupport.transform] = '';
+        div.style[cssSupport.transform] = 'rotateY(90deg)';
+        return div.style[cssSupport.transform] !== '';
+    }
+
+
+    cssSupport.transform3d = checkTransform3dSupport();
+
+});
 
 /**
  * Quick function for adding supported CSS properties
@@ -91,6 +133,6 @@ hAzzle.assert(function(div) {
 hAzzle.clearCloneStyle = cssSupport['bug-clearCloneStyle'];
 hAzzle.pixelPosition = cssSupport['api-pixelPosition'];
 hAzzle.boxSizingReliable = cssSupport['api-boxSizingReliable'];
-hAzzle.boxSizing = cssSupport['api-boxSizing'];
 // Check for getComputedStyle
-hAzzle.ComputedStyle = cssSupport['api-gCS']
+
+hAzzle.ComputedStyle = cssSupport['api-gCS'];
