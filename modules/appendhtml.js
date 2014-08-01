@@ -31,12 +31,13 @@ var doc = this.document,
         base: ['_', '', 0, 1]
     };
 
-// Support: IE 9
-htmlMap.optgroup = htmlMap.option;
-htmlMap.script = htmlMap.style = htmlMap.link = htmlMap.param = htmlMap.base;
-htmlMap.tbody = htmlMap.tfoot = htmlMap.colgroup = htmlMap.caption = htmlMap.thead;
-htmlMap.th = htmlMap.td;
-htmlMap.style = htmlMap.table = htmlMap.base;
+   // Support: IE 9
+   
+   htmlMap.optgroup = htmlMap.option;
+   htmlMap.script = htmlMap.style = htmlMap.link = htmlMap.param = htmlMap.base;
+   htmlMap.tbody = htmlMap.tfoot = htmlMap.colgroup = htmlMap.caption = htmlMap.thead;
+   htmlMap.th = htmlMap.td;
+//   htmlMap.style = htmlMap.table = htmlMap.base;
 
 hAzzle.extend({
 
@@ -48,15 +49,21 @@ hAzzle.extend({
             elems;
 
         return this.each(function(el) {
-
-            if (nType && !hAzzle.inArray(nType, el)) {
+          
+		  // Check for valid nodeType
+          
+		  if (nType && !hAzzle.inArray(nType, el)) {
 
                 return;
             }
-
+            
+			// Stabilize HTML
+			
             elems = stabilizeHTML(html, this.ownerDocument);
-
-            hAzzle.each(elems, function() {
+            
+			// Iterate through the elements
+            
+			hAzzle.each(elems, function() {
 
                 elems = len ? hAzzle.clone(this, true, true) : this, el;
 
@@ -65,7 +72,10 @@ hAzzle.extend({
 
                     elems = manipulationTarget(elems);
                 }
-                el[method](elem);
+				
+				// Do the DOM Level 4 magic
+				
+                el[method](elems);
             });
         });
     },
@@ -122,12 +132,16 @@ hAzzle.extend({
      */
 
     replaceWith: function() {
+		var arg = arguments[0];
         return this.each(function(elem) {
             hAzzle.clearData(elem);
             hAzzle.each(stabilizeHTML(arguments[0]), function(i) {
                 elem.replace(i);
             });
         });
+
+	// Force removal if there was no new content (e.g., from empty arguments)
+		return arg && (arg.length || arg.nodeType) ? this : this.remove();
     }
 });
 
@@ -295,7 +309,7 @@ hAzzle.each({
     prepend: [1, 9, 11],
     before: '',
     after: '',
-}, function(name, nType) {
+}, function(nType, name) {
     hAzzle.Core[name] = function() {
         return this.Manipulation(arguments, name, nType);
     };
