@@ -38,7 +38,6 @@ module.exports = function(config) {
         'html.js',
         'shims/classlist.js',
         'classes.js',
-        'appendhtml.js',
         'manipulation.js',
         'attributes.js',
         'removeable.js',
