@@ -152,6 +152,7 @@ hAzzle.extend({
 
             return this.each(function(el, i) {
 
+
                 var self = hAzzle(el);
                 // Call the same function again
                 self.html(value.call(el, i, self.html()));
@@ -231,7 +232,13 @@ hAzzle.extend({
 
             hAzzle.each(elems, function() {
 
-                elems = len ? hAzzle.clone(this, true, true) : this, el;
+                if (len) {
+
+                    elems = hAzzle.clone(this, true, true);
+                } else {
+                    elems = this;
+
+                }
 
                 if (method === 'append' ||
                     method === 'prepend') {
@@ -255,7 +262,7 @@ hAzzle.extend({
 
     replaceWith: function() {
         var arg = arguments[0];
-        return this.each(function(elem) {
+        this.each(function(elem) {
             hAzzle.clearData(elem);
             hAzzle.each(stabilizeHTML(arguments[0]), function(i) {
                 elem.replace(i);
@@ -483,10 +490,12 @@ function createHTML(html) {
         if (!tag || el.nodeType == 1) {
             els.push(el);
         }
-    } while (el = el.nextElementSibling);
+    } while ((el = el.nextElementSibling));
 
     hAzzle.each(els, function(el) {
-        el[pn] && el[pn].removeChild(el);
+        if (el[pn]) {
+            el[pn].removeChild(el);
+        }
     });
     return els;
 }
@@ -529,7 +538,7 @@ hAzzle.each({
 hAzzle.each(['appendTo', 'prependTo', 'insertBefore', 'insertAfter'], function(prop) {
     hAzzle.Core[prop] = function(node) {
         return InjectionMethod(this, node, prop);
-    }
+    };
 });
 
 // Radios and checkboxes setter
