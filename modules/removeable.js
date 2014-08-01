@@ -3,40 +3,54 @@
  * @param {Object} elem
  * @return {hAzzle}
  */
-hAzzle.clearData = function(elems) {
+hAzzle.extend({
 
-    var data, elem, type,
-        special = hAzzle.eventHooks.special,
-        i = 0;
+    clearData: function(elems) {
 
-    for (;
-        (elem = elems[i]) !== undefined; i++) {
+        var data, elem, type, key,
+            special = hAzzle.eventHooks.special,
+            i = 0;
 
-        if (hAzzle.legalTypes(elem) && (data = elem[_privateData.expando])) {
+        for (;
+            (elem = elems[i]) !== undefined; i++) {
 
-            if (data.events) {
+            if (hAzzle.legalTypes(elem)) {
 
-                for (type in data.events) {
+                key = elem[_privateData.expando];
 
-                    if (special[type]) {
+                if (key && (data = _privateData.cache[key])) {
 
-                        hAzzle.event.remove(elem, type);
+                    if (data.events) {
 
-                    } else {
+                        for (type in data.events) {
 
-                        if (elem.removeEventListener) {
+                            if (special[type]) {
 
-                            elem.removeEventListener(type, data.handle, false);
+                                hAzzle.event.remove(elem, type);
+
+                            } else {
+
+                                if (elem.removeEventListener) {
+
+                                    elem.removeEventListener(type, data.handle, false);
+                                }
+                            }
                         }
+
+                        delete data.events;
+                    }
+                    if (_privateData.cache[key]) {
+                        // Discard any remaining `private` data
+                        delete _privateData.cache[key];
                     }
                 }
-            }
 
-            delete data.events;
+            }
+            // Discard any remaining `user` data
+            delete _userData.cache[elem[_userData.expando]];
         }
     }
-}
-
+}, hAzzle);
 
 hAzzle.extend({
 
@@ -49,15 +63,16 @@ hAzzle.extend({
 
     remove: function(selector) {
 
-        // Filters the set of matched elements to be removed.
+        var elem, elems = selector ?
+            hAzzle.find(selector, this) : this,
+            i = 0;
+        for (;
+            (elem = elems[i]) !== null; i++) {
+            //        hAzzle.each(elem, function(el) {
 
-        var elem = selector ? hAzzle.find(selector, this) : this;
+            if (elem.nodeType === 1) {
 
-        hAzzle.each(elem, function(el) {
-
-            if (el.nodeType === 1) {
-
-                hAzzle.clearData(hAzzle.merge([el], hAzzle.find('*', el)));
+                hAzzle.clearData(hAzzle.merge([elem], hAzzle.find('*', elem)));
             }
 
             // In DOM Level 4 we have remove() with same effect 
@@ -66,10 +81,11 @@ hAzzle.extend({
             // and we will sit back with no removing of
             // parentNodes and memory leak 
 
-            if (el.parentNode && el.tagName !== 'BODY') {
-                el.parentNode.removeChild(el);
+            if (elem.parentNode && elem.tagName !== 'BODY') {
+
+                elem.parentNode.removeChild(elem);
             }
-        });
+        }
 
         return this;
     },

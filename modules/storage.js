@@ -17,7 +17,7 @@ function Storage() {
 
 Storage.prototype = {
 
-    registrer: function(owner, initial) {
+    register: function(owner, initial) {
         var descriptor = {};
 
         // Secure it in a non-enumerable, writable property
@@ -57,7 +57,7 @@ Storage.prototype = {
             return cache;
         }
 
-        return this.registrer(owner, initial);
+        return this.register(owner, initial);
     },
 
     set: function(owner, data, value) {
@@ -112,7 +112,7 @@ Storage.prototype = {
             cache = this.cache(owner);
 
         if (key === undefined) {
-            this.registrer(owner);
+            this.register(owner);
 
         } else {
 
@@ -165,8 +165,9 @@ var _privateData = new Storage(),
 // Expand the global hAzzle Object
 
 hAzzle.each({
-    'Private': _privateData,
-    'Data': _userData
+    'Data': _userData,
+    'Private': _privateData
+
 }, function(prop, name) {
 
     // Flush user / private data
