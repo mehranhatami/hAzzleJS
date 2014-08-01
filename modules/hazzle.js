@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.7b RC2
+ * Version: 0.9.7c RC2
  * Released under the MIT License.
  *
- * Date: 2014-07-30
+ * Date: 2014-08-02
  */
 
 (function (global, factory) {
@@ -165,17 +165,6 @@
 
     /**
      * @param {Function} callback
-     * @param {Object} args
-     * @return {hAzzle}
-     */
-
-    deepEach: function (callback, args) {
-
-      return hAzzle.deepEach(this, callback, args);
-    },
-
-    /**
-     * @param {Function} callback
      * @return {Array}
      */
 
@@ -286,30 +275,6 @@
           }
         }
 
-      }
-      return obj;
-    },
-
-    /**
-     * @param {Array} obj
-     * @param {function} callback
-     * @param {Object} context
-     * @return {hAzzle|Array}
-     */
-
-    deepEach: function (obj, callback, context) {
-      var i = 0,
-        l = obj.length;
-
-      for (; i < l; i++) {
-
-        if (obj[i].nodeName && (obj[i].nodeType === 1 ||
-          obj[i].nodeType === 11)) {
-
-          hAzzle.deepEach(obj[i].childNodes, callback, context);
-
-          callback.call(context || obj[i], obj[i], i, obj);
-        }
       }
       return obj;
     },

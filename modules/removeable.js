@@ -5,6 +5,12 @@
  */
 hAzzle.extend({
 
+    dispose: function(elem) {
+
+        return elem.parentNode ?
+            elem.parentNode.removeChild(elem) : elem;
+    },
+
     clearData: function(elems) {
         var data, elem, type,
             special = hAzzle.eventHooks.special,
@@ -50,7 +56,7 @@ hAzzle.extend({
 
             if (elem.nodeType === 1) {
 
-                hAzzle.clearData(hAzzle.merge([elem], hAzzle.find('*', elem)));
+                hAzzle.clearData(findSubNodes(elem));
             }
 
             // In DOM Level 4 we have remove() with same effect 
@@ -75,20 +81,22 @@ hAzzle.extend({
 
     empty: function() {
 
-        return this.each(function(el) {
+        var elem, i = 0;
 
-            if (el && el.nodeType === 1) {
+        for (;
+            (elem = this[i]) !== null; i++) {
+
+            if (elem.nodeType === 1) {
 
                 // Prevent memory leaks
+                // Clear data on each childNode
 
-                hAzzle.deepEach(el.childNodes, hAzzle.clearData);
+                hAzzle.clearData(findSubNodes(elem));
 
-                while (el.firstChild) {
-
-                    el.removeChild(el.firstChild);
-                }
+                // Remove any remaining nodes
+                elem.textContent = '';
             }
-        });
+        }
     },
 
     /**
@@ -101,6 +109,12 @@ hAzzle.extend({
     },
 
     dispose: function() {
-        return this.parentNode ? this.parentNode.removeChild(this) : this;
+        return this.parentNode ?
+            this.parentNode.removeChild(this) : this;
     }
 });
+
+
+function findSubNodes(elem) {
+    return hAzzle.merge([elem], hAzzle.find('*', elem));
+}
