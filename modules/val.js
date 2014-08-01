@@ -2,6 +2,16 @@
 
 var rreturn = /\r/g;
 
+
+    /**
+     * Get value for input/select elements
+     * Set value for input/select elements
+     *
+     * @param {String} value
+     * @return {Object|String}
+     */
+
+
 hAzzle.Core.val = function(value) {
 
     var hooks, ret,
@@ -157,3 +167,20 @@ hAzzle.extend({
     }
 
 }, hAzzle);
+
+
+// Radios and checkboxes setter
+
+hAzzle.each(['radio', 'checkbox'], function() {
+    hAzzle.valHooks[this] = {
+        set: function(elem, value) {
+            if (hAzzle.isArray(value)) {
+                var val = hAzzle(elem).val(),
+                    checked = hAzzle.indexOf(val, value) >= 0;
+                // Set the value
+                elem.checked = checked;
+                return;
+            }
+        }
+    };
+});

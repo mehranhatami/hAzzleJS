@@ -1,9 +1,30 @@
 /*!
  * Manipulation
+ *
+ * NOTE!!
+ *
+ * hAzzle are using DOM Level 4 for most of the
+ * DOM manipulation methouds - see doml4.js for the pollify.
+ *
+ * This gives better performance, and:
+ *
+ * - no need for dealing with fragments
+ * - call and apply of functions
+ *
+ * DOM Level 4 are not standard yet, and only in draft,
+ * so things can change, and bugs can occour.
+ * Example in older webkit we can't apply
+ * fragment on checkboxes, but this should have
+ * been fixed in newer webkit.
+ *
+ * IF bugs happen, then we need to patch the
+ * doml4.js, do no changes in this module.
+ *
+ * Kenny F.
  */
 var rnoInnerhtml = /<(?:script|style|link)/i,
+    rtagName = /<([\w:]+)/,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-    specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
 
     appendMethods = {
@@ -46,74 +67,65 @@ htmlMap.th = htmlMap.td;
 hAzzle.extend({
 
     /**
-     * Get value for input/select elements
-     * Set value for input/select elements
-     *
-     * @param {String} value
-     * @return {Object|String}
-     */
-
-    
-
-    /**
      * Get html from element.
      * Set html to element.
      *
-     * @param {String} html
+     * @param {String} value
      * @return {hAzzle|string}
-     *
      */
 
     html: function(value) {
 
-        var el = this[0] || {},
-            append = function(el, i) {
-                hAzzle.each(hAzzle.stabilizeHTML(value, i), function(node) {
-                    el.appendChild(node);
-                });
-            };
+        var elem = this[0] || {};
 
-        if (value === undefined && el.nodeType === 1) {
+        if (value === undefined && elem.nodeType === 1) {
 
-            return el.innerHTML;
+            return elem.innerHTML;
         }
 
-        // check if the value are an 'function'
+        // If 'function'
 
         if (typeof value === 'function') {
 
             return this.each(function(el, i) {
 
-
                 var self = hAzzle(el);
+
                 // Call the same function again
+
                 self.html(value.call(el, i, self.html()));
             });
         }
 
-        return this.empty().each(function(el, i) {
+        // Remove all data and avoid memory leaks before
+        // appending HTML
 
-            if (typeof value === 'string' && !specialTags.test(el.tagName) &&
-                !rnoInnerhtml.test(el.tagName)) {
+        if (typeof value === 'string' && !rnoInnerhtml.test(value) &&
+            !htmlMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+
+            return this.empty().each(function(elem) {
 
                 value = value.replace(uniqueTags, '<$1></$2>');
 
                 try {
 
-                    if (el.nodeType === 1) {
+                    if (elem.nodeType === 1) {
 
-                        el.innerHTML = value;
+                        elem.innerHTML = value;
                     }
 
-                    el = 0;
+                    elem = 0;
 
                 } catch (e) {}
+            });
+        }
 
-            } else {
+        // Fallback to 'append if 'value' are not a plain string value
 
-                append(el, i);
-            }
-        });
+        if (elem) {
+
+            this.empty().append(value);
+        }
     },
 
     /**
@@ -127,17 +139,17 @@ hAzzle.extend({
      */
 
     text: function(value) {
-        return typeof value === 'function' ?
-            this.each(function(el, i) {
-                var self = hAzzle(el);
-                self.text(value.call(el, i, self.text()));
-            }) :
-            value === undefined ? hAzzle.getText(this) :
-            this.empty().each(function() {
-                if (this.nodeType === 1 || this.nodeType === 9 || this.nodeType === 11) {
-                    this.textContent = value;
-                }
-            });
+        return hAzzle.setter(this, function(value) {
+            return value === undefined ?
+                hAzzle.getText(this) :
+                this.empty().each(function() {
+                    if (this.nodeType === 1 ||
+                        this.nodeType === 11 ||
+                        this.nodeType === 9) {
+                        this.textContent = value;
+                    }
+                });
+        }, null, value, arguments.length);
     },
 
     // DOM Manipulation method
@@ -167,9 +179,10 @@ hAzzle.extend({
                 if (len) {
 
                     elems = hAzzle.clone(this, true, true);
-                } else {
-                    elems = this;
 
+                } else {
+
+                    elems = this;
                 }
 
                 if (method === 'append' ||
@@ -218,7 +231,7 @@ hAzzle.extend({
  * @param {Numbers} clone
  */
 
-var stabilizeHTML = hAzzle.stabilizeHTML = function(node) {
+var stabilizeHTML = function(node) {
 
     var ret = [],
         elem, i;
@@ -385,21 +398,5 @@ hAzzle.each({
 hAzzle.each(['appendTo', 'prependTo', 'insertBefore', 'insertAfter'], function(prop) {
     hAzzle.Core[prop] = function(node) {
         return InjectionMethod(this, node, prop);
-    };
-});
-
-// Radios and checkboxes setter
-
-hAzzle.each(['radio', 'checkbox'], function() {
-    hAzzle.valHooks[this] = {
-        set: function(elem, value) {
-            if (hAzzle.isArray(value)) {
-                var val = hAzzle(elem).val(),
-                    checked = hAzzle.indexOf(val, value) >= 0;
-                // Set the value
-                elem.checked = checked;
-                return;
-            }
-        }
     };
 });
