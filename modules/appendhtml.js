@@ -1,49 +1,9 @@
-/*!
- * appendHTML.js
- *
- * NOTE!!
- *
- * This module are using DOM Level 4. Document fragment are not
- * used in this code because its all inside DL4.
- *
- * See DOML4.js module for the DL4 pollify. That pollify will be
- * deleted soon as DL4 become standard in all browsers.
- *
- * In most cases we are not using DL4 either because if pure strings,
- * we are using insertAdjacentHTML() for better performance. DL4 are used
- * as an fallback if no strings given.
- */
-var win = this,
-    doc = win.document,
-    uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+//  appendHTML.js
+
+var doc = this.document,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
-    riAH = /<script|\[object/i,
-    tagName = /<([\w:]+)/,
 
-    iAHInserters = {
-        before: 'beforeBegin',
-        after: 'afterEnd',
-        prepend: 'afterBegin',
-        append: 'beforeEnd'
-    },
-
-    JI = {
-
-        'append': function(elem, html) {
-            elem.append(html);
-        },
-        'prepend': function(elem, html) {
-            elem.prepend(html);
-        },
-        'after': function(elem, html) {
-            elem.after(html);
-        },
-        'before': function(elem, html) {
-            elem.before(html);
-        },
-    },
-
-    HI = {
+    appendMethods = {
 
         'appendTo': function(el, html) {
             html.appendChild(el);
@@ -72,7 +32,6 @@ var win = this,
         base: ['_', '', 0, 1]
     };
 
-
 // Support: IE 9
 htmlMap.optgroup = htmlMap.option;
 htmlMap.script = htmlMap.style = htmlMap.link = htmlMap.param = htmlMap.base;
@@ -82,67 +41,28 @@ htmlMap.style = htmlMap.table = htmlMap.base;
 
 hAzzle.extend({
 
-    /**
-     * Insert content, specified by the parameter, to the end of each element
-     * in the set of matched elements.
-     *
-     * @param {String/Object} node
-     * @return {hAzzle}
-     *
-     */
+    // DOM Manipulation method
 
-    append: function(node) {
-        var self = this;
-        return this.each(function(el, i) {
-            ManipulationMethod(el, i, node, self, 'append');
+    Manipulation: function(html, method, nType) {
+
+        var len = this.length > 1, elems;
+
+        return this.each(function(el) {
+
+            if (nType && !hAzzle.inArray(nType, el)) {
+
+                return;
+            }
+
+            elems = stabilizeHTML(html, this.ownerDocument);
+
+            hAzzle.each(elems, function() {
+                el[method](manipulationTarget(len ?
+                    hAzzle.clone(this, true, true) : this, el));
+            });
         });
     },
 
-    /**
-     * Insert content to the beginning of each element in the set
-     * of matched elements.
-     *
-     * @param {String/Object} node
-     * @return {hAzzle}
-     *
-     */
-
-    prepend: function(node) {
-        var self = this;
-        return this.each(function(el, i) {
-            ManipulationMethod(el, i, node, self, 'prepend');
-        });
-    },
-
-    /**
-     * Insert content after each element in the set of matched elements.
-     *
-     * @param {String/Object} node
-     * @return {hAzzle}
-     *
-     */
-
-    after: function(node) {
-        var self = this;
-        return this.each(function(el, i) {
-            ManipulationMethod(el, i, node, self, 'after');
-        });
-    },
-
-    /**
-     * Insert content before each element in the set of matched elements.
-     *
-     * @param {String/Object} node
-     * @return {hAzzle}
-     *
-     */
-
-    before: function(node) {
-        var self = this;
-        return this.each(function(el, i) {
-            ManipulationMethod(el, i, node, self, 'before');
-        });
-    },
     /**
      * Insert every element in the set of matched elements to the
      * end of the target.
@@ -195,52 +115,16 @@ hAzzle.extend({
      */
 
     replaceWith: function() {
-        var arg = arguments[0],
-            self = this;
-        return self.each(function(el, i) {
-            hAzzle.clearData(el);
-            hAzzle.each(stabilizeHTML(arg, self, i), function(i) {
-                // Call DOM Level 4 replace() 
-                el.replace(i);
+        return this.each(function(elem) {
+            hAzzle.clearData(elem);
+            hAzzle.each(stabilizeHTML(arguments[0]), function(i) {
+                elem.replace(i);
             });
         });
     }
 });
 
 /* =========================== PRIVATE FUNCTIONS ========================== */
-
-// Append, prepend, before and after manipulation methods
-// insertAdjutantHTML (iAH) are only used for this methods
-
-function ManipulationMethod(elem, count, html, chain, method) {
-
-    if (typeof html === 'string' &&
-        elem.insertAdjacentHTML &&
-        elem.parentNode && elem.parentNode.nodeType === 1) {
-        var tag = (tagName.exec(html) || ['', ''])[1].toLowerCase();
-        // Object or HTML-string with declaration of a script element 
-        // must not be passed to iAH	
-        if (!riAH.test(tag) && !htmlMap[tag]) {
-            elem.insertAdjacentHTML(iAHInserters[method], html.replace(uniqueTags, '<$1></$2>'));
-        }
-    } else {
-        if (elem.nodeType === 1 || elem.nodeType === 9 || elem.nodeType === 11) {
-            hAzzle.each(stabilizeHTML(html, chain, count), function(html) {
-                JI[method](elem, html);
-            });
-        }
-    }
-}
-
-// appendTo, prependTo, insertBefore, insertAfter manipulation methods
-
-function InjectionMethod(elem, html, method) {
-    return injectHTML.call(elem, html, elem, function(html, el) {
-        try {
-            HI[method](el, html);
-        } catch (e) {}
-    }, 1);
-}
 
 /**
  * Stabilize HTML
@@ -250,16 +134,39 @@ function InjectionMethod(elem, html, method) {
  */
 
 var stabilizeHTML = hAzzle.stabilizeHTML = function(node) {
-    if (typeof node == 'string') {
-        return createHTML(node);
+
+    var ret = [],
+        elem, i;
+
+    if (node) {
+
+        i = node.length;
+
+        while (i--) {
+
+            elem = node[i];
+
+            // String
+
+            if (typeof elem === "string") {
+
+                return createHTML(elem);
+
+                // nodeType
+
+            } else if (elem.nodeType) { // Handles Array, hAzzle, DOM NodeList collections
+
+                ret.push(elem);
+
+                // Textnode
+
+            } else {
+
+                ret = hAzzle.merge(ret, elem);
+            }
+        }
     }
-    if (node.nodeType === 3) {
-        node = [node];
-    } // Temporary
-    if (hAzzle.isNode(node)) {
-        node = [node];
-    }
-    return node;
+    return ret;
 };
 
 // Inject HTML
@@ -320,11 +227,6 @@ function injectHTML(target, node, fn, rev) {
  *  @param {string} html
  *  @param {string} context
  *  @return {hAzzle}
- *
- * NOTE!! This function are *only* internal. For creation
- * of HTML. Use the code in html.js
- * as document.
- *
  */
 
 function createHTML(html) {
@@ -357,3 +259,37 @@ function createHTML(html) {
     });
     return els;
 }
+
+// appendTo, prependTo, insertBefore, insertAfter manipulation methods
+
+function InjectionMethod(elem, html, method) {
+    return injectHTML.call(elem, html, elem, function(html, el) {
+        try {
+            appendMethods[method](el, html);
+        } catch (e) {}
+    }, 1);
+}
+
+function manipulationTarget(elem, content) {
+    return hAzzle.nodeName(elem, "table") &&
+        hAzzle.nodeName(content.nodeType !== 11 ? content : content.firstChild, "tr") ?
+
+        elem.getElementsByTagName("tbody")[0] ||
+        elem.appendChild(elem.ownerDocument.createElement("tbody")) :
+        elem;
+}
+
+/* =========================== INTERNAL ========================== */
+
+// Append, prepend, before and after
+
+hAzzle.each({
+    append: [1, 9, 11],
+    prepend: [1, 9, 11],
+    before: '',
+    after: '',
+}, function(name, nType) {
+    hAzzle.Core[name] = function() {
+        return this.Manipulation(arguments, name, nType);
+    };
+});
