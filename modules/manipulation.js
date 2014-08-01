@@ -29,27 +29,10 @@
  *
  * Kenny F.
  */
- 
 var rnoInnerhtml = /<(?:script|style|link)/i,
     rtagName = /<([\w:]+)/,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
-
-    appendMethods = {
-
-        'appendTo': function(el, html) {
-            html.appendChild(el);
-        },
-        'prependTo': function(el, html) {
-            html.insertBefore(el, html.firstChild);
-        },
-        'insertBefore': function(el, html) {
-            html.before(el);
-        },
-        'insertAfter': function(el, html) {
-            el.after(html, el);
-        }
-    },
 
     // We have to close these tags to support XHTML	
 
@@ -215,10 +198,10 @@ hAzzle.extend({
 
     replaceWith: function() {
         var arg = arguments[0];
-       this.each(function(elem) {
+        this.each(function(elem) {
             hAzzle.clearData(elem);
-            hAzzle.each(stabilizeHTML([arg]), function(a, i) {
-                elem.replace(a);
+            hAzzle.each(stabilizeHTML([arg]), function(html) {
+                elem.replace(html);
             });
         });
 
@@ -275,61 +258,9 @@ var stabilizeHTML = function(node) {
     return ret;
 };
 
-// Inject HTML
-
-function injectHTML(target, node, fn, rev) {
-
-    var i = 0,
-        r = [],
-        nodes, stabilized;
-
-    if (typeof target === 'string' && target.charAt(0) === '<' &&
-        target[target.length - 1] === '>' &&
-        target.length >= 3) {
-
-        nodes = target;
-
-    } else {
-
-        nodes = hAzzle(target);
-    }
-
-    stabilized = stabilizeHTML(nodes);
-
-    // normalize each node in case it's still a string and we need to create nodes on the fly
-
-    hAzzle.each(stabilized, function(t, j) {
-
-        hAzzle.each(node, function(el) {
-
-            if (j > 0) {
-
-                fn(t, r[i++] = hAzzle.clone(t, el));
-
-            } else {
-
-                fn(t, r[i++] = el);
-            }
-
-        }, null, rev);
-
-
-    }, this, rev);
-
-    node.length = i;
-
-    hAzzle.each(r, function(e) {
-
-        node[--i] = e;
-
-    }, null, !rev);
-
-    return node;
-}
-
 /**
  * Create HTML
- * 
+ *
  * Internal usage, we have html.js module for
  * creating html.
  *
@@ -371,16 +302,6 @@ function createHTML(html) {
     return els;
 }
 
-// appendTo, prependTo, insertBefore, insertAfter manipulation methods
-
-function InjectionMethod(elem, html, method) {
-    return injectHTML.call(elem, html, elem, function(html, el) {
-        try {
-            appendMethods[method](el, html);
-        } catch (e) {}
-    }, 1);
-}
-
 function manipulationTarget(elem, content) {
     return hAzzle.nodeName(elem, 'table') &&
         hAzzle.nodeName(content.nodeType !== 11 ? content : content.firstChild, 'tr') ?
@@ -407,22 +328,31 @@ hAzzle.each({
 /** AppendTo, prependTo, insertBefore, insertAfter
  *
  * Note!! This methods works similar to jQuery, but
- * people can be confused simply because we can't select an element on the 
+ * people can be confused simply because we can't select an element on the
  * page and insert it after another in the same way as jQuery.
  *
  * To get this to work for hAzzle, we can do:
  *
- * hAzzle.html('span.hello').appendTo( "#test" );
+ * hAzzle.html('div{hello}').appendTo( "#test" );
  *
- * hAzzle.html('span.hello').insertAfter( "#test" );
+ * hAzzle.html('div{hello}').insertAfter( "#test" );
  *
  */
 
-// Work in progress!! Not finished with this yet. 
-// K.F 
-
-hAzzle.each(['appendTo', 'prependTo', 'insertBefore', 'insertAfter'], function(prop) {
+hAzzle.each({
+    appendTo: "append",
+    prependTo: "prepend",
+    insertBefore: "before",
+    insertAfter: "after",
+    replaceAll: "replaceWith"
+}, function(original, prop) {
     hAzzle.Core[prop] = function(node) {
-        return InjectionMethod(this, node, prop);
+        var insert = hAzzle(node),
+            i = 0,
+            elems, last = insert.length - 1;
+        for (; i <= last; i++) {
+            elems = i === last ? this : this.clone(true);
+            hAzzle(insert[i])[original](elems);
+        }
     };
 });

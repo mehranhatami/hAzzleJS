@@ -12,7 +12,7 @@ hAzzle.clearData = function(elems) {
     for (;
         (elem = elems[i]) !== undefined; i++) {
 
-        if (hAzzle.legalTypes(elem) && (data = elem[hAzzleData.expando])) {
+        if (hAzzle.legalTypes(elem) && (data = elem[_privateData.expando])) {
 
             if (data.events) {
 
