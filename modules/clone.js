@@ -60,7 +60,7 @@ hAzzle.Core.cloneEvent = function(source, filter) {
         }
 
         return this.map(function() {
-            return cloneNode(this, shallow, deep);
+            return hAzzle.clone(this, shallow, deep);
         });
     };
 
@@ -134,8 +134,7 @@ function copyEvent(eventList) {
     }
 }
 
-
-function cloneNode(elem, shallow, deep) {
+hAzzle.clone = function(elem, shallow, deep) {
 
     var i, l, srcElements, destElements,
         clone = elem.cloneNode(true),
@@ -275,3 +274,4 @@ function fixInput(src, dest) {
         dest.defaultValue = src.defaultValue;
     }
 }
+

@@ -4,24 +4,32 @@
  * NOTE!!
  *
  * hAzzle are using DOM Level 4 for most of the
- * DOM manipulation methouds - see doml4.js for the pollify.
+ * DOM manipulation methods - see doml4.js for the pollify.
  *
  * This gives better performance, and:
  *
  * - no need for dealing with fragments
  * - call and apply of functions
  *
- * DOM Level 4 are not standard yet, and only in draft,
- * so things can change, and bugs can occour.
- * Example in older webkit we can't apply
+ * DOM Level 4 are not standard yet.
+ * Only in draft: http://www.w3.org/TR/2014/WD-dom-20140710/
+ *
+ * Things can therefor change, and bugs occour.
+ *
+ * One example: In older webkit we can't apply
  * fragment on checkboxes, but this should have
- * been fixed in newer webkit.
+ * been fixed in newer webkit that hAzzle supports.
  *
  * IF bugs happen, then we need to patch the
- * doml4.js, do no changes in this module.
+ * doml4.js, don't do any changes in this module.
+ *
+ * Support if insertAdjacentHTML are removed, because
+ * it's slower with all the patches / fixes that needs
+ * to get it to work.
  *
  * Kenny F.
  */
+ 
 var rnoInnerhtml = /<(?:script|style|link)/i,
     rtagName = /<([\w:]+)/,
     uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
@@ -207,10 +215,10 @@ hAzzle.extend({
 
     replaceWith: function() {
         var arg = arguments[0];
-        this.each(function(elem) {
+       this.each(function(elem) {
             hAzzle.clearData(elem);
-            hAzzle.each(stabilizeHTML(arguments[0]), function(i) {
-                elem.replace(i);
+            hAzzle.each(stabilizeHTML([arg]), function(a, i) {
+                elem.replace(a);
             });
         });
 
@@ -296,7 +304,7 @@ function injectHTML(target, node, fn, rev) {
 
             if (j > 0) {
 
-                fn(t, r[i++] = hAzzle.cloneNode(node, el));
+                fn(t, r[i++] = hAzzle.clone(t, el));
 
             } else {
 
@@ -321,6 +329,9 @@ function injectHTML(target, node, fn, rev) {
 
 /**
  * Create HTML
+ * 
+ * Internal usage, we have html.js module for
+ * creating html.
  *
  *  @param {string} html
  *  @param {string} context
@@ -383,8 +394,8 @@ function manipulationTarget(elem, content) {
 // Append, prepend, before and after
 
 hAzzle.each({
-    append: [1, 9, 11],
-    prepend: [1, 9, 11],
+    append: /* nodeTypes */ [1, 9, 11],
+    prepend: /* nodeTypes */ [1, 9, 11],
     before: '',
     after: '',
 }, function(nType, name) {
@@ -393,7 +404,22 @@ hAzzle.each({
     };
 });
 
-// AappendTo, prependTo, insertBefore, insertAfter
+/** AppendTo, prependTo, insertBefore, insertAfter
+ *
+ * Note!! This methods works similar to jQuery, but
+ * people can be confused simply because we can't select an element on the 
+ * page and insert it after another in the same way as jQuery.
+ *
+ * To get this to work for hAzzle, we can do:
+ *
+ * hAzzle.html('span.hello').appendTo( "#test" );
+ *
+ * hAzzle.html('span.hello').insertAfter( "#test" );
+ *
+ */
+
+// Work in progress!! Not finished with this yet. 
+// K.F 
 
 hAzzle.each(['appendTo', 'prependTo', 'insertBefore', 'insertAfter'], function(prop) {
     hAzzle.Core[prop] = function(node) {
