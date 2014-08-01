@@ -6,48 +6,26 @@
 hAzzle.extend({
 
     clearData: function(elems) {
-
-        var data, elem, type, key,
+        var data, elem, type,
             special = hAzzle.eventHooks.special,
             i = 0;
 
         for (;
             (elem = elems[i]) !== undefined; i++) {
+            if (hAzzle.legalTypes(elem) && (data = elem[_privateData.expando])) {
+                if (data.events) {
+                    for (type in data.events) {
+                        if (special[type]) {
+                            hAzzle.event.remove(elem, type);
 
-            if (hAzzle.legalTypes(elem)) {
-
-                key = elem[_privateData.expando];
-
-                if (key && (data = _privateData.cache[key])) {
-
-                    if (data.events) {
-
-                        for (type in data.events) {
-
-                            if (special[type]) {
-
-                                hAzzle.event.remove(elem, type);
-
-                            } else {
-
-                                if (elem.removeEventListener) {
-
-                                    elem.removeEventListener(type, data.handle, false);
-                                }
-                            }
+                            // This is a shortcut to avoid jQuery.event.remove's overhead
+                        } else {
+                            hAzzle.removeEvent(elem, type, data.handle);
                         }
-
-                        delete data.events;
-                    }
-                    if (_privateData.cache[key]) {
-                        // Discard any remaining `private` data
-                        delete _privateData.cache[key];
                     }
                 }
-
+                delete data.events;
             }
-            // Discard any remaining `user` data
-            delete _userData.cache[elem[_userData.expando]];
         }
     }
 }, hAzzle);
