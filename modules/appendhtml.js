@@ -1,5 +1,4 @@
 //  appendHTML.js
-
 var doc = this.document,
     singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
 
@@ -45,7 +44,8 @@ hAzzle.extend({
 
     Manipulation: function(html, method, nType) {
 
-        var len = this.length > 1, elems;
+        var len = this.length > 1,
+            elems;
 
         return this.each(function(el) {
 
@@ -57,8 +57,15 @@ hAzzle.extend({
             elems = stabilizeHTML(html, this.ownerDocument);
 
             hAzzle.each(elems, function() {
-                el[method](manipulationTarget(len ?
-                    hAzzle.clone(this, true, true) : this, el));
+
+                elems = len ? hAzzle.clone(this, true, true) : this, el;
+
+                if (method === 'append' ||
+                    method === 'prepend') {
+
+                    elems = manipulationTarget(elems);
+                }
+                el[method](elem);
             });
         });
     },
