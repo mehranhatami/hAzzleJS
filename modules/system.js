@@ -139,25 +139,23 @@ hAzzle.extend({
      * Finds the elements of an array which satisfy a filter function.
      */
 
-    grep: function(elems, callback, invert) {
-        var cbi,
-            matches = [],
-            i = 0,
-            l = elems.length,
-            cbE = !invert;
+    grep: function( elems, callback, invert ) {
+		var callbackInverse,
+			matches = [],
+			i = 0,
+			length = elems.length,
+			callbackExpect = !invert;
 
-        // Go through the array, only saving the items
-        // that pass the validator function
-        for (; i < l; i++) {
-            cbi = !callback(elems[i], i);
-            if (cbi !== cbE) {
-                matches.push(elems[i]);
-            }
-        }
+		for ( ; i < length; i++ ) {
+			
+			callbackInverse = !callback( elems[ i ], i );
+			if ( callbackInverse !== callbackExpect ) {
+				matches.push( elems[ i ] );
+			}
+		}
 
-        return matches;
-    },
-
+		return matches;
+	},
     /**
      * Bind a function to a context, optionally partially applying any
      *
