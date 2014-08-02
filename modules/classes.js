@@ -98,15 +98,15 @@ hAzzle.extend({
      *
      * Examples:
      *
-     * $(...).classes(); // => gets all the classes for the first element in the collection
+     * hAzzle(...).classes(); // => gets all the classes for the first element in the collection
      *
-     * $(...).classes('+someclass'); // => adds a class to all elements in the collection
+     * hAzzle(...).classes('+someclass'); // => adds a class to all elements in the collection
      *
-     * $(...).classes('-someclass'); // => removes a class from all elements in the collection
+     * hAzzle(...).classes('-someclass'); // => removes a class from all elements in the collection
      *
-     * $(...).classes('~someclass'); // => toggles a class for all elements in the collection
+     * hAzzle(...).classes('~someclass'); // => toggles a class for all elements in the collection
      *
-     * $(...).classes('+state-open +state-active ~visible -list-item +list-item-active');
+     * hAzzle(...).classes('+state-open +state-active ~visible -list-item +list-item-active');
      *
      */
 

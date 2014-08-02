@@ -32,7 +32,7 @@ hAzzle.Core.cloneEvent = function(source, filter) {
                 source = hAzzle(source);
             }
 
-            return this.each(hAzzle.proxy(copyEvent, this, eventList));
+            return this.each(hAzzle.bind(copyEvent, this, eventList));
         }
 
         return this;

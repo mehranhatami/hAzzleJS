@@ -26,24 +26,38 @@ hAzzle.extend({
     },
 
     size: function(obj, ownPropsOnly) {
-
-        var count = 0, key;
+        var count = 0,
+            key;
 
         if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
-			
             return obj.length;
-			
         } else if (hAzzle.isObject(obj)) {
-			
-            for (key in obj) {
-                
-				if (!ownPropsOnly || obj.hasOwnProperty(key)) {
+            for (key in obj)
+                if (!ownPropsOnly || obj.hasOwnProperty(key))
                     count++;
-                }
-			}	
         }
 
         return count;
+    },
+	
+	 swap: function(elem, options, callback, args) {
+        var ret, name,
+            old = {};
+
+        // Remember the old values, and insert the new ones
+        for (name in options) {
+            old[name] = elem.style[name];
+            elem.style[name] = options[name];
+        }
+
+        ret = callback.apply(elem, args || []);
+
+        // Revert the old values
+        for (name in options) {
+            elem.style[name] = old[name];
+        }
+
+        return ret;
     },
 
     /**
@@ -55,7 +69,8 @@ hAzzle.extend({
 
         var options, name, src, copy, copyIsArray, clone,
             target = arguments[0] || {},
-            i = 1, length = arguments.length,
+            i = 1,
+            length = arguments.length,
             deep = false;
 
         // Handle a deep copy situation
@@ -129,7 +144,6 @@ hAzzle.extend({
 
         // Go through the array, only saving the items
         // that pass the validator function
-		
         for (; i < l; i++) {
             cbi = !callback(elems[i], i);
             if (cbi !== cbE) {
@@ -147,7 +161,7 @@ hAzzle.extend({
      * @param {Object} context
      */
 
-    proxy: function(fn, context) {
+    bind: function(fn, context) {
 
         var tmp, args, proxy;
 

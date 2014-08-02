@@ -73,10 +73,23 @@ hAzzle.extend({
 
     add: function(selector, context) {
         return hAzzle(
+            // Make unique
             hAzzle.unique(
                 hAzzle.merge(this.get(), hAzzle(selector, context))
             )
         );
+    },
+
+    /**
+     * Reverse all elements in a collection
+     */
+
+    reverse: function() {
+        var arr = [];
+        this.each(function() {
+            arr.push(this);
+        });
+        return hAzzle(arr.reverse());
     },
 
     /**
@@ -171,7 +184,7 @@ hAzzle.extend({
 
     get: function(num) {
 
-        return num !== null ?
+        return num ?
 
             // Return just the one element from the set
             (this[num < 0 ? (this.length + num) : num]) :
@@ -180,9 +193,18 @@ hAzzle.extend({
             slice.call(this);
     },
 
+    /**
+     * Reduce the set of matched elements to those that match the selector or pass
+     * the function's test, optionally returned in reverse order
+     *
+     * @param {String} selector
+     * @param {Boolean} rev
+     * @return {hAzzle}
+     */
 
-    filter: function(selector) {
-        return hAzzle(isnot(this, selector || [], false));
+    filter: function(selector, rev) {
+        var res = isnot(this, selector || [], false);
+        return hAzzle(rev ? res.reverse() : res);
     },
 
     /**
@@ -193,7 +215,7 @@ hAzzle.extend({
      *
      */
 
-    not: function(selector) {
+    exclude: function(selector) {
         return hAzzle(isnot(this, selector || [], true));
     },
 
@@ -232,6 +254,13 @@ hAzzle.extend({
             }
         });
     },
+
+    // Alias for 'has()'	
+
+    hasDescendant: function() {
+        return this.has.apply(this, arguments);
+    },
+
 
     /** Determine the position of an element within the matched set of elements
      *
@@ -627,7 +656,14 @@ function isnot(els, selector, not) {
 }
 
 
-hAzzle.each(['children contents next prev'.split(' ')], function(prop) {
-
+hAzzle.each(['children', 'contents', 'next prev'], function(prop) {
     specials[prop] = true;
+});
+
+// not() aliases
+
+hAzzle.each(['reject', 'not', 'discard'], function(prop) {
+    hAzzle.Core[prop] = function() {
+        return this.not.apply(this, arguments);
+    };
 });

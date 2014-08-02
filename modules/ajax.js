@@ -815,7 +815,7 @@ AjaxCore.serialize = function () {
  * @return {String}
  */
 
-hAzzle.param = AjaxCore.toQueryString = function (o, trad) {
+hAzzle.objectToQuery = AjaxCore.toQueryString = function (o, trad) {
     var prefix, i = 0,
         l, traditional = trad || false,
         s = [],
