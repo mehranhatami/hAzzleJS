@@ -25,7 +25,9 @@
  * - jQuery
  */
 var whiteRegex = (/\S+/g),
-    namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
+   gtl = /\.+\s/,
+   gtr = /\.+$/,
+   namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
 
     slice = Array.prototype.slice,
 
@@ -193,6 +195,10 @@ var _event = hAzzle.event = {
         if (!eventData || !(events = eventData.events)) {
             return;
         }
+
+       // Remove empty namespace (ie trailing dots)
+       
+	   types = types.replace(gtl, ' ').replace(gtr, '');
 
         // Get multiple events
 
@@ -502,7 +508,8 @@ function returnFalse() {
 // Handle multiple events separated by a space
 
 function getTypes(types) {
-    return (types || '').match(whiteRegex) || [''];
+	
+  return (types || '').match(whiteRegex) || [''];
 }
 
 
