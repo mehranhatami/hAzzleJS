@@ -1,9 +1,4 @@
-/**
- * A handfull Usefull functions for the hAzzle Object
- */
-var slice = Array.prototype.slice,
-    push = Array.prototype.push;
-
+// System.js - Collection of system functions for hAzzle Core
 hAzzle.extend({
 
     mergeArray: function(arr, results) {
@@ -25,6 +20,8 @@ hAzzle.extend({
         return ret;
     },
 
+    // Get size of Array or Objects
+
     size: function(obj, ownPropsOnly) {
         var count = 0,
             key;
@@ -39,8 +36,10 @@ hAzzle.extend({
 
         return count;
     },
-	
-	 swap: function(elem, options, callback, args) {
+
+    // Swap properties
+
+    swap: function(elem, options, callback, args) {
         var ret, name,
             old = {};
 
@@ -106,21 +105,26 @@ hAzzle.extend({
                     }
 
                     // Recurse if we're merging plain objects or arrays
+
                     if (deep && copy && (hAzzle.isPlainObject(copy) || (copyIsArray = hAzzle.isArray(copy)))) {
+
                         if (copyIsArray) {
+
                             copyIsArray = false;
                             clone = src && hAzzle.isArray(src) ? src : [];
 
                         } else {
+
                             clone = src && hAzzle.isPlainObject(src) ? src : {};
                         }
-
 
                         // Never move original objects, clone them
                         target[name] = hAzzle.extend(deep, clone, copy);
 
                         // Don't bring in undefined values
+
                     } else if (copy !== undefined) {
+
                         target[name] = copy;
                     }
                 }

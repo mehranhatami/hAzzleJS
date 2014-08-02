@@ -13,7 +13,7 @@
             path + 'types.js',
             path + 'ready.js',
             path + 'shims/pnow.js',
-            path + 'extra.js',
+            path + 'system.js',
             path + 'text.js',
             path + 'core.js',
             path + 'cache.js',			

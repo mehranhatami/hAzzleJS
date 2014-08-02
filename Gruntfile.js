@@ -49,7 +49,7 @@ function conf(grunt) {
                 'types.js',
                 'ready.js',
                 'shims/pnow.js',
-                'extra.js',
+                'system.js',
                 'text.js',
                 'core.js',
                 'cache.js',
