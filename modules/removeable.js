@@ -5,11 +5,25 @@
  */
 hAzzle.extend({
 
+    /**
+     * Dispose all element children
+     *
+     * @param {Object} elem
+     * @return {hAzzle}
+     */
+
     dispose: function(elem) {
 
         return elem.parentNode ?
             elem.parentNode.removeChild(elem) : elem;
     },
+
+    /**
+     * Clear all data from elements - INTERNAL!!
+     *
+     * @param {Object|Array} elems
+     * @return {hAzzle}
+     */
 
     clearData: function(elems) {
         var data, elem, type,
@@ -40,7 +54,7 @@ hAzzle.extend({
 
     /**
      * Remove the set of matched elements from the DOM.
-     * @param {hAzzle}
+     * @param {String} selector
      * @return {hAzzle}
      *
      */
@@ -50,20 +64,14 @@ hAzzle.extend({
         var elem, elems = selector ?
             hAzzle.find(selector, this) : this,
             i = 0;
+
         for (;
             (elem = elems[i]) !== null; i++) {
-            //        hAzzle.each(elem, function(el) {
 
             if (elem.nodeType === 1) {
 
                 hAzzle.clearData(findSubNodes(elem));
             }
-
-            // In DOM Level 4 we have remove() with same effect 
-            // as this code, but we cant' use it. Using
-            // el.remove() will just call hAzzle.Core.remove
-            // and we will sit back with no removing of
-            // parentNodes and memory leak 
 
             if (elem.parentNode && elem.tagName !== 'BODY') {
 
@@ -76,6 +84,7 @@ hAzzle.extend({
 
     /**
      * Remove all child nodes of the set of matched elements from the DOM.
+     *
      * @return {hAzzle}
      */
 
@@ -101,6 +110,8 @@ hAzzle.extend({
 
     /**
      * Remove the set of matched elements from the DOM.
+     *
+     * @param {String} selector
      * @return {hAzzle}
      */
 
@@ -108,12 +119,19 @@ hAzzle.extend({
         return this.remove(selector, true);
     },
 
+    /**
+     * Dispose all children in the set of elements
+     *
+     * @return {hAzzle}
+     */
+
     dispose: function() {
         return this.parentNode ?
             this.parentNode.removeChild(this) : this;
     }
 });
 
+/* ============================ UTILITY METHODS =========================== */
 
 function findSubNodes(elem) {
     return hAzzle.merge([elem], hAzzle.find('*', elem));
