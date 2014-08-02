@@ -26,14 +26,7 @@ var keyRegex = /key/i,
     pointerProps = touchProps, // Its the same, isn't it!?
     messageProps = ('data origin source lastEventId').split(' '),
     textProps = ('data').split(' '),
-    stateProps = ('state').split(' '),
-
-    nativeWheel =
-    // IE>=9 supports `wheel` via `addEventListener` but exposes no `onwheel` attribute on DOM elements
-    // making feature detection impossible :(
-    'onwheel' in document.createElement('div') || document.documentMode > 8 ?
-    'wheel' :
-    'mousewheel';
+    stateProps = ('state').split(' ');
 
 // Damn! Mozilla and webKit have special events, let us deal with it ....!
 
@@ -75,44 +68,7 @@ hAzzle.props = {
         { // Mouse wheel / scroll events
             reg: mousewheelRegex,
             props: mouseWheelProps,
-            filter: function (evt, original) {
-
-                var evtDoc, doc, body,
-                    button = original.button;
-
-                // Calculate pageX/Y if missing and clientX/Y available
-
-                if (evt.pageX === null && original.clientX !== null) {
-                    evtDoc = evt.target.ownerDocument || document;
-                    doc = evtDoc.documentElement;
-                    body = evtDoc.body;
-                    docBody = doc || body;
-                    evt.pageX = original.clientX + docBody.scrollLeft - docBody.clientLeft || 0;
-                    evt.pageY = original.clientY + docBody.scrollTop - docBody.clientTop || 0;
-                }
-
-
-                if (nativeWheel === 'wheel') {
-                    evt.deltaMode = original.deltaMode;
-                    evt.deltaX = original.deltaX;
-                    evt.deltaY = original.deltaY;
-                    evt.deltaZ = original.deltaZ;
-                } else {
-                    evt.type = 'wheel';
-                    evt.deltaMode = 0; // deltaMode === 0 => scrolling in pixels (in Chrome default wheelDeltaY is 120)
-                    evt.deltaX = -1 * original.wheelDeltaX;
-                    evt.deltaY = -1 * original.wheelDeltaY;
-                    evt.deltaZ = 0; // not supported
-                }
-
-                if (!evt.which && button !== undefined) {
-
-                    evt.which = button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0));
-                }
-
-
-                return evt;
-            }
+            filter: mousescroll
         }, { // TextEvent
             reg: textRegex,
             props: textProps,
@@ -230,20 +186,6 @@ function mousescroll(evt, original) {
         docBody = doc || body;
         evt.pageX = original.clientX + docBody.scrollLeft - docBody.clientLeft || 0;
         evt.pageY = original.clientY + docBody.scrollTop - docBody.clientTop || 0;
-    }
-
-
-    if (nativeWheel === 'wheel') {
-        event.deltaMode = orgEvent.deltaMode;
-        event.deltaX = orgEvent.deltaX;
-        event.deltaY = orgEvent.deltaY;
-        event.deltaZ = orgEvent.deltaZ;
-    } else {
-        event.type = 'wheel';
-        event.deltaMode = 0; // deltaMode === 0 => scrolling in pixels (in Chrome default wheelDeltaY is 120)
-        event.deltaX = -1 * orgEvent.wheelDeltaX;
-        event.deltaY = -1 * orgEvent.wheelDeltaY;
-        event.deltaZ = 0; // not supported
     }
 
     if (!evt.which && button !== undefined) {

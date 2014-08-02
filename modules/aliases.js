@@ -163,12 +163,6 @@ hAzzle.extend({
     },
     unbind: function(types, fn) {
         return this.off(types, null, fn);
-    },
-	
-	wheel: function (data, fn) {
-        return arguments.length > 0 ?
-            this.on('wheel', null, data, fn) :
-            this.trigger('wheel');
     }
 });
 
