@@ -92,9 +92,9 @@ hAzzle.extend({
 
         var elem, i = 0;
 
-        for (;
-            (elem = this[i]) !== null; i++) {
-
+  
+ return this.each(function(elem) {
+  
             if (elem.nodeType === 1) {
 
                 // Prevent memory leaks
@@ -105,7 +105,8 @@ hAzzle.extend({
                 // Remove any remaining nodes
                 elem.textContent = '';
             }
-        }
+        });
+  
     },
 
     /**

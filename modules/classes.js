@@ -1,6 +1,4 @@
-/**
- * Class manipulation
- */
+// classes.js
 var wSpace = /\S+/g,
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
@@ -9,116 +7,46 @@ var wSpace = /\S+/g,
 hAzzle.extend({
 
     /**
-     * Add class(es) to element
+     * Add class(es) to each of the set of matched elements.
      *
      * @param {String} value
      * @return {hAzzle}
      */
 
     addClass: function(value) {
-
-        if (value) {
-
-            var classes, cls, i = 0,
-                type = typeof value,
-                l = this.length,
-                elem, multi;
-
-            if (type === 'string') {
-
-                classes = (value || '').match(wSpace) || [];
-
-                while (l--) {
-
-                    elem = this[l];
-
-                    if (elem.nodeType === 1) {
-
-                        // Multiple arguments
-
-                        if (MultiArgs) {
-
-                            elem = elem.classList;
-                            elem.add.apply(elem, classes);
-
-
-                        } else {
-
-                            l = classes.length;
-
-                            for (i = 0; i < l; i++) {
-                                cls = classes[i];
-                                elem.classList.add(cls);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (type === 'function') {
-                return this.each(function(el, count) {
-                    hAzzle(el).addClass(value.call(el, count, el.className));
+        var self = this;
+        return hAzzle.setter(this, function(elem, value) {
+            if (typeof value === 'function') {
+                return self.each(function(el, count) {
+                    hAzzle.addClass(el, value.call(el, count, el.className));
                 });
             }
-
-        }
+            return hAzzle.addClass(elem, value);
+        }, value, arguments.length > 1);
     },
 
     /**
-     * Remove class(es) from element
+     * Remove a single class, multiple classes, or all classes from each element
+     * in the set of matched elements.
      *
      * @param {String} value
+     * @return {hAzzle}
      */
 
     removeClass: function(value) {
-        if (value) {
-            var classes, cls, i = 0,
-                l = this.length,
-                elem, type = typeof value;
-
-            if (type === 'string' || arguments.length === 0) {
-
-                classes = value.match(wSpace) || [];
-
-                while (l--) {
-
-                    elem = this[l];
-
-                    if (elem.nodeType === 1 && elem.className) {
-
-                        if (!value) {
-
-                            elem.className = '';
-                        }
-
-                        // Check if we are supporting multiple arguments
-
-                        if (MultiArgs) {
-
-                            elem.classList.remove.apply(elem.classList, classes);
-
-                        } else {
-
-                            l = classes.length;
-
-                            for (; i < l; i++) {
-                                cls = classes[i];
-                                elem.classList.add(cls);
-                            }
-                        }
-                    }
-                }
-            }
-            if (type === 'function') {
-                return this.each(function(el, count) {
-                    hAzzle(el).removeClass(value.call(el, count, el.className));
+        var self = this;
+        return hAzzle.setter(this, function(elem, value) {
+            if (typeof value === 'function') {
+                return self.each(function(el, count) {
+                    hAzzle.removeClass(el, value.call(el, count, el.className));
                 });
             }
-        }
+            return hAzzle.removeClass(elem, value);
+        }, value, arguments.length > 1);
     },
 
     /**
-     * Check if the given element contains class name(s)
+     * Determine whether any of the matched elements are assigned the given class.
      *
      * @param {String} value
      * @return {Boolean}
@@ -157,49 +85,74 @@ hAzzle.extend({
      */
 
     toggleClass: function(value, state) {
+        return hAzzle.setter(this, function(elem, value, state) {
+            return hAzzle.toggleClass(elem, value, state);
+        }, value, state, arguments.length > 1);
+    },
 
-        var type = typeof value,
-            isBool = typeof state === 'boolean';
+    /**
+     * Classes - handle all classes at once
+     *
+     * @param {String} classes
+     * @return {hAzzle}
+     *
+     * Examples:
+     *
+     * $(...).classes(); // => gets all the classes for the first element in the collection
+     *
+     * $(...).classes('+someclass'); // => adds a class to all elements in the collection
+     *
+     * $(...).classes('-someclass'); // => removes a class from all elements in the collection
+     *
+     * $(...).classes('~someclass'); // => toggles a class for all elements in the collection
+     *
+     * $(...).classes('+state-open +state-active ~visible -list-item +list-item-active');
+     *
+     */
 
-        if (typeof value === 'function') {
-            return this.each(function(el, count) {
-                hAzzle(el).toggleClass(value.call(el, count, el.className, state), state);
+    classes: function(classes) {
+
+        var elem = this,
+            actionPrefix, className;
+
+        // Get all the classes of the first element in the jQuery collection
+
+        if (arguments.length === 0) {
+
+            return elem[0].className;
+        }
+
+        // Ensure classes is a string
+
+        if (typeof classes === 'string') {
+
+            return this.each(classes.split(/\s+/), function(elem) {
+
+                if (elem.length === 0) {
+
+                    return;
+                }
+
+                actionPrefix = elem.charAt(0);
+                className = elem.slice(1);
+
+                switch (actionPrefix) {
+                    case '+':
+                        elem.addClass(className);
+                        break;
+                    case '-':
+                        elem.removeClass(className);
+                        break;
+                    case '~':
+                        elem.toggleClass(className);
+                        break;
+                    default:
+                        throw new Error('Could not apply class change ["' + elem + '"]');
+                }
             });
         }
 
-        return this.each(function(el) {
-            if (el.nodeType === 1) {
-                if (type === 'string') {
-                    // Toggle individual class names
-                    var className,
-                        i = 0,
-                        classNames = value.match(wSpace) || [];
-
-                    // Check each className given, space separated list
-                    while ((className = classNames[i++])) {
-                        if (isBool) {
-                            // IE10+ doesn't support the toggle boolean flag.
-                            if (state) {
-                                el.classList.add(className);
-                            } else {
-                                el.classList.remove(className);
-                            }
-                        } else {
-                            el.classList.toggle(className);
-                        }
-                    }
-
-                } else if (value === undefined || type === 'boolean') { // toggle whole class name
-                    if (el.className) {
-                        // store className if set
-                        hAzzle.data(this, '__cln__', el.className);
-                    }
-
-                    el.className = this.className ||
-                        value === false ? '' : hAzzle.data(el, '__cln__') || '';
-                }
-            }
-        });
+        return this;
     },
 
     /** 
@@ -220,9 +173,127 @@ hAzzle.extend({
     removeClassPrefix: function(prefix) {
         return this.each(function(elem) {
             var classes = hAzzle.map(elem.className.split(' '), function(itm) {
-                return itm.indexOf(prefix) === 0 ? '' : itm;
+                return hAzzle.indexOf(itm, prefix) === 0 ? '' : itm;
             });
             elem.className = classes.join(' ');
         });
     }
 });
+
+hAzzle.extend({
+
+    addClass: function(elem, value) {
+
+        if (value) {
+
+            var classes, cls, i = 0,
+                l;
+
+            if (typeof value === 'string') {
+
+                classes = (value || '').match(wSpace) || [];
+
+                if (elem.nodeType === 1) {
+
+                    // Multiple arguments
+
+                    if (MultiArgs) {
+
+                        elem = elem.classList;
+                        elem.add.apply(elem, classes);
+
+                    } else {
+
+                        l = classes.length;
+
+                        for (i = 0; i < l; i++) {
+                            cls = classes[i];
+                            elem.classList.add(cls);
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    removeClass: function(elem, value) {
+
+        if (value) {
+
+            var classes, cls, i = 0,
+                l;
+
+            if (typeof value === 'string' ||
+                arguments.length === 0) {
+
+                classes = value.match(wSpace) || [];
+
+                if (elem.nodeType === 1 && elem.className) {
+
+                    if (!value) {
+
+                        elem.className = '';
+                    }
+
+                    // Check if we are supporting multiple arguments
+
+                    if (MultiArgs) {
+
+                        elem.classList.remove.apply(elem.classList, classes);
+
+                    } else {
+
+                        l = classes.length;
+
+                        for (; i < l; i++) {
+                            cls = classes[i];
+                            elem.classList.add(cls);
+                        }
+                    }
+                }
+            }
+        } else {
+
+            elem.className = '';
+        }
+    },
+
+    toggleClass: function(el, value, state) {
+
+        var type = typeof value,
+            isBool = typeof state === 'boolean';
+
+        if (el.nodeType === 1) {
+            if (type === 'string') {
+                // Toggle individual class names
+                var className,
+                    i = 0,
+                    classNames = value.match(wSpace) || [];
+
+                // Check each className given, space separated list
+                while ((className = classNames[i++])) {
+
+                    if (isBool) {
+                        // IE10+ doesn't support the toggle boolean flag.
+                        if (state) {
+                            el.classList.add(className);
+                        } else {
+                            el.classList.remove(className);
+                        }
+                    } else {
+                        el.classList.toggle(className);
+                    }
+                }
+
+            } else if (value === undefined || type === 'boolean') { // toggle whole class name
+                if (el.className) {
+                    // store className if set
+                    hAzzle.data(this, '__cln__', el.className);
+                }
+
+                el.className = this.className || value === false ? '' : hAzzle.data(el, '__cln__') || '';
+            }
+        }
+    }
+
+}, hAzzle);

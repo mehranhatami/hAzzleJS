@@ -1,5 +1,4 @@
-var win = this,
-    winDoc = win.document,
+var winDoc = this.document,
     docElem = winDoc.documentElement,
     setDocument,
     contains,
@@ -124,10 +123,10 @@ hAzzle.assert(function(div) {
 // QSA supported, test for bugs
 
 Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function(div) {
-	
+
     div.innerHTML = "<p class='QsA'>Jiesa</p>";
-    
-	return div.querySelectorAll(".QsA").length === 0 ? false :
+
+    return div.querySelectorAll(".QsA").length === 0 ? false :
         // Check for broken :checked pseudo in Webkit/Opera
         !div.querySelectorAll(":checked").length ? false : true;
 }) : false;

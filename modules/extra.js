@@ -5,7 +5,6 @@ var slice = Array.prototype.slice,
     push = Array.prototype.push;
 
 hAzzle.extend({
-	
 
     mergeArray: function(arr, results) {
 
@@ -27,15 +26,21 @@ hAzzle.extend({
     },
 
     size: function(obj, ownPropsOnly) {
-        var count = 0,
-            key;
+
+        var count = 0, key;
 
         if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
+			
             return obj.length;
+			
         } else if (hAzzle.isObject(obj)) {
-            for (key in obj)
-                if (!ownPropsOnly || obj.hasOwnProperty(key))
+			
+            for (key in obj) {
+                
+				if (!ownPropsOnly || obj.hasOwnProperty(key)) {
                     count++;
+                }
+			}	
         }
 
         return count;
@@ -50,8 +55,7 @@ hAzzle.extend({
 
         var options, name, src, copy, copyIsArray, clone,
             target = arguments[0] || {},
-            i = 1,
-            length = arguments.length,
+            i = 1, length = arguments.length,
             deep = false;
 
         // Handle a deep copy situation
@@ -125,6 +129,7 @@ hAzzle.extend({
 
         // Go through the array, only saving the items
         // that pass the validator function
+		
         for (; i < l; i++) {
             cbi = !callback(elems[i], i);
             if (cbi !== cbE) {

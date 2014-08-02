@@ -116,15 +116,21 @@ hAzzle.extend({
             return this;
         }
         if (typeof types === 'object') {
+			
             // ( types-object [, selector] )
-            for (type in types) {
-                this.off(type, selector, types[type]);
+            
+			for (type in types) {
+            
+			    this.off(type, selector, types[type]);
             }
-            return this;
+            
+			return this;
         }
         if (selector === false || typeof selector === 'function') {
-            // ( types [, fn] )
-            fn = selector;
+            
+			// ( types [, fn] )
+            
+			fn = selector;
             selector = undefined;
         }
         if (fn === false) {

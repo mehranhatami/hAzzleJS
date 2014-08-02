@@ -1,7 +1,5 @@
-// Transition
-
-var  pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
-     directions = [ "Top", "Right", "Bottom", "Left" ];
+var pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
+    directions = ["Top", "Right", "Bottom", "Left"];
 
 hAzzle.each(['transformOrigin', 'transition', 'filter'], function(prop) {
     hAzzle.cssHooks[prop] = {
@@ -12,7 +10,6 @@ hAzzle.each(['transformOrigin', 'transition', 'filter'], function(prop) {
             elem.style[hAzzle.cssSupport[prop]] = value;
         }
     };
-
 });
 
 // Margin and padding cssHooks
@@ -45,17 +42,22 @@ hAzzle.each(['margin', 'padding'], function(hook) {
 if (hAzzle.BackgroundPositionXY) {
     hAzzle.cssHooks.backgroundPosition = {
         get: function(elem) {
-            return hAzzle.map(['X', 'Y'], function(l) {
-                return hAzzle.css(elem, 'backgroundPosition' + l);
+            return hAzzle.map(['X', 'Y'], function(prop) {
+                return hAzzle.css(elem, 'backgroundPosition' + prop);
             }).join(' ');
         },
         set: function(elem, value) {
-            hAzzle.each(['X', 'Y'], function(l) {
-                var values = parseBgPos(value);
-                elem.style['backgroundPosition' + l] = values[l];
+            hAzzle.each(['X', 'Y'], function(prop) {
+                    var parts = bgPos.split(/\s/),
+                        values = {
+                            'X': parts[0],
+                            'Y': parts[1]
+                        };
+       
+                elem.style['backgroundPosition' + prop] = values[l];
             });
-        }
-    };
+    }
+};
 }
 
 if (!hAzzle.pixelPosition) {
@@ -82,15 +84,4 @@ if (!hAzzle.pixelPosition) {
             }
         };
     });
-}
-
-/* ============================ UTILITY METHODS =========================== */
-
-function parseBgPos(bgPos) {
-    var parts = bgPos.split(/\s/),
-        values = {
-            'X': parts[0],
-            'Y': parts[1]
-        };
-    return values;
 }

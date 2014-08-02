@@ -3,13 +3,14 @@
 
 if ('document' in self) {
 
-    if (!('classList' in document.createElement('_'))) {
+    if (!('classList' in document.createElement('div'))) {
 
         (function(view) {
 
             'use strict';
 
             if (!('Element' in view)) {
+				
                  return;
 			} 
 

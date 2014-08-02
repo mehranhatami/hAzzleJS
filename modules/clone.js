@@ -6,7 +6,7 @@
  * - data cloning
  * - event cloning
  */
- 
+
 var filterSpace = /\s+/gi,
     rcheckableType = /^(?:checkbox|radio)$/i;
 
@@ -212,9 +212,13 @@ function cloneTextSel(src, dest) {
     l = srcSelects.length;
 
     if (l) {
+
         for (; i < l; ++i) {
+
             for (j = 0, m = srcSelects[i].options.length; j < m; ++j) {
+
                 if (srcSelects[i].options[j].selected === true) {
+
                     destSelects[i].options[j].selected = true;
                 }
             }
@@ -274,4 +278,3 @@ function fixInput(src, dest) {
         dest.defaultValue = src.defaultValue;
     }
 }
-

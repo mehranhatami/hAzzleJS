@@ -127,30 +127,6 @@ hAzzle.extend({
     },
 
     /**
-     * Get the immediately following sibling of each element
-     *
-     * @param {Object} elem
-     * @return {hAzzle}
-     */
-
-    next: function(selector) {
-        return hAzzle(this.pluck('nextElementSibling')).filter(selector || '*');
-    },
-
-    /**
-     * Get the immediately preceding sibling of each element
-     * in the set of matched  elements, optionally filtered by a
-     * selector.
-     *
-     * @param {Object} elem
-     * @return {hAzzle}
-     */
-
-    prev: function(selector) {
-        return hAzzle(this.pluck('previousElementSibling')).filter(selector || '*');
-    },
-
-    /**
      * Reduce the set of matched elements to a subset specified by a range of indices.
      */
 
@@ -265,10 +241,12 @@ hAzzle.extend({
 
     index: function(selector) {
 
+        var haystack, needle;
+
         if (!selector) {
 
-            var haystack = this.parentElement(),
-                needle = this[0];
+            haystack = this.parentElement();
+            needle = this[0];
 
             // index in selector
 
@@ -303,7 +281,7 @@ hAzzle.extend({
             i = 0,
             l = this.length,
             matched = [],
-            pos = typeof selectors !== "string" ?
+            pos = typeof selectors !== 'string' ?
             hAzzle(selectors, context) : 0;
 
         for (; i < l; i++) {
@@ -369,48 +347,11 @@ hAzzle.extend({
         return this;
     },
 
-    query: function(selector, count) {
-
-        var self = this.each ? this : [this],
-            list = [],
-            i = 0,
-            m = self.length,
-            nodes, node,
-            j = 0,
-            l;
-
-        for (; i < m && (!count || list.length < count); i++) {
-
-            if (count === list.length + 1) {
-
-                node = hAzzle.find(selector, self[i]);
-
-                if (node) {
-
-                    list.push(node);
-                }
-
-            } else {
-
-                nodes = hAzzle.find(selector, self[i]);
-
-                for (l = nodes.length; j < l && (!count || list.length < count); j++) {
-                    list.push(nodes[j]);
-                }
-            }
-        }
-
-        return hAzzle(list);
-    },
-
-    /**
-     * Deprecated but kept due to consistency with the jQuery API
-     *
-     */
     find: function(selector) {
         var i,
             len = this.length,
             ret = [],
+
             self = this;
 
         // String
@@ -532,7 +473,7 @@ hAzzle.forOwn({
      */
 
     parents: function(elem) {
-        return hAzzle.traverse(elem, "parentElement");
+        return hAzzle.traverse(elem, 'parentElement');
     },
 
     /**
@@ -541,7 +482,31 @@ hAzzle.forOwn({
      */
 
     parentsUntil: function(elem, i, until) {
-        return hAzzle.traverse(elem, "parentElement", until);
+        return hAzzle.traverse(elem, 'parentElement', until);
+    },
+
+    /**
+     * Get the immediately following sibling of each element
+     *
+     * @param {Object} elem
+     * @return {hAzzle}
+     */
+
+    next: function(elem) {
+        return elem.nextElementSibling;
+    },
+
+    /**
+     * Get the immediately preceding sibling of each element
+     * in the set of matched  elements, optionally filtered by a
+     * selector.
+     *
+     * @param {Object} elem
+     * @return {hAzzle}
+     */
+
+    prev: function(elem) {
+        return elem.previousElementSibling;
     },
 
     /**
@@ -568,7 +533,7 @@ hAzzle.forOwn({
      */
 
     nextAll: function(elem) {
-        return hAzzle.traverse(elem, "nextElementSibling");
+        return hAzzle.traverse(elem, 'nextElementSibling');
     },
 
     /**
@@ -577,7 +542,7 @@ hAzzle.forOwn({
      */
 
     prevAll: function(elem) {
-        return hAzzle.traverse(elem, "previousElementSibling");
+        return hAzzle.traverse(elem, 'previousElementSibling');
     },
 
     /**
@@ -587,7 +552,7 @@ hAzzle.forOwn({
 
     nextUntil: function(elem, i, until) {
 
-        return hAzzle.traverse(elem, "nextElementSibling", until);
+        return hAzzle.traverse(elem, 'nextElementSibling', until);
     },
 
     /**
@@ -597,7 +562,7 @@ hAzzle.forOwn({
 
     prevUntil: function(elem, i, until) {
 
-        return hAzzle.traverse(elem, "previousElementSibling", until);
+        return hAzzle.traverse(elem, 'previousElementSibling', until);
     },
 
 
@@ -643,7 +608,7 @@ function isnot(els, selector, not) {
 
     var type = typeof selector;
 
-    if (type === "string") {
+    if (type === 'string') {
         selector = hAzzle.matches(selector, els);
         return hAzzle.grep(els, function(elem) {
             return (indexOf.call(selector, elem) >= 0) !== not;

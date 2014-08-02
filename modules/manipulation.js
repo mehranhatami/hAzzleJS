@@ -92,7 +92,7 @@ hAzzle.extend({
         // appending HTML
 
         if (typeof value === 'string' && !rnoInnerhtml.test(value) &&
-            !htmlMap[(rtagName.exec(value) || ["", ""])[1].toLowerCase()]) {
+            !htmlMap[(rtagName.exec(value) || ['', ''])[1].toLowerCase()]) {
 
             return this.empty().each(function(elem) {
 
@@ -130,6 +130,7 @@ hAzzle.extend({
      */
 
     text: function(value) {
+
         return hAzzle.setter(this, function(value) {
             return value === undefined ?
                 hAzzle.getText(this) :
@@ -148,6 +149,8 @@ hAzzle.extend({
     Manipulation: function(html, method, nType) {
 
         var len = this.length > 1,
+            set = this,
+            self,
             elems;
 
         return this.each(function(el) {
@@ -333,18 +336,18 @@ hAzzle.each({
  *
  * To get this to work for hAzzle, we can do:
  *
- * hAzzle.html('div{hello}').appendTo( "#test" );
+ * hAzzle.html('div{hello}').appendTo( '#test' );
  *
- * hAzzle.html('div{hello}').insertAfter( "#test" );
+ * hAzzle.html('div{hello}').insertAfter( '#test' );
  *
  */
 
 hAzzle.each({
-    appendTo: "append",
-    prependTo: "prepend",
-    insertBefore: "before",
-    insertAfter: "after",
-    replaceAll: "replaceWith"
+    appendTo: 'append',
+    prependTo: 'prepend',
+    insertBefore: 'before',
+    insertAfter: 'after',
+    replaceAll: 'replaceWith'
 }, function(original, prop) {
     hAzzle.Core[prop] = function(node) {
         var insert = hAzzle(node),
