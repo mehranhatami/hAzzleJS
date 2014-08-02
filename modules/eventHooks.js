@@ -4,11 +4,27 @@
  * jQuery API, our eventHooks are almost following
  * the same pattern.
  */
+var focusinBubbles = 'onfocusin' in window,
+    nativeWheel =
+    // IE>=9 supports `wheel` via `addEventListener` but exposes no `onwheel` attribute on DOM elements
+    // making feature detection impossible :(
+    'onwheel' in document.createElement('div') || document.documentMode > 8 ?
+    'wheel' :
+    'mousewheel';
 
-var focusinBubbles = 'onfocusin' in window;
 
 hAzzle.extend({
     'special': {
+        'wheel': {
+            'setup': function() {
+                this.addEventListener(nativeWheel, wheelHandler, false);
+            },
+
+            'shutdown': function() {
+                this.removeEventListener(nativeWheel, wheelHandler, false);
+            },
+
+        },
         'load': {
             'noBubble': true
         },
@@ -34,8 +50,8 @@ hAzzle.extend({
         'click': {
 
             // For checkbox, fire native event so checked state will be right
-            
-			'trigger': function() {
+
+            'trigger': function() {
                 if (this.type === 'checkbox' && this.click && hAzzle.nodeName(this, 'input')) {
                     this.click();
                     return false;
@@ -43,8 +59,8 @@ hAzzle.extend({
             },
 
             // For cross-browser consistency, don't fire native .click() on links
-            
-			'_default': function(evt) {
+
+            '_default': function(evt) {
                 return hAzzle.nodeName(evt.target, 'a');
             }
         },
@@ -70,7 +86,7 @@ hAzzle.extend({
                 originalEvent: {}
             }
         );
-		
+
         if (bubble) {
 
             hAzzle.event.trigger(e, null, elem);
@@ -118,6 +134,10 @@ hAzzle.forOwn({
 /* =========================== INTERNAL ========================== */
 
 
+function wheelHandler(orgEvent) {
+    return hAzzle.event.dispatch.apply(this, args);
+}
+
 
 if (!focusinBubbles) {
 
@@ -131,31 +151,31 @@ if (!focusinBubbles) {
         };
 
         hAzzle.eventHooks.special[fix] = {
-			
+
             setup: function() {
-				
+
                 var doc = this.ownerDocument || this,
                     attaches = hAzzle.private(doc, fix);
 
                 if (!attaches) {
-					
+
                     doc.addEventListener(orig, handler, true);
                 }
-				
+
                 hAzzle.private(doc, fix, (attaches || 0) + 1);
             },
             shutdown: function() {
-				
+
                 var doc = this.ownerDocument || this,
                     attaches = hAzzle.private(doc, fix) - 1;
 
                 if (!attaches) {
-					
+
                     doc.removeEventListener(orig, handler, true);
                     hAzzle.removePrivate(doc, fix);
 
                 } else {
-					
+
                     hAzzle.private(doc, fix, attaches);
                 }
             }
