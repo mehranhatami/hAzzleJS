@@ -244,9 +244,10 @@ hAzzle.extend({
 
     has: function(target) {
         var targets = hAzzle(target, this),
-            l = targets.length;
+            l = targets.length,
+            i;
         return this.filter(function() {
-            var i = 0;
+            i = 0;
             for (; i < l; i++) {
                 if (hAzzle.contains(this, targets[i])) {
                     return true;
@@ -557,6 +558,15 @@ hAzzle.forOwn({
     },
 
     /**
+     * Get the children of each element in the set of matched elements,
+     * including text and comment nodes.
+     */
+
+    childrenAll: function(elem) {
+        return elem.contentDocument || hAzzle.merge([], elem.childNodes);
+    },
+
+    /**
      * Get all following siblings of each element in the set of matched
      * elements, optionally filtered by a selector.
      */
@@ -592,17 +602,8 @@ hAzzle.forOwn({
     prevUntil: function(elem, i, until) {
 
         return hAzzle.traverse(elem, 'previousElementSibling', until);
-    },
-
-
-    /**
-     * Get the children of each element in the set of matched elements,
-     * including text and comment nodes.
-     */
-
-    contents: function(elem) {
-        return elem.contentDocument || hAzzle.merge([], elem.childNodes);
     }
+
 }, function(fn, name) {
 
     hAzzle.Core[name] = function(until, selector) {
@@ -668,7 +669,9 @@ hAzzle.each({
     'discard': 'exclude',
     'add': 'join',
     'concat': 'join',
-    'search': 'find'
+    'search': 'find',
+    'hasDescendant': 'has'
+
 }, function(original, prop) {
     hAzzle.Core[prop] = function() {
         return this[original].apply(this, arguments);
