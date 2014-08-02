@@ -75,7 +75,7 @@ hAzzle.props = {
         { // Mouse wheel / scroll events
             reg: mousewheelRegex,
             props: mouseWheelProps,
-            filter: function mousescroll(evt, original) {
+            filter: function (evt, original) {
 
                 var evtDoc, doc, body,
                     button = original.button;
