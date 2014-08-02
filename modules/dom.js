@@ -71,7 +71,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    add: function(selector, context) {
+    join: function(selector, context) {
         return hAzzle(
             // Make unique
             hAzzle.unique(
@@ -660,10 +660,17 @@ hAzzle.each(['children', 'contents', 'next prev'], function(prop) {
     specials[prop] = true;
 });
 
-// not() aliases
+// Aliases
 
-hAzzle.each(['reject', 'not', 'discard'], function(prop) {
+hAzzle.each({
+    'reject': 'exclude',
+    'not': 'exclude',
+    'discard': 'exclude',
+    'add': 'join',
+    'concat': 'join',
+    'search': 'find'
+}, function(original, prop) {
     hAzzle.Core[prop] = function() {
-        return this.exclude.apply(this, arguments);
+        return this[original].apply(this, arguments);
     };
 });
