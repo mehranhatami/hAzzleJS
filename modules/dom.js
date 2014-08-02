@@ -664,6 +664,6 @@ hAzzle.each(['children', 'contents', 'next prev'], function(prop) {
 
 hAzzle.each(['reject', 'not', 'discard'], function(prop) {
     hAzzle.Core[prop] = function() {
-        return this.not.apply(this, arguments);
+        return this.exclude.apply(this, arguments);
     };
 });
