@@ -9,6 +9,7 @@ var focusinBubbles = 'onfocusin' in window,
     'wheel' : 'mousewheel';
 
 hAzzle.extend({
+	
     'special': {
 
         'wheel': {
@@ -174,21 +175,19 @@ if (!focusinBubbles) {
     });
 }
 
-function mouseWheelHandler(orgEvent) {
-
-    var args = [].slice.call(arguments, 0),
-        evt = hAzzle.props.propFix(orgEvent);
-
+function mouseWheelHandler(original) {
+    var args = slice.call(arguments, 0),
+        evt = hAzzle.props.propFix(original);
     if (wheelEvent === 'wheel') {
-        evt.deltaMode = orgEvent.deltaMode;
-        evt.deltaX = orgEvent.deltaX;
-        evt.deltaY = orgEvent.deltaY;
-        evt.deltaZ = orgEvent.deltaZ;
+        evt.deltaMode = original.deltaMode;
+        evt.deltaX = original.deltaX;
+        evt.deltaY = original.deltaY;
+        evt.deltaZ = original.deltaZ;
     } else {
         evt.type = 'wheel';
         evt.deltaMode = 0;
-        evt.deltaX = -1 * orgEvent.wheelDeltaX;
-        evt.deltaY = -1 * orgEvent.wheelDeltaY;
+        evt.deltaX = -1 * original.wheelDeltaX;
+        evt.deltaY = -1 * original.wheelDeltaY;
         evt.deltaZ = 0; // not supported
     }
 

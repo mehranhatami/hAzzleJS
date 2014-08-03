@@ -163,11 +163,6 @@ hAzzle.extend({
     },
     unbind: function(types, fn) {
         return this.off(types, null, fn);
-    },
-	wheel: function (data, fn) {
-        return arguments.length > 0 ?
-            this.on('wheel', null, data, fn) :
-            this.trigger('wheel');
     }
 });
 
@@ -189,7 +184,7 @@ function once(fn) {
 
 hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
-        'change select submit keydown keypress keyup error contextmenu').split(' '),
+        'change select submit keydown keypress keyup error contextmenu wheel').split(' '),
     function(name) {
 
         hAzzle.Core[name] = function(data, fn) {
