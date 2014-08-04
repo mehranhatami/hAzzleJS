@@ -52,7 +52,7 @@ var topribol = /^(top|right|bottom|left)$/i,
 
         if (computed === 'auto' && topribol.test(prop)) {
 
-            var position = hAzzle.css(elem, 'position'); /* GET */
+            var position = hAzzle.css(elem, 'position');
 
             if (position === 'fixed' || (position === 'absolute' && topleft.test(prop))) {
                 computed = hAzzle(elem).position()[prop] + 'px';
@@ -63,11 +63,13 @@ var topribol = /^(top|right|bottom|left)$/i,
     };
 
 hAzzle.each(['Width', 'Height'], function(prop) {
-
     hAzzle['curCSS' + prop] = function(elem, computed) {
+		if(computed) {
         return elem.offsetHeight - (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderTopWidth')) || 0) -
             (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderBottomWidth')) || 0) -
             (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingLeft' : 'paddingTop')) || 0) -
             (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingRight' : 'paddingBottom')) || 0);
+		}
+		return null;	
     }
 });

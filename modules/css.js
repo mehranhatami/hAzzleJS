@@ -5,6 +5,12 @@ var
     autoRegex = /auto/g,
     leftrightRegex = /Left|Right/,
 
+    // Create a cached element for re-use when checking for CSS property prefixes.
+
+    prefixElement = document.createElement('div'),
+
+    prefixMatches = {},
+
     // Don't set styles on text and comment nodes
 
     excludedProps = [
@@ -21,8 +27,8 @@ var
         'order',
         'orphans',
         'widows',
-		'rotate3d',
-		'flipped',
+        'rotate3d',
+        'flipped',
         'transform',
         'transform-origin',
         'transform-style',
@@ -30,8 +36,6 @@ var
         'perspective-origin',
         'backface-visibility'
     ],
-
-    stylePrefixes = ['', 'Moz', 'Webkit', 'O', 'ms', 'Khtml'],
 
     /**
      * CSS Normal Transforms
@@ -61,30 +65,81 @@ hAzzle.extend({
 
     css: function(name, value) {
 
-        return hAzzle.setter( this, function( elem, name, value ) {
-			var styles, len,
-				map = {},
-				i = 0;
+        return hAzzle.setter(this, function(elem, name, value) {
+            var styles, len,
+                map = {},
+                i = 0;
 
-			if ( hAzzle.isArray( name ) ) {
-				styles = computeStyle( elem );
-				len = name.length;
+            if (hAzzle.isArray(name)) {
 
-				for ( ; i < len; i++ ) {
-					map[ name[ i ] ] = hAzzle.css( elem, name[ i ], false, styles );
-				}
+                i = name.length;
 
-				return map;
-			}
+                while (i--) {
 
-			return value !== undefined ?
-				hAzzle.style( elem, name, value ) :
-				hAzzle.css( elem, name );
-		}, name, value, arguments.length > 1 );
-	}
+                    map[name[i]] = hAzzle.css(elem, name[i], false);
+                }
+
+                return map;
+            }
+
+            return value !== undefined ?
+                hAzzle.style(elem, name, value) :
+                hAzzle.css(elem, name);
+        }, name, value, arguments.length > 1);
+    }
 });
 
 hAzzle.extend({
+
+    prefixCheck: function(prop) {
+
+        // If this property has already been checked, return the cached value.
+
+        if (prefixMatches[prop]) {
+
+            return [prefixMatches[prop], true];
+
+        } else {
+
+            var vendors = ['', 'Webkit', 'Moz', 'ms', 'O'],
+                i = 0,
+                vendorsLength = vendors.length,
+                propPrefixed;
+
+            for (; i < vendorsLength; i++) {
+
+                if (i === 0) {
+
+                    propPrefixed = prop;
+
+                } else {
+
+                    // Capitalize the first letter of the property to conform to JavaScript vendor 
+                    //prefix notation (e.g. webkitFilter). 
+
+                    propPrefixed = vendors[i] + prop.replace(/^\w/, function(match) {
+                        return match.toUpperCase();
+                    });
+                }
+
+                // Check if the browser supports this property as prefixed.
+
+                if (typeof prefixElement.style[propPrefixed] === 'string') {
+
+                    // Cache the match.
+
+                    prefixMatches[prop] = propPrefixed;
+
+                    return [propPrefixed, true];
+                }
+            }
+
+            // If the browser doesn't support this property in any form, include a 
+            // false flag so that the caller can decide how to proceed.
+
+            return [prop, false];
+        }
+    },
 
     cssProps: {
 
@@ -99,70 +154,48 @@ hAzzle.extend({
             get: function(elem, computed) {
 
                 if (computed) {
-
-                    var opacity = elem.style.opacity ||
-                        curCSS(elem, 'opacity');
-
-                    return (opacity === '') ? 1 : opacity.toFloat();
+                    // We should always get a number back from opacity
+                    var ret = hAzzle.curCSS(elem, 'opacity');
+                    return ret === '' ? '1' : ret;
                 }
-            },
-            set: function(el, value) {
-
-                if (typeof value !== 'number') {
-
-                    value = 1;
-                }
-
-                if (value == 1 || value === '') {
-
-                    value = '';
-
-                } else if (value < 0.00001) {
-
-                    value = 0;
-                }
-
-                el.style.opacity = value;
             }
         }
     },
 
     css: function(elem, name, extra, styles) {
 
-        var val, num, hooks,
-            origName = hAzzle.camelize(name);
+        var val, num, hooks;
 
-        // Make sure that we're working with the right name
-        name = hAzzle.cssProps[origName] || (hAzzle.cssProps[origName] = vendorPropName(elem.style, origName));
+        name = hAzzle.camelize(hAzzle.prefixCheck(name)[0]);
 
-        // gets hook for the prefixed version
-        // followed by the unprefixed version
+        //  Check if this is a hooked property
+
         hooks = hAzzle.cssHooks[name];
 
         // If a hook was provided get the computed value from there
-        if (hooks && "get" in hooks) {
+        if (hooks && 'get' in hooks) {
             val = hooks.get(elem, true, extra);
         }
 
         // Otherwise, if a way to get the computed value exists, use that
         if (val === undefined) {
-            val = curCSS(elem, name, styles);
+            val = hAzzle.curCSS(elem, name, styles);
         }
 
-        // Convert "normal" to computed value
-        if (val === "normal" && name in cssNormalTransform) {
+        // Convert 'normal' to computed value
+        if (val === 'normal' && name in cssNormalTransform) {
             val = cssNormalTransform[name];
         }
 
-        // Convert the ""|"auto" values in a correct pixel value (for IE and Firefox)
-        if (extra !== "auto" && /^margin/.test(name) && /^$|auto/.test(val)) {
+        // Convert the ''|'auto' values in a correct pixel value (for IE and Firefox)
+        if (extra !== 'auto' && /^margin/.test(name) && /^$|auto/.test(val)) {
 
             val = calculateCorrect(elem, name, val);
 
         }
         // Make numeric if forced or a qualifier was provided and val looks numeric
 
-        if (extra === "" || extra) {
+        if (extra === '' || extra) {
             num = parseFloat(val);
             return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
         }
@@ -181,23 +214,26 @@ hAzzle.extend({
         if (!elem || nType === 3 || nType === 8 || !elem.style) {
             return;
         }
+
         origName = hAzzle.camelize(name);
+
         style = elem.style;
+
         // Make sure that we're working with the right name
 
-        name = hAzzle.cssProps[origName] ||
-            (hAzzle.cssProps[origName] = vendorPropName(style, origName));
+        name = hAzzle.prefixCheck(origName)[0];
 
-        // Gets hook for the prefixed version, then unprefixed version
-        hooks = hAzzle.cssHooks[name] || hAzzle.cssHooks[origName];
+        // Gets hook
+
+        hooks = hAzzle.cssHooks[name];
 
         if (value !== undefined) {
             type = typeof value;
             // convert relative number strings
 
             if (type === 'string' && (ret = numbs.exec(value))) {
-				value = hAzzle.css( elem, name, "" );
-				value = hAzzle.units( value, ret[3], elem, name ) + ( ret[1] + 1 ) * ret[2];
+                value = hAzzle.css(elem, name, '');
+                value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = 'number';
             }
 
@@ -229,7 +265,7 @@ hAzzle.extend({
         } else {
 
             // If a hook was provided get the non-computed value from there
-            if (hooks && "get" in hooks &&
+            if (hooks && 'get' in hooks &&
                 (ret = hooks.get(elem, false, extra)) !== undefined) {
 
                 return ret;
@@ -238,65 +274,9 @@ hAzzle.extend({
             // Otherwise just get the value from the style object
             return style[name];
         }
-
-
     }
 
 }, hAzzle);
-
-
-
-
-/* =========================== PRIVATE FUNCTIONS ========================== */
-
-var curCSS = hAzzle.curCSS = function(elem, prop, computed) {
-
-    var ret;
-
-
-    computed = computed || computeStyle(elem);
-
-    if (computed) {
-
-        ret = computed.getPropertyValue(prop) || computed[prop];
-    }
-
-    if (computed && (ret === '' && !hAzzle.contains(elem.ownerDocument, elem))) {
-
-        ret = hAzzle.style(elem, prop);
-    }
-
-    return ret !== undefined ?
-        ret + '' :
-        ret;
-};
-
-// Return a css property mapped to a potentially vendor prefixed property
-
-function vendorPropName(style, name) {
-
-    // Shortcut for names that are not vendor prefixed
-    if (name in style) {
-        return name;
-    }
-
-    // Check for vendor prefixed names
-    var capName = name[0].toUpperCase() + name.slice(1),
-        origName = name,
-        i = stylePrefixes.length;
-
-    while (i--) {
-        name = stylePrefixes[i] + capName;
-        if (name in style) {
-            return name;
-        }
-    }
-
-    return origName;
-}
-
-
-
 
 /* ============================ UTILITY METHODS =========================== */
 
