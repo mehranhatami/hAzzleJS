@@ -4,21 +4,17 @@ var topribol = /^(top|right|bottom|left)$/i,
 
         if (!computed) {
 
+            // If the computedStyle object has yet to be cached, do so now.
+
             if (hAzzle.data(elem, 'curCSS') === undefined) {
 
-                computed = window.getComputedStyle(elem, null);
-
-                // If the computedStyle object has yet to be cached, do so now.
-
-            } else if (!hAzzle.data(elem, 'curCSS').computedStyle) {
-
-                computed = hAzzle.data(elem, 'curCSS').computedStyle = window.getComputedStyle(elem, null);
+                computed = hAzzle.data(elem, 'curCSS', window.getComputedStyle(elem, null));
 
                 // If computedStyle is cached, use it.
 
             } else {
 
-                computed = hAzzle.data(elem, 'curCSS').computedStyle;
+                computed = hAzzle.data(elem, 'curCSS');
             }
         }
 
@@ -58,7 +54,7 @@ var topribol = /^(top|right|bottom|left)$/i,
 
             var position = hAzzle.css(elem, 'position'); /* GET */
 
-            if (position === 'fixed' || (position === 'absolute' && topleft.test(property))) {
+            if (position === 'fixed' || (position === 'absolute' && topleft.test(prop))) {
                 computed = hAzzle(elem).position()[prop] + 'px';
             }
         }
