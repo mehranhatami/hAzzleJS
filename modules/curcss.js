@@ -21,11 +21,11 @@ var topribol = /^(top|right|bottom|left)$/i,
         if (prop === 'height' &&
             computed.getPropertyValue('boxSizing').toLowerCase() !== 'border-box') {
 
-            return curCSSHeight(elem, computed);
+            return hAzzle.curCSSHeight(elem, computed);
 
         } else if (prop === 'width' && computed.getPropertyValue(elem, 'boxSizing').toLowerCase() !== 'border-box') {
 
-            return curCSSWidth(elem, computed);
+            return hAzzle.curCSSWidth(elem, computed);
         }
 
         if (hAzzle.ie && prop === 'borderColor') {
@@ -62,16 +62,12 @@ var topribol = /^(top|right|bottom|left)$/i,
         return computed;
     };
 
-function curCSSHeight(elem, computed) {
-    return elem.offsetHeight - (parseFloat(computed.getPropertyValue('borderTopWidth')) || 0) -
-        (parseFloat(computed.getPropertyValue('borderBottomWidth')) || 0) -
-        (parseFloat(computed.getPropertyValue('paddingTop')) || 0) - (parseFloat(computed.getPropertyValue('paddingBottom')) || 0);
-}
+hAzzle.each(['Width', 'Height'], function(prop) {
 
-function curCSSWidth(elem, computed) {
-    return elem.offsetWidth - (parseFloat(computed.getPropertyValue('borderLeftWidth')) || 0) -
-        (parseFloat(computed.getPropertyValue('borderRightWidth')) || 0) -
-        (parseFloat(computed.getPropertyValue('paddingLeft')) || 0) -
-        (parseFloat(computed.getPropertyValue('paddingRight')) || 0);
-
-}
+    hAzzle['curCSS' + prop] = function(elem, computed) {
+        return elem.offsetHeight - (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderTopWidth')) || 0) -
+            (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderBottomWidth')) || 0) -
+            (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingLeft' : 'paddingTop')) || 0) -
+            (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingRight' : 'paddingBottom')) || 0);
+    }
+});
