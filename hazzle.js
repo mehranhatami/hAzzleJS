@@ -36,6 +36,7 @@
             path + 'removeable.js',
             path + 'units.js',
             path + 'csssupport.js',
+            path + 'curcss.js',
             path + 'css.js',
             path + 'cssHooks.js',			
             path + 'position.js',
