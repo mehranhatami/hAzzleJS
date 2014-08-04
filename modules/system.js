@@ -139,23 +139,23 @@ hAzzle.extend({
      * Finds the elements of an array which satisfy a filter function.
      */
 
-    grep: function( elems, callback, invert ) {
-		var callbackInverse,
-			matches = [],
-			i = 0,
-			length = elems.length,
-			callbackExpect = !invert;
+    grep: function(elems, callback, invert) {
+        var callbackInverse,
+            matches = [],
+            i = 0,
+            length = elems.length,
+            callbackExpect = !invert;
 
-		for ( ; i < length; i++ ) {
-			
-			callbackInverse = !callback( elems[ i ], i );
-			if ( callbackInverse !== callbackExpect ) {
-				matches.push( elems[ i ] );
-			}
-		}
+        for (; i < length; i++) {
 
-		return matches;
-	},
+            callbackInverse = !callback(elems[i], i);
+            if (callbackInverse !== callbackExpect) {
+                matches.push(elems[i]);
+            }
+        }
+
+        return matches;
+    },
     /**
      * Bind a function to a context, optionally partially applying any
      *
@@ -192,28 +192,28 @@ hAzzle.extend({
         return proxy;
     },
 
-	// Detect if Internet Explorer
+    // Detect if Internet Explorer
 
-	ie: (function() { 
+    ie: (function() {
         if (document.documentMode) {
             return document.documentMode;
         } else {
-            for (var i = 7; i > 4; i--) {
-                var div = document.createElement("div");
 
-                div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
+            hAzzle.assert(function(div) {
 
-                if (div.getElementsByTagName("span").length) {
-                    div = null;
+                for (var i = 7; i > 4; i--) {
 
-                    return i;
+                    div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
+
+                    if (div.getElementsByTagName("span").length) {
+
+                        return i;
+                    }
                 }
-            }
+            });
         }
 
         return undefined;
     })()
 
 }, hAzzle);
-
-

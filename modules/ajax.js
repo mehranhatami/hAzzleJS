@@ -18,7 +18,6 @@ var win = window,
         'application/json, text/javascript': 'json',
     },
 
-    ie10 = navigator.userAgent.indexOf('MSIE 10.0') !== -1,
     // Usefull regEx
 
     query = (/\?/),
@@ -275,7 +274,7 @@ function jsonpReq(options, fn, err, url) {
     script.src = url;
     script.async = true;
 
-    if (typeof script.onreadystatechange !== 'undefined' && !ie10) {
+    if (typeof script.onreadystatechange !== 'undefined' && ! (hAzzle.ie === 10)) {
 
         script.event = 'onclick';
         script.htmlFor = script.id = '_xmlhttp_' + reqId;
