@@ -12,8 +12,8 @@ var win = this,
 // Test if we are within a foreign domain. Use raf from the top if possible.
 try {
     // Accessing .name will throw SecurityError within a foreign domain.
-    var name = window.top.name
-        top = window.top
+    var name = window.top.name,
+        top = window.top;
 } catch (e) {
       top  = window;
 }
