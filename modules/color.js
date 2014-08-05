@@ -1,49 +1,60 @@
 var colorProperties = hAzzle.colorProperties = ['backgroundColor',
-    'borderColor',
-    'borderBottomColor',
-    'borderLeftColor',
-    'borderRightColor',
-    'borderTopColor',
-    'color',
-    'columnRuleColor',
-    'outlineColor',
-    'textDecorationColor',
-    'textEmphasisColor'
-];
+        'borderColor',
+        'borderBottomColor',
+        'borderLeftColor',
+        'borderRightColor',
+        'borderTopColor',
+        'color',
+        'columnRuleColor',
+        'outlineColor',
+        'textDecorationColor',
+        'textEmphasisColor'
+    ],
 
-// Others names can be added through plug-ins
+    // Others names can be added through plug-ins
 
-var colorNames = hAzzle.colorNames = {
-    aqua: 'rgb(0, 255, 255)',
-    aliceblue: 'rgb(240, 248,255)',
-    black: 'rgb(0, 0, 0)',
-    blue: 'rgb(0, 0, 255)',
-    fuchsia: 'rgb(255, 0, 255)',
-    gray: 'rgb(128, 128, 128)',
-    green: 'rgb(0, 128, 0)',
-    lime: 'rgb(0, 255, 0)',
-    maroon: 'rgb(128, 0, 0)',
-    navy: 'rgb(0, 0, 128)',
-    olive: 'rgb(128, 128, 0)',
-    purple: 'rgb(128, 0, 128)',
-    red: 'rgb(255, 0, 0)',
-    silver: 'rgb(192, 192, 192)',
-    teal: 'rgb(0, 128, 128)',
-    white: 'rgb(255, 255, 255)',
-    yellow: 'rgb(255, 255, 0)',
-    bisque: 'rgb(255, 228, 196)',
-    coral: 'rgb(255, 127, 80)',
-    cyan: 'rgb(0, 255, 255)',
-    crimson: 'rgb(220, 20, 60)',
-    beige: 'rgb(245, 245, 220)',
-    darkblue: 'rgb(0, 0, 139)',
-    darkcyan: 'rgb(0, 139, 139)',
-    pink: 'rgb(255, 192, 203)',
-    gold: 'rgb(255, 215, 0)',
-    indigo: 'rgb(75, 0, 130)',
-    ivory: 'rgb(255, 139, 139)',
-    magenta: 'rgb(255, 0, 255)',
-};
+    colorNames = hAzzle.colorNames = {
+        aqua: 'rgb(0, 255, 255)',
+        aliceblue: 'rgb(240, 248,255)',
+        black: 'rgb(0, 0, 0)',
+        blue: 'rgb(0, 0, 255)',
+        fuchsia: 'rgb(255, 0, 255)',
+        gray: 'rgb(128, 128, 128)',
+        green: 'rgb(0, 128, 0)',
+        lime: 'rgb(0, 255, 0)',
+        maroon: 'rgb(128, 0, 0)',
+        navy: 'rgb(0, 0, 128)',
+        olive: 'rgb(128, 128, 0)',
+        purple: 'rgb(128, 0, 128)',
+        red: 'rgb(255, 0, 0)',
+        silver: 'rgb(192, 192, 192)',
+        teal: 'rgb(0, 128, 128)',
+        white: 'rgb(255, 255, 255)',
+        yellow: 'rgb(255, 255, 0)',
+        bisque: 'rgb(255, 228, 196)',
+        coral: 'rgb(255, 127, 80)',
+        cyan: 'rgb(0, 255, 255)',
+        crimson: 'rgb(220, 20, 60)',
+        beige: 'rgb(245, 245, 220)',
+        darkblue: 'rgb(0, 0, 139)',
+        darkcyan: 'rgb(0, 139, 139)',
+        pink: 'rgb(255, 192, 203)',
+        gold: 'rgb(255, 215, 0)',
+        indigo: 'rgb(75, 0, 130)',
+        ivory: 'rgb(255, 139, 139)',
+        magenta: 'rgb(255, 0, 255)',
+    },
+
+    // Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" 
+    // and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
+
+    valueUnwrap = /^[A-z]+\((.*)\)$/i,
+    wrappedValueAlreadyExtracted = /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
+
+    // Split a multi-value property into an array of subvalues, 
+    // e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. 
+
+    valueSplit = /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig;
 
 hAzzle.each(colorProperties, function(colorName) {
 
@@ -128,4 +139,19 @@ hAzzle.each(colorProperties, function(colorName) {
             }
         };
     })();
+});
+
+
+// cssHook
+
+hAzzle.each(hAzzle.colorProperties, function(prop) {
+    hAzzle.cssHooks[prop] = {
+        // Convert color values to rgb(a) and set the style property
+        set: function(elem, value) {
+            var hcn = hAzzle.cssCore.normalize,
+                convert = hcn[prop]('extract', elem, value);
+            elem.style[prop] = hcn[prop]('inject', elem, convert);
+        }
+    }
+
 });

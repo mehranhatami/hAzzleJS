@@ -1,67 +1,22 @@
-var  // Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" 
-	// and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
+var cssCore = hAzzle.cssCore = {
 
-   valueUnwrap = /^[A-z]+\((.*)\)$/i,
-   wrappedValueAlreadyExtracted = /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
-
-    // Split a multi-value property into an array of subvalues, 
-	// e.g. "rgba(4, 3, 2, 1) 4px 3px 2px 1px" ==> [ "rgba(4, 3, 2, 1)", "4px", "3px", "2px", "1px" ]. 
-
-   valueSplit = /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig,
-
-   cssCore = hAzzle.cssCore = {
-
+   // Feature / bug detection
+   
    has:  { // Check for getComputedStyle support
 
           'api-gCS': !!document.defaultView.getComputedStyle,
 	},
-	
-	normalize: {
 
-                clip: function(type, element, propertyValue) {
-                    switch (type) {
-                        case "name":
-                            return "clip";
-                        /* Clip needs to be unwrapped and stripped of its commas during extraction. */
-                        case "extract":
-                            var extracted;
+	// Normalize properties
 
-                            /* If Velocity also extracted this value, skip extraction. */
-                            if (wrappedValueAlreadyExtracted.test(propertyValue)) {
-                                extracted = propertyValue;
-                            } else {
-                                /* Remove the "rect()" wrapper. */
-                                extracted = propertyValue.toString().match(valueUnwrap);
-
-                                if (extracted) {
-                                    /* Strip off commas. */
-                                    extracted = extracted[1].replace(/,(\s+)?/g, " ");
-                                }
-                            }
-
-                            return extracted;
-                        /* Clip needs to be re-wrapped during injection. */
-                        case "inject":
-                            return "rect(" + propertyValue + ")";
-                    }
-                },
-
-                opacity: function (type, element, propertyValue) {
-                        switch (type) {
-                            case "name":
-                                return "opacity";
-                            case "extract":
-                                return propertyValue;
-                            case "inject":
-                                return propertyValue;
-                        }
-                    }
-		}
+	normalize: {}
 };
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
+// Check for getComputedStyle support
 
+cssCore.has['api-gCS'] = !!document.defaultView.getComputedStyle;
 
 
 hAzzle.assert(function(div) {
