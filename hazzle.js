@@ -35,7 +35,7 @@
             path + 'attributes.js',
             path + 'removeable.js',
             path + 'units.js',
-            path + 'csssupport.js',
+            path + 'csscore.js',
             path + 'curcss.js',
             path + 'css.js',
             path + 'cssHooks.js',			

@@ -5,6 +5,7 @@ var
     autoRegex = /auto/g,
     leftrightRegex = /Left|Right/,
 
+ 
     // Create a cached element for re-use when checking for CSS property prefixes.
 
     prefixElement = document.createElement('div'),
@@ -37,9 +38,10 @@ var
         'backface-visibility'
     ],
 
-    /**
-     * CSS Normal Transforms
-     */
+   // Transform
+   
+   
+   // CSS Normal Transforms
 
     cssNormalTransform = {
 
@@ -251,7 +253,7 @@ hAzzle.extend({
                 value += ret && ret[3] ? ret[3] : 'px';
             }
 
-            if (hAzzle.cssSupport.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+            if (hAzzle.cssCore.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
 
                 style[hAzzle.camelize(name)] = 'inherit';
             }

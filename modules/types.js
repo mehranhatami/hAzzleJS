@@ -47,12 +47,6 @@ hAzzle.extend({
         return typeof value === 'string';
     },
 
-    // Determines if a reference is a `Function`.
-
-    isFunction: function(value) {
-        return typeof value === 'function';
-    },
-
     isEmptyObject: function(obj) {
         var name;
         for (name in obj) {
@@ -119,8 +113,8 @@ hAzzle.extend({
 /* =========================== INTERNAL ========================== */
 
 // Add some isType methods
-hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments'], function(name) {
+hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments', 'Function'], function(name) {
     hAzzle['is' + name] = function(o) {
-        return hAzzle.str.call(o) === '[object ' + name + ']';
+      return Object.prototype.toString.call(o) === '[object ' + name + ']';
     };
 });

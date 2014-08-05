@@ -71,7 +71,7 @@ function conf(grunt) {
                 'manipulation.js',
                 'attributes.js',
                 'removeable.js',
-                'csssupport.js',
+                'csscore.js',
                 'curcss.js',
 				'css.js',
 	            'cssHooks.js',

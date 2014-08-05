@@ -1,13 +1,26 @@
 var pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     directions = ["Top", "Right", "Bottom", "Left"];
 
+// Colors
+
+ hAzzle.each(hAzzle.colorProperties, function(prop) {
+    hAzzle.cssHooks[prop] = { 
+   // Convert color values to rgb(a) and set the style property
+	set: function(elem, value) {
+	 var convert = hAzzle.cssCore.Normalize[prop]('extract', elem, value);
+		  elem.style[prop] = hAzzle.cssCore.Normalize[prop]('inject', elem, convert);
+	}
+	} 
+ 
+ });
+
 hAzzle.each(['transformOrigin', 'transition', 'filter'], function(prop) {
     hAzzle.cssHooks[prop] = {
         get: function(elem) {
-            return elem.style[hAzzle.cssSupport[prop]];
+            return elem.style[hAzzle.cssCore[prop]];
         },
         set: function(elem, value) {
-            elem.style[hAzzle.cssSupport[prop]] = value;
+            elem.style[hAzzle.cssCore[prop]] = value;
         }
     };
 });
