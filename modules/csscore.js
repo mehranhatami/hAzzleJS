@@ -1,7 +1,4 @@
-
-
-var  transformCache = {},
-   // Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" 
+var  // Unwrap a property value's surrounding text, e.g. "rgba(4, 3, 2, 1)" ==> "4, 3, 2, 1" 
 	// and "rect(4px 3px 2px 1px)" ==> "4px 3px 2px 1px". */
 
    valueUnwrap = /^[A-z]+\((.*)\)$/i,
@@ -12,17 +9,15 @@ var  transformCache = {},
 
    valueSplit = /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig,
 
-
-
    cssCore = hAzzle.cssCore = {
 
-    // Check for getComputedStyle support
+   has:  { // Check for getComputedStyle support
 
-    'api-gCS': !!document.defaultView.getComputedStyle,
+          'api-gCS': !!document.defaultView.getComputedStyle,
+	},
 	
-	Normalize: {
-	
-	 registered: {
+	normalize: {
+
                 clip: function(type, element, propertyValue) {
                     switch (type) {
                         case "name":
@@ -62,11 +57,11 @@ var  transformCache = {},
                         }
                     }
 		}
-	}	
-	
 };
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
+
+
 
 
 hAzzle.assert(function(div) {
@@ -156,7 +151,7 @@ hAzzle.assert(function(div) {
 	  
     if (support.hasOwnProperty(key) && typeof cssCore[key] === 'undefined') {
 		
-     cssCore[key] = support[key];
+     cssCore.has[key] = support[key];
 	 
     }
   }
@@ -174,16 +169,16 @@ hAzzle.assert(function(div) {
 
 hAzzle.applyCSSSupport = function(name, value) {
 
-    cssCore[name] = value;
+    cssCore.has[name] = value;
 
     // Expost to the global hAzzle object
 
-    hAzzle[name] = cssCore[name];
+    hAzzle[name] = cssCore.has[name];
 };
 
 // Expose to the global hAzzle Object
 
-hAzzle.transition = cssCore.transition;
+hAzzle.transition = cssCore.has.transition;
 
 // Bug detection
 
@@ -194,27 +189,27 @@ hAzzle.assert(function(div) {
     div.style.backgroundClip = "content-box";
     div.cloneNode(true).style.backgroundClip = "";
 
-    cssCore['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
+    cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
 
-    if (cssCore['api-gCS']) {
+    if (cssCore.has['api-gCS']) {
 
         div.style.cssText = 'border:1px;padding:1px;width:4px;position:absolute';
         var divStyle = window.getComputedStyle(div, null);
 
-        cssCore['api-boxSizing'] = divStyle.boxSizing === "border-box";
+        cssCore.has['api-boxSizing'] = divStyle.boxSizing === "border-box";
 
         pixelPositionVal = divStyle.top !== '1%';
         boxSizingReliableVal = divStyle.width === '4px';
-        cssCore['api-pixelPosition'] = pixelPositionVal;
-        cssCore['api-boxSizingReliable'] = boxSizingReliableVal;
+        cssCore.has['api-pixelPosition'] = pixelPositionVal;
+        cssCore.has['api-boxSizingReliable'] = boxSizingReliableVal;
     }
 });
 
 // Expose to the global hAzzle Object
 
-hAzzle.clearCloneStyle = cssCore['bug-clearCloneStyle'];
-hAzzle.pixelPosition = cssCore['api-pixelPosition'];
-hAzzle.boxSizingReliable = cssCore['api-boxSizingReliable'];
+hAzzle.clearCloneStyle = cssCore.has['bug-clearCloneStyle'];
+hAzzle.pixelPosition = cssCore.has['api-pixelPosition'];
+hAzzle.boxSizingReliable = cssCore.has['api-boxSizingReliable'];
 // Check for getComputedStyle
 
-hAzzle.ComputedStyle = cssCore['api-gCS'];
+hAzzle.ComputedStyle = cssCore.has['api-gCS'];

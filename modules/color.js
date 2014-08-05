@@ -67,7 +67,7 @@ hAzzle.each(colorProperties, function(colorName) {
 
     (function() {
 
-        cssSupport.Normalizations[colorName] = function(type, element, propertyValue) {
+        cssCore.normalize[colorName] = function(type, element, propertyValue) {
             switch (type) {
                 case 'name':
                     return colorName;

@@ -7,8 +7,9 @@ var pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     hAzzle.cssHooks[prop] = { 
    // Convert color values to rgb(a) and set the style property
 	set: function(elem, value) {
-	 var convert = hAzzle.cssCore.Normalize[prop]('extract', elem, value);
-		  elem.style[prop] = hAzzle.cssCore.Normalize[prop]('inject', elem, convert);
+	 var hcn = hAzzle.cssCore.normalize,  
+	     convert = hcn[prop]('extract', elem, value);
+		  elem.style[prop] = hcn[prop]('inject', elem, convert);
 	}
 	} 
  
