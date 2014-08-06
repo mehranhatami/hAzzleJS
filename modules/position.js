@@ -117,7 +117,7 @@ function getWidthOrHeight(elem, name, extra) {
 
         valueIsBorderBox = hAzzle.boxSizing &&
 
-            (hAzzle.boxSizingReliable || val === elem.style[name]);
+            (hAzzle.cssCore.has['api-boxSizingReliable'] || val === elem.style[name]);
 
         val = parseFloat(val) || 0;
     }
