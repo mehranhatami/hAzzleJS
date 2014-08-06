@@ -15,6 +15,8 @@ var types = {
 
   objKeyPrefix = '[[obj]]',
 
+  maxCacheLength = 70,
+
   storePrototype = {
     'undefined': undefined,
     'null': null,
@@ -34,6 +36,16 @@ function hAzzleDummy(val) {
   return obj;
 }
 
+function modifyKeys(cacheObject, key) {
+
+  if (cacheObject.keys.push(key) > maxCacheLength) {
+
+    //REVIEW NEEDED: set a maximum cache size to prevent memory leak
+    //delete storage[cacheObject.keys.shift()];
+
+  }
+}
+
 function isDummy(obj) {
   return !!hAzzle.private(obj, '[[hAzzleDummy]]');
 }
@@ -41,6 +53,7 @@ function isDummy(obj) {
 function Cache() {
 
   this.storage = createMapStorage();
+  this.keys = [];
 }
 
 /* ============================ PROTOTYPE CHAIN =========================== */
@@ -117,6 +130,8 @@ Cache.prototype = {
       keyObj,
       obj;
 
+    modifyKeys(this, key);
+
     if (arguments.length === 1) {
 
       if (keyType === 'string' ||
@@ -180,7 +195,7 @@ Cache.prototype = {
 
       storage[key] = value;
 
-      return key;
+      return value;
     }
   }
 };
