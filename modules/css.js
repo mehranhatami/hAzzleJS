@@ -5,7 +5,7 @@ var
     autoRegex = /auto/g,
     leftrightRegex = /Left|Right/,
 
- 
+
     // Create a cached element for re-use when checking for CSS property prefixes.
 
     prefixElement = document.createElement('div'),
@@ -38,10 +38,7 @@ var
         'backface-visibility'
     ],
 
-   // Transform
-   
-   
-   // CSS Normal Transforms
+    // CSS Normal Transforms
 
     cssNormalTransform = {
 
@@ -147,11 +144,12 @@ hAzzle.extend({
     cssHooks: {
 
         opacity: {
+
             get: function(elem, computed) {
 
                 if (computed) {
                     // We should always get a number back from opacity
-                    var ret = hAzzle.curCSS(elem, 'opacity');
+                    var ret = curCSS(elem, 'opacity');
                     return ret === '' ? '1' : ret;
                 }
             }
@@ -160,11 +158,11 @@ hAzzle.extend({
 
     css: function(elem, name, extra, styles) {
 
-	  // Create cache for new elements
-      
-	   hAzzle.styleCache(elem);
+       var val, num, hooks;
 
-        var val, num, hooks;
+        // Create cache for new elements
+
+        hAzzle.styleCache(elem);
 
         name = hAzzle.camelize(hAzzle.prefixCheck(name)[0]);
 
@@ -173,16 +171,20 @@ hAzzle.extend({
         hooks = hAzzle.cssHooks[name];
 
         // If a hook was provided get the computed value from there
+		
         if (hooks && 'get' in hooks) {
             val = hooks.get(elem, true, extra);
         }
 
         // Otherwise, if a way to get the computed value exists, use that
+		
         if (val === undefined) {
+
             val = hAzzle.curCSS(elem, name, styles);
         }
 
         // Convert 'normal' to computed value
+		
         if (val === 'normal' && name in cssNormalTransform) {
             val = cssNormalTransform[name];
         }
@@ -204,7 +206,7 @@ hAzzle.extend({
     },
 
     style: function(elem, name, value, extra) {
-      
+
         var ret, type, hooks, origName,
             style, nType = elem.nodeType;
 
@@ -214,15 +216,15 @@ hAzzle.extend({
             return;
         }
 
-	     // Create cache for new elements
-      
-	     hAzzle.styleCache(elem);
+        // Create cache for new elements
+
+        hAzzle.styleCache(elem);
 
         origName = hAzzle.camelize(name);
 
         style = elem.style;
 
-        // Make sure that we're working with the right name
+        // Auto-add vendor prefix if needed. 
 
         name = hAzzle.prefixCheck(origName)[0];
 
@@ -231,7 +233,9 @@ hAzzle.extend({
         hooks = hAzzle.cssHooks[name];
 
         if (value !== undefined) {
+
             type = typeof value;
+
             // convert relative number strings
 
             if (type === 'string' && (ret = numbs.exec(value))) {
@@ -262,14 +266,14 @@ hAzzle.extend({
             // If a hook was provided, use that value, otherwise just set the specified value
 
             if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
-                
+
                 style[name] = value;
             }
 
         } else {
 
             // If a hook was provided get the non-computed value from there
-			
+
             if (hooks && 'get' in hooks &&
                 (ret = hooks.get(elem, false, extra)) !== undefined) {
 
@@ -279,7 +283,7 @@ hAzzle.extend({
             // Otherwise just get the value from the style object
             return style[name];
         }
-}
+    }
 }, hAzzle);
 
 /* ============================ UTILITY METHODS =========================== */
