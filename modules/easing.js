@@ -1,3 +1,8 @@
+
+// Default easing value
+
+hAzzle.defaultEasing = 'swing';
+
 var easings = hAzzle.easing = {};
 
 hAzzle.each(['Quad', 'Cubic', 'Quart', 'Quint', 'Expo'], function(name, i) {

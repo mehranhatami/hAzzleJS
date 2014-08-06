@@ -3,7 +3,8 @@ var
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
-	rotskew = /^(rotate|skew)/i,
+    rotskew = /^(rotate|skew)/i,
+    zerovalue = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i,
     leftrightRegex = /Left|Right/,
 
 
@@ -84,18 +85,49 @@ hAzzle.extend({
 });
 
 hAzzle.extend({
-	
-	getUnitType: function(prop) {
-    if (rotskew.test(prop)) {
-        return 'deg';
-    } else if (hAzzle.inArray(excludedProps, prop) >= 0) {
-        // Unitless properties
-        return '';
-    } else {
-       // Return px as default
-        return 'px';
-    }
-  },
+
+    unitless: {},
+
+    cssHooks: {
+
+        opacity: {
+
+            get: function(elem, computed) {
+
+                if (computed) {
+                    // We should always get a number back from opacity
+                    var ret = curCSS(elem, 'opacity');
+                    return ret === '' ? '1' : ret;
+                }
+            }
+        }
+    },
+
+    getUnitType: function(prop) {
+
+        if (rotskew.test(prop)) {
+
+            return 'deg';
+
+        } else if (hAzzle.inArray(excludedProps, prop) >= 0) {
+
+            // Unitless properties
+            return '';
+
+        } else {
+
+            // Return px as default
+            return 'px';
+        }
+    },
+
+    isZeroValue: function(value) {
+
+        // The browser defaults CSS values that have not been set to either 0 or 
+        // one of several possible null-value strings. Thus, we check for both falsiness and these special strings. 
+        // Note: Chrome returns "rgba(0, 0, 0, 0)" for an undefined color whereas IE returns 'transparent'.
+        return (value == 0 || zerovalue.test(value));
+    },
 
     prefixCheck: function(prop) {
 
@@ -147,31 +179,9 @@ hAzzle.extend({
         }
     },
 
-    cssProps: {
-
-        'float': 'cssFloat'
-    },
-
-    unitless: {},
-
-    cssHooks: {
-
-        opacity: {
-
-            get: function(elem, computed) {
-
-                if (computed) {
-                    // We should always get a number back from opacity
-                    var ret = curCSS(elem, 'opacity');
-                    return ret === '' ? '1' : ret;
-                }
-            }
-        }
-    },
-
     css: function(elem, name, extra, styles) {
 
-       var val, num, hooks;
+        var val, num, hooks;
 
         // Create cache for new elements
 
@@ -184,20 +194,20 @@ hAzzle.extend({
         hooks = hAzzle.cssHooks[name];
 
         // If a hook was provided get the computed value from there
-		
+
         if (hooks && 'get' in hooks) {
             val = hooks.get(elem, true, extra);
         }
 
         // Otherwise, if a way to get the computed value exists, use that
-		
+
         if (val === undefined) {
 
             val = hAzzle.curCSS(elem, name, styles);
         }
 
         // Convert 'normal' to computed value
-		
+
         if (val === 'normal' && name in cssNormalTransform) {
             val = cssNormalTransform[name];
         }
