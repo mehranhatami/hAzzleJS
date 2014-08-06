@@ -1,6 +1,10 @@
-var lrmp = /^(left$|right$|margin|padding)/,
-    reaf = /^(relative|absolute|fixed)$/,
-    topbot = /^(top|bottom)$/;
+// Wrap into a Object to avoid conflicts
+var unitsRegex = {
+    lrmp: /^(left$|right$|margin|padding)/,
+    reaf: /^(relative|absolute|fixed)$/,
+    topbot: /^(top|bottom)$/,
+    az: /[%A-z]+$/
+}
 
 hAzzle.extend({
     /**
@@ -17,21 +21,29 @@ hAzzle.extend({
         if (unit === '' ||
             unit === 'px') {
 
-            return px; // Don't waste our time if there is no conversion to do.
+            return px; // Don't waste time if there is no conversion to do.
         }
 
         if (unit === '%') {
 
-            if (lrmp.test(prop)) {
-                prop = "width";
-            } else if (topbot.test(prop)) {
-                prop = "height";
+            if (unitsRegex.lrmp.test(prop)) {
+
+                prop = 'width';
+
+            } else if (unitsRegex.topbot.test(prop)) {
+
+                prop = 'height';
             }
-            elem = reaf.test(curCSS(elem, "position")) ?
+
+            elem = unitsRegex.reaf.test(curCSS(elem, 'position')) ?
                 elem.offsetParent : elem.parentNode;
+
             if (elem) {
+
                 prop = parseFloat(curCSS(elem, prop));
+
                 if (prop !== 0) {
+
                     return px / prop * 100;
                 }
             }
@@ -39,6 +51,7 @@ hAzzle.extend({
         }
 
         if (unit === 'em') {
+
             return px / parseFloat(hAzzle.curCSS(elem, 'fontSize'));
         }
 
@@ -81,12 +94,12 @@ hAzzle.extend({
             .toString()
             .toLowerCase()
             // Match the unit type at the end of the value.
-            .replace(/[%A-z]+$/, function(match) {
+            .replace(unitsRegex.az, function(match) {
                 // Grab the unit type.
                 unitType = match;
 
                 // Strip the unit type off of value.
-                return "";
+                return '';
             });
 
         // If no unit type was supplied, assign one that is appropriate for this 
