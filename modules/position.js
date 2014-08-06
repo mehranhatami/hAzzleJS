@@ -1,5 +1,4 @@
 //  CSS position, width and height
-
 var splitRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
     numRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     displayRegex = /^(none|table(?!-c[ea]).+)/,
@@ -9,50 +8,50 @@ var splitRegex = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/i,
         visibility: 'hidden',
         display: 'block'
     },
-	
-    dir = [ 'Top', 'Right', 'Bottom', 'Left' ];
 
-hAzzle.extend({
+    dir = ['Top', 'Right', 'Bottom', 'Left'];
 
-    position: function() {
+hAzzle.position = function() {
 
-        if (this[0]) {
+    if (this[0]) {
 
-            var offsetParent, offset,
-                parentOffset = {
-                    top: 0,
-                    left: 0
-                },
-                elem = this[0];
+        var offsetParent, offset,
+            parentOffset = {
+                top: 0,
+                left: 0
+            },
+            elem = this[0];
 
-            if (hAzzle.css(elem, 'position') === 'fixed') {
+        // Use of curCSS here gives a more accurate value, and
+        // faster lookup
 
-                offset = elem.getBoundingClientRect();
+        if (hAzzle.curCSS(elem, 'position') === 'fixed') {
 
-            } else {
+            offset = elem.getBoundingClientRect();
 
-                offsetParent = this.offsetParent();
+        } else {
 
-                offset = this.offset();
+            offsetParent = this.offsetParent();
 
-                if (!hAzzle.nodeName(offsetParent[0], 'html')) {
+            offset = this.offset();
 
-                    parentOffset = offsetParent.offset();
-                }
+            if (!hAzzle.nodeName(offsetParent[0], 'html')) {
 
-                parentOffset.top += hAzzle.css(offsetParent[0], 'borderTopWidth', true);
-                parentOffset.left += hAzzle.css(offsetParent[0], 'borderLeftWidth', true);
+                parentOffset = offsetParent.offset();
             }
 
-            return {
-
-                top: offset.top - parentOffset.top - hAzzle.css(elem, 'marginTop', true),
-                left: offset.left - parentOffset.left - hAzzle.css(elem, 'marginLeft', true)
-            };
+            parentOffset.top += parseFloat(hAzzle.curCSS(offsetParent[0], 'borderTopWidth'));
+            parentOffset.left += parseFloat(hAzzle.curCSS(offsetParent[0], 'borderLeftWidth'));
         }
-        return null;
+
+        return {
+
+            top: offset.top - parentOffset.top - parseFloat(hAzzle.curCSS(elem, 'marginTop')),
+            left: offset.left - parentOffset.left - parseFloat(hAzzle.curCSS(elem, 'marginLeft'))
+        };
     }
-});
+    return null;
+};
 
 /* ============================ CSS HOOKS FOR POSITIONS =========================== */
 
@@ -69,18 +68,18 @@ hAzzle.each(['height', 'width'], function(name) {
         },
 
         set: function(elem, value, extra) {
-            var styles = extra && hAzzle.computeStyle(elem);
+            var styles = extra && getStyles(elem);
             return setPositiveNumber(elem, value, extra ?
                 augmentWidthOrHeight(
                     elem,
                     name,
                     extra,
-                    hAzzle.css(elem, 'boxSizing', false, styles) === 'border-box',
+                    curCSS(elem, 'boxSizing') === 'border-box',
                     styles
                 ) : 0
             );
         }
-    }
+    };
 });
 
 
@@ -89,8 +88,7 @@ hAzzle.each(['height', 'width'], function(name) {
 function getWidthOrHeight(elem, name, extra) {
 
     var valueIsBorderBox = true,
-        val = name === 'width' ? elem.offsetWidth : elem.offsetHeight,
-        styles = hAzzle.computeStyle(elem);
+        val = name === 'width' ? elem.offsetWidth : elem.offsetHeight;
 
     if (name === 'width') {
 
@@ -103,7 +101,7 @@ function getWidthOrHeight(elem, name, extra) {
 
     if (val <= 0 || val === null) {
 
-        val = curCSS(elem, name, styles);
+        val = curCSS(elem, name);
 
         if (val < 0 || val === null) {
 
@@ -115,7 +113,7 @@ function getWidthOrHeight(elem, name, extra) {
             return val;
         }
 
-        valueIsBorderBox = hAzzle.boxSizing &&
+        valueIsBorderBox = cssCore.has['api-boxSizing'] &&
 
             (hAzzle.cssCore.has['api-boxSizingReliable'] || val === elem.style[name]);
 
@@ -125,7 +123,7 @@ function getWidthOrHeight(elem, name, extra) {
     return (val + augmentWidthOrHeight(
         elem,
         name,
-        extra || (hAzzle.boxSizing ? 'border' : 'content'),
+        extra || (cssCore.has['api-boxSizing'] ? 'border' : 'content'),
         valueIsBorderBox,
         styles
     )) + 'px';
@@ -149,7 +147,7 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
 
         if (extra === 'margin') {
 
-            val += hAzzle.css(elem, extra + dir[i], true, styles);
+            val += css(elem, extra + dir[i], true, styles);
         }
 
         if (isBorderBox) {
