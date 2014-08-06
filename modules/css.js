@@ -51,7 +51,7 @@ var
 
 var computeStyle = hAzzle.computeStyle = function(elem) {
     var view = elem.ownerDocument.defaultView;
-    return hAzzle.ComputedStyle ? (view.opener ? view.getComputedStyle(elem, null) :
+    return hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
         window.getComputedStyle(elem, null)) : elem.style;
 };
 
@@ -253,7 +253,7 @@ hAzzle.extend({
                 value += ret && ret[3] ? ret[3] : 'px';
             }
 
-            if (hAzzle.cssCore.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+            if (hAzzle.cssCore.has['bug-clearCloneStyle'] && value === '' && name.indexOf('background') === 0) {
 
                 style[hAzzle.camelize(name)] = 'inherit';
             }
