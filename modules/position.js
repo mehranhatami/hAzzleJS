@@ -124,8 +124,7 @@ function getWidthOrHeight(elem, name, extra) {
         elem,
         name,
         extra || (cssCore.has['api-boxSizing'] ? 'border' : 'content'),
-        valueIsBorderBox,
-        styles
+        valueIsBorderBox
     )) + 'px';
 }
 
@@ -136,7 +135,7 @@ function setPositiveNumber(elem, value, subtract) {
         value;
 }
 
-function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
+function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
 
     var css = hAzzle.css,
         i = extra === (isBorderBox ? 'border' : 'content') ? 4 :
@@ -147,29 +146,29 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox, styles) {
 
         if (extra === 'margin') {
 
-            val += css(elem, extra + dir[i], true, styles);
+            val += parseFloat(curCSS(elem, extra + dir[i]));
         }
 
         if (isBorderBox) {
 
             if (extra === 'content') {
 
-                val -= css(elem, 'padding' + dir[i], true, styles);
+                val -= parseFloat(curCSS(elem, 'padding' + dir[i]));
             }
 
             if (extra !== 'margin') {
 
-                val -= css(elem, 'border' + dir[i] + 'Width', true, styles);
+                val -= parseFloat(curCSS(elem, 'border' + dir[i] + 'Width'));
             }
 
         } else {
 
 
-            val += css(elem, 'padding' + dir[i], true, styles);
+            val += parseFloat(curCSS(elem, 'padding' + dir[i], true, styles));
 
             if (extra !== 'padding') {
 
-                val += css(elem, 'border' + dir[i] + 'Width', true, styles);
+                val += parseFloat(curCSS(elem, 'border' + dir[i] + 'Width'));
             }
         }
     }

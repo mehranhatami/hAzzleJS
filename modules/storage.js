@@ -88,7 +88,7 @@ Storage.prototype = {
 
         var cache = this.cache(owner);
 
-    return cache && key === undefined ?
+        return cache && key === undefined ?
             cache : cache[key];
     },
     access: function(owner, key, value) {
@@ -359,4 +359,45 @@ function dataAttr(elem, key, data) {
     }
 
     return data;
+}
+
+/**
+ * Cache for CSS styles
+ *
+ * A primary design goal of hAzzle is to cache data wherever possible in
+ * order to avoid DOM requerying. Accordingly, each element has a data cache
+ * instantiated on it.
+ *
+ * hAzzle Core are only using the computedStyle object, the others are for plugins.
+ *
+ * - properties
+ *
+ * - transitions
+ *
+ * - transform
+ */
+
+hAzzle.styleCache = function(elem) {
+
+    if (hAzzle.data(elem, 'CSS') === undefined) {
+
+        hAzzle.data(elem, 'CSS', {
+
+            // A reference to the element's live computedStyle object.
+
+            computedStyle: null,
+
+            // A cache for CSS properties
+
+            properties: {},
+
+            // A cache for CSS transitions
+
+            transitions: {},
+
+            // A cache for CSS transform 
+
+            transform: {}
+        });
+    }
 }

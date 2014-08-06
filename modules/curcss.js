@@ -1,24 +1,34 @@
 // url: ehttp://caniuse.com/getcomputedstyle
 var topribol = /^(top|right|bottom|left)$/i,
     topleft = /top|left/i,
-
+    computedValues = function(elem) {
+        if (elem) {
+            var view = elem.ownerDocument.defaultView;
+            return hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
+                window.getComputedStyle(elem, null)) : elem.style;
+        }
+        return null;
+    },
     getStyles = function(elem) {
 
         var computed;
 
         // We save the computedStyle on the object to avoid stressing the DOM
 
-        if (hAzzle.data(elem, 'curCSS') === undefined) {
+        if (hAzzle.data(elem, 'CSS') === undefined) {
 
-            var view = elem.ownerDocument.defaultView;
-            computed = hAzzle.data(elem, 'curCSS', hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
-                window.getComputedStyle(elem, null)) : elem.style);
+            return computedValues(elem);
+
+            /* If the computedStyle object has yet to be cached, do so now. */
+        } else if (!hAzzle.data(elem, 'CSS').computedStyle) {
+
+            computed = hAzzle.data(elem, 'CSS').computedStyle = computedValues(elem);
 
             // If computedStyle is cached, use it.
 
         } else {
 
-            computed = hAzzle.data(elem, 'curCSS');
+            computed = hAzzle.data(elem, 'CSS').computedStyle;
         }
 
         return computed;

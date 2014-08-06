@@ -49,11 +49,6 @@ var
         fontWeight: '400'
     };
 
-var computeStyle = hAzzle.computeStyle = function(elem) {
-    var view = elem.ownerDocument.defaultView;
-    return hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
-        window.getComputedStyle(elem, null)) : elem.style;
-};
 
 hAzzle.extend({
 
@@ -68,8 +63,7 @@ hAzzle.extend({
     css: function(name, value) {
 
         return hAzzle.setter(this, function(elem, name, value) {
-            var styles, len,
-                map = {},
+            var map = {},
                 i = 0;
 
             if (hAzzle.isArray(name)) {
@@ -166,6 +160,10 @@ hAzzle.extend({
 
     css: function(elem, name, extra, styles) {
 
+	  // Create cache for new elements
+      
+	   hAzzle.styleCache(elem);
+
         var val, num, hooks;
 
         name = hAzzle.camelize(hAzzle.prefixCheck(name)[0]);
@@ -205,9 +203,8 @@ hAzzle.extend({
         return val;
     },
 
-
     style: function(elem, name, value, extra) {
-
+      
         var ret, type, hooks, origName,
             style, nType = elem.nodeType;
 
@@ -216,6 +213,10 @@ hAzzle.extend({
         if (!elem || nType === 3 || nType === 8 || !elem.style) {
             return;
         }
+
+	     // Create cache for new elements
+      
+	     hAzzle.styleCache(elem);
 
         origName = hAzzle.camelize(name);
 
@@ -261,12 +262,14 @@ hAzzle.extend({
             // If a hook was provided, use that value, otherwise just set the specified value
 
             if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
+                
                 style[name] = value;
             }
 
         } else {
 
             // If a hook was provided get the non-computed value from there
+			
             if (hooks && 'get' in hooks &&
                 (ret = hooks.get(elem, false, extra)) !== undefined) {
 
@@ -276,8 +279,7 @@ hAzzle.extend({
             // Otherwise just get the value from the style object
             return style[name];
         }
-    }
-
+}
 }, hAzzle);
 
 /* ============================ UTILITY METHODS =========================== */
