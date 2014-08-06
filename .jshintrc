@@ -4,6 +4,7 @@
 	  "hAzzle",
 	  "module",
 	  "define",
-	  "expect"
+	  "expect",
+	  "console"
 	]
 }
