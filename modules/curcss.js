@@ -1,14 +1,24 @@
+// url: ehttp://caniuse.com/getcomputedstyle
 var topribol = /^(top|right|bottom|left)$/i,
     topleft = /top|left/i,
+
+    getStyles = function(elem) {
+        if (elem.ownerDocument.defaultView.opener) {
+            return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+        }
+
+        return window.getComputedStyle(elem, null);
+    },
+
     curCSS = hAzzle.curCSS = function(elem, prop, computed) {
 
         if (!computed) {
 
-            // If the computedStyle object has yet to be cached, do so now.
+            // We save the computedStyle on the object to avoid stressing the DOM
 
             if (hAzzle.data(elem, 'curCSS') === undefined) {
 
-                computed = hAzzle.data(elem, 'curCSS', window.getComputedStyle(elem, null));
+                computed = hAzzle.data(elem, 'curCSS', getStyles(elem));
 
                 // If computedStyle is cached, use it.
 
@@ -18,8 +28,7 @@ var topribol = /^(top|right|bottom|left)$/i,
             }
         }
 
-        if (prop === 'height' &&
-            computed.getPropertyValue('boxSizing').toLowerCase() !== 'border-box') {
+        if (prop === 'height' && computed.getPropertyValue(elem, 'boxSizing').toLowerCase() !== 'border-box') {
 
             return hAzzle.curCSSHeight(elem, computed);
 
@@ -28,26 +37,22 @@ var topribol = /^(top|right|bottom|left)$/i,
             return hAzzle.curCSSWidth(elem, computed);
         }
 
+        // Internet Explorer doesn't return a value for borderColor - it only returns 
+        // individual values for each border side's color. 
+        // As a polyfill, default to querying for just the top border's color
+
         if (hAzzle.ie && prop === 'borderColor') {
 
             prop = 'borderTopColor';
         }
 
+        // IE9 has a bug in which the "filter" property must be accessed from computedStyle 
+        // using the getPropertyValue method instead of a direct property lookup.  The getPropertyValue
+        // method is slower than a direct lookup, which is why we avoid it by default.
+
         if (hAzzle.ie === 9 && prop === 'filter') {
 
             computed = computed.getPropertyValue(prop);
-
-        } else {
-
-            computed = computed[prop];
-        }
-
-        // Fall back to the property's style value (if defined) when computedValue returns nothing, which 
-        // can happen when the element hasn't been painted.
-
-        if (computed === '') {
-
-            computed = elem.style[prop];
         }
 
         if (computed === 'auto' && topribol.test(prop)) {
@@ -57,19 +62,23 @@ var topribol = /^(top|right|bottom|left)$/i,
             if (position === 'fixed' || (position === 'absolute' && topleft.test(prop))) {
                 computed = hAzzle(elem).position()[prop] + 'px';
             }
+
+        } else {
+
+            computed = computed[prop];
         }
 
-        return computed;
+        return computed //.getPropertyValue(prop);
     };
 
 hAzzle.each(['Width', 'Height'], function(prop) {
     hAzzle['curCSS' + prop] = function(elem, computed) {
-		if(computed) {
-        return elem.offsetHeight - (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderTopWidth')) || 0) -
-            (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderBottomWidth')) || 0) -
-            (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingLeft' : 'paddingTop')) || 0) -
-            (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingRight' : 'paddingBottom')) || 0);
-		}
-		return null;	
+        if (computed) {
+            return elem.offsetHeight - (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderTopWidth')) || 0) -
+                (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderBottomWidth')) || 0) -
+                (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingLeft' : 'paddingTop')) || 0) -
+                (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingRight' : 'paddingBottom')) || 0);
+        }
+        return null;
     }
 });
