@@ -23,7 +23,6 @@ hAzzle.domReady = {
     run: function (forceRun) {
 
         if (!forceRun && hAzzle.loaded) {
-
             return;
         }
 

@@ -1,8 +1,4 @@
-/**
- * Removes the data associated with an element
- * @param {Object} elem
- * @return {hAzzle}
- */
+// removeable.js
 hAzzle.extend({
 
     /**
@@ -26,9 +22,8 @@ hAzzle.extend({
      */
 
     clearData: function(elems) {
-        var data, elem, type,
-            special = hAzzle.eventHooks.special,
-            i = 0;
+        var data, elem, type, i = 0,
+            special = hAzzle.eventHooks.special;
 
         for (;
             (elem = elems[i]) !== undefined; i++) {
@@ -92,9 +87,9 @@ hAzzle.extend({
 
         var elem, i = 0;
 
-  
- return this.each(function(elem) {
-  
+
+        return this.each(function(elem) {
+
             if (elem.nodeType === 1) {
 
                 // Prevent memory leaks
@@ -106,7 +101,7 @@ hAzzle.extend({
                 elem.textContent = '';
             }
         });
-  
+
     },
 
     /**

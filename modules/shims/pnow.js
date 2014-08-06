@@ -1,9 +1,9 @@
-// Performance.now polyfill for IE 9 and browsers who don't support it
+// Performance.now polyfill
 (function(p){
   if (!p.now){
-    var start = (p.timing && p.timing.navigationStart) || Date.now();
+    var start = (p.timing && p.timing.navigationStart) || hAzzle.now();
     p.now = function now() {
-      return Date.now() - start;
+      return hAzzle.now() - start;
     };
   }
 })( this.performance || ( this.performance = {} ) );

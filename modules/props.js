@@ -1,9 +1,5 @@
-/**
- * Events properties
- *
- * Note! This is NOT extendable through plugins
- *
- */
+// props.js - NOT extendable through plugins!!
+
 var keyRegex = /key/i,
     mouseRegex = /click|mouse(?!(.*wheel|scroll))|menu|drag|drop/i,
     mousewheelRegex = /mouse.*(wheel|scroll)/i,
@@ -170,7 +166,7 @@ hAzzle.props = {
 
 /* =========================== INTERNAL ========================== */
 
-// Same for mouse, mouseWheel and mouseScroll
+// Same function for mouse, mouseWheel and mouseScroll
 
 function mousescroll(evt, original) {
 

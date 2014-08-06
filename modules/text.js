@@ -1,12 +1,11 @@
 hAzzle.getText = function (elem) {
 
     if (!elem) {
-
         return;
     }
+
     var node, ret = '',
-        i = 0,
-        l = elem.length,
+        i = 0, l = elem.length,
         etc, nodetype = elem.nodeType;
 
     if (!nodetype) {
@@ -19,7 +18,9 @@ hAzzle.getText = function (elem) {
             ret += hAzzle.getText(node);
         }
 
-    } else if (nodetype === 1 || nodetype === 9 || nodetype === 11) {
+    } else if (nodetype === 1 ||
+	           nodetype === 9 || 
+			   nodetype === 11) {
 
         etc = elem.textContent;
 

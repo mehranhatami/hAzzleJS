@@ -14,7 +14,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    show: function () {
+    show: function() {
         return showHide(this, true);
     },
 
@@ -27,7 +27,7 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    hide: function () {
+    hide: function() {
         return showHide(this);
     },
 
@@ -36,12 +36,12 @@ hAzzle.extend({
      * @return {Object}
      */
 
-    toggle: function (state) {
+    toggle: function(state) {
 
         if (typeof state === 'boolean') {
             return state ? this.show() : this.hide();
         }
-        return this.each(function () {
+        return this.each(function() {
             if (isHidden(this)) {
                 hAzzle(this).show();
             } else {

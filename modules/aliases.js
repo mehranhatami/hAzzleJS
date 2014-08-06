@@ -1,4 +1,4 @@
-// aliases.js - hAzzle.Core functions
+// aliases.js
 hAzzle.extend({
 
     /**
@@ -8,7 +8,7 @@ hAzzle.extend({
      * @param {String} selector
      * @param {String} data
      * @param {Function} fn
-     * @param {Boolean} on
+     * @param {Boolean} one
      * @return {hAzzle}
      */
 
@@ -30,9 +30,6 @@ hAzzle.extend({
             }
             return this;
         }
-
-        // Has to be boolean values, else
-        // everything break. So keep '==' and not '==='
 
         if (data == null && fn == null) {
 
@@ -122,7 +119,8 @@ hAzzle.extend({
             }
             return this;
         }
-        if (selector === false || typeof selector === 'function') {
+        if (selector === false || 
+		    typeof selector === 'function') {
             // ( types [, fn] )
             fn = selector;
             selector = undefined;
@@ -149,9 +147,8 @@ hAzzle.extend({
         });
     },
     triggerHandler: function(type, data) {
-        var elem = this[0];
-        if (elem) {
-            return hAzzle.event.trigger(type, data, elem, true);
+        if (this[0]) {
+            return hAzzle.event.trigger(type, data, this[0], true);
         }
     },
 
@@ -186,7 +183,6 @@ hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblcli
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
         'change select submit keydown keypress keyup error contextmenu wheel').split(' '),
     function(name) {
-
         hAzzle.Core[name] = function(data, fn) {
             return arguments.length > 0 ?
                 this.on(name, null, data, fn) :

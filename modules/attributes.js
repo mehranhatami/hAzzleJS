@@ -1,40 +1,11 @@
 /*!
  * attributes.js
  */
- 
 var doc = this.document,
     ssv = /\S+/g,
     inseteb = /^(?:input|select|textarea|button)$/i,
     boolAttr = hAzzle.boolAttr, // Boolean attributes
-    boolElem = hAzzle.boolElem, // Boolean elements
-    attrSupport = {},
-
-    concat = Array.prototype.concat;
-
-/* ============================ BUG / FEATURE DETECTION =========================== */
-
-(function() {
-    var input = doc.createElement('input'),
-        select = doc.createElement('select'),
-        opt = select.appendChild(doc.createElement('option'));
-
-    input.type = 'checkbox';
-
-    attrSupport['bug-checkbox'] = input.value !== '';
-
-    // Support: IE<=11+
-    // Must access selectedIndex to make default options select
-    attrSupport['bug-optSelected'] = opt.selected;
-
-    // Support: IE<=11+
-    // An input loses its value after becoming a radio
-    input = doc.createElement('input');
-    input.setAttribute('type', 'radio');
-    input.setAttribute('name', 't');
-
-    attrSupport['bug-radioValue'] = input.value === 't';
-
-})();
+    boolElem = hAzzle.boolElem; // Boolean elements
 
 hAzzle.extend({
 
@@ -111,13 +82,9 @@ hAzzle.extend({
     }
 });
 
+hAzzle.propMap = hAzzle.nodeHook = {};
+
 hAzzle.extend({
-
-    // properties renamed to avoid clashes with reserved words
-
-    propMap: {},
-
-    nodeHook: {},
 
     propHooks: {
 
@@ -135,6 +102,7 @@ hAzzle.extend({
         set: function(elem, value, name) {
 
             if (value === false) {
+
                 // Remove boolean attributes when set to false
                 hAzzle.removeAttr(elem, name);
 
@@ -152,7 +120,7 @@ hAzzle.extend({
         type: {
             set: function(elem, value) {
 
-                if (!attrSupport['bug-radioValue'] &&
+                if (!hAzzle.features['bug-radioValue'] &&
                     value === 'radio' &&
                     hAzzle.nodeName(elem, 'input')) {
 
@@ -184,11 +152,11 @@ hAzzle.extend({
 
             keys = typeof value == 'string' ?
 
-            // string
+            // String
 
             value.match(ssv) :
 
-            // merge arrays
+            // Merge arrays
 
             concat(value),
 
@@ -224,7 +192,10 @@ hAzzle.extend({
         var hooks, ret,
             nType = elem.nodeType;
 
-        if (!elem || nType === 2 || nType === 3 || nType === 8) {
+        if (!elem ||
+            nType === 2 ||
+            nType === 3 ||
+            nType === 8) {
 
             return;
         }
@@ -250,7 +221,6 @@ hAzzle.extend({
             if ((elem.ownerDocument || elem) !== document) {
 
                 hAzzle.setDocument(elem);
-
             }
 
             if (hooks && 'get' in hooks) {
@@ -291,16 +261,16 @@ hAzzle.extend({
             return value;
         }
     },
-
-    // Props to jQuery
-
     prop: function(elem, name, value) {
 
         var ret, hooks,
             nType = elem.nodeType;
 
-        // don't get/set properties on text, comment and attribute nodes
-        if (!elem || nType === 2 || nType === 3 || nType === 8) {
+        if (!elem ||
+            nType === 2 ||
+            nType === 3 ||
+            nType === 8) {
+
             return;
         }
 
@@ -371,7 +341,7 @@ function getBooleanAttrName(element, name) {
 
 // Support: IE9+
 
-if (!attrSupport['bug-optSelected']) {
+if (!hAzzle.features['bug-optSelected']) {
     hAzzle.propHooks.selected = {
         get: function(elem) {
             var parent = elem.parentNode;
@@ -382,7 +352,6 @@ if (!attrSupport['bug-optSelected']) {
         }
     };
 }
-
 
 hAzzle.each(['htmlFor', 'className', 'cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
     'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',

@@ -1,9 +1,7 @@
 // setter.js
 var setter = hAzzle.setter = function(elems, fn, key, value, chainable, eG, raw) {
 
-    var i = 0,
-        l = elems.length,
-        elem, bulk = key === null;
+    var i = 0, l = elems.length, elem, bulk = key === null;
 
     // Set multiple values
 

@@ -1,15 +1,13 @@
-// boolean.js
-// Shared with attributes.js and compile.js
+// boolean.js - Shared with attributes.js and compile.js
 
     hAzzle.boolAttr = {}, // Boolean attributes
     hAzzle.boolElem = {}, // Boolean elements
 
-    hAzzle.each([
-        'multiple', 'selected', 'checked', 'disabled', 'readOnly', 'required',
-        'async', 'autofocus', 'compact', 'nowrap', 'declare', 'noshade',
-        'noresize', 'defaultChecked', 'autoplay', 'controls', 'defer',
-        'hidden', 'ismap', 'loop', 'scoped', 'open'
-    ], function() {
+    hAzzle.each(('multiple selected checked disabled readOnly required '+
+        'async autofocus compact nowrap declare noshade ' +
+        'noresize defaultChecked autoplay controls defer ' +
+        'hidden ismap loop scoped open').split(' ')
+    , function() {
         hAzzle.boolAttr[this] = this;
     });
 

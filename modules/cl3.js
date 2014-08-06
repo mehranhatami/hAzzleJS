@@ -1,10 +1,5 @@
-/*
- *
- * CSS3 pseudo-classes extension for Jiesa
- *
- * Contains all CSS Level 3 selectors
- *
- */
+//  cl3.js
+
 var win = this,
     doc = win.document,
     i,

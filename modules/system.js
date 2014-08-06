@@ -29,9 +29,11 @@ hAzzle.extend({
         if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
             return obj.length;
         } else if (hAzzle.isObject(obj)) {
-            for (key in obj)
-                if (!ownPropsOnly || obj.hasOwnProperty(key))
+            for (key in obj) {
+                if (!ownPropsOnly || obj.hasOwnProperty(key)) {
                     count++;
+                }
+            }
         }
 
         return count;
@@ -175,7 +177,6 @@ hAzzle.extend({
         }
 
         if (typeof fn !== 'function') {
-
             return undefined;
         }
 
@@ -191,8 +192,8 @@ hAzzle.extend({
 
         return proxy;
     },
-	
-	isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+
+    isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
 
     // Detect if Internet Explorer
 
@@ -205,9 +206,9 @@ hAzzle.extend({
 
                 for (var i = 7; i > 4; i--) {
 
-                    div.innerHTML = "<!--[if IE " + i + "]><span></span><![endif]-->";
+                    div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
 
-                    if (div.getElementsByTagName("span").length) {
+                    if (div.getElementsByTagName('span').length) {
 
                         return i;
                     }

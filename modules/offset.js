@@ -15,8 +15,7 @@ hAzzle.extend({
         if (arguments.length) {
 
             return obj === undefined ?
-                this :
-                this.each(function(el, i) {
+                this : this.each(function(el, i) {
                     xy(el, obj, i);
                 });
         }
@@ -89,8 +88,8 @@ function xy(elem, ops, i) {
 
     curOffset = curElem.offset();
 
-    curCSSTop = hAzzle.css(elem, 'top');
-    curCSSLeft = hAzzle.css(elem, 'left');
+    curCSSTop = hAzzle.curCSS(elem, 'top');
+    curCSSLeft = hAzzle.curCSS(elem, 'left');
 
     calculatePosition = (position === 'absolute' || position === 'fixed') &&
         (curCSSTop + curCSSLeft).indexOf('auto') > -1;

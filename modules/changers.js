@@ -1,37 +1,15 @@
-/**
- * Jiesa - Child Selectors
- *
- * Known as special jQuery selectors.
- *
- * :even, :odd, :eq, :lt, :gt, :first, :last, :nth
- *
- * Note! There is some differences
- *
- * -2 means -2 and not -1 as in jQuey / Sizzle.
- *
- * for gt and lt, positive numbers to left,
- * negative number to the right.
- *
- * Example:
- *
- * Array (1,2,3,4,5)
- *
- * gt(-1) - give you number 5
- *
- * gt(1) - give you number 1
- *
- */
+// changers.js
 hAzzle.extend({
 
     changers: {
-        'eq': function (arr, index) {
+        'eq': function(arr, index) {
             return arr[index] ? [arr[index]] : [];
         },
-        'gt': function (arr, index) {
+        'gt': function(arr, index) {
 
             return arr.slice(index);
         },
-        'lt': function (arr, index) {
+        'lt': function(arr, index) {
 
             return arr.slice(0, index);
         },
@@ -45,7 +23,7 @@ hAzzle.extend({
          * @return {hAzzle}
          */
 
-        'first': function (arr, index) {
+        'first': function(arr, index) {
             return index ? arr.slice(0, index) : [arr[0]];
         },
 
@@ -58,26 +36,28 @@ hAzzle.extend({
          * @return {hAzzle}
          */
 
-        'last': function (arr, index) {
+        'last': function(arr, index) {
             return index ? arr.slice(arr.length - index) : [arr[arr.length - 1]];
         },
-        'odd': function (arr) {
+        'odd': function(arr) {
             return arrCalc(arr, 0, 2);
         },
-        'even': function (arr) {
+        'even': function(arr) {
             return arrCalc(arr, 1, 2);
         },
-        'nth': function (arr, val) {
+        'nth': function(arr, val) {
             return arrCalc(arr, val - 1, val);
         }
     }
 
 }, hAzzle.Jiesa);
 
- /* =========================== PRIVATE FUNCTIONS ========================== */
+/* =========================== PRIVATE FUNCTIONS ========================== */
 
 function arrCalc(arr, start, increment) {
-    var i = start, ret = [], e;
+    var i = start,
+        ret = [],
+        e;
     while ((e = arr[i])) {
         ret.push(e);
         i += increment;
