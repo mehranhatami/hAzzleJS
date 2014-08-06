@@ -16,7 +16,6 @@ var win = this,
 
   push = Array.prototype.push,
   pop = Array.prototype.pop,
-
   // Verify if the doc are HTML
 
   documentIsHTML = hAzzle.documentIsHTML,
@@ -41,21 +40,14 @@ var win = this,
   PseudoCache = {},
   PseudoInfoCache = {},
 
-  chunkCache = hAzzle.createCache(),
-  exeCache = hAzzle.createCache(),
-  filterCache = hAzzle.createCache(),
   tokenCache = hAzzle.createCache(),
   compilerCache = hAzzle.createCache(),
-  classCache = hAzzle.createCache(),
   /**
    * Special regex. NOTE! This is not part of the public Jiesa Object
    */
 
-  trimspaces = /^\s*|\s*$/g,
   whitespace = '[\\x20\\t\\r\\n\\f]',
-  special = /\s?([\+~\>])\s?/g,
   identifier = '(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+',
-  chunky = /(?:#[\w\d_-]+)|(?:\.[\w\d_-]+)|(?:\[(\w+(?:-\w+)?)(?:([\$\*\^!\|~\/]?=)(.+?))?\])|(?:[\>\+~])|\w+|\s|(?::[\w-]+(?:\([^\)]+\))?)/g,
 
   comma = new RegExp('^' + whitespace + '*,' + whitespace + '*'),
   ridentifier = new RegExp(identifier),
@@ -64,6 +56,28 @@ var win = this,
 
   rinputs = /^(?:input|select|textarea|button)$/i,
   rheader = /^h\d$/i,
+
+  attributes = '\\[' + whitespace + '*(' + identifier + ')(?:' + whitespace +
+  // Operator (capture 2)
+  '*([*^$|!~]?=)' + whitespace +
+  // 'Attribute values must be CSS identifiers [capture 5] or strings [capture 3 or capture 4]'
+  '*(?:\'((?:\\\\.|[^\\\\\'])*)\'|\"((?:\\\\.|[^\\\\\"])*)\"|(' + identifier + '))|)' + whitespace +
+  '*\\]',
+
+  rpseudo = new RegExp(':(' + identifier + ')(?:\\((' +
+    // To reduce the number of selectors needing tokenize in the preFilter, prefer arguments:
+    // 1. quoted (capture 3; capture 4 or capture 5)
+    '(\'((?:\\\\.|[^\\\\\'])*)\'|\"((?:\\\\.|[^\\\\\"])*)\")|' +
+    // 2. simple (capture 6)
+    '((?:\\\\.|[^\\\\()[\\]]|' + attributes + ')*)|' +
+    // 3. anything else (capture 2)
+    '.*' +
+    ')\\)|)'),
+
+  outermostContext,
+  rsibling = /[+~]/,
+  dirruns = 0,
+  done = 0,
 
   specialCases,
 
@@ -272,32 +286,6 @@ function mark(fn) {
   return fn;
 }
 
-/**
- * get nodes
- *
- * @param {string} context
- * @return {Object}
- */
-
-function getNodes(context) {
-
-  var nodes = [doc];
-
-  if (context) { //context can be a node, nodelist, array, document
-    if (context instanceof Array) {
-      nodes = context;
-    } else if (context.length) {
-      nodes = toArray(nodes);
-    } else if (context.nodeType === 1) {
-      nodes = [context];
-    }
-    //throw error for invalid context?
-  }
-  // Temporary fix Allways make sure we have a nodes to return
-  // else code breaks
-  return nodes && nodes;
-}
-
 hAzzle.extend({
 
   relative: {
@@ -326,114 +314,11 @@ hAzzle.extend({
     'nth': new RegExp('^:(only|first|last|nth|nth-last)-(child|of-type)(?:\\(' + whitespace +
       '*(even|odd|(([+-]|)(\\d*)n|)' + whitespace + '*(?:([+-]|)' + whitespace +
       '*(\\d+)|))' + whitespace + '*\\)|)', 'i'),
-    'attr': /^\[[\x20\t\r\n\f]*((?:\\.|[\w-]|[^\x00-\xa0])+)(?:[\x20\t\r\n\f]*([*^$|!~]?=)[\x20\t\r\n\f]*(?:'((?:\\.|[^\\'])*)\'|"((?:\\.|[^\\"])*)"|((?:\\.|[\w-]|[^\x00-\xa0])+))|)[\x20\t\r\n\f]*\]/,
+    'attr': new RegExp('^' + attributes),
 
     'changer': /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
     'pseudo': /:((?:\\.|[\w-]|[^\x00-\xa0])+)(?:\((('((?:\\.|[^\\'])*)\'|"((?:\\.|[^\\"])*)")|.*)\)|)/,
     'whitespace': new RegExp(whitespace),
-  },
-
-  /**
-   * Jiesa parser
-   *
-   * @param {string} selector
-   * @param {string|Object|Array} context
-   * @return {Object}
-   */
-
-  parse: function (selector, context) {
-
-    // Temporary fix
-    // Allways make sure we have a selector
-    // else code breaks
-
-    if (!selector) {
-
-      return;
-    }
-    var i = 0,
-      pieceStore = [],
-      nodes,
-      l, piece, piece1, j = 0,
-      k,
-      chunks, kf;
-    // I think this nodes are buggy as well
-    nodes = getNodes(context);
-
-    selector = selector.replace(trimspaces, '').replace(special, ' $1');
-
-    // Split the selector before we are looping through
-    //when we have only one chunk match returns null
-    kf = selector.match(chunky) || [selector];
-
-    // Collect all the chunks, and identify them
-
-    chunks = collector(kf);
-
-
-    l = chunks.length;
-
-    if (l) {
-
-      // create the node set
-
-      for (; i < l; i++) {
-
-        piece = chunks[i];
-
-        if (!piece.type) {
-
-          hAzzle.error('Invalid Selector: ' + piece.text);
-        }
-
-        if (piece.type !== 'whitespace' && chunks[i + 1]) {
-
-          // push all non-descendant selectors into piece store until we hit a space in the selector.
-
-          pieceStore.push(piece);
-
-        } else {
-
-          if (piece.type !== 'whitespace' && piece.type !== 'changer') {
-
-            pieceStore.push(piece);
-          }
-
-          // Grab the first piece, as the starting point, then perform the filters on the nodes.
-
-          piece1 = pieceStore.shift();
-
-          // Collect everything
-
-          nodes = Execute(nodes, piece1, context);
-
-          k = pieceStore.length;
-
-          // filter the nodes
-
-          for (; j < k; j++) {
-
-            // Not everyone has a filter :)
-
-            if (Jiesa.filters[pieceStore[j].type]) {
-
-              nodes = filter(nodes, pieceStore[j]);
-            }
-
-          }
-
-          // If  any positional pseudos, we have to create them
-
-          if (piece.type === 'changer') {
-
-            nodes = createPositionalPseudo(nodes, piece.text);
-          }
-
-          pieceStore = [];
-        }
-      }
-    }
-    return nodes;
   },
 
   getters: {
@@ -627,46 +512,13 @@ hAzzle.extend({
        * own solution.
        */
 
-      var info = Jiesa.regex.attr.exec(sel),
-        attr = getAttribute(elem, info[1]);
-
-      if (!info[2] || !attr) {
-        return !!attr;
+      var info = Jiesa.regex.attr.exec(sel);
+      if (info) {
+        info = specialCases.attr(info);
       }
 
-      if (info[2] && info[3]) {
+      return filterAttr(elem, info.slice(1));
 
-        var value = info[3].replace(/^['"]|['"]$/g, ''),
-          operator = info[2];
-
-        attr += '';
-
-        /**
-         * Special attribute - Regex Attribute Selector
-         * It gives the ability to match attributes with a regexp.
-         *
-         *  hAzzle('div[id/= [ RegEX ] ')
-         */
-
-        if (value && operator === '/=') {
-
-          var modifiers = value.match(/\s(\w+)$/) || ['', ''];
-          value = value.replace(/\\/g, '\\\\').replace(modifiers[0], '');
-          return RegExp(value, modifiers[1]).test(attr);
-        }
-
-        return value && operator === '==' ? attr === value :
-          operator === '=' ? attr === value :
-          operator === '!=' ? attr !== value :
-          operator === '^=' ? attr.indexOf(value) === 0 :
-          operator === '*=' ? attr.indexOf(value) > -1 :
-          operator === '$=' ? attr.slice(-value.length) === value :
-          operator === '~=' ? (' ' + attr + ' ').indexOf(value) > -1 :
-          operator === '|=' ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
-          false;
-
-      }
-      return false;
     },
 
     'rel': function (elem, sel, relElem) {
@@ -735,32 +587,6 @@ function IranianWalker(nodes, mode, fn) {
 
     return ret;
   }
-}
-//identify a chunk. Is it a class/id/tag etc?
-
-function identify(chunk) {
-
-  var type;
-
-  /**
-   * Mehran!!
-   *
-   * Dirty fix to solve the nth problem with
-   * relative attributes. Need to find a better
-   * solution for this. Maybe Jiesa solution
-   * where they filter on 'child'
-   */
-  var reg = Jiesa.regex;
-
-  if (reg.nth.test(chunk)) {
-    return 'pseudo';
-  }
-
-  for (type in Jiesa.regex) {
-
-    if (Jiesa.regex[type].test(chunk)) return type;
-  }
-  return false;
 }
 
 //just to prevent rewriting over and over...
@@ -837,85 +663,6 @@ function getAttribute(elem, attribute) {
     ((elem = elem.getAttributeNode(attribute)) && elem.value) || '');
 }
 
-function filter(nodes, pieceStore) {
-
-  var i = 0,
-    ret = [],
-    l = nodes.length,
-    fC, elem;
-
-  for (; i < l; i++) {
-    elem = nodes[i];
-
-    fC = filterCache.cache(elem);
-
-    if (!fC) {
-
-      var a = Jiesa.filters[pieceStore.type](elem, pieceStore.text);
-
-      if (a) {
-        ret.push(elem);
-      }
-      exeCache.cache(nodes[i] + ' ', ret);
-    }
-  }
-
-  return ret;
-}
-
-/**
- * Collect, and identify all selectors.
- *
- * @param {Object} nodes
- * @return {Object}
- *
- */
-
-function collector(nodes) {
-
-  var i = 0,
-    ret = [],
-    l = nodes.length,
-    chunk, elem;
-
-  for (; i < l; i++) {
-
-    elem = nodes[i];
-    chunk = chunkCache.cache(elem);
-
-    if (!chunk) {
-      ret.push({
-        text: nodes[i],
-        type: identify(elem)
-      });
-
-      // Cache the 'chunk'
-      chunk = chunkCache.cache(elem, ret);
-    }
-  }
-
-  return ret;
-}
-
-function Execute(nodes, piece, context) {
-
-  var i = 0,
-    ret = [],
-    l = nodes.length,
-    exe;
-
-  for (; i < l; i++) {
-
-    exe = exeCache.cache(nodes[i] + '');
-
-    if (!exe) {
-      ret = exeCache.cache(nodes[i] + '', ret.concat(Jiesa.getters[piece.type](nodes[i], piece.text, context)));
-    }
-  }
-
-  return ret;
-}
-
 /**
  * Returns a function to use in pseudos for positionals
  * @param {Function} fn
@@ -949,29 +696,9 @@ var runescape = new RegExp('\\\\([\\da-f]{1,6}' + whitespace + '?|(' + whitespac
       String.fromCharCode(high + 0x10000) :
       // Supplemental Plane codepoint (surrogate pair)
       String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
-  },
+  };
 
-  attributes = '\\[' + whitespace + '*(' + identifier + ')(?:' + whitespace +
-  // Operator (capture 2)
-  '*([*^$|!~]?=)' + whitespace +
-  // 'Attribute values must be CSS identifiers [capture 5] or strings [capture 3 or capture 4]'
-  '*(?:\'((?:\\\\.|[^\\\\\'])*)\'|\"((?:\\\\.|[^\\\\\"])*)\"|(' + identifier + '))|)' + whitespace +
-  '*\\]',
 
-  rpseudo = new RegExp(':(' + identifier + ')(?:\\((' +
-    // To reduce the number of selectors needing tokenize in the preFilter, prefer arguments:
-    // 1. quoted (capture 3; capture 4 or capture 5)
-    '(\'((?:\\\\.|[^\\\\\'])*)\'|\"((?:\\\\.|[^\\\\\"])*)\")|' +
-    // 2. simple (capture 6)
-    '((?:\\\\.|[^\\\\()[\\]]|' + attributes + ')*)|' +
-    // 3. anything else (capture 2)
-    '.*' +
-    ')\\)|)'),
-
-  outermostContext,
-  rsibling = /[+~]/,
-  dirruns = 0,
-  done = 0;
 
 function testContext(context) {
   return context && typeof context.getElementsByTagName !== 'undefined' && context;
@@ -990,7 +717,7 @@ specialCases = {
 
     return rgxResult.slice(0, 4);
   },
-  'child': function (rgxResult) {
+  'nth': function (rgxResult) {
     /* matches from matchExpr['CHILD']
         1 type (only|nth|...)
         2 what (child|of-type)
@@ -1352,7 +1079,8 @@ function matcherFromTokens(tokens) {
       matchers = [addCombinator(elementMatcher(matchers), matcher)];
     } else {
 
-      matcher = Jiesa.filters2[tokens[i].type].apply(null, tokens[i].matches);
+      matcher = getItemSelector(tokens[i].type, tokens[i].matches);
+      //Jiesa.filters2[tokens[i].type].apply(null, tokens[i].matches);
 
       // Return special upon seeing a positional matcher
       if (matcher[expando]) {
@@ -1516,13 +1244,13 @@ function compile(selector, match /* Internal Use Only */ ) {
 }
 
 /**
- * A low-level selection function that works with Jiesa's compiled
- *  selector functions
- * @param {String|Function} selector A selector or a pre-compiled
- *  selector function built with Jiesa.compile
- * @param {Element} context
+ * Jiesa parser
+ *
+ * @param {string} selector
+ * @param {string|Object|Array} context
  * @param {Array} [results]
  * @param {Array} [elements] A set of elements to match against
+ * @return {Object}
  */
 function parse(selector, context, results, elements) {
   var i, tokens, token, type, findfn,
@@ -1597,53 +1325,7 @@ function parse(selector, context, results, elements) {
   return results;
 }
 
-Jiesa.filters2 = {
-
-  'tag': function (nodeNameSelector) {
-    var nodeName = nodeNameSelector.replace(runescape, funescape).toLowerCase();
-    return nodeNameSelector === '*' ?
-      function () {
-        return true;
-      } :
-      function (elem) {
-        return elem.nodeName && elem.nodeName.toLowerCase() === nodeName;
-      };
-  },
-
-  'Class': function (className) {
-    var pattern = classCache.cache[className + ''];
-
-    return pattern ||
-      (pattern = new RegExp('(^|' + whitespace + ')' + className + '(' + whitespace + '|$)')) &&
-      classCache.cache(className, function (elem) {
-        return pattern.test(typeof elem.className === 'string' && elem.className || typeof elem.getAttribute !== 'undefined' && elem.getAttribute('class') || '');
-      });
-  },
-
-  'attr': function (name, operator, check) {
-    return function (elem) {
-      var result = hAzzle.attr(elem, name);
-
-      if (result === null) {
-        return operator === '!=';
-      }
-      if (!operator) {
-        return true;
-      }
-
-      result += '';
-
-      return operator === '=' ? result === check :
-        operator === '!=' ? result !== check :
-        operator === '^=' ? check && result.indexOf(check) === 0 :
-        operator === '*=' ? check && result.indexOf(check) > -1 :
-        operator === '$=' ? check && result.slice(-check.length) === check :
-        operator === '~=' ? (' ' + result + ' ').indexOf(check) > -1 :
-        operator === '|=' ? result === check || result.slice(0, check.length + 1) === check + '-' :
-        false;
-    };
-  },
-
+var specialFilters = {
   'nth': function (type, what, argument, first, last) {
     var simple = type.slice(0, 3) !== 'nth',
       forward = type.slice(-4) !== 'last',
@@ -1772,6 +1454,64 @@ Jiesa.filters2 = {
     return fn;
   }
 };
+
+function filterAttr(elem, args) {
+  var attr = args[0],
+    operator = args[1],
+    value = args[2];
+
+  var result = getAttribute(elem, attr);
+
+  if (result === null) {
+    return operator === '!=';
+  }
+
+  if (!operator) {
+    return true;
+  }
+
+  result += '';
+
+  /**
+   * Special attribute - Regex Attribute Selector
+   * It gives the ability to match attributes with a regexp.
+   *
+   *  hAzzle('div[id/= [ RegEX ] ')
+   */
+
+  if (value && operator === '/=') {
+
+    var modifiers = value.match(/\s(\w+)$/) || ['', ''];
+    value = value.replace(/\\/g, '\\\\').replace(modifiers[0], '');
+    return RegExp(value, modifiers[1]).test(attr);
+  }
+
+  return value && operator === '==' ? attr === value :
+    operator === '=' ? attr === value :
+    operator === '!=' ? attr !== value :
+    operator === '^=' ? attr.indexOf(value) === 0 :
+    operator === '*=' ? attr.indexOf(value) > -1 :
+    operator === '$=' ? attr.slice(-value.length) === value :
+    operator === '~=' ? (' ' + attr + ' ').indexOf(value) > -1 :
+    operator === '|=' ? attr === value || attr.slice(0, value.length + 1) === value + '-' :
+    false;
+}
+
+function getItemSelector(type, args) {
+  if (hAzzle.isFunction(specialFilters[type])) {
+    return specialFilters[type].apply(null, args);
+  }
+
+  return (function (type, args) {
+    return function (elem) {
+      var filter = type === 'attr' ? filterAttr : Jiesa.filters[type],
+        filterArgs = [elem];
+      push.apply(filterArgs, args);
+      return filter.apply(null, filterArgs);
+    };
+  }(type, args));
+
+}
 
 hAzzle.tokenize = tokenize;
 hAzzle.parse = parse;
