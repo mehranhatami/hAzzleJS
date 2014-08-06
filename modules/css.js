@@ -3,6 +3,7 @@ var
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
+	rotskew = /^(rotate|skew)/i,
     leftrightRegex = /Left|Right/,
 
 
@@ -83,6 +84,18 @@ hAzzle.extend({
 });
 
 hAzzle.extend({
+	
+	getUnitType: function(prop) {
+    if (rotskew.test(prop)) {
+        return 'deg';
+    } else if (hAzzle.inArray(excludedProps, prop) >= 0) {
+        // Unitless properties
+        return '';
+    } else {
+       // Return px as default
+        return 'px';
+    }
+  },
 
     prefixCheck: function(prop) {
 
