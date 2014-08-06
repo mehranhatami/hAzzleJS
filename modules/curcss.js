@@ -3,30 +3,30 @@ var topribol = /^(top|right|bottom|left)$/i,
     topleft = /top|left/i,
 
     getStyles = function(elem) {
-        if (elem.ownerDocument.defaultView.opener) {
-            return elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+
+        var computed;
+
+        // We save the computedStyle on the object to avoid stressing the DOM
+
+        if (hAzzle.data(elem, 'curCSS') === undefined) {
+
+            var view = elem.ownerDocument.defaultView;
+            computed = hAzzle.data(elem, 'curCSS', hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
+                window.getComputedStyle(elem, null)) : elem.style);
+
+            // If computedStyle is cached, use it.
+
+        } else {
+
+            computed = hAzzle.data(elem, 'curCSS');
         }
 
-        return window.getComputedStyle(elem, null);
+        return computed;
     },
 
     curCSS = hAzzle.curCSS = function(elem, prop, computed) {
 
-        if (!computed) {
-
-            // We save the computedStyle on the object to avoid stressing the DOM
-
-            if (hAzzle.data(elem, 'curCSS') === undefined) {
-
-                computed = hAzzle.data(elem, 'curCSS', getStyles(elem));
-
-                // If computedStyle is cached, use it.
-
-            } else {
-
-                computed = hAzzle.data(elem, 'curCSS');
-            }
-        }
+        computed = computed || getStyles(elem);
 
         if (prop === 'height' && computed.getPropertyValue(elem, 'boxSizing').toLowerCase() !== 'border-box') {
 
@@ -60,6 +60,10 @@ var topribol = /^(top|right|bottom|left)$/i,
             var position = hAzzle.css(elem, 'position');
 
             if (position === 'fixed' || (position === 'absolute' && topleft.test(prop))) {
+
+                // hAzzle strips the pixel unit from its returned values; we re-add it here 
+                // to conform with computePropertyValue's behavior.
+
                 computed = hAzzle(elem).position()[prop] + 'px';
             }
 
@@ -68,7 +72,7 @@ var topribol = /^(top|right|bottom|left)$/i,
             computed = computed[prop];
         }
 
-        return computed //.getPropertyValue(prop);
+        return computed;
     };
 
 hAzzle.each(['Width', 'Height'], function(prop) {
@@ -80,5 +84,5 @@ hAzzle.each(['Width', 'Height'], function(prop) {
                 (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingRight' : 'paddingBottom')) || 0);
         }
         return null;
-    }
+    };
 });
