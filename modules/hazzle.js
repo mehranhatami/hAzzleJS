@@ -185,23 +185,33 @@
         var length = arguments.length,
             source = arguments,
             target = arguments[1],
+            i = 0,
+            k,
             extend = function(target, source) {
 
-                for (var k in source) {
+                for (k in source) {
+
                     source.hasOwnProperty(k) && ((target || Core.prototype)[k] = source[k])
                 }
 
             }
+
+        // Don't do iteration if we can avoid it,
+        // better performance
+
         if (length === 1) {
+
             extend(target, source[0]);
+
         } else {
+
             source = arguments[0];
-            for (index = 0; index < length; index++) {
-                extend(target, arguments[index]);
+
+            for (; i < length; i++) {
+
+                extend(target, arguments[i]);
             }
         }
-
-        //extend(target, o);
     }
 
     hAzzle.extend({
@@ -658,13 +668,6 @@
         natives['[object ' + nl[i] + ']'] = nl[i].toLowerCase();
     }
 
-
-    /**
-     * element.hasOwnProperty won't work in IE6/7/8
-     */
-    hasOwnProperty = function(target, property) {
-        return Object.prototype.hasOwnProperty.call(target, property);
-    };
     // Expose hAzzle to the global object
 
     if (typeof noGlobal === 'undefined') {
