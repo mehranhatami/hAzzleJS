@@ -11,7 +11,6 @@
  * - remove
  * - matches
  */
- 
 (function(window) {
 
     'use strict';
@@ -81,10 +80,10 @@
             'matches', (
                 ElementPrototype.matchesSelector ||
                 ElementPrototype.webkitMatchesSelector ||
-            //    ElementPrototype.khtmlMatchesSelector ||
+                //    ElementPrototype.khtmlMatchesSelector ||
                 ElementPrototype.mozMatchesSelector ||
                 ElementPrototype.msMatchesSelector ||
-            //    ElementPrototype.oMatchesSelector ||
+                //    ElementPrototype.oMatchesSelector ||
                 function matches(selector) {
                     var parentNode = this.parentNode;
                     return !!parentNode && -1 < indexOf.call(
@@ -108,17 +107,17 @@
     }
 
     /* ============================ UTILITY METHODS =========================== */
-    
-	// Create TextNode if string, else
+
+    // Create TextNode if string, else
     // return the node untouched
 
     function stringNode(node) {
         return typeof node === 'string' ?
             window.document.createTextNode(node) : node;
     }
-    
-	// Apply the node to the fragment
-	
+
+    // Apply the node to the fragment
+
     function applyToFragment(nodes) {
 
         var fragment = window.document.createDocumentFragment(),
@@ -133,7 +132,10 @@
 
         for (; i < l; i++) {
 
-            fragment.appendChild(stringNode(container[i]));
+            try {
+                fragment.appendChild(stringNode(container[i]));
+            } catch (e) {}
+
         }
 
         return fragment;
