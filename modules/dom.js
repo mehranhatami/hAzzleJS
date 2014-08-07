@@ -145,7 +145,6 @@ hAzzle.extend({
     },
 
     toArray: function() {
-
         return slice.call(this);
     },
 
@@ -157,14 +156,17 @@ hAzzle.extend({
      *
      */
 
-    get: function(num) {
-        return num !== null ?
+    get: function(index) {
+        var result;
+        if (index === undefined) {
+            result = slice.call(this, 0);
+        } else if (index < 0) {
+            result = this[this.length + index];
+        } else {
+            result = this[index];
+        }
 
-            // Return just the one element from the set
-            (num < 0 ? this[num + this.length] : this[num]) :
-
-            // Return all the elements in a clean array
-            slice.call(this);
+        return result;
     },
 
     /**
@@ -497,7 +499,7 @@ hAzzle.forOwn({
      */
 
     next: function(elem) {
-        return elem.nextElementSibling;
+        return elem && elem.nextElementSibling;
     },
 
     /**
@@ -510,7 +512,7 @@ hAzzle.forOwn({
      */
 
     prev: function(elem) {
-        return elem.previousElementSibling;
+        return elem && elem.previousElementSibling;
     },
 
     /**
@@ -629,7 +631,6 @@ function isnot(els, selector, not) {
             return (indexOf.call(selector, elem) >= 0) !== not;
         });
 }
-
 
 hAzzle.each(['children', 'contents', 'next prev'], function(prop) {
     specials[prop] = true;
