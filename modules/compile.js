@@ -1,4 +1,4 @@
-/**
+tokenize/**
  * compile.js
  *
  * Include:
@@ -1513,5 +1513,5 @@ function getItemSelector(type, args) {
 
 }
 
-hAzzle.tokenize = tokenize;
-hAzzle.parse = parse;
+Jiesa.tokenize = tokenize;
+Jiesa.parse = parse;
