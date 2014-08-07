@@ -52,59 +52,6 @@ var
 hAzzle.extend({
 
     /**
-     * Get the current computed dimension for the first element in the set of matched
-     * elements or set the dimension of every matched element.
-     * @param {String} type
-     * @param {Object} options
-     *
-     * @returns {Object|hAzzle}
-     */
-    dimension: function(type, options) {
-        var target = (type === 'content' && options === undefined) ? this.first() : this[0];
-        type = type || 'content';
-        switch (type) {
-            case 'content': // content, read and write
-                if (options === undefined) {
-                    return {
-                        width: parseInt(target.style('width')),
-                        height: parseInt(target.style('height'))
-                    };
-                } else {
-                    this.each(function(element) {
-                        if (options.width !== undefined) {
-                            element.style.width = options.width + 'px';
-                        }
-                        if (options.height !== undefined) {
-                            element.style.height = options.height + 'px';
-                        }
-                    });
-                    return this;
-                }
-                break;
-            case 'client': // content + padding, read only
-                return {
-                    width: target.clientWidth,
-                    height: target.clientHeight
-                };
-                break;
-            case 'offset': // content + padding + scrollbar (if visible) + border, read only
-                return {
-                    width: target.offsetWidth,
-                    height: target.offsetHeight
-                };
-                break;
-            case 'scroll': // The total dimensions of the content if there were no scrollbars present, read only
-                return {
-                    width: target.scrollWidth,
-                    height: target.scrollHeight
-                };
-                break;
-            default:
-                throw new SyntaxError('Invalid argument for .dimension(type[, options]).');
-                break;
-        }
-    },
-    /**
      * Set / get CSS style
      *
      * @param {Object|string} property
