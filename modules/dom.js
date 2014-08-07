@@ -141,7 +141,11 @@ hAzzle.extend({
 
     /**
      * Reduce the set of matched elements to a subset specified by a range of indices.
-     */
+     *
+	 * @param {Integer} start
+	 * @param {Integer} end
+	 * @returns {hAzzle}
+	 */
 
     slice: function() {
 
@@ -179,18 +183,24 @@ hAzzle.extend({
         return slice.call(this);
     },
 
-    // Get the Nth element in the matched element set OR
-    // Get the whole matched element set as a clean array
+    /**
+	 * Retrieve the DOM elements matched by the hAzzle object as an array.
+	 *
+	 * @param {Integer} index
+	 * @return {hAzzle|Array}
+	 *
+	 */
 
-    get: function(num) {
-
-        return num ?
-
-            // Return just the one element from the set
-            (this[num < 0 ? (this.length + num) : num]) :
-
-            // Return all the elements in a clean array
-            slice.call(this);
+    get: function(index) {
+       var result;
+			if (index === undefined) {
+				result = slice.call(this, 0);
+			} else if (index < 0) {
+				result = this[this.length + index];
+			} else {
+				result = this[index];
+			}
+			return result;
     },
 
     /**

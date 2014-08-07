@@ -15,7 +15,8 @@ hAzzle.extend({
         if (arguments.length) {
 
             return obj === undefined ?
-                this : this.each(function(el, i) {
+                this :
+                this.each(function(el, i) {
                     xy(el, obj, i);
                 });
         }
@@ -53,16 +54,24 @@ hAzzle.extend({
         }
     },
 
-    offsetParent: function() {
-        return hAzzle(this.map(function(el) {
-            var offsetParent = el.offsetParent || docElem;
-            if (offsetParent) {
-                while ((!hAzzle.nodeName(offsetParent, 'html') && hAzzle.css(offsetParent, 'position') === 'static')) {
-                    offsetParent = offsetParent.offsetParent || docElem;
-                }
+    /**
+     * Get the closest ancestor element that is positioned.
+     *
+     * @returns {hAzzle}
+     */
+
+    offsetParent: function(selector) {
+
+        return this.map(function() {
+            var offsetParent = this.offsetParent || docElem;
+
+            while (offsetParent && (!hAzzle.nodeName(offsetParent, 'html') &&
+                hAzzle.css(offsetParent, 'position') === 'static')) {
+                offsetParent = offsetParent.offsetParent;
             }
-            return offsetParent;
-        }));
+
+            return offsetParent || docElem;
+        });
     }
 });
 
@@ -88,8 +97,8 @@ function xy(elem, ops, i) {
 
     curOffset = curElem.offset();
 
-    curCSSTop = hAzzle.curCSS(elem, 'top');
-    curCSSLeft = hAzzle.curCSS(elem, 'left');
+    curCSSTop = hAzzle.css(elem, 'top');
+    curCSSLeft = hAzzle.css(elem, 'left');
 
     calculatePosition = (position === 'absolute' || position === 'fixed') &&
         (curCSSTop + curCSSLeft).indexOf('auto') > -1;
@@ -127,10 +136,10 @@ function xy(elem, ops, i) {
 // scrollTop and scrollLeft functions
 
 hAzzle.each({
-    scrollLeft: "pageXOffset",
-    scrollTop: "pageYOffset"
+    scrollLeft: 'pageXOffset',
+    scrollTop: 'pageYOffset'
 }, function(prop, method) {
-    var top = "pageYOffset" === prop;
+    var top = 'pageYOffset' === prop;
 
     hAzzle.Core[method] = function(val) {
         return hAzzle.setter(this, function(elem, method, val) {

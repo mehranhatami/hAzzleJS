@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.8a RC3
+ * Version: 0.9.8b RC3
  * Released under the MIT License.
  *
- * Date: 2014-08-05
+ * Date: 2014-08-08
  */
 (function(global, factory) {
 
@@ -55,10 +55,9 @@
 
         i = nl.length,
 
-        // Left and right whitespace regexp for hAzzle.trim()
+        // Whitespace regexp for hAzzle.trim()
 
-        trwl = /^\s\s*/,
-        trwr = /\s\s*$/,
+        trwl = /^\s+|\s+$/g,
 
         // Define a local copy of hAzzle
 
@@ -153,13 +152,13 @@
         },
 
         /**
-         * @param {function} callback
-         * @param {Object} args
+         * @param {Function} callback
+         * @param {Boolean} reverse
          * @return {hAzzle}
          */
 
-        each: function(callback, args) {
-            return hAzzle.each(this, callback, args);
+        each: function(callback, reverse) {
+            return hAzzle.each(this, callback, reverse);
         },
 
         /**
@@ -234,53 +233,66 @@
          * @return {hAzzle}
          */
 
-        each: function(obj, callback, context) {
+        each: function(collection, callback, reverse) {
 
             var i = 0,
-                l = obj.length;
+                l = collection.length,
+                element = null;
 
             // Iterate through array	
 
-            if (isArraylike(obj)) {
+            if (isArraylike(collection)) {
 
-                for (; i < l; i++) {
-                    if (callback.call(obj[i], obj[i], i) === false) {
-                        break;
+                if (reverse) {
+                    for (i = collection.length - 1; i >= 0; i--) {
+                        element = collection[i];
+                        if (callback.call(element, element, i) === false) {
+                            break;
+                        }
+                    }
+                } else {
+
+                    for (; i < l; i++) {
+                        element = collection[i];
+                        if (callback.call(element, element, i) === false) {
+                            break;
+                        }
                     }
                 }
 
                 // Iterate through functions
 
-            } else if (typeof obj === 'function') {
+            } else if (typeof collection === 'function') {
 
-                for (i in obj) {
+                for (i in collection) {
 
                     if (i != 'prototype' && i != 'length' &&
-                        i != 'name' && (!obj.hasOwnProperty ||
-                            obj.hasOwnProperty(i))) {
-
-                        if (callback.call(context, obj[i], i) === false) {
+                        i != 'name' && (!collection.hasOwnProperty ||
+                            collection.hasOwnProperty(i))) {
+                        element = collection[i];
+                        if (callback.call(element, element, i) === false) {
 
                             break;
                         }
                     }
                 }
 
-                // Iterate through objects
-
+                // Iterate through 
             } else {
 
-                for (i in obj) {
-                    if (obj.hasOwnProperty(i)) {
-                        if (callback.call(context, obj[i], i) === false) {
+                for (i in collection) {
+                    if (collection.hasOwnProperty(i)) {
+                        element = collection[i];
+                        if (callback.call(element, element, i) === false) {
                             break;
                         }
                     }
                 }
 
             }
-            return obj;
+            return collection;
         },
+
 
         // Convert camelCase to  CSS-style
         // e.g. boxSizing -> box-sizing
@@ -595,12 +607,12 @@
     hAzzle.trim = (function() {
 
         if (!String.prototype.trim) {
-            return function(value) {
-                return typeof value === 'string' ? value.replace(trwl, '').replace(trwr, '') : value;
+            return function(str) {
+                return str.replace(trwl, '');
             };
         }
-        return function(value) {
-            return typeof value === 'string' ? value.trim() : value;
+        return function(str) {
+            return typeof str === 'string' ? str.trim() : str;
         };
     })();
 

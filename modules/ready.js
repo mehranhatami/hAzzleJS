@@ -1,52 +1,52 @@
-// Dom ready
-// The ready event handler
-var win = this,
-    doc = win.document,
-    hack = doc.documentElement.doScroll,
-    // hack for IE9+
-    loaded = (hack ? /^loaded|^c/ : /^loaded|^i|^c/).test(doc.readyState);
+hAzzle.extend({
 
-hAzzle.domReady = {
-    callbacks: [],
-    loaded: false,
-    listen: function () {
+    // Static property indicating whether DOM is ready.
 
-        if (!loaded) {
+    isReady: false,
 
-            // Use the handy event callback
-            doc.addEventListener("DOMContentLoaded", hAzzle.domReady.run, false); //the browsers that play nice.
-            // A fallback to window.onload, that will always work
-            win.addEventListener("load", hAzzle.domReady.run, false);
+    // List of functions to be executed after DOM is ready.
+
+    readyList: [],
+
+    /**
+     * Specify a function to execute when the DOM is fully loaded.
+     *
+     * @param {Function} callback
+     */
+
+    ready: function(callback) {
+        // Handler
+        var readyHandler = function() {
+            if (!hAzzle.isReady) {
+                hAzzle.isReady = true;
+                hAzzle.ready = function(callback) {
+                    return callback(hAzzle);
+                };
+                hAzzle.each(hAzzle.readyList, function(callback) {
+                    // Remove the handlers
+                    document.removeEventListener('DOMContentLoaded', readyHandler, false);
+                    window.removeEventListener('load', readyHandler, false);
+                    // Execute the callback
+                    callback(hAzzle);
+                });
+                hAzzle.readyList = []; // Clear the ready list
+            }
+        };
+        // Catch cases where hAzzle.ready() is called after the browser event has already occurred.
+        if (document.readyState === 'complete') {
+            readyHandler();
+        } else {
+            if (document.addEventListener) { // Standards-based browsers support DOMContentLoaded
+                // Use the handy event callback
+                document.addEventListener('DOMContentLoaded', readyHandler, false);
+                // A fallback to window.onload, that will always work
+                window.addEventListener('load', readyHandler, false);
+            }
+            hAzzle.ready = function(callback) {
+                hAzzle.readyList.push(callback);
+            };
+            return hAzzle.ready(callback);
         }
     },
 
-    run: function (forceRun) {
-
-        if (!forceRun && hAzzle.loaded) {
-            return;
-        }
-
-        hAzzle.each(hAzzle.domReady.callbacks, function (fn) {
-
-            fn.call(this, doc, hAzzle);
-
-            hAzzle.domReady.loaded = true;
-
-            doc.removeEventListener('DOMContentLoaded', hAzzle.domReady.run, false);
-            win.removeEventListener("load", hAzzle.domReady.run, false);
-        });
-    },
-
-    add: function (fn) {
-
-        if (typeof fn !== "function") {
-            hAzzle.error("Couldn't load your Javascript code");
-            return;
-        }
-
-        if (hAzzle.domReady.callbacks.push(fn) === 1) {
-
-            hAzzle.domReady.listen();
-        }
-    }
-};
+}, hAzzle);
