@@ -1,5 +1,4 @@
 // hAzzle feature detection
-var doc = document;
 
 var _hfs = hAzzle.features = {
 
@@ -22,7 +21,8 @@ function addFeature(name, fn) {
 /* ============================ BUG / FEATURE DETECTION =========================== */
 
 (function () {
-  var input = doc.createElement('input'),
+  var doc = document,
+    input = doc.createElement('input'),
     select = doc.createElement('select'),
     opt = select.appendChild(doc.createElement('option'));
 
