@@ -5,9 +5,9 @@ var documentIsHTML = hAzzle.documentIsHTML,
     quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
     ntapi = {},
     matches = Jiesa.has['api-mS'] ? function(node, selector) {
-		// 'matches' standard in DOM Level 4 and replacement for
-		// matchesselector
-        return !Jiesa.has['bug-mS'] ? node.matches(selector) : hAzzle.find();
+        // 'matches' standard in DOM Level 4 and replacement for
+        // matchesselector
+        return !Jiesa.has['bug-mS'] && typeof node === 'function' ? node.matches(selector) : hAzzle.find();
     } : hAzzle.find();
 
 
@@ -90,13 +90,14 @@ function findAMatchMehran(elem, m) {
     if (m[1]) m[1] = m[1].toLowerCase();
     if (m[3]) m[3] = m[3].split("=");
     if (m[4]) m[4] = " " + m[4] + " ";
-
-    return (
-        (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
-        (!m[2] || elem.id === m[2]) &&
-        (!m[3] || (m[3][1] ? elem.getAttribute(m[3][0]) === m[3][1] : elem.hasAttribute(m[3][0]))) &&
-        (!m[4] || (' ' + elem.className + ' ').indexOf(m[4]) >= 0)
-    );
+    if (elem && elem.nodeName) {
+        return (
+            (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
+            (!m[2] || elem.id === m[2]) &&
+            (!m[3] || (m[3][1] ? elem.getAttribute(m[3][0]) === m[3][1] : elem.hasAttribute(m[3][0]))) &&
+            (!m[4] || (' ' + elem.className + ' ').indexOf(m[4]) >= 0)
+        );
+    }
 }
 
 /* ============================ INTERNAL =========================== */

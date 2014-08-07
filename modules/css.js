@@ -230,12 +230,15 @@ hAzzle.extend({
 
     style: function(elem, name, value, extra) {
 
+        if (!elem) {
+            return;
+        }
+
         var ret, type, hooks, origName,
             style, nType = elem.nodeType;
 
-
         // Don't set styles on text and comment nodes
-        if (!elem || nType === 3 || nType === 8 || !elem.style) {
+        if (nType === 3 || nType === 8 || !elem.style) {
             return;
         }
 
@@ -306,6 +309,7 @@ hAzzle.extend({
             // Otherwise just get the value from the style object
             return style[name];
         }
+
     }
 }, hAzzle);
 

@@ -82,7 +82,7 @@ hAzzle.extend({
             // existing, and no XML doc - use QSA. If not, fallback
             // to the internal selector engine 
 
-    
+/*    
 
         var old = true,
           nid = expando;
@@ -128,13 +128,13 @@ hAzzle.extend({
 
             context.removeAttribute("id");
           }
-        }
+        }*/
       }
       
        
 	    // Run the parser
 
-        return hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context));
+        return selector ? hAzzle.merge(results, Jiesa.parse(selector.replace(rtrim, "$1"), context)) : [];
     },
 
     /**
