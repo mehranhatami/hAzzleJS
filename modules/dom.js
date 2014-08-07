@@ -16,33 +16,7 @@ var
 
     parpreunall = /^(?:parents|prev(?:Until|All))/,
 
-    specials = {},
-
-    /**
-     * Optimized map method for selector filtering
-     *
-     * @param {Array} arr
-     * @param {Function} fn
-     * @param {String} scope
-     * @param {hAzzle}
-     *
-     */
-    map = function(arr, fn, scope) {
-        var value,
-            i = arr.length,
-            ret = [];
-
-        while (i--) {
-
-            value = fn(arr[i], i, scope);
-
-            if (value !== null) {
-                ret.push(value);
-            }
-        }
-        // Flatten any nested arrays
-        return concat.apply([], ret);
-    };
+    specials = {};
 
 hAzzle.extend({
 
@@ -55,12 +29,6 @@ hAzzle.extend({
     empty: function() {
         this.length = 0;
         return this;
-    },
-
-    pluck: function(property) {
-        return hAzzle.map(this, function(el) {
-            return el[property];
-        });
     },
 
     /**
@@ -142,10 +110,9 @@ hAzzle.extend({
     /**
      * Reduce the set of matched elements to a subset specified by a range of indices.
      *
-	 * @param {Integer} start
-	 * @param {Integer} end
-	 * @returns {hAzzle}
-	 */
+     * @param {Integer} start
+     * @param {Integer} end
+     */
 
     slice: function() {
 
@@ -158,24 +125,23 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    eq: function(index) {
+    eq: function(i) {
 
-        index = +index;
+        i = +i;
 
         // Use the first identity optimization if possible
 
-        if (index === 0 && this.length <= index) {
+        if (i === 0 && this.length <= i) {
 
             return this;
         }
 
-        if (index < 0) {
+        if (i < 0) {
 
-            index = this.length + index;
+            i = this.length + i;
         }
 
-        return this[index] ? hAzzle(this[index]) : hAzzle([]);
-
+        return hAzzle(this[i] ? this[i] : []);
     },
 
     toArray: function() {
@@ -184,23 +150,21 @@ hAzzle.extend({
     },
 
     /**
-	 * Retrieve the DOM elements matched by the hAzzle object as an array.
-	 *
-	 * @param {Integer} index
-	 * @return {hAzzle|Array}
-	 *
-	 */
+     * Retrieve the DOM elements matched by the hAzzle object as an array.
+     *
+     * @param {Integer} index
+     * @return {hAzzle|Array}
+     *
+     */
 
-    get: function(index) {
-       var result;
-			if (index === undefined) {
-				result = slice.call(this, 0);
-			} else if (index < 0) {
-				result = this[this.length + index];
-			} else {
-				result = this[index];
-			}
-			return result;
+    get: function(num) {
+        return num !== null ?
+
+            // Return just the one element from the set
+            (num < 0 ? this[num + this.length] : this[num]) :
+
+            // Return all the elements in a clean array
+            slice.call(this);
     },
 
     /**
@@ -618,7 +582,7 @@ hAzzle.forOwn({
 
     hAzzle.Core[name] = function(until, selector) {
 
-        var matched = map(this, fn, until);
+        var matched = hAzzle.map(this, fn, until);
 
         if (name.slice(-5) !== 'Until') {
             selector = until;

@@ -167,13 +167,10 @@
          * @return {Array}
          */
 
-        map: function(callback, rev) {
+        map: function(callback) {
             var res = hAzzle(hAzzle.map(this, function(elem, i) {
                 return callback.call(elem, i, elem);
             }));
-
-            // Return reverse, or normal order
-            return rev ? res.reverse() : res;
         }
     };
 
@@ -185,8 +182,7 @@
         var length = arguments.length,
             source = arguments,
             target = arguments[1],
-            i = 0,
-            k,
+            i = 0, k,
             extend = function(target, source) {
 
                 for (k in source) {
@@ -613,12 +609,12 @@
     }, hAzzle);
 
     /**
-     * Remove empty whitespace from beginning and end of a string
+     * Remove leading and trailing whitespaces of the specified string.
      *
      * @param{String} str
      * @return{String}
      *
-     * String.prototype.trim() are only supported in IE9+ Standard mode.
+     * NOTE! String.prototype.trim() are only supported in IE9+ Standard mode.
      */
 
     hAzzle.trim = (function() {
