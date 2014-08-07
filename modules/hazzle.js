@@ -67,7 +67,7 @@
             // function
 
             return typeof selector === 'function' ?
-                hAzzle.domReady.add(selector) :
+                hAzzle.ready(selector) :
                 new Core(selector, context);
         };
 
@@ -182,20 +182,27 @@
      */
 
     hAzzle.extend = function() {
-        var destination = arguments[0],
-            source = arguments[1],
-            property;
-        for (property in destination) {
-            // Objects only
-            if (destination[property] && destination[property].constructor && typeof destination[property] === 'object') {
-                (source || Core.prototype)[property] = destination[property] || {};
-            } else {
-                if (destination.hasOwnProperty(property)) {
-                    (source || Core.prototype)[property] = destination[property];
+        var length = arguments.length,
+            source = arguments,
+            target = arguments[1],
+            extend = function(target, source) {
+
+                for (var k in source) {
+                    source.hasOwnProperty(k) && ((target || Core.prototype)[k] = source[k])
                 }
+
+            }
+        if (length === 1) {
+            extend(target, source[0]);
+        } else {
+            source = arguments[0];
+            for (index = 0; index < length; index++) {
+                extend(target, arguments[index]);
             }
         }
-    };
+
+        //extend(target, o);
+    }
 
     hAzzle.extend({
 
@@ -651,6 +658,13 @@
         natives['[object ' + nl[i] + ']'] = nl[i].toLowerCase();
     }
 
+
+    /**
+     * element.hasOwnProperty won't work in IE6/7/8
+     */
+    hasOwnProperty = function(target, property) {
+        return Object.prototype.hasOwnProperty.call(target, property);
+    };
     // Expose hAzzle to the global object
 
     if (typeof noGlobal === 'undefined') {
