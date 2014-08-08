@@ -27,7 +27,7 @@ Basicly - hAzzle supports all the new features on the marked that has been there
 - remove
 - matches
 
-Note! As of august 8 - 2014 hAzzle are more or less stable and can be used in production. Only remaining is the selector engine that is full of bugs. But Im not the one who develop the selector engine. - Kenny F.
+Note! As of august 8 - 2014 hAzzle are more or less stable and can be used in production.
 
 Browser compatiblity
 --------------------
