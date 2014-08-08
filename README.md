@@ -1,4 +1,4 @@
-hAzzleJS v. 0.9.7b RC2
+hAzzleJS v. 0.9.8c RC3
 ======
 
 [![Build Status](https://travis-ci.org/hazzlejs/hAzzleJS.svg?branch=master)](https://travis-ci.org/hazzlejs/hAzzleJS) [![Code Climate](https://codeclimate.com/github/hazzlejs/hAzzleJS.png)](https://codeclimate.com/github/hazzlejs/hAzzleJS) [![Coverage Status](https://coveralls.io/repos/mehranhatami/hAzzleJS/badge.png?branch=master)](https://coveralls.io/r/mehranhatami/hAzzleJS?branch=master)
@@ -27,6 +27,7 @@ Basicly - hAzzle supports all the new features on the marked that has been there
 - remove
 - matches
 
+Note! As of august 8 - 2014 hAzzle are more or less stable and can be used in production. Only remaining is the selector engine that is full of bugs. But Im not the one who develop the selector engine. - Kenny F.
 
 Browser compatiblity
 --------------------
