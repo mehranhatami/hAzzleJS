@@ -66,11 +66,6 @@ if (!nRAF && !nCAF) {
     };
 }
 
-// Overwrite default window.rAF and window.cAF
-
-win.requestAnimationFrame = nRAF;
-win.cancelAnimationFrame = nCAF;
-
 // rAF Core settings
 
 var rAF = {
@@ -117,9 +112,12 @@ hAzzle.requestFrame = function (callback) {
 
     // Call original rAF with wrapped callback
 
-    return win.requestAnimationFrame(rafCallback);
+    return nRAF(rafCallback);
 };
 
+hAzzle.cancelFrame = function(){
+    return cRAF.apply(window, arguments)
+  },
 // Expose to the globale hAzzle Object
 
 hAzzle.rAF = rAF;
