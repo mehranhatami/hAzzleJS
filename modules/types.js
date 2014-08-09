@@ -100,7 +100,17 @@ hAzzle.extend({
         return elem == 'null';
     },
 
-    isNodeList: function(obj) {
+    isNode: function(elem){
+     return !!elem && typeof elem == 'object' && 'nodeType' in elem;
+   },
+    isText: function(elem){
+         return elem && elem.nodeType === 3;
+   },
+    isFragment: function(elem){
+         return elem && elem.nodeType === 11;
+   },
+
+	isNodeList: function(obj) {
         return obj && hAzzle.is([
             'nodelist',
             'htmlcollection',
