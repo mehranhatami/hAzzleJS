@@ -110,7 +110,7 @@ if ('Element' in window) {
     }
 }
 
-var Expr = hAzzle.Expr = {
+var Expr = {
 
         /* ============================ INTERNAL =========================== */
 
@@ -789,3 +789,7 @@ transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr
 transformers.scoped = transformers.scope = function() {
     return scope;
 };
+
+// Expose
+
+hAzzle.Expr = Expr;
