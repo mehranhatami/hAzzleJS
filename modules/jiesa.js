@@ -273,8 +273,9 @@ var Expr = {
         // Set context
 
         ctx = context || document;
+		
         results = results || [];
-
+		
         if (hAzzle.documentIsHTML) {
 
             // Do a quick look-up         
@@ -285,10 +286,10 @@ var Expr = {
                     if (ctx.nodeType === 9) {
                         elem = ctx.getElementById(m);
                         if (elem && elem.parentNode) {
-                            if (elem.id === m) {
-                                results.push(elem);
-                                return results;
-                            }
+                           if (elem.id === m) {
+                    results.push(elem);
+                    return results;
+                }
                         } else {
                             return results;
                         }
@@ -297,16 +298,16 @@ var Expr = {
                         // ctx is not a document
                         if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(m)) &&
                             hAzzle.contains(ctx, elem) && elem.id === m) {
-                            results.push(elem);
-                            return results;
+                results.push(elem);
+                return results;
                         }
                     }
                 } else if (match[2]) {
-                    push.apply(results, context.getElementsByTagName(selector));
-                    return results;
+			         push.apply(results, ctx.getElementsByTagName(selector));
+                     return results;
                 } else if ((m = match[3])) {
-                    push.apply(results, context.getElementsByClassName(m));
-                    return results;
+					 push.apply(results, ctx.getElementsByClassName(m));
+                     return results;
                 }
             }
         }
