@@ -235,8 +235,6 @@ var Expr = {
         return a.pathname;
     }()),
 
-    // kenRa - hAzzle find
-
     /*
      * kenRa
      *
@@ -257,13 +255,13 @@ var Expr = {
 
     KenRa = function(selector, context, arrfunc) {
 
-        if (typeof selector !== 'string') {
-            return;
-        }
-
-        var ctx, match, results = [],
+        var ctx, found, results = [],
             m, elem,
             isDoc = isDocument(context);
+
+        if (!selector || typeof selector !== 'string') {
+            return results;
+        }
 
         if (!(arrfunc || isDoc || isElement(context))) {
             arrfunc = context;
@@ -271,21 +269,17 @@ var Expr = {
             isDoc = 1;
         }
 
-        // Need for trimming the selector??
-
-        // selector = hAzzle.trim(selector);
-
         // Set context
 
-        context = context || document;
+        context = context.ownerDocument || context;
 
-        if (hAzzle.documentIsHTML) {
+        if (isDoc && hAzzle.documentIsHTML) {
 
             // Do a quick look-up         
 
-            if ((match = rquickExpr.exec(selector))) {
+            if ((found = rquickExpr.exec(selector))) {
 
-                if ((m = match[1])) {
+                if ((m = found[1])) {
                     if (context.nodeType === 9) {
                         elem = context.getElementById(m);
                         if (elem && elem.parentNode) {
@@ -303,18 +297,17 @@ var Expr = {
                             return [elem];
                         }
                     }
-                } else if (match[2]) {
+                } else if (found[2]) {
                     return slice.call(context.getElementsByTagName(selector));
-                } else if ((m = match[3])) {
+                } else if ((m = found[3])) {
                     slice.call(context.getElementsByClassName(m));
                     return results;
                 }
             }
         }
 
-        // A dirty trick here to get it faster - split selectors by comma if it's exists.
         // Comma separated selectors. E.g hAzzle('p, a');
-        // Unique result, e.g "ul id=foo class=foo" should not appear two times.
+        // Unique result, e.g 'ul id=foo class=foo' should not appear two times.
 
         if (hAzzle.inArray(selector, ',') !== -1 && (m = selector.split(','))) {
             var i = 0,
@@ -354,14 +347,22 @@ var Expr = {
         if (b == 'even') {
             a = 2;
             b = 0;
-        } else if (b == 'odd') {
+        } 
+		
+		if (b == 'odd') {
             a = 2;
             b = 1;
-        } else if (a == '+' || a == '-') {
+        }
+		
+		if (a == '+' || a == '-') {
             a += 1;
-        } else if (!a && !n) {
+        }
+		
+		if (!a && !n) {
             a = 0;
-        } else if (!a) {
+        }
+		
+		if (!a) {
             a = 1;
         }
 
@@ -378,7 +379,7 @@ var Expr = {
                 x = startX;
 
             return {
-                next: function() {
+                'next': function() {
 
                     // For positive slopes increment x, otherwise decrement
 
@@ -386,12 +387,15 @@ var Expr = {
 
                 },
                 'reset': function() {
+					
                     x = startX;
                     y = undefined;
                 },
 
                 'matches': function(y) {
+					
                     if (!a) {
+						
                         return y == b;
                     }
                     var x = (y - b) / a;
@@ -430,7 +434,7 @@ var Expr = {
             return;
         }
 
-        var cScope, group, str, n, j, k, match, args, pseudo, filterFn, ctx,
+        var cScope, group, str, n, j, k, found, args, pseudo, filterFn, ctx,
             wholeSelector = '',
             lastMatchCombinator = '*';
 
@@ -457,22 +461,22 @@ var Expr = {
         // Mehran! Find an better solution then try / catch
 
         try {
-            while ((match = compileExpr.regexPattern.exec(selector))) {
+            while ((found = compileExpr.regexPattern.exec(selector))) {
 
-                selector = match[8] || '';
+                selector = found[8] || '';
 
                 // Combinator or comma
 
-                if (match[2]) {
+                if (found[2]) {
 
-                    if (match[2] == ',') {
+                    if (found[2] == ',') {
 
                         wholeSelector = wholeSelector + group + ',';
                         group = cScope;
 
                     } else {
 
-                        group += match[2];
+                        group += found[2];
                     }
 
                     lastMatchCombinator = '*';
@@ -481,9 +485,9 @@ var Expr = {
 
                     // Pseudo
 
-                    if (match[3] && match[0][0] == ':') {
+                    if (found[3] && found[0][0] == ':') {
 
-                        pseudo = match[3];
+                        pseudo = found[3];
 
                         if (pseudo[0] == '{') {
 
@@ -499,7 +503,7 @@ var Expr = {
 
                         if (selector[0] == '(') {
                             // Locate the position of the closing parents
-                            selector = selector.substr(1).trim();
+                            selector = hAzzle.trim(selector.slice(1));
                             // Blank out any escaped characters
                             str = selector.replace(escapeReplace, '  ');
                             n = 1;
@@ -525,7 +529,7 @@ var Expr = {
                                 break;
                             }
 
-                            args = selector.substr(0, j).trim();
+                            args = hAzzle.trim(selector.slice(0, j));
                             selector = selector.substr(j + 1);
                         }
 
@@ -538,7 +542,7 @@ var Expr = {
                             n = rCount++;
                             group += transformers[pseudo].apply(null, [args, attrExpando + n, tCount, pseudo, context, arrfunc]) || "[" + attrExpando + n + "='" + tCount + "']";
                         } else {
-                            group += match[1];
+                            group += found[1];
 
                             if (args) {
                                 group += "(" + args + ")";
@@ -547,18 +551,18 @@ var Expr = {
 
                         args = 0;
 
-                    } else if (match[7] || (match[4] && match[4][0] == '.') || (match[6] && match[6][0] == '{')) {
+                    } else if (found[7] || (found[4] && found[4][0] == '.') || (found[6] && found[6][0] == '{')) {
 
-                        group += filter(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [match[4], match[5], match[6], match[7], arrfunc]);
+                        group += filter(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [found[4], found[5], found[6], found[7], arrfunc]);
 
-                    } else if (match[5] == '!=' ||
-                        match[5] == '!==') {
+                    } else if (found[5] == '!=' ||
+                        found[5] == '!==') {
 
-                        group += ':not([' + match[4] + '=' + match[6] + '])';
+                        group += ':not([' + found[4] + '=' + found[6] + '])';
 
                     } else {
 
-                        group += match[1];
+                        group += found[1];
                     }
 
                     lastMatchCombinator = '';
