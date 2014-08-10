@@ -239,8 +239,14 @@ var Expr = {
             context = document;
             isDoc = 1;
         }
+        
+		// Need for trimming the selector??
 
-        selector = hAzzle.trim(selector);
+        // selector = hAzzle.trim(selector);
+
+        // Set context
+		
+        ctx = context || document;
 
         if (isDoc && hAzzle.documentIsHTML) {
 
@@ -249,8 +255,8 @@ var Expr = {
             if ((match = rquickExpr.exec(selector))) {
 
                 if ((m = match[1])) {
-                    if (context.nodeType === 9) {
-                        elem = context.getElementById(m);
+                    if (ctx.nodeType === 9) {
+                        elem = ctx.getElementById(m);
                         if (elem && elem.parentNode) {
                             if (elem.id === m) {
                                 results.push(elem);
@@ -261,26 +267,22 @@ var Expr = {
                         }
                     } else {
 
-                        // Context is not a document
-                        if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
-                            hAzzle.contains(context, elem) && elem.id === m) {
+                        // ctx is not a document
+                        if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(m)) &&
+                            hAzzle.contains(ctx, elem) && elem.id === m) {
                             results.push(elem);
                             return results;
                         }
                     }
                 } else if (match[2]) {
-                    push.apply(results, context.getElementsByTagName(selector));
+                    push.apply(results, ctx.getElementsByTagName(selector));
                     return results;
                 } else if ((m = match[3])) {
-                    push.apply(results, context.getElementsByClassName(m));
+                    push.apply(results, ctx.getElementsByClassName(m));
                     return results;
                 }
             }
         }
-
-        // Set context
-
-        ctx = context.ownerDocument || context;
 
         // A dirty trick here to get it faster - split selectors by comma if it's exists.
         // Comma separated selectors. E.g hAzzle('p, a');
@@ -302,7 +304,7 @@ var Expr = {
 
         // Everything else
 
-        return slice.call(quickQueryAll(tokenize(selector, context, references), ctx));
+        return slice.call(quickQueryAll(tokenize(selector, ctx, references), ctx));
     },
 
     anb = function(str) {
@@ -623,7 +625,7 @@ var Expr = {
         return o && o.nodeType === 1;
     }
 
-    function  isDocument(o) {
+    function isDocument(o) {
         return o && o.nodeType === 9;
     }
 
