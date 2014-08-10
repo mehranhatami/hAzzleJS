@@ -272,7 +272,7 @@ var Expr = {
 
         // Set context
 
-        ctx = context || document;
+        context = context || document;
 		
         results = results || [];
 		
@@ -283,8 +283,8 @@ var Expr = {
             if ((match = rquickExpr.exec(selector))) {
 
                 if ((m = match[1])) {
-                    if (ctx.nodeType === 9) {
-                        elem = ctx.getElementById(m);
+                    if (context.nodeType === 9) {
+                        elem = context.getElementById(m);
                         if (elem && elem.parentNode) {
                            if (elem.id === m) {
                     results.push(elem);
@@ -295,18 +295,18 @@ var Expr = {
                         }
                     } else {
 
-                        // ctx is not a document
-                        if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(m)) &&
-                            hAzzle.contains(ctx, elem) && elem.id === m) {
+                        // context is not a document
+                        if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
+                            hAzzle.contains(context, elem) && elem.id === m) {
                 results.push(elem);
                 return results;
                         }
                     }
                 } else if (match[2]) {
-			         push.apply(results, ctx.getElementsByTagName(selector));
+			         push.apply(results, context.getElementsByTagName(selector));
                      return results;
                 } else if ((m = match[3])) {
-					 push.apply(results, ctx.getElementsByClassName(m));
+					 push.apply(results, context.getElementsByClassName(m));
                      return results;
                 }
             }
@@ -332,7 +332,7 @@ var Expr = {
 
         // Everything else
 
-        return slice.call(quickQueryAll(tokenize(selector, ctx, arrfunc), ctx));
+        return slice.call(quickQueryAll(tokenize(selector, context, arrfunc), context));
     },
 
     /*
