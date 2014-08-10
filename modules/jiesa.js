@@ -255,10 +255,9 @@ var Expr = {
      *
      */
 
-    KenRa = function(selector, context, arrfunc) {
+    KenRa = function(selector, context, arrfunc, results) {
 
-        var ctx, results = [],
-            match, m, elem,
+        var ctx, match, m, elem,
             isDoc = isDocument(context);
 
         if (!(arrfunc || isDoc || isElement(context))) {
@@ -274,8 +273,9 @@ var Expr = {
         // Set context
 
         ctx = context || document;
+        results = results || [];
 
-        if (isDoc && hAzzle.documentIsHTML) {
+        if (hAzzle.documentIsHTML) {
 
             // Do a quick look-up         
 
@@ -286,23 +286,27 @@ var Expr = {
                         elem = ctx.getElementById(m);
                         if (elem && elem.parentNode) {
                             if (elem.id === m) {
-                                return [elem];
+                                results.push(elem);
+                                return results;
                             }
                         } else {
-                            return [];
+                            return results;
                         }
                     } else {
 
                         // ctx is not a document
                         if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(m)) &&
                             hAzzle.contains(ctx, elem) && elem.id === m) {
-                            return [elem];
+                            results.push(elem);
+                            return results;
                         }
                     }
                 } else if (match[2]) {
-                    return slice.call(ctx.getElementsByTagName(selector));
+                    push.apply(results, context.getElementsByTagName(selector));
+                    return results;
                 } else if ((m = match[3])) {
-                    return slice.call(ctx.getElementsByClassName(m));
+                    push.apply(results, context.getElementsByClassName(m));
+                    return results;
                 }
             }
         }
