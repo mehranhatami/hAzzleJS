@@ -2,7 +2,7 @@
 var wSpace = /\S+/g,
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
-    MultiArgs = hAzzle.MultiArgs;
+    MultiArgs = hAzzle.features['api-MultiArgs'];
 
 hAzzle.extend({
 

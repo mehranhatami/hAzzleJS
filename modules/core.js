@@ -101,25 +101,6 @@ winDoc = hAzzle.setDocument();
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
-// Feature detect if the browser supports MatchesSelector,
-// and check for classList support
-
-hAzzle.assert(function(div) {
-
-    div.classList.add('a', 'b');
-    // Detect if the browser supports classList
-    Jiesa.has['api-classList'] = !!winDoc.documentElement.classList;
-    // Detect if the classList API supports multiple arguments
-    // IE11-- don't support it
-    Jiesa.has['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);
-
-    Jiesa.has['api-mS'] = cnative.test((Jiesa.matches = docElem.matches ||
-        docElem.webkitMatchesSelector ||
-        docElem.mozMatchesSelector ||
-        docElem.oMatchesSelector ||
-        docElem.msMatchesSelector));
-});
-
 // QSA supported, test for bugs
 
 Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function(div) {
@@ -344,13 +325,6 @@ function siblingCheck(a, b) {
 hAzzle.docElem = docElem;
 hAzzle.expando = expando;
 hAzzle.Jiesa = Jiesa;
-
-// Return true/ false if classList are supported
-// This depends of the 'classList shim' are 
-// included in the build or not
-
-hAzzle.classList = Jiesa.has['api-classList'];
-hAzzle.MultiArgs = Jiesa.has['api-MultiArgs'];
 hAzzle.unique = function(results) {
     var elem,
         duplicates = [],
