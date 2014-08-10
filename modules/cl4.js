@@ -1,3 +1,9 @@
+var radicheck = /radio|checkbox/i;
+
+function isForm(elem) {
+    return elem && typeof elem.form !== 'undefined';
+}
+
 // CL4 - required, read-only, read-write, optional
 
 hAzzle.each({
@@ -27,7 +33,7 @@ hAzzle.extend({
 
     // HTML5 UI element states (form controls)
     'DEFAULT': function(elem) {
-        return isForm(elem) && ((compileExpr.radicheck).test(elem.type) ||
+        return isForm(elem) && ((radicheck).test(elem.type) ||
             /option/i.test(elem.nodeName)) && (elem.defaultChecked ||
             elem.defaultSelected);
     },
@@ -54,6 +60,6 @@ hAzzle.extend({
         return false;
     },
     'INDETERMINATE': function(elem) {
-        return isForm(elem) && (compileExpr.radicheck).test(elem.type) && Kenny(':checked', elem.form).length === 0;
+        return isForm(elem) && (radicheck).test(elem.type) && hAzzle.find(':checked', elem.form).length === 0;
     },
 }, hAzzle.Expr);

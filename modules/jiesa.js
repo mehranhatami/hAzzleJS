@@ -27,27 +27,8 @@ var i,
 
     rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
-    // http://www.w3.org/TR/CSS21/syndata.html#value-def-identifier
-
-    identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
-
-    ridentifier = new RegExp("^" + identifier + "$"),
-
-    // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
-
-    runescape = new RegExp("\\\\([\\da-f]{1,6}" + '[\\x20\\t\\r\\n\\f]' + "?|(" + '[\\x20\\t\\r\\n\\f]' + ")|.)", "ig"),
-    funescape = function(_, escaped, escapedWhitespace) {
-        var high = "0x" + escaped - 0x10000;
-        return high !== high || escapedWhitespace ?
-            escaped :
-            high < 0 ?
-            // BMP codepoint
-            String.fromCharCode(high + 0x10000) :
-            // Supplemental Plane codepoint (surrogate pair)
-            String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
-    },
-
     whitespace = '[^\\x00-\\xFF]',
+
     wrapps = '\\\\' + combineRegEx('[\\da-fA-F]{1,6}(?:(?:\\r\\n)|\\s)?', '[^\\n\\r\\f\\da-fA-F]'),
     nl = '\\n|(?:\\r\\n)|\\f',
     firstString = "'(?:[^\\n\\r\\f\\\\']|(?:\\\\" + nl + ")|(?:" + wrapps + "))*'",
@@ -672,10 +653,6 @@ function extend(pseudo, type, fn) {
         return 1;
     }
     return 0;
-}
-
-function isForm(elem) {
-    return elem && typeof elem.form !== 'undefined';
 }
 
 function getAttr(elem, attr) {

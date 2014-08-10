@@ -1,10 +1,28 @@
-
 /* ============================ CL3 SELECTORS =========================== */
+
+var header = /^h\d$/i,
+    inputs = /^(?:input|select|textarea|button)$/i,
+    identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
+
+    ridentifier = new RegExp("^" + identifier + "$"),
+
+    // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
+
+    runescape = new RegExp("\\\\([\\da-f]{1,6}" + '[\\x20\\t\\r\\n\\f]' + "?|(" + '[\\x20\\t\\r\\n\\f]' + ")|.)", "ig"),
+    funescape = function(_, escaped, escapedWhitespace) {
+        var high = "0x" + escaped - 0x10000;
+        return high !== high || escapedWhitespace ?
+            escaped :
+            high < 0 ?
+            // BMP codepoint
+            String.fromCharCode(high + 0x10000) :
+            // Supplemental Plane codepoint (surrogate pair)
+            String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
+    };
 
 // NOTE!! This pseudo selectors are not nativelly supported by
 // QSA, query (DL 4) / queryAll (DL 4), and added here just to
 // keep up with Sizzle
-
 hAzzle.extend({
 
     // Nativelly supported, but buggy
@@ -49,7 +67,7 @@ hAzzle.extend({
     },
 
     'VISIBLE': function(elem) {
-        return !Expr.hidden(elem);
+        return !hAzzle.Expr.HIDDEN(elem);
     },
 
     'TEXT': function(elem) {
@@ -59,17 +77,17 @@ hAzzle.extend({
             ((attr = elem.getAttribute('type')) === null || attr.toLowerCase() === 'text');
     },
     'HEADER': function(elem) {
-        return compileExpr.header.test(elem.nodeName);
+        return header.test(elem.nodeName);
     },
     'BUTTON': function(elem) {
         var name = elem.nodeName.toLowerCase();
         return name === 'input' && elem.type === 'button' || name === 'button';
     },
     'INPUT': function(elem) {
-        return compileExpr.inputs.test(elem.nodeName);
+        return inputs.test(elem.nodeName);
     },
     'PARENT': function(elem) {
-        return !Expr.EMPTY(elem);
+        return !hAzzle.Expr.EMPTY(elem);
     },
     'SELECTED': function(elem) {
         // Accessing this property makes selected-by-default
@@ -105,21 +123,23 @@ hAzzle.extend({
 
 // Add button/input type pseudos
 
-for (i in {
+hAzzle.each({
     RADIO: true,
     CHECKBOX: true,
     FILE: true,
     PASSWORD: true,
     IMAGE: true
-}) {
-    hAzzle.Expr[i] = createInputPseudo(i);
-}
-for (i in {
+}, function(value, prop) {
+    hAzzle.Expr[prop] = createInputPseudo(prop);
+});
+
+hAzzle.each({
     SUBMIT: true,
     RESET: true
-}) {
-    hAzzle.Expr[i] = createButtonPseudo(i);
-}
+}, function(value, prop) {
+    hAzzle.Expr[prop] = createButtonPseudo(prop);
+});
+
 
 /**
  * Returns a function to use in pseudos for input types
