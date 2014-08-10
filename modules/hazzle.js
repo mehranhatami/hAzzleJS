@@ -75,7 +75,7 @@
 
     function Core(selector, context) {
 
-        if (!selector) {
+        if (!selector ) {
             return this;
         }
 
@@ -171,6 +171,9 @@
             var res = hAzzle(hAzzle.map(this, function(elem, i) {
                 return callback.call(elem, i, elem);
             }));
+        },
+        set: function(key, value) {
+            return this[key] = value;
         }
     };
 
@@ -182,7 +185,8 @@
         var length = arguments.length,
             source = arguments,
             target = arguments[1],
-            i = 0, k,
+            i = 0,
+            k,
             extend = function(target, source) {
 
                 for (k in source) {
@@ -247,7 +251,11 @@
          */
 
         each: function(collection, callback, reverse) {
-
+         
+		  if(!collection) { 
+		      return; 
+		 }
+		  
             var i = 0,
                 l = collection.length,
                 element = null;

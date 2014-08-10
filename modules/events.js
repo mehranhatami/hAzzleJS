@@ -129,7 +129,7 @@ var _event = hAzzle.event = {
                 handler: handler,
                 guid: handler.guid,
                 selector: selector,
-                needsContext: selector && hAzzle.Jiesa.regex.changer.test(selector),
+//                needsContext: selector && hAzzle.Jiesa.regex.changer.test(selector),
                 namespace: namespaces.join('.')
             }, objHandler);
 
@@ -366,8 +366,8 @@ var _event = hAzzle.event = {
 
                         if (matches[sel] === undefined) {
 
-                            matches[sel] = handleObj.needsContext ?
-                                hAzzle(sel, this).index(cur) >= 0 :
+                            matches[sel] = //handleObj.needsContext ?
+//                                hAzzle(sel, this).index(cur) >= 0 :
                                 hAzzle.matches(sel, [cur]).length;
                         }
 
@@ -409,8 +409,8 @@ hAzzle.Event = function(src, props) {
         this.isDefaultPrevented = src.defaultPrevented ||
             src.defaultPrevented === undefined &&
             src.returnValue === false ?
-            returnTrue :
-            returnFalse;
+            yesman :
+            noman;
 
     } else {
         this.type = src;
@@ -434,18 +434,18 @@ hAzzle.Event.prototype = {
 
     /* =========================== EVENT PROPAGATION ========================== */
 
-    isDefaultPrevented: returnFalse,
+    isDefaultPrevented: noman,
 
-    isPropagationStopped: returnFalse,
+    isPropagationStopped: noman,
 
-    isImmediatePropagationStopped: returnFalse,
+    isImmediatePropagationStopped: noman,
 
     // Prevent default action
 
     preventDefault: function() {
         var e = this.originalEvent;
 
-        this.isDefaultPrevented = returnTrue;
+        this.isDefaultPrevented = yesman;
 
         if (e && e.preventDefault) {
             e.preventDefault();
@@ -457,7 +457,7 @@ hAzzle.Event.prototype = {
     stopPropagation: function() {
         var e = this.originalEvent;
 
-        this.isPropagationStopped = returnTrue;
+        this.isPropagationStopped = yesman;
 
         if (e && e.stopPropagation) {
             e.stopPropagation();
@@ -466,7 +466,7 @@ hAzzle.Event.prototype = {
     stopImmediatePropagation: function() {
         var e = this.originalEvent;
 
-        this.isImmediatePropagationStopped = returnTrue;
+        this.isImmediatePropagationStopped = yesman;
 
         if (e && e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
@@ -497,11 +497,12 @@ hAzzle.Event.prototype = {
 
 /* ============================ UTILITY METHODS =========================== */
 
-function returnTrue() {
+// how high?
+function yesman() {
     return true;
 }
-
-function returnFalse() {
+// how low?
+function noman() {
     return false;
 }
 
