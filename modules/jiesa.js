@@ -5,7 +5,7 @@ var i,
     push = Array.prototype.push,
     join = Array.prototype.join,
     toString = Function.prototype.toString,
-	
+
     // Holder for querySelector / query (DOM Level 4)
     // Default: querySelector
 
@@ -114,7 +114,12 @@ var Expr = {
             value = value || '';
             var property = attr[0] == '.' ? attr.slice(1) : undefined,
                 result = property ? el[property] : getAttr(el, attr) || '',
-                check = value[0] == '{' ? ref[value.slice(1, -1)] : value.replace(compileExpr.beginEndQuoteReplace, '$2'), // Strip out beginning and ending quotes if present
+
+                // Strip out beginning and ending quotes if present
+
+                check = value[0] == '{' ? ref[value.slice(1, -1)] :
+                value.replace(compileExpr.beginEndQuoteReplace, '$2'),
+
                 regProp = check + '-' + flags,
                 reg = hAzzle.isRegExp(check) ? check : flags.indexOf('r') > -1 ?
                 (regExCache[regProp] || (regExCache[regProp] = new RegExp(check, flags.replace('r', '')))) : undefined;
@@ -139,20 +144,20 @@ var Expr = {
 
         /* ============================ GLOBAL =========================== */
 
-        'CONTAINS': function(el, args, p, references) {
+        'CONTAINS': function(el, args, p, arrfunc) {
             args = compileExpr.containsArg.exec(args);
-            return Expr.attr(el, '.textContent', '*=', args[1], args[2], references);
+            return Expr.attr(el, '.textContent', '*=', args[1], args[2], arrfunc);
         },
 
         // Same as the 'has' pseudo - what is the point?
 
-        'WITH': function(el, args, p, references) {
-            return quickQuery(tokenize(args, el, references), el.ownerDocument);
+        'WITH': function(el, args, p, arrfunc) {
+            return quickQuery(tokenize(args, el, arrfunc), el.ownerDocument);
         },
 
-        'HAS': function(el, args, p, references) {
+        'HAS': function(el, args, p, arrfunc) {
 
-            return quickQuery(tokenize(args, el, references), el.ownerDocument);
+            return quickQuery(tokenize(args, el, arrfunc), el.ownerDocument);
         },
 
         'ANY-LINK': function(el) {
@@ -192,30 +197,37 @@ var Expr = {
             }
         },
 
-        'NOT': function(args, attr, attrValue, p, context, references) {
-            args = filter(KenRa(args, context, references), attr, attrValue, Expr.tru);
+        'NOT': function(args, attr, attrValue, p, context, arrfunc) {
+            args = filter(KenRa(args, context, arrfunc), attr, attrValue, Expr.tru);
             return ':not(' + args + ')';
         },
 
-        'REFERENCED-BY': function(args, attr, attrValue, p, context, references) {
+        'REFERENCED-BY': function(args, attr, attrValue, p, context, arrfunc) {
             var element, refEl,
                 found = compileExpr.referencedByArg.match(args),
                 ctx = context.ownerDocument || context,
                 referenceAttr = found[1],
-                elements = KenRa(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, references),
+                elements = KenRa(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, arrfunc),
                 l = elements.length;
+
             while ((element = elements[--l])) {
-                refEl = grabID(referenceAttr[0] == '.' ? element[referenceAttr.slice(1)] : getAttr(element, referenceAttr), ctx);
+
+                refEl = grabID(referenceAttr[0] == '.' ?
+                    element[referenceAttr.slice(1)] :
+                    getAttr(element, referenceAttr), ctx);
+
                 if (refEl) {
                     refEl.setAttribute(attr, attrValue);
                 }
             }
         },
 
-        'MATCHES': function(args, attr, attrValue, p, context, references) {
-            filter(KenRa(args, context.ownerDocument || context, references), attr, attrValue, Expr.tru);
+        'MATCHES': function(args, attr, attrValue, p, context, arrfunc) {
+            filter(KenRa(args, context.ownerDocument || context, arrfunc), attr, attrValue, Expr.tru);
         }
     },
+
+    // Create a fake path for comparison
 
     fakePath = (function() {
         var a = document.createElement('a');
@@ -223,14 +235,34 @@ var Expr = {
         return a.pathname;
     }()),
 
-    KenRa = function(selector, context, references) {
+    // kenRa - hAzzle find
+
+    /*
+     * kenRa
+     *
+     * @param {String} selector
+     * @param {Array|Object|String} context
+     * @param {Array|Function|Object} arrfunc
+     * @return {Array|hAzzle}
+     *
+     * The 'arrfunc' parameter can be used to create ad-hoc pseudo selectors which behave as filters.
+     * Additionally, some selectors can utilize arrfunc to make element selection even more
+     * powerful (attribute/property selectors, contains).
+     *
+     * 'arrfunc' are defined within an object or an array, and elements within are referenced by their
+     * associated key. Keys can
+     * be any number of character but cannot contain a closing curly brace }.
+     *
+     */
+
+    KenRa = function(selector, context, arrfunc) {
 
         var ctx, results = [],
             match, m, elem,
             isDoc = isDocument(context);
 
-        if (!(references || isDoc || isElement(context))) {
-            references = context;
+        if (!(arrfunc || isDoc || isElement(context))) {
+            arrfunc = context;
             context = document;
             isDoc = 1;
         }
@@ -295,8 +327,16 @@ var Expr = {
 
         // Everything else
 
-        return slice.call(quickQueryAll(tokenize(selector, ctx, references), ctx));
+        return slice.call(quickQueryAll(tokenize(selector, ctx, arrfunc), ctx));
     },
+
+    /*
+     * anb
+     *
+     * @param {String} str
+     * @return {Array|hAzzle}
+     *
+     */
 
     anb = function(str) {
         //remove all spaces and parse the string
@@ -359,7 +399,27 @@ var Expr = {
         }(a - 0, b - 1)); // Convert a and b to a number (if string), subtract 1 from y-intercept (b) for 0-based indices
     },
 
-    tokenize = function(selector, context, references) {
+
+    /*
+     * Tokenize
+     *
+     * @param {String} str
+     * @return {Array|hAzzle}
+     *
+     * The 'tokenize' function, tokenize the queries in the following
+     * order:
+     *
+     * 1 - whole match
+     * 2 - combinator/comma
+     * 3 - class/pseudo
+     * 4 - attribute name
+     * 5 - attribute operator
+     * 6 - attribute value
+     * 7 - attribute flags
+     * 8 - right context
+     *
+     */
+    tokenize = function(selector, context, arrfunc) {
 
         if (!selector) {
             return;
@@ -369,8 +429,8 @@ var Expr = {
             wholeSelector = '',
             lastMatchCombinator = '*';
 
-        if (!(references || isDocument(context) || isElement(context))) {
-            references = context;
+        if (!(arrfunc || isDocument(context) || isElement(context))) {
+            arrfunc = context;
             context = document;
         }
 
@@ -422,7 +482,7 @@ var Expr = {
 
                         if (pseudo[0] == '{') {
 
-                            filterFn = references[pseudo.slice(1, -1)];
+                            filterFn = arrfunc[pseudo.slice(1, -1)];
 
                         } else {
 
@@ -466,12 +526,12 @@ var Expr = {
 
                         if (filterFn) {
 
-                            group = filter(quickQueryAll(group + lastMatchCombinator, ctx), attrExpando + rCount++, tCount, filterFn, [args, pseudo, references]);
+                            group = filter(quickQueryAll(group + lastMatchCombinator, ctx), attrExpando + rCount++, tCount, filterFn, [args, pseudo, arrfunc]);
 
 
                         } else if (transformers[pseudo]) {
                             n = rCount++;
-                            group += transformers[pseudo].apply(null, [args, attrExpando + n, tCount, pseudo, context, references]) || "[" + attrExpando + n + "='" + tCount + "']";
+                            group += transformers[pseudo].apply(null, [args, attrExpando + n, tCount, pseudo, context, arrfunc]) || "[" + attrExpando + n + "='" + tCount + "']";
                         } else {
                             group += match[1];
 
@@ -484,7 +544,7 @@ var Expr = {
 
                     } else if (match[7] || (match[4] && match[4][0] == '.') || (match[6] && match[6][0] == '{')) {
 
-                        group += filter(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [match[4], match[5], match[6], match[7], references]);
+                        group += filter(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [match[4], match[5], match[6], match[7], arrfunc]);
 
                     } else if (match[5] == '!=' ||
                         match[5] == '!==') {
@@ -507,6 +567,14 @@ var Expr = {
             runningCount--;
         }
     },
+
+    /**
+     * The 'getSelector' function takes an element and returns a string value for a
+     * simple CSS selector which uniquely identifies that element.
+     *
+     * @param {Object|Array|String} el
+     * @return {Object|hAzzle}
+     */
 
     getSelector = function(el) {
 
@@ -736,11 +804,11 @@ function byIdRaw(id, elements) {
  * hAzzle(":nth-last-match(4n-2 of footer :any-link)");
  */
 
-transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr, attrValue, pseudo, context, references) {
+transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr, attrValue, pseudo, context, arrfunc) {
     var element,
         ofPos = args.indexOf('of'),
         anbIterator = anb(args.substr(0, ofPos)),
-        elements = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), references),
+        elements = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
         l = elements.length - 1,
         nthMatch = pseudo[4] !== 'L';
     while ((element = elements[nthMatch ? anbIterator.next() : l - anbIterator.next()])) {
