@@ -14,6 +14,7 @@ module.exports = function(config) {
 
     var modules = [
         'hazzle.js',
+        'core.js',
         'features.js',
         'uniqueid.js',
         'cache.js',
@@ -25,7 +26,6 @@ module.exports = function(config) {
         'shims/pnow.js',
         'system.js',
         'text.js',
-        'core.js',
         'setter.js',
         'detection.js',
         'storage.js',
