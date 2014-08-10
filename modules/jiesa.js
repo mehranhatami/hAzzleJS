@@ -4,7 +4,8 @@ var i,
     slice = Array.prototype.slice,
     push = Array.prototype.push,
     join = Array.prototype.join,
-
+    toString = Function.prototype.toString,
+	
     // Holder for querySelector / query (DOM Level 4)
     // Default: querySelector
 
@@ -239,13 +240,13 @@ var Expr = {
             context = document;
             isDoc = 1;
         }
-        
-		// Need for trimming the selector??
+
+        // Need for trimming the selector??
 
         // selector = hAzzle.trim(selector);
 
         // Set context
-		
+
         ctx = context || document;
 
         if (isDoc && hAzzle.documentIsHTML) {
@@ -259,27 +260,23 @@ var Expr = {
                         elem = ctx.getElementById(m);
                         if (elem && elem.parentNode) {
                             if (elem.id === m) {
-                                results.push(elem);
-                                return results;
+                                return [elem];
                             }
                         } else {
-                            return results;
+                            return [];
                         }
                     } else {
 
                         // ctx is not a document
                         if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(m)) &&
                             hAzzle.contains(ctx, elem) && elem.id === m) {
-                            results.push(elem);
-                            return results;
+                            return [elem];
                         }
                     }
                 } else if (match[2]) {
-                    push.apply(results, ctx.getElementsByTagName(selector));
-                    return results;
+                    return slice.call(ctx.getElementsByTagName(selector));
                 } else if ((m = match[3])) {
-                    push.apply(results, ctx.getElementsByClassName(m));
-                    return results;
+                    return slice.call(ctx.getElementsByClassName(m));
                 }
             }
         }
@@ -477,6 +474,7 @@ var Expr = {
 
                             group = filter(quickQueryAll(group + lastMatchCombinator, ctx), attrExpando + rCount++, tCount, filterFn, [args, pseudo, references]);
 
+
                         } else if (transformers[pseudo]) {
                             n = rCount++;
                             group += transformers[pseudo].apply(null, [args, attrExpando + n, tCount, pseudo, context, references]) || "[" + attrExpando + n + "='" + tCount + "']";
@@ -538,167 +536,167 @@ var Expr = {
         return '[' + attr + "='" + value + "']";
     };
 
-    /* ============================ UTILITY METHODS =========================== */
+/* ============================ UTILITY METHODS =========================== */
 
-    // Combine regExes
+// Combine regExes
 
-    function combineRegEx() {
-        return "(?:(?:" + join.call(arguments, ")|(?:") + "))";
+function combineRegEx() {
+    return "(?:(?:" + join.call(arguments, ")|(?:") + "))";
+}
+
+function quickQueryAll(selector, context) {
+
+    if (!selector || !context) {
+        return [];
+    }
+    var old = true,
+        nid = attrExpando;
+
+    if (context !== document) {
+
+        // Thanks to Andrew Dupont for the technique
+
+        old = context.getAttribute('id');
+
+        if (old) {
+
+            nid = old.replace(escaped, '\\$&');
+
+        } else {
+
+            context.setAttribute('id', nid);
+        }
+
+        nid = "[id='" + nid + "'] ";
+
+        context = sibling.test(selector) ? context.parentElement : context;
+        selector = nid + selector.split(',').join(',' + nid);
     }
 
-   function quickQueryAll(selector, context) {
+    try {
 
-        if (!selector || !context) {
-            return [];
+        return context[_queryAll](selector);
+
+    } finally {
+
+        if (!old) {
+
+            context.removeAttribute('id');
         }
-        var old = true,
-            nid = attrExpando;
+    }
+}
 
-        if (context !== document) {
+function quickQuery(selector, context) {
 
-            // Thanks to Andrew Dupont for the technique
+    if (!selector || !context) {
+        return [];
+    }
+    return context[_query](selector);
+}
 
-            old = context.getAttribute('id');
+function filter(elems, attr, attrValue, filterFn, args) {
 
-            if (old) {
+    if (!elems) {
+        return '';
+    }
 
-                nid = old.replace(escaped, '\\$&');
+    // Can't calculate length if 'elems' don't exist
 
-            } else {
+    var i = elems.length;
 
-                context.setAttribute('id', nid);
-            }
+    args = args || [];
 
-            nid = "[id='" + nid + "'] ";
+    while (i--) {
 
-            context = sibling.test(selector) ? context.parentElement : context;
-            selector = nid + selector.split(',').join(',' + nid);
-        }
+        if (filterFn.apply(undefined, [elems[i]].concat(args))) {
 
-        try {
-
-            return context[_queryAll](selector);
-
-        } finally {
-
-            if (!old) {
-
-                context.removeAttribute('id');
-            }
+            elems[i].setAttribute(attr, attrValue);
         }
     }
 
-    function quickQuery(selector, context) {
+    // If all of the elems matched the filter return empty string
 
-        if (!selector || !context) {
-            return [];
-        }
-        return context[_query](selector);
+    return "[" + attr + "='" + attrValue + "']";
+}
+
+function isElement(o) {
+    return o && o.nodeType === 1;
+}
+
+function isDocument(o) {
+    return o && o.nodeType === 9;
+}
+
+function extend(pseudo, type, fn) {
+
+    // Pseudo are allways upperCase
+    // Except for internals
+
+    pseudo = pseudo.toUpperCase() || null;
+
+    // Check that the pseudo matches the css pseudo pattern, is 
+    // not already in use and that fn is a function
+
+    if (pseudo && compileExpr.identReg.test(pseudo) &&
+        !Expr[pseudo] && !transformers[pseudo] && typeof(fn) === 'function') {
+        type[pseudo] = fn;
+        return 1;
     }
-	
-    function filter(elems, attr, attrValue, filterFn, args) {
+    return 0;
+}
 
-        if (!elems) {
-            return '';
-        }
+function getAttr(elem, attr) {
 
-        // Can't calculate length if 'elems' don't exist
-
-        var i = elems.length;
-
-        args = args || [];
-
-        while (i--) {
-
-            if (filterFn.apply(undefined, [elems[i]].concat(args))) {
-
-                elems[i].setAttribute(attr, attrValue);
-            }
-        }
-
-        // If all of the elems matched the filter return empty string
-
-        return "[" + attr + "='" + attrValue + "']";
-    }
-	
-    function isElement (o) {
-        return o && o.nodeType === 1;
-    }
-
-    function isDocument(o) {
-        return o && o.nodeType === 9;
+    if (!elem) {
+        return '';
     }
 
-    function extend(pseudo, type, fn) {
+    // Set document vars if needed
 
-        // Pseudo are allways upperCase
-        // Except for internals
-
-        pseudo = pseudo.toUpperCase() || null;
-
-        // Check that the pseudo matches the css pseudo pattern, is 
-        // not already in use and that fn is a function
-
-        if (pseudo && compileExpr.identReg.test(pseudo) &&
-            !Expr[pseudo] && !transformers[pseudo] && typeof(fn) === 'function') {
-            type[pseudo] = fn;
-            return 1;
-        }
-        return 0;
+    if ((elem.ownerDocument || elem) !== document) {
+        hAzzle.setDocument(elem);
     }
 
-    function getAttr(elem, attr) {
+    // Performance speed-up
 
-        if (!elem) {
-            return '';
+    if (attr === 'class') {
+        // className is '' when non-existent
+        // getAttribute('class') is null
+
+        attr = elem.className;
+
+        if (attr === '' && elem.getAttribute('class') === null) {
+            attr = null;
         }
-
-        // Set document vars if needed
-
-        if ((elem.ownerDocument || elem) !== document) {
-            hAzzle.setDocument(elem);
-        }
-
-        // Performance speed-up
-
-        if (attr === 'class') {
-            // className is '' when non-existent
-            // getAttribute('class') is null
-
-            attr = elem.className;
-
-            if (attr === '' && elem.getAttribute('class') === null) {
-                attr = null;
-            }
-            return attr;
-        }
-        if (attr === 'href') {
-            return elem.getAttribute('href', 2);
-        }
-        if (attr === 'title') {
-            // getAttribute('title') can be '' when non-existent sometimes?
-            return elem.getAttribute('title') || null;
-        }
-        if (attr === 'style') {
-            return elem.style.cssText || '';
-        }
-        var val;
-        return hAzzle.documentIsHTML ?
-            elem.getAttribute(attr) :
-            (val = elem.getAttributeNode(attr)) && val.specified ?
-            val.value :
-            null;
+        return attr;
     }
+    if (attr === 'href') {
+        return elem.getAttribute('href', 2);
+    }
+    if (attr === 'title') {
+        // getAttribute('title') can be '' when non-existent sometimes?
+        return elem.getAttribute('title') || null;
+    }
+    if (attr === 'style') {
+        return elem.style.cssText || '';
+    }
+    var val;
+    return hAzzle.documentIsHTML ?
+        elem.getAttribute(attr) :
+        (val = elem.getAttributeNode(attr)) && val.specified ?
+        val.value :
+        null;
+}
 
-    /* ============================ FEATURE / BUG DETECTION =========================== */
+/* ============================ FEATURE / BUG DETECTION =========================== */
 
-    // Avoid getElementById bug
-    // Support: IE<10
-    // Check if getElementById returns elements by name
-    // The broken getElementById methods don't pick up programatically-set names,
-    // so use a roundabout getElementsByName test
+// Avoid getElementById bug
+// Support: IE<10
+// Check if getElementById returns elements by name
+// The broken getElementById methods don't pick up programatically-set names,
+// so use a roundabout getElementsByName test
 
-    var grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
+var grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
         var elem = null;
         if (hAzzle.documentIsHTML || context.nodeType !== 9) {
             return byIdRaw(id, context.getElementsByTagName('*'));
@@ -714,16 +712,16 @@ var Expr = {
         return m && m.parentNode ? [m] : [];
     };
 
-    function byIdRaw (id, elements) {
-        var i = -1,
-            element = null;
-        while ((element = elements[++i])) {
-            if (getAttr(element, 'id') === id) {
-                break;
-            }
+function byIdRaw(id, elements) {
+    var i = -1,
+        element = null;
+    while ((element = elements[++i])) {
+        if (getAttr(element, 'id') === id) {
+            break;
         }
-        return element;
-    };
+    }
+    return element;
+}
 
 /* ============================ UTILITY METHODS =========================== */
 
