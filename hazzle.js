@@ -21,6 +21,8 @@
             path + 'setter.js',			
             path + 'storage.js',
             path + 'jiesa.js',
+            path + 'cl3.js',
+			path + 'cl4.js',
             path + 'matchesselector.js',
             path + 'matches.js',
             path + 'raf.js',

@@ -58,6 +58,8 @@ function conf(grunt) {
                 'storage.js',
                 'compile.js',
                 'jiesa.js',
+                'cl3.js',
+                'cl4.js',								
                 'matchesselector.js',
                 'matches.js',
                 'raf.js',
