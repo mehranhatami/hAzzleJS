@@ -306,23 +306,6 @@ var Expr = {
             }
         }
 
-        // Comma separated selectors. E.g hAzzle('p, a');
-        // Unique result, e.g 'ul id=foo class=foo' should not appear two times.
-
-        if (hAzzle.inArray(selector, ',') !== -1 && (m = selector.split(','))) {
-            var i = 0,
-                l = m.length;
-            for (; i < l; i++) {
-                hAzzle.each(KenRa(m[i]), function(el) {
-                    if (!hAzzle.contains(results, el)) {
-                        results.push(el);
-                    }
-                });
-            }
-
-            return results;
-        }
-
         // Everything else
 
         return slice.call(quickQueryAll(tokenize(selector, context, arrfunc), context));
