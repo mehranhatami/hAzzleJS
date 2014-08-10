@@ -3,11 +3,14 @@ var documentIsHTML = hAzzle.documentIsHTML,
     docElem = hAzzle.docElem,
     Jiesa = hAzzle.Jiesa,
     quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
-    ntapi = {},
-    matches = Jiesa.has['api-mS'] ? function(node, selector) {
+    ntapi = {};
+	
+
+    var matches = hAzzle.features['api-mS'] ? function(node, selector) {
         // 'matches' standard in DOM Level 4 and replacement for
         // matchesselector
-        return !Jiesa.has['bug-mS'] && typeof node === 'function' ? node.matches(selector) : hAzzle.find();
+        return node.matches(selector);
+//        return !Jiesa.has['bug-mS'] && typeof node === 'function' ? node.matches(selector) : hAzzle.find(node, selector);
     } : hAzzle.find();
 
 

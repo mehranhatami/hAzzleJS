@@ -255,9 +255,14 @@ var Expr = {
      *
      */
 
-    KenRa = function(selector, context, arrfunc, results) {
+    KenRa = function(selector, context, arrfunc) {
 
-        var ctx, match, m, elem,
+        if (typeof selector !== 'string') {
+            return;
+        }
+
+        var ctx, match, results = [],
+            m, elem,
             isDoc = isDocument(context);
 
         if (!(arrfunc || isDoc || isElement(context))) {
@@ -273,8 +278,6 @@ var Expr = {
         // Set context
 
         context = context || document;
-
-        results = results || [];
 
         if (hAzzle.documentIsHTML) {
 

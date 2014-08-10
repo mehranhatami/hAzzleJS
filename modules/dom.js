@@ -361,8 +361,7 @@ hAzzle.extend({
             // Loop through all elements, and check for match
 
             for (i = 0; i < len; i++) {
-
-                hAzzle.find(selector, self[i], ret);
+            push.apply(ret, hAzzle.find(selector, self[i]));
             }
 
             // If more then one element, make sure they are unique
