@@ -1,3 +1,4 @@
+// Jiesa - selector engine
 var i,
 
     slice = Array.prototype.slice,
@@ -8,12 +9,12 @@ var i,
     // Holder for querySelector / query (DOM Level 4)
     // Default: querySelector
 
-    query = 'querySelector',
+    _query = 'querySelector',
 
     // Holder for querySelectorAll / queryAll (DOM Level 4)
     // Default: querySelectorAll
 
-    queryAll = 'querySelectorAll',
+    _queryAll = 'querySelectorAll',
 
     // Expando used for attributes and the translation
 
@@ -73,11 +74,11 @@ var i,
 
     iCount = 0,
 
-    // Increments every time translate is called (recursive calls do not increment it)
+    // Increments every time tokenize is called (recursive calls do not increment it)
 
     tCount = 0,
 
-    // Reset every time translate is called (recursive calls do not reset it) and incremented
+    // Reset every time tokenize is called (recursive calls do not reset it) and incremented
     //for attribute names
 
     rCount,
@@ -102,11 +103,11 @@ var i,
 if ('Element' in window) {
 
     if (!isNative(Element.prototype, 'query')) {
-        query = 'query';
+        _query = 'query';
     }
 
     if (!isNative(Element.prototype, 'queryAll')) {
-        queryAll = 'queryAll';
+        _queryAll = 'queryAll';
     }
 }
 
@@ -152,12 +153,12 @@ var Expr = {
         // Same as the 'has' pseudo - what is the point?
 
         'WITH': function(el, args, p, references) {
-            return quickQuery(translate(args, el, references), el.ownerDocument);
+            return quickQuery(tokenize(args, el, references), el.ownerDocument);
         },
 
         'HAS': function(el, args, p, references) {
 
-            return quickQuery(translate(args, el, references), el.ownerDocument);
+            return quickQuery(tokenize(args, el, references), el.ownerDocument);
         },
 
         'ANY-LINK': function(el) {
@@ -226,487 +227,477 @@ var Expr = {
         var a = document.createElement('a');
         a.href = '/';
         return a.pathname;
-    }());
+    }()),
 
-var Kenny = hAzzle.find = function(selector, context, references) {
+    Kenny = function(selector, context, references) {
 
-    var ctx, results = [],
-        match, m, elem,
-        isDoc = isDocument(context);
+        var ctx, results = [],
+            match, m, elem,
+            isDoc = isDocument(context);
 
-    if (!(references || isDoc || isElement(context))) {
-        references = context;
-        context = document;
-        isDoc = 1;
-    }
+        if (!(references || isDoc || isElement(context))) {
+            references = context;
+            context = document;
+            isDoc = 1;
+        }
 
-    selector = hAzzle.trim(selector);
+        selector = hAzzle.trim(selector);
 
-    if (isDoc && hAzzle.documentIsHTML) {
+        if (isDoc && hAzzle.documentIsHTML) {
 
-        // Do a quick look-up         
+            // Do a quick look-up         
 
-        if ((match = rquickExpr.exec(selector))) {
+            if ((match = rquickExpr.exec(selector))) {
 
-            if ((m = match[1])) {
-                if (context.nodeType === 9) {
-                    elem = context.getElementById(m);
-                    if (elem && elem.parentNode) {
-                        if (elem.id === m) {
-                            results.push(elem);
+                if ((m = match[1])) {
+                    if (context.nodeType === 9) {
+                        elem = context.getElementById(m);
+                        if (elem && elem.parentNode) {
+                            if (elem.id === m) {
+                                results.push(elem);
+                                return results;
+                            }
+                        } else {
                             return results;
                         }
                     } else {
-                        return results;
-                    }
-                } else {
 
-                    // Context is not a document
-                    if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
-                        hAzzle.contains(context, elem) && elem.id === m) {
-                        results.push(elem);
-                        return results;
+                        // Context is not a document
+                        if (context.ownerDocument && (elem = context.ownerDocument.getElementById(m)) &&
+                            hAzzle.contains(context, elem) && elem.id === m) {
+                            results.push(elem);
+                            return results;
+                        }
                     }
+                } else if (match[2]) {
+                    push.apply(results, context.getElementsByTagName(selector));
+                    return results;
+                } else if ((m = match[3])) {
+                    push.apply(results, context.getElementsByClassName(m));
+                    return results;
                 }
-            } else if (match[2]) {
-                push.apply(results, context.getElementsByTagName(selector));
-                return results;
-            } else if ((m = match[3])) {
-                push.apply(results, context.getElementsByClassName(m));
-                return results;
             }
         }
-    }
 
-    // Set context
+        // Set context
 
-    ctx = context.ownerDocument || context;
+        ctx = context.ownerDocument || context;
 
-    // A dirty trick here to get it faster - split selectors by comma if it's exists.
-    // Comma separated selectors. E.g hAzzle('p, a');
-    // Unique result, e.g "ul id=foo class=foo" should not appear two times.
+        // A dirty trick here to get it faster - split selectors by comma if it's exists.
+        // Comma separated selectors. E.g hAzzle('p, a');
+        // Unique result, e.g "ul id=foo class=foo" should not appear two times.
 
-    if (hAzzle.inArray(selector, ',') !== -1 && (m = selector.split(','))) {
-        var i = 0,
-            l = m.length;
-        for (; i < l; i++) {
-            hAzzle.each(Kenny(m[i]), function(el) {
-                if (!hAzzle.contains(results, el)) {
-                    results.push(el);
-                }
-            });
+        if (hAzzle.inArray(selector, ',') !== -1 && (m = selector.split(','))) {
+            var i = 0,
+                l = m.length;
+            for (; i < l; i++) {
+                hAzzle.each(Kenny(m[i]), function(el) {
+                    if (!hAzzle.contains(results, el)) {
+                        results.push(el);
+                    }
+                });
+            }
+
+            return results;
         }
 
-        return results;
-    }
+        // Everything else
 
-    // Everything else
+        return slice.call(quickQueryAll(tokenize(selector, context, references), ctx));
+    },
 
-   return slice.call(quickQueryAll(translate(selector, context, references), ctx));
-};
+    anb = function(str) {
+        //remove all spaces and parse the string
+        var match = str.replace(spaceReplace, '')
+            .match(compileExpr.anbPattern),
+            a = match[1],
+            n = !match[3],
+            b = n ? match[2] || 0 : match[3];
 
-var anb = hAzzle.anb = function(str) {
-    //remove all spaces and parse the string
-    var match = str.replace(spaceReplace, '')
-        .match(compileExpr.anbPattern),
-        a = match[1],
-        n = !match[3],
-        b = n ? match[2] || 0 : match[3];
+        if (b == 'even') {
+            a = 2;
+            b = 0;
+        } else if (b == 'odd') {
+            a = 2;
+            b = 1;
+        } else if (a == '+' || a == '-') {
+            a += 1;
+        } else if (!a && !n) {
+            a = 0;
+        } else if (!a) {
+            a = 1;
+        }
 
-    if (b == 'even') {
-        a = 2;
-        b = 0;
-    } else if (b == 'odd') {
-        a = 2;
-        b = 1;
-    } else if (a == '+' || a == '-') {
-        a += 1;
-    } else if (!a && !n) {
-        a = 0;
-    } else if (!a) {
-        a = 1;
-    }
+        // Return an iterator
 
-    // Return an iterator
+        return (function(a, b) {
+            var y,
+                posSlope = a >= 0,
 
-    return (function(a, b) {
-        var y,
-            posSlope = a >= 0,
+                // If no slope or the y-intercept >= 0 with a positive slope start x at 0
+                // otherwise start x at the x-intercept rounded
 
-            // If no slope or the y-intercept >= 0 with a positive slope start x at 0
-            // otherwise start x at the x-intercept rounded
-
-            startX = !a || (b >= 0 && posSlope) ? 0 : posSlope ? Math.ceil(-b / a) : Math.floor(-b / a),
-            x = startX;
-
-        return {
-            next: function() {
-
-                // For positive slopes increment x, otherwise decrement
-
-                return x < 0 || (!a && y == b) ? -1 : (y = a * (posSlope ? x++ : x--) + b);
-
-            },
-            'reset': function() {
+                startX = !a || (b >= 0 && posSlope) ? 0 : posSlope ? Math.ceil(-b / a) : Math.floor(-b / a),
                 x = startX;
-                y = undefined;
-            },
 
-            'matches': function(y) {
-                if (!a) {
-                    return y == b;
+            return {
+                next: function() {
+
+                    // For positive slopes increment x, otherwise decrement
+
+                    return x < 0 || (!a && y == b) ? -1 : (y = a * (posSlope ? x++ : x--) + b);
+
+                },
+                'reset': function() {
+                    x = startX;
+                    y = undefined;
+                },
+
+                'matches': function(y) {
+                    if (!a) {
+                        return y == b;
+                    }
+                    var x = (y - b) / a;
+
+                    //Check that x is a whole number
+
+                    return x >= 0 && x == (x | 0);
                 }
-                var x = (y - b) / a;
+            };
+        }(a - 0, b - 1)); // Convert a and b to a number (if string), subtract 1 from y-intercept (b) for 0-based indices
+    },
 
-                //Check that x is a whole number
+    tokenize = function(selector, context, references) {
 
-                return x >= 0 && x == (x | 0);
-            }
-        };
-    }(a - 0, b - 1)); // Convert a and b to a number (if string), subtract 1 from y-intercept (b) for 0-based indices
-};
+        if (!selector) {
+            return;
+        }
 
-var translate = hAzzle.translate = function(selector, context, references) {
+        var cScope, group, str, n, j, k, match, args, pseudo, filterFn, ctx,
+            wholeSelector = '',
+            lastMatchCombinator = '*';
 
-    if (!selector) {
-        return;
-    }
+        if (!(references || isDocument(context) || isElement(context))) {
+            references = context;
+            context = document;
+        }
 
-    var cScope, group, str, n, j, k, match, args, pseudo, filterFn, ctx,
-        wholeSelector = '',
-        lastMatchCombinator = '*';
+        group = cScope = getSelector(context) + ' ';
 
-    if (!(references || isDocument(context) || isElement(context))) {
-        references = context;
-        context = document;
-    }
+        ctx = context.ownerDocument || context;
 
-    group = cScope = getSelector(context) + ' ';
+        //if no other instances of Kenny are in progress
 
-    ctx = context.ownerDocument || context;
+        if (!(runningCount++)) {
 
-    //if no other instances of Kenny are in progress
+            rCount = 0;
+            tCount++;
+            scope = cScope;
+        }
 
-    if (!(runningCount++)) {
+        selector = selector.replace(/^\s*--/, '');
 
-        rCount = 0;
-        tCount++;
-        scope = cScope;
-    }
+        // Mehran! Find an better solution then try / catch
 
-    selector = selector.replace(/^\s*--/, '');
+        try {
+            while ((match = compileExpr.selectorPattern.exec(selector))) {
 
-    // Mehran! Find an better solution then try / catch
+                selector = match[8] || '';
 
-    try {
-        while ((match = compileExpr.selectorPattern.exec(selector))) {
+                // Combinator or comma
 
-            selector = match[8] || '';
+                if (match[2]) {
 
-            // Combinator or comma
+                    if (match[2] == ',') {
 
-            if (match[2]) {
-
-                if (match[2] == ',') {
-
-                    wholeSelector = wholeSelector + group + ',';
-                    group = cScope;
-
-                } else {
-
-                    group += match[2];
-                }
-
-                lastMatchCombinator = '*';
-
-            } else {
-
-                // Pseudo
-
-                if (match[3] && match[0][0] == ':') {
-
-                    pseudo = match[3];
-
-                    if (pseudo[0] == '{') {
-
-                        filterFn = references[pseudo.slice(1, -1)];
+                        wholeSelector = wholeSelector + group + ',';
+                        group = cScope;
 
                     } else {
 
-                        pseudo = pseudo.toUpperCase();
-                        filterFn = Expr[pseudo];
+                        group += match[2];
                     }
 
-                    // If there is an opening parents, get everything inside the parentes
+                    lastMatchCombinator = '*';
 
-                    if (selector[0] == '(') {
-                        // Locate the position of the closing parents
-                        selector = selector.substr(1).trim();
-                        // Blank out any escaped characters
-                        str = selector.replace(escapeReplace, '  ');
-                        n = 1;
+                } else {
 
-                        // If the args start with a quote, search for the closing parents after the closing quote
+                    // Pseudo
 
-                        j = selector[0] == "\"" || selector[0] == "'" ? selector.indexOf(selector[0], 1) : 0;
+                    if (match[3] && match[0][0] == ':') {
 
-                        while (n) {
+                        pseudo = match[3];
 
-                            k = str.indexOf(')', ++j);
-                            j = str.indexOf('(', j);
-                            if (k > j && j > 0) {
-                                n++;
-                            } else {
-                                n--;
-                                j = k;
+                        if (pseudo[0] == '{') {
 
+                            filterFn = references[pseudo.slice(1, -1)];
+
+                        } else {
+
+                            pseudo = pseudo.toUpperCase();
+                            filterFn = Expr[pseudo];
+                        }
+
+                        // If there is an opening parents, get everything inside the parentes
+
+                        if (selector[0] == '(') {
+                            // Locate the position of the closing parents
+                            selector = selector.substr(1).trim();
+                            // Blank out any escaped characters
+                            str = selector.replace(escapeReplace, '  ');
+                            n = 1;
+
+                            // If the args start with a quote, search for the closing parents after the closing quote
+
+                            j = selector[0] == "\"" || selector[0] == "'" ? selector.indexOf(selector[0], 1) : 0;
+
+                            while (n) {
+
+                                k = str.indexOf(')', ++j);
+                                j = str.indexOf('(', j);
+                                if (k > j && j > 0) {
+                                    n++;
+                                } else {
+
+                                    n--;
+                                    j = k;
+                                }
+                            }
+
+                            if (j < 0) {
+                                break;
+                            }
+
+                            args = selector.substr(0, j).trim();
+                            selector = selector.substr(j + 1);
+                        }
+
+                        if (filterFn) {
+
+                            group = filter(quickQueryAll(group + lastMatchCombinator, ctx), attrExpando + rCount++, tCount, filterFn, [args, pseudo, references]);
+
+                        } else if (transformers[pseudo]) {
+                            n = rCount++;
+                            group += transformers[pseudo].apply(null, [args, attrExpando + n, tCount, pseudo, context, references]) || "[" + attrExpando + n + "='" + tCount + "']";
+                        } else {
+                            group += match[1];
+
+                            if (args) {
+                                group += "(" + args + ")";
                             }
                         }
 
-                        if (j < 0) {
-                            break;
-                        }
+                        args = 0;
 
-                        args = selector.substr(0, j).trim();
-                        selector = selector.substr(j + 1);
-                    }
+                    } else if (match[7] || (match[4] && match[4][0] == '.') || (match[6] && match[6][0] == '{')) {
 
-                    if (filterFn) {
+                        group += filter(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [match[4], match[5], match[6], match[7], references]);
 
-                        group = filter(quickQueryAll(group + lastMatchCombinator, ctx), attrExpando + rCount++, tCount, filterFn, [args, pseudo, references]);
+                    } else if (match[5] == '!=' ||
+                        match[5] == '!==') {
 
-                    } else if (transformers[pseudo]) {
-                        n = rCount++;
-                        group += transformers[pseudo].apply(null, [args, attrExpando + n, tCount, pseudo, context, references]) || "[" + attrExpando + n + "='" + tCount + "']";
+                        group += ':not([' + match[4] + '=' + match[6] + '])';
+
                     } else {
-                        group += match[1];
 
-                        if (args) {
-                            group += "(" + args + ")";
-                        }
+                        group += match[1];
                     }
 
-                    args = 0;
-
-                } else if (match[7] || (match[4] && match[4][0] == '.') || (match[6] && match[6][0] == '{')) {
-
-                    group += filter(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [match[4], match[5], match[6], match[7], references]);
-
-                } else if (match[5] == '!=' ||
-                    match[5] == '!==') {
-
-                    group += ':not([' + match[4] + '=' + match[6] + '])';
-
-                } else {
-
-                    group += match[1];
+                    lastMatchCombinator = '';
                 }
+            }
 
-                lastMatchCombinator = '';
+            return hAzzle.trim(wholeSelector + group + selector);
+
+        } finally {
+
+            runningCount--;
+        }
+    },
+
+    getSelector = function(el) {
+
+        if (!el || isDocument(el)) {
+            return '';
+        }
+
+        if (el.id) {
+
+            return '#' + el.id;
+        }
+
+        var attr = attrExpando + 'c',
+            value = getAttr(el, attr);
+        if (!value) {
+
+            value = iCount++;
+            el.setAttribute(attr, value);
+        }
+
+        return '[' + attr + "='" + value + "']";
+    },
+
+    /* ============================ UTILITY METHODS =========================== */
+
+    // Combine regExes
+
+    combineRegEx = function() {
+        return "(?:(?:" + join.call(arguments, ")|(?:") + "))";
+    },
+
+    quickQueryAll = function(selector, context) {
+
+        if (!selector || !context) {
+            return [];
+        }
+        var old = true,
+            nid = attrExpando;
+
+        if (context !== document) {
+
+            // Thanks to Andrew Dupont for the technique
+
+            old = context.getAttribute('id');
+
+            if (old) {
+
+                nid = old.replace(escaped, '\\$&');
+
+            } else {
+
+                context.setAttribute('id', nid);
+            }
+
+            nid = "[id='" + nid + "'] ";
+
+            context = sibling.test(selector) ? context.parentElement : context;
+            selector = nid + selector.split(',').join(',' + nid);
+        }
+
+        try {
+
+            return context[_queryAll](selector);
+
+        } finally {
+
+            if (!old) {
+
+                context.removeAttribute('id');
+            }
+        }
+    },
+
+    quickQuery = function(selector, context) {
+
+        if (!selector || !context) {
+            return [];
+        }
+        return context[_query](selector);
+    },
+
+    filter = function(elems, attr, attrValue, filterFn, args) {
+
+        if (!elems) {
+            return '';
+        }
+
+        // Can't calculate length if 'elems' don't exist
+
+        var i = elems.length;
+
+        args = args || [];
+
+        while (i--) {
+
+            if (filterFn.apply(undefined, [elems[i]].concat(args))) {
+
+                elems[i].setAttribute(attr, attrValue);
             }
         }
 
-        return hAzzle.trim(wholeSelector + group + selector);
+        // If all of the elems matched the filter return empty string
 
-    } finally {
+        return "[" + attr + "='" + attrValue + "']";
+    },
 
-        runningCount--;
-    }
-};
+    isElement = function(o) {
+        return o && o.nodeType === 1;
+    },
 
-var getSelector = hAzzle.getSelector = function(el) {
+    isDocument = function(o) {
+        return o && o.nodeType === 9;
+    },
 
-    if (!el || isDocument(el)) {
-        return '';
-    }
+    extend = function(pseudo, type, fn) {
 
-    if (el.id) {
+        // Pseudo are allways upperCase
+        // Except for internals
 
-        return '#' + el.id;
-    }
+        pseudo = pseudo.toUpperCase() || null;
 
-    var attr = attrExpando + 'c',
-        value = getAttr(el, attr);
-    if (!value) {
+        // Check that the pseudo matches the css pseudo pattern, is 
+        // not already in use and that fn is a function
 
-        value = iCount++;
-        el.setAttribute(attr, value);
-    }
+        if (pseudo && compileExpr.identReg.test(pseudo) &&
+            !Expr[pseudo] && !transformers[pseudo] && typeof(fn) === 'function') {
+            type[pseudo] = fn;
+            return 1;
+        }
+        return 0;
+    },
 
-    return '[' + attr + "='" + value + "']";
-};
+    getAttr = function(elem, attr) {
 
-/* ============================ PLUGIN METHODS =========================== */
-
-hAzzle.addFilter = function(pseudo, fn) {
-    return typeof fn === 'function' && extend(pseudo, Expr, fn);
-};
-
-hAzzle.addTransformer = function(pseudo, fn) {
-    return typeof fn === 'function' && extend(pseudo, transformers, fn);
-};
-
-/* ============================ UTILITY METHODS =========================== */
-
-// Combine regEx
-
-function combineRegEx() {
-    return "(?:(?:" + join.call(arguments, ")|(?:") + "))";
-}
-
-function quickQueryAll(selector, context) {
-
-    if (!selector || !context) {
-        return [];
-    }
-    var old = true,
-        nid = attrExpando;
-
-    if (context !== document) {
-
-        // Thanks to Andrew Dupont for the technique
-
-        old = context.getAttribute('id');
-
-        if (old) {
-
-            nid = old.replace(escaped, '\\$&');
-
-        } else {
-
-            context.setAttribute('id', nid);
+        if (!elem) {
+            return '';
         }
 
-        nid = "[id='" + nid + "'] ";
+        // Set document vars if needed
 
-        context = sibling.test(selector) ? context.parentElement : context;
-        selector = nid + selector.split(',').join(',' + nid);
-    }
-
-    try {
-
-        return context[queryAll](selector);
-
-    } finally {
-
-        if (!old) {
-
-            context.removeAttribute('id');
+        if ((elem.ownerDocument || elem) !== document) {
+            hAzzle.setDocument(elem);
         }
-    }
-}
 
-function quickQuery(selector, context) {
+        // Performance speed-up
 
-    if (!selector || !context) {
-        return [];
-    }
-    return context[query](selector);
-}
+        if (attr === 'class') {
+            // className is '' when non-existent
+            // getAttribute('class') is null
 
-function filter(elements, attr, attrValue, filterFn, args) {
+            attr = elem.className;
 
-    if (!elements) {
-        return '';
-    }
-
-    // Can't calculate length if 'elements' don't exist
-
-    var i = elements.length;
-
-    args = args || [];
-
-    while (i--) {
-
-        if (filterFn.apply(undefined, [elements[i]].concat(args))) {
-
-            elements[i].setAttribute(attr, attrValue);
+            if (attr === '' && elem.getAttribute('class') === null) {
+                attr = null;
+            }
+            return attr;
         }
-    }
-
-    // If all of the elements matched the filter return empty string
-
-    return "[" + attr + "='" + attrValue + "']";
-}
-
-function isElement(o) {
-    return o && o.nodeType === 1;
-}
-
-function isDocument(o) {
-    return o && o.nodeType === 9;
-}
-
-function extend(pseudo, type, fn) {
-
-    // Pseudo are allways upperCase
-    // Except for internals
-
-    pseudo = pseudo.toUpperCase() || null;
-
-    // Check that the pseudo matches the css pseudo pattern, is 
-    // not already in use and that fn is a function
-
-    if (pseudo && compileExpr.identReg.test(pseudo) &&
-        !Expr[pseudo] && !transformers[pseudo] && typeof(fn) === 'function') {
-        type[pseudo] = fn;
-        return 1;
-    }
-    return 0;
-}
-
-function getAttr(elem, attr) {
-
-    if (!elem) {
-        return '';
-    }
-
-    // Set document vars if needed
-
-    if ((elem.ownerDocument || elem) !== document) {
-        hAzzle.setDocument(elem);
-    }
-
-    // Performance speed-up
-
-    if (attr === 'class') {
-        // className is '' when non-existent
-        // getAttribute('class') is null
-
-        attr = elem.className;
-
-        if (attr === '' && elem.getAttribute('class') === null) {
-            attr = null;
+        if (attr === 'href') {
+            return elem.getAttribute('href', 2);
         }
-        return attr;
-    }
-    if (attr === 'href') {
-        return elem.getAttribute('href', 2);
-    }
-    if (attr === 'title') {
-        // getAttribute('title') can be '' when non-existent sometimes?
-        return elem.getAttribute('title') || null;
-    }
-    if (attr === 'style') {
-        return elem.style.cssText || '';
-    }
-    var val;
-    return hAzzle.documentIsHTML ?
-        elem.getAttribute(attr) :
-        (val = elem.getAttributeNode(attr)) && val.specified ?
-        val.value :
-        null;
-}
+        if (attr === 'title') {
+            // getAttribute('title') can be '' when non-existent sometimes?
+            return elem.getAttribute('title') || null;
+        }
+        if (attr === 'style') {
+            return elem.style.cssText || '';
+        }
+        var val;
+        return hAzzle.documentIsHTML ?
+            elem.getAttribute(attr) :
+            (val = elem.getAttributeNode(attr)) && val.specified ?
+            val.value :
+            null;
+    },
 
-/* ============================ FEATURE / BUG DETECTION =========================== */
+    /* ============================ FEATURE / BUG DETECTION =========================== */
 
-// Avoid getElementById bug
-// Support: IE<10
-// Check if getElementById returns elements by name
-// The broken getElementById methods don't pick up programatically-set names,
-// so use a roundabout getElementsByName test
+    // Avoid getElementById bug
+    // Support: IE<10
+    // Check if getElementById returns elements by name
+    // The broken getElementById methods don't pick up programatically-set names,
+    // so use a roundabout getElementsByName test
 
-var grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
+    grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
         var elem = null;
         if (hAzzle.documentIsHTML || context.nodeType !== 9) {
             return byIdRaw(id, context.getElementsByTagName('*'));
@@ -720,18 +711,18 @@ var grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
     function(id, context) {
         var m = context.getElementById(id);
         return m && m.parentNode ? [m] : [];
-    };
+    },
 
-function byIdRaw(id, elements) {
-    var i = -1,
-        element = null;
-    while ((element = elements[++i])) {
-        if (getAttr(element, 'id') === id) {
-            break;
+    byIdRaw = function(id, elements) {
+        var i = -1,
+            element = null;
+        while ((element = elements[++i])) {
+            if (getAttr(element, 'id') === id) {
+                break;
+            }
         }
-    }
-    return element;
-}
+        return element;
+    };
 
 /* ============================ UTILITY METHODS =========================== */
 
@@ -768,7 +759,7 @@ transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr
 
 /**
  * The scope pseudo selector matches the context element that was passed into hAzzle.find()() or
- * hAzzle.translate(). When no context element is provided, scope is the equivalent of :root.
+ * hAzzle.tokenize(). When no context element is provided, scope is the equivalent of :root.
  *
  * EXAMPLE:
  * --------
@@ -790,6 +781,23 @@ transformers.scoped = transformers.scope = function() {
     return scope;
 };
 
+
+/* ============================ PLUGIN METHODS =========================== */
+
+hAzzle.addFilter = function(pseudo, fn) {
+    return typeof fn === 'function' && extend(pseudo, Expr, fn);
+};
+
+hAzzle.addTransformer = function(pseudo, fn) {
+    return typeof fn === 'function' && extend(pseudo, transformers, fn);
+};
+
+/* ============================ GLOBAL =========================== */
+
 // Expose
 
 hAzzle.Expr = Expr;
+hAzzle.find = Kenny;
+hAzzle.anb = anb;
+hAzzle.tokenize = tokenize;
+hAzzle.getSelector = getSelector;
