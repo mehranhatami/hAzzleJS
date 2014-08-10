@@ -4,7 +4,6 @@ var i,
     slice = Array.prototype.slice,
     push = Array.prototype.push,
     join = Array.prototype.join,
-    toString = Function.prototype.toString,
 
     // Holder for querySelector / query (DOM Level 4)
     // Default: querySelector
