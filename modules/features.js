@@ -1,6 +1,7 @@
 // hAzzle feature detection
 
-var _features = hAzzle.features = {
+var docElem = hAzzle.docElem,
+   _features = hAzzle.features = {
 
  // Support: IE<=11+
  // Make sure textarea (and checkbox) defaultValue is properly cloned
@@ -21,9 +22,9 @@ function addFeature(name, fn) {
 /* ============================ BUG / FEATURE DETECTION =========================== */
 
 (function() {
-    var input = doc.createElement('input'),
-        select = doc.createElement('select'),
-        opt = select.appendChild(doc.createElement('option'));
+    var input = document.createElement('input'),
+        select = document.createElement('select'),
+        opt = select.appendChild(document.createElement('option'));
 
     input.type = 'checkbox';
 
@@ -35,7 +36,7 @@ function addFeature(name, fn) {
 
     // Support: IE<=11+
     // An input loses its value after becoming a radio
-    input = doc.createElement('input');
+    input = document.createElement('input');
     input.setAttribute('type', 'radio');
     input.setAttribute('name', 't');
 
@@ -48,7 +49,7 @@ hAzzle.assert(function(div) {
 
     div.classList.add('a', 'b');
     // Detect if the browser supports classList
-    _features['api-classList'] = !!winDoc.documentElement.classList;
+    _features['api-classList'] = !!document.documentElement.classList;
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
     _features['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);

@@ -535,17 +535,17 @@ var Expr = {
         }
 
         return '[' + attr + "='" + value + "']";
-    },
+    };
 
     /* ============================ UTILITY METHODS =========================== */
 
     // Combine regExes
 
-    combineRegEx = function() {
+    function combineRegEx() {
         return "(?:(?:" + join.call(arguments, ")|(?:") + "))";
-    },
+    }
 
-    quickQueryAll = function(selector, context) {
+   function quickQueryAll(selector, context) {
 
         if (!selector || !context) {
             return [];
@@ -585,17 +585,17 @@ var Expr = {
                 context.removeAttribute('id');
             }
         }
-    },
+    }
 
-    quickQuery = function(selector, context) {
+    function quickQuery(selector, context) {
 
         if (!selector || !context) {
             return [];
         }
         return context[_query](selector);
-    },
-
-    filter = function(elems, attr, attrValue, filterFn, args) {
+    }
+	
+    function filter(elems, attr, attrValue, filterFn, args) {
 
         if (!elems) {
             return '';
@@ -618,17 +618,17 @@ var Expr = {
         // If all of the elems matched the filter return empty string
 
         return "[" + attr + "='" + attrValue + "']";
-    },
-
-    isElement = function(o) {
+    }
+	
+    function isElement (o) {
         return o && o.nodeType === 1;
-    },
+    }
 
-    isDocument = function(o) {
+    function  isDocument(o) {
         return o && o.nodeType === 9;
-    },
+    }
 
-    extend = function(pseudo, type, fn) {
+    function extend(pseudo, type, fn) {
 
         // Pseudo are allways upperCase
         // Except for internals
@@ -644,9 +644,9 @@ var Expr = {
             return 1;
         }
         return 0;
-    },
+    }
 
-    getAttr = function(elem, attr) {
+    function getAttr(elem, attr) {
 
         if (!elem) {
             return '';
@@ -687,7 +687,7 @@ var Expr = {
             (val = elem.getAttributeNode(attr)) && val.specified ?
             val.value :
             null;
-    },
+    }
 
     /* ============================ FEATURE / BUG DETECTION =========================== */
 
@@ -697,7 +697,7 @@ var Expr = {
     // The broken getElementById methods don't pick up programatically-set names,
     // so use a roundabout getElementsByName test
 
-    grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
+    var grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
         var elem = null;
         if (hAzzle.documentIsHTML || context.nodeType !== 9) {
             return byIdRaw(id, context.getElementsByTagName('*'));
@@ -711,9 +711,9 @@ var Expr = {
     function(id, context) {
         var m = context.getElementById(id);
         return m && m.parentNode ? [m] : [];
-    },
+    };
 
-    byIdRaw = function(id, elements) {
+    function byIdRaw (id, elements) {
         var i = -1,
             element = null;
         while ((element = elements[++i])) {
