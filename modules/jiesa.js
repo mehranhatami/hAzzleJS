@@ -29,36 +29,30 @@ var i,
     rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
     whitespace = '[^\\x00-\\xFF]',
-
     wrapps = '\\\\' + combineRegEx('[\\da-fA-F]{1,6}(?:(?:\\r\\n)|\\s)?', '[^\\n\\r\\f\\da-fA-F]'),
-    nl = '\\n|(?:\\r\\n)|\\f',
-    firstString = "'(?:[^\\n\\r\\f\\\\']|(?:\\\\" + nl + ")|(?:" + wrapps + "))*'",
+    newLine = '\\n|(?:\\r\\n)|\\f',
+    firstString = "'(?:[^\\n\\r\\f\\\\']|(?:\\\\" + newLine + ")|(?:" + wrapps + "))*'",
     secondString = firstString.replace("'", "\""),
-    string = combineRegEx(firstString, secondString),
+    combinedString = combineRegEx(firstString, secondString),
     commaCombinators = '\\s*([+>~,\\s])\\s*',
     argReference = '{[^}]+}',
     numbstart = combineRegEx('[_a-zA-Z]', whitespace, wrapps),
     dumbchar = combineRegEx(numbstart, '[\\w-]'),
-    ident = '-?' + numbstart + dumbchar + '*',
-    identityFlag = '(' + combineRegEx(ident, string, argReference) + ')(?:\\s+([a-zA-Z]*))?',
-    attrib = '\\[\\s*(\\.?' + ident + ')\\s*(?:([|^$*~!]?=)\\s*' + identityFlag + '\\s*)?\\]',
-    pseudoClass = '[:.](' + combineRegEx(ident, argReference) + ')',
+    identifier = '-?' + numbstart + dumbchar + '*',
+    identityFlag = '(' + combineRegEx(identifier, combinedString, argReference) + ')(?:\\s+([a-zA-Z]*))?',
+    attributeQuotes = '\\[\\s*(\\.?' + identifier + ')\\s*(?:([|^$*~!]?=)\\s*' + identityFlag + '\\s*)?\\]',
+    kfpseudo = '[:.](' + combineRegEx(identifier, argReference) + ')',
     hashes = '#' + dumbchar + '+',
-    rtype = combineRegEx(ident, '\\*'),
+    rtype = combineRegEx(identifier, '\\*'),
     spaceReplace = /\s+/g,
     escapeReplace = /\\./g,
 
     // regEx we are using through the code
 
     compileExpr = {
-        header: /^h\d$/i,
-        inputs: /^(?:input|select|textarea|button)$/i,
-        radicheck: /radio|checkbox/i,
-        selectorPattern: new RegExp('^(' + combineRegEx(commaCombinators, rtype, hashes, pseudoClass, attrib) + ')(.*)$'),
+        regexPattern: new RegExp('^(' + combineRegEx(commaCombinators, rtype, hashes, kfpseudo, attributeQuotes) + ')(.*)$'),
         anbPattern: /(?:([+-]?\d*)n([+-]\d+)?)|((?:[+-]?\d+)|(?:odd)|(?:even))/i,
-        identReg: new RegExp('^' + ident + '$'),
-        hashReg: new RegExp('^' + hashes + '$'),
-        typeReg: new RegExp('^' + rtype + '$'),
+        identPattern: new RegExp('^' + identifier + '$'),
         containsArg: new RegExp('^' + identityFlag + '$'),
         referencedByArg: /^\s*(\S+)(?:\s+in\s+([\s\S]*))?\s*$/i,
         beginEndQuoteReplace: /^(['"])(.*)\1$/,
@@ -194,12 +188,12 @@ var Expr = {
 
             if (selector) {
 
-                filter(Kenny(selector, ctx), attr, attrValue, Expr.tru);
+                filter(KenRa(selector, ctx), attr, attrValue, Expr.tru);
             }
         },
 
         'NOT': function(args, attr, attrValue, p, context, references) {
-            args = filter(Kenny(args, context, references), attr, attrValue, Expr.tru);
+            args = filter(KenRa(args, context, references), attr, attrValue, Expr.tru);
             return ':not(' + args + ')';
         },
 
@@ -208,7 +202,7 @@ var Expr = {
                 found = compileExpr.referencedByArg.match(args),
                 ctx = context.ownerDocument || context,
                 referenceAttr = found[1],
-                elements = Kenny(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, references),
+                elements = KenRa(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, references),
                 l = elements.length;
             while ((element = elements[--l])) {
                 refEl = grabID(referenceAttr[0] == '.' ? element[referenceAttr.slice(1)] : getAttr(element, referenceAttr), ctx);
@@ -219,7 +213,7 @@ var Expr = {
         },
 
         'MATCHES': function(args, attr, attrValue, p, context, references) {
-            filter(Kenny(args, context.ownerDocument || context, references), attr, attrValue, Expr.tru);
+            filter(KenRa(args, context.ownerDocument || context, references), attr, attrValue, Expr.tru);
         }
     },
 
@@ -229,7 +223,7 @@ var Expr = {
         return a.pathname;
     }()),
 
-    Kenny = function(selector, context, references) {
+    KenRa = function(selector, context, references) {
 
         var ctx, results = [],
             match, m, elem,
@@ -289,7 +283,7 @@ var Expr = {
             var i = 0,
                 l = m.length;
             for (; i < l; i++) {
-                hAzzle.each(Kenny(m[i]), function(el) {
+                hAzzle.each(KenRa(m[i]), function(el) {
                     if (!hAzzle.contains(results, el)) {
                         results.push(el);
                     }
@@ -384,7 +378,7 @@ var Expr = {
 
         ctx = context.ownerDocument || context;
 
-        //if no other instances of Kenny are in progress
+        //if no other instances of KenRa are in progress
 
         if (!(runningCount++)) {
 
@@ -398,7 +392,7 @@ var Expr = {
         // Mehran! Find an better solution then try / catch
 
         try {
-            while ((match = compileExpr.selectorPattern.exec(selector))) {
+            while ((match = compileExpr.regexPattern.exec(selector))) {
 
                 selector = match[8] || '';
 
@@ -637,7 +631,7 @@ function extend(pseudo, type, fn) {
     // Check that the pseudo matches the css pseudo pattern, is 
     // not already in use and that fn is a function
 
-    if (pseudo && compileExpr.identReg.test(pseudo) &&
+    if (pseudo && compileExpr.identPattern.test(pseudo) &&
         !Expr[pseudo] && !transformers[pseudo] && typeof(fn) === 'function') {
         type[pseudo] = fn;
         return 1;
@@ -746,7 +740,7 @@ transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr
     var element,
         ofPos = args.indexOf('of'),
         anbIterator = anb(args.substr(0, ofPos)),
-        elements = Kenny(args.substr(ofPos + 2), (context.ownerDocument || context), references),
+        elements = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), references),
         l = elements.length - 1,
         nthMatch = pseudo[4] !== 'L';
     while ((element = elements[nthMatch ? anbIterator.next() : l - anbIterator.next()])) {
@@ -796,7 +790,7 @@ hAzzle.addTransformer = function(pseudo, fn) {
 // Expose
 
 hAzzle.Expr = Expr;
-hAzzle.find = Kenny;
+hAzzle.find = KenRa;
 hAzzle.anb = anb;
 hAzzle.tokenize = tokenize;
 hAzzle.getSelector = getSelector;
