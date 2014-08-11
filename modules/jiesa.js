@@ -117,8 +117,8 @@ var Expr = {
         'attr': function(el, attr, operator, value, flags, ref) {
             flags = (flags || '').toLowerCase();
             value = value || '';
-            var property = attr[0] == '.' ? attr.slice(1) : undefined,
-                result = property ? el[property] : getAttr(el, attr) || '',
+            var prop = attr[0] == '.' ? attr.slice(1) : undefined,
+                result = prop ? el[prop] : getAttr(el, attr) || '',
 
                 // Strip out beginning and ending quotes if present
 
@@ -140,7 +140,7 @@ var Expr = {
                 operator === '$=' ? check && result.slice(-check.length) == check :
                 operator === '~=' ? (' ' + result.replace(spaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') > -1 :
                 operator === '|=' ? result == check || !result.indexOf(check + '-') :
-                property in el;
+                prop in el;
         },
 
         'tru': function() {
@@ -203,13 +203,11 @@ var Expr = {
         },
 
         'NOT': function(args, attr, attrValue, p, context, arrfunc) {
-            args = markElements(KenRa(args, context, arrfunc), attr, attrValue, Expr.tru);
-            return ':not(' + args + ')';
+            return ':not(' + markElements(KenRa(args, context, arrfunc), attr, attrValue, Expr.tru) + ')';
         },
 
         'REFERENCED-BY': function(args, attr, attrValue, p, context, arrfunc) {
-            var element, refEl,
-                found = compileExpr.referencedByArg.match(args),
+            var element, refEl, found = compileExpr.referencedByArg.match(args),
                 ctx = context.ownerDocument || context,
                 referenceAttr = found[1],
                 elements = KenRa(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, arrfunc),
@@ -217,7 +215,7 @@ var Expr = {
 
             while ((element = elements[--l])) {
 
-                refEl = grabID(referenceAttr[0] == '.' ?
+                refEl = grabID(referenceAttr[0] === '.' ?
                     element[referenceAttr.substr(1)] :
                     getAttr(element, referenceAttr), ctx);
 
@@ -830,14 +828,17 @@ function createCache() {
  */
 
 transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr, attrValue, pseudo, context, arrfunc) {
-    var element,
-        ofPos = args.indexOf('of'),
+    var elem, ofPos = args.indexOf('of'), 
         anbIterator = anb(args.slice(0, ofPos)),
-        elements = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
-        l = elements.length - 1,
+        elems = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
+        l = elems.length - 1,
         nthMatch = pseudo[4] !== 'L';
-    while ((element = elements[nthMatch ? anbIterator.next() : l - anbIterator.next()])) {
-        element.setAttribute(attr, attrValue);
+
+    while ((elem = elems[nthMatch ? 
+	        anbIterator.next() : 
+			l - anbIterator.next()])) {
+				
+        elem.setAttribute(attr, attrValue);
     }
 };
 
@@ -859,7 +860,6 @@ transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr
  * we can't be sure what name to be used. It has been known as 'SCOPE', but in
  * the new DOM Level 4 drafts, it named 'SCOPED' and used in the
  * query() and queryAll() that will replace querySelectorAll():
-
  *
  * For now hAzzle are supporting both names
  */
