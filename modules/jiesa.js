@@ -110,15 +110,16 @@ if ('Element' in window) {
 
 var Expr = {
 
-        'cacheLength': 70,
-
+       'cacheLength': 70,
+	   
         /* ============================ INTERNAL =========================== */
 
         'attr': function(el, attr, operator, value, flags, ref) {
             flags = (flags || '').toLowerCase();
             value = value || '';
-            var prop = attr[0] == '.' ? attr.slice(1) : undefined,
-                result = prop ? el[prop] : getAttr(el, attr) || '',
+			
+            var property = attr[0] == '.' ? attr.slice(1) : undefined,
+			    result = property ? el[property] : getAttr(el, attr) || '',
 
                 // Strip out beginning and ending quotes if present
 
@@ -128,6 +129,7 @@ var Expr = {
                 regProp = check + '-' + flags,
                 reg = hAzzle.isRegExp(check) ? check : flags.indexOf('r') > -1 ?
                 (regExCache[regProp] || (regExCache[regProp] = new RegExp(check, flags.replace('r', '')))) : undefined;
+
 
             if (flags.indexOf('i') > -1 && !reg) {
                 result = result.toUpperCase();
@@ -140,7 +142,7 @@ var Expr = {
                 operator === '$=' ? check && result.slice(-check.length) == check :
                 operator === '~=' ? (' ' + result.replace(spaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') > -1 :
                 operator === '|=' ? result == check || !result.indexOf(check + '-') :
-                prop in el;
+                property in el;
         },
 
         'tru': function() {
@@ -179,7 +181,7 @@ var Expr = {
                 ctx = context.ownerDocument || context,
                 pathname = ctx.location.pathname;
 
-            pathname = fakePath ? pathname : pathname.substr(1);
+            pathname = fakePath ? pathname : pathname.slice(1);
 
             if (!args) {
 
@@ -215,8 +217,8 @@ var Expr = {
 
             while ((element = elements[--l])) {
 
-                refEl = grabID(referenceAttr[0] === '.' ?
-                    element[referenceAttr.substr(1)] :
+                refEl = grabID(referenceAttr[0] == '.' ?
+                    element[referenceAttr.slice(1)] :
                     getAttr(element, referenceAttr), ctx);
 
                 if (refEl) {
@@ -225,7 +227,7 @@ var Expr = {
             }
         },
 
-        /**
+       /**
          * The matches pseudo selector selects elements which meet the sub-selector. This can be especially helpful
          * in simplifying complex selectors.
          *
@@ -239,7 +241,7 @@ var Expr = {
          * div > :matches(p, a, h1):nth-child(2n+1)
          *
          */
-
+		 
         'MATCHES': function(args, attr, attrValue, p, context, arrfunc) {
             markElements(KenRa(args, context.ownerDocument || context, arrfunc), attr, attrValue, Expr.tru);
         }
@@ -267,11 +269,12 @@ var Expr = {
      *
      * 'arrfunc' are defined within an object or an array, and elements within are referenced by their
      * associated key. Keys can be any number of character but cannot contain a closing curly brace }.
+     *
      */
 
     KenRa = function(selector, context, arrfunc) {
 
-        var found, results = [],
+        var ctx, found, results = [],
             m, elem,
             isDoc = isDocument(context);
 
@@ -337,30 +340,39 @@ var Expr = {
 
     anb = function(str) {
         //remove all spaces and parse the string
-        var found = str.replace(spaceReplace, '')
+        var match = str.replace(spaceReplace, '')
             .match(compileExpr.anbPattern),
-            a = found[1],
-            n = !found[3],
-            b = n ? found[2] || 0 : found[3];
+            a = match[1],
+            n = !match[3],
+            b = n ? match[2] || 0 : match[3];
 
         if (b == 'even') {
             a = 2;
             b = 0;
-        } else if (b == 'odd') {
+        } 
+		
+		if (b == 'odd') {
             a = 2;
             b = 1;
-        } else if (a == '+' || a == '-') {
+        }
+		
+		if (a == '+' || a == '-') {
             a += 1;
-        } else if (!a && !n) {
+        }
+		
+		if (!a && !n) {
             a = 0;
-        } else if (!a) {
+        }
+		
+		if (!a) {
             a = 1;
         }
+
         // Return an iterator
 
         return (function(a, b) {
-
-            var y, posSlope = a >= 0,
+            var y,
+                posSlope = a >= 0,
 
                 // If no slope or the y-intercept >= 0 with a positive slope start x at 0
                 // otherwise start x at the x-intercept rounded
@@ -369,7 +381,6 @@ var Expr = {
                 x = startX;
 
             return {
-
                 'next': function() {
 
                     // For positive slopes increment x, otherwise decrement
@@ -378,15 +389,15 @@ var Expr = {
 
                 },
                 'reset': function() {
-
+					
                     x = startX;
                     y = undefined;
                 },
 
                 'matches': function(y) {
-
+					
                     if (!a) {
-
+						
                         return y == b;
                     }
                     var x = (y - b) / a;
@@ -398,6 +409,7 @@ var Expr = {
             };
         }(a - 0, b - 1)); // Convert a and b to a number (if string), subtract 1 from y-intercept (b) for 0-based indices
     },
+
 
     /*
      * Tokenize
@@ -418,7 +430,6 @@ var Expr = {
      * 8 - right context
      *
      */
-
     tokenize = function(selector, context, arrfunc) {
 
         if (!selector || typeof selector !== 'string') {
@@ -681,7 +692,6 @@ function markElements(elems, attr, attrValue, filterFn, args) {
     while (i--) {
 
         if (filterFn([elems[i]].concat(args))) {
-
             elems[i].setAttribute(attr, attrValue);
         }
     }
@@ -808,6 +818,7 @@ function createCache() {
     return cache;
 }
 
+
 /* ============================ UTILITY METHODS =========================== */
 
 /**
@@ -828,17 +839,14 @@ function createCache() {
  */
 
 transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr, attrValue, pseudo, context, arrfunc) {
-    var elem, ofPos = args.indexOf('of'), 
-        anbIterator = anb(args.slice(0, ofPos)),
-        elems = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
-        l = elems.length - 1,
+    var element,
+        ofPos = args.indexOf('of'),
+        anbIterator = anb(args.substr(0, ofPos)),
+        elements = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
+        l = elements.length - 1,
         nthMatch = pseudo[4] !== 'L';
-
-    while ((elem = elems[nthMatch ? 
-	        anbIterator.next() : 
-			l - anbIterator.next()])) {
-				
-        elem.setAttribute(attr, attrValue);
+    while ((element = elements[nthMatch ? anbIterator.next() : l - anbIterator.next()])) {
+        element.setAttribute(attr, attrValue);
     }
 };
 
@@ -860,6 +868,7 @@ transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr
  * we can't be sure what name to be used. It has been known as 'SCOPE', but in
  * the new DOM Level 4 drafts, it named 'SCOPED' and used in the
  * query() and queryAll() that will replace querySelectorAll():
+
  *
  * For now hAzzle are supporting both names
  */
@@ -877,7 +886,6 @@ hAzzle.addFilter = function(pseudo, fn) {
 hAzzle.addTransformer = function(pseudo, fn) {
     return typeof fn === 'function' && extend(pseudo, transformers, fn);
 };
-
 
 /* ============================ GLOBAL =========================== */
 
