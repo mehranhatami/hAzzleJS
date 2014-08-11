@@ -45,6 +45,7 @@ var i,
     hashes = '#' + dumbchar + '+',
     rtype = combineRegEx(identifier, '\\*'),
     spaceReplace = /\s+/g,
+    stripReplace = /^\s*--/,
     escapeReplace = /\\./g,
 
     // regEx we are using through the code
@@ -108,6 +109,8 @@ if ('Element' in window) {
 }
 
 var Expr = {
+
+        'cacheLength': 70,
 
         /* ============================ INTERNAL =========================== */
 
@@ -265,14 +268,12 @@ var Expr = {
      * powerful (attribute/property selectors, contains).
      *
      * 'arrfunc' are defined within an object or an array, and elements within are referenced by their
-     * associated key. Keys can
-     * be any number of character but cannot contain a closing curly brace }.
-     *
+     * associated key. Keys can be any number of character but cannot contain a closing curly brace }.
      */
 
     KenRa = function(selector, context, arrfunc) {
 
-        var ctx, found, results = [],
+        var found, results = [],
             m, elem,
             isDoc = isDocument(context);
 
@@ -325,7 +326,7 @@ var Expr = {
 
         // Everything else
 
-        return slice.call(quickQueryAll(tokenize(selector, context, arrfunc), context));
+        return quickQueryAll(tokenize(selector, context, arrfunc), context);
     },
 
     /*
@@ -338,39 +339,30 @@ var Expr = {
 
     anb = function(str) {
         //remove all spaces and parse the string
-        var match = str.replace(spaceReplace, '')
+        var found = str.replace(spaceReplace, '')
             .match(compileExpr.anbPattern),
-            a = match[1],
-            n = !match[3],
-            b = n ? match[2] || 0 : match[3];
+            a = found[1],
+            n = !found[3],
+            b = n ? found[2] || 0 : found[3];
 
         if (b == 'even') {
             a = 2;
             b = 0;
-        }
-
-        if (b == 'odd') {
+        } else if (b == 'odd') {
             a = 2;
             b = 1;
-        }
-
-        if (a == '+' || a == '-') {
+        } else if (a == '+' || a == '-') {
             a += 1;
-        }
-
-        if (!a && !n) {
+        } else if (!a && !n) {
             a = 0;
-        }
-
-        if (!a) {
+        } else if (!a) {
             a = 1;
         }
-
         // Return an iterator
 
         return (function(a, b) {
-            var y,
-                posSlope = a >= 0,
+
+            var y, posSlope = a >= 0,
 
                 // If no slope or the y-intercept >= 0 with a positive slope start x at 0
                 // otherwise start x at the x-intercept rounded
@@ -379,6 +371,7 @@ var Expr = {
                 x = startX;
 
             return {
+
                 'next': function() {
 
                     // For positive slopes increment x, otherwise decrement
@@ -408,7 +401,6 @@ var Expr = {
         }(a - 0, b - 1)); // Convert a and b to a number (if string), subtract 1 from y-intercept (b) for 0-based indices
     },
 
-
     /*
      * Tokenize
      *
@@ -428,10 +420,11 @@ var Expr = {
      * 8 - right context
      *
      */
+
     tokenize = function(selector, context, arrfunc) {
 
-        if (!selector) {
-            return;
+        if (!selector || typeof selector !== 'string') {
+            return [];
         }
 
         var cScope, group, str, n, j, k, found, args, pseudo, filterFn, ctx,
@@ -462,7 +455,7 @@ var Expr = {
             scope = cScope;
         }
 
-        selector = selector.replace(/^\s*--/, '');
+        selector = selector.replace(stripReplace, '');
 
         // Mehran! Find an better solution then try / catch
 
@@ -524,6 +517,7 @@ var Expr = {
                                 j = str.indexOf('(', j);
                                 if (k > j && j > 0) {
                                     n++;
+
                                 } else {
 
                                     n--;
@@ -532,6 +526,7 @@ var Expr = {
                             }
 
                             if (j < 0) {
+
                                 break;
                             }
 
@@ -551,7 +546,7 @@ var Expr = {
                             group += found[1];
 
                             if (args) {
-                                group += "(" + args + ")";
+                                group += '(' + args + ')';
                             }
                         }
 
@@ -578,7 +573,6 @@ var Expr = {
             // Cache the tokens
 
             return tokenCache(oldSelector, hAzzle.trim(wholeSelector + group + selector));
-            //            return hAzzle.trim(wholeSelector + group + selector);
 
         } finally {
 
@@ -807,7 +801,7 @@ function createCache() {
     var keys = [];
 
     function cache(key, value) {
-        if (keys.push(key + " ") > 70) {
+        if (keys.push(key + ' ') > Expr.cacheLength) {
             // Only keep the most recent entries
             delete cache[keys.shift()];
         }
@@ -883,6 +877,7 @@ hAzzle.addFilter = function(pseudo, fn) {
 hAzzle.addTransformer = function(pseudo, fn) {
     return typeof fn === 'function' && extend(pseudo, transformers, fn);
 };
+
 
 /* ============================ GLOBAL =========================== */
 
