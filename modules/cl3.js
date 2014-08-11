@@ -1,5 +1,4 @@
 /* ============================ CL3 SELECTORS =========================== */
-
 var header = /^h\d$/i,
     inputs = /^(?:input|select|textarea|button)$/i,
     identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
@@ -36,9 +35,10 @@ hAzzle.extend({
             x = cnl - 1;
 
         for (; x >= 0; x--) {
+
             nt = cn[x].nodeType;
 
-            if ((nt === 1) || (nt == 3)) {
+            if ((nt === 1) || (nt === 3)) {
                 return false;
             }
         }
@@ -46,8 +46,10 @@ hAzzle.extend({
     },
 
     'HIDDEN': function(elem) {
-        if (elem.style) {
-            if (elem.style.display === 'none' || elem.style.visibility === 'hidden') {
+        var style = elem.style;
+        if (style) {
+            if (style.display === 'none' ||
+                style.visibility === 'hidden') {
                 return true;
             }
         }
@@ -55,7 +57,8 @@ hAzzle.extend({
     },
 
     'TARGET': function(elem) {
-        var hash = window.location ? window.location.hash : '';
+        var hash = window.location ?
+            window.location.hash : '';
         return hash && hash.slice(1) === elem.id;
     },
     'ACTIVE': function(elem) {
@@ -74,14 +77,16 @@ hAzzle.extend({
         var attr;
         return elem.nodeName.toLowerCase() === 'input' &&
             elem.type === 'text' &&
-            ((attr = elem.getAttribute('type')) === null || attr.toLowerCase() === 'text');
+            ((attr = elem.getAttribute('type')) === null ||
+                attr.toLowerCase() === 'text');
     },
     'HEADER': function(elem) {
         return header.test(elem.nodeName);
     },
     'BUTTON': function(elem) {
         var name = elem.nodeName.toLowerCase();
-        return name === 'input' && elem.type === 'button' || name === 'button';
+        return name === 'input' && elem.type === 'button' ||
+            name === 'button';
     },
     'INPUT': function(elem) {
         return inputs.test(elem.nodeName);
@@ -95,8 +100,6 @@ hAzzle.extend({
         if (elem.parentNode) {
             elem.parentNode.selectedIndex;
         }
-
-
         return elem.selected === true;
     },
     'LANG': function(lang) {
@@ -119,6 +122,7 @@ hAzzle.extend({
             return false;
         };
     }
+
 }, hAzzle.Expr);
 
 // Add button/input type pseudos
@@ -139,7 +143,6 @@ hAzzle.each({
 }, function(value, prop) {
     hAzzle.Expr[prop] = createButtonPseudo(prop);
 });
-
 
 /**
  * Returns a function to use in pseudos for input types

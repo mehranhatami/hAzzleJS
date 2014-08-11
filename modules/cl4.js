@@ -1,4 +1,5 @@
-var radicheck = /radio|checkbox/i;
+var radicheck = /radio|checkbox/i,
+    optcheck = /option/i;
 
 function isForm(elem) {
     return elem && typeof elem.form !== 'undefined';
@@ -34,7 +35,7 @@ hAzzle.extend({
     // HTML5 UI element states (form controls)
     'DEFAULT': function(elem) {
         return isForm(elem) && ((radicheck).test(elem.type) ||
-            /option/i.test(elem.nodeName)) && (elem.defaultChecked ||
+            optcheck.test(elem.nodeName)) && (elem.defaultChecked ||
             elem.defaultSelected);
     },
 
