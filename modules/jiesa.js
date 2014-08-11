@@ -58,6 +58,8 @@ var i,
         beginEndQuoteReplace: /^(['"])(.*)\1$/,
     },
 
+    tokenCache = createCache(),
+
     scope,
 
     // Cache for regEx
@@ -434,7 +436,13 @@ var Expr = {
 
         var cScope, group, str, n, j, k, found, args, pseudo, filterFn, ctx,
             wholeSelector = '',
-            lastMatchCombinator = '*';
+            lastMatchCombinator = '*',
+            oldSelector = selector,
+            cached = tokenCache[oldSelector + ' '];
+
+        if (cached) {
+            return cached;
+        }
 
         if (!(arrfunc || isDocument(context) || isElement(context))) {
             arrfunc = context;
@@ -567,7 +575,10 @@ var Expr = {
                 }
             }
 
-            return hAzzle.trim(wholeSelector + group + selector);
+            // Cache the tokens
+
+            return tokenCache(oldSelector, hAzzle.trim(wholeSelector + group + selector));
+            //            return hAzzle.trim(wholeSelector + group + selector);
 
         } finally {
 
@@ -790,6 +801,19 @@ function byIdRaw(id, elements) {
         }
     }
     return element;
+}
+
+function createCache() {
+    var keys = [];
+
+    function cache(key, value) {
+        if (keys.push(key + " ") > 70) {
+            // Only keep the most recent entries
+            delete cache[keys.shift()];
+        }
+        return (cache[key + " "] = value);
+    }
+    return cache;
 }
 
 /* ============================ UTILITY METHODS =========================== */
