@@ -174,7 +174,7 @@ var Expr = {
                 ctx = context.ownerDocument || context,
                 pathname = ctx.location.pathname;
 
-            pathname = fakePath ? pathname : pathname.slice(1);
+            pathname = fakePath ? pathname : pathname.substr(1);
 
             if (!args) {
 
@@ -193,12 +193,12 @@ var Expr = {
 
             if (selector) {
 
-                filter(KenRa(selector, ctx), attr, attrValue, Expr.tru);
+                markElements(KenRa(selector, ctx), attr, attrValue, Expr.tru);
             }
         },
 
         'NOT': function(args, attr, attrValue, p, context, arrfunc) {
-            args = filter(KenRa(args, context, arrfunc), attr, attrValue, Expr.tru);
+            args = markElements(KenRa(args, context, arrfunc), attr, attrValue, Expr.tru);
             return ':not(' + args + ')';
         },
 
@@ -213,7 +213,7 @@ var Expr = {
             while ((element = elements[--l])) {
 
                 refEl = grabID(referenceAttr[0] == '.' ?
-                    element[referenceAttr.slice(1)] :
+                    element[referenceAttr.substr(1)] :
                     getAttr(element, referenceAttr), ctx);
 
                 if (refEl) {
@@ -222,8 +222,23 @@ var Expr = {
             }
         },
 
+        /**
+         * The matches pseudo selector selects elements which meet the sub-selector. This can be especially helpful
+         * in simplifying complex selectors.
+         *
+         * Example:
+         * -------
+         *
+         * div > p:nth-child(2n+1), div > a:nth-child(2n+1), div > h1:nth-child(2n+1)
+         *
+         * can be simplified too:
+         *
+         * div > :matches(p, a, h1):nth-child(2n+1)
+         *
+         */
+
         'MATCHES': function(args, attr, attrValue, p, context, arrfunc) {
-            filter(KenRa(args, context.ownerDocument || context, arrfunc), attr, attrValue, Expr.tru);
+            markElements(KenRa(args, context.ownerDocument || context, arrfunc), attr, attrValue, Expr.tru);
         }
     },
 
@@ -330,22 +345,22 @@ var Expr = {
         if (b == 'even') {
             a = 2;
             b = 0;
-        } 
-		
-		if (b == 'odd') {
+        }
+
+        if (b == 'odd') {
             a = 2;
             b = 1;
         }
-		
-		if (a == '+' || a == '-') {
+
+        if (a == '+' || a == '-') {
             a += 1;
         }
-		
-		if (!a && !n) {
+
+        if (!a && !n) {
             a = 0;
         }
-		
-		if (!a) {
+
+        if (!a) {
             a = 1;
         }
 
@@ -370,15 +385,15 @@ var Expr = {
 
                 },
                 'reset': function() {
-					
+
                     x = startX;
                     y = undefined;
                 },
 
                 'matches': function(y) {
-					
+
                     if (!a) {
-						
+
                         return y == b;
                     }
                     var x = (y - b) / a;
@@ -518,7 +533,7 @@ var Expr = {
 
                         if (filterFn) {
 
-                            group = filter(quickQueryAll(group + lastMatchCombinator, ctx), attrExpando + rCount++, tCount, filterFn, [args, pseudo, arrfunc]);
+                            group = markElements(quickQueryAll(group + lastMatchCombinator, ctx), attrExpando + rCount++, tCount, filterFn, [args, pseudo, arrfunc]);
 
 
                         } else if (transformers[pseudo]) {
@@ -536,7 +551,7 @@ var Expr = {
 
                     } else if (found[7] || (found[4] && found[4][0] == '.') || (found[6] && found[6][0] == '{')) {
 
-                        group += filter(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [found[4], found[5], found[6], found[7], arrfunc]);
+                        group += markElements(ctx.queryAll(group + lastMatchCombinator), attrExpando + rCount++, tCount, Expr.attr, [found[4], found[5], found[6], found[7], arrfunc]);
 
                     } else if (found[5] == '!=' ||
                         found[5] == '!==') {
@@ -648,7 +663,7 @@ function quickQuery(selector, context) {
     return context[_query](selector);
 }
 
-function filter(elems, attr, attrValue, filterFn, args) {
+function markElements(elems, attr, attrValue, filterFn, args) {
 
     if (!elems) {
         return '';
@@ -662,7 +677,7 @@ function filter(elems, attr, attrValue, filterFn, args) {
 
     while (i--) {
 
-        if (filterFn.apply(undefined, [elems[i]].concat(args))) {
+        if (filterFn([elems[i]].concat(args))) {
 
             elems[i].setAttribute(attr, attrValue);
         }
@@ -799,7 +814,7 @@ function byIdRaw(id, elements) {
 transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr, attrValue, pseudo, context, arrfunc) {
     var element,
         ofPos = args.indexOf('of'),
-        anbIterator = anb(args.substr(0, ofPos)),
+        anbIterator = anb(args.slice(0, ofPos)),
         elements = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
         l = elements.length - 1,
         nthMatch = pseudo[4] !== 'L';
