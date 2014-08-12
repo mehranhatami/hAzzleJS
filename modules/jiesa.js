@@ -1,3 +1,4 @@
+
 // Jiesa - selector engine
 var i,
 
@@ -331,8 +332,14 @@ var Expr = {
         }
 
         // Everything else
+        
+		// Could add in support for xPath / XML doc here in case
+        // queryAll not supported
 
-        return quickQueryAll(tokenize(selector, context, arrfunc), context);
+        var token = tokenize(selector, context, arrfunc)
+
+        return context.nodeType === 9 && token ? 
+		       quickQueryAll(token, context) : [];
     },
 
     /*
@@ -584,7 +591,7 @@ var Expr = {
                 }
             }
 
-            // Cache the tokens
+            // Cache it and return
 
             return tokenCache(oldSelector, hAzzle.trim(wholeSelector + group + selector));
 
@@ -664,7 +671,7 @@ function quickQueryAll(selector, context) {
     try {
 
         return context.nodeType === 9 ?
-            context[_queryAll](selector) : [];
+            context.querySelectorAll(selector) : [];
 
     } finally {
 
