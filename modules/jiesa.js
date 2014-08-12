@@ -1,4 +1,3 @@
-
 // Jiesa - selector engine
 var i,
 
@@ -112,6 +111,10 @@ if ('Element' in window) {
 var Expr = {
 
         'cacheLength': 70,
+
+        'filter': {
+
+        },
 
         /* ============================ INTERNAL =========================== */
 
@@ -281,8 +284,8 @@ var Expr = {
     KenRa = function(selector, context, arrfunc) {
 
         var ctx, found, results = [],
-            m, elem,
-            isDoc = isDocument(context);
+            m, elem, matched, oldSelector = selector
+        isDoc = isDocument(context);
 
         if (!selector || typeof selector !== 'string') {
             return results;
@@ -331,15 +334,28 @@ var Expr = {
             }
         }
 
+        // Fast look-up
+
+        while (oldSelector) {
+
+            // Filter selector by filter if any	for quicker
+            // look-up
+
+            for (type in Expr.filter) {}
+
+            // Break and continue with QSA if no match		
+
+            if (!matched) {
+                break;
+            }
+        }
+
         // Everything else
-        
-		// Could add in support for xPath / XML doc here in case
-        // queryAll not supported
 
         var token = tokenize(selector, context, arrfunc)
 
-        return context.nodeType === 9 && token ? 
-		       quickQueryAll(token, context) : [];
+        return context.nodeType === 9 && token ?
+            quickQueryAll(token, context) : [];
     },
 
     /*
@@ -495,6 +511,7 @@ var Expr = {
                         group = cScope;
 
                     } else {
+
 
                         group += found[2];
                     }
