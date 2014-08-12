@@ -3,16 +3,10 @@ var winDoc = this.document,
     setDocument,
     contains,
     cnative = /^[^{]+\{\s*\[native \w/,
-    mArgsL = /(^| )a( |$)/,
-    mArgsR = /(^| )b( |$)/,
 
     indexOf = Array.prototype.indexOf,
 
     me = 1 << 31,
-
-    expando = 'hAzzle' + Math.random() + '-Kenny Flashlight',
-
-    matches,
 
     hasDuplicate,
 
@@ -21,35 +15,16 @@ var winDoc = this.document,
             hasDuplicate = true;
         }
         return 0;
-    },
-
-    // Core methods for DOM
-
-    domCore = {
-
-        'api-stableSort': expando.split("").sort(sortOrder).join("") === expando,
-        'api-sortInput': false,
-        'bug-detectDuplicates': !!hasDuplicate,
-        'sort-bug': hAzzle.assert(function(div1) {
-            // Should return 1, but returns 4 (following)
-            return div1.compareDocumentPosition(document.createElement("div")) & 1;
-        })
-
-    },
-
-    // Core methods for Jiesa
-
-    Jiesa = {
-
-        sortOrder: sortOrder,
-
-        has: {
-
-            // Feature detect if the browser supports QSA
-
-            'api-QSA': !!winDoc.querySelectorAll
-        }
     };
+
+hAzzle.features['api-stableSort'] = hAzzle.expando.split("").sort(sortOrder).join("") === hAzzle.expando;
+hAzzle.features['api-sortInput'] = false;
+hAzzle.features['bug-detectDuplicates'] = !!hasDuplicate;
+hAzzle.features['sortOrder'] = sortOrder;
+hAzzle.features['sort-bug'] = hAzzle.assert(function(div1) {
+    // Should return 1, but returns 4 (following)
+    return div1.compareDocumentPosition(document.createElement('div')) & 1;
+});
 
 // Convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
 
@@ -94,53 +69,9 @@ var setDocument = hAzzle.setDocument = function(node) {
     return doc;
 };
 
-
 // Set correct document
 
-winDoc = hAzzle.setDocument();
-
-/* ============================ FEATURE / BUG DETECTION =========================== */
-
-// QSA supported, test for bugs
-
-Jiesa.has['bug-QSA'] = Jiesa.has['api-QSA'] ? hAzzle.assert(function(div) {
-
-    div.innerHTML = "<p class='QsA'>Jiesa</p>";
-
-    return div.querySelectorAll(".QsA").length === 0 ? false :
-        // Check for broken :checked pseudo in Webkit/Opera
-        !div.querySelectorAll(":checked").length ? false : true;
-}) : false;
-
-// matchesSelector supported, test for bugs
-
-Jiesa.has['bug-mS'] = Jiesa.has['api-mS'] ? hAzzle.assert(function(div) {
-
-    // IE9 supports matchesSelector, but doesn't work on orphaned elems
-    // check for that
-    return matches.call(div, "div") ? false :
-        // This should fail with an exception
-        // Gecko does not error, returns false instead
-        matches.call(div, "[s!='']:x") ? false : true;
-}) : false;
-
-/**
- * Check if getElementsByTagName ("*") returns only elements
- */
-
-Jiesa.has["bug-GEBTN"] = hAzzle.assert(function(div) {
-    div.appendChild(winDoc.createComment(''));
-    return div.getElementsByTagName('*').length > 0;
-});
-
-/**
- * Check for getElementById bug
- * Support: IE<10
- */
-Jiesa.has["bug-GEBI"] = hAzzle.assert(function(div) {
-    hAzzle.docElem.appendChild(div).id = expando;
-    return winDoc.getElementsByName > 0 || winDoc.getElementsByName(expando).length;
-});
+winDoc = setDocument();
 
 /**
  * Check if an element contains another element
@@ -178,7 +109,7 @@ contains = (docElem.contains || docElem.compareDocumentPosition) ? function(pare
 
 // Sort
 
-Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
+hAzzle.features.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
 
     function(a, b) {
 
@@ -204,7 +135,7 @@ Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
 
         // Disconnected nodes
         if (compare & 1 ||
-            (!domCore['sort-bug'] && b.compareDocumentPosition(a) === compare)) {
+            (!hAzzle.features['sort-bug'] && b.compareDocumentPosition(a) === compare)) {
 
             // Choose the first element that is related to our preferred document
             if (a === winDoc || a.ownerDocument === winDoc && contains(winDoc, a)) {
@@ -215,8 +146,8 @@ Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
             }
 
             // Maintain original order
-            return domCore['api-sortInput'] ?
-                (indexOf.call(domCore['api-sortInput'], a) - indexOf.call(domCore['api-sortInput'], b)) :
+            return hAzzle.features['api-sortInput'] ?
+                (indexOf.call(hAzzle.features['api-sortInput'], a) - indexOf.call(hAzzle.features['api-sortInput'], b)) :
                 0;
         }
 
@@ -242,8 +173,8 @@ Jiesa.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
                 b === winDoc ? 1 :
                 aup ? -1 :
                 bup ? 1 :
-                domCore['api-sortInput'] ?
-                (indexOf.call(domCore['api-sortInput'], a) - indexOf.call(domCore['api-sortInput'], b)) :
+                hAzzle.features['api-sortInput'] ?
+                (indexOf.call(hAzzle.features['api-sortInput'], a) - indexOf.call(hAzzle.features['api-sortInput'], b)) :
                 0;
 
             // If the nodes are siblings, we can do a quick check
@@ -323,17 +254,16 @@ function siblingCheck(a, b) {
 /* =========================== GLOBAL FUNCTIONS ========================== */
 
 hAzzle.docElem = docElem;
-hAzzle.expando = expando;
-hAzzle.Jiesa = Jiesa;
+
 hAzzle.unique = function(results) {
     var elem,
         duplicates = [],
         j = 0,
         i = 0,
-        apis = domCore['api-sortInput'];
+        apis = hAzzle.features['api-sortInput'];
 
     // Unless we *know* we can detect duplicates, assume their presence
-    hasDuplicate = !domCore['bug-detectDuplicates'];
+    hasDuplicate = !hAzzle.features['bug-detectDuplicates'];
 
     results.sort(sortOrder);
 

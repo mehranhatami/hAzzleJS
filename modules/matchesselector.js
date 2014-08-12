@@ -1,7 +1,6 @@
 // hAzzle.matchesselector
 var documentIsHTML = hAzzle.documentIsHTML,
     docElem = hAzzle.docElem,
-    Jiesa = hAzzle.Jiesa,
     quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
     ntapi = {};
 	

@@ -513,6 +513,7 @@ var Expr = {
                     } else {
 
 
+
                         group += found[2];
                     }
 
@@ -808,7 +809,7 @@ function getAttr(elem, attr) {
 // The broken getElementById methods don't pick up programatically-set names,
 // so use a roundabout getElementsByName test
 
-var grabID = Jiesa.has['bug-GEBI'] ? function(id, context) {
+var grabID = hAzzle.features['bug-GEBI'] ? function(id, context) {
         var elem = null;
         if (hAzzle.documentIsHTML || context.nodeType !== 9) {
             return byIdRaw(id, context.getElementsByTagName('*'));
