@@ -16,6 +16,7 @@
             path + 'shims/pnow.js',
             path + 'system.js',
             path + 'text.js',
+            path + 'features.js',
             path + 'core.js',
             path + 'cache.js',			
             path + 'setter.js',			
