@@ -110,16 +110,16 @@ if ('Element' in window) {
 
 var Expr = {
 
-       'cacheLength': 70,
-	   
+        'cacheLength': 70,
+
         /* ============================ INTERNAL =========================== */
 
         'attr': function(el, attr, operator, value, flags, ref) {
             flags = (flags || '').toLowerCase();
             value = value || '';
-			
+
             var property = attr[0] == '.' ? attr.slice(1) : undefined,
-			    result = property ? el[property] : getAttr(el, attr) || '',
+                result = property ? el[property] : getAttr(el, attr) || '',
 
                 // Strip out beginning and ending quotes if present
 
@@ -139,9 +139,13 @@ var Expr = {
                 operator === '!=' ? (reg ? !reg.test(result) : result !== check) :
                 operator === '^=' ? !result.indexOf(check) :
                 operator === '*=' ? reg ? reg.test(result) : result.indexOf(check) >= 0 :
-                operator === '$=' ? check && result.slice(-check.length) == check :
+                operator === '!*=' ? reg ? reg.test(result) : result.indexOf(check) === 0 :
+                operator === '$=' ? check && result.slice(-check.length) === check :
+                operator === '!$=' ? check && result.slice(-check.length) !== check :
                 operator === '~=' ? (' ' + result.replace(spaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') > -1 :
+                operator === '!~=' ? (' ' + result.replace(spaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') === -1 :
                 operator === '|=' ? result == check || !result.indexOf(check + '-') :
+                operator === '!|=' ? result == check || result.indexOf(check + '-') :
                 property in el;
         },
 
@@ -224,10 +228,11 @@ var Expr = {
                 if (refEl) {
                     refEl.setAttribute(attr, attrValue);
                 }
+
             }
         },
 
-       /**
+        /**
          * The matches pseudo selector selects elements which meet the sub-selector. This can be especially helpful
          * in simplifying complex selectors.
          *
@@ -241,7 +246,7 @@ var Expr = {
          * div > :matches(p, a, h1):nth-child(2n+1)
          *
          */
-		 
+
         'MATCHES': function(args, attr, attrValue, p, context, arrfunc) {
             markElements(KenRa(args, context.ownerDocument || context, arrfunc), attr, attrValue, Expr.tru);
         }
@@ -349,22 +354,22 @@ var Expr = {
         if (b == 'even') {
             a = 2;
             b = 0;
-        } 
-		
-		if (b == 'odd') {
+        }
+
+        if (b == 'odd') {
             a = 2;
             b = 1;
         }
-		
-		if (a == '+' || a == '-') {
+
+        if (a == '+' || a == '-') {
             a += 1;
         }
-		
-		if (!a && !n) {
+
+        if (!a && !n) {
             a = 0;
         }
-		
-		if (!a) {
+
+        if (!a) {
             a = 1;
         }
 
@@ -389,15 +394,15 @@ var Expr = {
 
                 },
                 'reset': function() {
-					
+
                     x = startX;
                     y = undefined;
                 },
 
                 'matches': function(y) {
-					
+
                     if (!a) {
-						
+
                         return y == b;
                     }
                     var x = (y - b) / a;
@@ -658,7 +663,8 @@ function quickQueryAll(selector, context) {
 
     try {
 
-        return context[_queryAll](selector);
+        return context.nodeType === 9 ?
+            context[_queryAll](selector) : [];
 
     } finally {
 
@@ -691,7 +697,7 @@ function markElements(elems, attr, attrValue, filterFn, args) {
 
     while (i--) {
 
-        if (filterFn([elems[i]].concat(args))) {
+        if (filterFn.apply(undefined, [elems[i]].concat(args))) {
             elems[i].setAttribute(attr, attrValue);
         }
     }
