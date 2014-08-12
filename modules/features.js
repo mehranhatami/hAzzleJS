@@ -7,7 +7,7 @@ var docElem = hAzzle.docElem,
 
     matches,
 
-    expando = 'hAzzle-' + String('k.f.' + Math.random()).replace(/\D/g, ''),
+    expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, '') + 'k.f.',
 
     _features = {
 
