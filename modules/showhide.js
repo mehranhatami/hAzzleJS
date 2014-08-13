@@ -59,8 +59,6 @@ hAzzle.extend({
  */
 
 function isHidden(elem, el) {
-    // isHidden might be called from jQuery#filter function;
-    // in that case, element will be second argument
     elem = el || elem;
     return hAzzle.css(elem, 'display') === 'none' ||
         !hAzzle.contains(elem.ownerDocument, elem);
