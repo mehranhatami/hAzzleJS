@@ -193,9 +193,8 @@ hAzzle.extend({
         return proxy;
     },
 
-    isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
-
-    // Detect if Internet Explorer
+    // Special detection for IE, because we got a lot of trouble
+	// with it. Damn IE!!
 
     ie: (function() {
         if (document.documentMode) {
