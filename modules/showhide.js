@@ -59,10 +59,12 @@ hAzzle.extend({
  */
 
 function isHidden(elem, el) {
+    // isHidden might be called from jQuery#filter function;
+    // in that case, element will be second argument
     elem = el || elem;
-    return hAzzle.style(elem, 'display') === 'none' || !hAzzle.contains(elem.ownerDocument, elem);
+    return hAzzle.css(elem, 'display') === 'none' ||
+        !hAzzle.contains(elem.ownerDocument, elem);
 }
-
 
 /**
  * Show / Hide an elements
@@ -75,42 +77,59 @@ function isHidden(elem, el) {
 function showHide(elements, show) {
     var display, elem, hidden,
         values = [],
-        index,
+        i = 0,
         length = elements.length;
 
-    for (index = 0; index < length; index++) {
-        elem = elements[index];
+    for (; i < length; i++) {
+        elem = elements[i];
+
         if (!elem.style) {
             continue;
         }
 
-        values[index] = hAzzle.data(elem, 'olddisplay');
-        display = elem.style.display;
+        values[i] = hAzzle.getPrivate(elem, 'olddisplay');
+
+        // Cache the computedStyle on the Object, we may use
+        // it later
+
+        display = hAzzle.curCSS(elem, 'style');
+
         if (show) {
-            if (!values[index] && display === 'none') {
+
+            if (!values[i] && display === 'none') {
+
                 elem.style.display = '';
             }
+
             if (elem.style.display === '' && isHidden(elem)) {
-                values[index] = hAzzle.data(elem, 'olddisplay', defaultDisplay(elem.nodeName));
+
+                values[i] = hAzzle.private(
+                    elem,
+                    'olddisplay',
+                    defaultDisplay(elem.nodeName)
+                );
             }
         } else {
             hidden = isHidden(elem);
 
             if (display !== 'none' || !hidden) {
-                hAzzle.data(elem, 'olddisplay', hidden ? display : hAzzle.css(elem, 'display'));
+                hAzzle.setPrivate(
+                    elem,
+                    'olddisplay',
+                    hidden ? display : hAzzle.css(elem, 'display')
+                );
             }
         }
     }
 
-    // Set the display of most of the elements in a second loop
-    // to avoid the constant reflow
-    for (index = 0; index < length; index++) {
-        elem = elements[index];
+
+    for (i = 0; i < length; i++) {
+        elem = elements[i];
         if (!elem.style) {
             continue;
         }
         if (!show || elem.style.display === 'none' || elem.style.display === '') {
-            elem.style.display = show ? values[index] || '' : 'none';
+            elem.style.display = show ? values[i] || '' : 'none';
         }
     }
 
@@ -119,22 +138,26 @@ function showHide(elements, show) {
 
 function actualDisplay(name, doc) {
 
-    var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
-        display,
-        gDfCS = win.getDefaultComputedStyle,
-        style = gDfCS && gDfCS(elem[0]);
+    // Create element
+
+    var style, display, elem = doc.createElement(name);
+
+    // Append to Document Body ( DL4) 
+
+    doc.body.append(elem);
+
+    // Get the style values
+
+    style = computedValues(elem);
 
     if (style) {
-
         display = style.display;
-
     } else {
-
-        display = hAzzle.css(elem[0], 'display');
+        display = hAzzle.curCSS(elem, 'display');
     }
-
-    elem.detach();
-
+    // Get rid of the childs
+    hAzzle.dispose(elem);
+    // Return 
     return display;
 }
 
@@ -167,6 +190,7 @@ function defaultDisplay(nodeName) {
 
             doc.documentElement.removeChild(iframe);
         }
+
 
         // Store the correct default display
         elemdisplay[nodeName] = display;
