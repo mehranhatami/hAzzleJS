@@ -124,7 +124,10 @@ FX.prototype = {
     update: function() {
 
         var self = this,
-            hooks = hAzzle.fxHooks[self.prop];
+            prop = self.prop,
+            elem = self.elem,
+            style = elem.style,
+            hooks = hAzzle.fxHooks[prop];
 
         // If any 'hooks' - use it
 
@@ -134,10 +137,10 @@ FX.prototype = {
 
         } else {
 
-            if (self.elem.style && self.elem.style[self.prop] !== null) {
-                self.elem.style[self.prop] = self.now + self.unit;
+            if (style && style[prop] !== null) {
+                style[prop] = self.now + self.unit;
             } else {
-                self.elem[self.prop] = self.now;
+                elem[prop] = self.now;
             }
         }
 
@@ -148,11 +151,14 @@ FX.prototype = {
      * Get the current CSS style
      */
 
-    cur: function() {
+    curStyle: function() {
 
         var self = this,
+            prop = self.prop,
             result,
-            hooks = hAzzle.fxHooks[self.prop];
+            elem = self.elem,
+            style = elem.style,
+            hooks = hAzzle.fxHooks[prop];
 
         if (hooks && hooks.get) {
 
@@ -160,12 +166,15 @@ FX.prototype = {
 
         } else {
 
-            if (self.elem[self.prop] !== null &&
-                (!self.elem.style || self.elem.style[self.prop]) == null) {
-                return self.elem[self.prop];
+            // If no fxHooks, get current CSS style the
+            // 'normal' way 
+
+            if (elem[prop] !== null &&
+                (!style || style[prop]) == null) {
+                return curCSS(elem, prop);
             }
 
-            result = hAzzle.css(self.elem, self.prop, '');
+            result = hAzzle.css(elem, prop, '');
 
             // Empty strings, null, undefined and 'auto' are converted to 0.
 
@@ -277,13 +286,13 @@ FX.prototype = {
 
         if (prop === 'show') {
             if (hAzzleFX !== undefined) {
-                this.run(this.cur(), hAzzleFX);
+                this.run(this.curStyle(), hAzzleFX);
             } else {
-                this.run(this.prop === 'width' || this.prop === 'height' ? 1 : 0, this.cur());
+                this.run(this.prop === 'width' || this.prop === 'height' ? 1 : 0, this.curStyle());
             }
             hAzzle(this.elem).show();
         } else {
-            this.run(this.cur(), 0);
+            this.run(this.curStyle(), 0);
         }
     }
 };
@@ -317,7 +326,7 @@ hAzzle.extend({
     },
 
     // FX Hooks
-    // NOTE!! This will be changed soon
+    // Can and will be extended through plug-ins
 
     fxHooks: {
 
@@ -544,7 +553,7 @@ hAzzle.extend({
                      *********************************/
 
                     parts = relativevalues.exec(value);
-                    start = fx.cur();
+                    start = fx.curStyle();
 
                     if (parts) {
 
@@ -555,7 +564,7 @@ hAzzle.extend({
                         // We need to compute starting value
                         if (unit !== 'px') {
                             hAzzle.style(elem, p, (end || 1) + unit);
-                            start = ((end || 1) / fx.cur()) * start;
+                            start = ((end || 1) / fx.curStyle()) * start;
                             hAzzle.style(elem, p, start + unit);
                         }
 
@@ -591,6 +600,7 @@ hAzzle.extend({
     },
 
     stop: function(type, clearQueue, gotoEnd) {
+
 
         if (typeof type !== 'string') {
 
