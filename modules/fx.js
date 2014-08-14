@@ -129,6 +129,10 @@ FX.prototype = {
             style = elem.style,
             hooks = hAzzle.fxHooks[prop];
 
+		if (self.options.step) {
+           self.options.step.call(elem, self.now, self);
+        }
+
         // If any 'hooks' - use it
 
         if (hooks && hooks.set) {
