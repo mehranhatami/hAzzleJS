@@ -3,6 +3,10 @@ var foreign, nRAF, nCAF,
     perf = window.performance,
     lastTime = 0,
 
+    // Default duration value
+
+    defaultDuration = 50,
+
     // Various regex we are going to use
 
     showhidetgl = /^(?:toggle|show|hide)$/,
@@ -154,7 +158,6 @@ FX.prototype = {
         var self = this,
             percent = 0,
             pos = 0,
-            i,
             elem = self.elem,
             currentTime = hAzzle.pnow(),
             options = self.options,
@@ -162,6 +165,7 @@ FX.prototype = {
             callback = hAzzle.shallowCopy(function(gotoEnd) {
 
                 var lastTickTime = hAzzle.pnow(),
+                    i,
                     done = true;
 
                 if (gotoEnd || lastTickTime >= duration + currentTime) {
@@ -280,6 +284,13 @@ hAzzle.extend({
 
     perfNow: perfNow,
 
+    duration: {
+        'fast': 150,
+        'normal': 500,
+        'slow': 750
+
+    },
+
     // FX Hooks
     // NOTE!! This will be changed soon
 
@@ -360,38 +371,32 @@ hAzzle.extend({
           Option: Duration
         *********************/
 
+        // jQuery uses 'slow', 'fast' e.g. as duration values. hAzzle
+        // supports similar for effects or directly inside the
+        // options Object
+
         duration = opt.duration = options.duration ? options.duration :
             typeof options === 'number' ? options :
-            easing && typeof easing === 'number' ? easing : 400;
+            easing && typeof easing === 'number' ? easing : defaultDuration;
+
+        if (typeof duration === 'number' && duration === 0) {
+
+            // If the user is attempting to set a duration of 0, we adjust it to
+            // 1 (in order to produce an immediate style change).
+
+            opt.duration = 1;
+        }
 
         if (typeof duration === 'string') {
-
-            switch (duration.toString().toLowerCase()) {
-                case 'fast':
-                    opt.duration = 200;
-                    break;
-
-                case 'normal':
-                    opt.duration = 400;
-                    break;
-
-                case 'slow':
-                    opt.duration = 600;
-                    break;
-
-                default:
-                    // Remove the potential 'ms' suffix and default to 1 if the user is attempting 
-                    // to set a duration of 0 (in order to produce an immediate style change).
-                    opt.duration = parseFloat(duration) || 1;
-            }
+            opt.duration = hAzzle.duration[duration.toString().toLowerCase()] || defaultDuration;
         }
 
         /**********************
           Option: Callbacks
         **********************/
 
-        opt.complete = (options.complete ? options.complete :
-            (options && typeof options === 'function') ? options :
+        opt.complete = (options.complete && typeof options.complete === 'function' ?
+            options.complete : (options && typeof options === 'function') ? options :
             (easing && typeof easing === 'function') ? easing :
             (callback && typeof callback === 'function')) || function() {};
 
@@ -399,8 +404,8 @@ hAzzle.extend({
             Option: Easing
         *******************/
 
-        opt.easing = easing = options.easing ? options.easing :
-            (options && typeof options === 'string') ? options :
+        opt.easing = easing = options.easing && typeof options.easing === 'string' ?
+            options.easing : (options && typeof options === 'string') ? options :
             (easing && typeof easing === 'string');
 
         /*******************
@@ -451,6 +456,7 @@ hAzzle.extend({
             var style = elem.style;
 
             if (elem.nodeType === 1 && ('height' in prop || 'width' in prop)) {
+
 
                 opt.overflow = [style.overflow, style.overflowX, style.overflowY];
 
@@ -575,6 +581,7 @@ hAzzle.extend({
             clearQueue = type;
             type = undefined;
         }
+
 
         if (clearQueue && type !== false) {
             this.queue(type || 'fx', []);
