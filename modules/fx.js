@@ -3,9 +3,15 @@ var foreign, nRAF, nCAF,
     perf = window.performance,
     lastTime = 0,
 
+    fxPrefix = 'hAzzleFX',
+
     // Default duration value
 
-    defaultDuration = 50,
+    fxDuration = 500,
+
+    // Default easing value
+
+    fxEasing = 'linear',
 
     // Various regex we are going to use
 
@@ -82,6 +88,8 @@ function FX(elem, options, prop, easing) {
 
 hAzzle.FX = FX;
 
+/* ============================ FX PROTOTYPE CHAIN=========================== */
+
 FX.prototype = {
 
     /**
@@ -99,7 +107,7 @@ FX.prototype = {
         this.options = options;
         this.elem = elem;
         this.prop = prop;
-        this.easing = easing || 'linear';
+        this.easing = easing || fxEasing;
         this.now = 0;
         this.currentState = {};
         this.originalState = {};
@@ -115,19 +123,22 @@ FX.prototype = {
 
     update: function() {
 
-        if (this.options.step) {
-            this.options.step.call(this.elem, this.now, this);
-        }
+        var self = this,
+            hooks = hAzzle.fxHooks[self.prop];
 
-        var hooks = hAzzle.fxHooks[this.prop];
+        // If any 'hooks' - use it
 
         if (hooks && hooks.set) {
 
-            hooks.set(this);
+            hooks.set(self);
 
         } else {
 
-            hAzzle.fxHooks._default.set(this);
+            if (self.elem.style && self.elem.style[self.prop] !== null) {
+                self.elem.style[self.prop] = self.now + self.unit;
+            } else {
+                self.elem[self.prop] = self.now;
+            }
         }
 
         return;
@@ -139,10 +150,27 @@ FX.prototype = {
 
     cur: function() {
 
-        var hooks = hAzzle.fxHooks[this.prop];
-        return hooks && hooks.get ?
-            hooks.get(this) :
-            hAzzle.fxHooks._default.get(this);
+        var self = this,
+            result,
+            hooks = hAzzle.fxHooks[self.prop];
+
+        if (hooks && hooks.get) {
+
+            hooks.get(self);
+
+        } else {
+
+            if (self.elem[self.prop] !== null &&
+                (!self.elem.style || self.elem.style[self.prop]) == null) {
+                return self.elem[self.prop];
+            }
+
+            result = hAzzle.css(self.elem, self.prop, '');
+
+            // Empty strings, null, undefined and 'auto' are converted to 0.
+
+            return !result || result === 'auto' ? 0 : result;
+        }
     },
 
     /**
@@ -161,6 +189,8 @@ FX.prototype = {
             elem = self.elem,
             currentTime = hAzzle.pnow(),
             options = self.options,
+            currentState = self.currentState,
+            originalState = self.originalState,
             duration = options.duration,
             callback = hAzzle.shallowCopy(function(gotoEnd) {
 
@@ -174,17 +204,17 @@ FX.prototype = {
                     pos = percent = 1;
                     self.update();
 
-                    self.currentState[self.prop] = true;
+                    currentState[self.prop] = true;
 
-                    for (i in self.currentState) {
-                        if (self.currentState[i] !== true) {
+                    for (i in currentState) {
+                        if (currentState[i] !== true) {
                             done = false;
                         }
                     }
 
                     if (done) {
 
-                        resetCSS(elem, options, self.currentState, self.originalState);
+                        resetCSS(elem, options, currentState, originalState);
                     }
 
                     return false;
@@ -205,15 +235,10 @@ FX.prototype = {
 
             }, {
                 elem: this.elem,
-                fxState: function() {
-                    if (hAzzle.private(self.elem, 'hAzzleFX' + self.prop) === undefined) {
-                        if (self.options.hide) {
-                            hAzzle.private(self.elem, 'hAzzleFX' + self.prop, start);
-                        } else if (self.options.show) {
-                            hAzzle.private(self.elem, 'hAzzleFX' + self.prop, end);
-                        }
-                    }
-                }
+
+                // Save current animation state on the DOM element
+
+                fxState: fxState(elem, self.prop, options, start, end)
             });
 
         // Push the callback into the dictionary array
@@ -245,7 +270,7 @@ FX.prototype = {
      */
 
     showhide: function(prop) {
-        var hAzzleFX = hAzzle.private(this.elem, 'hAzzleFX' + this.prop);
+        var hAzzleFX = hAzzle.private(this.elem, fxPrefix + this.prop);
         this.originalState[this.prop] = hAzzleFX || this.elem.style[this.prop];
 
         this.options[prop] = true;
@@ -302,31 +327,23 @@ hAzzle.extend({
 
                 fx.elem.style.opacity = fx.now;
             }
-        },
-
-        _default: {
-
-            get: function(fx) {
-                var result;
-
-                if (fx.elem[fx.prop] !== null &&
-                    (!fx.elem.style || fx.elem.style[fx.prop]) == null) {
-                    return fx.elem[fx.prop];
-                }
-
-                result = hAzzle.css(fx.elem, fx.prop, '');
-                // Empty strings, null, undefined and 'auto' are converted to 0.
-                return !result || result === 'auto' ? 0 : result;
-            },
-            set: function(fx) {
-
-                if (fx.elem.style && fx.elem.style[fx.prop] !== null) {
-                    fx.elem.style[fx.prop] = fx.now + fx.unit;
-                } else {
-                    fx.elem[fx.prop] = fx.now;
-                }
-            }
         }
+    },
+
+    // Set default easing value
+
+    setEasing: function(val) {
+
+        fxEasing = typeof val === 'string' ? val : 'linear';
+
+    },
+
+    // Set default duration value
+
+    setDuration: function(val) {
+
+        fxDuration = typeof val === 'number' ? val : 500;
+
     },
 
     // prop: Mehran Hatami
@@ -377,7 +394,7 @@ hAzzle.extend({
 
         duration = opt.duration = options.duration ? options.duration :
             typeof options === 'number' ? options :
-            easing && typeof easing === 'number' ? easing : defaultDuration;
+            easing && typeof easing === 'number' ? easing : fxDuration;
 
         if (typeof duration === 'number' && duration === 0) {
 
@@ -388,7 +405,7 @@ hAzzle.extend({
         }
 
         if (typeof duration === 'string') {
-            opt.duration = hAzzle.duration[duration.toString().toLowerCase()] || defaultDuration;
+            opt.duration = hAzzle.duration[duration.toString().toLowerCase()] || fxDuration;
         }
 
         /**********************
@@ -591,6 +608,7 @@ hAzzle.extend({
             var index,
                 hadTimers = false,
                 dictionary = hAzzle.dictionary,
+
                 data = hAzzle.private(this);
 
 
@@ -697,7 +715,7 @@ function resetCSS(elem, opts, curState, originalState) {
 
         for (p in curState) {
             style[p] = originalState[p];
-            hAzzle.removeData(elem, 'hAzzleFX' + p, true);
+            hAzzle.removeData(elem, fxPrefix + p, true);
             // Toggle data is no longer needed
             hAzzle.removeData(elem, 'toggle' + p, true);
         }
@@ -712,4 +730,16 @@ function resetCSS(elem, opts, curState, originalState) {
         opts.complete = false;
         complete.call(elem);
     }
+}
+
+function fxState(elem, prop, options, start, end) {
+    return (function(prop, options, start, end) {
+        if (hAzzle.private(elem, fxPrefix + prop) === undefined) {
+            if (options.hide) {
+                hAzzle.private(elem, fxPrefix + prop, start);
+            } else if (options.show) {
+                hAzzle.private(elem, fxPrefix + prop, end);
+            }
+        }
+    }(prop, options, start, end));
 }
