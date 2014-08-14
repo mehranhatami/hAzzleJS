@@ -14,7 +14,14 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    show: function() {
+    show: function(speed, easing, callback) {
+        if (typeof speed === 'number') {
+            return this.animate(createAnimation('show', true), {
+                duration: speed,
+                easing: easing,
+                complete: callback
+            });
+        }
         return showHide(this, true);
     },
 
@@ -27,7 +34,14 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    hide: function() {
+    hide: function(speed, easing, callback) {
+        if (typeof speed === 'number') {
+            return this.animate(createAnimation('hide', true), {
+                duration: speed,
+                easing: easing,
+                complete: callback
+            });
+        }
         return showHide(this);
     },
 
@@ -36,7 +50,14 @@ hAzzle.extend({
      * @return {Object}
      */
 
-    toggle: function(state) {
+    toggle: function(state, easing, callback) {
+        if (typeof state === 'number') {
+            return this.animate(createAnimation('toggle', true), {
+                duration: state,
+                easing: easing,
+                complete: callback
+            });
+        }
 
         if (typeof state === 'boolean') {
             return state ? this.show() : this.hide();
