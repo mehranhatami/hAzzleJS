@@ -1,21 +1,21 @@
 // System.js - Collection of system functions for hAzzle Core
+var push = Array.prototype.push;
 hAzzle.extend({
 
-    mergeArray: function(arr, results) {
+    mergeArray: function(array, results) {
+var ret = results || [];
 
-        var ret = results || [];
+		if ( array != null ) {
+			// The window, strings (and functions) also have 'length'
+			// Tweaked logic slightly to handle Blackberry 4.7 RegExp issues #6930
+			var type = hAzzle.type( array );
 
-        if (arr !== null) {
-
-            if (hAzzle.isArraylike(Object(arr))) {
-
-                hAzzle.merge(ret, hAzzle.isString(arr) ? [arr] : arr);
-
-            } else {
-
-                push.call(ret, arr);
-            }
-        }
+			if ( array.length == null || type === "string" || type === "function" || type === "regexp" || hAzzle.isWindow( array ) ) {
+				push.call( ret, array );
+			} else {
+				hAzzle.merge( ret, array );
+			}
+		}
 
         return ret;
     },

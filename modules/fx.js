@@ -1,9 +1,75 @@
 // fx.js
 // WORK IN PROGRESS!! 
 
+var foreign, nRAF, nCAF,
+    perf = window.performance,
+    lastTime = 0;
+
+// Test if we are within a foreign domain. Use raf from the top if possible.
+try {
+    // Accessing .name will throw SecurityError within a foreign domain.
+    foreign = window.top;
+} catch (e) {
+    foreign = window;
+}
+
+// Performance.now()
+
+var perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
+    now = perfNow ? function() {
+        return perfNow.call(perf);
+    } : function() {
+        return hAzzle.now();
+    };
+
+// Grab the native implementation.
+
+nRAF = foreign.requestAnimationFrame;
+nCAF = foreign.cancelAnimationFrame || foreign.cancelRequestAnimationFrame;
+
+// if native rAF and cAF fails, fallback to a vendor
+// prefixed one	, or the polyfill ( IE9)
+
+if (!nRAF && !nCAF) {
+
+    // RequestAnimationFrame
+
+    nRAF =
+        foreign.webkitRequestAnimationFrame ||
+        foreign.mozRequestAnimationFrame ||
+        foreign.oRequestAnimationFrame ||
+        foreign.msRequestAnimationFrame ||
+        function(callback) {
+            var currTime = hAzzle.now(),
+                timeToCall = Math.max(0, 16 - (currTime - lastTime)),
+                id = window.setTimeout(function() {
+                        callback(currTime + timeToCall);
+                    },
+                    timeToCall);
+            lastTime = currTime + timeToCall;
+            return id; // return the id for cancellation capabilities
+        };
+
+    // CancelAnimationFrame
+    nCAF =
+        foreign.webkitCancelAnimationFrame ||
+        foreign.webkitCancelRequestAnimationFrame ||
+        foreign.mozCancelAnimationFrame ||
+        foreign.oCancelAnimationFrame ||
+        foreign.msCancelAnimationFrame ||
+        function(id) {
+            clearTimeout(id);
+        };
+}
+
+
+
+
+
+
 var rfxtypes = /^(?:toggle|show|hide)$/,
     rfxnum = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
-    timerId;
+    rafId;
 
 /* ============================ FX =========================== */
 
@@ -24,12 +90,13 @@ FX.prototype = {
         this.now = 0;
         this.currentState = {};
         this.originalState = {};
-        // This will and can be overwritten
+        
+		// This will and can be overwritten
 
         this.unit = hAzzle.unitless[prop] ? '' : 'px';
     },
 
-    // Simple function for setting a style value
+    // Update the CSS style values during the animation
 
     update: function() {
 
@@ -61,7 +128,7 @@ FX.prototype = {
             hAzzle.fxHooks._default.get(this);
     },
 
-    // Start an animation from one number to another
+    // Start an run the animation
 
     run: function(start, end) {
 
@@ -133,11 +200,11 @@ FX.prototype = {
 
         if (callback()) {
 
-            // If no timerId, start the animation
+            // If no rafId, start the animation
 
-            if (timerId == null) {
+            if (rafId == null) {
 
-                timerId = hAzzle.requestFrame(raf);
+                rafId = hAzzle.requestFrame(raf);
             }
 
         } else {
@@ -146,7 +213,7 @@ FX.prototype = {
         }
     },
 
-    // Show, hide and toggle animation 
+    // Show and hide
 
     showhide: function(prop) {
         var hAzzleFX = hAzzle.private(this.elem, 'hAzzleFX' + this.prop);
@@ -169,11 +236,22 @@ FX.prototype = {
 
 FX.prototype.init.prototype = FX.prototype;
 
-// hAzzle 
+// Extend the hAzzle Object
 
 hAzzle.extend({
 
     dictionary: [],
+	
+   // Detect if the browser supports native rAF, because there are
+   // issues with iOS6, so check if the native rAF and cAF works
+   // http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
+	
+	nativeRAF: (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
+            foreign.cancelRequestAnimationFrame)) ? true : false,
+   
+    // Detect if performance.now() are supported			
+	
+	perfNow: perfNow,		
 
     fxHooks: {
 
@@ -208,7 +286,37 @@ hAzzle.extend({
                 }
             }
         }
-    }
+    },
+	
+    // prop: Mehran Hatami
+	
+	requestFrame: function(callback) {
+
+        var rafCallback = (function(callback) {
+            // Wrap the given callback to pass in performance timestamp   
+            return function(tick) {
+                // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+                // if not, we have to do a timestamp fix on each frame
+                if (tick > 1e12 != hAzzle.now() > 1e12) {
+                    tick = now();
+                }
+                callback(tick);
+            };
+        })(callback);
+
+        // Call original rAF with wrapped callback
+
+        return nRAF(rafCallback);
+    },
+
+    cancelFrame: function() {
+
+        nCAF.apply(window, arguments);
+    },
+
+    // performance.now()
+
+    pnow: now
 }, hAzzle);
 
 hAzzle.extend({
@@ -311,7 +419,7 @@ hAzzle.extend({
                   *********************************/
 
                 var style = elem.style;
-                // Height/width overflow pass
+
                 if (elem.nodeType === 1 && ('height' in prop || 'width' in prop)) {
 
                     opt.overflow = [style.overflow, style.overflowX, style.overflowY];
@@ -353,9 +461,6 @@ hAzzle.extend({
                         value = hooks.expand(value);
                         delete prop[name];
 
-                        // Not quite $.extend, this won't overwrite existing keys.
-
-                        // Reusing 'p' because we have the correct 'name'
                         for (p in value) {
                             if (!(p in prop)) {
                                 prop[p] = value[p];
@@ -499,17 +604,11 @@ hAzzle.extend({
 /* ============================ UTILITY METHODS =========================== */
 
 function raf() {
-    if (timerId) {
+    if (rafId) {
         hAzzle.requestFrame(raf);
         ticks();
     }
 }
-
-
-
-/**************
-       Timing
-   **************/
 
 function ticks() {
 
@@ -525,8 +624,8 @@ function ticks() {
     }
 
     if (!dictionary.length) {
-        hAzzle.cancelFrame(timerId);
-        timerId = null;
+        hAzzle.cancelFrame(rafId);
+        rafId = null;
     }
 }
 

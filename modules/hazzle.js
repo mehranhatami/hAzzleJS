@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.8b RC3
+ * Version: 0.9.9a RC3
  * Released under the MIT License.
  *
- * Date: 2014-08-08
+ * Date: 2014-08-15
  */
 (function(global, factory) {
 
@@ -255,7 +255,6 @@
 		  if(!collection) { 
 		      return; 
 		 }
-		  
             var i = 0,
                 l = collection.length,
                 element = null;
