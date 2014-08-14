@@ -1,11 +1,19 @@
 // fx.js
-// WORK IN PROGRESS!! 
-
 var foreign, nRAF, nCAF,
     perf = window.performance,
-    lastTime = 0;
+    lastTime = 0,
+
+    // Various regex we are going to use
+
+    showhidetgl = /^(?:toggle|show|hide)$/,
+    relativevalues = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
+
+    // rAF ID
+
+    rafId;
 
 // Test if we are within a foreign domain. Use raf from the top if possible.
+
 try {
     // Accessing .name will throw SecurityError within a foreign domain.
     foreign = window.top;
@@ -28,7 +36,7 @@ nRAF = foreign.requestAnimationFrame;
 nCAF = foreign.cancelAnimationFrame || foreign.cancelRequestAnimationFrame;
 
 // if native rAF and cAF fails, fallback to a vendor
-// prefixed one	, or the polyfill ( IE9)
+// prefixed one, if that fails too, use polyfill
 
 if (!nRAF && !nCAF) {
 
@@ -62,15 +70,6 @@ if (!nRAF && !nCAF) {
         };
 }
 
-
-
-
-
-
-var rfxtypes = /^(?:toggle|show|hide)$/,
-    rfxnum = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
-    rafId;
-
 /* ============================ FX =========================== */
 
 function FX(elem, options, prop, easing) {
@@ -81,6 +80,16 @@ hAzzle.FX = FX;
 
 FX.prototype = {
 
+    /**
+     * Init
+     *
+     * @param {Object} elem
+     * @param {Object} options
+     * @param {Object} prop
+     * @param {String|Function } easing
+     * @return {hAzzle|Object}
+     */
+
     init: function(elem, options, prop, easing) {
 
         this.options = options;
@@ -90,13 +99,15 @@ FX.prototype = {
         this.now = 0;
         this.currentState = {};
         this.originalState = {};
-        
-		// This will and can be overwritten
+
+        // This will and can be overwritten
 
         this.unit = hAzzle.unitless[prop] ? '' : 'px';
     },
 
-    // Update the CSS style values during the animation
+    /**
+     * Update the CSS style values during the animation
+     */
 
     update: function() {
 
@@ -118,7 +129,9 @@ FX.prototype = {
         return;
     },
 
-    // Get the current style
+    /**
+     * Get the current CSS style
+     */
 
     cur: function() {
 
@@ -128,13 +141,20 @@ FX.prototype = {
             hAzzle.fxHooks._default.get(this);
     },
 
-    // Start an run the animation
+    /**
+     * Start and run the animation
+     *
+     * @param {Number} start
+     * @param {Number} end
+     * @return {hAzzle}
+     */
 
     run: function(start, end) {
 
         var self = this,
             percent = 0,
-            pos = 0, i,
+            pos = 0,
+            i,
             elem = self.elem,
             currentTime = hAzzle.pnow(),
             options = self.options,
@@ -192,7 +212,7 @@ FX.prototype = {
                 }
             });
 
-        // Push
+        // Push the callback into the dictionary array
 
         hAzzle.dictionary.push(callback);
 
@@ -202,7 +222,7 @@ FX.prototype = {
 
             // If no rafId, start the animation
 
-            if (rafId == null) {
+            if (!rafId) {
 
                 rafId = hAzzle.requestFrame(raf);
             }
@@ -213,7 +233,12 @@ FX.prototype = {
         }
     },
 
-    // Show and hide
+    /**
+     * Show | Hide
+     *
+     * @param {Object} prop
+     * @return {hAzzle}
+     */
 
     showhide: function(prop) {
         var hAzzleFX = hAzzle.private(this.elem, 'hAzzleFX' + this.prop);
@@ -240,18 +265,23 @@ FX.prototype.init.prototype = FX.prototype;
 
 hAzzle.extend({
 
+    // Holds all animations
+
     dictionary: [],
-	
-   // Detect if the browser supports native rAF, because there are
-   // issues with iOS6, so check if the native rAF and cAF works
-   // http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
-	
-	nativeRAF: (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
-            foreign.cancelRequestAnimationFrame)) ? true : false,
-   
+
+    // Detect if the browser supports native rAF, because there are
+    // issues with iOS6, so check if the native rAF and cAF works
+    // http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
+
+    nativeRAF: (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
+        foreign.cancelRequestAnimationFrame)) ? true : false,
+
     // Detect if performance.now() are supported			
-	
-	perfNow: perfNow,		
+
+    perfNow: perfNow,
+
+    // FX Hooks
+    // NOTE!! This will be changed soon
 
     fxHooks: {
 
@@ -259,27 +289,27 @@ hAzzle.extend({
 
             set: function(fx) {
 
-                fx.elem.style['opacity'] = fx.now;
+                fx.elem.style.opacity = fx.now;
             }
         },
 
         _default: {
 
-            get: function(tween) {
+            get: function(fx) {
                 var result;
 
-                if (tween.elem[tween.prop] !== null &&
-                    (!tween.elem.style || tween.elem.style[tween.prop] == null)) {
-                    return tween.elem[tween.prop];
+                if (fx.elem[fx.prop] !== null &&
+                    (!fx.elem.style || fx.elem.style[fx.prop]) == null) {
+                    return fx.elem[fx.prop];
                 }
 
-                result = hAzzle.css(tween.elem, tween.prop, '');
+                result = hAzzle.css(fx.elem, fx.prop, '');
                 // Empty strings, null, undefined and 'auto' are converted to 0.
                 return !result || result === 'auto' ? 0 : result;
             },
             set: function(fx) {
 
-                if (fx.elem.style && fx.elem.style[fx.prop] != null) {
+                if (fx.elem.style && fx.elem.style[fx.prop] !== null) {
                     fx.elem.style[fx.prop] = fx.now + fx.unit;
                 } else {
                     fx.elem[fx.prop] = fx.now;
@@ -287,10 +317,10 @@ hAzzle.extend({
             }
         }
     },
-	
+
     // prop: Mehran Hatami
-	
-	requestFrame: function(callback) {
+
+    requestFrame: function(callback) {
 
         var rafCallback = (function(callback) {
             // Wrap the given callback to pass in performance timestamp   
@@ -377,7 +407,7 @@ hAzzle.extend({
             Option: Queue
         *******************/
 
-        if (opt.queue == null ||
+        if (!opt.queue ||
             opt.queue === true) {
             opt.queue = 'fx';
         }
@@ -406,136 +436,135 @@ hAzzle.extend({
            Animate
         *******************/
 
-        function doAnimation() {
+        function Animate() {
 
-                var elem = this,
-                    isElement = elem.nodeType === 1,
-                    hidden = isElement && isHidden(elem),
-                    name, p, fx, hooks, parts, start, end, unit,
-                    value, method;
+            var elem = this,
+                isElement = elem.nodeType === 1,
+                hidden = isElement && isHidden(elem),
+                name, p, fx, hooks, parts, start, end, unit,
+                value, method;
+
+            /*********************************
+                 Option: Display & Visibility
+              *********************************/
+
+            var style = elem.style;
+
+            if (elem.nodeType === 1 && ('height' in prop || 'width' in prop)) {
+
+                opt.overflow = [style.overflow, style.overflowX, style.overflowY];
+
+                display = hAzzle.css(elem, 'display');
+
+                // Test default display if display is currently 'none'
+
+                var checkDisplay = display === 'none' ?
+                    hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName) : display;
+
+                if (checkDisplay === 'inline' && hAzzle.css(elem, 'float') === 'none') {
+                    style.display = 'inline-block';
+                }
+            }
+
+            if (opt.overflow) {
+                style.overflow = 'hidden';
+            }
+
+            // Do some iteration
+
+            for (p in prop) {
+
+                value = prop[p];
+                name = hAzzle.camelize(p);
+
+                if (value === 'hide' && hidden || value === 'show' && !hidden) {
+                    return opt.complete.call(this);
+                }
+
+                if (p !== name) {
+                    prop[name] = value;
+                    delete prop[p];
+                }
+
+                hooks = hAzzle.cssHooks[name];
+                if (hooks && 'expand' in hooks) {
+                    value = hooks.expand(value);
+                    delete prop[name];
+
+                    for (p in value) {
+                        if (!(p in prop)) {
+                            prop[p] = value[p];
+                        }
+                    }
+                }
+
+                fx = new FX(elem, opt, p, easing);
 
                 /*********************************
-                     Option: Display & Visibility
+                   Hide / Show / Toggle
                   *********************************/
 
-                var style = elem.style;
+                if (showhidetgl.test(value)) {
 
-                if (elem.nodeType === 1 && ('height' in prop || 'width' in prop)) {
-
-                    opt.overflow = [style.overflow, style.overflowX, style.overflowY];
-
-                    display = hAzzle.css(elem, 'display');
-
-                    // Test default display if display is currently 'none'
-
-                    var checkDisplay = display === 'none' ?
-                        hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName) : display;
-
-                    if (checkDisplay === 'inline' && hAzzle.css(elem, 'float') === 'none') {
-                        style.display = 'inline-block';
-                    }
-                }
-
-                if (opt.overflow) {
-                    style.overflow = 'hidden';
-                }
-
-                // Do some iteration
-
-                for (p in prop) {
-
-                    value = prop[p];
-                    name = hAzzle.camelize(p);
-
-                    if (value === 'hide' && hidden || value === 'show' && !hidden) {
-                        return opt.complete.call(this);
+                    if ((method = hAzzle.private(elem, 'toggle' + p) ||
+                        (value === 'toggle' ? hidden ? 'show' : 'hide' : 0))) {
+                        hAzzle.private(elem, 'toggle' + p, method === 'show' ? 'hide' : 'show');
+                        fx.showhide(method);
+                    } else {
+                        fx.showhide(value);
                     }
 
-                    if (p !== name) {
-                        prop[name] = value;
-                        delete prop[p];
-                    }
-
-                    hooks = hAzzle.cssHooks[name];
-                    if (hooks && 'expand' in hooks) {
-                        value = hooks.expand(value);
-                        delete prop[name];
-
-                        for (p in value) {
-                            if (!(p in prop)) {
-                                prop[p] = value[p];
-                            }
-                        }
-                    }
-
-                    fx = new FX(elem, opt, p, easing);
+                } else {
 
                     /*********************************
-                       Hide / Show / Toggle
-                      *********************************/
+                      Relative values
+                     *********************************/
 
-                    if (rfxtypes.test(value)) {
+                    parts = relativevalues.exec(value);
+                    start = fx.cur();
 
-                        if ((method = hAzzle.private(elem, 'toggle' + p) ||
-                            (value === 'toggle' ? hidden ? 'show' : 'hide' : 0))) {
-                            hAzzle.private(elem, 'toggle' + p, method === 'show' ? 'hide' : 'show');
-                            fx.showhide(method);
-                        } else {
-                            fx.showhide(value);
+                    if (parts) {
+
+                        end = parseFloat(parts[2]);
+
+                        unit = parts[3] || (hAzzle.unitless[p] ? '' : 'px');
+
+                        // We need to compute starting value
+                        if (unit !== 'px') {
+                            hAzzle.style(elem, p, (end || 1) + unit);
+                            start = ((end || 1) / fx.cur()) * start;
+                            hAzzle.style(elem, p, start + unit);
                         }
+
+                        if (parts[1]) {
+
+                            end = ((parts[1] === '-=' ? -1 : 1) * end) + start;
+                        }
+
+                        // Set correct unit prefix
+
+                        fx.unit = unit;
+
+                        // Start the animation
+
+                        fx.run(start, end);
 
                     } else {
 
-                        /*********************************
-                          Relative values
-                         *********************************/
+                        // Start the animation
 
-                        parts = rfxnum.exec(value);
-                        start = fx.cur();
-
-                        if (parts) {
-
-                            end = parseFloat(parts[2]);
-
-                            unit = parts[3] || (hAzzle.unitless[p] ? '' : 'px');
-
-                            // We need to compute starting value
-                            if (unit !== 'px') {
-                                hAzzle.style(elem, p, (end || 1) + unit);
-                                start = ((end || 1) / fx.cur()) * start;
-                                hAzzle.style(elem, p, start + unit);
-                            }
-
-                            if (parts[1]) {
-
-                                end = ((parts[1] === '-=' ? -1 : 1) * end) + start;
-                            }
-
-                            // Set correct unit prefix
-
-                            fx.unit = unit;
-
-                            // Start the animation
-
-                            fx.run(start, end);
-
-                        } else {
-
-                            // Start the animation
-
-                            fx.run(start, value);
-                        }
+                        fx.run(start, value);
                     }
                 }
-
-                // For JS strict compliance
-                return true;
             }
-            //  return this.each(doAnimation);
+
+            // For JS strict compliance
+            return true;
+        }
 
         return opt.queue === false ?
-            this.each(doAnimation) :
-            this.queue(opt.queue, doAnimation);
+            this.each(Animate) :
+            this.queue(opt.queue, Animate);
     },
 
     stop: function(type, clearQueue, gotoEnd) {
@@ -579,7 +608,7 @@ hAzzle.extend({
             }
 
             for (index = dictionary.length; index--;) {
-                if (dictionary[index].elem === this && (type == null || dictionary[index].queue === type)) {
+                if (dictionary[index].elem === this && (!type || dictionary[index].queue === type)) {
                     if (gotoEnd) {
 
                         // force the next step to be the last
@@ -636,8 +665,9 @@ function ticks() {
  *********************/
 
 function resetCSS(elem, opts, curState, originalState) {
- 
-    var style = elem.style, p, complete;
+
+    var style = elem.style,
+        p, complete;
     // Reset the overflow
 
     if (opts.overflow) {
