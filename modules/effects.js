@@ -48,7 +48,10 @@ hAzzle.each({
 }, function(props, name) {
 
     hAzzle.Core[name] = function(speed, easing, callback) {
-        return this.animate(props, speed, easing, callback);
+        return this.animate(props, { duration: speed,
+			                         easing: easing,
+			                         complete: callback
+			                         });
     };
 });
 
