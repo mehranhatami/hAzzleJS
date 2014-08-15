@@ -9,8 +9,7 @@ var camelize = hAzzle.camelize,
     charRegEx = /([A-Z])/g;
 
 function Storage() {
-
-    this.expando = hAzzle.expando;
+  this.expando = 'Storage-' + String(Math.random()).replace(/\D/g, '');
 }
 
 /* =========================== PROTOTYPE CHAIN ========================== */
@@ -85,9 +84,7 @@ Storage.prototype = {
     },
 
     get: function(owner, key) {
-
         var cache = this.cache(owner);
-
         return cache && key === undefined ?
             cache : cache[key];
     },

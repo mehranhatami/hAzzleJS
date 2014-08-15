@@ -85,9 +85,49 @@ hAzzle.extend({
      */
 
     toggleClass: function(value, state) {
-        return hAzzle.setter(this, function(elem, value, state) {
-            return hAzzle.toggleClass(elem, value, state);
-        }, value, state, arguments.length > 1);
+
+        var type = typeof value,
+            isBool = typeof state === 'boolean';
+
+        if (hAzzle.type(value) === 'function') {
+            return this.each(function(el, count) {
+                hAzzle(el).toggleClass(value.call(el, count, el.className, state), state);
+            });
+        }
+
+        return this.each(function(el) {
+            if (el.nodeType === 1) {
+                if (type === 'string') {
+                    // Toggle individual class names
+                    var className,
+                        i = 0,
+                        classNames = value.match(wSpace) || [];
+
+                    // Check each className given, space separated list
+                    while ((className = classNames[i++])) {
+                        if (isBool) {
+                            // IE10+ doesn't support the toggle boolean flag.
+                            if (state) {
+                                el.classList.add(className);
+                            } else {
+                                el.classList.remove(className);
+                            }
+                        } else {
+                            el.classList.toggle(className);
+                        }
+                    }
+
+                } else if (value === undefined || type === 'boolean') { // toggle whole class name
+                    if (el.className) {
+                        // store className if set
+                        hAzzle.data(this, '__cln__', el.className);
+                    }
+
+                    el.className = this.className ||
+                        value === false ? '' : hAzzle.data(el, '__cln__') || '';
+                }
+            }
+        });
     },
 
     /**
@@ -255,44 +295,6 @@ hAzzle.extend({
         } else {
 
             elem.className = '';
-        }
-    },
-
-    toggleClass: function(el, value, state) {
-
-        var type = typeof value,
-            isBool = typeof state === 'boolean';
-
-        if (el.nodeType === 1) {
-            if (type === 'string') {
-                // Toggle individual class names
-                var className,
-                    i = 0,
-                    classNames = value.match(wSpace) || [];
-
-                // Check each className given, space separated list
-                while ((className = classNames[i++])) {
-
-                    if (isBool) {
-                        // IE10+ doesn't support the toggle boolean flag.
-                        if (state) {
-                            el.classList.add(className);
-                        } else {
-                            el.classList.remove(className);
-                        }
-                    } else {
-                        el.classList.toggle(className);
-                    }
-                }
-
-            } else if (value === undefined || type === 'boolean') { // toggle whole class name
-                if (el.className) {
-                    // store className if set
-                    hAzzle.data(this, '__cln__', el.className);
-                }
-
-                el.className = this.className || value === false ? '' : hAzzle.data(el, '__cln__') || '';
-            }
         }
     }
 
