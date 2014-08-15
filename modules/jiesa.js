@@ -352,10 +352,9 @@ var
             }
           }
         } else if (found[2]) {
-          return slice.call(context.getElementsByTagName(selector));
+          return context.getElementsByTagName(selector);
         } else if ((m = found[3])) {
-          slice.call(context.getElementsByClassName(m));
-          return results;
+		    return context.getElementsByClassName(m);
         }
       }
     }
