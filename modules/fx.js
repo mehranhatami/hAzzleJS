@@ -153,7 +153,8 @@ FX.prototype = {
             if (style && hAzzle.cssHooks[prop]) {
                 hAzzle.style(elem, prop, now + self.unit);
             } else {
-                elem[prop] = now;
+				
+				hAzzle.style(elem, prop, now + self.unit)
             }
         }
 

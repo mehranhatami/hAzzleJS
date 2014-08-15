@@ -157,9 +157,11 @@ function showHide(elements, show) {
 function actualDisplay(name, doc) {
  var style,
      elem = hAzzle( doc.createElement( name ) ).appendTo( doc.body ),
- 	 display = curCSS( elem[ 0 ], "display" );
-	 elem.detach();
-	return display;
+     display = window.getDefaultComputedStyle &&
+    ( style = window.getDefaultComputedStyle( elem[ 0 ] ) ) ?
+    style.display : curCSS( elem[ 0 ], "display" );
+    elem.detach();
+    return display;
 }
 
 
@@ -179,9 +181,11 @@ function defaultDisplay(nodeName) {
 			// Use the already-created iframe if possible
 
 			iframe = (iframe || hAzzle( createHTML('<iframe frameborder="0" width="0" height="0"/>') ))
-				.appendTo( doc.documentElement );
+				.appendTo( document.documentElement );
+
 
             doc = iframe[0].contentDocument;
+		
             doc.write();
             doc.close();
 
