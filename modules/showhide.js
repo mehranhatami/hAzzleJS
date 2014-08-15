@@ -141,7 +141,6 @@ function showHide(elements, show) {
         }
     }
 
-
     for (i = 0; i < length; i++) {
         elem = elements[i];
         if (!elem.style) {
@@ -156,28 +155,11 @@ function showHide(elements, show) {
 }
 
 function actualDisplay(name, doc) {
-
-    // Create element
-
-    var style, display, elem = doc.createElement(name);
-
-    // Append to Document Body ( DL4) 
-
-    doc.body.append(elem);
-
-    // Get the style values
-
-    style = computedValues(elem);
-
-    if (style) {
-        display = style.display;
-    } else {
-        display = hAzzle.curCSS(elem, 'display');
-    }
-    // Get rid of the childs
-    hAzzle.dispose(elem);
-    // Return 
-    return display;
+ var style,
+     elem = hAzzle( doc.createElement( name ) ).appendTo( doc.body ),
+ 	 display = curCSS( elem[ 0 ], "display" );
+	 elem.detach();
+	return display;
 }
 
 
@@ -188,28 +170,24 @@ function defaultDisplay(nodeName) {
 
     if (!display) {
 
-        display = actualDisplay(nodeName, doc);
+        display = actualDisplay(nodeName, document);
 
         // If the simple way fails, read from inside an iframe
 
         if (display === 'none' || !display) {
 
-            // Use the already-created iframe if possible
+			// Use the already-created iframe if possible
 
-            iframe = (iframe || doc.documentElement).appendChild('<iframe frameborder="0" width="0" height="0"/>');
+			iframe = (iframe || hAzzle( createHTML('<iframe frameborder="0" width="0" height="0"/>') ))
+				.appendTo( doc.documentElement );
 
-            // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
             doc = iframe[0].contentDocument;
-
-            // Support: IE
             doc.write();
             doc.close();
 
             display = actualDisplay(nodeName, doc);
-
-            doc.documentElement.removeChild(iframe);
+			iframe.detach();
         }
-
 
         // Store the correct default display
         elemdisplay[nodeName] = display;

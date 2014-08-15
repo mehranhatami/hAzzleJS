@@ -143,6 +143,50 @@ hAzzle.extend({
                 });
         }, null, value, arguments.length);
     },
+	
+	    /**
+     * Insert every element in the set of matched elements to the
+     * end of the target.
+     *
+     * @param {hAzzle|string|Element|Array} node
+     * @return {hAzzle}
+     */
+
+    appendTo: function(node) {
+        return InjectionMethod(this, node, 'appendTo');
+    },
+
+    /**
+     * Insert every element in the set of matched elements to the
+     * beginning of the target.
+     *
+     * @param {hAzzle|string|Element|Array} node
+     * @return {hAzzle}
+     */
+
+    prependTo: function(node) {
+        return InjectionMethod(this, node, 'prependTo');
+    },
+
+    /**
+     * @param {hAzzle|string|Element|Array} target
+     * @param {Object} scope
+     * @return {hAzzle}
+     */
+
+    insertBefore: function(node) {
+        return InjectionMethod(this, node, 'insertBefore');
+    },
+
+    /**
+     * @param {hAzzle|string|Element|Array} node
+     * @param {Object} scope
+     * @return {hAzzle}
+     */
+
+    insertAfter: function(node) {
+        return InjectionMethod(this, node, 'insertAfter');
+    },
 
     // DOM Manipulation method
 
@@ -328,34 +372,67 @@ hAzzle.each({
     };
 });
 
-/** AppendTo, prependTo, insertBefore, insertAfter
- *
- * Note!! This methods works similar to jQuery, but
- * people can be confused simply because we can't select an element on the
- * page and insert it after another in the same way as jQuery.
- *
- * To get this to work for hAzzle, we can do:
- *
- * hAzzle.html('div{hello}').appendTo( '#test' );
- *
- * hAzzle.html('div{hello}').insertAfter( '#test' );
- *
- */
+// appendTo, prependTo, insertBefore, insertAfter manipulation methods
 
-hAzzle.each({
-    appendTo: 'append',
-    prependTo: 'prepend',
-    insertBefore: 'before',
-    insertAfter: 'after',
-    replaceAll: 'replaceWith'
-}, function(original, prop) {
-    hAzzle.Core[prop] = function(node) {
-        var insert = hAzzle(node),
-            i = 0,
-            elems, last = insert.length - 1;
-        for (; i <= last; i++) {
-            elems = i === last ? this : this.clone(true);
-            hAzzle(insert[i])[original](elems);
-        }
-    };
-});
+function InjectionMethod(elem, html, method) {
+    return injectHTML.call(elem, html, elem, function(html, el) {
+        try {
+            HI[method](el, html);
+        } catch (e) {}
+    }, 1);
+}
+
+
+
+// Inject HTML
+
+function injectHTML(target, node, fn, rev) {
+
+    var i = 0,
+        r = [],
+        nodes, stabilized;
+
+    if (typeof target === 'string' && target.charAt(0) === '<' &&
+        target[target.length - 1] === '>' &&
+        target.length >= 3) {
+
+        nodes = target;
+
+    } else {
+
+        nodes = hAzzle(target);
+    }
+
+    stabilized = stabilizeHTML(nodes);
+
+    // normalize each node in case it's still a string and we need to create nodes on the fly
+
+    hAzzle.each(stabilized, function(t, j) {
+
+        hAzzle.each(node, function(el) {
+
+            if (j > 0) {
+
+                fn(t, r[i++] = hAzzle.cloneNode(node, el));
+
+            } else {
+
+                fn(t, r[i++] = el);
+            }
+
+        }, null, rev);
+
+
+    }, this, rev);
+
+    node.length = i;
+
+    hAzzle.each(r, function(e) {
+
+        node[--i] = e;
+
+    }, null, !rev);
+
+    return node;
+}
+

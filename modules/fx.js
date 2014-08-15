@@ -1,4 +1,12 @@
 // fx.js
+
+/**
+ * TODO!!
+ *
+ * - Add function to kill all animations running in a queue
+ */
+
+
 var foreign, nRAF, nCAF,
     perf = window.performance,
     lastTime = 0,
@@ -410,7 +418,9 @@ hAzzle.extend({
 
     animate: function(prop, options, easing, callback) {
 
-        var opt = {},
+        options = options || {};
+	
+	    var opt = {},
             duration;
 
         /*********************
@@ -457,7 +467,7 @@ hAzzle.extend({
         /*******************
             Option: Queue
         *******************/
-
+      
         if (!opt.queue ||
             opt.queue === true) {
             opt.queue = 'fx';
@@ -571,10 +581,6 @@ hAzzle.extend({
 
                 } else {
 
-                    /*********************************
-                      Relative values
-                     *********************************/
-
                     parts = relativevalues.exec(value);
 
                     if (parts) {
@@ -628,6 +634,7 @@ hAzzle.extend({
             // For JS strict compliance
             return true;
         }
+// useQueue
 
         return opt.queue === false ?
             this.each(Animate) :
