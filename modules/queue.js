@@ -80,9 +80,9 @@ var setter = 2;
 			this.each(function() {
 				var queue = hAzzle.queue( this, type, data );
 
-//				if ( type === "fx" && queue[0] !== "inprogress" ) {
+				if ( type === "fx" && queue[0] !== "inprogress" ) {
 					hAzzle.dequeue( this, type );
-	//			}
+				}
 			});
 	},
 	dequeue: function(type){
