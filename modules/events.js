@@ -25,10 +25,10 @@
  * - jQuery
  */
 var whiteRegex = (/\S+/g),
-   gtl = /\.+\s/,
-   gtr = /\.+$/,
-   namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
-
+    gtl = /\.+\s/,
+    gtr = /\.+$/,
+    namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
+    speci = /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
     slice = Array.prototype.slice,
 
     // Public object for eventHooks
@@ -60,7 +60,6 @@ var _event = hAzzle.event = {
             events, handleObj, t;
 
         if (!eventData) {
-
             return;
         }
 
@@ -110,7 +109,6 @@ var _event = hAzzle.event = {
             // There *must* be a type, no attaching namespace-only handlers
 
             if (!type) {
-
                 continue;
             }
 
@@ -129,7 +127,7 @@ var _event = hAzzle.event = {
                 handler: handler,
                 guid: handler.guid,
                 selector: selector,
-//                needsContext: selector && hAzzle.Jiesa.regex.changer.test(selector),
+                needsContext: selector && speci.test(selector),
                 namespace: namespaces.join('.')
             }, objHandler);
 
@@ -170,7 +168,6 @@ var _event = hAzzle.event = {
 
             _event.global[type] = true;
         }
-
     },
 
     /**
@@ -196,9 +193,9 @@ var _event = hAzzle.event = {
             return;
         }
 
-       // Remove empty namespace (ie trailing dots)
-       
-	   types = types.replace(gtl, ' ').replace(gtr, '');
+        // Remove empty namespace (ie trailing dots)
+
+        types = types.replace(gtl, ' ').replace(gtr, '');
 
         // Get multiple events
 
@@ -270,7 +267,6 @@ var _event = hAzzle.event = {
         }
     },
 
-
     handle: function(evt) {
 
         if (!evt) {
@@ -312,7 +308,8 @@ var _event = hAzzle.event = {
 
             while ((handleObj = matched.handlers[j++]) &&
                 !evt.isImmediatePropagationStopped()) {
-                if (!evt.namespace_re || evt.namespace_re.test(handleObj.namespace)) {
+                if (!evt.rnamespace || evt.rnamespace.test(handleObj.namespace)) {
+
                     evt.handleObj = handleObj;
                     evt.data = handleObj.data;
 
@@ -342,11 +339,11 @@ var _event = hAzzle.event = {
         var i, matches, sel, handleObj,
             queue = [],
             cur = evt.target,
-            dC = handlers.delegateCount;
+            delegateCount = handlers.delegateCount;
 
-        if (dC && cur.nodeType && (!evt.button || evt.type !== 'click')) {
+        if (delegateCount && cur.nodeType && (!evt.button || evt.type !== 'click')) {
 
-            for (; cur !== this; cur = cur.parentElement || this) {
+            for (; cur !== this; cur = cur.parentNode || this) {
 
                 // Don't process clicks on disabled elements
 
@@ -354,7 +351,7 @@ var _event = hAzzle.event = {
 
                     matches = [];
 
-                    i = dC;
+                    i = delegateCount;
 
                     while (i--) {
 
@@ -366,8 +363,8 @@ var _event = hAzzle.event = {
 
                         if (matches[sel] === undefined) {
 
-                            matches[sel] = //handleObj.needsContext ?
-//                                hAzzle(sel, this).index(cur) >= 0 :
+                            matches[sel] = handleObj.needsContext ?
+                       hAzzle(sel, this).index(cur) >= 0 :
                                 hAzzle.matches(sel, [cur]).length;
                         }
 
@@ -388,11 +385,11 @@ var _event = hAzzle.event = {
             }
         }
 
-        if (dC < handlers.length) {
+        if (delegateCount < handlers.length) {
 
             queue.push({
                 elem: this,
-                handlers: handlers.slice(dC)
+                handlers: handlers.slice(delegateCount)
             });
         }
 
@@ -400,17 +397,19 @@ var _event = hAzzle.event = {
     }
 };
 
-
 hAzzle.Event = function(src, props) {
+    // Allow instantiation without the 'new' keyword
+    if (!(this instanceof hAzzle.Event)) {
+        return new hAzzle.Event(src, props);
+    }
 
     if (src && src.type) {
         this.originalEvent = src;
         this.type = src.type;
         this.isDefaultPrevented = src.defaultPrevented ||
-            src.defaultPrevented === undefined &&
-            src.returnValue === false ?
-            yesman :
-            noman;
+            src.defaultPrevented === undefined ?
+            returnTrue :
+            returnFalse;
 
     } else {
         this.type = src;
@@ -428,102 +427,93 @@ hAzzle.Event = function(src, props) {
     this[hAzzle.expando] = true;
 };
 
-hAzzle.Event.prototype = {
+hAzzle.Event.prototype.constructor = hAzzle.Event;
+hAzzle.Event.prototype.isDefaultPrevented = returnFalse;
+hAzzle.Event.prototype.isPropagationStopped = returnFalse;
+hAzzle.Event.prototype.isImmediatePropagationStopped = returnFalse;
 
-    constructor: hAzzle.Event,
+hAzzle.Event.prototype.preventDefault = function() {
 
-    /* =========================== EVENT PROPAGATION ========================== */
+    var e = this.originalEvent;
 
-    isDefaultPrevented: noman,
+    this.isDefaultPrevented = returnTrue;
 
-    isPropagationStopped: noman,
-
-    isImmediatePropagationStopped: noman,
-
-    // Prevent default action
-
-    preventDefault: function() {
-        var e = this.originalEvent;
-
-        this.isDefaultPrevented = yesman;
-
-        if (e && e.preventDefault) {
-            e.preventDefault();
-        }
-    },
-
-    // Stop event propagation
-
-    stopPropagation: function() {
-        var e = this.originalEvent;
-
-        this.isPropagationStopped = yesman;
-
-        if (e && e.stopPropagation) {
-            e.stopPropagation();
-        }
-    },
-    stopImmediatePropagation: function() {
-        var e = this.originalEvent;
-
-        this.isImmediatePropagationStopped = yesman;
-
-        if (e && e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
-
-        this.stopPropagation();
-    },
-
-
-    // Block any further event processing
-
-    stop: function() {
-
-        this.stopped = true;
-        this.preventDefault();
-
-        if (this.stopPropagation) {
-
-            this.stopPropagation();
-
-        } else {
-
-            this.cancelBubble = true;
-        }
+    if (e && e.preventDefault) {
+        e.preventDefault();
     }
 };
 
+// Stop event propagation
+
+hAzzle.Event.prototype.stopPropagation = function() {
+
+    var e = this.originalEvent;
+
+    this.isPropagationStopped = returnTrue;
+
+    if (e && e.stopPropagation) {
+        e.stopPropagation();
+    }
+};
+
+hAzzle.Event.prototype.stopImmediatePropagation = function() {
+    var e = this.originalEvent;
+
+    this.isImmediatePropagationStopped = returnTrue;
+
+    if (e && e.stopImmediatePropagation) {
+        e.stopImmediatePropagation();
+    }
+
+    this.stopPropagation();
+};
+
+// Block any further event processing
+
+hAzzle.Event.prototype.stop = function() {
+
+    this.stopped = true;
+    this.preventDefault();
+
+    if (this.stopPropagation) {
+
+        this.stopPropagation();
+
+    } else {
+
+        this.cancelBubble = true;
+    }
+};
 
 /* ============================ UTILITY METHODS =========================== */
 
-// how high?
-function yesman() {
-    return true;
+function returnTrue() {
+   return true;
 }
-// how low?
-function noman() {
+
+function returnFalse() {
     return false;
 }
 
 // Handle multiple events separated by a space
 
 function getTypes(types) {
-	
-  return (types || '').match(whiteRegex) || [''];
+    return (types || '').match(whiteRegex) || [''];
 }
-
 
 // Globalize it
 
-hAzzle.addEvent = function(elem, type, handler) {
-    if (elem.addEventListener) {
-        elem.addEventListener(type, handler, false);
-    }
-};
+hAzzle.extend({
 
-hAzzle.removeEvent = function(elem, type, handle) {
-    if (elem.removeEventListener) {
-        elem.removeEventListener(type, handle, false);
+    addEvent: function(elem, type, handler) {
+        if (elem.addEventListener) {
+            elem.addEventListener(type, handler, false);
+        }
+    },
+
+    removeEvent: function(elem, type, handle) {
+        if (elem.removeEventListener) {
+            elem.removeEventListener(type, handle, false);
+        }
     }
-};
+}, hAzzle);

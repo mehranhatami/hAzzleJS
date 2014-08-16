@@ -4,6 +4,7 @@
  * jQuery API, our eventHooks are almost following
  * the same pattern.
  */
+
 var focusinBubbles = 'onfocusin' in window,
     wheelEvent = 'onwheel' in document.createElement('div') || document.documentMode > 8 ?
     'wheel' : 'mousewheel';

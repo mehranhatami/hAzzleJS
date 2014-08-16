@@ -12,11 +12,9 @@ var
     slice = ArrayProto.slice,
     concat = ArrayProto.concat,
 
-    // Usefull regex
-
     parpreunall = /^(?:parents|prev(?:Until|All))/,
 
-    specials = {};
+    preservesUniquenessAndOrder = {};
 
 hAzzle.extend({
 
@@ -589,7 +587,7 @@ hAzzle.forOwn({
 
         if (this.length > 1) {
             // Remove duplicates
-            if (!specials[name]) {
+            if (!preservesUniquenessAndOrder[name]) {
                 hAzzle.unique(matched);
             }
 
@@ -626,7 +624,7 @@ function isnot(els, selector, not) {
 }
 
 hAzzle.each(['children', 'contents', 'next prev'], function(prop) {
-    specials[prop] = true;
+    preservesUniquenessAndOrder[prop] = true;
 });
 
 // Aliases

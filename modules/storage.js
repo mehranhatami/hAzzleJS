@@ -9,12 +9,17 @@ var camelize = hAzzle.camelize,
     charRegEx = /([A-Z])/g;
 
 function Storage() {
-  this.expando = 'Storage-' + String(Math.random()).replace(/\D/g, '');
+  return new Storage.prototype.init();
+    
 }
 
-/* =========================== PROTOTYPE CHAIN ========================== */
-
 Storage.prototype = {
+	
+	expando: 0,
+	
+	init: function() {
+	this.expando = hAzzle.expando + hAzzle.getID(true, 'storage')
+	},
 
     register: function(owner, initial) {
         var descriptor = {};
@@ -84,7 +89,9 @@ Storage.prototype = {
     },
 
     get: function(owner, key) {
+
         var cache = this.cache(owner);
+
         return cache && key === undefined ?
             cache : cache[key];
     },
@@ -155,6 +162,10 @@ Storage.prototype = {
         }
     }
 };
+
+Storage.prototype.init.prototype = Storage.prototype;
+
+
 
 var _privateData = new Storage(),
     _userData = new Storage();
