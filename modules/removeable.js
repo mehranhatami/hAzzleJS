@@ -59,9 +59,7 @@ hAzzle.extend({
         var elem, elems = selector ?
             hAzzle.find(selector, this) : this,
             i = 0;
-
-        for (;
-            (elem = elems[i]) !== null; i++) {
+return this.each(function(elem) {
 
             if (elem.nodeType === 1) {
 
@@ -72,9 +70,9 @@ hAzzle.extend({
 
                 elem.parentNode.removeChild(elem);
             }
-        }
+   
 
-        return this;
+});
     },
 
     /**
