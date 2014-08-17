@@ -1,8 +1,7 @@
 // fx.js
-var foreign, nRAF, nCAF,
+var nRAF, nCAF,
     perf = window.performance,
     lastTime = 0,
-
     fxPrefix = 'hAzzleFX',
 
     // Default duration value
@@ -20,45 +19,54 @@ var foreign, nRAF, nCAF,
 
     // rAF ID
 
-    rafId;
+    rafId,
 
-// Test if we are within a foreign domain. Use raf from the top if possible.
+    fixTick = false,
 
-try {
-    // Accessing .name will throw SecurityError within a foreign domain.
-    foreign = window.top;
-} catch (e) {
-    foreign = window;
-}
+    // Performance.now()
 
-// Performance.now()
-
-var fixTs = false // feature detected below,
-perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
+    perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
     pnow = perfNow ? function() {
         return perfNow.call(perf);
     } : function() {
         return hAzzle.now();
     };
 
-// Grab the native implementation.
+(function() {
+    var i,
+        vendors = ['webkit', 'moz', 'ms', 'o'],
+        top;
 
-nRAF = foreign.requestAnimationFrame;
-nCAF = foreign.cancelAnimationFrame || foreign.cancelRequestAnimationFrame;
+    // Test if we are within a foreign domain. Use raf from the top if possible.
+    try {
+        // Accessing .name will throw SecurityError within a foreign domain.
+        window.top.name;
+        top = window.top;
+    } catch (e) {
+        top = window;
+    }
 
-// if native rAF and cAF fails, fallback to a vendor
-// prefixed one, if that fails too, use polyfill
+    nRAF = top.requestAnimationFrame;
+    nCAF = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
 
-if (!nRAF && !nCAF) {
+    // Grab the native implementation.
+    for (i = 0; i < vendors.length && !nRAF; i++) {
+        nRAF = top[vendors[i] + 'RequestAnimationFrame'];
+        nCAF = top[vendors[i] + 'CancelAnimationFrame'] ||
+            top[vendors[i] + 'CancelRequestAnimationFrame'];
+    }
 
-    // RequestAnimationFrame
+    nRAF(function(timestamp) {
+        // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+        // if not, we have to do a timestamp fix on each frame
+        fixTick = timestamp > 1e12 != pnow() > 1e12;
+    });
 
-    nRAF =
-        foreign.webkitRequestAnimationFrame ||
-        foreign.mozRequestAnimationFrame ||
-        foreign.oRequestAnimationFrame ||
-        foreign.msRequestAnimationFrame ||
-        function(callback) {
+    if (!nRAF && !nCAF) {
+
+        // RequestAnimationFrame
+
+        nRAF = function(callback) {
             var currTime = hAzzle.now(),
                 timeToCall = Math.max(0, 16 - (currTime - lastTime)),
                 id = window.setTimeout(function() {
@@ -69,23 +77,13 @@ if (!nRAF && !nCAF) {
             return id; // return the id for cancellation capabilities
         };
 
-    // CancelAnimationFrame
-    nCAF =
-        foreign.webkitCancelAnimationFrame ||
-        foreign.webkitCancelRequestAnimationFrame ||
-        foreign.mozCancelAnimationFrame ||
-        foreign.oCancelAnimationFrame ||
-        foreign.msCancelAnimationFrame ||
-        function(id) {
+        // CancelAnimationFrame
+        nCAF = function(id) {
             clearTimeout(id);
         };
-}
+    }
 
-nRAF(function(timestamp) {
-    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-    // if not, we have to do a timestamp fix on each frame
-    fixTs = timestamp > 1e12 != pnow() > 1e12
-})
+}());
 
 
 /* ============================ FX =========================== */
@@ -119,6 +117,7 @@ FX.prototype = {
         this.now = 0;
         this.currentState = {};
         this.originalState = {};
+        this.isRunning = false;
 
         // This will and can be overwritten
 
@@ -153,8 +152,7 @@ FX.prototype = {
             if (style && hAzzle.cssHooks[prop]) {
                 hAzzle.style(elem, prop, now + self.unit);
             } else {
-
-                hAzzle.style(elem, prop, now + self.unit)
+                hAzzle.style(elem, prop, now + self.unit);
             }
         }
 
@@ -219,8 +217,7 @@ FX.prototype = {
             callback = hAzzle.shallowCopy(function(gotoEnd) {
 
                 var lastTickTime = pnow(),
-                    i,
-                    done = true;
+                    i, done = true;
 
                 // Do animation if we are not at the end
 
@@ -323,13 +320,6 @@ hAzzle.extend({
     // Holds all animations
 
     dictionary: [],
-
-    // Detect if the browser supports native rAF, because there are
-    // issues with iOS6, so check if the native rAF and cAF works
-    // http://shitwebkitdoes.tumblr.com/post/47186945856/native-requestanimationframe-broken-on-ios-6
-
-    nativeRAF: (foreign.requestAnimationFrame && (foreign.cancelAnimationFrame ||
-        foreign.cancelRequestAnimationFrame)) ? true : false,
 
     // Detect if performance.now() are supported			
 
@@ -443,8 +433,7 @@ hAzzle.extend({
             Option: Queue
         *******************/
 
-        if (!opt.queue ||
-            opt.queue === true) {
+        if (!opt.queue || opt.queue === true) {
             opt.queue = 'fx';
         }
 
@@ -473,12 +462,13 @@ hAzzle.extend({
            Animate
         *******************/
 
+
         function Animate() {
 
             var elem = this,
                 isElement = elem.nodeType === 1,
                 hidden = isElement && isHidden(elem),
-                name, p, fx, hooks, parts, start, end, unit,
+                name, p, fx, relative, start, end, unit,
                 scale, target, maxIterations,
                 value, method;
 
@@ -526,17 +516,7 @@ hAzzle.extend({
                     delete prop[p];
                 }
 
-                hooks = hAzzle.cssHooks[name];
-                if (hooks && 'expand' in hooks) {
-                    value = hooks.expand(value);
-                    delete prop[name];
-
-                    for (p in value) {
-                        if (!(p in prop)) {
-                            prop[p] = value[p];
-                        }
-                    }
-                }
+                // Create new instance
 
                 fx = new FX(elem, opt, p, easing);
 
@@ -561,7 +541,7 @@ hAzzle.extend({
                     if (relative) {
 
                         target = fx.curStyle(),
-                            unit = parts && parts[3] || (hAzzle.unitless[p] ? "" : "px"),
+                            unit = relative && relative[3] || (hAzzle.unitless[p] ? "" : "px"),
                             start = (hAzzle.unitless[p] || unit !== "px" && +target) &&
                             relativevalues.exec(hAzzle.css(elem, p)),
                             scale = 1,
@@ -624,22 +604,20 @@ hAzzle.extend({
             type = undefined;
         }
 
-
         if (clearQueue && type !== false) {
             this.queue(type || 'fx', []);
         }
 
         return this.each(function() {
 
-            var i, hadTimers = false,
+            var dequeue = true,
+                i,
                 dictionary = hAzzle.dictionary,
                 data = hAzzle.private(this);
 
             function stopQueue(elem, data, i) {
-
-                var hooks = data[i];
                 hAzzle.removePrivate(elem, i, true);
-                hooks.stop(gotoEnd);
+                data[i].stop(gotoEnd);
             }
 
             if (i) {
@@ -652,16 +630,19 @@ hAzzle.extend({
 
                 for (i in data) {
                     if (data[i] && data[i].stop) {
-                        stopQueue(this, data, i);
+                        stopQueue(data[i]);
                     }
                 }
             }
 
             for (i = dictionary.length; i--;) {
-                if (dictionary[i].elem === this && (!type || dictionary[i].queue === type)) {
+                if (dictionary[i].elem === this &&
+                    (!type || dictionary[i].queue === type)) {
+
                     if (gotoEnd) {
 
                         // Force the next step to be the last
+
                         dictionary[i](true);
 
                     } else {
@@ -669,12 +650,12 @@ hAzzle.extend({
                         dictionary[i].fxState();
                     }
 
-                    hadTimers = true;
+                    dequeue = false;
                     dictionary.splice(i, 1);
                 }
             }
 
-            if (!gotoEnd && hadTimers) {
+            if (dequeue || !gotoEnd) {
                 hAzzle.dequeue(this, type);
             }
 
@@ -686,10 +667,10 @@ hAzzle.extend({
 /* ============================ UTILITY METHODS =========================== */
 
 function update(tick) {
+    if (fixTick) {
+        tick = pnow();
+    }
     if (rafId) {
-        if (fixTs) {
-            tick = pnow();
-        }
         nRAF(update);
         ticks();
     }
@@ -720,16 +701,17 @@ function ticks() {
  *
  * @param {Object} elem
  * @param {Object} opt
- * @param {Object} curState  
+ * @param {Object} curState
  * @param {Object} originalState
  * @return {hAzzle|Object}
  */
 
 function resetCSS(elem, opt, curState, originalState) {
 
-   var style = elem.style, p, complete;
+    var style = elem.style,
+        p, complete;
 
-   // Reset the overflow
+    // Reset the overflow
 
     if (opt.overflow) {
 
@@ -742,7 +724,7 @@ function resetCSS(elem, opt, curState, originalState) {
     // Hide the element if the 'hide' operation was done
 
     if (opt.hide) {
-		
+
         hAzzle(elem).hide();
     }
 
@@ -751,14 +733,14 @@ function resetCSS(elem, opt, curState, originalState) {
     if (opt.hide || opt.show) {
 
         for (p in curState) {
-			
+
             style[p] = originalState[p];
-            
-			hAzzle.removePrivate(elem, fxPrefix + p, true);
-            
-			// Toggle data is no longer needed
-            
-			hAzzle.removePrivate(elem, 'toggle' + p, true);
+
+            hAzzle.removePrivate(elem, fxPrefix + p, true);
+
+            // Toggle data is no longer needed
+
+            hAzzle.removePrivate(elem, 'toggle' + p, true);
         }
     }
 
@@ -773,14 +755,12 @@ function resetCSS(elem, opt, curState, originalState) {
     }
 }
 
-function fxState(elem, prop, options, start, end) {
+// Remember the state so we can go back to it later
+
+function fxState(elem, prop, opt, start, end) {
     return function() {
         if (hAzzle.private(elem, fxPrefix + prop) === undefined) {
-            if (options.hide) {
-                hAzzle.private(elem, fxPrefix + prop, start);
-            } else if (options.show) {
-                hAzzle.private(elem, fxPrefix + prop, end);
-            }
+            hAzzle.private(elem, fxPrefix + prop, opt.hide ? start : end);
         }
     };
 }
