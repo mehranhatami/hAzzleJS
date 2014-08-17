@@ -143,9 +143,16 @@ FX.prototype = {
 
         if (hooks && hooks.set) {
 
-            hooks.set(self);
+            // params:  elem, now, prop
+            // fx can be a object, so we deal with it before
+            // sending it to the fxHooks
+
+            hooks.set(elem, fixNow(now), prop);
 
         } else {
+
+            // 'now' can be a object, but as default we deal with as
+            // a single value
 
             if (style && hAzzle.cssHooks[prop]) {
                 hAzzle.style(elem, prop, now + self.unit);
@@ -173,7 +180,7 @@ FX.prototype = {
 
         if (hooks && hooks.get) {
 
-            hooks.get(self);
+            hooks.get(elem, self.now, prop);
 
         } else {
 
@@ -335,22 +342,22 @@ hAzzle.extend({
 
     fxHooks: {
         scrollLeft: {
-            set: function(fx) {
-                if (fx.elem.nodeType && fx.elem.parentNode) {
-                    fx.elem[fx.prop] = fx.now;
+            set: function(elem, now, prop) {
+                if (elem.nodeType && elem.parentNode) {
+                    elem[prop] = now;
                 }
             }
         },
         scrollTop: {
-            set: function(fx) {
-                if (fx.elem.nodeType && fx.elem.parentNode) {
-                    fx.elem[fx.prop] = fx.now;
+            set: function(elem, now, prop) {
+                if (elem.nodeType && elem.parentNode) {
+                    elem[prop] = now;
                 }
             }
         },
         opacity: {
-            set: function(fx) {
-                fx.elem.style.opacity = fx.now;
+            set: function(elem, now) {
+                elem.style.opacity = now;
             }
         }
     },
@@ -466,6 +473,7 @@ hAzzle.extend({
 
             var elem = this,
                 isElement = elem.nodeType === 1,
+
                 hidden = isElement && isHidden(elem),
                 name, p, fx, relative, start, end, unit,
                 scale, target, maxIterations,
@@ -777,4 +785,17 @@ function fxState(elem, prop, opt, start, end) {
             hAzzle.private(elem, fxPrefix + prop, opt.hide ? start : end);
         }
     };
+}
+
+function fixNow(now) {
+
+    if (typeof now === 'object') {
+        return {
+            x: now[1],
+            y: now[2],
+            z: now[3],
+            q: now[4],
+        };
+    }
+    return now;
 }
