@@ -638,7 +638,7 @@ hAzzle.extend({
             function stopQueue(elem, data, i) {
 
                 var hooks = data[i];
-                hAzzle.removeData(elem, i, true);
+                hAzzle.removePrivate(elem, i, true);
                 hooks.stop(gotoEnd);
             }
 
@@ -754,11 +754,11 @@ function resetCSS(elem, opt, curState, originalState) {
 			
             style[p] = originalState[p];
             
-			hAzzle.removeData(elem, fxPrefix + p, true);
+			hAzzle.removePrivate(elem, fxPrefix + p, true);
             
 			// Toggle data is no longer needed
             
-			hAzzle.removeData(elem, 'toggle' + p, true);
+			hAzzle.removePrivate(elem, 'toggle' + p, true);
         }
     }
 
