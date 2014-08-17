@@ -1,4 +1,5 @@
-var i, ua = navigator.userAgent,
+var i,
+  ua = navigator.userAgent,
   isOpera = hAzzle.isOpera,
   Detection = {
 
@@ -12,10 +13,10 @@ var i, ua = navigator.userAgent,
     Chrome: !!window.chrome && !isOpera, // Chrome 1+
     Safari: Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0,
     IE: false || !!document.documentMode // IE
-  }
+  };
 
 // Expose
 
 for (i in Detection) {
-  hAzzle['is' + i] = Detection[i]
+  hAzzle['is' + i] = Detection[i];
 }
