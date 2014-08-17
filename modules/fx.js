@@ -147,7 +147,7 @@ FX.prototype = {
             // fx can be a object, so we deal with it before
             // sending it to the fxHooks
 
-            hooks.set(elem, fixNow(now), prop);
+            hooks.set(elem, now, prop);
 
         } else {
 
@@ -218,56 +218,80 @@ FX.prototype = {
             options = self.options,
             currentState = self.currentState,
             originalState = self.originalState,
-            duration = options.duration,
-            callback = hAzzle.shallowCopy(function(gotoEnd) {
+            duration = options.duration;
 
-                var lastTickTime = pnow(),
-                    i, done = true;
+        //			alert(differences)
+        var callback = hAzzle.shallowCopy(function(gotoEnd) {
 
-                // Do animation if we are not at the end
+            var lastTickTime = pnow(), v,
+                i, done = true;
 
-                if (gotoEnd || lastTickTime >= duration + currentTime) {
+            // Do animation if we are not at the end
 
-                    self.now = end;
-                    pos = percent = 1;
-                    self.update();
+            if (gotoEnd || lastTickTime >= duration + currentTime) {
 
-                    currentState[self.prop] = true;
+                self.now = end;
+                pos = percent = 1;
+                self.update();
 
-                    for (i in currentState) {
-                        if (currentState[i] !== true) {
-                            done = false;
-                        }
+                currentState[self.prop] = true;
+
+                for (i in currentState) {
+                    if (currentState[i] !== true) {
+                        done = false;
                     }
-
-                    if (done) {
-
-                        resetCSS(elem, options, currentState, originalState);
-                    }
-
-                    return false;
-
-                } else {
-
-                    // Calculate easing, and perform the next step of the
-                    // animation
-
-                    percent = (lastTickTime - currentTime) / duration;
-                    pos = hAzzle.easing[self.easing](percent, duration * percent, 0, 1, duration);
-                    self.now = start + ((end - start) * pos);
-
-                    self.update();
                 }
 
-                return true;
+                if (done) {
 
-            }, {
-                elem: this.elem,
+                    resetCSS(elem, options, currentState, originalState);
+                }
 
-                // Save current animation state on the DOM element
+                return false;
 
-                fxState: fxState(elem, self.prop, options, start, end)
-            });
+            } else {
+
+                // Calculate easing, and perform the next step of the
+                // animation
+
+                percent = (lastTickTime - currentTime) / duration;
+                pos = hAzzle.easing[self.easing](percent, duration * percent, 0, 1, duration);
+
+
+                if (hAzzle.type(end) === 'object') {
+
+                    if (typeof start !== 'object') {
+                        start = {};
+                    }
+                    for (var val in end) {
+                        if (!start.hasOwnProperty(val)) {
+                            start[val] = 0;
+                        }
+                        self.now[val] = end[val] - start[val];
+                    }
+                } else {
+
+                    self.now = start + ((end - start) * pos);
+                }
+
+                if (typeof self.now === 'object') {
+                    for (var v in self.now) {
+                        self.now[v] = start + ((end[v] - start[v]) * pos);
+                    }
+                }
+
+                self.update();
+            }
+
+            return true;
+
+        }, {
+            elem: this.elem,
+
+            // Save current animation state on the DOM element
+
+            fxState: fxState(elem, self.prop, options, start, end)
+        });
 
         // Push the callback into the dictionary array
 
@@ -785,17 +809,4 @@ function fxState(elem, prop, opt, start, end) {
             hAzzle.private(elem, fxPrefix + prop, opt.hide ? start : end);
         }
     };
-}
-
-function fixNow(now) {
-
-    if (typeof now === 'object') {
-        return {
-            x: now[1],
-            y: now[2],
-            z: now[3],
-            q: now[4],
-        };
-    }
-    return now;
 }
