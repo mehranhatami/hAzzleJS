@@ -215,12 +215,11 @@ FX.prototype = {
             pos = 0,
             elem = self.elem,
             currentTime = pnow(),
-            options = self.options,
+            opt = self.options,
             currentState = self.currentState,
             originalState = self.originalState,
-            duration = options.duration;
+            duration = opt.duration;
 
-        //			alert(differences)
         var callback = hAzzle.shallowCopy(function(gotoEnd) {
 
             var lastTickTime = pnow(), v,
@@ -244,7 +243,7 @@ FX.prototype = {
 
                 if (done) {
 
-                    resetCSS(elem, options, currentState, originalState);
+                    resetCSS(elem, opt, currentState, originalState);
                 }
 
                 return false;
@@ -290,7 +289,7 @@ FX.prototype = {
 
             // Save current animation state on the DOM element
 
-            fxState: fxState(elem, self.prop, options, start, end)
+            fxState: fxState(elem, self.prop, opt, start, end)
         });
 
         // Push the callback into the dictionary array
