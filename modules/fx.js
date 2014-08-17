@@ -33,8 +33,7 @@ var nRAF, nCAF,
     };
 
 (function() {
-    var i,
-        vendors = ['webkit', 'moz', 'ms', 'o'],
+    var i, vendors = ['webkit', 'moz', 'ms', 'o'],
         top;
 
     // Test if we are within a foreign domain. Use raf from the top if possible.
@@ -84,7 +83,6 @@ var nRAF, nCAF,
     }
 
 }());
-
 
 /* ============================ FX =========================== */
 
@@ -388,12 +386,13 @@ hAzzle.extend({
         var opt = {},
             duration;
 
+
         /*********************
           Option: Duration
         *********************/
 
         // jQuery uses 'slow', 'fast' e.g. as duration values. hAzzle
-        // supports similar for effects or directly inside the
+        // supports similar for effects 'ONLY', or directly inside the
         // options Object
 
         duration = opt.duration = options.duration ? options.duration :
@@ -409,7 +408,7 @@ hAzzle.extend({
         }
 
         if (typeof duration === 'string') {
-            opt.duration = hAzzle.duration[duration.toString().toLowerCase()] || fxDuration;
+            opt.duration = hAzzle.duration[duration.toLowerCase()] || fxDuration;
         }
 
         /**********************
@@ -586,13 +585,29 @@ hAzzle.extend({
                 }
             }
 
-
             return true;
         }
 
-        return opt.queue === false ?
-            this.each(Animate) :
-            this.queue(opt.queue, Animate);
+        // When the queue option is set to false, the call skips the element's queue and fires immediately.
+
+        if (options.queue === false) {
+
+            // Fire delay if any
+            /*           
+            		   if (options.delay) {
+
+                           setTimeout(function() {
+            				   return this.each(Animate)
+            				   }, opt.delay);
+                       
+            		   } else {*/
+            return this.each(Animate);
+            //              }
+
+        } else {
+
+            return this.queue(opt.queue, Animate);
+        }
     },
 
     stop: function(type, clearQueue, gotoEnd) {
@@ -611,8 +626,7 @@ hAzzle.extend({
         return this.each(function() {
 
             var dequeue = true,
-                i,
-                dictionary = hAzzle.dictionary,
+                i, dictionary = hAzzle.dictionary,
                 data = hAzzle.private(this);
 
             function stopQueue(elem, data, i) {
