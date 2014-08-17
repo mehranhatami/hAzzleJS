@@ -354,7 +354,7 @@ var
         } else if (found[2]) {
           return context.getElementsByTagName(selector);
         } else if ((m = found[3])) {
-		    return context.getElementsByClassName(m);
+          return context.getElementsByClassName(m);
         }
       }
     }
@@ -708,7 +708,7 @@ function quickQueryAll(selector, context) {
   try {
 
     return context.nodeType === 9 ?
-      context.querySelectorAll(selector) : [];
+      context.querySelectorAll(selector + "") : [];
 
   } finally {
 
