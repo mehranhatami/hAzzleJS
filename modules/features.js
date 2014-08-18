@@ -7,7 +7,7 @@ var docElem = hAzzle.docElem,
 
     matches,
 
-    expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, '') + 'k.f.',
+    expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
 
     _features = {
 
@@ -59,8 +59,8 @@ function addFeature(name, fn) {
 // Check if XML document
 
 _features.isXML = (function(document) {
-    return (!!document.xmlVersion) || (!!document.xml) || (toString.call(document) == '[object XMLDocument]') ||
-        (document.nodeType == 9 && document.documentElement.nodeName != 'HTML');
+//    return (!!document.xmlVersion) || (!!document.xml) || (toString.call(document) == '[object XMLDocument]') ||
+//        (document.nodeType == 9 && document.documentElement.nodeName != 'HTML');
 }(document));
 
 hAzzle.assert(function(div) {
