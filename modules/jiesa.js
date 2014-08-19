@@ -1,6 +1,5 @@
 // Jiesa - selector engine
-var slice = Array.prototype.slice,
-  join = Array.prototype.join,
+var join = Array.prototype.join,
   toString = Function.prototype.toString,
 
   // Holder for querySelector / query (DOM Level 4)
@@ -53,7 +52,7 @@ var slice = Array.prototype.slice,
 
   compileExpr = {
     regexPattern: new RegExp('^(' + combineRegEx(commaCombinators, rtype, hashes, kfpseudo, attributeQuotes) + ')(.*)$'),
-    anbPattern: /(?:([+-]?\d*)n([+-]\d+)?)|((?:[+-]?\d+)|(?:odd)|(?:even))/i,
+    anbPattern: /(?:([+-]?\d*)n([+-]\d+)?)|((?:[+-]?\d+)|(?:odd)|(?:even)|(?:first))/i,
     identPattern: new RegExp('^' + identifier + '$'),
     containsArg: new RegExp('^' + identityFlag + '$'),
     referencedByArg: /^\s*(\S+)(?:\s+in\s+([\s\S]*))?\s*$/i,
@@ -221,9 +220,9 @@ var
     'LOCAL-LINK': function (args, attr, attrValue, p, context) {
       var pathnameParts, selector,
         ctx = context.ownerDocument || context,
-        pathname = ctx.location.pathname,
+        pathname = ctx.location.pathname;
 
-        pathname = fakePath ? pathname : pathname.slice(1);
+      pathname = fakePath ? pathname : pathname.slice(1);
 
       if (!args) {
 
@@ -492,12 +491,12 @@ var
     var cScope, group, str, n, j, k, found, args, pseudo, filterFn, ctx,
       wholeSelector = '',
       lastMatchCombinator = '*',
-      oldSelector = selector,
-      cached = tokenCache.cache(oldSelector + '');
+      oldSelector = selector;
+    //cached = tokenCache.cache(oldSelector + '');
 
-    if (cached) {
-      return cached;
-    }
+    // if (cached) {
+    //   return cached;
+    // }
 
     if (!(arrfunc || isDocument(context) || isElement(context))) {
       arrfunc = context;
@@ -636,8 +635,8 @@ var
 
       // Cache it and return
 
-      return tokenCache.cache(oldSelector, hAzzle.trim(wholeSelector + group + selector));
-
+      //return tokenCache.cache(oldSelector, hAzzle.trim(wholeSelector + group + selector)) + '';
+      return hAzzle.trim(wholeSelector + group + selector);
     } finally {
 
       runningCount--;
@@ -708,7 +707,7 @@ function quickQueryAll(selector, context) {
   try {
 
     return context.nodeType === 9 ?
-      context.querySelectorAll(selector + "") : [];
+      context.querySelectorAll(selector + '') : [];
 
   } finally {
 
