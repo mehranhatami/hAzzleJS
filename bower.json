@@ -14,5 +14,8 @@
   "devDependencies": {
     "chai": "*",
     "jasmine": "~1.3.1"
+  },
+  "dependencies": {
+    "jquery": "~2.1.1"
   }
 }
