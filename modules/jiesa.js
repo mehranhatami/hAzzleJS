@@ -122,7 +122,7 @@ function markElements(elems, attr, attrValue, filterFn, args) {
 
   while (i--) {
 
-    if (filterFn.apply(undefined, [elems[i]].concat(args))) {
+    if (filterFn.apply(undefined, [elems[i]].concat(args).concat(i).concat(elems.length))) {
       elems[i].setAttribute(attr, attrValue);
     }
   }
@@ -213,6 +213,26 @@ var
       if (id) {
         return quickQuery('a[href$=\'#' + id + '\']', el.ownerDocument);
       }
+    },
+
+    'EVEN': function (el, args, p, arrfunc, index) {
+      return !(index % 2);
+    },
+
+    'ODD': function (el, args, p, arrfunc, index) {
+      return !!(index % 2);
+    },
+
+    'EQ': function (el, args, p, arrfunc, index) {
+      return (hAzzle.isNumeric(args) && parseInt(args, 10) === index);
+    },
+
+    'FIRST': function (el, args, p, arrfunc, index) {
+      return (index === 0);
+    },
+
+    'LAST': function (el, args, p, arrfunc, index, length) {
+      return (index === length - 1);
     }
   },
   transformers = {
@@ -491,7 +511,10 @@ var
     var cScope, group, str, n, j, k, found, args, pseudo, filterFn, ctx,
       wholeSelector = '',
       lastMatchCombinator = '*',
-      oldSelector = selector;
+      oldSelector = selector,
+      cached,
+      contextCached,
+      baseSelector = selector + '';
     //cached = tokenCache.cache(oldSelector + '');
 
     // if (cached) {
@@ -501,6 +524,13 @@ var
     if (!(arrfunc || isDocument(context) || isElement(context))) {
       arrfunc = context;
       context = document;
+    }
+
+    contextCached = tokenCache.val(context);
+    if (contextCached) {
+      if ((cached = contextCached[baseSelector])) {
+        return cached;
+      }
     }
 
     group = cScope = getSelector(context) + ' ';
@@ -634,9 +664,17 @@ var
       }
 
       // Cache it and return
+      cached = hAzzle.trim(wholeSelector + group + selector);
+      if (contextCached) {
+        contextCached[baseSelector] = cached;
+      } else {
+        contextCached = {};
+        contextCached[baseSelector] = cached;
+        tokenCache.cache(context, contextCached);
+      }
 
       //return tokenCache.cache(oldSelector, hAzzle.trim(wholeSelector + group + selector)) + '';
-      return hAzzle.trim(wholeSelector + group + selector);
+      return cached;
     } finally {
 
       runningCount--;
