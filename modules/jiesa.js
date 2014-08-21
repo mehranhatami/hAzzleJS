@@ -330,7 +330,8 @@ var
 
     var found, results = [],
       m, elem, matched, oldSelector = selector,
-      isDoc = isDocument(context);
+      isDoc = isDocument(context),
+      scopedContext = context;
 
     if (!selector || typeof selector !== 'string') {
       return results;
@@ -396,7 +397,7 @@ var
 
     // Everything else
 
-    var token = tokenize(selector, context, arrfunc);
+    var token = tokenize(selector, scopedContext, arrfunc);
 
     return context.nodeType === 9 && token ?
       quickQueryAll(token, context) : [];
@@ -515,17 +516,13 @@ var
       cached,
       contextCached,
       baseSelector = selector + '';
-    //cached = tokenCache.cache(oldSelector + '');
-
-    // if (cached) {
-    //   return cached;
-    // }
 
     if (!(arrfunc || isDocument(context) || isElement(context))) {
       arrfunc = context;
       context = document;
     }
 
+    //new caching approach
     contextCached = tokenCache.val(context);
     if (contextCached) {
       if ((cached = contextCached[baseSelector])) {
@@ -663,7 +660,7 @@ var
         }
       }
 
-      // Cache it and return
+      // new caching approach
       cached = hAzzle.trim(wholeSelector + group + selector);
       if (contextCached) {
         contextCached[baseSelector] = cached;
@@ -673,7 +670,6 @@ var
         tokenCache.cache(context, contextCached);
       }
 
-      //return tokenCache.cache(oldSelector, hAzzle.trim(wholeSelector + group + selector)) + '';
       return cached;
     } finally {
 

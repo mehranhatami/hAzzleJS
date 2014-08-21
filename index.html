@@ -4,8 +4,7 @@
 <head>
     <title>hAzzleJS</title>
     <meta charset="utf-8">
-    
-    <script type="text/javascript" src="bower_components/jquery/dist/jquery.js"></script>
+    <!-- <script type="text/javascript" src="bower_components/jquery/dist/jquery.js"></script> -->
 
     <script type="text/javascript" src="modules/hazzle.js"></script>
     <script type="text/javascript" src="modules/uniqueid.js"></script>
@@ -60,33 +59,52 @@
 
 <body>
  
-<div class="inputs">
-  <p>
-    <input type="text"><br>
-    <input type="text">
-  </p>
-  <p>
-    <input type="password">
-  </p>
+<div>
+  <button>:nth-last-of-type(even)</button>
+  <button>:nth-last-of-type(odd)</button>
+  <button>:nth-last-of-type(3n)</button>
+  <button>:nth-last-of-type(2)</button>
 </div>
-<div id="focus-count">focusout fire</div>
-<div id="blur-count">blur fire</div>
+<div>
+  <button>:nth-last-of-type(3n+1)</button>
+  <button>:nth-last-of-type(3n+2)</button>
+</div>
+ 
+<div>
+  <table>
+    <tr><td>John</td></tr>
+    <tr><td>Karl</td></tr>
+    <tr><td>Brandon</td></tr>
+    <tr><td>Benjamin</td></tr>
+  </table>
+</div>
+<div>
+  <table>
+    <tr><td>Sam</td></tr>
+  </table>
+</div>
+<div>
+  <table>
+    <tr><td>Glen</td></tr>
+    <tr><td>Tane</td></tr>
+    <tr><td>Ralph</td></tr>
+    <tr><td>David</td></tr>
+    <tr><td>Mike</td></tr>
+    <tr><td>Dan</td></tr>
+  </table>
+</div>
+ 
+<span>tr<span id="inner"></span></span>
  
 <script>
 var $ = hAzzle;
-var focus = 0,
-  blur = 0;
-$( "p" )
-  .focusout(function() {
-    focus++;
-    $( "#focus-count" ).text( "focusout fired: " + focus + "x" );
-  })
-  .blur(function() {
-    blur++;
-    $( "#blur-count" ).text( "blur fired: " + blur + "x" );
-  });
+$( 'button' ).click(function() {
+  var str = $( this ).text();
+  $( 'tr' ).css( 'background', 'white' );
+  $( 'tr' + str ).css( 'background', '#ff0000' );
+  $( '#inner' ).text( str );
+});
 </script>
  
 </body>
-
 </html>
