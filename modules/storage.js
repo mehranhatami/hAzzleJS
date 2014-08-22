@@ -289,11 +289,11 @@ hAzzle.extend({
                 }
 
                 data = _userData.get(elem, camelKey);
-				
-				var data = _userData.get( elem, camelKey ),
-					hasDataAttrs = _privateData.get( this, "hasDataAttrs" ),
-					isHyphenated = key.indexOf("-") !== -1;
-				
+
+				var 
+					hasDataAttrs = _privateData.get( this, 'hasDataAttrs' ),
+					isHyphenated = key.indexOf('-') !== -1;
+
 
                 if (data !== undefined) {
 

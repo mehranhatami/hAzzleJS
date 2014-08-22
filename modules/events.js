@@ -24,11 +24,19 @@
  * - https://github.com/dperini/nwevents/blob/master/src/nwevents.js
  * - jQuery
  */
-var whiteRegex = (/\S+/g),
-    gtl = /\.+\s/,
-    gtr = /\.+$/,
-    namespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
-    speci = /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
+var
+   // Wrap it inside a object to avoid variable conflicts
+   
+    eventRegex = {
+        nameL: '(^|\\.)',
+        nameR: '\\.(?:.*\\.|)',
+        nameFR: '(\\.|$)',
+        whiteRegex: (/\S+/g),
+        gtl: /\.+\s/,
+        gtr: /\.+$/,
+        namespaceRegex: /^([^.]*)(?:\.(.+)|)$/,
+        speci: /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
+    },
     slice = Array.prototype.slice,
 
     // Public object for eventHooks
@@ -87,7 +95,8 @@ hAzzle.event = {
 
             eventHandler = eventData.handle = function(e) {
                 return typeof hAzzle !== 'undefined' && hAzzle.event.triggered !== e.type ?
-                    hAzzle.event.handle.apply(this, arguments) : undefined;
+                    hAzzle.event.handle.apply(this, arguments) :
+                    undefined;
             };
         }
 
@@ -101,7 +110,7 @@ hAzzle.event = {
 
             // event type	
 
-            tmp = namespaceRegex.exec(types[t]) || [];
+            tmp = eventRegex.namespaceRegex.exec(types[t]) || [];
             type = origType = tmp[1];
             namespaces = (tmp[2] || '').split('.').sort();
 
@@ -126,7 +135,7 @@ hAzzle.event = {
                 handler: handler,
                 guid: handler.guid,
                 selector: selector,
-                needsContext: selector && speci.test(selector),
+                needsContext: selector && eventRegex.speci.test(selector),
                 namespace: namespaces.join('.')
             }, objHandler);
 
@@ -194,16 +203,17 @@ hAzzle.event = {
 
         // Remove empty namespace (ie trailing dots)
 
-        types = types.replace(gtl, ' ').replace(gtr, '');
+        types = types.replace(eventRegex.gtl, ' ').replace(eventRegex.gtr, '');
 
         // Get multiple events
 
         types = getTypes(types);
+
         t = types.length;
 
         while (t--) {
 
-            tmp = namespaceRegex.exec(types[t]) || [];
+            tmp = eventRegex.namespaceRegex.exec(types[t]) || [];
             type = origType = tmp[1];
             namespaces = (tmp[2] || '').split('.').sort();
 
@@ -220,7 +230,7 @@ hAzzle.event = {
             special = eventHooks.special[type] || {};
             type = (selector ? special.delegateType : special.bindType) || type;
             handlers = events[type] || [];
-            tmp = tmp[2] && new RegExp("(^|\\.)" + namespaces.join("\\.(?:.*\\.|)") + "(\\.|$)");
+            tmp = tmp[2] && new RegExp(eventRegex.nameL + namespaces.join(eventRegex.nameR) + eventRegex.nameFR);
             // Remove matching events
 
             origCount = j = handlers.length;
@@ -497,7 +507,7 @@ function returnFalse() {
 // Handle multiple events separated by a space
 
 function getTypes(types) {
-    return (types || '').match(whiteRegex) || [''];
+    return (types || '').match(eventRegex.whiteRegex) || [''];
 }
 
 // Globalize it
