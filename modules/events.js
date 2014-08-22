@@ -268,11 +268,6 @@ hAzzle.event = {
 
     handle: function(evt) {
 
-        if (!evt) {
-
-            return;
-        }
-
         // Grab the event object
 
         evt = hAzzle.event.fix(evt);

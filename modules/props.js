@@ -1,6 +1,4 @@
-var
-    i,
-    propKey = /^key/,
+var propKey = /^key/,
     propMouse = /^(?:mouse|pointer|contextmenu)|click/;
 
 hAzzle.extend({
@@ -41,6 +39,7 @@ hAzzle.extend({
         },
 
         pageX: function(evt) {
+
             var eventDoc, doc, body;
 
             // Calculate pageX if missing and clientX available
@@ -70,7 +69,14 @@ hAzzle.extend({
             }
 
             return evt.pageY;
-        }
+        },
+        relatedTarget: function(evt) {
+            return this.relatedTarget = evt.fromElement === this.target ? evt.toElement : evt.fromElement;
+        },
+        metaKey: function(evt) {
+            return evt.metaKey === undefined ?
+                this.originalEvent.ctrlKey : evt.metaKey;
+        },
     },
 
     fix: function(evt) {
@@ -91,7 +97,7 @@ hAzzle.extend({
             hAzzle.each(fixHook.props.splice(0), addEventProps);
         }
 
-        evt = hAzzle.Event(originalEvent);
+        evt = new hAzzle.Event(originalEvent);
 
         if (!evt.target) {
             evt.target = document;
@@ -112,13 +118,16 @@ hAzzle.extend({
 
 function addEventProps(name) {
 
-    Object.defineProperty(hAzzle.Event.prototype, name, {
+    var OdP = Object.defineProperty;
+
+    OdP(hAzzle.Event.prototype, name, {
         enumerable: true,
         configurable: true,
 
         get: function() {
-            var value, hooks;
 
+
+            var value, hooks;
             if (this.originalEvent) {
                 if (hooks = hAzzle.event.propHooks[name]) {
                     value = hooks(this.originalEvent);
@@ -126,12 +135,14 @@ function addEventProps(name) {
                     value = this.originalEvent[name];
                 }
             }
-
+            OdP(this, name, {
+                value: value
+            });
             return this[name] = value;
         },
 
         set: function(value) {
-            Object.defineProperty(this, name, {
+            OdP(this, name, {
                 enumerable: true,
                 configurable: true,
                 writable: true,
