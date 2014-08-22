@@ -1,13 +1,15 @@
 var
+    i,
     propKey = /^key/,
-    propMouse = /^(?:mouse|pointer|contextmenu)|click/;
+    propMouse = /^(?:mouse|pointer|contextmenu)|click/,
+
+	// Includes all common event props including KeyEvent and MouseEvent specific props
+
+	props = ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
+        'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
+        'srcElement target timeStamp type view which propertyName').split(' ');
 
 hAzzle.extend({
-
-    // Includes all common event props including KeyEvent and MouseEvent specific props
-    props: ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
-        'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
-        'srcElement target timeStamp type view which propertyName').split(' '),
 
     fixHooks: {},
 
@@ -27,43 +29,44 @@ hAzzle.extend({
                 return (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
             }
 
-            return event.which;
+            return evt.which;
         },
 
-        pageX: function(event) {
+        pageX: function(evt) {
             var eventDoc, doc, body;
 
             // Calculate pageX if missing and clientX available
-            if (event.pageX == null && event.clientX != null) {
-                eventDoc = event.target.ownerDocument || document;
+            if (evt.pageX == null && evt.clientX != null) {
+                eventDoc = evt.target.ownerDocument || document;
                 doc = eventDoc.documentElement;
                 body = eventDoc.body;
 
-                return event.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+                return evt.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
                     (doc && doc.clientLeft || body && body.clientLeft || 0);
             }
 
-            return event.pageX;
+            return evt.pageX;
         },
 
-        pageY: function(event) {
+        pageY: function(evt) {
             var eventDoc, doc, body;
 
             // Calculate pageY if missing and clientY available
-            if (event.pageY == null && event.clientY != null) {
-                eventDoc = event.target.ownerDocument || document;
+            if (evt.pageY == null && evt.clientY != null) {
+                eventDoc = evt.target.ownerDocument || document;
                 doc = eventDoc.documentElement;
                 body = eventDoc.body;
 
-                return event.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) -
+                return evt.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) -
                     (doc && doc.clientTop || body && body.clientTop || 0);
             }
 
-            return event.pageY;
+            return evt.pageY;
         }
     },
 
     fix: function(evt) {
+
         if (evt[hAzzle.expando]) {
             return evt;
         }
@@ -73,9 +76,6 @@ hAzzle.extend({
         var originalEvent = evt,
             fixHook = this.fixHooks[evt.type];
 
-        if (this.props.length) {
-            hAzzle.each(this.props.splice(0), addEventProps);
-        }
         if (fixHook && fixHook.props && fixHook.props.length) {
             hAzzle.each(fixHook.props.splice(0), addEventProps);
         }
@@ -128,4 +128,10 @@ function addEventProps(name) {
             });
         }
     });
+}
+
+// Auto-add during pageload / page refresh
+
+for(i in props) {
+addEventProps(props[i])
 }

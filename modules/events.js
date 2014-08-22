@@ -308,7 +308,7 @@ var _event = hAzzle.event = {
 
             while ((handleObj = matched.handlers[j++]) &&
                 !evt.isImmediatePropagationStopped()) {
-              if ( handleObj.namespace === "_" ||
+              if ( handleObj.namespace === "@" ||
                !evt.rnamespace || evt.rnamespace.test( handleObj.namespace ) ) {
                     evt.handleObj = handleObj;
                     evt.data = handleObj.data;
