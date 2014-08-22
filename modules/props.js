@@ -1,17 +1,25 @@
 var
     i,
     propKey = /^key/,
-    propMouse = /^(?:mouse|pointer|contextmenu)|click/,
-
-	// Includes all common event props including KeyEvent and MouseEvent specific props
-
-	props = ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
-        'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
-        'srcElement target timeStamp type view which propertyName').split(' ');
+    propMouse = /^(?:mouse|pointer|contextmenu)|click/;
 
 hAzzle.extend({
 
     fixHooks: {},
+
+    // Includes all common event props including KeyEvent and MouseEvent specific props
+
+    props: ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
+        'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
+        ' button buttons clientX clientY offsetX offsetY pageX pageY ' +
+        'screenX screenY toElement dataTransfer fromElement data state ' +
+        'srcElement target timeStamp type view which propertyName ' +
+        // Mousewheel
+        'wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ axis ' +
+        // Keys
+        'char charCode key keyCode keyIdentifier keyLocation location clipboardData ' +
+        // Touch / Pointer
+        'touches targetTouches changedTouches scale rotation').split(' '),
 
     propHooks: {
 
@@ -72,10 +80,13 @@ hAzzle.extend({
         }
 
         // Create a writable copy of the event object and normalize some properties
-		
+
         var originalEvent = evt,
             fixHook = this.fixHooks[evt.type];
 
+        if (this.props.length) {
+            hAzzle.each(this.props.splice(0), addEventProps);
+        }
         if (fixHook && fixHook.props && fixHook.props.length) {
             hAzzle.each(fixHook.props.splice(0), addEventProps);
         }
@@ -130,8 +141,14 @@ function addEventProps(name) {
     });
 }
 
-// Auto-add during pageload / page refresh
+// Firefox
 
-for(i in props) {
-addEventProps(props[i])
+if (hAzzle.isFirefox) {
+    hAzzle.event.props.concat('mozMovementY mozMovementX'.split(' '));
+}
+
+// WebKit 
+
+if (hAzzle.isChrome || hAzzle.isOpera) {
+    hAzzle.event.props.concat(('webkitMovementY webkitMovementX').split(' '));
 }

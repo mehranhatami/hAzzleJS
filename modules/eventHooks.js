@@ -15,9 +15,6 @@ hAzzle.extend({
         },
 
         'click': {
-            '_default': function(evt) {
-                return hAzzle.nodeName(evt.target, 'a');
-            },
 
             // Utilize native event to ensure correct checkbox state
             'setup': function() {
@@ -34,6 +31,9 @@ hAzzle.extend({
                 if (hAzzle.nodeName(this, 'input') && this.type === 'checkbox' && this.click) {
                     useNative(this, 'click', false, returnTrue);
                 }
+            },
+            '_default': function(evt) {
+                return hAzzle.nodeName(evt.target, 'a');
             }
         }
     },
@@ -104,7 +104,6 @@ if (!hAzzle.features.focusinBubbles) {
         blur: 'focusout'
     }, function(fix, orig) {
 
-
         // Attach a single capturing handler while someone wants focusin/focusout
         var handler = function(evt) {
             hAzzle.eventHooks.simulate(fix, evt.target, hAzzle.event.fix(evt), true);
@@ -168,7 +167,7 @@ hAzzle.each({
 
 
 
-function useNative(el, type, onlyHandlers, noopHandler) {
+function useNative(el, type, handlers, noop) {
     var buffer, active;
 
     if (hAzzle.private(el, type)) {
@@ -176,8 +175,8 @@ function useNative(el, type, onlyHandlers, noopHandler) {
     }
 
     // If triggering, force setup through hAzzle.event.add
-    if (noopHandler) {
-        return hAzzle.event.add(el, type, noopHandler);
+    if (noop) {
+        return hAzzle.event.add(el, type, noop);
     }
 
     // Register the reentrant controller for all namespaces
@@ -187,15 +186,7 @@ function useNative(el, type, onlyHandlers, noopHandler) {
             // Remember provided arguments
             buffer = active = slice.call(arguments);
 
-            // Go native!
-            try {
-                this[type]();
-
-                // Support: IE<9
-                // Handle error on focus to hidden element (#1486, #12518)
-            } catch (e) {
-                return;
-            }
+            this[type]();
 
             // Outermost synthetic does not pass Go
             evt.stopImmediatePropagation();
@@ -206,7 +197,7 @@ function useNative(el, type, onlyHandlers, noopHandler) {
         } else if (!evt.isTrigger && active) {
 
             buffer = hAzzle.event.trigger(hAzzle.shallowCopy(buffer.shift(), hAzzle.Event.prototype),
-                buffer, this, onlyHandlers);
+                buffer, this, handlers);
 
             active = false;
 
