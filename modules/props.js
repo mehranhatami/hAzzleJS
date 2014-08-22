@@ -13,17 +13,17 @@ hAzzle.extend({
 
     propHooks: {
 
-        which: function(event) {
-            var button = event.button;
+        which: function(evt) {
+            var button = evt.button;
 
             // Add which for key events
-            if (event.which == null && propKey.test(event.type)) {
-                return event.charCode != null ? event.charCode : event.keyCode;
+            if (evt.which == null && propKey.test(evt.type)) {
+                return evt.charCode != null ? evt.charCode : evt.keyCode;
             }
 
             // Add which for click: 1 === left; 2 === middle; 3 === right
             // Note: button is not normalized, so don't use it
-            if (!event.which && button !== undefined && propMouse.test(event.type)) {
+            if (!evt.which && button !== undefined && propMouse.test(evt.type)) {
                 return (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
             }
 
@@ -39,7 +39,8 @@ hAzzle.extend({
                 doc = eventDoc.documentElement;
                 body = eventDoc.body;
 
-                return event.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) - (doc && doc.clientLeft || body && body.clientLeft || 0);
+                return event.clientX + (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+                    (doc && doc.clientLeft || body && body.clientLeft || 0);
             }
 
             return event.pageX;
@@ -54,7 +55,8 @@ hAzzle.extend({
                 doc = eventDoc.documentElement;
                 body = eventDoc.body;
 
-                return event.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) - (doc && doc.clientTop || body && body.clientTop || 0);
+                return event.clientY + (doc && doc.scrollTop || body && body.scrollTop || 0) -
+                    (doc && doc.clientTop || body && body.clientTop || 0);
             }
 
             return event.pageY;
@@ -67,6 +69,7 @@ hAzzle.extend({
         }
 
         // Create a writable copy of the event object and normalize some properties
+		
         var originalEvent = evt,
             fixHook = this.fixHooks[evt.type];
 
@@ -79,7 +82,6 @@ hAzzle.extend({
 
         evt = hAzzle.Event(originalEvent);
 
-        // All events should have a target; Cordova deviceready doesn't
         if (!evt.target) {
             evt.target = document;
         }

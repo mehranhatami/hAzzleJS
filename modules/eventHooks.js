@@ -23,7 +23,7 @@ hAzzle.extend({
             'setup': function() {
                 // Claim the first click handler
                 if (hAzzle.nodeName(this, 'input') && this.type === 'checkbox' && this.click) {
-                    wrapNative(this, 'click');
+                    useNative(this, 'click');
                 }
 
                 // Nothing to see here, move along
@@ -32,7 +32,7 @@ hAzzle.extend({
             'trigger': function() {
                 // Force setup before triggering a click
                 if (hAzzle.nodeName(this, 'input') && this.type === 'checkbox' && this.click) {
-                    wrapNative(this, 'click', false, returnTrue);
+                    useNative(this, 'click', false, returnTrue);
                 }
             }
         }
@@ -68,7 +68,7 @@ hAzzle.extend({
 
 }, hAzzle.eventHooks);
 
-hAzzle.forOwn({
+hAzzle.each({
     mouseenter: 'mouseover',
     mouseleave: 'mouseout',
     pointerenter: 'pointerover',
@@ -97,8 +97,78 @@ hAzzle.forOwn({
 
 /* =========================== INTERNAL ========================== */
 
+// Create 'bubbling' focus and blur events
+if (!hAzzle.features.focusinBubbles) {
+    hAzzle.each({
+        focus: 'focusin',
+        blur: 'focusout'
+    }, function(fix, orig) {
 
-function wrapNative(el, type, onlyHandlers, noopHandler) {
+
+        // Attach a single capturing handler while someone wants focusin/focusout
+        var handler = function(evt) {
+            hAzzle.eventHooks.simulate(fix, evt.target, hAzzle.event.fix(evt), true);
+        };
+
+        hAzzle.eventHooks.special[fix] = {
+            setup: function() {
+
+                var doc = this.ownerDocument || this,
+                    attaches = hAzzle.private(doc, fix);
+
+                if (!attaches) {
+                    doc.addEventListener(orig, handler, true);
+                }
+                hAzzle.private(doc, fix, (attaches || 0) + 1);
+            },
+            shutdown: function() {
+                var doc = this.ownerDocument || this,
+                    attaches = hAzzle.private(doc, fix) - 1;
+
+                if (!attaches) {
+
+                    doc.removeEventListener(orig, handler, true);
+                    hAzzle.removePrivate(doc, fix);
+
+                } else {
+
+                    hAzzle.private(doc, fix, attaches);
+                }
+            }
+        };
+    });
+}
+
+hAzzle.each({
+    focus: 'focusin',
+    blur: 'focusout'
+}, function(delegateType, type) {
+    hAzzle.eventHooks.special[type] = {
+
+        'delegateType': delegateType,
+
+        'setup': function() {
+            // Claim the first click handler
+            return useNative(this, type, !hAzzle.features.focusinBubbles);
+        },
+
+        'trigger': function() {
+            try {
+                // Force setup before trigger
+                if ((this === document.activeElement) === (type === 'blur') && this[type]) {
+                    useNative(this, type, !hAzzle.features.focusinBubbles, returnTrue);
+                }
+
+                // Support: IE9
+                // Iframes and document.activeElement don't mix well
+            } catch (err) {}
+        }
+    };
+});
+
+
+
+function useNative(el, type, onlyHandlers, noopHandler) {
     var buffer, active;
 
     if (hAzzle.private(el, type)) {
@@ -147,74 +217,3 @@ function wrapNative(el, type, onlyHandlers, noopHandler) {
     // Note that the intercepting handler exists, but don't abort .add
     return !hAzzle.private(el, type, true);
 }
-
-
-// Create 'bubbling' focus and blur events
-if (!hAzzle.features.focusinBubbles) {
-    hAzzle.each({
-        focus: 'focusin',
-        blur: 'focusout'
-    }, function(fix, orig) {
-
-
-        // Attach a single capturing handler while someone wants focusin/focusout
-        var handler = function(evt) {
-            hAzzle.eventHooks.simulate(fix, evt.target, hAzzle.event.fix(evt), true);
-        };
-
-        hAzzle.eventHooks.special[fix] = {
-            setup: function() {
-
-                var doc = this.ownerDocument || this,
-                    attaches = hAzzle.private(doc, fix);
-
-                if (!attaches) {
-                    doc.addEventListener(orig, handler, true);
-                }
-                hAzzle.private(doc, fix, (attaches || 0) + 1);
-            },
-            shutdown: function() {
-                var doc = this.ownerDocument || this,
-                    attaches = hAzzle.private(doc, fix) - 1;
-
-                if (!attaches) {
-
-                    doc.removeEventListener(orig, handler, true);
-                    hAzzle.removePrivate(doc, fix);
-
-                } else {
-
-                    hAzzle.private(doc, fix, attaches);
-                }
-            }
-        };
-    });
-}
-
-
-hAzzle.each({
-    focus: 'focusin',
-    blur: 'focusout'
-}, function(delegateType, type) {
-    hAzzle.eventHooks.special[type] = {
-
-        delegateType: delegateType,
-
-        setup: function() {
-            // Claim the first click handler
-            return wrapNative(this, type, !hAzzle.features.focusinBubbles);
-        },
-
-        trigger: function() {
-            try {
-                // Force setup before trigger
-                if ((this === document.activeElement) === (type === 'blur') && this[type]) {
-                    wrapNative(this, type, !hAzzle.features.focusinBubbles, returnTrue);
-                }
-
-                // Support: IE9
-                // Iframes and document.activeElement don't mix well
-            } catch (err) {}
-        }
-    };
-});
