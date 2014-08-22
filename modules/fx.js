@@ -496,7 +496,7 @@ hAzzle.extend({
 
             var elem = this,
                 isElement = elem.nodeType === 1,
-
+                checkDisplay, style = elem.style,
                 hidden = isElement && isHidden(elem),
                 name, p, fx, relative, start, end, unit,
                 scale, target, maxIterations,
@@ -505,8 +505,6 @@ hAzzle.extend({
             /*********************************
                  Option: Display & Visibility
               *********************************/
-
-            var style = elem.style;
 
             if (elem.nodeType === 1 && ('height' in prop || 'width' in prop)) {
 
@@ -518,7 +516,7 @@ hAzzle.extend({
 
                 // Test default display if display is currently 'none'
 
-                var checkDisplay = display === 'none' ?
+                 checkDisplay = display === 'none' ?
                     hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName) : display;
 
                 if (checkDisplay === 'inline' && curCSS(elem, 'float') === 'none') {

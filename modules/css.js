@@ -234,7 +234,7 @@ hAzzle.extend({
             return;
         }
 
-        var ret, type, hooks, origName,
+        var ret, type, hooks, oldValue, origName,
             style, nType = elem.nodeType;
 
         // Don't set styles on text and comment nodes
@@ -292,8 +292,16 @@ hAzzle.extend({
             // If a hook was provided, use that value, otherwise just set the specified value
 
             if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
-
+                
+				oldValue = style[ name ];
                 style[name] = value;
+				
+				// Revert to the old value if the browser didn't accept the new rule to
+				// not break the cascade.
+
+  			   if ( value && !style[ name ] ) {
+					style[ name ] = oldValue;
+				}
             }
 
         } else {

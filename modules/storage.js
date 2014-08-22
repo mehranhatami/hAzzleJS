@@ -289,6 +289,11 @@ hAzzle.extend({
                 }
 
                 data = _userData.get(elem, camelKey);
+				
+				var data = _userData.get( elem, camelKey ),
+					hasDataAttrs = _privateData.get( this, "hasDataAttrs" ),
+					isHyphenated = key.indexOf("-") !== -1;
+				
 
                 if (data !== undefined) {
 
@@ -312,9 +317,13 @@ hAzzle.extend({
             this.each(function() {
                 var data = _userData.get(this, camelKey);
                 _userData.set(this, camelKey, value);
-                if (key.indexOf('-') !== -1 && data !== undefined) {
+				if ( isHyphenated && data !== undefined ) {
+					_userData.set( this, key, value );
+				}
+
+				if ( isHyphenated && hasDataAttrs === undefined ) {
                     _userData.set(this, key, value);
-                }
+               }
             });
         }, null, value, arguments.length > 1, null, true);
     },
