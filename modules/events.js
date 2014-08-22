@@ -37,8 +37,7 @@ var whiteRegex = (/\S+/g),
 
 // hAzzle event
 
-
-var _event = hAzzle.event = {
+hAzzle.event = {
 
     global: {},
 
@@ -87,8 +86,8 @@ var _event = hAzzle.event = {
         if (!(eventHandler = eventData.handle)) {
 
             eventHandler = eventData.handle = function(e) {
-                return typeof hAzzle !== 'undefined' && _event.triggered !== e.type ?
-                    _event.handle.apply(this, arguments) : undefined;
+                return typeof hAzzle !== 'undefined' && hAzzle.event.triggered !== e.type ?
+                    hAzzle.event.handle.apply(this, arguments) : undefined;
             };
         }
 
@@ -166,7 +165,7 @@ var _event = hAzzle.event = {
                 handlers.push(handleObj);
             }
 
-            _event.global[type] = true;
+            hAzzle.event.global[type] = true;
         }
     },
 
@@ -212,7 +211,7 @@ var _event = hAzzle.event = {
 
                 for (type in events) {
 
-                    _event.remove(elem, type + types[t], handler, selector, true);
+                    hAzzle.event.remove(elem, type + types[t], handler, selector, true);
                 }
 
                 continue;
@@ -276,7 +275,7 @@ var _event = hAzzle.event = {
 
         // Grab the event object
 
-        evt = hAzzle.event.fix( evt );
+        evt = hAzzle.event.fix(evt);
 
         var i, j, ret, matched, handleObj,
             queue = [],
@@ -294,7 +293,7 @@ var _event = hAzzle.event = {
 
         // Determine handlers
 
-        queue = _event.handlers.call(this, evt, handlers);
+        queue = hAzzle.event.handlers.call(this, evt, handlers);
 
         i = queue.length;
 
@@ -308,8 +307,8 @@ var _event = hAzzle.event = {
 
             while ((handleObj = matched.handlers[j++]) &&
                 !evt.isImmediatePropagationStopped()) {
-              if ( handleObj.namespace === "_" ||
-               !evt.rnamespace || evt.rnamespace.test( handleObj.namespace ) ) {
+                if (handleObj.namespace === "_" ||
+                    !evt.rnamespace || evt.rnamespace.test(handleObj.namespace)) {
                     evt.handleObj = handleObj;
                     evt.data = handleObj.data;
                     ret = ((eventHooks.special[handleObj.origType] || {}).handle ||
@@ -363,7 +362,7 @@ var _event = hAzzle.event = {
                         if (matches[sel] === undefined) {
 
                             matches[sel] = handleObj.needsContext ?
-                       hAzzle(sel, this).index(cur) >= 0 :
+                                hAzzle(sel, this).index(cur) >= 0 :
                                 hAzzle.matches(sel, [cur]).length;
                         }
 
@@ -410,6 +409,11 @@ hAzzle.Event = function(src, props) {
             returnTrue :
             returnFalse;
 
+        // Create target properties
+        this.target = src.target;
+        this.currentTarget = src.currentTarget;
+        this.relatedTarget = src.relatedTarget;
+
     } else {
         this.type = src;
     }
@@ -426,68 +430,69 @@ hAzzle.Event = function(src, props) {
     this[hAzzle.expando] = true;
 };
 
-hAzzle.Event.prototype.constructor = hAzzle.Event;
-hAzzle.Event.prototype.isDefaultPrevented = returnFalse;
-hAzzle.Event.prototype.isPropagationStopped = returnFalse;
-hAzzle.Event.prototype.isImmediatePropagationStopped = returnFalse;
+hAzzle.Event.prototype = {
 
-hAzzle.Event.prototype.preventDefault = function() {
+        constructor: hAzzle.Event,
+        isDefaultPrevented: returnFalse,
+        isPropagationStopped: returnFalse,
+        isImmediatePropagationStopped: returnFalse,
+        preventDefault: function() {
 
-    var e = this.originalEvent;
+            var e = this.originalEvent;
 
-    this.isDefaultPrevented = returnTrue;
+            this.isDefaultPrevented = returnTrue;
 
-    if (e && e.preventDefault) {
-        e.preventDefault();
+            if (e && e.preventDefault) {
+                e.preventDefault();
+            }
+        },
+
+        // Stop event propagation
+
+        stopPropagation: function() {
+
+            var e = this.originalEvent;
+
+            this.isPropagationStopped = returnTrue;
+
+            if (e && e.stopPropagation) {
+                e.stopPropagation();
+            }
+        },
+
+        stopImmediatePropagation: function() {
+            var e = this.originalEvent;
+
+            this.isImmediatePropagationStopped = returnTrue;
+
+            if (e && e.stopImmediatePropagation) {
+                e.stopImmediatePropagation();
+            }
+
+            this.stopPropagation();
+        },
+
+        // Block any further event processing
+
+        stop: function() {
+
+            this.stopped = true;
+            this.preventDefault();
+
+            if (this.stopPropagation) {
+
+                this.stopPropagation();
+
+            } else {
+
+                this.cancelBubble = true;
+            }
+        }
     }
-};
-
-// Stop event propagation
-
-hAzzle.Event.prototype.stopPropagation = function() {
-
-    var e = this.originalEvent;
-
-    this.isPropagationStopped = returnTrue;
-
-    if (e && e.stopPropagation) {
-        e.stopPropagation();
-    }
-};
-
-hAzzle.Event.prototype.stopImmediatePropagation = function() {
-    var e = this.originalEvent;
-
-    this.isImmediatePropagationStopped = returnTrue;
-
-    if (e && e.stopImmediatePropagation) {
-        e.stopImmediatePropagation();
-    }
-
-    this.stopPropagation();
-};
-
-// Block any further event processing
-
-hAzzle.Event.prototype.stop = function() {
-
-    this.stopped = true;
-    this.preventDefault();
-
-    if (this.stopPropagation) {
-
-        this.stopPropagation();
-
-    } else {
-
-        this.cancelBubble = true;
-    }
-};
-
-/* ============================ UTILITY METHODS =========================== */
+    /* ============================ UTILITY METHODS =========================== */
 
 function returnTrue() {
-   return true;
+    return true;
 }
 
 function returnFalse() {
