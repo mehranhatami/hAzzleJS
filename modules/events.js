@@ -276,7 +276,7 @@ var _event = hAzzle.event = {
 
         // Grab the event object
 
-        evt = hAzzle.props.propFix(evt);
+        evt = hAzzle.event.fix( evt );
 
         var i, j, ret, matched, handleObj,
             queue = [],
@@ -308,11 +308,10 @@ var _event = hAzzle.event = {
 
             while ((handleObj = matched.handlers[j++]) &&
                 !evt.isImmediatePropagationStopped()) {
-                if (!evt.rnamespace || evt.rnamespace.test(handleObj.namespace)) {
-
+              if ( handleObj.namespace === "_" ||
+               !evt.rnamespace || evt.rnamespace.test( handleObj.namespace ) ) {
                     evt.handleObj = handleObj;
                     evt.data = handleObj.data;
-
                     ret = ((eventHooks.special[handleObj.origType] || {}).handle ||
                         handleObj.handler).apply(matched.elem, args);
 
@@ -327,8 +326,8 @@ var _event = hAzzle.event = {
         }
 
         // Call the postPrep hook for the mapped type
-        if (special.postPrep) {
-            special.postPrep.call(this, evt);
+        if (special.postDispatch) {
+            special.postDispatch.call(this, evt);
         }
 
         return evt.result;

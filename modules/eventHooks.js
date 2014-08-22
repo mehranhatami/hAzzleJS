@@ -1,73 +1,38 @@
-/** hAzzle eventHooks
- *
- * Note! In an attempt to be compatible with the
- * jQuery API, our eventHooks are almost following
- * the same pattern.
- */
-
-var focusinBubbles = 'onfocusin' in window,
-    wheelEvent = 'onwheel' in document.createElement('div') || document.documentMode > 8 ?
-    'wheel' : 'mousewheel';
-
+// eventHooks.js
 hAzzle.extend({
-	
+
     'special': {
-
-        'wheel': {
-            'setup': function() {
-
-                this.addEventListener(wheelEvent, mouseWheelHandler, false);
-            },
-
-            'shutdown': function() {
-                this.removeEventListener(wheelEvent, mouseWheelHandler, false);
-            },
-        },
-
         'load': {
-            'noBubble': true
-        },
-        'focus': {
-            'trigger': function() {
-
-                if (this !== document.activeElement && this.focus) {
-                    this.focus();
-                    return false;
-                }
-            },
-            'delegateType': 'focusin'
-        },
-        'blur': {
-            'trigger': function() {
-                if (this === document.activeElement && this.blur) {
-                    this.blur();
-                    return false;
-                }
-            },
-            'delegateType': 'focusout'
-        },
-        'click': {
-
-            // For checkbox, fire native event so checked state will be right
-
-            'trigger': function() {
-                if (this.type === 'checkbox' && this.click && hAzzle.nodeName(this, 'input')) {
-                    this.click();
-                    return false;
-                }
-            },
-
-            // For cross-browser consistency, don't fire native .click() on links
-
-            '_default': function(evt) {
-                return hAzzle.nodeName(evt.target, 'a');
-            }
+            noBubble: true
         },
 
         'beforeunload': {
-            'postPrep': function(evt) {
-                if (evt.result !== undefined && evt.originalEvent) {
+            'postDispatch': function(evt) {
+                if (evt.result !== undefined) {
                     evt.originalEvent.returnValue = evt.result;
+                }
+            }
+        },
+
+        'click': {
+            '_default': function(evt) {
+                return hAzzle.nodeName(evt.target, 'a');
+            },
+
+            // Utilize native event to ensure correct checkbox state
+            'setup': function() {
+                // Claim the first click handler
+                if (hAzzle.nodeName(this, 'input') && this.type === 'checkbox' && this.click) {
+                    wrapNative(this, 'click');
+                }
+
+                // Nothing to see here, move along
+                return false;
+            },
+            'trigger': function() {
+                // Force setup before triggering a click
+                if (hAzzle.nodeName(this, 'input') && this.type === 'checkbox' && this.click) {
+                    wrapNative(this, 'click', false, returnTrue);
                 }
             }
         }
@@ -78,7 +43,7 @@ hAzzle.extend({
     'simulate': function(type, elem, evt, bubble) {
 
         var e = hAzzle.shallowCopy(
-            new hAzzle.Event(),
+            hAzzle.Event(),
             evt, {
                 type: type,
                 isSimulated: true,
@@ -132,33 +97,83 @@ hAzzle.forOwn({
 
 /* =========================== INTERNAL ========================== */
 
-if (!focusinBubbles) {
 
-    hAzzle.forOwn({
+function wrapNative(el, type, onlyHandlers, noopHandler) {
+    var buffer, active;
+
+    if (hAzzle.private(el, type)) {
+        return false;
+    }
+
+    // If triggering, force setup through hAzzle.event.add
+    if (noopHandler) {
+        return hAzzle.event.add(el, type, noopHandler);
+    }
+
+    // Register the reentrant controller for all namespaces
+    hAzzle.event.add(el, type + '._', function(evt) {
+        // If this is the outermost with-native-handlers event, fire a native one
+        if ((evt.isTrigger & 1) && !active) {
+            // Remember provided arguments
+            buffer = active = slice.call(arguments);
+
+            // Go native!
+            try {
+                this[type]();
+
+                // Support: IE<9
+                // Handle error on focus to hidden element (#1486, #12518)
+            } catch (e) {
+                return;
+            }
+
+            // Outermost synthetic does not pass Go
+            evt.stopImmediatePropagation();
+            evt.preventDefault();
+
+            return buffer;
+
+        } else if (!evt.isTrigger && active) {
+
+            buffer = hAzzle.event.trigger(hAzzle.shallowCopy(buffer.shift(), hAzzle.Event.prototype),
+                buffer, this, onlyHandlers);
+
+            active = false;
+
+            evt.stopImmediatePropagation();
+        }
+    });
+
+    // Note that the intercepting handler exists, but don't abort .add
+    return !hAzzle.private(el, type, true);
+}
+
+
+// Create 'bubbling' focus and blur events
+if (!hAzzle.features.focusinBubbles) {
+    hAzzle.each({
         focus: 'focusin',
         blur: 'focusout'
     }, function(fix, orig) {
 
+
+        // Attach a single capturing handler while someone wants focusin/focusout
         var handler = function(evt) {
-            hAzzle.eventHooks.simulate(fix, evt.target, hAzzle.props.propFix(evt), true);
+            hAzzle.eventHooks.simulate(fix, evt.target, hAzzle.event.fix(evt), true);
         };
 
         hAzzle.eventHooks.special[fix] = {
-
             setup: function() {
 
                 var doc = this.ownerDocument || this,
                     attaches = hAzzle.private(doc, fix);
 
                 if (!attaches) {
-
                     doc.addEventListener(orig, handler, true);
                 }
-
                 hAzzle.private(doc, fix, (attaches || 0) + 1);
             },
             shutdown: function() {
-
                 var doc = this.ownerDocument || this,
                     attaches = hAzzle.private(doc, fix) - 1;
 
@@ -176,23 +191,30 @@ if (!focusinBubbles) {
     });
 }
 
-function mouseWheelHandler(original) {
-    var args = slice.call(arguments, 0),
-        evt = hAzzle.props.propFix(original);
-    if (wheelEvent === 'wheel') {
-        evt.deltaMode = original.deltaMode;
-        evt.deltaX = original.deltaX;
-        evt.deltaY = original.deltaY;
-        evt.deltaZ = original.deltaZ;
-    } else {
-        evt.type = 'wheel';
-        evt.deltaMode = 0;
-        evt.deltaX = -1 * original.wheelDeltaX;
-        evt.deltaY = -1 * original.wheelDeltaY;
-        evt.deltaZ = 0; // not supported
-    }
 
-    args[0] = evt;
+hAzzle.each({
+    focus: 'focusin',
+    blur: 'focusout'
+}, function(delegateType, type) {
+    hAzzle.eventHooks.special[type] = {
 
-    return hAzzle.event.handle.apply(this, args);
-}
+        delegateType: delegateType,
+
+        setup: function() {
+            // Claim the first click handler
+            return wrapNative(this, type, !hAzzle.features.focusinBubbles);
+        },
+
+        trigger: function() {
+            try {
+                // Force setup before trigger
+                if ((this === document.activeElement) === (type === 'blur') && this[type]) {
+                    wrapNative(this, type, !hAzzle.features.focusinBubbles, returnTrue);
+                }
+
+                // Support: IE9
+                // Iframes and document.activeElement don't mix well
+            } catch (err) {}
+        }
+    };
+});
