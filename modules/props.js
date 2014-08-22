@@ -1,37 +1,53 @@
-var propKey = /^key/,
-    propMouse = /^(?:mouse|pointer|contextmenu)|click/;
-
-hAzzle.extend({
-
-    fixHooks: {},
+var i,
+    propKeyfixRegex = /^key/,
+    propMousefixRegex = /^(?:mouse|pointer|contextmenu)|click/,
 
     // Includes all common event props including KeyEvent and MouseEvent specific props
 
-    props: ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
+    commonProps = ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
         'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
-        ' button buttons clientX clientY offsetX offsetY pageX pageY ' +
+        'button buttons clientX clientY offsetX offsetY pageX pageY ' +
         'screenX screenY toElement dataTransfer fromElement data state ' +
         'srcElement target timeStamp type view which propertyName ' +
-        // Mousewheel
-        'wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ axis ' +
-        // Keys
-        'char charCode key keyCode keyIdentifier keyLocation location clipboardData ' +
-        // Touch / Pointer
-        'touches targetTouches changedTouches scale rotation').split(' '),
 
-    propHooks: {
+        // Mousewheel
+
+        'wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ axis ' +
+
+        // Keys
+
+        'char charCode key keyCode keyIdentifier keyLocation location clipboardData ' +
+
+        // Touch / Pointer
+
+        'touches targetTouches changedTouches scale rotation').split(' ');
+
+// Extend
+
+hAzzle.extend({
+
+    // The fixHooks API are different then jQuery, but works the same way.
+    // For example, to set a hook for the 'drop' event that copies the dataTransfer 
+    // property, assign an object to hAzzle.event.fixHooks.drop:
+    //
+    // hAzzle.event.fixHooks.drop = {
+    //    props: [ "dataTransfer" ]
+    // };
+
+    fixHooks: {
 
         which: function(evt) {
+
             var button = evt.button;
 
             // Add which for key events
-            if (evt.which == null && propKey.test(evt.type)) {
+            if (evt.which == null && propKeyfixRegex.test(evt.type)) {
                 return evt.charCode != null ? evt.charCode : evt.keyCode;
             }
 
             // Add which for click: 1 === left; 2 === middle; 3 === right
             // Note: button is not normalized, so don't use it
-            if (!evt.which && button !== undefined && propMouse.test(evt.type)) {
+            if (!evt.which && button !== undefined && propMousefixRegex.test(evt.type)) {
                 return (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
             }
 
@@ -59,6 +75,7 @@ hAzzle.extend({
             var eventDoc, doc, body;
 
             // Calculate pageY if missing and clientY available
+
             if (evt.pageY == null && evt.clientY != null) {
                 eventDoc = evt.target.ownerDocument || document;
                 doc = eventDoc.documentElement;
@@ -71,7 +88,7 @@ hAzzle.extend({
             return evt.pageY;
         },
         relatedTarget: function(evt) {
-            return this.relatedTarget = evt.fromElement === this.target ? evt.toElement : evt.fromElement;
+            return this.relatedTarget = (evt.fromElement === this.target ? evt.toElement : evt.fromElement);
         },
         metaKey: function(evt) {
             return evt.metaKey === undefined ?
@@ -90,9 +107,6 @@ hAzzle.extend({
         var originalEvent = evt,
             fixHook = this.fixHooks[evt.type];
 
-        if (this.props.length) {
-            hAzzle.each(this.props.splice(0), addEventProps);
-        }
         if (fixHook && fixHook.props && fixHook.props.length) {
             hAzzle.each(fixHook.props.splice(0), addEventProps);
         }
@@ -125,19 +139,14 @@ function addEventProps(name) {
         configurable: true,
 
         get: function() {
-
-
             var value, hooks;
             if (this.originalEvent) {
-                if (hooks = hAzzle.event.propHooks[name]) {
+                if ((hooks = hAzzle.event.fixHooks[name])) {
                     value = hooks(this.originalEvent);
                 } else {
                     value = this.originalEvent[name];
                 }
             }
-            OdP(this, name, {
-                value: value
-            });
             return this[name] = value;
         },
 
@@ -155,11 +164,15 @@ function addEventProps(name) {
 // Firefox
 
 if (hAzzle.isFirefox) {
-    hAzzle.event.props.concat('mozMovementY mozMovementX'.split(' '));
+    commonProps.concat('mozMovementY mozMovementX'.split(' '));
 }
 
 // WebKit 
 
 if (hAzzle.isChrome || hAzzle.isOpera) {
-    hAzzle.event.props.concat(('webkitMovementY webkitMovementX').split(' '));
+    commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
+}
+
+for (i in commonProps) {
+    addEventProps(commonProps[i]);
 }
