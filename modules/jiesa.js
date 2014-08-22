@@ -1,5 +1,6 @@
 // Jiesa - selector engine
 var join = Array.prototype.join,
+  push = Array.prototype.push,
   toString = Function.prototype.toString,
 
   // Holder for querySelector / query (DOM Level 4)
@@ -120,9 +121,18 @@ function markElements(elems, attr, attrValue, filterFn, args) {
 
   args = args || [];
 
-  while (i--) {
+  function filter(i) {
+    var params = [elems[i]],
+      info = {
+        elems: elems,
+        currentIndex: i
+      };
+    push.apply(params, args);
+    return filterFn.apply(info, params);
+  }
 
-    if (filterFn.apply(undefined, [elems[i]].concat(args).concat(i).concat(elems.length))) {
+  while (i--) {
+    if (filter(i)) {
       elems[i].setAttribute(attr, attrValue);
     }
   }
@@ -204,7 +214,6 @@ var
     },
 
     'HAS': function (el, args, p, arrfunc) {
-
       return quickQuery(tokenize(args, el, arrfunc), el.ownerDocument);
     },
 
@@ -215,24 +224,29 @@ var
       }
     },
 
-    'EVEN': function (el, args, p, arrfunc, index) {
-      return !(index % 2);
+    'EVEN': function () {
+      var info = this;
+      return !Boolean(info.currentIndex % 2);
     },
 
-    'ODD': function (el, args, p, arrfunc, index) {
-      return !!(index % 2);
+    'ODD': function () {
+      var info = this;
+      return Boolean(info.currentIndex % 2);
     },
 
-    'EQ': function (el, args, p, arrfunc, index) {
-      return (hAzzle.isNumeric(args) && parseInt(args, 10) === index);
+    'EQ': function (el, args) {
+      var info = this;
+      return (hAzzle.isNumeric(args) && parseInt(args, 10) === info.currentIndex);
     },
 
-    'FIRST': function (el, args, p, arrfunc, index) {
-      return (index === 0);
+    'FIRST': function () {
+      var info = this;
+      return (info.currentIndex === 0);
     },
 
-    'LAST': function (el, args, p, arrfunc, index, length) {
-      return (index === length - 1);
+    'LAST': function () {
+      var info = this;
+      return (info.currentIndex === info.elems.length - 1);
     }
   },
   transformers = {
@@ -512,7 +526,6 @@ var
     var cScope, group, str, n, j, k, found, args, pseudo, filterFn, ctx,
       wholeSelector = '',
       lastMatchCombinator = '*',
-      oldSelector = selector,
       cached,
       contextCached,
       baseSelector = selector + '';
