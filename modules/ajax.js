@@ -38,7 +38,7 @@ var win = window,
         json: "application/json;charset=utf-8, text/javascript"
     },
 
-    xhr = function (options) {
+    xhr = function(options) {
 
         if (options.crossOrigin === true) {
 
@@ -86,7 +86,7 @@ var win = window,
          * @return {hAzzle}
          */
 
-        xmlhttp: function (options, fn) {
+        xmlhttp: function(options, fn) {
 
             var self = this;
             self.options = options;
@@ -168,22 +168,22 @@ AjaxCore.xmlhttp.prototype = {
 
     // About requests
 
-    abort: function () {
+    abort: function() {
         this._aborted = true;
         this.request.abort();
-		
+
     },
 
     // Try again!
 
-    retry: function () {
+    retry: function() {
         ajaxInit.call(this, this.options, this.fn);
     },
     // Add handlers to be called when the request is resolved, rejected, or still in progress.
-    then: function (ajaxHandleResponses, fail) {
+    then: function(ajaxHandleResponses, fail) {
 
-        ajaxHandleResponses = ajaxHandleResponses || function () {};
-        fail = fail || function () {};
+        ajaxHandleResponses = ajaxHandleResponses || function() {};
+        fail = fail || function() {};
 
         if (this._done) {
 
@@ -203,7 +203,7 @@ AjaxCore.xmlhttp.prototype = {
 
     // Add handlers to be called when the request is either resolved or rejected. 
 
-    always: function (fn) {
+    always: function(fn) {
 
         if (this._done || this._erred) {
 
@@ -219,7 +219,7 @@ AjaxCore.xmlhttp.prototype = {
 
     // fail will execute when the request fails
 
-    fail: function (fn) {
+    fail: function(fn) {
 
         if (this._erred) {
 
@@ -233,7 +233,7 @@ AjaxCore.xmlhttp.prototype = {
         return this;
     },
 
-    catch: function (fn) {
+    catch: function(fn) {
         return this.fail(fn);
     }
 };
@@ -274,13 +274,13 @@ function jsonpReq(options, fn, err, url) {
     script.src = url;
     script.async = true;
 
-    if (typeof script.onreadystatechange !== 'undefined' && ! (hAzzle.ie === 10)) {
+    if (typeof script.onreadystatechange !== 'undefined' && !(hAzzle.ie === 10)) {
 
         script.event = 'onclick';
         script.htmlFor = script.id = '_xmlhttp_' + reqId;
     }
 
-    script.onload = script.onreadystatechange = function () {
+    script.onload = script.onreadystatechange = function() {
 
         if ((script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded') || loaded) {
             return false;
@@ -310,7 +310,7 @@ function jsonpReq(options, fn, err, url) {
     // Enable JSONP timeout
     return {
 
-        abort: function () {
+        abort: function() {
             script.onload = script.onreadystatechange = null;
             err({}, 'Request is aborted: timeout', {});
             lastValue = undefined;
@@ -327,6 +327,7 @@ function urlappend(url, s) {
 function gettRequest(fn, err) {
     var opt = this.options,
         method = (opt.type || 'GET').toUpperCase(),
+
         headers = opt.headers || {},
         url = hAzzle.isString(opt) ? opt : opt.url,
         isAFD,
@@ -375,7 +376,7 @@ function gettRequest(fn, err) {
 
     // Set headers
 
-    hAzzle.forOwn(headers, function (value, key) {
+    hAzzle.forOwn(headers, function(value, key) {
         // Make sure the value are 'defined' before
         // setting the headers
         if (hAzzle.isDefined(value)) {
@@ -395,7 +396,7 @@ function gettRequest(fn, err) {
 
         xhttp.onload = fn;
         xhttp.onerror = err;
-        xhttp.onprogress = function () {};
+        xhttp.onprogress = function() {};
         sendWait = true;
 
     } else {
@@ -407,7 +408,7 @@ function gettRequest(fn, err) {
 
         var self = this;
 
-        xhttp.onreadystatechange = function () {
+        xhttp.onreadystatechange = function() {
 
             if (self._aborted) {
 
@@ -443,7 +444,7 @@ function gettRequest(fn, err) {
 
     if (sendWait) {
 
-        setTimeout(function () {
+        setTimeout(function() {
 
             SendRequest(xhttp, data);
 
@@ -520,20 +521,20 @@ function ajaxInit(options, fn) {
     // set timeout
     // default: 1500
 
-    self.timeout = setTimeout(function () {
+    self.timeout = setTimeout(function() {
         self.abort();
     }, options.timeout);
 
     // set up the handlers
     // default: hAzzle.noop
 
-    this._successHandler = function () {
+    this._successHandler = function() {
         options.success.apply(options, arguments);
     };
-    this._errorHandlers.push(function () {
+    this._errorHandlers.push(function() {
         options.error.apply(options, arguments);
     });
-    this._completeHandlers.push(function () {
+    this._completeHandlers.push(function() {
         options.complete.apply(options, arguments);
     });
 
@@ -569,13 +570,14 @@ function ajaxInit(options, fn) {
 
     function ajaxHandleResponses(resp) {
 
-        var type = options.dataType || headerTypes[resp.getResponseHeader('Content-Type')],
-            status = resp.status,
+        var type = options.dataType ||
+            (resp && headerTypes(resp.getResponseHeader('Content-Type'))),
+            status = resp.status;
 
-            // XHR Level 2 spec - supported by IE10 - introduced the new response/responseType properties. This are
-            // - obviously - not working in IE9, so we do a litle 'magic'
+        // XHR Level 2 spec - supported by IE10 - introduced the new response/responseType properties. This are
+        // - obviously - not working in IE9, so we do a litle 'magic'
 
-            response = ('response' in resp) ? resp.response : resp.responseText;
+        response = ('response' in resp) ? resp.response : resp.responseText;
 
         // if no content
 
@@ -639,7 +641,7 @@ function serial(el, callback) {
         a = 0,
         len = el.length,
         // options callback
-        optCallback = function (options) {
+        optCallback = function(options) {
             if (options && !options.disabled) {
                 callback(n, normalize(options.attributes.value && options.attributes.value.specified ? options.value : options.text));
             }
@@ -695,7 +697,7 @@ function serial(el, callback) {
 
 function eachFormElement() {
     var cb = this,
-        e, i, serializeSubtags = function (e, tags) {
+        e, i, serializeSubtags = function(e, tags) {
 
             var i = 0,
                 j = 0,
@@ -736,7 +738,7 @@ function serializeQueryString() {
 
 function serializeHash() {
     var hash = {};
-    eachFormElement.apply(function (name, value) {
+    eachFormElement.apply(function(name, value) {
         if (name in hash) {
 
             if (hash[name] && !isArray(hash[name])) {
@@ -754,11 +756,11 @@ function serializeHash() {
 }
 
 
-AjaxCore.serializeArray = function () {
+AjaxCore.serializeArray = function() {
 
     var arr = [];
 
-    eachFormElement.apply(function (name, value) {
+    eachFormElement.apply(function(name, value) {
         arr.push({
             name: name,
             value: value
@@ -768,7 +770,7 @@ AjaxCore.serializeArray = function () {
     return arr;
 };
 
-AjaxCore.serialize = function () {
+AjaxCore.serialize = function() {
 
     if (arguments.length === 0) {
 
@@ -814,12 +816,12 @@ AjaxCore.serialize = function () {
  * @return {String}
  */
 
-hAzzle.objectToQuery = AjaxCore.toQueryString = function (o, trad) {
+hAzzle.objectToQuery = AjaxCore.toQueryString = function(o, trad) {
     var prefix, i = 0,
         l, traditional = trad || false,
         s = [],
         enc = encodeURIComponent,
-        add = function (key, value) {
+        add = function(key, value) {
             // If value is a function, invoke it and return its value
             value = hAzzle.isFunction(value) ? value() : (value === null ? '' : value);
             s[s.length] = enc(key) + '=' + enc(value);
@@ -875,13 +877,25 @@ function buildParams(prefix, obj, traditional, add) {
     }
 }
 
-AjaxCore.getexpando = function () {
+AjaxCore.getexpando = function() {
     return expando;
 };
 
 
-// Extend to the global hAzzle Object
+hAzzle.extend({
 
-hAzzle.ajax = function (options, fn) {
-    return new AjaxCore.xmlhttp(options, fn);
-};
+    ajax: function(options, fn) {
+        return new AjaxCore.xmlhttp(options, fn);
+    },
+    evalUrl: function(url) {
+        return hAzzle.ajax({
+            url: url,
+            type: 'GET',
+            dataType: 'script',
+            async: false,
+            global: false,
+            'throws': true
+        })
+    }
+
+}, hAzzle);
