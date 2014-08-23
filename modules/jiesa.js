@@ -1,9 +1,7 @@
-(function () {
-  
 // Jiesa - selector engine
 var join = Array.prototype.join,
   push = Array.prototype.push,
-  toString = Function.prototype.toString,
+  funcToString = Function.prototype.toString,
 
   // Holder for querySelector / query (DOM Level 4)
   // Default: querySelector
@@ -93,8 +91,8 @@ var join = Array.prototype.join,
       return false;
     }
     return (
-      toString.call(context[name]) ===
-      toString.call(document.querySelector).replace(/\bquerySelector\b/g, name)
+      funcToString.call(context[name]) ===
+      funcToString.call(document.querySelector).replace(/\bquerySelector\b/g, name)
     );
   };
 
@@ -971,5 +969,3 @@ hAzzle.grab = grab;
 hAzzle.anb = anb;
 hAzzle.tokenize = tokenize;
 hAzzle.getSelector = getSelector;
-
-}());
