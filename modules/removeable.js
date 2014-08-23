@@ -23,7 +23,7 @@ hAzzle.extend({
 
     clearData: function(elems) {
         var data, elem, type, i = 0,
-            special = hAzzle.eventHooks.special;
+            special = hAzzle.event.special;
 
         for (;
             (elem = elems[i]) !== undefined; i++) {
