@@ -180,6 +180,12 @@ hAzzle.clone = function(elem, shallow, deep) {
             cloneCopyEvent(elem, clone);
         }
     }
+	
+	// Preserve script evaluation history
+		destElements = hAzzle.grab( clone, 'script' );
+		if ( destElements.length > 0 ) {
+			setGlobalEval( destElements, !inPage && hAzzle.grab( elem, 'script' ) );
+		}
 
     // Return the cloned set
     return clone;
@@ -273,3 +279,4 @@ function fixInput(src, dest) {
         dest.defaultValue = src.defaultValue;
     }
 }
+

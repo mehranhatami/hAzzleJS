@@ -216,6 +216,13 @@ var ret = results || [];
         }
 
         return undefined;
-    })()
+    })(),
+	
+	// Evaluates a script in a global context
+	globalEval: function( code ) {
+		var script = document.createElement( 'script' );
+		script.text = code;
+		document.head.appendChild( script ).parentNode.removeChild( script );
+	}
 
 }, hAzzle);
