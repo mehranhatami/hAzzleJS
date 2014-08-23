@@ -143,8 +143,8 @@ hAzzle.clone = function(elem, shallow, deep) {
     if (!hAzzle.features['feature-cloneCheck'] && (nType === 1 || nType === 11) &&
         !hAzzle.isXML(elem)) {
 
-        destElements = grab(clone);
-        srcElements = grab(elem);
+        destElements = getAll(clone);
+        srcElements = getAll(elem);
 
         for (i = 0, l = srcElements.length; i < l; i++) {
 
@@ -156,8 +156,8 @@ hAzzle.clone = function(elem, shallow, deep) {
 
         if (deep) {
 
-            srcElements = srcElements || grab(elem);
-            destElements = destElements || grab(clone);
+            srcElements = srcElements || hAzzle.grab(elem);
+            destElements = destElements || hAzzle.grab(clone);
 
             for (i = 0, l = srcElements.length; i < l; i++) {
 
@@ -260,11 +260,6 @@ function cloneCopyEvent(src, dest) {
     }
 }
 
-// Grab childnodes
-
-function grab(context) {
-    return hAzzle.merge([context], hAzzle.find('*', context));
-}
 
 // Fix the input
 

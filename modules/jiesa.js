@@ -727,6 +727,17 @@ var
 
 /* ============================ UTILITY METHODS =========================== */
 
+// Grab childnodes
+
+function grab(context, tag) {
+   var ret = context.getElementsByTagName ? context.getElementsByTagName( tag || "*" ) :
+			context[_queryAll] ? context[_queryAll]( tag || "*" ) : [];
+
+	return tag === undefined || tag && hAzzle.nodeName( context, tag ) ?
+		hAzzle.merge( [ context ], ret ) :
+		ret;
+}
+
 function quickQueryAll(selector, context) {
 
   if (!selector || !context) {
@@ -956,6 +967,7 @@ hAzzle.addTransformer = function (pseudo, fn) {
 
 hAzzle.Expr = Expr;
 hAzzle.find = KenRa;
+hAzzle.grab = grab;
 hAzzle.anb = anb;
 hAzzle.tokenize = tokenize;
 hAzzle.getSelector = getSelector;
