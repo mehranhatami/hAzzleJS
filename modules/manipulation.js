@@ -1,5 +1,4 @@
 // manipulation.js
-
 var rnoInnerhtml = /<(?:script|style|link)/i,
     rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     rtagName = /<([\w:]+)/,
@@ -18,7 +17,7 @@ var rnoInnerhtml = /<(?:script|style|link)/i,
         thead: [1, "<table>", "</table>"],
         col: [2, "<table><colgroup>", "</colgroup></table>"],
         fieldset: [1, '<form>', '</form>', 1],
-        legend: [2, '<form><fieldset>', '</fieldset></form>', 2],
+        legend: [2, '<form><fieldset>', '</fieldset></form>'],
         tr: [2, "<table><tbody>", "</tbody></table>"],
         td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
         base: [0, "", ""]
@@ -44,12 +43,11 @@ hAzzle.extend({
 
         var elem = this[0] || {};
 
-        if (value === undefined && elem.nodeType === 1) {
+        if (value === undefined &&
+            elem.nodeType === 1) {
 
             return elem.innerHTML;
         }
-
-        // If 'function'
 
         if (typeof value === 'function') {
 
@@ -90,8 +88,8 @@ hAzzle.extend({
 
         if (elem) {
 
-           this.empty().append(value);
-       }
+            this.empty().append(value);
+        }
     },
 
     /**
@@ -104,7 +102,7 @@ hAzzle.extend({
      * @return {hAzzle|String}
      */
 
-      text: function(value) {
+    text: function(value) {
 
         return hAzzle.setter(this, function(value) {
             return value === undefined ?
@@ -122,7 +120,7 @@ hAzzle.extend({
     append: function() {
         return this.Manipulation(arguments, function(elem) {
             if (this.nodeType === 1 || this.nodeType === 11 || this.nodeType === 9) {
-               var target = manipulationTarget(this, elem);
+                var target = manipulationTarget(this, elem);
                 target.appendChild(elem);
             }
         }, 'beforeend');
@@ -154,13 +152,15 @@ hAzzle.extend({
         args = concat.apply([], args);
 
         var fragment, first, scripts, hasScripts, node, doc, iAH, tag,
-            i = 0,  set = this,
+            i = 0,
+            set = this,
             l = set.length,
             noClone = l - 1,
             value = args[0],
             isFunction = hAzzle.isFunction(value);
 
         // We can't cloneNode fragments that contain checked, in WebKit
+
         if (isFunction ||
             (l > 1 && typeof value === 'string' &&
                 !hAzzle.features['feature-cloneCheck'] && rchecked.test(value))) {
@@ -174,7 +174,7 @@ hAzzle.extend({
         }
 
         if (l) {
-            fragment = hAzzle.buildFragment(args, this[0].ownerDocument, false, this);
+            fragment = createDocFragment(args, this[0].ownerDocument, this);
             first = fragment.firstChild;
 
             if (fragment.childNodes.length === 1) {
@@ -183,18 +183,14 @@ hAzzle.extend({
 
             if (first) {
 
-                // Use a quick insert method if possible
+                // Use insertAdjacentHTML if possible
+
                 if (place) {
                     iAH = args.join('');
                     tag = (rtagName.exec(iAH) || ['', ''])[1].toLowerCase();
 
-                    // Object or HTML-string with declaration of a script element must not be passed to iAH,
-                    // also, we do not wrap HTML-string if needed - it's jQuery.buildFragment job
                     if (!riAH.test(iAH) && !htmlMap[tag]) {
                         return this.each(function(index) {
-
-                            // Check for presence of insertAdjacentHTML method is needed in case of non-elements ending up in jQuery set
-                            // Check for parent element is needed in case of 'beforebegin' or 'afterend' is passed as first argument to iAH otherwise it will throw an error
                             if (this.insertAdjacentHTML && this.parentNode && this.parentNode.nodeType === 1) {
                                 this.insertAdjacentHTML(place, iAH.replace(rxhtmlTag, '<$1></$2>'));
 
@@ -207,9 +203,6 @@ hAzzle.extend({
                 scripts = hAzzle.map(hAzzle.grab(fragment, 'script'), disableScript);
                 hasScripts = scripts.length;
 
-                // Use the original fragment for the last item
-                // instead of the first because it can end up
-                // being emptied incorrectly in certain situations (#8070).
                 for (; i < l; i++) {
                     node = fragment;
 
@@ -262,22 +255,18 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-replaceWith: function() {
-		var arg = arguments[ 0 ];
-		this.Manipulation( arguments, function( elem ) {
-			arg = this.parentElement;
-			hAzzle.clearData( hAzzle.grab( this ) );
-			if ( arg ) {
-				arg.replaceChild( elem, this );
-			}
-		});
-		return arg && (arg.length || arg.nodeType) ? this : this.remove();
-	},
+    replaceWith: function() {
+        var arg = arguments[0];
+        this.Manipulation(arguments, function(elem) {
+            arg = this.parentElement;
+            hAzzle.clearData(hAzzle.grab(this));
+            if (arg) {
+                arg.replaceChild(elem, this);
+            }
+        });
+        return arg && (arg.length || arg.nodeType) ? this : this.remove();
+    }
 });
-
-
-
-
 
 
 hAzzle.each({
@@ -305,13 +294,11 @@ hAzzle.each({
     };
 });
 
-
-
+/* ============================ UTILITY METHODS =========================== */
 
 function manipulationTarget(elem, content) {
     return hAzzle.nodeName(elem, 'table') &&
         hAzzle.nodeName(content.nodeType !== 11 ? content : content.firstChild, 'tr') ?
-
         elem.getElementsByTagName('tbody')[0] ||
         elem.appendChild(elem.ownerDocument.createElement('tbody')) :
         elem;
@@ -335,10 +322,7 @@ function restoreScript(elem) {
     return elem;
 }
 
-
-
-
-hAzzle.buildFragment = function(elems, context, scripts, selection) {
+function createDocFragment(elems, context, selection) {
     var elem, tmp, tag, wrap, contains, j,
         fragment = context.createDocumentFragment(),
         nodes = [],
@@ -391,8 +375,6 @@ hAzzle.buildFragment = function(elems, context, scripts, selection) {
     i = 0;
     while ((elem = nodes[i++])) {
 
-        // #4087 - If origin and destination elements are the same, and this is
-        // that element, do not do anything
         if (selection && hAzzle.inArray(elem, selection) !== -1) {
             continue;
         }
@@ -406,29 +388,19 @@ hAzzle.buildFragment = function(elems, context, scripts, selection) {
         if (contains) {
             setGlobalEval(tmp);
         }
-
-        // Capture executables
-        if (scripts) {
-            j = 0;
-            while ((elem = tmp[j++])) {
-                if (rscriptType.test(elem.type || '')) {
-                    scripts.push(elem);
-                }
-            }
-        }
     }
 
     return fragment;
-};
+}
 
 // Mark scripts as having already been evaluated
-function setGlobalEval( elems, refElements ) {
-	var i = 0,
-		l = elems.length;
+function setGlobalEval(elems, refElements) {
+    var i = elems.length;
 
-	for ( ; i < l; i++ ) {
-		hAzzle.setPrivate(
-			elems[ i ], 'hAzzleGlobal', !refElements || hAzzle.getPrivate( refElements[ i ], 'hAzzleGlobal' )
-		);
-	}
+    while (i--) {
+        hAzzle.setPrivate(
+            elems[i], 'hAzzleGlobal', !refElements ||
+            hAzzle.getPrivate(refElements[i], 'hAzzleGlobal')
+        );
+    }
 }
