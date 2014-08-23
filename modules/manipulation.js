@@ -116,38 +116,38 @@ hAzzle.extend({
                 });
         }, null, value, arguments.length);
     },
-
-    append: function() {
-        return this.Manipulation(arguments, function(elem) {
-            if (this.nodeType === 1 || this.nodeType === 11 || this.nodeType === 9) {
-                var target = manipulationTarget(this, elem);
-                target.appendChild(elem);
-            }
-        }, 'beforeend');
-    },
-
-    prepend: function() {
-        return this.Manipulation(arguments, function(elem) {
-            if (this.nodeType === 1 || this.nodeType === 11 || this.nodeType === 9) {
-                var target = manipulationTarget(this, elem);
-                target.insertBefore(elem, target.firstChild);
-            }
-        }, 'afterbegin');
-    },
-
+   
+   /**
+     * Insert content after each element in the set of matched elements.
+     *
+     * @return {hAzzle}
+     *
+     */
+   
     before: function() {
         return this.Manipulation(arguments, function(elem) {
-            this.parentNode && this.parentNode.insertBefore(elem, this);
+		if(this.parentNode) {
+           this.parentNode.insertBefore(elem, this);
+         } 
         }, 'beforebegin');
     },
 
+ /**
+     * Insert content after each element in the set of matched elements.
+     *
+     * @return {hAzzle}
+     *
+     */
+	 
     after: function() {
         return this.Manipulation(arguments, function(elem) {
-            this.parentNode && this.parentNode.insertBefore(elem, this.nextSibling);
+			if(this.parentNode) {
+			this.parentNode.insertBefore(elem, this.nextSibling);
+           } 
         }, 'afterend');
     },
 
-    Manipulation: function(args, callback, place) {
+    Manipulation: function(args, filterFn, place) {
 
         args = concat.apply([], args);
 
@@ -169,11 +169,12 @@ hAzzle.extend({
                 if (isFunction) {
                     args[0] = value.call(this, index, self.html());
                 }
-                self.Manipulation(args, callback, place);
+                self.Manipulation(args, filterFn, place);
             });
         }
 
         if (l) {
+			// set
             fragment = createDocFragment(args, this[0].ownerDocument, this);
             first = fragment.firstChild;
 
@@ -191,11 +192,13 @@ hAzzle.extend({
 
                     if (!riAH.test(iAH) && !htmlMap[tag]) {
                         return this.each(function(index) {
-                            if (this.insertAdjacentHTML && this.parentNode && this.parentNode.nodeType === 1) {
+                            if (this.insertAdjacentHTML && 
+							    this.parentNode && 
+								this.parentNode.nodeType === 1) {
                                 this.insertAdjacentHTML(place, iAH.replace(rxhtmlTag, '<$1></$2>'));
 
                             } else {
-                                set.eq(index).Manipulation(args, callback);
+                                set.eq(index).Manipulation(args, filterFn);
                             }
                         });
                     }
@@ -217,7 +220,7 @@ hAzzle.extend({
                         }
                     }
 
-                    callback.call(this[i], node, i);
+                    filterFn.call(this[i], node, i);
                 }
 
                 if (hasScripts) {
@@ -404,3 +407,23 @@ function setGlobalEval(elems, refElements) {
         );
     }
 }
+
+// Append / Prepend
+
+hAzzle.each({
+    'append': 'beforeend',
+    'prepend': 'afterbegin'
+}, function(iah, name) {
+    hAzzle.Core[name] = function() {
+        return this.Manipulation(arguments, function(elem) {
+            if (this.nodeType === 1 || this.nodeType === 11 || this.nodeType === 9) {
+                var target = manipulationTarget(this, elem);
+                if (name === 'append') {
+                    target.appendChild(elem);
+                } else {
+                    target.insertBefore(elem, target.firstChild);
+                }
+            }
+        }, iah);
+    };
+});
