@@ -1,3 +1,5 @@
+(function () {
+  
 // Jiesa - selector engine
 var join = Array.prototype.join,
   push = Array.prototype.push,
@@ -957,3 +959,5 @@ hAzzle.find = KenRa;
 hAzzle.anb = anb;
 hAzzle.tokenize = tokenize;
 hAzzle.getSelector = getSelector;
+
+}());
