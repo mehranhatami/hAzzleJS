@@ -16,14 +16,14 @@ var
 
     htmlMap = {
         // Support: IE9
-        option: [1, "<select multiple='multiple'>", "</select>"],
-        thead: [1, "<table>", "</table>"],
-        col: [2, "<table><colgroup>", "</colgroup></table>"],
-        fieldset: [1, '<form>', '</form>', 1],
+        option: [1, "<select multiple='multiple'>", '</select>'],
+        thead: [1, '<table>', '</table>'],
+        col: [2, '<table><colgroup>', '</colgroup></table>'],
+        fieldset: [1, '<form>', '</form>'],
         legend: [2, '<form><fieldset>', '</fieldset></form>'],
-        tr: [2, "<table><tbody>", "</tbody></table>"],
-        td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
-        base: [0, "", ""]
+        tr: [2, '<table><tbody>', '</tbody></table>'],
+        td: [3, '<table><tbody><tr>', '</tr></tbody></table>'],
+        base: [0, '', '']
     };
 
 // Support: IE9
@@ -196,8 +196,8 @@ hAzzle.extend({
                     if (!manipRegex.iAHRegexp.test(iAH) && !htmlMap[tag]) {
                         return this.each(function(index) {
                             if (this.insertAdjacentHTML && 
-							    this.parentNode && 
-								this.parentNode.nodeType === 1) {
+                                this.parentNode && 
+                                this.parentNode.nodeType === 1) {
                                 this.insertAdjacentHTML(place, iAH.replace(manipRegex.xhtmlRegexp, '<$1></$2>'));
 
                             } else {
@@ -217,8 +217,6 @@ hAzzle.extend({
 
                         // Keep references to cloned scripts for later restoration
                         if (hasScripts) {
-                            // Support: QtWebKit
-                            // hAzzle.merge because push.apply(_, arraylike) throws
                             hAzzle.merge(scripts, hAzzle.grab(node, 'script'));
                         }
                     }
@@ -250,7 +248,6 @@ hAzzle.extend({
                 }
             }
         }
-
         return this;
     },
 
@@ -317,9 +314,9 @@ function disableScript(elem) {
 }
 
 function restoreScript(elem) {
-    var match = manipRegex.maskedRegexp.exec(elem.type);
+    var match;
 
-    if (match) {
+    if ((match = manipRegex.maskedRegexp.exec(elem.type))) {
         elem.type = match[1];
     } else {
         elem.removeAttribute('type');
@@ -359,16 +356,17 @@ function createDocFragment(elems, context, selection) {
 
                 // Descend through wrappers to the right content
                 j = wrap[0];
-                while (j--) {
+                
+				while (j--) {
                     tmp = tmp.lastChild;
                 }
 
                 hAzzle.merge(nodes, tmp.childNodes);
 
                 // Remember the top-level container
+				
                 tmp = fragment.firstChild;
 
-                // Ensure the created nodes are orphaned (#12392)
                 tmp.textContent = '';
             }
         }
