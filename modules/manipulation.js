@@ -1,13 +1,16 @@
 // manipulation.js
-var rnoInnerhtml = /<(?:script|style|link)/i,
-    rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-    rtagName = /<([\w:]+)/,
-    rhtml = /<|&#?\w+;/,
-    rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
-    rscriptType = /^$|\/(?:java|ecma)script/i,
-    rscriptTypeMasked = /^true\/(.*)/,
-    riAH = /<script|\[object/i,
-    rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+var
+    manipRegex = {
+        innerHTMLRegexp: /<(?:script|style|link)/i,
+        xhtmlRegexp: /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        tagNameRegexp: /<([\w:]+)/,
+        htmlRegexp: /<|&#?\w+;/,
+        checkedRegexp: /checked\s*(?:[^=]|=\s*.checked.)/i,
+        scriptRegexp: /^$|\/(?:java|ecma)script/i,
+        maskedRegexp: /^true\/(.*)/,
+        iAHRegexp: /<script|\[object/i,
+        cleanScriptRegexp: /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g
+    },
 
     // We have to close these tags to support XHTML
 
@@ -64,12 +67,12 @@ hAzzle.extend({
         // Remove all data and avoid memory leaks before
         // appending HTML
 
-        if (typeof value === 'string' && !rnoInnerhtml.test(value) &&
-            !htmlMap[(rtagName.exec(value) || ['', ''])[1].toLowerCase()]) {
+        if (typeof value === 'string' && !manipRegex.innerHTMLRegexp.test(value) &&
+            !htmlMap[(manipRegex.tagNameRegexp.exec(value) || ['', ''])[1].toLowerCase()]) {
 
             return this.empty().each(function(elem) {
 
-                value = value.replace(rxhtmlTag, '<$1></$2>');
+                value = value.replace(manipRegex.xhtmlRegexp, '<$1></$2>');
 
                 try {
 
@@ -116,34 +119,34 @@ hAzzle.extend({
                 });
         }, null, value, arguments.length);
     },
-   
-   /**
+
+    /**
      * Insert content after each element in the set of matched elements.
      *
      * @return {hAzzle}
      *
      */
-   
+
     before: function() {
         return this.Manipulation(arguments, function(elem) {
-		if(this.parentNode) {
-           this.parentNode.insertBefore(elem, this);
-         } 
+            if (this.parentNode) {
+                this.parentNode.insertBefore(elem, this);
+            }
         }, 'beforebegin');
     },
 
- /**
+    /**
      * Insert content after each element in the set of matched elements.
      *
      * @return {hAzzle}
      *
      */
-	 
+
     after: function() {
         return this.Manipulation(arguments, function(elem) {
-			if(this.parentNode) {
-			this.parentNode.insertBefore(elem, this.nextSibling);
-           } 
+            if (this.parentNode) {
+                this.parentNode.insertBefore(elem, this.nextSibling);
+            }
         }, 'afterend');
     },
 
@@ -163,7 +166,7 @@ hAzzle.extend({
 
         if (isFunction ||
             (l > 1 && typeof value === 'string' &&
-                !hAzzle.features['feature-cloneCheck'] && rchecked.test(value))) {
+                !hAzzle.features['feature-cloneCheck'] && manipRegex.checkedRegexp.test(value))) {
             return this.each(function(index) {
                 var self = set.eq(index);
                 if (isFunction) {
@@ -174,7 +177,7 @@ hAzzle.extend({
         }
 
         if (l) {
-			// set
+            // set
             fragment = createDocFragment(args, this[0].ownerDocument, this);
             first = fragment.firstChild;
 
@@ -188,14 +191,14 @@ hAzzle.extend({
 
                 if (place) {
                     iAH = args.join('');
-                    tag = (rtagName.exec(iAH) || ['', ''])[1].toLowerCase();
+                    tag = (manipRegex.tagNameRegexp.exec(iAH) || ['', ''])[1].toLowerCase();
 
-                    if (!riAH.test(iAH) && !htmlMap[tag]) {
+                    if (!manipRegex.iAHRegexp.test(iAH) && !htmlMap[tag]) {
                         return this.each(function(index) {
                             if (this.insertAdjacentHTML && 
 							    this.parentNode && 
 								this.parentNode.nodeType === 1) {
-                                this.insertAdjacentHTML(place, iAH.replace(rxhtmlTag, '<$1></$2>'));
+                                this.insertAdjacentHTML(place, iAH.replace(manipRegex.xhtmlRegexp, '<$1></$2>'));
 
                             } else {
                                 set.eq(index).Manipulation(args, filterFn);
@@ -232,7 +235,7 @@ hAzzle.extend({
                     // Evaluate executable scripts on first document insertion
                     for (i = 0; i < hasScripts; i++) {
                         node = scripts[i];
-                        if (rscriptType.test(node.type || '') &&
+                        if (manipRegex.scriptRegexp.test(node.type || '') &&
                             !hAzzle.private(node, 'hAzzleGlobal') &&
                             hAzzle.contains(doc, node)) {
                             if (node.src) {
@@ -240,7 +243,7 @@ hAzzle.extend({
                                     hAzzle.evalUrl(node.src);
                                 }
                             } else {
-                                hAzzle.globalEval(node.textContent.replace(rcleanScript, ''));
+                                hAzzle.globalEval(node.textContent.replace(manipRegex.cleanScriptRegexp, ''));
                             }
                         }
                     }
@@ -314,7 +317,7 @@ function disableScript(elem) {
 }
 
 function restoreScript(elem) {
-    var match = rscriptTypeMasked.exec(elem.type);
+    var match = manipRegex.maskedRegexp.exec(elem.type);
 
     if (match) {
         elem.type = match[1];
@@ -333,27 +336,26 @@ function createDocFragment(elems, context, selection) {
         l = elems.length;
 
     for (; i < l; i++) {
+
         elem = elems[i];
 
         if (elem || elem === 0) {
 
             // Add nodes directly
+
             if (hAzzle.type(elem) === 'object') {
 
                 hAzzle.merge(nodes, elem.nodeType ? [elem] : elem);
 
-                // Convert non-html into a text node
-            } else if (!rhtml.test(elem)) {
-                nodes.push(context.createTextNode(elem));
-
                 // Convert html into DOM nodes
+
             } else {
                 tmp = tmp || fragment.appendChild(context.createElement('div'));
 
                 // Deserialize a standard representation
-                tag = (rtagName.exec(elem) || ['', ''])[1].toLowerCase();
+                tag = (manipRegex.tagNameRegexp.exec(elem) || ['', ''])[1].toLowerCase();
                 wrap = htmlMap[tag] || htmlMap.base;
-                tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, '<$1></$2>') + wrap[2];
+                tmp.innerHTML = wrap[1] + elem.replace(manipRegex.xhtmlRegexp, '<$1></$2>') + wrap[2];
 
                 // Descend through wrappers to the right content
                 j = wrap[0];
@@ -374,6 +376,7 @@ function createDocFragment(elems, context, selection) {
 
     // Remove wrapper from fragment
     fragment.textContent = '';
+    fragment.innerHTML = ''; // Clear innerHTML
 
     i = 0;
     while ((elem = nodes[i++])) {
