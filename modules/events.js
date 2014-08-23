@@ -5,14 +5,14 @@
  *
  *    Chrome 9+
  *    Safari 5.0+
- *    Firefox 16+
- *    Opera 15.0+
+ *    Firefox 18+
+ *    Opera 15.1+
  *    Internet Explorer 9+
  *
  * Mobile browsers support:
  *
- *    Google Android 4.1+
- *    Apple iOS 6+
+ *    Google Android 4.0+
+ *    Apple iOS 5+
  *    ChromiumOS
  *    FirefoxOS
  *
@@ -25,8 +25,8 @@
  * - jQuery
  */
 var
-   // Wrap it inside a object to avoid variable conflicts
-   
+// Wrap it inside a object to avoid variable conflicts
+
     eventRegex = {
         nameL: '(^|\\.)',
         nameR: '\\.(?:.*\\.|)',
@@ -36,12 +36,7 @@ var
         gtr: /\.+$/,
         namespaceRegex: /^([^.]*)(?:\.(.+)|)$/,
         speci: /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
-    },
-    slice = Array.prototype.slice,
-
-    // Public object for eventHooks
-
-    eventHooks = hAzzle.eventHooks = {};
+    };
 
 // hAzzle event
 
@@ -120,11 +115,11 @@ hAzzle.event = {
                 continue;
             }
 
-            special = eventHooks.special[type] || {};
+            special = hAzzle.event.special[type] || {};
 
             type = (selector ? special.delegateType : special.bindType) || type;
 
-            special = eventHooks.special[type] || {};
+            special = hAzzle.event.special[type] || {};
 
             // Take a shallowCopy of the object
 
@@ -227,7 +222,7 @@ hAzzle.event = {
                 continue;
             }
 
-            special = eventHooks.special[type] || {};
+            special = hAzzle.event.special[type] || {};
             type = (selector ? special.delegateType : special.bindType) || type;
             handlers = events[type] || [];
             tmp = tmp[2] && new RegExp(eventRegex.nameL + namespaces.join(eventRegex.nameR) + eventRegex.nameFR);
@@ -286,7 +281,7 @@ hAzzle.event = {
             queue = [],
             args = slice.call(arguments),
             handlers = (hAzzle.getPrivate(this, 'events') || {})[evt.type] || [],
-            special = eventHooks.special[evt.type] || {};
+            special = hAzzle.event.special[evt.type] || {};
 
         args[0] = evt;
         evt.delegateTarget = this;
@@ -316,7 +311,7 @@ hAzzle.event = {
                     !evt.rnamespace || evt.rnamespace.test(handleObj.namespace)) {
                     evt.handleObj = handleObj;
                     evt.data = handleObj.data;
-                    ret = ((eventHooks.special[handleObj.origType] || {}).handle ||
+                    ret = ((hAzzle.event.special[handleObj.origType] || {}).handle ||
                         handleObj.handler).apply(matched.elem, args);
 
                     if (ret !== undefined) {
@@ -329,7 +324,7 @@ hAzzle.event = {
             }
         }
 
-        // Call the postPrep hook for the mapped type
+        // Call the postDispatch hook for the mapped type
         if (special.postDispatch) {
             special.postDispatch.call(this, evt);
         }
@@ -401,18 +396,13 @@ hAzzle.event = {
 };
 
 hAzzle.Event = function(src, props) {
-    // Allow instantiation without the 'new' keyword
-    if (!(this instanceof hAzzle.Event)) {
-        return new hAzzle.Event(src, props);
-    }
 
     if (src && src.type) {
+
         this.originalEvent = src;
         this.type = src.type;
-        this.isDefaultPrevented = src.defaultPrevented ||
-            src.defaultPrevented === undefined ?
-            returnTrue :
-            returnFalse;
+
+        this.isDefaultPrevented = src.defaultPrevented ? returnTrue : returnFalse;
 
         // Create target properties
         this.target = src.target;
@@ -424,7 +414,6 @@ hAzzle.Event = function(src, props) {
     }
 
     if (props) {
-
         hAzzle.shallowCopy(this, props);
     }
 
@@ -432,69 +421,67 @@ hAzzle.Event = function(src, props) {
     this.timeStamp = src && src.timeStamp || hAzzle.now();
 
     // Mark it as fixed
-    this[hAzzle.expando] = true;
+    this[hAzzle.expando + 'kf'] = true;
 };
 
 hAzzle.Event.prototype = {
 
-        constructor: hAzzle.Event,
-        isDefaultPrevented: returnFalse,
-        isPropagationStopped: returnFalse,
-        isImmediatePropagationStopped: returnFalse,
-        preventDefault: function() {
+    // Set the constructor
 
-            var e = this.originalEvent;
+    constructor: hAzzle.Event,
 
-            this.isDefaultPrevented = returnTrue;
+    // isDefaultPrevented:
 
-            if (e && e.preventDefault) {
-                e.preventDefault();
-            }
-        },
+    isDefaultPrevented: returnFalse,
 
-        // Stop event propagation
+    // isPropagationStopped
 
-        stopPropagation: function() {
+    isPropagationStopped: returnFalse,
 
-            var e = this.originalEvent;
+    // isImmediatePropagationStopped
+    isImmediatePropagationStopped: returnFalse,
 
-            this.isPropagationStopped = returnTrue;
+    // preventDefault
 
-            if (e && e.stopPropagation) {
-                e.stopPropagation();
-            }
-        },
+    preventDefault: function() {
 
-        stopImmediatePropagation: function() {
-            var e = this.originalEvent;
+        var evt = this.originalEvent;
 
-            this.isImmediatePropagationStopped = returnTrue;
+        this.isDefaultPrevented = returnTrue;
 
-            if (e && e.stopImmediatePropagation) {
-                e.stopImmediatePropagation();
-            }
-
-            this.stopPropagation();
-        },
-
-        // Block any further event processing
-
-        stop: function() {
-
-            this.stopped = true;
-            this.preventDefault();
-
-            if (this.stopPropagation) {
-
-                this.stopPropagation();
-
-            } else {
-
-                this.cancelBubble = true;
-            }
+        if (evt && evt.preventDefault) {
+            evt.preventDefault();
         }
+    },
+
+    // Stop event propagation
+
+    stopPropagation: function() {
+
+        var evt = this.originalEvent;
+
+        this.isPropagationStopped = returnTrue;
+
+        if (evt && evt.stopPropagation) {
+            evt.stopPropagation();
+        }
+    },
+
+    stopImmediatePropagation: function() {
+
+        var evt = this.originalEvent;
+
+        this.isImmediatePropagationStopped = returnTrue;
+
+        if (evt && evt.stopImmediatePropagation) {
+            evt.stopImmediatePropagation();
+        }
+
+        this.stopPropagation();
     }
-    /* ============================ UTILITY METHODS =========================== */
+};
+
+/* ============================ UTILITY METHODS =========================== */
 
 function returnTrue() {
     return true;

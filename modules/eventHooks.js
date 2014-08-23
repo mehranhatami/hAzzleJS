@@ -2,6 +2,7 @@
 hAzzle.extend({
 
     'special': {
+
         'load': {
             noBubble: true
         },
@@ -66,7 +67,7 @@ hAzzle.extend({
         }
     }
 
-}, hAzzle.eventHooks);
+}, hAzzle.event);
 
 hAzzle.each({
     mouseenter: 'mouseover',
@@ -75,7 +76,7 @@ hAzzle.each({
     pointerleave: 'pointerout'
 }, function(fix, orig) {
 
-    hAzzle.eventHooks.special[orig] = {
+    hAzzle.event.special[orig] = {
         delegateType: fix,
         bindType: fix,
 
@@ -106,10 +107,10 @@ if (!hAzzle.features.focusinBubbles) {
 
         // Attach a single capturing handler while someone wants focusin/focusout
         var handler = function(evt) {
-            hAzzle.eventHooks.simulate(fix, evt.target, hAzzle.event.fix(evt), true);
+            hAzzle.event.simulate(fix, evt.target, hAzzle.event.fix(evt), true);
         };
 
-        hAzzle.eventHooks.special[fix] = {
+        hAzzle.event.special[fix] = {
             setup: function() {
 
                 var doc = this.ownerDocument || this,
@@ -142,7 +143,7 @@ hAzzle.each({
     focus: 'focusin',
     blur: 'focusout'
 }, function(delegateType, type) {
-    hAzzle.eventHooks.special[type] = {
+    hAzzle.event.special[type] = {
 
         'delegateType': delegateType,
 
