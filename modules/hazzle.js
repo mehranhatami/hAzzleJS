@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.9a RC3
+ * Version: 0.9.9c RC3
  * Released under the MIT License.
  *
- * Date: 2014-08-15
+ * Date: 2014-08-24
  */
 (function(global, factory) {
 
@@ -75,7 +75,7 @@
 
     function Core(selector, context) {
 
-        if (!selector ) {
+        if (!selector) {
             return this;
         }
 
@@ -108,9 +108,14 @@
 
             // Wrap DOM nodes.
 
-        } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector) || (selector.window === selector)) {
+        } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector)) {
 
             selector = [selector];
+        } else if (selector === window) {
+
+            // Need to find a solution here for the window 
+            this[0] = window;
+            return this;
         }
 
         if (selector) {
@@ -251,10 +256,10 @@
          */
 
         each: function(collection, callback, reverse) {
-         
-		  if(!collection) { 
-		      return; 
-		 }
+
+            if (!collection) {
+                return;
+            }
             var i = 0,
                 l = collection.length,
                 element = null;
@@ -459,22 +464,17 @@
         },
 
         merge: function(first, second) {
-            var len, j = 0,
-                i;
-
-            if (first) {
-
-                len = +second.length;
+            var len = +second.length,
+                j = 0,
                 i = first.length;
 
-                for (; j < len; j++) {
-                    first[i++] = second[j];
-                }
-
-                first.length = i;
-
-                return first;
+            for (; j < len; j++) {
+                first[i++] = second[j];
             }
+
+            first.length = i;
+
+            return first;
 
         },
 

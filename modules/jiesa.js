@@ -24,6 +24,9 @@ var join = Array.prototype.join,
   // Easily-parseable/retrievable ID or TAG or CLASS selectors
 
   rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+
+  eoeglnfl = /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
+
   // Combine regExes
 
   combineRegEx = function combineRegEx() {
@@ -754,7 +757,7 @@ function quickQueryAll(selector, context) {
   try {
 
     return context.nodeType === 9 ?
-      context.querySelectorAll(selector + '') : [];
+      context[_queryAll](selector + '') : [];
 
   } finally {
 
@@ -770,7 +773,7 @@ function quickQuery(selector, context) {
   if (!selector || !context) {
     return [];
   }
-  return context[_query](selector);
+  return context[_query](selector + '');
 }
 
 function isElement(o) {

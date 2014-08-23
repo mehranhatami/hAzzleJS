@@ -274,30 +274,31 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    closest: function(selectors, context) {
+    closest: function(selector, context) {
         var cur,
             i = 0,
             l = this.length,
-            matched = [],
-            pos = typeof selectors !== 'string' ?
-            hAzzle(selectors, context) : 0;
+            ret = [],
+            pos = (typeof selector !== 'string' || eoeglnfl.test(selector)) &&
+            hAzzle(selector, context);
 
         for (; i < l; i++) {
 
-            cur = this[i];
+            for (cur = this[i]; cur && cur !== context; cur = cur.parentNode) {
+                // Always skip document fragments
+                if (cur.nodeType < 11 && (pos ?
+                    pos.index(cur) >= 0 :
 
-            while (cur && cur !== context && cur.nodeType !== 11) {
+                    cur.nodeType === 1 &&
+                    hAzzle.matches(selector, cur))) {
 
-                if (pos ? pos.index(cur) > -1 : cur.nodeType === 1 && hAzzle.matches(selectors, cur)) {
-
-                    matched.push(cur);
+                    ret.push(cur);
                     break;
                 }
-                cur = cur.parentElement;
             }
         }
 
-        return hAzzle(matched.length > 1 ? hAzzle.unique(matched) : matched);
+        return hAzzle(ret.length > 1 ? hAzzle.unique(ret) : ret);
     },
 
     /**
@@ -359,19 +360,12 @@ hAzzle.extend({
             // Loop through all elements, and check for match
 
             for (i = 0; i < len; i++) {
-            push.apply(ret, hAzzle.find(selector, self[i]));
+                push.apply(ret, hAzzle.find(selector, self[i]));
             }
 
             // If more then one element, make sure they are unique
 
-            if (len > 1) {
-
-                ret = hAzzle.unique(ret);
-
-            }
-            // return the result
-
-            return hAzzle(ret);
+            return hAzzle(len > 1 ? hAzzle.unique(ret) : ret);
 
         } else { // Object
 
@@ -575,7 +569,16 @@ hAzzle.forOwn({
 
     hAzzle.Core[name] = function(until, selector) {
 
-        var matched = hAzzle.map(this, fn, until);
+        //   var matched = hAzzle.map(this, fn, until);
+
+        var matched = hAzzle.map(this, function(elem) {
+            var type = elem.nodeType;
+
+            if (type === 1 || type === 11 || type === 9) {
+                return fn.apply(this, arguments);
+            }
+        }, until);
+
 
         if (name.slice(-5) !== 'Until') {
             selector = until;

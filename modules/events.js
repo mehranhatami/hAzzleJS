@@ -28,15 +28,14 @@ var
 // Wrap it inside a object to avoid variable conflicts
 
     eventRegex = {
-        nameL: '(^|\\.)',
-        nameR: '\\.(?:.*\\.|)',
-        nameFR: '(\\.|$)',
-        whiteRegex: (/\S+/g),
-        gtl: /\.+\s/,
-        gtr: /\.+$/,
-        namespaceRegex: /^([^.]*)(?:\.(.+)|)$/,
-        speci: /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
-    };
+    nameL: '(^|\\.)',
+    nameR: '\\.(?:.*\\.|)',
+    nameFR: '(\\.|$)',
+    whiteRegex: (/\S+/g),
+    gtl: /\.+\s/,
+    gtr: /\.+$/,
+    namespaceRegex: /^([^.]*)(?:\.(.+)|)$/
+};
 
 // hAzzle event
 
@@ -130,7 +129,7 @@ hAzzle.event = {
                 handler: handler,
                 guid: handler.guid,
                 selector: selector,
-                needsContext: selector && eventRegex.speci.test(selector),
+                needsContext: selector && eoeglnfl.test(selector),
                 namespace: namespaces.join('.')
             }, objHandler);
 
@@ -424,6 +423,13 @@ hAzzle.Event = function(src, props) {
     this[hAzzle.expando + 'kf'] = true;
 };
 
+/**
+ * PreventDefault/stopPropagation/stopImmediatePropagation supports
+ * chaining, so we can chain i.e.
+ *
+ * e.preventDefault().stopPropagation();
+ */
+
 hAzzle.Event.prototype = {
 
     // Set the constructor
@@ -452,6 +458,8 @@ hAzzle.Event.prototype = {
         if (evt && evt.preventDefault) {
             evt.preventDefault();
         }
+		
+		return this;
     },
 
     // Stop event propagation
@@ -465,6 +473,8 @@ hAzzle.Event.prototype = {
         if (evt && evt.stopPropagation) {
             evt.stopPropagation();
         }
+		
+		return this;
     },
 
     stopImmediatePropagation: function() {
@@ -477,7 +487,7 @@ hAzzle.Event.prototype = {
             evt.stopImmediatePropagation();
         }
 
-        this.stopPropagation();
+        return this.stopPropagation();
     }
 };
 
