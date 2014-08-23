@@ -34,7 +34,7 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
 
     data = data === null ? [evt] : hAzzle.mergeArray(data, [evt]);
 
-    special = hAzzle.eventHooks.special[type] || {};
+    special = hAzzle.event.special[type] || {};
 
     // Check for valid handlers
 

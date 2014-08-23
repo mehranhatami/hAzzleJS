@@ -54,24 +54,24 @@ hAzzle.extend({
      *
      */
 
-    remove: function(selector) {
+    remove: function(selector, keepData /* Internal Use Only */ ) {
 
         var elem, elems = selector ?
-            hAzzle.filter(selector, this) : this,
+            hAzzle.find(selector, this) : this,
             i = 0;
+
         return this.each(function(elem) {
 
-            if (elem.nodeType === 1) {
-
-                hAzzle.clearData(findSubNodes(elem));
+            if (!keepData && elem.nodeType === 1) {
+                hAzzle.clearData(hAzzle.grab(elem));
             }
 
             if (elem.parentNode && elem.tagName !== 'BODY') {
-
+                if (keepData && hAzzle.contains(elem.ownerDocument, elem)) {
+                    setGlobalEval(hAzzle.grab(elem, 'script'));
+                }
                 elem.parentNode.removeChild(elem);
             }
-
-
         });
     },
 
@@ -85,7 +85,6 @@ hAzzle.extend({
 
         var elem, i = 0;
 
-
         return this.each(function(elem) {
 
             if (elem.nodeType === 1) {
@@ -93,13 +92,12 @@ hAzzle.extend({
                 // Prevent memory leaks
                 // Clear data on each childNode
 
-                hAzzle.clearData(findSubNodes(elem));
+                hAzzle.clearData(hAzzle.grab(elem, false));
 
                 // Remove any remaining nodes
                 elem.textContent = '';
             }
         });
-
     },
 
     /**
@@ -124,9 +122,3 @@ hAzzle.extend({
             this.parentNode.removeChild(this) : this;
     }
 });
-
-/* ============================ UTILITY METHODS =========================== */
-
-function findSubNodes(elem) {
-    return hAzzle.merge([elem], hAzzle.find('*', elem));
-}

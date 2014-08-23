@@ -1,59 +1,34 @@
-/*!
- * Manipulation
- *
- * NOTE!!
- *
- * hAzzle are using DOM Level 4 for most of the
- * DOM manipulation methods - see doml4.js for the pollify.
- *
- * This gives better performance, and:
- *
- * - no need for dealing with fragments
- * - call and apply of functions
- *
- * DOM Level 4 are not standard yet.
- * Only in draft: http://www.w3.org/TR/2014/WD-dom-20140710/
- *
- * Things can therefor change, and bugs occour.
- *
- * One example: In older webkit we can't apply
- * fragment on checkboxes, but this should have
- * been fixed in newer webkit that hAzzle supports.
- *
- * IF bugs happen, then we need to patch the
- * doml4.js, don't do any changes in this module.
- *
- * Support if insertAdjacentHTML are removed, because
- * it's slower with all the patches / fixes that needs
- * to get it to work.
- *
- * Kenny F.
- */
-var rnoInnerhtml = /<(?:script|style|link)/i,
-    rtagName = /<([\w:]+)/,
-    uniqueTags = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-    singleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
+// manipulation.js
 
-    // We have to close these tags to support XHTML	
+var rnoInnerhtml = /<(?:script|style|link)/i,
+    rxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+    rtagName = /<([\w:]+)/,
+    rhtml = /<|&#?\w+;/,
+    rchecked = /checked\s*(?:[^=]|=\s*.checked.)/i,
+    rscriptType = /^$|\/(?:java|ecma)script/i,
+    rscriptTypeMasked = /^true\/(.*)/,
+    riAH = /<script|\[object/i,
+    rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+
+    // We have to close these tags to support XHTML
 
     htmlMap = {
-        thead: ['<table>', '</table>', 1],
-        tr: ['<table><tbody>', '</tbody></table>', 2],
-        td: ['<table><tbody><tr>', '</tr></tbody></table>', 3],
-        col: ['<table><colgroup>', '</colgroup></table>', 2],
-        fieldset: ['<form>', '</form>', 1],
-        legend: ['<form><fieldset>', '</fieldset></form>', 2],
-        option: ['<select multiple="multiple">', '</select>', 1],
-        base: ['_', '', 0, 1]
+        // Support: IE9
+        option: [1, "<select multiple='multiple'>", "</select>"],
+        thead: [1, "<table>", "</table>"],
+        col: [2, "<table><colgroup>", "</colgroup></table>"],
+        fieldset: [1, '<form>', '</form>', 1],
+        legend: [2, '<form><fieldset>', '</fieldset></form>', 2],
+        tr: [2, "<table><tbody>", "</tbody></table>"],
+        td: [3, "<table><tbody><tr>", "</tr></tbody></table>"],
+        base: [0, "", ""]
     };
 
-// Support: IE 9
-
+// Support: IE9
 htmlMap.optgroup = htmlMap.option;
-htmlMap.script = htmlMap.style = htmlMap.link = htmlMap.param = htmlMap.base;
 htmlMap.tbody = htmlMap.tfoot = htmlMap.colgroup = htmlMap.caption = htmlMap.thead;
 htmlMap.th = htmlMap.td;
-//   htmlMap.style = htmlMap.table = htmlMap.base;
+htmlMap.style = htmlMap.table = htmlMap.base;
 
 hAzzle.extend({
 
@@ -96,7 +71,7 @@ hAzzle.extend({
 
             return this.empty().each(function(elem) {
 
-                value = value.replace(uniqueTags, '<$1></$2>');
+                value = value.replace(rxhtmlTag, '<$1></$2>');
 
                 try {
 
@@ -115,8 +90,8 @@ hAzzle.extend({
 
         if (elem) {
 
-            this.empty().append(value);
-        }
+           this.empty().append(value);
+       }
     },
 
     /**
@@ -129,7 +104,7 @@ hAzzle.extend({
      * @return {hAzzle|String}
      */
 
-    text: function(value) {
+      text: function(value) {
 
         return hAzzle.setter(this, function(value) {
             return value === undefined ?
@@ -143,97 +118,141 @@ hAzzle.extend({
                 });
         }, null, value, arguments.length);
     },
-	
-	    /**
-     * Insert every element in the set of matched elements to the
-     * end of the target.
-     *
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
 
-    appendTo: function(node) {
-        return InjectionMethod(this, node, 'appendTo');
+    append: function() {
+        return this.Manipulation(arguments, function(elem) {
+            if (this.nodeType === 1 || this.nodeType === 11 || this.nodeType === 9) {
+               var target = manipulationTarget(this, elem);
+                target.appendChild(elem);
+            }
+        }, 'beforeend');
     },
 
-    /**
-     * Insert every element in the set of matched elements to the
-     * beginning of the target.
-     *
-     * @param {hAzzle|string|Element|Array} node
-     * @return {hAzzle}
-     */
-
-    prependTo: function(node) {
-        return InjectionMethod(this, node, 'prependTo');
+    prepend: function() {
+        return this.Manipulation(arguments, function(elem) {
+            if (this.nodeType === 1 || this.nodeType === 11 || this.nodeType === 9) {
+                var target = manipulationTarget(this, elem);
+                target.insertBefore(elem, target.firstChild);
+            }
+        }, 'afterbegin');
     },
 
-    /**
-     * @param {hAzzle|string|Element|Array} target
-     * @param {Object} scope
-     * @return {hAzzle}
-     */
-
-    insertBefore: function(node) {
-        return InjectionMethod(this, node, 'insertBefore');
+    before: function() {
+        return this.Manipulation(arguments, function(elem) {
+            this.parentNode && this.parentNode.insertBefore(elem, this);
+        }, 'beforebegin');
     },
 
-    /**
-     * @param {hAzzle|string|Element|Array} node
-     * @param {Object} scope
-     * @return {hAzzle}
-     */
-
-    insertAfter: function(node) {
-        return InjectionMethod(this, node, 'insertAfter');
+    after: function() {
+        return this.Manipulation(arguments, function(elem) {
+            this.parentNode && this.parentNode.insertBefore(elem, this.nextSibling);
+        }, 'afterend');
     },
 
-    // DOM Manipulation method
+    Manipulation: function(args, callback, place) {
 
-    Manipulation: function(html, method, nType) {
+        args = concat.apply([], args);
 
-        var len = this.length > 1,
-            set = this,
-            self,
-            elems;
+        var fragment, first, scripts, hasScripts, node, doc, iAH, tag,
+            i = 0,  set = this,
+            l = set.length,
+            noClone = l - 1,
+            value = args[0],
+            isFunction = hAzzle.isFunction(value);
 
-        return this.each(function(el) {
+        // We can't cloneNode fragments that contain checked, in WebKit
+        if (isFunction ||
+            (l > 1 && typeof value === 'string' &&
+                !hAzzle.features['feature-cloneCheck'] && rchecked.test(value))) {
+            return this.each(function(index) {
+                var self = set.eq(index);
+                if (isFunction) {
+                    args[0] = value.call(this, index, self.html());
+                }
+                self.Manipulation(args, callback, place);
+            });
+        }
 
-            // Check for valid nodeType
+        if (l) {
+            fragment = hAzzle.buildFragment(args, this[0].ownerDocument, false, this);
+            first = fragment.firstChild;
 
-            if (nType && !hAzzle.inArray(nType, el)) {
-
-                return;
+            if (fragment.childNodes.length === 1) {
+                fragment = first;
             }
 
-            // Stabilize HTML
+            if (first) {
 
-            elems = stabilizeHTML(html, this.ownerDocument);
+                // Use a quick insert method if possible
+                if (place) {
+                    iAH = args.join('');
+                    tag = (rtagName.exec(iAH) || ['', ''])[1].toLowerCase();
 
-            // Iterate through the elements
+                    // Object or HTML-string with declaration of a script element must not be passed to iAH,
+                    // also, we do not wrap HTML-string if needed - it's jQuery.buildFragment job
+                    if (!riAH.test(iAH) && !htmlMap[tag]) {
+                        return this.each(function(index) {
 
-            hAzzle.each(elems, function() {
+                            // Check for presence of insertAdjacentHTML method is needed in case of non-elements ending up in jQuery set
+                            // Check for parent element is needed in case of 'beforebegin' or 'afterend' is passed as first argument to iAH otherwise it will throw an error
+                            if (this.insertAdjacentHTML && this.parentNode && this.parentNode.nodeType === 1) {
+                                this.insertAdjacentHTML(place, iAH.replace(rxhtmlTag, '<$1></$2>'));
 
-                if (len) {
+                            } else {
+                                set.eq(index).Manipulation(args, callback);
+                            }
+                        });
+                    }
+                }
+                scripts = hAzzle.map(hAzzle.grab(fragment, 'script'), disableScript);
+                hasScripts = scripts.length;
 
-                    elems = hAzzle.clone(this, true, true);
+                // Use the original fragment for the last item
+                // instead of the first because it can end up
+                // being emptied incorrectly in certain situations (#8070).
+                for (; i < l; i++) {
+                    node = fragment;
 
-                } else {
+                    if (i !== noClone) {
+                        node = hAzzle.clone(node, true, true);
 
-                    elems = this;
+                        // Keep references to cloned scripts for later restoration
+                        if (hasScripts) {
+                            // Support: QtWebKit
+                            // hAzzle.merge because push.apply(_, arraylike) throws
+                            hAzzle.merge(scripts, hAzzle.grab(node, 'script'));
+                        }
+                    }
+
+                    callback.call(this[i], node, i);
                 }
 
-                if (method === 'append' ||
-                    method === 'prepend') {
+                if (hasScripts) {
+                    doc = scripts[scripts.length - 1].ownerDocument;
 
-                    elems = manipulationTarget(elems);
+                    // Reenable scripts
+                    hAzzle.map(scripts, restoreScript);
+
+                    // Evaluate executable scripts on first document insertion
+                    for (i = 0; i < hasScripts; i++) {
+                        node = scripts[i];
+                        if (rscriptType.test(node.type || '') &&
+                            !hAzzle.private(node, 'hAzzleGlobal') &&
+                            hAzzle.contains(doc, node)) {
+                            if (node.src) {
+                                if (hAzzle.evalUrl) {
+                                    hAzzle.evalUrl(node.src);
+                                }
+                            } else {
+                                hAzzle.globalEval(node.textContent.replace(rcleanScript, ''));
+                            }
+                        }
+                    }
                 }
+            }
+        }
 
-                // Do the DOM Level 4 magic
-
-                el[method](elems);
-            });
-        });
+        return this;
     },
 
     /**
@@ -243,196 +262,173 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    replaceWith: function() {
-        var arg = arguments[0];
-        this.each(function(elem) {
-            hAzzle.clearData(elem);
-            hAzzle.each(stabilizeHTML([arg]), function(html) {
-                elem.replace(html);
-            });
-        });
-
-        // Force removal if there was no new content (e.g., from empty arguments)
-        return arg && (arg.length || arg.nodeType) ? this : this.remove();
-    }
-
+replaceWith: function() {
+		var arg = arguments[ 0 ];
+		this.Manipulation( arguments, function( elem ) {
+			arg = this.parentElement;
+			hAzzle.clearData( hAzzle.grab( this ) );
+			if ( arg ) {
+				arg.replaceChild( elem, this );
+			}
+		});
+		return arg && (arg.length || arg.nodeType) ? this : this.remove();
+	},
 });
 
 
 
-/* =========================== PRIVATE FUNCTIONS ========================== */
 
-/**
- * Stabilize HTML
- * @param {Object} node
- * @param {Object} elems
- * @param {Numbers} clone
- */
 
-var stabilizeHTML = function(node) {
 
-    var ret = [],
-        elem, i;
+hAzzle.each({
+    appendTo: 'append',
+    prependTo: 'prepend',
+    insertBefore: 'before',
+    insertAfter: 'after',
+    replaceAll: 'replaceWith'
+}, function(original, name) {
+    hAzzle.Core[name] = function(selector) {
+        var elems,
+            ret = [],
+            insert = hAzzle(selector),
+            last = insert.length - 1,
+            i = 0;
 
-    if (node) {
+        for (; i <= last; i++) {
+            elems = i === last ? this : this.clone(true);
+            hAzzle(insert[i])[original](elems);
 
-        i = node.length;
-
-        while (i--) {
-
-            elem = node[i];
-
-            // String
-
-            if (typeof elem === 'string') {
-
-                return createHTML(elem);
-
-                // nodeType
-
-            } else if (elem.nodeType) { // Handles Array, hAzzle, DOM NodeList collections
-
-                ret.push(elem);
-
-                // Textnode
-
-            } else {
-
-                ret = hAzzle.merge(ret, elem);
-            }
+            push.apply(ret, elems.get());
         }
-    }
-    return ret;
-};
 
-/**
- * Create HTML
- *
- * Internal usage, we have html.js module for
- * creating html.
- *
- *  @param {string} html
- *  @param {string} context
- *  @return {hAzzle}
- */
+        return hAzzle(ret);
+    };
+});
 
-function createHTML(html) {
 
-    var tag = html.match(singleTag),
-        el = document.createElement('div'),
-        els = [],
-        p = tag ? htmlMap[tag[1].toLowerCase()] : null,
-        dep = p ? p[2] + 1 : 1,
-        ns = p && p[3],
-        pn = 'parentNode';
 
-    el.innerHTML = p ? (p[0] + html + p[1]) : html;
-
-    while (dep--) {
-        el = el.firstChild;
-    }
-
-    if (ns && el && el.nodeType !== 1) {
-        el = el.nextElementSibling;
-    }
-    do {
-        if (!tag || el.nodeType == 1) {
-            els.push(el);
-        }
-    } while ((el = el.nextElementSibling));
-
-    hAzzle.each(els, function(el) {
-        if (el[pn]) {
-            el[pn].removeChild(el);
-        }
-    });
-    return els;
-}
 
 function manipulationTarget(elem, content) {
     return hAzzle.nodeName(elem, 'table') &&
         hAzzle.nodeName(content.nodeType !== 11 ? content : content.firstChild, 'tr') ?
+
         elem.getElementsByTagName('tbody')[0] ||
         elem.appendChild(elem.ownerDocument.createElement('tbody')) :
         elem;
 }
 
-/* =========================== INTERNAL ========================== */
-
-// Append, prepend, before and after
-
-hAzzle.each({
-    append: /* nodeTypes */ [1, 9, 11],
-    prepend: /* nodeTypes */ [1, 9, 11],
-    before: '',
-    after: '',
-}, function(nType, name) {
-    hAzzle.Core[name] = function() {
-        return this.Manipulation(arguments, name, nType);
-    };
-});
-
-// appendTo, prependTo, insertBefore, insertAfter manipulation methods
-
-function InjectionMethod(elem, html, method) {
-    return injectHTML.call(elem, html, elem, function(html, el) {
-        try {
-            HI[method](el, html);
-        } catch (e) {}
-    }, 1);
+// Replace/restore the type attribute of script elements for safe DOM manipulation
+function disableScript(elem) {
+    elem.type = (elem.getAttribute('type') !== null) + '/' + elem.type;
+    return elem;
 }
 
+function restoreScript(elem) {
+    var match = rscriptTypeMasked.exec(elem.type);
 
-
-// Inject HTML
-
-function injectHTML(target, node, fn, rev) {
-
-    var i = 0,
-        r = [],
-        nodes, stabilized;
-
-    if (typeof target === 'string' && target.charAt(0) === '<' &&
-        target[target.length - 1] === '>' &&
-        target.length >= 3) {
-
-        nodes = target;
-
+    if (match) {
+        elem.type = match[1];
     } else {
-
-        nodes = hAzzle(target);
+        elem.removeAttribute('type');
     }
 
-    stabilized = stabilizeHTML(nodes);
-
-    // normalize each node in case it's still a string and we need to create nodes on the fly
-
-    hAzzle.each(stabilized, function(t, j) {
-
-        hAzzle.each(node, function(el) {
-
-            if (j > 0) {
-
-                fn(t, r[i++] = hAzzle.cloneNode(node, el));
-
-            } else {
-
-                fn(t, r[i++] = el);
-            }
-
-        }, null, rev);
-
-
-    }, this, rev);
-
-    node.length = i;
-
-    hAzzle.each(r, function(e) {
-
-        node[--i] = e;
-
-    }, null, !rev);
-
-    return node;
+    return elem;
 }
 
+
+
+
+hAzzle.buildFragment = function(elems, context, scripts, selection) {
+    var elem, tmp, tag, wrap, contains, j,
+        fragment = context.createDocumentFragment(),
+        nodes = [],
+        i = 0,
+        l = elems.length;
+
+    for (; i < l; i++) {
+        elem = elems[i];
+
+        if (elem || elem === 0) {
+
+            // Add nodes directly
+            if (hAzzle.type(elem) === 'object') {
+
+                hAzzle.merge(nodes, elem.nodeType ? [elem] : elem);
+
+                // Convert non-html into a text node
+            } else if (!rhtml.test(elem)) {
+                nodes.push(context.createTextNode(elem));
+
+                // Convert html into DOM nodes
+            } else {
+                tmp = tmp || fragment.appendChild(context.createElement('div'));
+
+                // Deserialize a standard representation
+                tag = (rtagName.exec(elem) || ['', ''])[1].toLowerCase();
+                wrap = htmlMap[tag] || htmlMap.base;
+                tmp.innerHTML = wrap[1] + elem.replace(rxhtmlTag, '<$1></$2>') + wrap[2];
+
+                // Descend through wrappers to the right content
+                j = wrap[0];
+                while (j--) {
+                    tmp = tmp.lastChild;
+                }
+
+                hAzzle.merge(nodes, tmp.childNodes);
+
+                // Remember the top-level container
+                tmp = fragment.firstChild;
+
+                // Ensure the created nodes are orphaned (#12392)
+                tmp.textContent = '';
+            }
+        }
+    }
+
+    // Remove wrapper from fragment
+    fragment.textContent = '';
+
+    i = 0;
+    while ((elem = nodes[i++])) {
+
+        // #4087 - If origin and destination elements are the same, and this is
+        // that element, do not do anything
+        if (selection && hAzzle.inArray(elem, selection) !== -1) {
+            continue;
+        }
+
+        contains = hAzzle.contains(elem.ownerDocument, elem);
+
+        // Append to fragment
+        tmp = hAzzle.grab(fragment.appendChild(elem), 'script');
+
+        // Preserve script evaluation history
+        if (contains) {
+            setGlobalEval(tmp);
+        }
+
+        // Capture executables
+        if (scripts) {
+            j = 0;
+            while ((elem = tmp[j++])) {
+                if (rscriptType.test(elem.type || '')) {
+                    scripts.push(elem);
+                }
+            }
+        }
+    }
+
+    return fragment;
+};
+
+// Mark scripts as having already been evaluated
+function setGlobalEval( elems, refElements ) {
+	var i = 0,
+		l = elems.length;
+
+	for ( ; i < l; i++ ) {
+		hAzzle.setPrivate(
+			elems[ i ], 'hAzzleGlobal', !refElements || hAzzle.getPrivate( refElements[ i ], 'hAzzleGlobal' )
+		);
+	}
+}
