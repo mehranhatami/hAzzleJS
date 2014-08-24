@@ -4,6 +4,10 @@ var nRAF, nCAF,
     lastTime = 0,
     fxPrefix = 'hAzzleFX',
 
+    // Checks for iOS6 will only be done if no native frame support
+
+    ios6 = /iP(ad|hone|od).*OS 6/.test(window.navigator.userAgent),
+
     // Default duration value
 
     fxDuration = 500,
@@ -33,56 +37,54 @@ var nRAF, nCAF,
     };
 
 (function() {
-    var i, vendors = ['webkit', 'moz', 'ms', 'o'],
-        top;
 
-    // Test if we are within a foreign domain. Use raf from the top if possible.
-    try {
-        // Accessing .name will throw SecurityError within a foreign domain.
-        window.top.name;
-        top = window.top;
-    } catch (e) {
-        top = window;
-    }
+    nRAF = function() {
+        // native animation frames
+        // http://webstuff.nfshost.com/anim-timing/Overview.html
+        // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
 
-    nRAF = top.requestAnimationFrame;
-    nCAF = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+        return top.requestAnimationFrame ||
+            // no native rAF support
+            (ios6 ? // iOS6 is buggy
+                top.requestAnimationFrame ||
+                top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
+                top.mozRequestAnimationFrame ||
+                top.msRequestAnimationFrame :
+                // IE <= 9, Android <= 4.3, very old/rare browsers
+                function(callback) {
+                    var currTime = hAzzle.now(),
+                        timeToCall = Math.max(0, 16 - (currTime - lastTime)),
+                        id = window.setTimeout(function() {
+                                callback(currTime + timeToCall);
+                            },
+                            timeToCall);
+                    lastTime = currTime + timeToCall;
+                    return id; // return the id for cancellation capabilities
+                });
+    }();
 
-    // Grab the native implementation.
-    for (i = 0; i < vendors.length && !nRAF; i++) {
-        nRAF = top[vendors[i] + 'RequestAnimationFrame'];
-        nCAF = top[vendors[i] + 'CancelAnimationFrame'] ||
-            top[vendors[i] + 'CancelRequestAnimationFrame'];
-    }
-
-    nRAF(function(timestamp) {
-        // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-        // if not, we have to do a timestamp fix on each frame
-        fixTick = timestamp > 1e12 != pnow() > 1e12;
-    });
-
-    if (!nRAF && !nCAF) {
-
-        // RequestAnimationFrame
-
-        nRAF = function(callback) {
-            var currTime = hAzzle.now(),
-                timeToCall = Math.max(0, 16 - (currTime - lastTime)),
-                id = window.setTimeout(function() {
-                        callback(currTime + timeToCall);
-                    },
-                    timeToCall);
-            lastTime = currTime + timeToCall;
-            return id; // return the id for cancellation capabilities
-        };
-
-        // CancelAnimationFrame
-        nCAF = function(id) {
-            clearTimeout(id);
-        };
-    }
+    nCAF = function() {
+        return top.cancelAnimationFrame ||
+            // no native cAF support
+            (!ios6 ? foreign.cancelAnimationFrame ||
+                top.webkitCancelAnimationFrame ||
+                top.webkitCancelRequestAnimationFrame ||
+                top.mozCancelAnimationFrame :
+                function(id) {
+                    clearTimeout(id);
+                });
+    }();
 
 }());
+
+nRAF(function(timestamp) {
+    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+    // if not, we have to do a timestamp fix on each frame
+    fixTick = timestamp > 1e12 != pnow() > 1e12;
+});
+
+
+var ticker = nRAF;
 
 /* ============================ FX =========================== */
 
@@ -140,6 +142,7 @@ FX.prototype = {
         }
 
         // If any 'hooks' - use it
+
 
         if (hooks && hooks.set) {
 
@@ -222,7 +225,8 @@ FX.prototype = {
 
         var callback = hAzzle.shallowCopy(function(gotoEnd) {
 
-            var lastTickTime = pnow(), v,
+            var lastTickTime = pnow(),
+                v,
                 i, done = true;
 
             // Do animation if we are not at the end
@@ -274,7 +278,7 @@ FX.prototype = {
                 }
 
                 if (typeof self.now === 'object') {
-                    for (var v in self.now) {
+                    for (v in self.now) {
                         self.now[v] = start + ((end[v] - start[v]) * pos);
                     }
                 }
@@ -516,7 +520,7 @@ hAzzle.extend({
 
                 // Test default display if display is currently 'none'
 
-                 checkDisplay = display === 'none' ?
+                checkDisplay = display === 'none' ?
                     hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName) : display;
 
                 if (checkDisplay === 'inline' && curCSS(elem, 'float') === 'none') {
@@ -585,6 +589,7 @@ hAzzle.extend({
 
                                 scale = scale || ".5";
                                 start = start / scale;
+
                                 hAzzle.style(elem, p, start + unit);
 
                             } while (
@@ -709,9 +714,9 @@ hAzzle.extend({
 
 /* ============================ UTILITY METHODS =========================== */
 
-function update(tick) {
+function update(timestamp) {
     if (fixTick) {
-        tick = pnow();
+        timestamp = pnow();
     }
     if (rafId) {
         nRAF(update);
@@ -806,4 +811,25 @@ function fxState(elem, prop, opt, start, end) {
             hAzzle.private(elem, fxPrefix + prop, opt.hide ? start : end);
         }
     };
+}
+
+
+
+if (!hAzzle.isMobile && document.hidden !== undefined) {
+    document.addEventListener('visibilitychange', function() {
+        // Reassign the rAF function (which the global update() function uses) based on the tab's focus state.
+        if (document.hidden) {
+            ticker = function(callback) {
+                // The tick function needs a truthy first argument in order to pass its internal timestamp check.
+                return setTimeout(function() {
+                    callback(true);
+                }, 17);
+            };
+
+            // The rAF loop has been paused by the browser, so we manually restart the tick.
+            update();
+        } else {
+            ticker = nRAF;
+        }
+    });
 }
