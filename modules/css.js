@@ -3,7 +3,6 @@ var
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
-    rotskew = /^(rotate|skew)/i,
     zerovalue = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i,
     leftrightRegex = /Left|Right/,
 
@@ -106,30 +105,12 @@ hAzzle.extend({
         }
     },
 
-    getUnitType: function(prop) {
-
-        if (rotskew.test(prop)) {
-
-            return 'deg';
-
-        } else if (hAzzle.inArray(excludedProps, prop) >= 0) {
-
-            // Unitless properties
-            return '';
-
-        } else {
-
-            // Return px as default
-            return 'px';
-        }
-    },
-
     isZeroValue: function(value) {
 
         // The browser defaults CSS values that have not been set to either 0 or 
         // one of several possible null-value strings. Thus, we check for both falsiness and these special strings. 
         // Note: Chrome returns 'rgba(0, 0, 0, 0)' for an undefined color whereas IE returns 'transparent'.
-        return (value == 0 || zerovalue.test(value));
+        return (value === 0 || zerovalue.test(value));
     },
 
     prefixCheck: function(prop) {

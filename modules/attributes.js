@@ -293,36 +293,7 @@ hAzzle.extend({
                 ret :
                 elem[name];
         }
-    },
-
-    /**
-     * Count (or iterate) an element's attributes.
-     *
-     * @param {Object} elem
-     * @param {Function|number} fn
-     * @param {String} scope
-     * @return {Number}
-     */
-
-    anyAttr: function(elem, fn, scope) {
-
-        var a, ela = elem.attributes,
-            l = ela && ela.length,
-            i = 0;
-
-        if (typeof fn !== 'function') {
-            return +l || 0;
-        }
-
-        scope = scope || elem;
-
-        while (i < l) {
-            if (fn.call(scope, (a = ela[i++]).value, a.name, a)) {
-                return i;
-            }
-        }
-        return 0;
-    }
+	}
 
 }, hAzzle);
 

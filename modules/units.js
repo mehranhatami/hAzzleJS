@@ -4,9 +4,8 @@ var unitsRegex = {
     reaf: /^(relative|absolute|fixed)$/,
     topbot: /^(top|bottom)$/,
     az: /[%A-z]+$/
-}
+};
 
-hAzzle.extend({
     /**
      * Converts one unit to another
      *
@@ -16,7 +15,7 @@ hAzzle.extend({
      *
      */
 
-    units: function(px, unit, elem, prop) {
+hAzzle.units = function(px, unit, elem, prop) {
 
         if (unit === '' ||
             unit === 'px') {
@@ -80,38 +79,4 @@ hAzzle.extend({
         unit = hAzzle.units.unity[unit];
 
         return unit ? px / unit : px;
-    },
-
-    /**
-     * Separates a property value into its numeric value and its unit type.
-     */
-
-    separateValue: function(property, value) {
-        var unitType,
-            numericValue;
-
-        numericValue = (value || 0)
-            .toString()
-            .toLowerCase()
-            // Match the unit type at the end of the value.
-            .replace(unitsRegex.az, function(match) {
-                // Grab the unit type.
-                unitType = match;
-
-                // Strip the unit type off of value.
-                return '';
-            });
-
-        // If no unit type was supplied, assign one that is appropriate for this 
-        // property (e.g. 'deg' for rotateZ or 'px' for width).
-
-        if (!unitType) {
-            unitType = hAzzle.getUnitType(property);
-        }
-
-        // Return an array with the numeric value and the unit type
-
-        return [numericValue, unitType];
-    }
-
-}, hAzzle);
+    };

@@ -6,8 +6,8 @@ hAzzle.extend({
      *
      * @param {String|Object} types
      * @param {String} selector
-     * @param {String} data
-     * @param {Function} fn
+     * @param {String|Function} data
+     * @param {Function|Undefined} fn
      * @param {Boolean} one
      * @return {hAzzle}
      */
@@ -66,7 +66,10 @@ hAzzle.extend({
 
             origFn = fn;
 
-            fn = once(fn);
+			fn = function( event ) {
+				hAzzle().off( event );
+				return origFn.apply( this, arguments );
+			};
 
             fn.guid = origFn.guid || (origFn.guid = hAzzle.getID(true, 'hEvt_'));
         }
@@ -79,10 +82,10 @@ hAzzle.extend({
     /**
      * Bind a DOM event but fire once before being removed
      *
-     * @param {String} events
-     * @param {String} selector
-     * @param {String} data
-     * @param {Function} fn
+     * @param {String|undefined} events
+     * @param {String|undefined} selector
+     * @param {String|undefined} data
+     * @param {Function|undefined} fn
      * @return {hAzzle}
      */
 
@@ -163,25 +166,11 @@ hAzzle.extend({
     }
 });
 
-/* ============================ UTILITY METHODS =========================== */
-
-function returnFalse() {
-    return false;
-}
-
-function once(fn) {
-    return function(evt) {
-        // wrap the handler in a handler that does a remove as well
-        hAzzle().off(evt);
-        return fn.apply(this, arguments);
-    };
-}
-
 /* ============================ INTERNAL =========================== */
 
 hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
-        'change select submit keydown keypress keyup error contextmenu wheel').split(' '),
+        'change select submit keydown keypress keyup error contextmenu').split(' '),
     function(name) {
         hAzzle.Core[name] = function(data, fn) {
             return arguments.length > 0 ?
