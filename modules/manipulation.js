@@ -43,11 +43,11 @@ hAzzle.extend({
             elem.val('');
         });
         elem.blur(function(e) {
-            if (hAzzle.trim(elem.val()) == '') {
+            if (hAzzle.trim(elem.val()) === '') {
                 elem.val(text);
             }
         });
-        if (hAzzle.trim(elem.val()) == '') {
+        if (hAzzle.trim(elem.val()) === '') {
             elem.val(text);
         }
     },
@@ -172,7 +172,7 @@ hAzzle.extend({
         }, 'afterend');
     },
 
-    Manipulation: function(args, filterFn, place) {
+    Manipulation: function(args, filterFn, iAH) {
 
         args = concat.apply([], args);
 
@@ -194,7 +194,7 @@ hAzzle.extend({
                 if (isFunction) {
                     args[0] = value.call(this, index, self.html());
                 }
-                self.Manipulation(args, filterFn, place);
+                self.Manipulation(args, filterFn, iAH);
             });
         }
 
@@ -211,23 +211,11 @@ hAzzle.extend({
 
                 // Use insertAdjacentHTML if possible
 
-                if (place) {
-                    iAH = args.join('');
-                    tag = (manipRegex.tagNameRegexp.exec(iAH) || ['', ''])[1].toLowerCase();
+                if (iAH) {
 
-                    if (!manipRegex.iAHRegexp.test(iAH) && !htmlMap[tag]) {
-                        return this.each(function(index) {
-                            if (this.insertAdjacentHTML &&
-                                this.parentNode &&
-                                this.parentNode.nodeType === 1) {
-                                this.insertAdjacentHTML(place, iAH.replace(manipRegex.xhtmlRegexp, '<$1></$2>'));
-
-                            } else {
-                                set.eq(index).Manipulation(args, filterFn);
-                            }
-                        });
-                    }
+                    return insertAdjacent(args.join(''), iAH, set, filterFn)
                 }
+
                 scripts = hAzzle.map(hAzzle.grab(fragment, 'script'), disableScript);
                 hasScripts = scripts.length;
 
@@ -320,6 +308,25 @@ hAzzle.each({
 });
 
 /* ============================ UTILITY METHODS =========================== */
+
+
+function insertAdjacent(html, place, set, filterFn) {
+    tag = (manipRegex.tagNameRegexp.exec(html) || ['', ''])[1].toLowerCase();
+
+    if (!manipRegex.iAHRegexp.test(html) && !htmlMap[tag]) {
+        return set.each(function(index) {
+            if (this.insertAdjacentHTML &&
+                this.parentNode &&
+                this.parentNode.nodeType === 1) {
+                this.insertAdjacentHTML(place, html.replace(manipRegex.xhtmlRegexp, '<$1></$2>'));
+
+            } else {
+                set.eq(index).Manipulation(args, filterFn);
+            }
+        });
+    }
+
+}
 
 function manipulationTarget(elem, content) {
     return hAzzle.nodeName(elem, 'table') &&
