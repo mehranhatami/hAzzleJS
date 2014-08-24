@@ -728,9 +728,7 @@ var
 // Grab childnodes
 
 function grab(context, tag) {
-   var ret = context.getElementsByTagName ? context.getElementsByTagName( tag || "*" ) :
-			context[_queryAll] ? context[_queryAll]( tag || "*" ) : [];
-
+	var ret = context.getElementsByTagName( tag || "*" );
 	return tag === undefined || tag && hAzzle.nodeName( context, tag ) ?
 		hAzzle.merge( [ context ], ret ) :
 		ret;

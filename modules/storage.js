@@ -4,22 +4,26 @@
  * Saves data on the object private and public
  */
 var camelize = hAzzle.camelize,
-    WhiteRegex = (/\S+/g),
-    htmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
-    charRegEx = /([A-Z])/g;
+
+    storageRegex = {
+
+        WhiteRegex: (/\S+/g),
+        htmlRegEx: /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
+        charRegEx: /([A-Z])/g
+    };
 
 function Storage() {
-  return new Storage.prototype.init();
-    
+    return new Storage.prototype.init();
+
 }
 
 Storage.prototype = {
-	
-	expando: 0,
-	
-	init: function() {
-	this.expando = hAzzle.expando + hAzzle.getID(true, 'storage')
-	},
+
+    expando: 0,
+
+    init: function() {
+        this.expando = hAzzle.expando + hAzzle.getID(true, 'storage');
+    },
 
     register: function(owner, initial) {
         var descriptor = {};
@@ -46,7 +50,6 @@ Storage.prototype = {
     cache: function(owner, initial) {
 
         if (!hAzzle.legalTypes(owner)) {
-
             return {};
         }
 
@@ -135,8 +138,7 @@ Storage.prototype = {
                 } else {
 
                     name = camel;
-                    name = name in cache ? [name] :
-                        (name.match(WhiteRegex) || []);
+                    name = name in cache ? [name] : (name.match(storageRegex.WhiteRegex) || []);
                 }
             }
 
@@ -150,9 +152,9 @@ Storage.prototype = {
     },
     hasData: function(owner) {
 
-        return !hAzzle.isEmptyObject(
-            owner[this.expando] || {}
-        );
+        var cache = owner[this.expando];
+        return !!cache && !hAzzle.isEmptyObject(cache);
+
     },
     flush: function(owner) {
 
@@ -189,6 +191,7 @@ hAzzle.each({
     hAzzle['get' + name] = function(elem, data) {
         return prop.get(elem, data);
     };
+
 
     // Set user / private data
 
@@ -290,9 +293,9 @@ hAzzle.extend({
 
                 data = _userData.get(elem, camelKey);
 
-				var 
-					hasDataAttrs = _privateData.get( this, 'hasDataAttrs' ),
-					isHyphenated = key.indexOf('-') !== -1;
+                var
+                    hasDataAttrs = _privateData.get(this, 'hasDataAttrs'),
+                    isHyphenated = key.indexOf('-') !== -1;
 
 
                 if (data !== undefined) {
@@ -317,13 +320,13 @@ hAzzle.extend({
             this.each(function() {
                 var data = _userData.get(this, camelKey);
                 _userData.set(this, camelKey, value);
-				if ( isHyphenated && data !== undefined ) {
-					_userData.set( this, key, value );
-				}
-
-				if ( isHyphenated && hasDataAttrs === undefined ) {
+                if (isHyphenated && data !== undefined) {
                     _userData.set(this, key, value);
-               }
+                }
+
+                if (isHyphenated && hasDataAttrs === undefined) {
+                    _userData.set(this, key, value);
+                }
             });
         }, null, value, arguments.length > 1, null, true);
     },
@@ -352,7 +355,7 @@ function dataAttr(elem, key, data) {
 
     if (data === undefined && elem.nodeType === 1) {
 
-        name = 'data-' + key.replace(charRegEx, '-$1').toLowerCase();
+        name = 'data-' + key.replace(storageRegex.charRegEx, '-$1').toLowerCase();
 
         data = elem.getAttribute(name);
 
@@ -363,7 +366,7 @@ function dataAttr(elem, key, data) {
                     data === 'null' ? null :
                     // Only convert to a number if it doesn't change the string
                     +data + '' === data ? +data :
-                    htmlRegEx.test(data) ? JSON.parse(data + '') : data;
+                    storageRegex.htmlRegEx.test(data) ? JSON.parse(data + '') : data;
             } catch (e) {}
 
             // Make sure we set the data so it isn't changed later
@@ -416,5 +419,5 @@ hAzzle.styleCache = function(elem) {
 
             transform: {}
         });
-    }
+    };
 }
