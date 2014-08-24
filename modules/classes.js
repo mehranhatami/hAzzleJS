@@ -52,7 +52,7 @@ hAzzle.extend({
      * @return {Boolean}
      */
 
-    hasClass: function(value) {
+    hasClass: function(selector) {
 
         var self = this,
             i = self.length;
@@ -63,8 +63,13 @@ hAzzle.extend({
 
             while (i--) {
 
+                if (typeof this[i].className === 'object' &&
+                    this[i].classList && this[i].classList.contains(selector)) {
+                    return true;
+                }
+
                 if (self[i].nodeType === 1) {
-                    if (self[i].classList.contains(value)) {
+                    if (self[i].classList.contains(selector)) {
                         return true;
                     }
                 }
@@ -226,12 +231,15 @@ hAzzle.extend({
 
         if (value) {
 
-            var classes, cls, i = 0,
+            var classes = (value || '').match(wSpace) || [],
+                cls, i = 0,
                 l;
 
-            if (typeof value === 'string') {
+            if (typeof elem.className === 'object' && elem.classList) {
+                elem.classList.add.apply(elem.classList, classes);
+            }
 
-                classes = (value || '').match(wSpace) || [];
+            if (typeof value === 'string') {
 
                 if (elem.nodeType === 1) {
 
@@ -260,13 +268,16 @@ hAzzle.extend({
 
         if (value) {
 
-            var classes, cls, i = 0,
+            var classes = value.match(wSpace) || [],
+                cls, i = 0,
                 l;
+
+            if (typeof elem.className === 'object' && elem.classList) {
+                elem.classList.remove.apply(elem.classList, classes);
+            }
 
             if (typeof value === 'string' ||
                 arguments.length === 0) {
-
-                classes = value.match(wSpace) || [];
 
                 if (elem.nodeType === 1 && elem.className) {
 
