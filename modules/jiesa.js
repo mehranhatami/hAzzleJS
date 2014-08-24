@@ -400,12 +400,12 @@ var
 
     while (oldSelector) {
       var type;
-      // Filter selector by filter if any	for quicker
+      // Filter selector by filter if any for quicker
       // look-up
 
       for (type in Expr.filter) {}
 
-      // Break and continue with QSA if no match		
+      // Break and continue with QSA if no match    
 
       if (!matched) {
         break;
@@ -414,7 +414,7 @@ var
 
     // Everything else
 
-    var token = tokenize(selector, scopedContext, arrfunc);
+    var token = tokenize(selector, context, arrfunc, scopedContext);
 
     return context.nodeType === 9 && token ?
       quickQueryAll(token, context) : [];
@@ -520,7 +520,7 @@ var
    * 8 - right context
    *
    */
-  tokenize = function (selector, context, arrfunc) {
+  tokenize = function (selector, context, arrfunc, scopedContext) {
 
     if (!selector || typeof selector !== 'string') {
       return [];
@@ -537,9 +537,12 @@ var
       arrfunc = context;
       context = document;
     }
+    if (scopedContext === undefined) {
+      scopedContext = context;
+    }
 
     //new caching approach
-    contextCached = tokenCache.val(context);
+    contextCached = tokenCache.val(scopedContext);
     if (contextCached) {
       if ((cached = contextCached[baseSelector])) {
         return cached;
@@ -683,7 +686,7 @@ var
       } else {
         contextCached = {};
         contextCached[baseSelector] = cached;
-        tokenCache.cache(context, contextCached);
+        tokenCache.cache(scopedContext, contextCached);
       }
 
       return cached;
@@ -728,10 +731,10 @@ var
 // Grab childnodes
 
 function grab(context, tag) {
-	var ret = context.getElementsByTagName( tag || "*" );
-	return tag === undefined || tag && hAzzle.nodeName( context, tag ) ?
-		hAzzle.merge( [ context ], ret ) :
-		ret;
+  var ret = context.getElementsByTagName(tag || "*");
+  return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
+    hAzzle.merge([context], ret) :
+    ret;
 }
 
 function quickQueryAll(selector, context) {
