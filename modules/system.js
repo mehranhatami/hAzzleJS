@@ -1,21 +1,24 @@
-// System.js - Collection of system functions for hAzzle Core
-var push = Array.prototype.push;
+// System.js
 hAzzle.extend({
 
     mergeArray: function(array, results) {
-var ret = results || [];
 
-		if ( array != null ) {
-			// The window, strings (and functions) also have 'length'
-			// Tweaked logic slightly to handle Blackberry 4.7 RegExp issues #6930
-			var type = hAzzle.type( array );
+        var ret = results || [];
 
-			if ( array.length == null || type === "string" || type === "function" || type === "regexp" || hAzzle.isWindow( array ) ) {
-				push.call( ret, array );
-			} else {
-				hAzzle.merge( ret, array );
-			}
-		}
+        if (array != null) {
+
+            var type = hAzzle.type(array);
+
+            if (array.length == null ||
+                type === "string" ||
+                type === "function" ||
+                type === "regexp" ||
+                hAzzle.isWindow(array)) {
+                Array.prototype.push.call(ret, array);
+            } else {
+                hAzzle.merge(ret, array);
+            }
+        }
 
         return ret;
     },
@@ -25,12 +28,13 @@ var ret = results || [];
     size: function(obj, ownPropsOnly) {
         var count = 0,
             key;
-
-        if (hAzzle.isArray(obj) || hAzzle.isString(obj)) {
+        if (hAzzle.isArray(obj) ||
+            hAzzle.isString(obj)) {
             return obj.length;
         } else if (hAzzle.isObject(obj)) {
             for (key in obj) {
-                if (!ownPropsOnly || obj.hasOwnProperty(key)) {
+                if (!ownPropsOnly ||
+                    obj.hasOwnProperty(key)) {
                     count++;
                 }
             }
@@ -42,8 +46,7 @@ var ret = results || [];
     // Swap properties
 
     swap: function(elem, options, callback, args) {
-        var ret, name,
-            old = {};
+        var ret, name, old = {};
 
         // Remember the old values, and insert the new ones
         for (name in options) {
@@ -194,7 +197,7 @@ var ret = results || [];
     },
 
     // Special detection for IE, because we got a lot of trouble
-	// with it. Damn IE!!
+    // with it. Damn IE!!
 
     ie: (function() {
         if (document.documentMode) {
@@ -202,8 +205,8 @@ var ret = results || [];
         } else {
 
             hAzzle.assert(function(div) {
-
-                for (var i = 7; i > 4; i--) {
+              var i = 7;
+                for (; i > 4; i--) {
 
                     div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
 
@@ -217,12 +220,12 @@ var ret = results || [];
 
         return undefined;
     })(),
-	
-	// Evaluates a script in a global context
-	globalEval: function( code ) {
-		var script = document.createElement( 'script' );
-		script.text = code;
-		document.head.appendChild( script ).parentNode.removeChild( script );
-	}
+
+    // Evaluates a script in a global context
+    globalEval: function(code) {
+        var script = document.createElement('script');
+        script.text = code;
+        document.head.appendChild(script).parentNode.removeChild(script);
+    }
 
 }, hAzzle);

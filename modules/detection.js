@@ -1,5 +1,4 @@
-var i,
-  ua = navigator.userAgent,
+var i, ua = navigator.userAgent,
   isOpera = hAzzle.isOpera,
   Detection = {
 

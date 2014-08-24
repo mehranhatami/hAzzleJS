@@ -36,7 +36,8 @@ var topribol = /^(top|right|bottom|left)$/i,
 
     curCSS = hAzzle.curCSS = function(elem, prop, computed) {
 
-        computed = computed || getStyles(elem);
+        computed = computed || 
+		           getStyles(elem);
 
         if (prop === 'height' && computed.getPropertyValue(elem, 'boxSizing').toLowerCase() !== 'border-box') {
 

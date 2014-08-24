@@ -20,7 +20,6 @@ module.exports = function(config) {
         'cache.js',
         'doml4.js',
         'query.js',
-        'ntapi.js',
         'types.js',
         'ready.js',
         'shims/pnow.js',

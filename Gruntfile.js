@@ -46,7 +46,6 @@ function conf(grunt) {
                 'booleans.js',
                 'doml4.js',
                 'query.js',
-                'ntapi.js',
                 'types.js',
                 'ready.js',
                 'shims/pnow.js',
