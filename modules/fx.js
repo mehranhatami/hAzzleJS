@@ -66,7 +66,7 @@ var nRAF, nCAF,
     nCAF = function() {
         return top.cancelAnimationFrame ||
             // no native cAF support
-            (!ios6 ? foreign.cancelAnimationFrame ||
+            (!ios6 ? top.cancelAnimationFrame ||
                 top.webkitCancelAnimationFrame ||
                 top.webkitCancelRequestAnimationFrame ||
                 top.mozCancelAnimationFrame :
@@ -82,7 +82,6 @@ nRAF(function(timestamp) {
     // if not, we have to do a timestamp fix on each frame
     fixTick = timestamp > 1e12 != pnow() > 1e12;
 });
-
 
 var ticker = nRAF;
 
@@ -131,8 +130,8 @@ FX.prototype = {
     update: function() {
 
         var hooks = hAzzle.fxHooks[this.prop];
-
-        if (this.options.step) {
+        // 'now' could be an object
+        if (this.options.step && typeof this.now !== 'object') {
             this.options.step.call(elem, this.now, this);
         }
 
@@ -142,17 +141,14 @@ FX.prototype = {
             hAzzle.fxHooks._default.set(this);
         }
         return this;
-
     },
 
     /**
-     * Get the current CSS style
+     * Get the current CSS style for the animated object
      */
 
     curStyle: function() {
-
         var hooks = hAzzle.fxHooks[this.prop];
-
         return hooks && hooks.get ?
             hooks.get(this) :
             hAzzle.fxHooks._default.get(this);
@@ -181,7 +177,7 @@ FX.prototype = {
         var callback = hAzzle.shallowCopy(function(gotoEnd) {
 
             var lastTickTime = pnow(),
-                v, i, done = true;
+                v, val, i, done = true;
 
             // Do animation if we are not at the end
 
@@ -220,7 +216,7 @@ FX.prototype = {
                     if (typeof start !== 'object') {
                         start = {};
                     }
-                    for (var val in end) {
+                    for (val in end) {
                         if (!start.hasOwnProperty(val)) {
                             start[val] = 0;
                         }
@@ -370,7 +366,6 @@ hAzzle.extend({
     setEasing: function(val) {
 
         fxEasing = typeof val === 'string' ? val : 'linear';
-
     },
 
     // Set default duration value
@@ -378,7 +373,6 @@ hAzzle.extend({
     setDuration: function(val) {
 
         fxDuration = typeof val === 'number' ? val : 500;
-
     },
 
     // performance.now()
