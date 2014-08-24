@@ -1,15 +1,18 @@
 // manipulation.js
 var
     manipRegex = {
-        innerHTMLRegexp: /<(?:script|style|link)/i,
-        xhtmlRegexp: /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        innerHTMLRegexp: /<(script|style|link)/i,
         tagNameRegexp: /<([\w:]+)/,
         htmlRegexp: /<|&#?\w+;/,
         checkedRegexp: /checked\s*(?:[^=]|=\s*.checked.)/i,
         scriptRegexp: /^$|\/(?:java|ecma)script/i,
         maskedRegexp: /^true\/(.*)/,
         iAHRegexp: /<script|\[object/i,
-        cleanScriptRegexp: /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g
+        cleanScriptRegexp: /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g,
+        // element that self-closes but shouldn't ($1-$5) or no-innerHTML container ($6)
+        xhtmlRegexp: /(<)(?!area|br|col|embed|hr|img|input|meta|param|link)(([\w:]+)[^>]*)(\/)(>)|(<(script|style|textarea)[^>]*>[\w\W]*?<\/\7\s*>|<!--[\w\W]*?--)/gi,
+        // "<"; element name and content; ">"; "<"; "/"; element name; ">"; no-innerHTML container
+        xhtmTaglReplacement: "$1$2$5$1$4$3$5$6",
     },
 
     // We have to close these tags to support XHTML
@@ -33,6 +36,21 @@ htmlMap.th = htmlMap.td;
 htmlMap.style = htmlMap.table = htmlMap.base;
 
 hAzzle.extend({
+
+    placeholder: function(text) {
+        var elem = hAzzle(this);
+        elem.focus(function(e) {
+            elem.val('');
+        });
+        elem.blur(function(e) {
+            if (hAzzle.trim(elem.val()) == '') {
+                elem.val(text);
+            }
+        });
+        if (hAzzle.trim(elem.val()) == '') {
+            elem.val(text);
+        }
+    },
 
     /**
      * Get html from element.
@@ -64,6 +82,10 @@ hAzzle.extend({
             });
         }
 
+        if (typeof value === 'number') {
+            value = value.toString();
+        }
+
         // Remove all data and avoid memory leaks before
         // appending HTML
 
@@ -72,7 +94,7 @@ hAzzle.extend({
 
             return this.empty().each(function(elem) {
 
-                value = value.replace(manipRegex.xhtmlRegexp, '<$1></$2>');
+                value = value.replace(manipRegex.xhtmlRegexp, manipRegex.xhtmTaglReplacement);
 
                 try {
 
@@ -195,8 +217,8 @@ hAzzle.extend({
 
                     if (!manipRegex.iAHRegexp.test(iAH) && !htmlMap[tag]) {
                         return this.each(function(index) {
-                            if (this.insertAdjacentHTML && 
-                                this.parentNode && 
+                            if (this.insertAdjacentHTML &&
+                                this.parentNode &&
                                 this.parentNode.nodeType === 1) {
                                 this.insertAdjacentHTML(place, iAH.replace(manipRegex.xhtmlRegexp, '<$1></$2>'));
 
@@ -352,19 +374,19 @@ function createDocFragment(elems, context, selection) {
                 // Deserialize a standard representation
                 tag = (manipRegex.tagNameRegexp.exec(elem) || ['', ''])[1].toLowerCase();
                 wrap = htmlMap[tag] || htmlMap.base;
-                tmp.innerHTML = wrap[1] + elem.replace(manipRegex.xhtmlRegexp, '<$1></$2>') + wrap[2];
+                tmp.innerHTML = wrap[1] + elem.replace(manipRegex.xhtmlRegexp, manipRegex.xhtmTaglReplacement) + wrap[2];
 
                 // Descend through wrappers to the right content
                 j = wrap[0];
-                
-				while (j--) {
+
+                while (j--) {
                     tmp = tmp.lastChild;
                 }
 
                 hAzzle.merge(nodes, tmp.childNodes);
 
                 // Remember the top-level container
-				
+
                 tmp = fragment.firstChild;
 
                 tmp.textContent = '';

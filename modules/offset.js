@@ -22,6 +22,7 @@ hAzzle.extend({
         }
 
         var el = this[0],
+		    parents,
             d, w, boundingRect;
 
         if (el) {
@@ -30,10 +31,11 @@ hAzzle.extend({
             boundingRect = el.getBoundingClientRect();
             w = getWindow(d);
 
-            // If current element don't exist in the 
-            // document root, return empty object
+       // Make sure it's not a disconnected DOM node
 
-            if (!hAzzle.contains(docElem, el)) {
+        parents = this.parents();
+		
+		if ( parents[ parents.length - 1 ] !== docElem ) {
 
                 return {
                     top: 0,
