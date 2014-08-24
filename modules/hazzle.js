@@ -1,13 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.9c RC3
+ * Version: 0.9.9d RC3
  * Released under the MIT License.
  *
- * Date: 2014-08-24
+ * Date: 2014-08-25
  */
 (function(global, factory) {
-
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
             factory(global, true) :
@@ -28,7 +27,6 @@
 
     var document = window.document,
 
-
         // Prototype references.
 
         ArrayProto = Array.prototype,
@@ -41,19 +39,6 @@
         // Holds javascript natives
 
         natives = {},
-
-        nl = ['Boolean',
-            'String',
-            'Function',
-            'Array',
-            'Date',
-            'RegExp',
-            'Object',
-            'Error',
-            'Arguments'
-        ],
-
-        i = nl.length,
 
         // Whitespace regexp for hAzzle.trim()
 
@@ -108,14 +93,11 @@
 
             // Wrap DOM nodes.
 
-        } else if (hAzzle.isElement(selector) || hAzzle.isDocument(selector)) {
+        } else if (hAzzle.isElement(selector) ||
+            hAzzle.isDocument(selector) ||
+            (selector === window)) {
 
             selector = [selector];
-        } else if (selector === window) {
-
-            // Need to find a solution here for the window 
-            this[0] = window;
-            return this;
         }
 
         if (selector) {
@@ -173,12 +155,9 @@
          */
 
         map: function(callback) {
-            var res = hAzzle(hAzzle.map(this, function(elem, i) {
+            return hAzzle(hAzzle.map(this, function(elem, i) {
                 return callback.call(elem, i, elem);
             }));
-        },
-        set: function(key, value) {
-            return this[key] = value;
         }
     };
 
@@ -193,13 +172,10 @@
             i = 0,
             k,
             extend = function(target, source) {
-
                 for (k in source) {
-
-                    source.hasOwnProperty(k) && ((target || Core.prototype)[k] = source[k])
+                    source.hasOwnProperty(k) && ((target || Core.prototype)[k] = source[k]);
                 }
-
-            }
+            };
 
         // Don't do iteration if we can avoid it,
         // better performance
@@ -217,7 +193,7 @@
                 extend(target, arguments[i]);
             }
         }
-    }
+    };
 
     hAzzle.extend({
 
@@ -323,7 +299,6 @@
         // e.g. boxSizing -> box-sizing
 
         decamelize: function(str) {
-
             return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
         },
 
@@ -428,9 +403,6 @@
             var rval = val,
                 i = 0,
                 l = arr.length;
-
-
-
 
             for (; i < l; i++) {
 
@@ -583,7 +555,6 @@
 
         type: function(obj) {
 
-
             var type = typeof obj,
                 str;
 
@@ -612,7 +583,9 @@
             return type;
 
         },
+
         hasOwn: natives.hasOwnProperty
+
     }, hAzzle);
 
     /**
@@ -666,18 +639,24 @@
 
     // Populate the native list
 
-    while (i--) {
-
-        natives['[object ' + nl[i] + ']'] = nl[i].toLowerCase();
-    }
+    hAzzle.each(['Boolean',
+        'String',
+        'Function',
+        'Array',
+        'Date',
+        'RegExp',
+        'Object',
+        'Error',
+        'Arguments'
+    ], function() {
+        natives['[object ' + this + ']'] = this.toLowerCase();
+    });
 
     // Expose hAzzle to the global object
 
     if (typeof noGlobal === 'undefined') {
         window.hAzzle = hAzzle;
     }
-
-
     return hAzzle;
 
 }));
