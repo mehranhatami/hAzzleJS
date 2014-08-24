@@ -130,41 +130,19 @@ FX.prototype = {
 
     update: function() {
 
-        var self = this,
-            prop = self.prop,
-            elem = self.elem,
-            style = elem.style,
-            now = self.now,
-            hooks = hAzzle.fxHooks[prop];
+        var hooks = hAzzle.fxHooks[this.prop];
 
-        if (self.options.step) {
-            self.options.step.call(elem, self.now, self);
+        if (this.options.step) {
+            this.options.step.call(elem, this.now, this);
         }
-
-        // If any 'hooks' - use it
-
 
         if (hooks && hooks.set) {
-
-            // params:  elem, now, prop
-            // fx can be a object, so we deal with it before
-            // sending it to the fxHooks
-
-            hooks.set(elem, now, prop);
-
+            hooks.set(this);
         } else {
-
-            // 'now' can be a object, but as default we deal with as
-            // a single value
-
-            if (style && hAzzle.cssHooks[prop]) {
-                hAzzle.style(elem, prop, now + self.unit);
-            } else {
-                hAzzle.style(elem, prop, now + self.unit);
-            }
+            hAzzle.fxHooks._default.set(this);
         }
+        return this;
 
-        return;
     },
 
     /**
@@ -173,34 +151,11 @@ FX.prototype = {
 
     curStyle: function() {
 
-        var self = this,
-            prop = self.prop,
-            result,
-            elem = self.elem,
-            style = elem.style,
-            hooks = hAzzle.fxHooks[prop];
+        var hooks = hAzzle.fxHooks[this.prop];
 
-
-        if (hooks && hooks.get) {
-
-            hooks.get(elem, self.now, prop);
-
-        } else {
-
-            // If no fxHooks, get current CSS style the
-            // 'normal' way 
-
-            if (elem[prop] !== null &&
-                (!style || style[prop]) == null) {
-                return curCSS(elem, prop);
-            }
-
-            result = hAzzle.css(elem, prop, '');
-
-            // Empty strings, null, undefined and 'auto' are converted to 0.
-
-            return !result || result === 'auto' ? 0 : result;
-        }
+        return hooks && hooks.get ?
+            hooks.get(this) :
+            hAzzle.fxHooks._default.get(this);
     },
 
     /**
@@ -226,8 +181,7 @@ FX.prototype = {
         var callback = hAzzle.shallowCopy(function(gotoEnd) {
 
             var lastTickTime = pnow(),
-                v,
-                i, done = true;
+                v, i, done = true;
 
             // Do animation if we are not at the end
 
@@ -369,22 +323,44 @@ hAzzle.extend({
 
     fxHooks: {
         scrollLeft: {
-            set: function(elem, now, prop) {
-                if (elem.nodeType && elem.parentNode) {
-                    elem[prop] = now;
+            set: function(fx) {
+                if (fx.elem.nodeType && fx.elem.parentNode) {
+                    fx.elem[fx.prop] = fx.now;
                 }
             }
         },
         scrollTop: {
-            set: function(elem, now, prop) {
-                if (elem.nodeType && elem.parentNode) {
-                    elem[prop] = now;
+            set: function(fx) {
+                if (fx.elem.nodeType && fx.elem.parentNode) {
+                    fx.elem[fx.prop] = fx.now;
                 }
             }
         },
         opacity: {
-            set: function(elem, now) {
-                elem.style.opacity = now;
+            set: function(fx) {
+                fx.elem.style.opacity = fx.now;
+            }
+        },
+
+        _default: {
+
+            get: function(fx) {
+                var result;
+
+                if (fx.elem[fx.prop] != null &&
+                    (!fx.elem.style || fx.elem.style[fx.prop] == null)) {
+                    return fx.elem[fx.prop];
+                }
+
+                result = hAzzle.css(fx.elem, fx.prop, '');
+                return !result || result === 'auto' ? 0 : result;
+            },
+            set: function(fx) {
+                if (hAzzle.cssHooks[fx.prop]) {
+                    hAzzle.style(fx.elem, fx.prop, fx.now + fx.unit);
+                } else {
+                    fx.elem[fx.prop] = fx.now;
+                }
             }
         }
     },
@@ -495,14 +471,13 @@ hAzzle.extend({
            Animate
         *******************/
 
-
         function Animate() {
 
             var elem = this,
-                isElement = elem.nodeType === 1,
-                checkDisplay, style = elem.style,
-                hidden = isElement && isHidden(elem),
-                name, p, fx, relative, start, end, unit,
+                checkDisplay,
+                style = elem.style,
+                hidden = elem.nodeType && isHidden(elem),
+                name, index, fx, relative, start, end, unit,
                 scale, target, maxIterations,
                 value, method;
 
@@ -510,9 +485,13 @@ hAzzle.extend({
                  Option: Display & Visibility
               *********************************/
 
-            if (elem.nodeType === 1 && ('height' in prop || 'width' in prop)) {
+            if (elem.nodeType === 1 && ('height' in prop ||
+                'width' in prop)) {
 
-                opt.overflow = [style.overflow, style.overflowX, style.overflowY];
+                opt.overflow = [style.overflow,
+                    style.overflowX,
+                    style.overflowY
+                ];
 
                 // Get current display
 
@@ -534,23 +513,24 @@ hAzzle.extend({
 
             // Do some iteration
 
-            for (p in prop) {
+            for (index in prop) {
 
-                value = prop[p];
-                name = hAzzle.camelize(p);
+                value = prop[index];
+                name = hAzzle.camelize(index);
 
-                if (value === 'hide' && hidden || value === 'show' && !hidden) {
+                if (value === 'hide' && hidden ||
+                    value === 'show' && !hidden) {
                     return opt.complete.call(this);
                 }
 
-                if (p !== name) {
+                if (index !== name) {
                     prop[name] = value;
-                    delete prop[p];
+                    delete prop[index];
                 }
 
                 // Create new instance
 
-                fx = new FX(elem, opt, p, easing);
+                fx = new FX(elem, opt, index, easing);
 
                 /*********************************
                    Hide / Show / Toggle
@@ -558,9 +538,9 @@ hAzzle.extend({
 
                 if (showhidetgl.test(value)) {
 
-                    if ((method = hAzzle.private(elem, 'toggle' + p) ||
+                    if ((method = hAzzle.private(elem, 'toggle' + index) ||
                         (value === 'toggle' ? hidden ? 'show' : 'hide' : 0))) {
-                        hAzzle.private(elem, 'toggle' + p, method === 'show' ? 'hide' : 'show');
+                        hAzzle.private(elem, 'toggle' + index, method === 'show' ? 'hide' : 'show');
                         fx.showhide(method);
                     } else {
                         fx.showhide(value);
@@ -573,9 +553,9 @@ hAzzle.extend({
                     if (relative) {
 
                         target = fx.curStyle(),
-                            unit = relative && relative[3] || (hAzzle.unitless[p] ? "" : "px"),
-                            start = (hAzzle.unitless[p] || unit !== "px" && +target) &&
-                            relativevalues.exec(hAzzle.css(elem, p)),
+                            unit = relative && relative[3] || (hAzzle.unitless[index] ? '' : 'px'),
+                            start = (hAzzle.unitless[index] || unit !== 'px' && +target) &&
+                            relativevalues.exec(hAzzle.css(elem, index)),
                             scale = 1,
                             maxIterations = 20;
 
@@ -590,7 +570,7 @@ hAzzle.extend({
                                 scale = scale || ".5";
                                 start = start / scale;
 
-                                hAzzle.style(elem, p, start + unit);
+                                hAzzle.style(elem, index, start + unit);
 
                             } while (
                                 scale !== (scale = fx.curStyle() / target) && scale !== 1 && --maxIterations
@@ -626,17 +606,7 @@ hAzzle.extend({
 
         if (options.queue === false) {
 
-            // Fire delay if any
-            /*           
-            		   if (options.delay) {
-
-                           setTimeout(function() {
-            				   return this.each(Animate)
-            				   }, opt.delay);
-                       
-            		   } else {*/
             return this.each(Animate);
-            //              }
 
         } else {
 
