@@ -176,7 +176,7 @@ hAzzle.extend({
 
         args = concat.apply([], args);
 
-        var fragment, first, scripts, hasScripts, node, doc, iAH, tag,
+        var fragment, first, scripts, hasScripts, node, doc, tag,
             i = 0,
             set = this,
             l = set.length,
@@ -213,7 +213,7 @@ hAzzle.extend({
 
                 if (iAH) {
 
-                    return insertAdjacent(args.join(''), iAH, set, filterFn)
+                    return insertAdjacent(args.join(''), iAH, set, filterFn);
                 }
 
                 scripts = hAzzle.map(hAzzle.grab(fragment, 'script'), disableScript);
