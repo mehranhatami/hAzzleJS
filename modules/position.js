@@ -163,8 +163,7 @@ function augmentWidthOrHeight(elem, name, extra, isBorderBox) {
 
         } else {
 
-
-            val += parseFloat(curCSS(elem, 'padding' + dir[i], true, styles));
+            val += parseFloat(curCSS(elem, 'padding' + dir[i], true, elem.style));
 
             if (extra !== 'padding') {
 

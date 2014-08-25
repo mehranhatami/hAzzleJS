@@ -304,6 +304,8 @@ hAzzle.extend({
 
     dictionary: [],
 
+    sequences: {},
+
     // Detect if performance.now() are supported			
 
     perfNow: perfNow,
@@ -373,7 +375,8 @@ hAzzle.extend({
                 if (hAzzle.cssHooks[fx.prop]) {
                     hAzzle.style(fx.elem, fx.prop, fx.now + fx.unit);
                 } else {
-                    fx.elem[fx.prop] = fx.now;
+                    hAzzle.style(fx.elem, fx.prop, fx.now + fx.unit);
+
                 }
             }
         }
@@ -665,9 +668,6 @@ function interpretValue(elem, fx, relative, prop) {
     }
 }
 
-
-
-
 function opts(options, easing, callback) {
     options = options || {};
 
@@ -763,6 +763,7 @@ function Animate(elem, prop, easing, opt) {
     if (elem.nodeType === 1 && ('height' in prop ||
         'width' in prop)) {
 
+        //       opt.overflow = [ curCSS(elem, 'overflow'), curCSS(elem, 'overflowX'), curCSS(elem, 'overflowY') ];
         opt.overflow = [style.overflow,
             style.overflowX,
             style.overflowY
@@ -782,8 +783,12 @@ function Animate(elem, prop, easing, opt) {
         }
     }
 
+    // Both directions hide scrollbars since scrollbar height animations looks unappealing.
+
     if (opt.overflow) {
         style.overflow = 'hidden';
+        style.overflowX = "visible";
+        style.overflowY = "hidden";
     }
 
     // Do some iteration
@@ -798,10 +803,10 @@ function Animate(elem, prop, easing, opt) {
             return opt.complete.call(this);
         }
 
-        if (index !== name) {
-            prop[name] = value;
-            delete prop[index];
-        }
+        //      if (index !== name) {
+        //          prop[name] = value;
+        //            delete prop[index];
+        //    }
 
         // Create new instance
 
