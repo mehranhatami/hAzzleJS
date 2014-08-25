@@ -1,6 +1,5 @@
 // fx.js
-
-var  fxPrefix = 'hAzzleFX',
+var fxPrefix = 'hAzzleFX',
     // Default duration value
 
     fxDuration = 400,
@@ -18,7 +17,74 @@ var  fxPrefix = 'hAzzleFX',
 
     rafId,
 
- ticker = nRAF;
+    nRAF, nCAF,
+    perf = window.performance,
+    lastTime = 0,
+
+    // Checks for iOS6 will only be done if no native frame support
+
+    ios6 = /iP(ad|hone|od).*OS 6/.test(window.navigator.userAgent),
+
+    fixTick = false,
+
+    // Performance.now()
+
+    perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
+    pnow = perfNow ? function() {
+        return perfNow.call(perf);
+    } : function() {
+        return hAzzle.now();
+    };
+
+(function() {
+
+    nRAF = function() {
+        // native animation frames
+        // http://webstuff.nfshost.com/anim-timing/Overview.html
+        // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
+
+        return top.requestAnimationFrame ||
+            // no native rAF support
+            (ios6 ? // iOS6 is buggy
+                top.requestAnimationFrame ||
+                top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
+                top.mozRequestAnimationFrame ||
+                top.msRequestAnimationFrame :
+                // IE <= 9, Android <= 4.3, very old/rare browsers
+                function(callback) {
+                    var currTime = hAzzle.now(),
+                        timeToCall = Math.max(0, 16 - (currTime - lastTime)),
+                        id = window.setTimeout(function() {
+                                callback(currTime + timeToCall);
+                            },
+                            timeToCall);
+                    lastTime = currTime + timeToCall;
+                    return id; // return the id for cancellation capabilities
+                });
+    }();
+
+    nCAF = function() {
+        return top.cancelAnimationFrame ||
+            // no native cAF support
+            (!ios6 ? top.cancelAnimationFrame ||
+                top.webkitCancelAnimationFrame ||
+                top.webkitCancelRequestAnimationFrame ||
+                top.mozCancelAnimationFrame :
+                function(id) {
+                    clearTimeout(id);
+                });
+    }();
+
+}());
+
+nRAF(function(timestamp) {
+    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+    // if not, we have to do a timestamp fix on each frame
+    fixTick = timestamp > 1e12 != pnow() > 1e12;
+});
+
+
+var ticker = nRAF;
 
 /* ============================ FX =========================== */
 
@@ -109,14 +175,14 @@ FX.prototype = {
             originalState = self.originalState,
             duration = opt.duration;
 
-        var callback = hAzzle.shallowCopy(function(gotoEnd) {
+        var callback = hAzzle.shallowCopy(function(jumpToEnd) {
 
             var lastTickTime = pnow(),
                 v, val, i, done = true;
 
             // Do animation if we are not at the end
 
-            if (gotoEnd || lastTickTime >= duration + currentTime) {
+            if (jumpToEnd || lastTickTime >= duration + currentTime) {
 
                 self.now = end;
                 pos = percent = 1;
@@ -295,8 +361,8 @@ hAzzle.extend({
                 var result;
 
                 if (fx.elem[fx.prop] != null &&
-                    (!fx.elem.style || 
-					  fx.elem.style[fx.prop] == null)) {
+                    (!fx.elem.style ||
+                        fx.elem.style[fx.prop] == null)) {
                     return fx.elem[fx.prop];
                 }
 
@@ -333,205 +399,50 @@ hAzzle.extend({
 
 }, hAzzle);
 
+
 hAzzle.extend({
+
+    /**
+     * Perform a custom animation of a set of CSS properties.
+     *
+     * @param {Object} prop
+     * @param {Object|String} options
+     * @param {String|Function} easing
+     * @param {Function} callback
+     * @return {hAzzle}
+     */
 
     animate: function(prop, options, easing, callback) {
 
-        options = options || {};
+        var opt = opts(options, easing, callback);
 
-
-
-        var opt = {},
-            duration;
-
-
-        /*********************
-          Option: Duration
-        *********************/
-
-        // jQuery uses 'slow', 'fast' e.g. as duration values. hAzzle
-        // supports similar for effects 'ONLY', or directly inside the
-        // options Object
-
-        duration = opt.duration = options.duration ? options.duration :
-            typeof options === 'number' ? options :
-            easing && typeof easing === 'number' ? easing : fxDuration;
-
-        if (typeof duration === 'number' && duration === 0) {
-
-            // If the user is attempting to set a duration of 0, we adjust it to
-            // 1 (in order to produce an immediate style change).
-
-            opt.duration = 1;
+        function startAnimation() {
+            return Animate(this, prop, easing, opt);
         }
 
-        if (typeof duration === 'string') {
-            opt.duration = hAzzle.duration[duration.toLowerCase()] || fxDuration;
-        }
-
-        /**********************
-          Option: Callbacks
-        **********************/
-
-        opt.complete = (options.complete && typeof options.complete === 'function' ?
-            options.complete : (options && typeof options === 'function') ? options :
-            (easing && typeof easing === 'function') ? easing :
-            (callback && typeof callback === 'function')) || function() {};
-
-        /*******************
-            Option: Easing
-        *******************/
-
-        opt.easing = easing = options.easing && typeof options.easing === 'string' ?
-            options.easing : (options && typeof options === 'string') ? options :
-            (easing && typeof easing === 'string');
-
-        /*******************
-            Option: Queue
-        *******************/
-
-        if (!opt.queue || opt.queue === true) {
-            opt.queue = 'fx';
-        }
-
-        opt.old = opt.complete;
-
-        // Complete
-
-        opt.complete = function() {
-            if (hAzzle.isFunction(opt.old)) {
-
-                opt.old.call(this);
-            }
-
-            if (opt.queue) {
-                hAzzle.dequeue(this, opt.queue);
-            }
-        };
-
-        // If no properties, return
-
-        if (hAzzle.isEmptyObject(prop)) {
-            return this.each(opt.complete, [false]);
-        }
-
-        /*******************
-           Animate
-        *******************/
-
-        function Animate() {
-
-            var elem = this,
-                checkDisplay,
-                style = elem.style,
-                hidden = elem.nodeType && isHidden(elem),
-                name, index, fx, relative, start,
-                value, method;
-
-            /*********************************
-                 Option: Display & Visibility
-              *********************************/
-
-            if (elem.nodeType === 1 && ('height' in prop ||
-                'width' in prop)) {
-
-                opt.overflow = [style.overflow,
-                    style.overflowX,
-                    style.overflowY
-                ];
-
-                // Get current display
-
-                display = curCSS(elem, 'display');
-
-                // Test default display if display is currently 'none'
-
-                checkDisplay = display === 'none' ?
-                    hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName) : display;
-
-                if (checkDisplay === 'inline' && curCSS(elem, 'float') === 'none') {
-                    style.display = 'inline-block';
-                }
-            }
-
-            if (opt.overflow) {
-                style.overflow = 'hidden';
-            }
-
-            // Do some iteration
-
-            for (index in prop) {
-
-                value = prop[index];
-                name = hAzzle.camelize(index);
-
-                if (value === 'hide' && hidden ||
-                    value === 'show' && !hidden) {
-                    return opt.complete.call(this);
-                }
-
-                if (index !== name) {
-                    prop[name] = value;
-                    delete prop[index];
-                }
-
-                // Create new instance
-
-                fx = new FX(elem, opt, index, easing);
-
-                /*********************************
-                   Hide / Show / Toggle
-                  *********************************/
-
-                if (showhidetgl.test(value)) {
-
-                    if ((method = hAzzle.private(elem, 'toggle' + index) ||
-                        (value === 'toggle' ? hidden ? 'show' : 'hide' : 0))) {
-                        hAzzle.private(elem, 'toggle' + index, method === 'show' ? 'hide' : 'show');
-                        fx.showhide(method);
-                    } else {
-                        fx.showhide(value);
-                    }
-
-                } else {
-
-                    relative = relativevalues.exec(value);
-
-                    // If a +=/-= token was provided, we're doing a relative animation
-
-                    if (relative) {
-
-                        interpretValue(elem, fx, relative, index);
-
-                    } else {
-
-                        // Start the animation
-
-                        fx.run(start, value);
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        // When the queue option is set to false, the call skips the element's queue and fires immediately.
+        // When the queue option is set to false, the call skips the element's queue 
+        // and fires immediately.
 
         if (options.queue === false) {
 
-            return this.each(Animate);
+            return this.each(startAnimation);
 
         } else {
 
-            return this.queue(opt.queue, Animate);
+            return this.queue(opt.queue, startAnimation);
         }
     },
 
-    stop: function(type, clearQueue, gotoEnd) {
+    /**
+     * Stop the currently-running animation on the matched elements..
+     *
+     * @return {hAzzle}
+     */
+    stop: function(type, clearQueue, jumpToEnd) {
 
         if (typeof type !== 'string') {
 
-            gotoEnd = clearQueue;
+            jumpToEnd = clearQueue;
             clearQueue = type;
             type = undefined;
         }
@@ -548,7 +459,7 @@ hAzzle.extend({
 
             function stopQueue(elem, data, i) {
                 hAzzle.removePrivate(elem, i, true);
-                data[i].stop(gotoEnd);
+                data[i].stop(jumpToEnd);
             }
 
             if (i) {
@@ -570,7 +481,7 @@ hAzzle.extend({
                 if (dictionary[i].elem === this &&
                     (!type || dictionary[i].queue === type)) {
 
-                    if (gotoEnd) {
+                    if (jumpToEnd) {
 
                         // Force the next step to be the last
 
@@ -586,7 +497,7 @@ hAzzle.extend({
                 }
             }
 
-            if (dequeue || !gotoEnd) {
+            if (dequeue || !jumpToEnd) {
                 hAzzle.dequeue(this, type);
             }
 
@@ -696,27 +607,6 @@ function fxState(elem, prop, opt, start, end) {
     };
 }
 
-
-
-if (!hAzzle.isMobile && document.hidden !== undefined) {
-    document.addEventListener('visibilitychange', function() {
-        // Reassign the rAF function (which the global update() function uses) based on the tab's focus state.
-        if (document.hidden) {
-            ticker = function(callback) {
-                // The tick function needs a truthy first argument in order to pass its internal timestamp check.
-                return setTimeout(function() {
-                    callback(true);
-                }, 17);
-            };
-
-            // The rAF loop has been paused by the browser, so we manually restart the tick.
-            update();
-        } else {
-            ticker = nRAF;
-        }
-    });
-}
-
 /**
  * Calculate relative animation
  *
@@ -725,8 +615,8 @@ if (!hAzzle.isMobile && document.hidden !== undefined) {
 function interpretValue(elem, fx, relative, prop) {
 
     var end, target = fx.curStyle(),
-        unit = relative && relative[3] || 
-		       (hAzzle.unitless[prop] ? '' : 'px'),
+        unit = relative && relative[3] ||
+        (hAzzle.unitless[prop] ? '' : 'px'),
         start = (hAzzle.unitless[prop] ||
             unit !== 'px' && +target) &&
         relativevalues.exec(hAzzle.css(elem, prop)),
@@ -773,4 +663,202 @@ function interpretValue(elem, fx, relative, prop) {
 
         fx.run(start, end);
     }
+}
+
+
+
+
+function opts(options, easing, callback) {
+    options = options || {};
+
+    var opt = {},
+        duration;
+
+
+    /*********************
+      Option: Duration
+    *********************/
+
+    // jQuery uses 'slow', 'fast' e.g. as duration values. hAzzle
+    // supports similar for effects 'ONLY', or directly inside the
+    // options Object
+
+    duration = opt.duration = options.duration ? options.duration :
+        typeof options === 'number' ? options :
+        easing && typeof easing === 'number' ? easing : fxDuration;
+
+    if (typeof duration === 'number' && duration === 0) {
+
+        // If the user is attempting to set a duration of 0, we adjust it to
+        // 1 (in order to produce an immediate style change).
+
+        opt.duration = 1;
+    }
+
+    if (typeof duration === 'string') {
+        opt.duration = hAzzle.duration[duration.toLowerCase()] || fxDuration;
+    }
+
+    /**********************
+      Option: Callbacks
+    **********************/
+
+    opt.complete = (options.complete && typeof options.complete === 'function' ?
+        options.complete : (options && typeof options === 'function') ? options :
+        (easing && typeof easing === 'function') ? easing :
+        (callback && typeof callback === 'function')) || function() {};
+
+    /*******************
+        Option: Easing
+    *******************/
+
+    opt.easing = easing = options.easing && typeof options.easing === 'string' ?
+        options.easing : (options && typeof options === 'string') ? options :
+        (easing && typeof easing === 'string');
+
+    /*******************
+        Option: Queue
+    *******************/
+
+    if (!opt.queue || opt.queue === true) {
+        opt.queue = 'fx';
+    }
+
+    opt.old = opt.complete;
+
+    // Complete
+
+    opt.complete = function() {
+        if (hAzzle.isFunction(opt.old)) {
+
+            opt.old.call(this);
+        }
+
+
+        if (opt.queue) {
+            hAzzle.dequeue(this, opt.queue);
+        }
+    };
+    return opt;
+}
+
+function Animate(elem, prop, easing, opt) {
+
+    var
+        checkDisplay,
+        style = elem.style,
+        hidden = elem.nodeType && isHidden(elem),
+        name, index, fx, relative, start,
+        value, method;
+
+    // If no properties, return
+
+    if (hAzzle.isEmptyObject(prop)) {
+        return this.each(opt.complete, [false]);
+    }
+    /*********************************
+         Option: Display & Visibility
+      *********************************/
+
+    if (elem.nodeType === 1 && ('height' in prop ||
+        'width' in prop)) {
+
+        opt.overflow = [style.overflow,
+            style.overflowX,
+            style.overflowY
+        ];
+
+        // Get current display
+
+        display = curCSS(elem, 'display');
+
+        // Test default display if display is currently 'none'
+
+        checkDisplay = display === 'none' ?
+            hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName) : display;
+
+        if (checkDisplay === 'inline' && curCSS(elem, 'float') === 'none') {
+            style.display = 'inline-block';
+        }
+    }
+
+    if (opt.overflow) {
+        style.overflow = 'hidden';
+    }
+
+    // Do some iteration
+
+    for (index in prop) {
+
+        value = prop[index];
+        name = hAzzle.camelize(index);
+
+        if (value === 'hide' && hidden ||
+            value === 'show' && !hidden) {
+            return opt.complete.call(this);
+        }
+
+        if (index !== name) {
+            prop[name] = value;
+            delete prop[index];
+        }
+
+        // Create new instance
+
+        fx = new FX(elem, opt, index, easing);
+
+        /*********************************
+           Hide / Show / Toggle
+          *********************************/
+
+        if (showhidetgl.test(value)) {
+
+            if ((method = hAzzle.private(elem, 'toggle' + index) ||
+                (value === 'toggle' ? hidden ? 'show' : 'hide' : 0))) {
+                hAzzle.private(elem, 'toggle' + index, method === 'show' ? 'hide' : 'show');
+                fx.showhide(method);
+            } else {
+                fx.showhide(value);
+            }
+
+        } else {
+
+            relative = relativevalues.exec(value);
+
+            // If a +=/-= token was provided, we're doing a relative animation
+
+            if (relative) {
+
+                interpretValue(elem, fx, relative, index);
+
+            } else {
+
+                // Start the animation
+
+                fx.run(start, value);
+            }
+        }
+    }
+
+    return true;
+}
+
+
+if (!hAzzle.isMobile && document.hidden !== undefined) {
+    document.addEventListener('visibilitychange', function() {
+        // Reassign the rAF function (which the global update() function uses) based on the tab's focus state.
+        if (document.hidden) {
+            ticker = function(callback) {
+                // The tick function needs a truthy first argument in order to pass its internal timestamp check.
+                return setTimeout(function() {
+                    callback(true);
+                }, 17);
+            };
+
+            // The rAF loop has been paused by the browser, so we manually restart the tick.
+            update();
+        } else {
+            ticker = nRAF;
+        }
+    });
 }

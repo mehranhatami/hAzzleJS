@@ -80,7 +80,6 @@ function conf(grunt) {
                 'offset.js',
                 'showhide.js',
                 'queue.js',
-                'raf.js',
 				'fx.js',
 				'fxhooks.js',	
                 'events.js',
