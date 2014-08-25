@@ -10,7 +10,7 @@ var nRAF, nCAF,
 
     // Default duration value
 
-    fxDuration = 500,
+    fxDuration = 400,
 
     // Default easing value
 
@@ -116,7 +116,6 @@ FX.prototype = {
         this.now = 0;
         this.currentState = {};
         this.originalState = {};
-        this.isRunning = false;
 
         // This will and can be overwritten
 
@@ -314,8 +313,43 @@ hAzzle.extend({
 
     },
 
-    // FX Hooks
-    // Can and will be extended through plug-ins
+    /**
+     * FX Hooks used to extend the animated CSS properties.
+     * It works the same way as hAzzle.cssHooks, but the
+     *
+     * 'fx' object contains:
+     *
+     * - elem  ( element that are animating)
+     * - prop (animated property)
+     * - now  ( current step - could be a object)
+     * - easing
+     *
+     * This fxHook let you set properties like transitions and
+     * transform.
+     *
+     * Example:
+     *
+     * hAzzle( "test" ).animate({transform: 'translateY(-100px) rotate(1rad) scaleX(2) skewY(42deg)'});
+     *
+     * In this case it first use the 'getter' to see if the transform propertiy exist, and if not it
+     * will fallback to _default.
+     *
+     * The getter:
+     *
+     * hAzzle.fxHooks.transform: { get: function(fx) {} }
+     *
+     * The setter:
+     *
+     * hAzzle.fxHooks.transform: { set: function(fx) {} }
+     *
+     *
+     * The getter let you start your animation from an already existing position. If you already
+     * defined skewY(20deg) with CSS rules, you can use the getter to start from this position.
+     *
+     * The 'setter' sets the CSS property on the element. In this case.  skewY(42deg)
+     *
+     * Then the animation will start at skewY(20deg) and end at skewY(42deg)
+     */
 
     fxHooks: {
         scrollLeft: {
@@ -386,6 +420,8 @@ hAzzle.extend({
     animate: function(prop, options, easing, callback) {
 
         options = options || {};
+
+
 
         var opt = {},
             duration;
