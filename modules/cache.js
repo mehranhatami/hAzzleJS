@@ -1,7 +1,9 @@
 /**
  * hAzzle's caching engine
  */
-var types = {
+var
+  splice = Array.prototype.splice,
+  types = {
 
     'null': 1,
     'boolean': 1,
@@ -36,13 +38,35 @@ function hAzzleDummy(val) {
   return obj;
 }
 
-function modifyKeys(cacheObject, key) {
+function resetStorage(self) {
 
-  if (cacheObject.keys.push(key) > maxCacheLength) {
+  var hasIndexArray = hAzzle.isArray(self.keys);
 
-    //REVIEW NEEDED: set a maximum cache size to prevent memory leak
-    //delete storage[cacheObject.keys.shift()];
+  if (hasIndexArray && self.keys.length === 0) {
+    return;
+  }
 
+  //free up the memory
+  if (self.hasOwnProperty('storage')) {
+    self.storage = undefined;
+    delete self.storage;
+  }
+
+  if (hasIndexArray) {
+    self.keys = undefined;
+    delete self.keys;
+  }
+
+  self.storage = createMapStorage();
+  self.keys = [];
+}
+
+function storeTheKey(self, key) {
+  var keys = self.keys,
+    len = keys.push(key);
+
+  if (self.hasBound && len > maxCacheLength) {
+    self.del(keys[0]);
   }
 }
 
@@ -50,15 +74,30 @@ function isDummy(obj) {
   return !!hAzzle.private(obj, '[[hAzzleDummy]]');
 }
 
-function Cache() {
+function createMapStorage() {
+  return Object.create(storePrototype);
+}
 
+function Cache(hasBound) {
   this.storage = createMapStorage();
   this.keys = [];
+  this.hasBound = (hasBound === undefined) ? true : false;
+}
+
+/* ============================ PRIVATE FUNCTIONS =========================== */
+function createCache() {
+  return new Cache();
 }
 
 /* ============================ PROTOTYPE CHAIN =========================== */
 
 Cache.prototype = {
+
+  innerCache: null,
+
+  size: function () {
+    return this.keys.length;
+  },
 
   key: function (obj) {
 
@@ -100,7 +139,11 @@ Cache.prototype = {
     if (ktype === 'object' ||
       ktype === 'function') {
 
-      keyObj = this.key(key);
+      if (this.innerCache === null) {
+        return null;
+      }
+
+      keyObj = this.innerCache.key(key);
 
       if (keyObj) {
 
@@ -121,7 +164,64 @@ Cache.prototype = {
     return null;
   },
 
-  cache: function cacheMap(key, value) {
+  clear: function clear() {
+    resetStorage(this);
+  },
+
+  del: function del(key) {
+
+    var storage = this.storage,
+      keyObj,
+      ktype = hAzzle.type(key),
+      keys, index, length, keyVal;
+
+    if (ktype === 'object' ||
+      ktype === 'function') {
+
+      if (this.innerCache === null) {
+        return false;
+      }
+
+      keyObj = this.innerCache.key(key);
+
+      if (keyObj) {
+        key = objKeyPrefix + keyObj;
+      } else {
+        return false;
+      }
+
+    }
+
+    if (storage.hasOwnProperty(key)) {
+
+      storage[key] = undefined;
+
+      delete storage[key];
+
+      //remove from keys
+      keys = this.keys;
+      index = -1;
+      length = keys.length;
+      while (++index < length) {
+        keyVal = keys[index];
+        if (keyVal === key) {
+          splice.call(keys, index--, 1);
+          break;
+        }
+      }
+
+      if (keyObj) {
+        this.del(keyObj);
+      }
+
+      return true;
+    }
+
+    return false;
+
+  },
+
+  cache: function cache(key, value) {
 
     var storage = this.storage,
       keyType = hAzzle.type(key),
@@ -130,52 +230,50 @@ Cache.prototype = {
       keyObj,
       obj;
 
-    modifyKeys(this, key);
-
     if (arguments.length === 1) {
 
-      if (keyType === 'string' ||
-        keyType === 'number') {
+      //valueType = keyType;
+      //keyType = 'string';
 
-        return this.val(key);
-      }
+      value = key;
 
-      if (keyType === 'boolean' ||
-        key === null ||
-        key === undefined) {
+      key = '[[' + hAzzle.getID(true, 'cache_') + ']]';
 
-        return key;
-      }
+      this.cache(key, value);
 
-      if (keyType === 'object' || keyType === 'function') {
+      return key;
 
-        keyObj = this.key(key);
+      // if (keyType === 'object' || keyType === 'function') {
 
-        if (keyObj) {
+      //   keyObj = this.key(key);
 
-          obj = this.val(objKeyPrefix + keyObj);
+      //   if (keyObj) {
 
-          if (obj) {
+      //     obj = this.val(objKeyPrefix + keyObj);
 
-            return obj;
+      //     if (obj) {
 
-          } else {
+      //       return obj;
 
-            return keyObj;
-          }
-        }
+      //     } else {
 
-        value = key;
+      //       return keyObj;
+      //     }
+      //   }
 
-        key = '[[' + hAzzle.getID(true, 'cache_') + ']]';
+      //   value = key;
 
-        hAzzle.private(value, cacheKey, key);
+      //   key = '[[' + hAzzle.getID(true, 'cache_') + ']]';
 
-        storage[key] = value;
+      //   hAzzle.private(value, cacheKey, key);
 
-        return key;
-      }
+      //   storage[key] = value;
+
+      //   return key;
+      // }
     } else {
+
+      storeTheKey(this, key);
 
       if (types[valueType]) {
 
@@ -188,7 +286,11 @@ Cache.prototype = {
       if (keyType === 'object' ||
         keyType === 'function') {
 
-        key = objKeyPrefix + this.cache(key);
+        if (this.innerCache === null) {
+          this.innerCache = createCache(this.hasBound);
+        }
+
+        key = objKeyPrefix + this.innerCache.cache(key);
       }
 
       hAzzle.private(value, cacheKey, key);
@@ -200,17 +302,7 @@ Cache.prototype = {
   }
 };
 
-/* ============================ PRIVATE FUNCTIONS =========================== */
-// Create Map Storage
 
-function createMapStorage() {
-
-  return Object.create(storePrototype);
-}
-
-function createCache() {
-  return new Cache();
-}
 
 // Expand to the global hAzzle Object
 
