@@ -1,5 +1,5 @@
 // effects.js
-var directions = [ "Top", "Right", "Bottom", "Left" ];
+var expat = [ "Top", "Right", "Bottom", "Left" ];
 hAzzle.each({
 
     /**
@@ -66,7 +66,7 @@ function createAnimation(type, includeWidth) {
     includeWidth = includeWidth ? 1 : 0;
 
     for (; i < 4; i += 2 - includeWidth) {
-        which = directions[i];
+        which = expat[i];
         attrs['margin' + which] = attrs['padding' + which] = type;
     }
 
