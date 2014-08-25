@@ -58,7 +58,6 @@ module.exports = function(config) {
         'raf.js',
         'fx.js',
         'fxhooks.js',		
-        'effects.js',
         'jsonxml.js',
     ];
 
