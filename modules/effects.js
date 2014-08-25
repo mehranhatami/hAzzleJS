@@ -1,4 +1,5 @@
 // effects.js
+var directions = [ "Top", "Right", "Bottom", "Left" ];
 hAzzle.each({
 
     /**
@@ -54,7 +55,7 @@ hAzzle.each({
 			                         });
     };
 });
-var directions = [ "Top", "Right", "Bottom", "Left" ];
+
 function createAnimation(type, includeWidth) {
 
     var which, i = 0,
