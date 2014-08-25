@@ -34,7 +34,7 @@ module.exports = function(config) {
 		'clone.js',
         'matchesselector.js',
         'matches.js',
-        'raf.js',
+        'effects.js',		
         'html.js',
         'shims/classlist.js',
         'classes.js',
@@ -54,6 +54,9 @@ module.exports = function(config) {
         'ajax.js',
         'dom.js',
         'traversing.js',
+        'queue.js',
+        'raf.js',
+        'fx.js',
         'jsonxml.js',
     ];
 
