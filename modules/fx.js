@@ -131,7 +131,7 @@ FX.prototype = {
         var hooks = hAzzle.fxHooks[this.prop];
         // 'now' could be an object
         if (this.options.step && typeof this.now !== 'object') {
-            this.options.step.call(elem, this.now, this);
+            this.options.step.call(this.elem, this.now, this);
         }
 
         if (hooks && hooks.set) {
@@ -507,8 +507,7 @@ hAzzle.extend({
                 checkDisplay,
                 style = elem.style,
                 hidden = elem.nodeType && isHidden(elem),
-                name, index, fx, relative, start, end, unit,
-                scale, target, maxIterations,
+                name, index, fx, relative, start,
                 value, method;
 
             /*********************************
@@ -580,46 +579,12 @@ hAzzle.extend({
 
                     relative = relativevalues.exec(value);
 
+                    // If a +=/-= token was provided, we're doing a relative animation
+
                     if (relative) {
 
-                        target = fx.curStyle(),
-                            unit = relative && relative[3] || (hAzzle.unitless[index] ? '' : 'px'),
-                            start = (hAzzle.unitless[index] || unit !== 'px' && +target) &&
-                            relativevalues.exec(hAzzle.css(elem, index)),
-                            scale = 1,
-                            maxIterations = 20;
+                        relativeCalculation(elem, fx, relative, index);
 
-                        if (start && start[3] !== unit) {
-
-                            unit = unit || start[3];
-                            relative = relative || [];
-                            start = +target || 1;
-
-                            do {
-
-                                scale = scale || ".5";
-                                start = start / scale;
-
-                                hAzzle.style(elem, index, start + unit);
-
-                            } while (
-                                scale !== (scale = fx.curStyle() / target) && scale !== 1 && --maxIterations
-                            );
-                        }
-
-                        // Update tween properties
-                        if (relative) {
-                            start = +start || +target || 0;
-                            fx.unit = unit;
-                            // If a +=/-= token was provided, we're doing a relative animation
-                            end = relative[1] ?
-                                start + (relative[1] + 1) * relative[2] :
-                                +relative[2];
-
-                            // Start the animation
-
-                            fx.run(start, end);
-                        }
                     } else {
 
                         // Start the animation
@@ -832,4 +797,62 @@ if (!hAzzle.isMobile && document.hidden !== undefined) {
             ticker = nRAF;
         }
     });
+}
+
+/**
+ * Calculate relative animation
+ *
+ */
+
+function relativeCalculation(elem, fx, relative, prop) {
+
+    var end, target = fx.curStyle(),
+        unit = relative && relative[3] || 
+		       (hAzzle.unitless[prop] ? '' : 'px'),
+        start = (hAzzle.unitless[prop] ||
+            unit !== 'px' && +target) &&
+        relativevalues.exec(hAzzle.css(elem, prop)),
+        scale = 1,
+        maxIterations = 20;
+
+    if (start && start[3] !== unit) {
+
+        unit = unit || start[3];
+        relative = relative || [];
+        start = +target || 1;
+
+        do {
+
+            scale = scale || ".5";
+            start = start / scale;
+
+            // Faster then using hAzzle.style
+
+            elem.style[prop] = start + unit;
+
+        } while (
+            scale !== (scale = fx.curStyle() / target) &&
+            scale !== 1 &&
+            --maxIterations
+        );
+    }
+
+    // Update the properties
+
+    if (relative) {
+
+        start = +start || +target || 0;
+
+        fx.unit = unit;
+
+        // If a +=/-= token was provided, we're doing a relative animation
+
+        end = relative[1] ?
+            start + (relative[1] + 1) * relative[2] :
+            +relative[2];
+
+        // Start the animation
+
+        fx.run(start, end);
+    }
 }
