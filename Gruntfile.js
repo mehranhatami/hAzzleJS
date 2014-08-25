@@ -82,6 +82,7 @@ function conf(grunt) {
                 'queue.js',
                 'raf.js',
 				'fx.js',
+				'fxhooks.js',	
                 'effects.js',				
                 'events.js',
                 'trigger.js',

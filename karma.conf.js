@@ -57,6 +57,8 @@ module.exports = function(config) {
         'queue.js',
         'raf.js',
         'fx.js',
+        'fxhooks.js',		
+        'effects.js',
         'jsonxml.js',
     ];
 

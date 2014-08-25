@@ -64,6 +64,7 @@ FX.prototype = {
     update: function() {
 
         var hooks = hAzzle.fxHooks[this.prop];
+
         // 'now' could be an object
         if (this.options.step && typeof this.now !== 'object') {
             this.options.step.call(this.elem, this.now, this);
@@ -287,25 +288,6 @@ hAzzle.extend({
      */
 
     fxHooks: {
-        scrollLeft: {
-            set: function(fx) {
-                if (fx.elem.nodeType && fx.elem.parentNode) {
-                    fx.elem[fx.prop] = fx.now;
-                }
-            }
-        },
-        scrollTop: {
-            set: function(fx) {
-                if (fx.elem.nodeType && fx.elem.parentNode) {
-                    fx.elem[fx.prop] = fx.now;
-                }
-            }
-        },
-        opacity: {
-            set: function(fx) {
-                fx.elem.style.opacity = fx.now;
-            }
-        },
 
         _default: {
 
@@ -519,7 +501,7 @@ hAzzle.extend({
 
                     if (relative) {
 
-                        relativeCalculation(elem, fx, relative, index);
+                        interpretValue(elem, fx, relative, index);
 
                     } else {
 
@@ -740,7 +722,7 @@ if (!hAzzle.isMobile && document.hidden !== undefined) {
  *
  */
 
-function relativeCalculation(elem, fx, relative, prop) {
+function interpretValue(elem, fx, relative, prop) {
 
     var end, target = fx.curStyle(),
         unit = relative && relative[3] || 

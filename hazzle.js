@@ -27,6 +27,8 @@
             path + 'matches.js',
             path + 'raf.js',
             path + 'fx.js',
+            path + 'fxhooks.js',
+            path + 'effects.js',						
             path + 'html.js',
             path + 'shims/classlist.js',
             path + 'classes.js',

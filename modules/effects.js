@@ -54,7 +54,7 @@ hAzzle.each({
 			                         });
     };
 });
-
+var directions = [ "Top", "Right", "Bottom", "Left" ];
 function createAnimation(type, includeWidth) {
 
     var which, i = 0,
