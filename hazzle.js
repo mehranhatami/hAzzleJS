@@ -26,9 +26,6 @@
             path + 'matchesselector.js',
             path + 'matches.js',
             path + 'raf.js',
-            path + 'fx.js',
-            path + 'fxhooks.js',
-            path + 'effects.js',						
             path + 'html.js',
             path + 'shims/classlist.js',
             path + 'classes.js',
@@ -50,7 +47,10 @@
             path + 'eventhooks.js',
             path + 'ajax.js',
             path + 'clone.js',
-            path + 'jsonxml.js'
+            path + 'fx.js',
+            path + 'fxhooks.js',
+            path + 'effects.js',						
+           path + 'jsonxml.js'
         ];
     if (typeof exports === 'object') {
         // node export

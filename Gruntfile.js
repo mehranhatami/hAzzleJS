@@ -83,7 +83,6 @@ function conf(grunt) {
                 'raf.js',
 				'fx.js',
 				'fxhooks.js',	
-                'effects.js',				
                 'events.js',
                 'trigger.js',
                 'aliases.js',
