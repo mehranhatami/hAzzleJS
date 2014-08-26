@@ -33,3 +33,27 @@ hAzzle.assert(function(div) {
         cssCore.has['api-boxSizingReliable'] = boxSizingReliableVal;
     }
 });
+
+
+hAzzle.assert( function(div) {
+var divStyle = div.style,
+    testProperties = [
+        'Transform',
+		'OTransform',
+		'msTransform',
+		'WebkitTransform',
+		'MozTransform',
+	],
+	i = testProperties.length;
+
+// test different vendor prefixes of these properties
+while ( i-- ) {
+	if ( testProperties[i] in divStyle ) {
+		_features.transform = testProperties[i];
+				console.log(supportProperty)
+		_features.transformOrigin = supportProperty + "Origin";
+		continue;
+	}
+}
+	});
+
