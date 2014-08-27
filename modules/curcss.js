@@ -2,7 +2,9 @@
 var topribol = /^(top|right|bottom|left)$/i,
     topleft = /top|left/i,
     computedValues = function(elem) {
-        if (elem) {
+
+        if (elem && elem !== window) {
+
             var view = elem.ownerDocument.defaultView;
             return hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
                 window.getComputedStyle(elem, null)) : elem.style;
@@ -36,8 +38,7 @@ var topribol = /^(top|right|bottom|left)$/i,
 
     curCSS = hAzzle.curCSS = function(elem, prop, computed) {
 
-        computed = computed || 
-		           getStyles(elem);
+        computed = computed || getStyles(elem);
 
         if (prop === 'height' && computed.getPropertyValue(elem, 'boxSizing').toLowerCase() !== 'border-box') {
 
@@ -79,8 +80,9 @@ var topribol = /^(top|right|bottom|left)$/i,
             }
 
         } else {
-
-            computed = computed[prop];
+            if (computed != null) {
+                computed = computed[prop];
+            }
         }
 
         return computed;
