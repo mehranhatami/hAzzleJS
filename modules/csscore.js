@@ -90,12 +90,7 @@ hAzzle.assert( function(div) {
     }
   }
 
-  cssCore.transform = getVendorPropertyName('transform') 
-  cssCore.transformOrigin = getVendorPropertyName('transformOrigin') 
   cssCore.boxShadow = getVendorPropertyName('boxshadow')   
   cssCore.borderRadius = getVendorPropertyName('borderRadius')   
   cssCore.borderImage = getVendorPropertyName('borderImage')    
 });
-
-
-
