@@ -1,13 +1,102 @@
-var rfxnum = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
-    timerId;
+// fx.js
+var fxPrefix = 'hAzzleFX',
+    // Default duration value
 
-function fx(elem, options, prop, easing) {
-    return new fx.prototype.init(elem, options, prop, easing);
+    fxDuration = 400,
+
+    // Default easing value
+
+    fxEasing = 'linear',
+
+    // Various regex we are going to use
+
+    showhidetgl = /^(?:toggle|show|hide)$/,
+    relativevalues = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
+
+    // rAF ID
+
+    rafId,
+
+    nRAF, nCAF,
+    perf = window.performance,
+    lastTime = 0,
+
+    // Checks for iOS6 will only be done if no native frame support
+
+    ios6 = /iP(ad|hone|od).*OS 6/.test(window.navigator.userAgent),
+
+    fixTick = false,
+
+    // Performance.now()
+
+    perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
+    pnow = perfNow ? function() {
+        return perfNow.call(perf);
+    } : function() {
+        return hAzzle.now();
+    };
+
+(function() {
+
+    nRAF = function() {
+        // native animation frames
+        // http://webstuff.nfshost.com/anim-timing/Overview.html
+        // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
+
+        return top.requestAnimationFrame ||
+            // no native rAF support
+            (ios6 ? // iOS6 is buggy
+                top.requestAnimationFrame ||
+                top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
+                top.mozRequestAnimationFrame ||
+                top.msRequestAnimationFrame :
+                // IE <= 9, Android <= 4.3, very old/rare browsers
+                function(callback) {
+                    var currTime = hAzzle.now(),
+                        timeToCall = Math.max(0, 16 - (currTime - lastTime)),
+                        id = window.setTimeout(function() {
+                                callback(currTime + timeToCall);
+                            },
+                            timeToCall);
+                    lastTime = currTime + timeToCall;
+                    return id; // return the id for cancellation capabilities
+                });
+    }();
+
+    nCAF = function() {
+        return top.cancelAnimationFrame ||
+            // no native cAF support
+            (!ios6 ? top.cancelAnimationFrame ||
+                top.webkitCancelAnimationFrame ||
+                top.webkitCancelRequestAnimationFrame ||
+                top.mozCancelAnimationFrame :
+                function(id) {
+                    clearTimeout(id);
+                });
+    }();
+
+}());
+
+nRAF(function(timestamp) {
+    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
+    // if not, we have to do a timestamp fix on each frame
+    fixTick = timestamp > 1e12 != pnow() > 1e12;
+});
+
+
+var ticker = nRAF;
+
+/* ============================ FX =========================== */
+
+function FX(elem, options, prop, easing) {
+    return new FX.prototype.init(elem, options, prop, easing);
 }
 
-hAzzle.fx = fx;
+hAzzle.FX = FX;
 
-hAzzle.fx.prototype = {
+/* ============================ FX PROTOTYPE CHAIN=========================== */
+
+FX.prototype = {
 
     /**
      * Init
@@ -19,14 +108,19 @@ hAzzle.fx.prototype = {
      * @return {hAzzle|Object}
      */
 
-    init: function(elem, options, prop) {
+    init: function(elem, options, prop, easing) {
 
         this.options = options;
         this.elem = elem;
         this.prop = prop;
-        this.easing = options.easing || 'linear';
+        this.easing = easing || fxEasing;
+        this.now = 0;
         this.currentState = {};
         this.originalState = {};
+
+        // This will and can be overwritten
+
+        this.unit = hAzzle.unitless[prop] ? '' : 'px';
     },
 
     /**
@@ -36,6 +130,11 @@ hAzzle.fx.prototype = {
     update: function() {
 
         var hooks = hAzzle.fxHooks[this.prop];
+
+        // 'now' could be an object
+        if (this.options.step && typeof this.now !== 'object') {
+            this.options.step.call(this.elem, this.now, this);
+        }
 
         if (hooks && hooks.set) {
             hooks.set(this);
@@ -49,10 +148,8 @@ hAzzle.fx.prototype = {
      * Get the current CSS style for the animated object
      */
 
-    cur: function() {
-
+    curStyle: function() {
         var hooks = hAzzle.fxHooks[this.prop];
-
         return hooks && hooks.get ?
             hooks.get(this) :
             hAzzle.fxHooks._default.get(this);
@@ -63,114 +160,248 @@ hAzzle.fx.prototype = {
      *
      * @param {Number} start
      * @param {Number} end
-     * @param {String} unit
      * @return {hAzzle}
      */
 
-    custom: function(from, to, unit) {
+    run: function(start, end) {
 
-        var self = this;
+        var self = this,
+            percent = 0,
+            pos = 0,
+            elem = self.elem,
+            currentTime = pnow(),
+            opt = self.options,
+            currentState = self.currentState,
+            originalState = self.originalState,
+            duration = opt.duration;
 
-        this.startTime = pnow();
-        this.end = to;
-        this.now = this.start = from;
-        this.pos = this.state = 0;
-        this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? "" : "px");
+        var callback = hAzzle.shallowCopy(function(jumpToEnd) {
 
-        hAzzle.fx.timer(
-            hAzzle.shallowCopy(function t(gotoEnd) {
-                return self.step(gotoEnd);
-            }, {
-                elem: this.elem,
-                queue: this.options.queue,
-                fxState: fxState
-            })
-        );
-    },
+            var lastTickTime = pnow(),
+                v, val, i, done = true;
 
-    showhide: function(value) {
+            // Do animation if we are not at the end
 
-  var prop = this.prop,
-      start = this.cur(),
-	  elem = this.elem;
+            if (jumpToEnd || lastTickTime >= duration + currentTime) {
 
-        var hAzzleFX = hAzzle.private(elem, 'fxshow' + prop);
+                self.now = end;
+                pos = percent = 1;
+                self.update();
 
-        this.originalState[prop] = hAzzleFX || elem.style[prop];
+                currentState[self.prop] = true;
 
-        this.options[value] = true;
-
-        if (value === 'show') {
-
-            if (hAzzleFX !== undefined) {
-
-                this.custom(start, hAzzleFX);
-
-            } else {
-
-                this.custom(prop === 'width' || prop === 'height' ? 1 : 0, start);
-            }
-
-            hAzzle(elem).show();
-
-        } else {
-
-            this.custom(start, 0);
-        }
-    },
-
-    // Each step of an animation
-	
-    step: function(gotoEnd) {
-        var p, n,
-            self = this,
-            t = pnow(),
-            done = true,
-            elem = this.elem,
-            options = this.options,
-			naturalEnd = t >= options.duration + this.startTime;
-
-        if (gotoEnd || naturalEnd) {
-            this.now = this.end;
-            this.pos = this.state = 1;
-            this.update();
-
-            this.currentState[this.prop] = true;
-
-            for (p in this.currentState) {
-                if (this.currentState[p] !== true) {
-                    done = false;
+                for (i in currentState) {
+                    if (currentState[i] !== true) {
+                        done = false;
+                    }
                 }
+
+                if (done) {
+
+                    resetCSS(elem, opt, currentState, originalState);
+                }
+
+                return false;
+
+            } else {
+
+                // Calculate easing, and perform the next step of the
+                // animation
+
+                percent = (lastTickTime - currentTime) / duration;
+                pos = hAzzle.easing[self.easing](percent, duration * percent, 0, 1, duration);
+
+
+                if (hAzzle.type(end) === 'object') {
+
+                    if (typeof start !== 'object') {
+                        start = {};
+                    }
+                    for (val in end) {
+                        if (!start.hasOwnProperty(val)) {
+                            start[val] = 0;
+                        }
+                        self.now[val] = end[val] - start[val];
+                    }
+                } else {
+
+                    self.now = start + ((end - start) * pos);
+                }
+
+                if (typeof self.now === 'object') {
+                    for (v in self.now) {
+                        self.now[v] = start + ((end[v] - start[v]) * pos);
+                    }
+                }
+
+                self.update();
             }
 
-            if (done) {
+            return true;
 
-                resetCSS(elem, options, self.currentState, self.originalState);
+        }, {
+            elem: this.elem,
+
+            // Save current animation state on the DOM element
+
+            fxState: fxState(elem, self.prop, opt, start, end)
+        });
+
+        // Push the callback into the dictionary array
+
+        hAzzle.dictionary.push(callback);
+
+        // Check if executable
+
+        if (callback()) {
+
+            // If no rafId, start the animation
+
+            if (!rafId) {
+
+                rafId = nRAF(update);
             }
-
-            return false;
 
         } else {
-            // classical easing cannot be used with an Infinity duration
-            if (options.duration == Infinity) {
-                this.now = t;
-            } else {
-                n = t - this.startTime;
-                this.state = n / options.duration;
 
-                // Perform the easing function, defaults to swing
-                this.pos = hAzzle.easing[this.easing](this.state, n, 0, 1, options.duration);
-                this.now = this.start + ((this.end - this.start) * this.pos);
-            }
-            // Perform the next step of the animation
-            this.update();
+            hAzzle.dictionary.pop();
         }
+    },
 
-        return true;
+    /**
+     * Show | Hide
+     *
+     * @param {Object} prop
+     * @return {hAzzle}
+     */
+
+    showhide: function(prop) {
+        var hAzzleFX = hAzzle.private(this.elem, fxPrefix + this.prop);
+        this.originalState[this.prop] = hAzzleFX || this.elem.style[this.prop];
+
+        this.options[prop] = true;
+
+        if (prop === 'show') {
+            if (hAzzleFX !== undefined) {
+                this.run(this.curStyle(), hAzzleFX);
+            } else {
+                this.run(this.prop === 'width' || this.prop === 'height' ? 1 : 0, this.curStyle());
+            }
+            hAzzle(this.elem).show();
+        } else {
+            this.run(this.curStyle(), 0);
+        }
     }
 };
 
-fx.prototype.init.prototype = fx.prototype;
+FX.prototype.init.prototype = FX.prototype;
+
+// Extend the hAzzle Object
+
+hAzzle.extend({
+
+    // Holds all animations
+
+    dictionary: [],
+
+    sequences: {},
+
+    // Detect if performance.now() are supported			
+
+    perfNow: perfNow,
+
+    duration: {
+        'fast': 150,
+        'normal': 500,
+        'slow': 750
+
+    },
+
+    /**
+     * FX Hooks used to extend the animated CSS properties.
+     * It works the same way as hAzzle.cssHooks, but the
+     *
+     * 'fx' object contains:
+     *
+     * - elem  ( element that are animating)
+     * - prop (animated property)
+     * - now  ( current step - could be a object)
+     * - easing
+     *
+     * This fxHook let you set properties like transitions and
+     * transform.
+     *
+     * Example:
+     *
+     * hAzzle( "test" ).animate({transform: 'translateY(-100px) rotate(1rad) scaleX(2) skewY(42deg)'});
+     *
+     * In this case it first use the 'getter' to see if the transform propertiy exist, and if not it
+     * will fallback to _default.
+     *
+     * The getter:
+     *
+     * hAzzle.fxHooks.transform: { get: function(fx) {} }
+     *
+     * The setter:
+     *
+     * hAzzle.fxHooks.transform: { set: function(fx) {} }
+     *
+     *
+     * The getter let you start your animation from an already existing position. If you already
+     * defined skewY(20deg) with CSS rules, you can use the getter to start from this position.
+     *
+     * The 'setter' sets the CSS property on the element. In this case.  skewY(42deg)
+     *
+     * Then the animation will start at skewY(20deg) and end at skewY(42deg)
+     */
+
+    fxHooks: {
+
+        _default: {
+
+            get: function(fx) {
+                var result;
+
+                if (fx.elem[fx.prop] != null &&
+                    (!fx.elem.style ||
+                        fx.elem.style[fx.prop] == null)) {
+                    return fx.elem[fx.prop];
+                }
+
+                result = hAzzle.css(fx.elem, fx.prop, '');
+                return !result || result === 'auto' ? 0 : result;
+            },
+            set: function(fx) {
+                if (hAzzle.cssHooks[fx.prop]) {
+                    hAzzle.style(fx.elem, fx.prop, fx.now + fx.unit);
+                } else {
+                    hAzzle.style(fx.elem, fx.prop, fx.now + fx.unit);
+
+                }
+            }
+        }
+    },
+
+    // Set default easing value
+
+    setEasing: function(val) {
+
+        fxEasing = typeof val === 'string' ? val : 'linear';
+    },
+
+    // Set default duration value
+
+    setDuration: function(val) {
+
+        fxDuration = typeof val === 'number' ? val : 500;
+    },
+
+    // performance.now()
+
+    pnow: pnow
+
+}, hAzzle);
+
 
 hAzzle.extend({
 
@@ -184,19 +415,25 @@ hAzzle.extend({
      * @return {hAzzle}
      */
 
-    animate: function(prop, speed, easing, callback) {
-        var optall = hAzzle.speed(speed, easing, callback),
-            doAnimation = function() {
-                return Animation(this, hAzzle.shallowCopy({}, prop), optall);
-            };
+    animate: function(prop, options, easing, callback) {
 
-        if (hAzzle.isEmptyObject(prop)) {
-            return this.each(optall.complete, [false]);
+        var opt = opts(options, easing, callback);
+
+        function startAnimation() {
+            return Animate(this, prop, easing, opt);
         }
 
-        return optall.queue === false ?
-            this.each(doAnimation) :
-            this.queue(optall.queue, doAnimation);
+        // When the queue option is set to false, the call skips the element's queue 
+        // and fires immediately.
+
+        if (options.queue === false) {
+
+            return this.each(startAnimation);
+
+        } else {
+
+            return this.queue(opt.queue, startAnimation);
+        }
     },
 
     /**
@@ -204,7 +441,6 @@ hAzzle.extend({
      *
      * @return {hAzzle}
      */
-
     stop: function(type, clearQueue, jumpToEnd) {
 
         if (typeof type !== 'string') {
@@ -221,7 +457,7 @@ hAzzle.extend({
         return this.each(function() {
 
             var dequeue = true,
-                i, timers = hAzzle.timers,
+                i, dictionary = hAzzle.dictionary,
                 data = hAzzle.private(this);
 
             function stopQueue(elem, data, i) {
@@ -244,24 +480,23 @@ hAzzle.extend({
                 }
             }
 
-            for (i = timers.length; i--;) {
-                if (timers[i].elem === this &&
-                    (!type || timers[i].queue === type)) {
+            for (i = dictionary.length; i--;) {
+                if (dictionary[i].elem === this &&
+                    (!type || dictionary[i].queue === type)) {
 
                     if (jumpToEnd) {
 
                         // Force the next step to be the last
 
-                        timers[i](true);
+                        dictionary[i](true);
 
                     } else {
 
-
-                        timers[i].fxState();
+                        dictionary[i].fxState();
                     }
 
                     dequeue = false;
-                    timers.splice(i, 1);
+                    dictionary.splice(i, 1);
                 }
             }
 
@@ -271,223 +506,39 @@ hAzzle.extend({
 
         });
     }
-
 });
 
-hAzzle.sequences = {}
 
-hAzzle.fxHooks = {};
+/* ============================ UTILITY METHODS =========================== */
 
-hAzzle.speed = function(speed, easing, fn) {
-
-
-        var opt = speed && typeof speed === "object" ? hAzzle.shallowCopy({}, speed) : {
-            complete: fn || !fn && easing ||
-                hAzzle.isFunction(speed) && speed,
-            duration: speed,
-            easing: fn && easing || easing && !hAzzle.isFunction(easing) && easing
-        };
-
-        // Go to the end state if fx are off or if document is hidden
-
-        if (document.hidden) {
-            opt.duration = 0;
-
-        } else {
-            opt.duration = typeof opt.duration === 'number' ?
-                opt.duration : hAzzle.fx.speeds[opt.duration] ?
-                hAzzle.fx.speeds[opt.duration] : hAzzle.fx.speeds._default;
-        }
-
-        // normalize opt.queue - true/undefined/null -> "fx"
-        if (opt.queue == null || opt.queue === true) {
-            opt.queue = "fx";
-        }
-
-        // Queueing
-        opt.old = opt.complete;
-
-        opt.complete = function() {
-
-            if (hAzzle.isFunction(opt.old)) {
-                opt.old.call(this);
-            }
-
-            if (opt.queue) {
-                hAzzle.dequeue(this, opt.queue);
-            }
-        };
-        return opt;
-    };
-
- hAzzle.timers = [];
-
-
-
-hAzzle.extend({
-    tick: function() {
-        var timer,
-            timers = hAzzle.timers,
-            i = 0;
-
-        for (; i < timers.length; i++) {
-            timer = timers[i];
-            // Checks the timer has not already been removed
-            if (!timer() && timers[i] === timer) {
-                timers.splice(i--, 1);
-            }
-        }
-
-        if (!timers.length) {
-            hAzzle.fx.stop();
-        }
-    },
-
-    stop: function() {
-        nCAF(timerId);
-        timerId = null;
-    },
-
-    speeds: {
-        slow: 600,
-        fast: 200,
-        // Default speed
-        _default: 400
-    }
-
-}, hAzzle.fx);
-
-function raf(timestamp) {
+function update(timestamp) {
     if (fixTick) {
         timestamp = pnow();
     }
-    //console.log(timestamp)
-    if (timerId) {
-        nRAF(raf);
-        hAzzle.fx.tick();
+    if (rafId) {
+        nRAF(update);
+        ticks();
     }
 }
 
+function ticks() {
 
-hAzzle.fx.timer = function(timer) {
-    hAzzle.timers.push(timer);
+    var timer,
+        dictionary = hAzzle.dictionary,
+        i = 0;
 
-    if (timer()) {
-        hAzzle.fx.start();
-    } else {
-        hAzzle.timers.pop();
-    }
-};
-
-hAzzle.fx.start = function() {
-    if (!timerId) {
-        timerId = nRAF(raf);
-    }
-};
-
-
-function checkHeightAuto(elem, prop, opt) {
-
-    var style = elem.style, height, display = elem.style.display;
-
-    if (elem.nodeType === 1 && ("height" in prop || "width" in prop)) {
- 
-        opt.overflow = [elem.style.overflow, elem.style.overflowX, elem.style.overflowY];
-
-        // Set display property to inline-block for height/width
-        // animations on inline elements that are having width/height animated
-
-        if (curCSS(elem, "display") === "inline" &&
-            curCSS(elem, "float") === "none") {
-            style.display = "inline-block";
+    for (; i < dictionary.length; i++) {
+        timer = dictionary[i];
+        if (!timer() && dictionary[i] === timer) {
+            dictionary.splice(i--, 1);
         }
     }
 
-    if (opt.overflow != null) {
-
-        // Ensure the element is visible, and temporarily remove vertical scrollbars 
-        // since animating them is visually unappealing.
-
-        style.overflow = 'hidden';
-        style.overflowX = 'visible';
-        style.overflowY = 'hidden';
+    if (!dictionary.length) {
+        nCAF(rafId);
+        rafId = null;
     }
-
-    return opt;
 }
-
-
-// Do the aniamtion
-
-function Animation(elem, prop, opt) {
-
-    var hidden = elem.nodeType && isHidden(elem),
-        index, val, anim, parts, start, end, unit,
-        method;
-
-    checkHeightAuto(elem, prop, opt);
-
-    for (index in prop) {
-
-        val = prop[index];
-
-        // Camelize the property, and check for vendor prefixes
-
-        name = hAzzle.camelize(hAzzle.prefixCheck(index)[0]);
-
-        if (val === 'hide' && hidden || val === 'show' && !hidden) {
-
-            return opt.complete.call(elem);
-        }
-
-        anim = new hAzzle.fx(elem, opt, index);
-
-        if (val === 'toggle' || 
-		    val === 'show' || 
-			val === 'hide') {
-
-            if ((method = hAzzle.private(elem, 'toggle' + index) ||
-                (val === 'toggle' ? hidden ? 'show' : 'hide' : 0))) {
-
-                hAzzle.private(elem, 'toggle' + index, method === 'show' ? 'hide' : 'show');
-
-                anim.showhide(method);
-            } 
-
-        } else {
-
-            parts = rfxnum.exec(val);
-            start = anim.cur();
-
-            if (parts) {
-                end = parseFloat(parts[2]);
-                unit = parts[3] || (hAzzle.unitless[index] ? "" : "px");
-
-                // We need to compute starting value
-                if (unit !== "px") {
-                    hAzzle.style(elem, index, (end || 1) + unit);
-                    start = ((end || 1) / anim.cur()) * start;
-                    hAzzle.style(elem, index, start + unit);
-                }
-
-                // If a +=/-= token was provided, we're doing a relative animation
-                if (parts[1]) {
-                    end = ((parts[1] === "-=" ? -1 : 1) * end) + start;
-                }
-
-                anim.custom(start, end, unit);
-
-            } else {
-                anim.custom(start, val, "");
-            }
-        }
-
-    }
-
-    // For JS strict compliance
-    return true;
-}
-
 
 /**
  * Reset CSS properties back to same
@@ -530,7 +581,7 @@ function resetCSS(elem, opt, curState, originalState) {
 
             style[p] = originalState[p];
 
-            hAzzle.removePrivate(elem, "fxshow" + p, true);
+            hAzzle.removePrivate(elem, fxPrefix + p, true);
 
             // Toggle data is no longer needed
 
@@ -553,13 +604,266 @@ function resetCSS(elem, opt, curState, originalState) {
 
 function fxState(elem, prop, opt, start, end) {
     return function() {
-        if (hAzzle.private(elem, "fxshow" + prop) === undefined) {
-            if (opt.hide) {
-                hAzzle.private(elem, "fxshow" + prop, start);
-            } else if (opt.show) {
-                hAzzle.private(elem, "fxshow" + prop, end);
-            }
+        if (hAzzle.private(elem, fxPrefix + prop) === undefined) {
+            hAzzle.private(elem, fxPrefix + prop, opt.hide ? start : end);
         }
     };
 }
 
+/**
+ * Calculate relative animation
+ *
+ */
+
+function interpretValue(elem, fx, relative, prop) {
+
+    var end, target = fx.curStyle(),
+        unit = relative && relative[3] ||
+        (hAzzle.unitless[prop] ? '' : 'px'),
+        start = (hAzzle.unitless[prop] ||
+            unit !== 'px' && +target) &&
+        relativevalues.exec(hAzzle.css(elem, prop)),
+        scale = 1,
+        maxIterations = 20;
+
+    if (start && start[3] !== unit) {
+
+        unit = unit || start[3];
+        relative = relative || [];
+        start = +target || 1;
+
+        do {
+
+            scale = scale || ".5";
+            start = start / scale;
+
+            // Faster then using hAzzle.style
+
+            elem.style[prop] = start + unit;
+
+        } while (
+            scale !== (scale = fx.curStyle() / target) &&
+            scale !== 1 &&
+            --maxIterations
+        );
+    }
+
+    // Update the properties
+
+    if (relative) {
+
+        start = +start || +target || 0;
+
+        fx.unit = unit;
+
+        // If a +=/-= token was provided, we're doing a relative animation
+
+        end = relative[1] ?
+            start + (relative[1] + 1) * relative[2] :
+            +relative[2];
+
+        // Start the animation
+
+        fx.run(start, end);
+    }
+}
+
+function opts(options, easing, callback) {
+    options = options || {};
+
+    var opt = {},
+        duration;
+
+
+    /*********************
+      Option: Duration
+    *********************/
+
+    // jQuery uses 'slow', 'fast' e.g. as duration values. hAzzle
+    // supports similar for effects 'ONLY', or directly inside the
+    // options Object
+
+    duration = opt.duration = options.duration ? options.duration :
+        typeof options === 'number' ? options :
+        easing && typeof easing === 'number' ? easing : fxDuration;
+
+    if (typeof duration === 'number' && duration === 0) {
+
+        // If the user is attempting to set a duration of 0, we adjust it to
+        // 1 (in order to produce an immediate style change).
+
+        opt.duration = 1;
+    }
+
+    if (typeof duration === 'string') {
+        opt.duration = hAzzle.duration[duration.toLowerCase()] || fxDuration;
+    }
+
+    /**********************
+      Option: Callbacks
+    **********************/
+
+    opt.complete = (options.complete && typeof options.complete === 'function' ?
+        options.complete : (options && typeof options === 'function') ? options :
+        (easing && typeof easing === 'function') ? easing :
+        (callback && typeof callback === 'function')) || function() {};
+
+    /*******************
+        Option: Easing
+    *******************/
+
+    opt.easing = easing = options.easing && typeof options.easing === 'string' ?
+        options.easing : (options && typeof options === 'string') ? options :
+        (easing && typeof easing === 'string');
+
+    /*******************
+        Option: Queue
+    *******************/
+
+    if (!opt.queue || opt.queue === true) {
+        opt.queue = 'fx';
+    }
+
+    opt.old = opt.complete;
+
+    // Complete
+
+    opt.complete = function() {
+        if (hAzzle.isFunction(opt.old)) {
+
+            opt.old.call(this);
+        }
+
+
+        if (opt.queue) {
+            hAzzle.dequeue(this, opt.queue);
+        }
+    };
+    return opt;
+}
+
+function Animate(elem, prop, easing, opt) {
+
+    var
+        checkDisplay,
+        style = elem.style,
+        hidden = elem.nodeType && isHidden(elem),
+        name, index, fx, relative, start,
+        value, method;
+
+    // If no properties, return
+
+    if (hAzzle.isEmptyObject(prop)) {
+        return this.each(opt.complete, [false]);
+    }
+    /*********************************
+         Option: Display & Visibility
+      *********************************/
+
+    if (elem.nodeType === 1 && ('height' in prop ||
+        'width' in prop)) {
+
+        //       opt.overflow = [ curCSS(elem, 'overflow'), curCSS(elem, 'overflowX'), curCSS(elem, 'overflowY') ];
+        opt.overflow = [style.overflow,
+            style.overflowX,
+            style.overflowY
+        ];
+
+        // Get current display
+
+        display = curCSS(elem, 'display');
+
+        // Test default display if display is currently 'none'
+
+        checkDisplay = display === 'none' ?
+            hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName) : display;
+
+        if (checkDisplay === 'inline' && curCSS(elem, 'float') === 'none') {
+            style.display = 'inline-block';
+        }
+    }
+
+    // Both directions hide scrollbars since scrollbar height animations looks unappealing.
+
+    if (opt.overflow) {
+        style.overflow = 'hidden';
+        style.overflowX = "visible";
+        style.overflowY = "hidden";
+    }
+
+    // Do some iteration
+
+    for (index in prop) {
+
+        value = prop[index];
+        name = hAzzle.camelize(index);
+
+        if (value === 'hide' && hidden ||
+            value === 'show' && !hidden) {
+            return opt.complete.call(this);
+        }
+
+        //      if (index !== name) {
+        //          prop[name] = value;
+        //            delete prop[index];
+        //    }
+
+        // Create new instance
+
+        fx = new FX(elem, opt, index, easing);
+
+        /*********************************
+           Hide / Show / Toggle
+          *********************************/
+
+        if (showhidetgl.test(value)) {
+
+            if ((method = hAzzle.private(elem, 'toggle' + index) ||
+                (value === 'toggle' ? hidden ? 'show' : 'hide' : 0))) {
+                hAzzle.private(elem, 'toggle' + index, method === 'show' ? 'hide' : 'show');
+                fx.showhide(method);
+            } else {
+                fx.showhide(value);
+            }
+
+        } else {
+
+            relative = relativevalues.exec(value);
+
+            // If a +=/-= token was provided, we're doing a relative animation
+
+            if (relative) {
+
+                interpretValue(elem, fx, relative, index);
+
+            } else {
+
+                // Start the animation
+
+                fx.run(start, value);
+            }
+        }
+    }
+
+    return true;
+}
+
+
+if (!hAzzle.isMobile && document.hidden !== undefined) {
+    document.addEventListener('visibilitychange', function() {
+        // Reassign the rAF function (which the global update() function uses) based on the tab's focus state.
+        if (document.hidden) {
+            ticker = function(callback) {
+                // The tick function needs a truthy first argument in order to pass its internal timestamp check.
+                return setTimeout(function() {
+                    callback(true);
+                }, 17);
+            };
+
+            // The rAF loop has been paused by the browser, so we manually restart the tick.
+            update();
+        } else {
+            ticker = nRAF;
+        }
+    });
+}
