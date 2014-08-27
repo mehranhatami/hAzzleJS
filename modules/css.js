@@ -33,6 +33,11 @@ var
         'flipped',
         'transform',
         'ms-flex-order',
+        'transformOrigin',
+	    'perspective',
+	    'transformStyle',
+	    'perspectiveOrigin',
+	    'backfaceVisibility',				
 		'ms-flex-negative',
         'ms-flex-positive',
 		'transform-origin',
@@ -89,6 +94,8 @@ hAzzle.extend({
 hAzzle.extend({
 
     unitless: {},
+	
+	cssProps: {},
 
     cssHooks: {
 
