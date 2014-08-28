@@ -1,7 +1,5 @@
-/*
- * Not implemented completely
- */
 (function () {
+
   var Map,
     MapIterator;
 
