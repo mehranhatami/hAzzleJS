@@ -125,6 +125,29 @@ Cache.prototype = {
     return null;
   },
 
+  has: function (key) {
+    var keyObj,
+      ktype = hAzzle.type(key),
+      storage = this.storage;
+
+    if (ktype === 'object' ||
+      ktype === 'function') {
+
+      if (this.innerCache === null) {
+        return false;
+      }
+
+      keyObj = this.innerCache.key(key);
+
+      if (keyObj) {
+
+        key = objKeyPrefix + keyObj;
+      }
+    }
+
+    return storage.hasOwnProperty(key);
+  },
+
   val: function (key) {
 
     var keyObj,
@@ -140,7 +163,7 @@ Cache.prototype = {
       ktype === 'function') {
 
       if (this.innerCache === null) {
-        return null;
+        return undefined;
       }
 
       keyObj = this.innerCache.key(key);
@@ -161,7 +184,7 @@ Cache.prototype = {
       return val;
     }
 
-    return null;
+    return undefined;
   },
 
   clear: function clear() {
@@ -226,14 +249,9 @@ Cache.prototype = {
     var storage = this.storage,
       keyType = hAzzle.type(key),
       valueType = hAzzle.type(value),
-      val,
-      keyObj,
-      obj;
+      val;
 
     if (arguments.length === 1) {
-
-      //valueType = keyType;
-      //keyType = 'string';
 
       value = key;
 
@@ -243,34 +261,6 @@ Cache.prototype = {
 
       return key;
 
-      // if (keyType === 'object' || keyType === 'function') {
-
-      //   keyObj = this.key(key);
-
-      //   if (keyObj) {
-
-      //     obj = this.val(objKeyPrefix + keyObj);
-
-      //     if (obj) {
-
-      //       return obj;
-
-      //     } else {
-
-      //       return keyObj;
-      //     }
-      //   }
-
-      //   value = key;
-
-      //   key = '[[' + hAzzle.getID(true, 'cache_') + ']]';
-
-      //   hAzzle.private(value, cacheKey, key);
-
-      //   storage[key] = value;
-
-      //   return key;
-      // }
     } else {
 
       storeTheKey(this, key);
@@ -297,12 +287,14 @@ Cache.prototype = {
 
       storage[key] = value;
 
+      if (types[valueType]) {
+        value = value.valueOf();
+      }
+
       return value;
     }
   }
 };
-
-
 
 // Expand to the global hAzzle Object
 
