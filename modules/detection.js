@@ -21,7 +21,7 @@ for (i in Detection) {
 
 // Get correct mobile / Tablet device
 
-hAzzle.getMobile = function() {
+hAzzle.getMobile = (function() {
 
     var agen = ua.toLowerCase();
 
@@ -45,4 +45,4 @@ hAzzle.getMobile = function() {
     }
 
     return null;
-}
+}())
