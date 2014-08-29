@@ -26,14 +26,14 @@ var
     'true': true
   };
 
-function hAzzleDummy(val) {
+function shadowObject(val) {
   var obj = {
     valueOf: function () {
       return val;
     }
   };
 
-  hAzzle.private(obj, '[[hAzzleDummy]]', true);
+  hAzzle.private(obj, '[[shadowObject]]', true);
 
   return obj;
 }
@@ -70,8 +70,8 @@ function storeTheKey(self, key) {
   }
 }
 
-function isDummy(obj) {
-  return !!hAzzle.private(obj, '[[hAzzleDummy]]');
+function isShadowObject(obj) {
+  return !!hAzzle.private(obj, '[[shadowObject]]');
 }
 
 function createMapStorage() {
@@ -177,7 +177,7 @@ Cache.prototype = {
     if (storage.hasOwnProperty(key)) {
       val = storage[key];
 
-      if (isDummy(val)) {
+      if (isShadowObject(val)) {
         return val.valueOf();
       }
 
@@ -270,7 +270,7 @@ Cache.prototype = {
         val = value;
 
         //This case needs 
-        value = hAzzleDummy(val);
+        value = shadowObject(val);
       }
 
       if (keyType === 'object' ||

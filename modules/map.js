@@ -106,23 +106,50 @@
         index = 0,
         size = this.size,
         keys = this.mapCache.keys,
-        fn;
+        callback;
 
       if (size !== keys.length) {
         console.log('Invalid map object!');
         return false;
       }
 
-      fn = !thisArg ? callbackFn : (function (callbackFn, thisArg) {
-        return function (value, key, map) {
-          return callbackFn.call(thisArg, value, key, map);
-        };
-      }(callbackFn, thisArg));
+      callback = hAzzle.createCallback(callbackFn, thisArg, 3);
 
       while (index < size) {
         key = keys[index];
         value = this.get(key);
-        fn(value, key, this);
+        callback(value, key, this);
+        index++;
+      }
+
+    },
+
+    //Kenny:
+    //!!!!!DO NOT REMOVE THIS METHOD!!!!!
+    //TEMPORARY FUNCTION TO COMPARE IT WITH MY NEW APPROACH USED IN THE MAIN FOREACH FUNCTION
+    each: function (callbackFn, thisArg) {
+      var key,
+        value,
+        index = 0,
+        size = this.size,
+        keys = this.mapCache.keys,
+        callback;
+
+      if (size !== keys.length) {
+        console.log('Invalid map object!');
+        return false;
+      }
+
+      callback = (function (callbackFn) {
+        return function (value, key, map) {
+          return callbackFn.call(thisArg, value, key, map);
+        };
+      }(callbackFn));
+
+      while (index < size) {
+        key = keys[index];
+        value = this.get(key);
+        callback(value, key, this);
         index++;
       }
     },
