@@ -18,12 +18,14 @@ Percentage.prototype = {
         this.elem = elem;
         this.complete = options.callback;
         this.completeParams = options.callbackParams;
-
-        var i = 0,
+        this.originalState = [];
+		
+	        var i = 0,
             ar = [],
             prop, begin, end,
             newbs = to.to,
             from = to.from,
+			style = elem.style,
             self = hAzzle.private(elem, 'fxDta', dictionary[length++] = this),
             easing = options.ease || hAzzle.defaultEasing,
             duration = options.duration || defaultDuration;
@@ -50,11 +52,21 @@ Percentage.prototype = {
                 duration = parseFloat(duration) || 1;
         }
 
-        for (prop in from) {
+	if ( elem.nodeType === 1 && ( 'height' in to.to || 'width' in to.to ) ) {
+		this.originalState.overflow = [ style.overflow, style.overflowX, style.overflowY ];
+		display = hAzzle.css( elem, 'display' );
+		checkDisplay = display === 'none' ?
+			hAzzle.getPrivate( elem, 'olddisplay' ) || defaultDisplay( elem.nodeName ) : display;
+		if ( checkDisplay === 'inline' && hAzzle.css( elem, 'float' ) === 'none' ) {
+			style.display = 'inline-block';
+		}
+	}
 
-            if (!from.hasOwnProperty(prop)) {
-                continue;
-            }
+	if ( this.originalState.overflow ) {
+		style.overflow = 'hidden';
+	}
+
+        for (prop in from) {
 
             end = parseInt(newbs[prop], 10);
             begin = parseInt(from[prop], 10);
@@ -136,12 +148,26 @@ Percentage.prototype = {
     // Stop a percentage animation
 
     stop: function(complete, callback, popped) {
+		
+		var self = this,  
+		    state = self.originalState,
+			elem = self.elem,
+			transitions = self.transitions,
+			style = elem.style; 
+		   this.originalState = [];
+		
+		if ( state != null) {
+			
+            style.overflow = state.overflow[ 0 ];
+			style.overflowX = state.overflow[ 1 ];
+			style.overflowY = state.overflow[ 2 ];
+		}
 
-        hAzzle.removePrivate(this.elem, 'fxDta');
+        hAzzle.removePrivate(elem, 'fxDta');
 
-        if (complete && this.transitions) {
+        if (complete && transitions) {
 
-            this.transitions(true);
+            transitions(true);
         }
 
         if (callback) {
@@ -149,7 +175,7 @@ Percentage.prototype = {
         }
 
         if (!popped) {
-            popTween(this, this.elem, callback, this.completeParams);
+            popTween(this, elem, callback, this.completeParams);
         }
 
     }
