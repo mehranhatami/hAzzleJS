@@ -1,6 +1,4 @@
-var win = this,
-    doc = win.document,
-    iframe,
+var iframe, iframeDoc,
     elemdisplay = {};
 
 hAzzle.extend({
@@ -58,6 +56,7 @@ hAzzle.extend({
                 complete: callback
             });
         }
+
 
         if (typeof state === 'boolean') {
             return state ? this.show() : this.hide();
@@ -155,11 +154,11 @@ function showHide(elements, show) {
 }
 
 function actualDisplay(name, doc) {
- var style,
-     elem = hAzzle( doc.createElement( name ) ).appendTo( doc.body ),
-     display = window.getDefaultComputedStyle &&
-    ( style = window.getDefaultComputedStyle( elem[ 0 ] ) ) ?
-    style.display : curCSS( elem[ 0 ], "display" );
+    var style,
+        elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
+        display = window.getDefaultComputedStyle &&
+        (style = window.getDefaultComputedStyle(elem[0])) ?
+        style.display : curCSS(elem[0], 'display');
     elem.detach();
     return display;
 }
@@ -172,29 +171,39 @@ function defaultDisplay(nodeName) {
 
     if (!display) {
 
+        var body = document.body,
+            elem = hAzzle.html('div').appendTo(body);
+
         display = actualDisplay(nodeName, document);
 
         // If the simple way fails, read from inside an iframe
 
         if (display === 'none' || !display) {
 
-			// Use the already-created iframe if possible
 
-			iframe = (iframe || hAzzle( createHTML('<iframe frameborder="0" width="0" height="0"/>') ))
-				.appendTo( document.documentElement );
+            // Use the already-created iframe if possible
 
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.frameBorder = iframe.width = iframe.height = 0;
+            }
 
-            doc = iframe[0].contentDocument;
-		
-            doc.write();
-            doc.close();
+            body.appendChild(iframe);
 
-            display = actualDisplay(nodeName, doc);
-			iframe.detach();
+            if (!iframeDoc || !iframe.createElement) {
+                iframeDoc = iframe.contentDocument.document;
+                iframeDoc.write((document.compatMode === 'CSS1Compat' ? '<!doctype html>' : '') + '<html><body>');
+                iframeDoc.close();
+            }
+
+            elem = iframeDoc.createElement(nodeName);
+
+            iframeDoc.body.appendChild(elem);
+
+            display = hAzzle.css(elem, 'display');
+
+            body.removeChild(iframe);
         }
-
-        // Store the correct default display
-        elemdisplay[nodeName] = display;
     }
 
     return display;
