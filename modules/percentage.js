@@ -2,10 +2,13 @@
 var percent = '%';
 
 function Percentage(elem, to, options) {
+
+    if (!(this instanceof Percentage)) {
+        return new Percentage.prototype.init(elem, to, options);
+    }
+
     return new Percentage.prototype.init(elem, to, options);
 }
-
-hAzzle.Percentage = Percentage;
 
 Percentage.prototype = {
 
@@ -37,6 +40,8 @@ Percentage.prototype = {
             (hAzzle.speeds[options.duration] || options.duration) :
             hAzzle.defaultDuration;
 
+			self.percentage = true;
+			
         // Height/width overflow pass
 
         if (elem.nodeType === 1 && ('height' in to.to || 'width' in to.to)) {
@@ -141,9 +146,10 @@ Percentage.prototype = {
             elem = self.elem,
             transitions = self.transitions,
             style = elem.style;
+
         this.originalState = [];
 
-        if (state != null) {
+        if (state) {
 
             style.overflow = state.overflow[0];
             style.overflowX = state.overflow[1];
@@ -208,13 +214,13 @@ hAzzle.percentage = function(elem, to, options) {
     }
 
     if (!options) {
-	   options = {};
-	}
+        options = {};
+    }
 
     if (!options.mode && (supportTransform && hAzzle.useTransform)) {
         percCSS(elem, to, options);
     } else if (!options.mode) {
-        new Percentage(elem, to, options);
+        Percentage(elem, to, options);
     }
 
     if (options.mode === 'transform' && supportTransform) {
@@ -223,5 +229,5 @@ hAzzle.percentage = function(elem, to, options) {
         return;
     }
 
-    new Percentage(elem, to, options);
+    Percentage(elem, to, options);
 };
