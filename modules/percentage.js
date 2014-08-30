@@ -32,7 +32,6 @@ Percentage.prototype = {
             self = hAzzle.private(elem, 'fxDta', hAzzle.dictionary[length++] = this),
             easing = options.ease || hAzzle.defaultEasing,
 
-            // Support for jQuery's named durations.
             // Duration '0' will likely never happen, it will see it as false,
             // and set 'hAzzle.defaultDuration'
 
@@ -132,9 +131,7 @@ Percentage.prototype = {
 
                 return false;
             }
-
         };
-
     },
 
     // Stop a percentage animation
@@ -217,13 +214,13 @@ hAzzle.percentage = function(elem, to, options) {
         options = {};
     }
 
-    if (!options.mode && (supportTransform && hAzzle.useTransform)) {
+    if (!options.mode && (transitionend && hAzzle.useTransform)) {
         percCSS(elem, to, options);
     } else if (!options.mode) {
         Percentage(elem, to, options);
     }
 
-    if (options.mode === 'transform' && supportTransform) {
+    if (options.mode === 'transform' && transitionend) {
 
         percCSS(elem, to, options);
         return;

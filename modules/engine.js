@@ -1,75 +1,83 @@
 // engine.js
 var
-    rafId,
-    run,
-    length = 0,
+    rafId, pre, run, length = 0,
     ua = navigator.userAgent,
-    skeleton,
-    browser,
-    trans,
-    run,
-    itm,
-    accelerate,
-    rafId,
-    transit = {
+    skeleton, browser, trans, run, itm,
+    transitionend, rafId,
 
-        "WebkitTransition": ["webkitTransitionEnd", "-webkit-transition", !!window.chrome && !window.opera || ua.indexOf(' OPR/') >= 0 ? "chrome" : "safari"],
-        "MozTransition": ["transitionend", "-moz-transition", "firefox"],
-        "MSTransition": ["transitionend", "-ms-transition", "ie"],
-        "OTransition": ["otransitionend", "-o-transition", "opera"],
-        "transition": ["transitionend", "transition", null],
+    // Detect platform support for transitions
+
+    detectPlatform = {
+
+        "WebkitTransition": !!window.chrome && !window.opera || ua.indexOf(' OPR/') >= 0 ? "chrome" : "safari",
+
+        "MozTransition": "firefox",
+
+        "MSTransition": "ie",
+
+        "OTransition": "opera",
+
+        "transition": null
     },
 
-    supportTransform = transit[hAzzle.cssCore.transition],
+    platformTransitions = detectPlatform[hAzzle.cssCore.transition]
 
-    /**
-     * Detect who can use CSS transitions
-     *
-     * true = use CSS3 above all else when available, false = use requestAnimationFrame with Timer fallback
-     * combining browsers + mobile devices is not currently supported (i.e. all Android browsers will be passed the "android" parameter)
-     * Microsoft added for the future, will fallback to request/timer for now
-     */
+/**
+ * Detect who can use CSS transitions
+ *
+ * true = use CSS3 above all else when available, false = use requestAnimationFrame with Timer fallback
+ * combining browsers + mobile devices is not currently supported (i.e. all Android browsers will be passed the "android" parameter)
+ * Microsoft added for the future, will fallback to request/timer for now
+ */
 
-    canUseTransitions = {
-        ios: false,
-        android: false,
-        winMobile: false,
-        firefox: false,
-        chrome: false,
-        safari: false,
-        opera: false,
-        ie: false
-    };
+var isTransform = {
+    ios: false,
+    android: false,
+    winMobile: false,
+    firefox: false,
+    chrome: false,
+    safari: false,
+    opera: false,
+    ie: false
+};
 
 // if CSS transitions are supported
 
-if (supportTransform) {
+
+
+if ((pre = hAzzle.cssCore.transition)) {
 
     // Create stylesheet and append the rules
 
-    var pre = supportTransform[1],
-        sheet = document.createElement("style");
+    var sheet = document.createElement("style");
+
+    // Create a CSS stylesheet with this rule:
+    // .hAzzleFX{transition-property:none !important;}
 
     sheet.type = "text/css";
     sheet.innerHTML = ".hAzzleFX{" + pre + "-property:none !important;}";
 
     // Append the sheet do the document head
 
-    document.getElementsByTagName('head')[0].appendChild(sheet);
+    document.head.appendChild(sheet);
 
     // Create a 'skeleton' we need to use with CSS Transform for transitions
+    // It's dummy values will be replaces later on
 
     skeleton = pre + "-property:{props};" + pre + "-duration:{duration}s;" + pre + "-timing-function:cubic-bezier({easing});";
 
     // Detect mobile browser
 
-    browser = !hAzzle.getMobile ? supportTransform[2] : hAzzle.getMobile;
+    browser = !hAzzle.getMobile ? platformTransitions /*null*/ : hAzzle.getMobile;
 
-    // Force hardware acceleration in Safari and iOS.
 
-    accelerate = browser === 'safari' || browser === 'ios';
+    // Mobile devices have hardware acceleration removed at the end of the animation in order to 
+    // avoid hogging the GPU's memory.
+    // As a workaround, we force hardware acceleration in Safari and iOS.
 
-    supportTransform = supportTransform[0];
+    hAzzle.accelerate = browser === 'safari' || browser === 'ios';
+
+    transitionend = pre + 'end';
 
     setDefaults();
 }
@@ -86,7 +94,7 @@ hAzzle.extend({
 
     // Default easing
 
-    defaultEase: 'linear',
+    defaultEasing: 'linear',
 
     // Default beizer easing
 
@@ -102,37 +110,37 @@ hAzzle.extend({
 
     length: 0,
 
-
     fxHook: {
 
         opacity: {
             set: function(fx) {
+
                 fx.elem.style['opacity'] = fx.tick;
             },
         },
         _default: {
 
-            get: function(tween) {
+            get: function(fx) {
 
                 var result;
 
-                if (tween.elem[tween.prop] != null &&
-                    (!tween.elem.style || tween.elem.style[tween.prop] == null)) {
-                    return tween.elem[tween.prop];
+                if (fx.elem[fx.prop] != null &&
+                    (!fx.elem.style || fx.elem.style[fx.prop] == null)) {
+                    return tween.elem[fx.prop];
                 }
 
-                result = hAzzle.css(tween.elem, tween.prop, "");
+                result = hAzzle.css(fx.elem, fx.prop, "");
                 // Empty strings, null, undefined and "auto" are converted to 0.
                 return !result || result === "auto" ? 0 : result;
             },
-            set: function(tween) {
-
-                hAzzle.style(tween.elem, tween.prop, tween.tick + 'px');
+            set: function(fx, unit) {
+                unit = unit || 'px';
+                hAzzle.style(fx.elem, fx.prop, fx.tick + unit);
             }
         }
     },
 
-    defaultEasing: 'linear',
+    // Support for jQuery's named durations.
 
     speeds: {
         slow: 600,
@@ -149,9 +157,9 @@ hAzzle.extend({
 
         for (prop in settings) {
 
-            if (canUseTransitions.hasOwnProperty(prop)) {
+            if (isTransform.hasOwnProperty(prop)) {
 
-                canUseTransitions[prop] = settings[prop];
+                isTransform[prop] = settings[prop];
             }
         }
 
@@ -167,7 +175,7 @@ hAzzle.extend({
      * @return {hAzzle|Object}
      */
 
-    stopTween: function(elem, jumpToEnd, callback, popped) {
+    stop: function(elem, jumpToEnd, callback, popped) {
 
         if (!fxDta) {
             return;
@@ -182,6 +190,8 @@ hAzzle.extend({
             fxDta.stop(callback);
         }
     },
+
+    // Stop all running animations
 
     stopAll: function(complete) {
 
@@ -211,7 +221,6 @@ hAzzle.extend({
         fxDta = trans = null;
     },
 
-
     tween: function(elem, to, settings) {
 
         var fxDta = hAzzle.private(elem, 'fxDta');
@@ -228,7 +237,7 @@ hAzzle.extend({
 
         if (!settings.mode) {
 
-            if (!supportTransform || !hAzzle.useTransform) {
+            if (!transitionend || !hAzzle.useTransform) {
 
                 new FX(elem, to, settings);
 
@@ -237,7 +246,7 @@ hAzzle.extend({
                 new Transform(elem, to, settings);
             }
 
-        } else if (settings.mode === "timeline" || !supportTransform) {
+        } else if (settings.mode === "timeline" || !transitionend) {
 
             new FX(elem, to, settings);
 
@@ -276,14 +285,14 @@ function ticker() {
     if (hAzzle.activated) {
 
         rafId = nRAF(ticker);
+
     } else {
 
         nCAF(rafId);
         itm = trans = null;
-
     }
 
-   hAzzle.isRunning = run;
+    hAzzle.isRunning = run;
 
 }
 
@@ -293,14 +302,11 @@ function setDefaults() {
 
     var prop;
 
-    for (prop in canUseTransitions) {
+    for (prop in isTransform) {
 
-        if (!canUseTransitions.hasOwnProperty(prop)) {
-            continue;
-        }
 
         if (prop === browser) {
-            hAzzle.useTransform = canUseTransitions[prop];
+            hAzzle.useTransform = isTransform[prop];
             break;
 
         }
