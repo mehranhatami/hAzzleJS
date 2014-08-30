@@ -173,18 +173,14 @@ Tween.prototype = {
                 remaining = Math.max(0, startTime + self.duration - t);
                 percent = 1 - (remaining / self.duration || 0),
 
-                    n = t - startTime;
-
-                state = n / self.duration;
-
                 // Perform the easing function, defaults to swing
-                //	pos = hAzzle.easing['flicker']( state );
-                pos = hAzzle.easing['flicker'](percent, self.duration * percent, 0, 1, self.duration);
 
-                //	console.log(start)
+                pos = hAzzle.easing['flicker'](percent, self.duration * percent, 0, 1, self.duration);
 
                 now = start + ((end - start) * pos);
 
+                //	console.log(now)
+				
                 self.update(elem, prop, now);
             }
 
