@@ -165,7 +165,8 @@ Tween.prototype = {
                 now = end;
                 pos = state = 1;
 
-                Tween.prototype.update(elem, prop, now);
+                self.update(elem, prop, now);
+				
                 return false;
 
             } else {
@@ -179,7 +180,7 @@ Tween.prototype = {
 
                 now = start + ((end - start) * pos);
 
-                //	console.log(now)
+             //   console.log(now)
 				
                 self.update(elem, prop, now);
             }
