@@ -2,7 +2,7 @@
 var
     rafId, pre, run, length = 0,
     ua = navigator.userAgent,
-    skeleton, browser, trans, run, itm,
+    skeleton, browser, trans, run,
     transitionend, rafId,
 
     // Detect platform support for transitions
@@ -20,7 +20,7 @@ var
         'transition': null
     },
 
-    platformTransitions = detectPlatform[hAzzle.cssCore.transition]
+    platformTransitions = detectPlatform[hAzzle.cssCore.transition];
 
 /**
  * Detect who can use CSS transitions
@@ -127,7 +127,7 @@ hAzzle.extend({
                 var result;
 
                 if (!elem[prop] &&
-                    (!elem.style || elem.style[prop] == null)) {
+                    (!elem.style || elem.style[prop] === null)) {
 
                     return elem[prop];
                 }
@@ -185,6 +185,8 @@ hAzzle.extend({
 
     stop: function(elem, jumpToEnd, callback, popped) {
 
+      var fxDta = hAzzle.private(elem, 'fxDta');
+	  
         if (!fxDta) {
             return;
         }
@@ -271,20 +273,29 @@ hAzzle.extend({
 
 function ticker() {
 
-    var leg = length;
+    var leg = length, fxDta;
 
     while (leg--) {
 
-        itm = hAzzle.dictionary[leg];
+        fxDta = hAzzle.dictionary[leg];
 
-        if (!itm) break;
-        if (itm.isCSS) continue;
+        if (!fxDta) {
+		    
+			break;	
+		}
+		
+        if (fxDta.isCSS) {
+  		  
+		  continue;
+		  
+		}
 
-        if (itm && !itm.cycle()) {
+        if (fxDta && !fxDta.cycle()) {
 
-            itm.stop(false, itm.complete, false, true);
+            fxDta.stop(false, fxDta.complete, false, true);
 
         } else {
+			
             hAzzle.activated = true;
 
         }
@@ -297,7 +308,7 @@ function ticker() {
     } else {
 
         nCAF(rafId);
-        itm = trans = null;
+        fxDta = trans = null;
     }
 
     hAzzle.isRunning = run;
