@@ -39,8 +39,8 @@ Percentage.prototype = {
             (hAzzle.speeds[options.duration] || options.duration) :
             hAzzle.defaultDuration;
 
-			self.percentage = true;
-			
+        self.percentage = true;
+
         // Height/width overflow pass
 
         if (elem.nodeType === 1 && ('height' in to.to || 'width' in to.to)) {
@@ -105,8 +105,11 @@ Percentage.prototype = {
 
             if (tick < 0.99 && !force) {
 
-                // Note! For now we are setting the styles directly - better performance.
-                // I'm going to change this in the future
+                /**
+                 * No fxHooks for percentage.js. Better performance if we are setting
+                 * the style directly. And this will only run if the mode are not
+                 * 'transform'.
+                 */
 
                 while (i--) {
 

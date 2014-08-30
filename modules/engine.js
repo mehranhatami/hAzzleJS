@@ -9,15 +9,15 @@ var
 
     detectPlatform = {
 
-        "WebkitTransition": !!window.chrome && !window.opera || ua.indexOf(' OPR/') >= 0 ? "chrome" : "safari",
+        'WebkitTransition': !!window.chrome && !window.opera || ua.indexOf(' OPR/') >= 0 ? 'chrome' : 'safari',
 
-        "MozTransition": "firefox",
+        'MozTransition': 'firefox',
 
-        "MSTransition": "ie",
+        'MSTransition': 'ie',
 
-        "OTransition": "opera",
+        'OTransition': 'opera',
 
-        "transition": null
+        'transition': null
     },
 
     platformTransitions = detectPlatform[hAzzle.cssCore.transition]
@@ -26,7 +26,7 @@ var
  * Detect who can use CSS transitions
  *
  * true = use CSS3 above all else when available, false = use requestAnimationFrame with Timer fallback
- * combining browsers + mobile devices is not currently supported (i.e. all Android browsers will be passed the "android" parameter)
+ * combining browsers + mobile devices is not currently supported (i.e. all Android browsers will be passed the 'android' parameter)
  * Microsoft added for the future, will fallback to request/timer for now
  */
 
@@ -47,13 +47,13 @@ if ((pre = hAzzle.cssCore.transition)) {
 
     // Create stylesheet and append the rules
 
-    var sheet = document.createElement("style");
+    var sheet = document.createElement('style');
 
     // Create a CSS stylesheet with this rule:
     // .hAzzleFX{transition-property:none !important;}
 
-    sheet.type = "text/css";
-    sheet.innerHTML = ".hAzzleFX{" + pre + "-property:none !important;}";
+    sheet.type = 'text/css';
+    sheet.innerHTML = '.hAzzleFX{' + pre + '-property:none !important;}';
 
     // Append the sheet do the document head
 
@@ -62,7 +62,7 @@ if ((pre = hAzzle.cssCore.transition)) {
     // Create a 'skeleton' we need to use with CSS Transform for transitions
     // It's dummy values will be replaces later on
 
-    skeleton = pre + "-property:{props};" + pre + "-duration:{duration}s;" + pre + "-timing-function:cubic-bezier({easing});";
+    skeleton = pre + '-property:{props};' + pre + '-duration:{duration}s;' + pre + '-timing-function:cubic-bezier({easing});';
 
     // Detect mobile browser
 
@@ -115,34 +115,35 @@ hAzzle.extend({
     fxHook: {
 
         opacity: {
-            set: function(fx) {
+            set: function(elem, prop, value) {
 
-                fx.elem.style['opacity'] = fx.tick;
+                elem.style[prop] = value;
             },
         },
         _default: {
 
-            get: function(fx) {
+            get: function(elem, prop) {
 
                 var result;
 
-                if (fx.elem[fx.prop] != null &&
-                    (!fx.elem.style || fx.elem.style[fx.prop] == null)) {
+                if (!elem[prop] &&
+                    (!elem.style || elem.style[prop] == null)) {
 
-                    return tween.elem[fx.prop];
+                    return elem[prop];
                 }
 
-                result = hAzzle.css(fx.elem, fx.prop, "");
+                result = hAzzle.css(elem, prop, '');
 
-                // Empty strings, null, undefined and "auto" are converted to 0.
+                // Empty strings, null, undefined and 'auto' are converted to 0.
 
-                return !result || result === "auto" ? 0 : result;
+                return !result || result === 'auto' ? 0 : result;
             },
-            set: function(fx, unit) {
+			
+            set: function(elem, prop, value, unit) {
 
                 unit = unit || 'px';
 
-                hAzzle.style(fx.elem, fx.prop, fx.tick + unit);
+                hAzzle.style(elem, prop, value + unit);
             }
         }
     },
@@ -253,7 +254,7 @@ hAzzle.extend({
                 Transform(elem, to, settings);
             }
 
-        } else if (settings.mode === "timeline" || !transitionend) {
+        } else if (settings.mode === 'timeline' || !transitionend) {
 
             FX(elem, to, settings);
 
