@@ -43,8 +43,6 @@ var isTransform = {
 
 // if CSS transitions are supported
 
-
-
 if ((pre = hAzzle.cssCore.transition)) {
 
     // Create stylesheet and append the rules
@@ -69,7 +67,6 @@ if ((pre = hAzzle.cssCore.transition)) {
     // Detect mobile browser
 
     browser = !hAzzle.getMobile ? platformTransitions /*null*/ : hAzzle.getMobile;
-
 
     // Mobile devices have hardware acceleration removed at the end of the animation in order to 
     // avoid hogging the GPU's memory.
@@ -110,6 +107,11 @@ hAzzle.extend({
 
     length: 0,
 
+    /**
+     * fxHooks similar to cssHooks, but optimized for
+     * animation
+     */
+
     fxHook: {
 
         opacity: {
@@ -126,15 +128,20 @@ hAzzle.extend({
 
                 if (fx.elem[fx.prop] != null &&
                     (!fx.elem.style || fx.elem.style[fx.prop] == null)) {
+
                     return tween.elem[fx.prop];
                 }
 
                 result = hAzzle.css(fx.elem, fx.prop, "");
+
                 // Empty strings, null, undefined and "auto" are converted to 0.
+
                 return !result || result === "auto" ? 0 : result;
             },
             set: function(fx, unit) {
+
                 unit = unit || 'px';
+
                 hAzzle.style(fx.elem, fx.prop, fx.tick + unit);
             }
         }
@@ -239,20 +246,20 @@ hAzzle.extend({
 
             if (!transitionend || !hAzzle.useTransform) {
 
-                new FX(elem, to, settings);
+                FX(elem, to, settings);
 
             } else {
 
-                new Transform(elem, to, settings);
+                Transform(elem, to, settings);
             }
 
         } else if (settings.mode === "timeline" || !transitionend) {
 
-            new FX(elem, to, settings);
+            FX(elem, to, settings);
 
         } else {
 
-            new Transform(elem, to, settings);
+            Transform(elem, to, settings);
         }
     }
 
@@ -293,10 +300,9 @@ function ticker() {
     }
 
     hAzzle.isRunning = run;
-
 }
 
-// Sets the default tween behaviour ('transfor, 'rAF', timer)
+// Sets the default tween behaviour ('transform, 'rAF', timer)
 
 function setDefaults() {
 
