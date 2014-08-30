@@ -48,8 +48,6 @@
             path + 'ajax.js',
             path + 'clone.js',
             path + 'fx.js',
-            path + 'fxhooks.js',
-            path + 'effects.js',						
            path + 'jsonxml.js'
         ];
     if (typeof exports === 'object') {

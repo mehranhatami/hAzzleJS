@@ -54,9 +54,7 @@ module.exports = function(config) {
         'ajax.js',
         'dom.js',
         'traversing.js',
-        'queue.js',
         'fx.js',
-        'fxhooks.js',		
         'jsonxml.js',
     ];
 
