@@ -3,27 +3,7 @@ var rafId, run, length = 0,
     browser = hAzzle.getMobile,
     trans, run,
     rafId,
-    transitionend = hAzzle.cssCore.transition + 'end',
-
-    /**
-     * Detect who can use CSS transitions
-     *
-     * true = use CSS3 above all else when available, false = use requestAnimationFrame with Timer fallback
-     * combining browsers + mobile devices is not currently supported (i.e. all Android browsers will be passed the 'android' parameter)
-     * Microsoft added for the future, will fallback to request/timer for now
-     */
-
-    isTransform = {
-        ios: false,
-        android: false,
-        winMobile: false,
-        firefox: false,
-        chrome: false,
-        safari: false,
-        opera: false,
-        ie: false
-    };
-
+    transitionend = hAzzle.cssCore.transition + 'end';
 
 hAzzle.extend({
 
@@ -101,23 +81,6 @@ hAzzle.extend({
         fast: 200,
         // Default speed
         _default: 400
-    },
-
-    // Overrride default engine
-
-    setEngines: function(settings) {
-
-        var prop;
-
-        for (prop in settings) {
-
-            if (isTransform.hasOwnProperty(prop)) {
-
-                isTransform[prop] = settings[prop];
-            }
-        }
-
-        setDefaults();
     },
 
     /** 
@@ -260,22 +223,3 @@ function ticker() {
 
     hAzzle.isRunning = run;
 }
-
-// Sets the default animation behaviour ('transform, 'rAF', timer)
-
-function setDefaults() {
-
-    var prop;
-
-    for (prop in isTransform) {
-
-
-        if (prop === browser) {
-            hAzzle.useTransform = isTransform[prop];
-            break;
-
-        }
-    }
-}
-
-setDefaults();

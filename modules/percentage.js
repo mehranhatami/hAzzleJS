@@ -187,7 +187,7 @@ function percCSS(obj, to, options) {
         newTo[prop] = goTo[prop];
     }
 
-    hAzzle.tween(obj, newTo, options);
+    hAzzle.fx(obj, newTo, options);
 }
 
 /** 
