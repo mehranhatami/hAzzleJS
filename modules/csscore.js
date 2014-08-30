@@ -54,15 +54,15 @@ hAzzle.assert( function(div) {
     }
   }
 	
-	 // Helper function to check if transform3D is supported.
+  // Helper function to check if transform3D is supported.
   // Should return true for Webkits and Firefox 10+.
+  
   function checkTransform3dSupport() {
     div.style[support.transform] = '';
     div.style[support.transform] = 'rotateY(90deg)';
     return div.style[support.transform] !== '';
   }
-  
-  
+
    var isChrome = navigator.userAgent.toLowerCase().indexOf('chrome') > -1;
 
   // Check for the browser's transitions support.
@@ -90,7 +90,31 @@ hAzzle.assert( function(div) {
     }
   }
 
-  cssCore.boxShadow = getVendorPropertyName('boxshadow')   
-  cssCore.borderRadius = getVendorPropertyName('borderRadius')   
-  cssCore.borderImage = getVendorPropertyName('borderImage')    
+  cssCore.boxShadow = getVendorPropertyName('boxshadow');
+  cssCore.borderRadius = getVendorPropertyName('borderRadius');
+  cssCore.borderImage = getVendorPropertyName('borderImage');    
 });
+
+// Check if support translate3d
+
+hAzzle.assert(function(div) {
+
+var  has3d, t, transforms = {
+        'webkitTransform':'-webkit-transform',
+        'OTransform':'-o-transform',
+        'msTransform':'-ms-transform',
+        'MozTransform':'-moz-transform',
+        'transform':'transform'
+    };
+	
+  for(t in transforms){
+
+        if( div.style[t] !== undefined ){
+            div.style[t] = 'translate3d(1px,1px,1px)';
+            has3d = window.getComputedStyle(div).getPropertyValue(transforms[t]);
+        }
+    }
+	cssCore.translate3d = (has3d !== undefined && has3d.length > 0 && has3d !== "none");
+
+	});
+
