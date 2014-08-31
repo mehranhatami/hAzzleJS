@@ -147,16 +147,22 @@ function markElements(elems, attr, attrValue, filterFn, args) {
   return '[' + attr + '=\'' + attrValue + '\']';
 }
 
-function objValue(obj, key) {
-  var keys = key.split(propsExpr).filter(function (value) {
+function objValue(obj, props) {
+  var keys = props.split(propsExpr).filter(function (value) {
       return value !== '';
     }),
     current = obj,
     i = 0,
-    len = keys.length;
+    len = keys.length,
+    key;
 
   for (; i < len; i += 1) {
-    current = current[keys[i]];
+    key = keys[i];
+    if (current.hasOwnProperty(key)) {
+      current = current[key];
+    } else {
+      return '';
+    }
   }
 
   return current;
@@ -672,6 +678,9 @@ var
               group += found[1];
 
               if (args) {
+                if (args[0] == '{') {
+                  args = objValue(arrfunc, args.slice(1, -1));
+                }
                 group += '(' + args + ')';
               }
             }
