@@ -95,8 +95,10 @@ Storage.prototype = {
 
         var cache = this.cache(owner);
 
+        if(cache !== undefined ) {
         return cache && key === undefined ?
             cache : cache[key];
+		}
     },
     access: function(owner, key, value) {
         var stored;

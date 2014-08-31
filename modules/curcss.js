@@ -5,8 +5,10 @@ var topribol = /^(top|right|bottom|left)$/i,
 
         if (elem && elem !== window) {
 
-            var view = elem.ownerDocument.defaultView;
-            return hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
+            if (elem.ownerDocument !== undefined) {
+                var view = elem.ownerDocument.defaultView;
+            }
+            return view && hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
                 window.getComputedStyle(elem, null)) : elem.style;
         }
         return null;
@@ -18,18 +20,18 @@ var topribol = /^(top|right|bottom|left)$/i,
         // We save the computedStyle on the object to avoid stressing the DOM
 
         if (hAzzle.data(elem, 'CSS') === undefined) {
-
+            //console.log('not cached')
             return computedValues(elem);
 
             /* If the computedStyle object has yet to be cached, do so now. */
         } else if (!hAzzle.data(elem, 'CSS').computedStyle) {
-
+            //console.log('caching just NOW')
             computed = hAzzle.data(elem, 'CSS').computedStyle = computedValues(elem);
 
             // If computedStyle is cached, use it.
 
         } else {
-
+            // console.log('data cached')
             computed = hAzzle.data(elem, 'CSS').computedStyle;
         }
 
