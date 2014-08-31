@@ -25,7 +25,9 @@ var join = Array.prototype.join,
 
   rquickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
 
-  eoeglnfl = /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
+  propsExpr = /\.|\[|\]|"|'/,
+
+  //eoeglnfl = /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
 
   // Combine regExes
 
@@ -145,6 +147,21 @@ function markElements(elems, attr, attrValue, filterFn, args) {
   return '[' + attr + '=\'' + attrValue + '\']';
 }
 
+function objValue(obj, key) {
+  var keys = key.split(propsExpr).filter(function (value) {
+      return value !== '';
+    }),
+    current = obj,
+    i = 0,
+    len = keys.length;
+
+  for (; i < len; i += 1) {
+    current = current[keys[i]];
+  }
+
+  return current;
+}
+
 var
 // Create a fake path for comparison
 
@@ -173,7 +190,7 @@ var
 
         // Strip out beginning and ending quotes if present
 
-        check = value[0] == '{' ? ref[value.slice(1, -1)] :
+        check = value[0] == '{' ? objValue(ref, value.slice(1, -1)) :
         value.replace(compileExpr.beginEndQuoteReplace, '$2'),
 
         regProp = check + '-' + flags,
@@ -731,7 +748,7 @@ var
 // Grab childnodes
 
 function grab(context, tag) {
-  var ret = context.getElementsByTagName(tag || "*");
+  var ret = context.getElementsByTagName(tag || '*');
   return tag === undefined || tag && hAzzle.nodeName(context, tag) ?
     hAzzle.merge([context], ret) :
     ret;
