@@ -273,6 +273,22 @@ var
     'LAST': function () {
       var info = this;
       return (info.currentIndex === info.elems.length - 1);
+    },
+
+    'GT': function (el, args) {
+      var info = this,
+        ind = parseInt(args, 10),
+        len = info.elems.length;
+
+      return (info.currentIndex > (len + ind) % len);
+    },
+
+    'LT': function (el, args) {
+      var info = this,
+        ind = parseInt(args, 10),
+        len = info.elems.length;
+
+      return (info.currentIndex < (len + ind) % len);
     }
   },
   transformers = {
@@ -663,6 +679,9 @@ var
               }
 
               args = hAzzle.trim(selector.slice(0, j));
+              if (args && args[0] == '{') {
+                args = objValue(arrfunc, args.slice(1, -1));
+              }
               selector = selector.substr(j + 1);
             }
 
@@ -678,9 +697,6 @@ var
               group += found[1];
 
               if (args) {
-                if (args[0] == '{') {
-                  args = objValue(arrfunc, args.slice(1, -1));
-                }
                 group += '(' + args + ')';
               }
             }

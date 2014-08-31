@@ -60,51 +60,16 @@
 
 <body>
  
-<div>
-  <button>:nth-last-of-type(even)</button>
-  <button>:nth-last-of-type(odd)</button>
-  <button>:nth-last-of-type(3n)</button>
-  <button>:nth-last-of-type(2)</button>
-</div>
-<div>
-  <button>:nth-last-of-type(3n+1)</button>
-  <button>:nth-last-of-type(3n+2)</button>
-</div>
- 
-<div>
-  <table>
-    <tr><td>John</td></tr>
-    <tr><td>Karl</td></tr>
-    <tr><td>Brandon</td></tr>
-    <tr><td>Benjamin</td></tr>
-  </table>
-</div>
-<div>
-  <table>
-    <tr><td>Sam</td></tr>
-  </table>
-</div>
-<div>
-  <table>
-    <tr><td>Glen</td></tr>
-    <tr><td>Tane</td></tr>
-    <tr><td>Ralph</td></tr>
-    <tr><td>David</td></tr>
-    <tr><td>Mike</td></tr>
-    <tr><td>Dan</td></tr>
-  </table>
-</div>
- 
-<span>tr<span id="inner"></span></span>
- 
+<table id='ss' border="1">
+  <tr><td>TD #0</td><td>TD #1</td><td>TD #2</td></tr>
+  <tr><td>TD #3</td><td>TD #4</td><td>TD #5</td></tr>
+  <tr><td>TD #6</td><td>TD #7</td><td>TD #8</td></tr>
+</table>
+
 <script>
 var $ = hAzzle;
-$( 'button' ).click(function() {
-  var str = $( this ).text();
-  $( 'tr' ).css( 'background', 'white' );
-  $( 'tr' + str ).css( 'background', '#ff0000' );
-  $( '#inner' ).text( str );
-});
+$( "td:lt({x.y})", {x:{y:4}} ).css( "backgroundColor", "yellow" );
+$( "td:lt(-2)" ).css( "color", "red" );
 </script>
  
 </body>
