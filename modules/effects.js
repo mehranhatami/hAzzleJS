@@ -5,7 +5,27 @@ var cssExpand = ['Top', 'Right', 'Bottom', 'Left'],
     // Container for the user's custom animation effects that are referenced by name in 
     // place of a properties map object.
 
-    effects = {};
+    effects = {},
+
+    propMap = {
+
+        display: function(value) {
+
+            value = value.toString().toLowerCase();
+
+            if (value === 'auto') {
+
+                value = hAzzle.getDisplayType(elem);
+            }
+            return value;
+        },
+
+        visibility: function(value) {
+
+            return value.toString().toLowerCase();
+
+        }
+    };
 
 hAzzle.each(['fade', 'slide'], function(direction) {
 
