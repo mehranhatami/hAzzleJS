@@ -44,12 +44,6 @@ hAzzle.each({
         prop = genFx(val);
         prop.display = (direction === 'Down' ? (hAzzle.getDisplayType(elem) === 'inline' ? 'inline-block' : 'block') : 'none');
 
-        // Force vertical overflow content to clip so that sliding works as expected.
-
-        prop.overflow = elem.style.overflow;
-
-        elem.style.overflow = 'hidden';
-
         return prop;
     };
 
@@ -73,11 +67,6 @@ hAzzle.each([
         prop.opacity = (direction === 'In' ? 'show' : 'hide');
         prop.display = (direction === 'In' ? 'auto' : 'none');
 
-        // Force vertical overflow content to clip so that sliding works as expected.
-
-        prop.overflow = elem.style.overflow;
-
-        elem.style.overflow = 'hidden';
         return prop;
     };
 
