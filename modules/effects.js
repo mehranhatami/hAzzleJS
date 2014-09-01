@@ -1,11 +1,16 @@
 var cssExpand = ['Top', 'Right', 'Bottom', 'Left'],
     xy = ['X', 'Y'],
     elemdisplay = {},
-    iframe, iframeDoc;
-
+    iframe, iframeDoc,
+	
+    // Container for the user's custom animation effects that are referenced by name in 
+    // place of a properties map object.
+	
+	effects = {};
+	
 hAzzle.each(['fade', 'slide'], function(direction) {
 
-    hAzzle.effects[direction + 'Toggle'] = function(elem, prop) {
+    effects[direction + 'Toggle'] = function(elem, prop) {
 
         // Override the properties to be a Object
         prop = {};
@@ -33,7 +38,7 @@ hAzzle.each({
     Up: 'hide'
 }, function(val, direction) {
 
-    hAzzle.effects['slide' + direction] = function(elem, prop) {
+    effects['slide' + direction] = function(elem, prop) {
 
         // Override the properties to be a Object
         prop = {};
@@ -62,7 +67,7 @@ hAzzle.each([
     'Out'
 ], function(direction) {
 
-    hAzzle.effects['fade' + direction] = function(elem, prop) {
+    effects['fade' + direction] = function(elem, prop) {
 
         // Override the properties to be a Object
         prop = {};
@@ -285,4 +290,5 @@ function isHidden(elem, el) {
 
 // Expose to the global hAzzle Object
 
+hAzzle.effects = effects;
 hAzzle.isHidden = isHidden;
