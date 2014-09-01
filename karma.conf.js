@@ -34,7 +34,6 @@ module.exports = function(config) {
 		'clone.js',
         'matchesselector.js',
         'matches.js',
-        'effects.js',		
         'html.js',
         'shims/classlist.js',
         'classes.js',
@@ -52,9 +51,10 @@ module.exports = function(config) {
         'aliases.js',
         'eventHooks.js',
         'ajax.js',
+        'fx.js',
+        'effects.js',		
         'dom.js',
         'traversing.js',
-        'fx.js',
         'jsonxml.js',
     ];
 

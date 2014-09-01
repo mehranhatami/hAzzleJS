@@ -1,13 +1,12 @@
 var cssExpand = ['Top', 'Right', 'Bottom', 'Left'],
-    xy = ['X', 'Y'],
     elemdisplay = {},
     iframe, iframeDoc,
-	
+
     // Container for the user's custom animation effects that are referenced by name in 
     // place of a properties map object.
-	
-	effects = {};
-	
+
+    effects = {};
+
 hAzzle.each(['fade', 'slide'], function(direction) {
 
     effects[direction + 'Toggle'] = function(elem, prop) {
@@ -86,28 +85,6 @@ hAzzle.each([
         return this.animate('fade' + direction, speed, easing, callback);
     };
 
-});
-
-hAzzle.each(xy, function(l) {
-    hAzzle.cssHooks['backgroundPosition' + l] = {
-        get: function(elem) {
-            var values = parseBgPos(hAzzle.css(elem, 'backgroundPosition'));
-            return values[l];
-        },
-        set: function(elem, value) {
-            var values = parseBgPos(hAzzle.css(elem, 'backgroundPosition')),
-                isX = l === 'X';
-
-            elem.style.backgroundPosition = (isX ? value : values.X) + ' ' +
-                (isX ? values.Y : value);
-        }
-    };
-
-    hAzzle.fxAfter['backgroundPosition' + l] = {
-        set: function(fx) {
-            hAzzle.cssHooks['backgroundPosition' + l].set(fx.elem, fx.now + fx.unit);
-        }
-    };
 });
 
 
@@ -242,9 +219,6 @@ function showHide(elements, show) {
     return elements;
 }
 
-
-
-
 function genFx(type, includeWidth) {
     var which,
         i = 0,
@@ -263,17 +237,6 @@ function genFx(type, includeWidth) {
     }
 
     return attrs;
-}
-
-// Helper function to parse out the X and Y values from backgroundPosition
-
-function parseBgPos(bgPos) {
-    var parts = bgPos.split(/\s/),
-        values = {
-            'X': parts[0],
-            'Y': parts[1]
-        };
-    return values;
 }
 
 
