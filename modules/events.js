@@ -76,7 +76,7 @@ hAzzle.event = {
             handler.guid = hAzzle.getID(true, 'hEvt_');
         }
 
-        // Create a hash table of event types for the element
+        // Create handler storage of event types for the element
 
         if (!(events = eventData.events)) {
 
@@ -458,8 +458,8 @@ hAzzle.Event.prototype = {
         if (evt && evt.preventDefault) {
             evt.preventDefault();
         }
-		
-		return this;
+
+        return this;
     },
 
     // Stop event propagation
@@ -473,8 +473,8 @@ hAzzle.Event.prototype = {
         if (evt && evt.stopPropagation) {
             evt.stopPropagation();
         }
-		
-		return this;
+
+        return this;
     },
 
     stopImmediatePropagation: function() {
@@ -510,6 +510,33 @@ function getTypes(types) {
 // Globalize it
 
 hAzzle.extend({
+
+    /**
+     * Check if an event type are supported
+     * Example:
+     *
+     * hAzzle.eventSupport('submit');
+     */
+
+    eventSupport: function(eventName) {
+
+        hAzzle.assert(function(div) {
+
+            var isSupported;
+
+            eventName = 'on' + eventName;
+            isSupported = (eventName in div);
+
+            if (!isSupported) {
+
+                div.setAttribute(eventName, 'return;');
+                isSupported = typeof div[eventName] === 'function';
+            }
+
+            return isSupported
+        });
+
+    },
 
     addEvent: function(elem, type, handler) {
         if (elem.addEventListener) {

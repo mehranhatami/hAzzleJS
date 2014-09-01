@@ -27,7 +27,12 @@ var join = Array.prototype.join,
 
   propsExpr = /\.|\[|\]|"|'/,
 
-  //eoeglnfl = /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
+// IF you remove this one Mehran, you break this things:
+//
+//  dom.js  module
+//  event.js module  
+
+ eoeglnfl = /^[\x20\t\r\n\f]*[>+~]|:(even|odd|eq|gt|lt|nth|first|last)(?:\([\x20\t\r\n\f]*((?:-\d)?\d*)[\x20\t\r\n\f]*\)|)(?=[^-]|$)/i,
 
   // Combine regExes
 

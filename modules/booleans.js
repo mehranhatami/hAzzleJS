@@ -1,9 +1,9 @@
 	var i,
 	    boolElemArray = ['input', 'select', 'option', 'textarea', 'button', 'form', 'details'],
 	    boolAttrArray = ('multiple selected checked disabled readOnly required ' +
-	        'async autofocus compact nowrap declare noshade ' +
-	        'noresize defaultChecked autoplay controls defer ' +
-	        'hidden ismap loop scoped open').split(' ');
+	        'async autofocus compact nowrap declare noshade hreflang ' +
+	        'noresize defaultChecked autoplay controls defer autocomplete ' +
+	        'hidden tabindex readonly type accesskey dropzone spellcheck ismap loop scoped open').split(' ');
 
 	 // boolean.js - Shared with attributes.js and compile.js
 

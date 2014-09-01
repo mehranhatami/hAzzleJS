@@ -82,7 +82,10 @@ hAzzle.extend({
     }
 });
 
-hAzzle.propMap = hAzzle.nodeHook = {};
+hAzzle.propMap = hAzzle.nodeHook = {
+'class'	: 'className',
+'for': 'htmlFor'	
+};
 
 hAzzle.extend({
 
@@ -324,9 +327,11 @@ if (!hAzzle.features['bug-optSelected']) {
     };
 }
 
-hAzzle.each(['htmlFor', 'className', 'cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
+hAzzle.each(['cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
     'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',
-    'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex'
+    'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex', 'dropZone','spellCheck',
+	'hrefLang','isMap', 'srcDoc', 'mediaGroup', 'autoComplete', 'noValidate',
+	'radioGroup' 
 ], function() {
     hAzzle.propMap[this.toLowerCase()] = this;
 });
