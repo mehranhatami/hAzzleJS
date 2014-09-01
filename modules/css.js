@@ -3,6 +3,9 @@ var
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
+    inlineregex = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
+    listitemregex = /^(li)$/i,
+    tablerowregex = /^(tr)$/i,
     zerovalue = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i,
     leftrightRegex = /Left|Right/,
 
@@ -34,13 +37,13 @@ var
         'transform',
         'ms-flex-order',
         'transformOrigin',
-	    'perspective',
-	    'transformStyle',
-	    'perspectiveOrigin',
-	    'backfaceVisibility',				
-		'ms-flex-negative',
+        'perspective',
+        'transformStyle',
+        'perspectiveOrigin',
+        'backfaceVisibility',
+        'ms-flex-negative',
         'ms-flex-positive',
-		'transform-origin',
+        'transform-origin',
         'transform-style',
         'perspective',
         'perspective-origin',
@@ -94,8 +97,8 @@ hAzzle.extend({
 hAzzle.extend({
 
     unitless: {},
-	
-	cssProps: {},
+
+    cssProps: {},
 
     cssHooks: {
 
@@ -167,6 +170,20 @@ hAzzle.extend({
             // false flag so that the caller can decide how to proceed.
 
             return [prop, false];
+        }
+    },
+
+    getDisplayType: function(element) {
+        var tagName = element.tagName.toString().toLowerCase();
+        if (inlineregex.test(tagName)) {
+            return 'inline';
+        } else if (listitemregex.test(tagName)) {
+            return 'list-item';
+        } else if (tablerowregex.test(tagName)) {
+            return 'table-row';
+            // Default to 'block' when no match is found.
+        } else {
+            return 'block';
         }
     },
 
@@ -283,16 +300,16 @@ hAzzle.extend({
             // If a hook was provided, use that value, otherwise just set the specified value
 
             if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
-                
-				oldValue = style[ name ];
-                style[name] = value;
-				
-				// Revert to the old value if the browser didn't accept the new rule to
-				// not break the cascade.
 
-  			   if ( value && !style[ name ] ) {
-					style[ name ] = oldValue;
-				}
+                oldValue = style[name];
+                style[name] = value;
+
+                // Revert to the old value if the browser didn't accept the new rule to
+                // not break the cascade.
+
+                if (value && !style[name]) {
+                    style[name] = oldValue;
+                }
             }
 
         } else {
