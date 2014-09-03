@@ -1,17 +1,6 @@
-// raf.js
-
-var nRAF, nCAF,
+var nativeRequestAnimationFrame,
+    nativeCancelAnimationFrame,
     perf = window.performance,
-    lastTime = 0,
-
-    // Checks for iOS6 will only be done if no native frame support
-
-    ios6 = /iP(ad|hone|od).*OS 6/.test(window.navigator.userAgent),
-
-    fixTick = false,
-
-    // Performance.now()
-
     perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
     pnow = perfNow ? function() {
         return perfNow.call(perf);
@@ -19,50 +8,163 @@ var nRAF, nCAF,
         return hAzzle.now();
     };
 
+// Grab the native request and cancel functions.
+
 (function() {
+    var i, top;
 
-    nRAF = function() {
-        // native animation frames
-        // http://webstuff.nfshost.com/anim-timing/Overview.html
-        // http://dev.chromium.org/developers/design-documents/requestanimationframe-implementation
+    // Test if we are within a foreign domain. Use raf from the top if possible.
 
-        return top.requestAnimationFrame ||
-            // no native rAF support
-            (ios6 ? // iOS6 is buggy
-                top.requestAnimationFrame ||
-                top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
-                top.mozRequestAnimationFrame ||
-                top.msRequestAnimationFrame :
-                // IE <= 9, Android <= 4.3, very old/rare browsers
-                function(callback) {
-                    var currTime = hAzzle.now(),
-                        timeToCall = Math.max(0, 16 - (currTime - lastTime)),
-                        id = window.setTimeout(function() {
-                                callback(currTime + timeToCall);
-                            },
-                            timeToCall);
-                    lastTime = currTime + timeToCall;
-                    return id; // return the id for cancellation capabilities
-                });
-    }();
+    try {
+        // Accessing .name will throw SecurityError within a foreign domain.
+        window.top.name;
+        top = window.top;
+    } catch (e) {
+        top = window;
+    }
 
-    nCAF = function() {
-        return top.cancelAnimationFrame ||
-            // no native cAF support
-            (!ios6 ? top.cancelAnimationFrame ||
-                top.webkitCancelAnimationFrame ||
-                top.webkitCancelRequestAnimationFrame ||
-                top.mozCancelAnimationFrame :
-                function(id) {
-                    clearTimeout(id);
-                });
-    }();
+    nativeRequestAnimationFrame = top.requestAnimationFrame;
+    nativeCancelAnimationFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
 
+    if (!nativeRequestAnimationFrame) {
+
+        // Get the prefixed one
+
+        nativeRequestAnimationFrame = top.requestAnimationFrame ||
+            top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
+            top.msRequestAnimationFrame ||
+            top.mozRequestAnimationFrame ||
+            top.msRequestAnimationFrame;
+
+        nativeCancelAnimationFrame = top.webkitCancelAnimationFrame ||
+            top.webkitCancelRequestAnimationFrame ||
+            top.msCancelRequestAnimationFrame ||
+            top.mozCancelAnimationFrame;
+    }
+
+    nativeRequestAnimationFrame && nativeRequestAnimationFrame(function() {
+        RAF.hasNative = true;
+    });
 }());
 
-nRAF(function(timestamp) {
-    // feature-detect if rAF and now() are of the same scale (epoch or high-res),
-    // if not, we have to do a timestamp fix on each frame
-    fixTick = timestamp > 1e12 != pnow() > 1e12;
-});
+function RAF(options) {
 
+    if (!(this instanceof RAF)) {
+        return new RAF.prototype.init(options);
+    }
+
+    return new RAF.prototype.init(options);
+}
+
+hAzzle.RAF = RAF;
+
+RAF.prototype = {
+
+    constructor: RAF,
+
+    fps: 60,
+
+    init: function(options) {
+
+        options = options || {};
+
+        // Its a frame rate.
+        if (typeof options == 'number') options = {
+            frameRate: options
+        };
+        options.useNative != null || (options.useNative = true);
+        this.options = options;
+        this.frameRate = options.frameRate || RAF.fps;
+        this.frameLength = 1000 / this.frameRate;
+        this.isCustomFrameRate = this.frameRate !== RAF.fps;
+        this.timeoutId = null;
+        this.callbacks = {};
+        this.lastTickTime = 0;
+        this.tickCounter = 0;
+    },
+    shim: function(options) {
+
+        var animationFrame = RAF(options);
+
+        window.requestAnimationFrame = function(callback) {
+
+            return animationFrame.request(callback);
+        };
+
+        window.cancelAnimationFrame = function(id) {
+
+            return animationFrame.cancel(id);
+        };
+
+        return animationFrame;
+    },
+
+    hasNative: false,
+
+    request: function(callback) {
+
+        var self = this,
+            delay;
+
+        ++this.tickCounter;
+
+        if (RAF.hasNative && self.options.useNative && !this.isCustomFrameRate) {
+
+            return nativeRequestAnimationFrame(callback);
+        }
+
+        if (!callback) {
+            hAzzle.error('Not enough arguments');
+        }
+
+        if (this.timeoutId == null) {
+
+            delay = this.frameLength + this.lastTickTime - hAzzle.now();
+
+            if (delay < 0) {
+
+                delay = 0;
+            }
+
+            this.timeoutId = window.setTimeout(function() {
+
+                var id;
+
+                self.lastTickTime = hAzzle.now();
+                self.timeoutId = null;
+                ++self.tickCounter;
+
+                for (id in self.callbacks) {
+
+                    if (self.callbacks[id]) {
+
+                        if (RAF.hasNative && self.options.useNative) {
+
+                            nativeRequestAnimationFrame(self.callbacks[id]);
+
+                        } else {
+
+                            self.callbacks[id](pnow());
+                        }
+
+                        delete self.callbacks[id];
+                    }
+                }
+            }, delay);
+        }
+
+        this.callbacks[this.tickCounter] = callback;
+        return this.tickCounter;
+    },
+
+    cancel: function(id) {
+
+        if (this.hasNative && this.options.useNative) {
+            nativeCancelAnimationFrame(id);
+        }
+
+        delete this.callbacks[id];
+    }
+};
+
+RAF.prototype.init.prototype = RAF.prototype;
