@@ -13,7 +13,8 @@ fps.prototype = {
 
     init: function(opts) {
 
-        opts || (opts = {});
+         opts = opts || {};
+		
         this.updateRate = opts.updateRate || thousand;
         this.tickCounter = 0;
         this.updateTimeoutId = null;
@@ -23,9 +24,9 @@ fps.prototype = {
 
         var self = this;
 
-        self.startTime = hAzzle.now();
-        self.tickCounter = 0;
-        self.updateTimeoutId = setTimeout(function() {
+        this.startTime = hAzzle.now();
+        this.tickCounter = 0;
+        this.updateTimeoutId = setTimeout(function() {
 
             if (self.tickCounter) {
                 callback(Math.round(thousand / ((hAzzle.now() - self.startTime) / self.tickCounter)));
@@ -40,7 +41,7 @@ fps.prototype = {
 
     stop: function() {
         var self = this;
-        clearTimeout(self.updateTimeoutId);
+        clearTimeout(this.updateTimeoutId);
         return self;
     },
 
@@ -49,6 +50,6 @@ fps.prototype = {
         ++self.tickCounter;
         return self;
     }
-}
+};
 
 fps.prototype.init.prototype = fps.prototype;
