@@ -1,17 +1,11 @@
 var nativeRequestAnimationFrame,
-    nativeCancelAnimationFrame,
-    perf = window.performance,
-    perfNow = perf.now || perf.webkitNow || perf.msNow || perf.mozNow,
-    pnow = perfNow ? function() {
-        return perfNow.call(perf);
-    } : function() {
-        return hAzzle.now();
-    };
+    nativeCancelAnimationFrame;
 
 // Grab the native request and cancel functions.
 
 (function() {
-    var i, top;
+
+    var top;
 
     // Test if we are within a foreign domain. Use raf from the top if possible.
 
@@ -62,6 +56,8 @@ RAF.prototype = {
 
     constructor: RAF,
 
+    // Default 60 fps
+
     fps: 60,
 
     init: function(options) {
@@ -69,19 +65,23 @@ RAF.prototype = {
         options = options || {};
 
         // Its a frame rate.
+
         if (typeof options == 'number') options = {
             frameRate: options
         };
+
         options.useNative != null || (options.useNative = true);
+
         this.options = options;
-        this.frameRate = options.frameRate || RAF.fps;
+        this.frameRate = options.frameRate || this.fps;
         this.frameLength = 1000 / this.frameRate;
-        this.isCustomFrameRate = this.frameRate !== RAF.fps;
+        this.isCustomFrameRate = this.frameRate !== this.fps;
         this.timeoutId = null;
         this.callbacks = {};
         this.lastTickTime = 0;
         this.tickCounter = 0;
     },
+
     shim: function(options) {
 
         var animationFrame = RAF(options);
@@ -117,7 +117,7 @@ RAF.prototype = {
             hAzzle.error('Not enough arguments');
         }
 
-        if (this.timeoutId == null) {
+        if (this.timeoutId === null) {
 
             delay = this.frameLength + this.lastTickTime - hAzzle.now();
 
@@ -144,7 +144,7 @@ RAF.prototype = {
 
                         } else {
 
-                            self.callbacks[id](pnow());
+                            self.callbacks[id](self.perfNow());
                         }
 
                         delete self.callbacks[id];
@@ -164,7 +164,20 @@ RAF.prototype = {
         }
 
         delete this.callbacks[id];
-    }
+    },
+
+    perfNow: function() {
+
+        if (window.performance) {
+            return window.performance.now() ||
+                window.performance.webkitNow() ||
+                window.performance.msNow() ||
+                window.performance.mozNow();
+        }
+        return hAzzle.now() - this.navigationStart;
+    },
+
+    navigationStart: hAzzle.now()
 };
 
 RAF.prototype.init.prototype = RAF.prototype;
