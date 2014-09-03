@@ -11,7 +11,7 @@ var nativeRequestAnimationFrame,
 
     try {
         // Accessing .name will throw SecurityError within a foreign domain.
-        window.top.name;
+        var name = window.top.name
         top = window.top;
     } catch (e) {
         top = window;
@@ -153,8 +153,13 @@ RAF.prototype = {
             }, delay);
         }
 
-        this.callbacks[this.tickCounter] = callback;
-        return this.tickCounter;
+        // Need to check 'callbacks' not are undefined, else it throws
+        // and nothing will work. Better to die silently!
+
+        if (self.callbacks !== undefined) {
+            self.callbacks[this.tickCounter] = callback;
+            return this.tickCounter;
+        }
     },
 
     cancel: function(id) {
