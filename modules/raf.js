@@ -1,5 +1,5 @@
-var nativeRequestAnimationFrame,
-    nativeCancelAnimationFrame;
+var nRAF,
+    nCAF;
 
 // Grab the native request and cancel functions.
 
@@ -17,26 +17,26 @@ var nativeRequestAnimationFrame,
         top = window;
     }
 
-    nativeRequestAnimationFrame = top.requestAnimationFrame;
-    nativeCancelAnimationFrame = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+    nRAF = top.requestAnimationFrame;
+    nCAF = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
 
-    if (!nativeRequestAnimationFrame) {
+    if (!nRAF) {
 
         // Get the prefixed one
 
-        nativeRequestAnimationFrame = top.requestAnimationFrame ||
+        nRAF = top.requestAnimationFrame ||
             top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
             top.msRequestAnimationFrame ||
             top.mozRequestAnimationFrame ||
             top.msRequestAnimationFrame;
 
-        nativeCancelAnimationFrame = top.webkitCancelAnimationFrame ||
+        nCAF = top.webkitCancelAnimationFrame ||
             top.webkitCancelRequestAnimationFrame ||
             top.msCancelRequestAnimationFrame ||
             top.mozCancelAnimationFrame;
     }
 
-    nativeRequestAnimationFrame && nativeRequestAnimationFrame(function() {
+    nRAF && nRAF(function() {
         RAF.hasNative = true;
     });
 }());
@@ -64,39 +64,51 @@ RAF.prototype = {
 
         options = options || {};
 
-        // Its a frame rate.
+        // It's a frame rate.
 
         if (typeof options == 'number') options = {
             frameRate: options
         };
 
-        options.useNative != null || (options.useNative = true);
-
-        this.options = options;
         this.frameRate = options.frameRate || this.fps;
         this.frameLength = 1000 / this.frameRate;
-        this.isCustomFrameRate = this.frameRate !== this.fps;
+        this.isCustomFPS = this.frameRate !== this.fps;
+
+        // Timeout ID
         this.timeoutId = null;
+
+        // Callback
+
         this.callbacks = {};
+
+        // Last 'tick' time
+
         this.lastTickTime = 0;
+
+        // Tick counter
+
         this.tickCounter = 0;
+
+        // Use native {Booleans}
+
+        this.useNative = false;
+
+        options.useNative != null || (this.useNative = true);
     },
 
     shim: function(options) {
 
-        var animationFrame = RAF(options);
+        var _RAF = RAF(options);
 
         window.requestAnimationFrame = function(callback) {
-
-            return animationFrame.request(callback);
+            return _RAF.request(callback);
         };
 
         window.cancelAnimationFrame = function(id) {
-
-            return animationFrame.cancel(id);
+            return _RAF.cancel(id);
         };
 
-        return animationFrame;
+        return _RAF;
     },
 
     hasNative: false,
@@ -108,9 +120,9 @@ RAF.prototype = {
 
         ++this.tickCounter;
 
-        if (RAF.hasNative && self.options.useNative && !this.isCustomFrameRate) {
+        if (RAF.hasNative && self.useNative && !this.isCustomFPS) {
 
-            return nativeRequestAnimationFrame(callback);
+            return nRAF(callback);
         }
 
         if (!callback) {
@@ -122,7 +134,6 @@ RAF.prototype = {
             delay = this.frameLength + this.lastTickTime - hAzzle.now();
 
             if (delay < 0) {
-
                 delay = 0;
             }
 
@@ -132,15 +143,18 @@ RAF.prototype = {
 
                 self.lastTickTime = hAzzle.now();
                 self.timeoutId = null;
+
+                // Counting backward - slower or not?
+
                 ++self.tickCounter;
 
                 for (id in self.callbacks) {
 
                     if (self.callbacks[id]) {
 
-                        if (RAF.hasNative && self.options.useNative) {
+                        if (RAF.hasNative && self.useNative) {
 
-                            nativeRequestAnimationFrame(self.callbacks[id]);
+                            nRAF(self.callbacks[id]);
 
                         } else {
 
@@ -164,8 +178,9 @@ RAF.prototype = {
 
     cancel: function(id) {
 
-        if (this.hasNative && this.options.useNative) {
-            nativeCancelAnimationFrame(id);
+        if (this.hasNative && this.useNative) {
+
+            nCAF(id);
         }
 
         delete this.callbacks[id];
@@ -173,11 +188,14 @@ RAF.prototype = {
 
     perfNow: function() {
 
-        if (window.performance) {
-            return window.performance.now() ||
-                window.performance.webkitNow() ||
-                window.performance.msNow() ||
-                window.performance.mozNow();
+        var wPerf = window.performance;
+
+        if (wPerf) {
+
+            return wPerf.now() ||
+                wPerf.webkitNow() ||
+                wPerf.msNow() ||
+                wPerf.mozNow();
         }
         return hAzzle.now() - this.navigationStart;
     },
