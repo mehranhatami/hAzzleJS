@@ -24,8 +24,7 @@ var nRAF,
 
         // Get the prefixed one
 
-        nRAF = top.requestAnimationFrame ||
-            top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
+        nRAF = top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
             top.msRequestAnimationFrame ||
             top.mozRequestAnimationFrame ||
             top.msRequestAnimationFrame;
@@ -69,29 +68,29 @@ RAF.prototype = {
         if (typeof options == 'number') options = {
             frameRate: options
         };
-
+	
         this.frameRate = options.frameRate || this.fps;
         this.frameLength = 1000 / this.frameRate;
         this.isCustomFPS = this.frameRate !== this.fps;
-
-        // Timeout ID
+        
+		// Timeout ID
         this.timeoutId = null;
-
-        // Callback
-
-        this.callbacks = {};
-
-        // Last 'tick' time
-
-        this.lastTickTime = 0;
+        
+		// Callback
+		
+		this.callbacks = {};
+        
+		// Last 'tick' time
+		
+		this.lastTickTime = 0;
 
         // Tick counter
 
-        this.tickCounter = 0;
+		this.tickCounter = 0;
 
         // Use native {Booleans}
 
-        this.useNative = false;
+		this.useNative = false;
 
         options.useNative != null || (this.useNative = true);
     },
@@ -143,9 +142,9 @@ RAF.prototype = {
 
                 self.lastTickTime = hAzzle.now();
                 self.timeoutId = null;
-
-                // Counting backward - slower or not?
-
+				
+				// Counting backward - slower or not?
+				
                 ++self.tickCounter;
 
                 for (id in self.callbacks) {
@@ -179,7 +178,7 @@ RAF.prototype = {
     cancel: function(id) {
 
         if (this.hasNative && this.useNative) {
-
+			
             nCAF(id);
         }
 
@@ -188,11 +187,11 @@ RAF.prototype = {
 
     perfNow: function() {
 
-        var wPerf = window.performance;
+       var wPerf = window.performance;
 
         if (wPerf) {
 
-            return wPerf.now() ||
+			return wPerf.now() ||
                 wPerf.webkitNow() ||
                 wPerf.msNow() ||
                 wPerf.mozNow();
