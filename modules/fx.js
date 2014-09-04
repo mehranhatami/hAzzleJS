@@ -31,13 +31,15 @@ Tween.prototype = {
 
         var hooks = hAzzle.fxAfter[this.prop],
             complete, from, val,
+			
             self = this,
             done = true,
             callback = {
 
                 animate: function(currentTime, jumpToEnd) {
 
-                    var i, delta = currentTime - self.start, v, temp;
+                    var i, index, delta = currentTime - self.start,
+					options = self.options, style = self.elem.style, v;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -58,22 +60,28 @@ Tween.prototype = {
 
                                 self.update();
                             }
+                     
+					 if ( options.overflow != null) {
 
+                          style.overflow = options.overflow[0];
+                          style.overflowX = options.overflow[1];
+                          style.overflowY = options.overflow[2];
+		              }
                             // Execute the complete function
 
-                            complete = self.options.complete;
+                            complete = options.complete;
 
                             if (complete) {
 
-                                self.options.complete = false;
+                                options.complete = false;
                                 complete.call(self.elem);
                             }
                         }
                         return false;
                     }
 
-                   // NOTE!! There exist bugs in this calculations for Android 2.3	, but
-                   // hAzzle are not supporting Android 2.x so I'm not going to fix it
+                    // NOTE!! There exist bugs in this calculations for Android 2.3	, but
+                    // hAzzle are not supporting Android 2.x so I'm not going to fix it
 
                     if (typeof this.diff === 'object') {
 
@@ -83,11 +91,11 @@ Tween.prototype = {
                         }
 
                     } else {
-						
-     			       // Do not use Math.max for calculations it's much slower!
-                       // http://jsperf.com/math-max-vs-comparison/3
-                       
-					    self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
+
+                        // Do not use Math.max for calculations it's much slower!
+                        // http://jsperf.com/math-max-vs-comparison/3
+
+                        self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
                     }
 
                     // Update the CSS style(s)
@@ -136,9 +144,9 @@ Tween.prototype = {
         this.to = to;
 
         if (callback.animate() && dictionary.push(callback)) {
-			
+
             if (!rafId) {
-			
+
                 rafId = frame.request(raf);
             }
         }
@@ -160,7 +168,7 @@ Tween.prototype.init.prototype = Tween.prototype;
 
 hAzzle.extend({
 
-    animate: function(options, speed, easing, callback) {
+    animate: function(opts, speed, easing, callback) {
 
         var opt;
 
@@ -202,17 +210,26 @@ hAzzle.extend({
 
         return this.each(function() {
 
-            var index, val, anim, hooks, name, unit;
+            var index, val, anim, hooks, name, unit, style = this.style;
+			
+	// Height/width overflow pass
+	if ( this.nodeType === 1 && ( "height" in opts || "width" in opts ) ) {
+		opt.overflow = [ style.overflow, style.overflowX, style.overflowY ];
+	}
 
-            for (index in options) {
+if ( opt.overflow ) {
+		style.overflow = "hidden";
+	}			
 
-                val = options[index];
+            for (index in opts) {
+
+                val = opts[index];
 
                 name = hAzzle.camelize(index);
 
                 if (index !== name) {
-                    options[name] = options[index];
-                    delete options[index];
+                    opts[name] = opts[index];
+                    delete opts[index];
                 }
 
                 if (hAzzle.propertyMap[index]) {
@@ -224,11 +241,11 @@ hAzzle.extend({
                 hooks = hAzzle.fxBefore[index];
 
                 if (hooks) {
-              
-			      // Animation are started from inside of this hook 
-              
-                  anim.run(hooks(this, index, val, anim), ' ', false);
-					 
+
+                    // Animation are started from inside of this hook 
+
+                    anim.run(hooks(this, index, val, anim), ' ', false);
+
                 } else {
 
                     anim.run(val, unit);
@@ -265,7 +282,7 @@ hAzzle.extend({
 
 function raf(timestamp) {
     if (rafId) {
-        window.requestAnimationFrame(raf);
+        frame.request(raf);
         render(timestamp);
     }
 }
@@ -276,14 +293,14 @@ function render(tick) {
         tick = frame.perfNow();
     }
 
-   var timer, i = 0;
+    var timer, i = 0;
 
     for (; i < dictionary.length; i++) {
 
         timer = dictionary[i];
 
-        if (!timer.animate(tick) && 
-		     dictionary[i] === timer) {
+        if (!timer.animate(tick) &&
+            dictionary[i] === timer) {
             dictionary.splice(i--, 1);
         }
     }
@@ -364,9 +381,9 @@ hAzzle.extend({
 }, hAzzle);
 
 hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
-    set: function(tween) {
-        if (tween.elem.nodeType && tween.elem.parentNode) {
-            tween.elem[tween.prop] = tween.now;
+    set: function(fx) {
+        if (fx.elem.nodeType && fx.elem.parentNode) {
+            fx.elem[fx.prop] = fx.pos;
         }
     }
 };
