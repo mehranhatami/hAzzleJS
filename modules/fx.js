@@ -39,7 +39,7 @@ Tween.prototype = {
                 animate: function(currentTime, jumpToEnd) {
 
                     var i, index, delta = currentTime - self.start,
-					options = self.options, style = self.elem.style, v;
+                     options = self.options, style = self.elem.style, v;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -61,7 +61,7 @@ Tween.prototype = {
                                 self.update();
                             }
                      
-					 if ( options.overflow != null) {
+                     if ( options.overflow != null) {
 
                           style.overflow = options.overflow[0];
                           style.overflowX = options.overflow[1];
@@ -213,19 +213,22 @@ hAzzle.extend({
             var index, val, anim, hooks, name, unit, style = this.style;
 			
 	// Height/width overflow pass
-	if ( this.nodeType === 1 && ( "height" in opts || "width" in opts ) ) {
+	if ( this.nodeType === 1 && ( 'height' in opts || 'width' in opts ) ) {
 		opt.overflow = [ style.overflow, style.overflowX, style.overflowY ];
 	}
 
-if ( opt.overflow ) {
-		style.overflow = "hidden";
-	}			
-
-            for (index in opts) {
+         if ( opt.overflow ) {
+		    style.overflow = 'hidden';
+	      }
+		  
+		   for (index in opts) {
 
                 val = opts[index];
+               
+			   // Auto-set vendor prefixes. 
+			   // This is cached for better performance
 
-                name = hAzzle.camelize(index);
+                name = hAzzle.camelize(hAzzle.prefixCheck(index)[0]);
 
                 if (index !== name) {
                     opts[name] = opts[index];
