@@ -69,10 +69,10 @@ RAF.prototype = {
             frameRate: options
         };
 	
-        this.frameRate = options.frameRate || this.fps;
+        this.frameRate = options.frameRate || hAzzle.defaultFPS.toString();
         this.frameLength = 1000 / this.frameRate;
-        this.isCustomFPS = this.frameRate !== this.fps;
-        
+        this.isCustomFPS = this.frameRate !== hAzzle.defaultFPS.toString();
+
 		// Timeout ID
         this.timeoutId = null;
         
