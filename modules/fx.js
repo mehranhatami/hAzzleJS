@@ -27,21 +27,17 @@ Tween.prototype = {
         this.duration = options.duration || 600;
     },
 
-    run: function(from, to) {
+    run: function(to) {
 
-        this.diff = to - from;
-        this.start = frame.perfNow();
-        this.pos = 0;
-        this.to = to;
-        this.from = from;
-
-        var self = this,
+        var hooks = hAzzle.fxAfter[this.prop],
+            complete, from,
+            self = this,
             done = true,
             callback = {
 
                 animate: function(currentTime, jumpToEnd) {
 
-                    var delta = currentTime - self.start;
+                    var i, delta = currentTime - self.start;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -89,6 +85,15 @@ Tween.prototype = {
                 elem: this.elem
             };
 
+        this.from = from = hooks && hooks.get ?
+            hooks.get(this) :
+            hAzzle.fxAfter._default.get(this);
+
+        this.diff = to - from;
+        this.start = frame.perfNow();
+        this.pos = 0;
+        this.to = to;
+
         if (callback.animate() && dictionary.push(callback)) {
             if (!rafId) {
                 rafId = frame.request(function render(tick) {
@@ -123,7 +128,14 @@ Tween.prototype = {
     },
 
     update: function() {
-        this.elem.style[this.prop] = this.pos + 'px';
+
+        var hooks = hAzzle.fxAfter[this.prop];
+
+        if (hooks && hooks.set) {
+            hooks.set(this);
+        } else {
+            hAzzle.fxAfter._default.set(this);
+        }
     }
 };
 
@@ -173,18 +185,40 @@ hAzzle.extend({
 
         return this.each(function() {
 
-            var index;
+            var index, val, anim, hooks, name;
 
             for (index in options) {
 
-                var anim = new Tween(this, opt, index);
+                val = options[index];
 
-                anim.run(parseFloat(hAzzle.css(this, index)), options[index]);
+                name = hAzzle.camelize(index);
+
+                if (index !== name) {
+                    options[name] = options[index];
+                    delete options[index];
+                }
+
+                if (hAzzle.propertyMap[index]) {
+                    val = hAzzle.propertyMap[index](this, index);
+                }
+
+                anim = new Tween(this, opt, index);
+
+                hooks = hAzzle.fxBefore[index];
+
+                if (hooks) {
+
+                    hooks(this, index, val, anim);
+
+                } else {
+
+                    anim.run(val);
+                }
             }
         });
     },
 
-    stop: function(gotoEnd) {
+    stop: function(jumpToEnd) {
 
         return this.each(function() {
 
@@ -194,7 +228,7 @@ hAzzle.extend({
             while (i--) {
 
                 if (timers[i].elem === this) {
-                    if (gotoEnd) {
+                    if (jumpToEnd) {
 
                         // Force the next step to be the last
 
@@ -207,3 +241,74 @@ hAzzle.extend({
         });
     }
 });
+
+hAzzle.extend({
+
+    propertyMap: {
+
+        display: function(elem, value) {
+
+            value = value.toString().toLowerCase();
+
+            if (value === 'auto') {
+
+                value = hAzzle.getDisplayType(elem);
+            }
+            return value;
+        },
+
+        visibility: function(elem, value) {
+
+            return value.toString().toLowerCase();
+
+        }
+    },
+
+    fxBefore: {},
+
+    fxAfter: {
+
+        opacity: {
+            set: function(fx) {
+                fx.elem.style.opacity = fx.pos;
+            }
+        },
+
+        _default: {
+
+            /**
+             * _default getter / setter default CSS properties. getComputedStyle are
+             * cached on the object itself for better performance, so we only
+             * queuing the DOM once
+             */
+
+            get: function(fx) {
+
+                var result,
+                    prop = fx.elem[fx.prop];
+
+                if (prop != null && (!getStyles(fx.elem) || prop == null)) {
+                    return prop;
+                }
+
+                result = hAzzle.css(fx.elem, fx.prop, '');
+
+                // Empty strings, null, undefined and 'auto' are converted to 0.
+                return !result || result === 'auto' ? 0 : result;
+            },
+
+            set: function(fx) {
+
+                hAzzle.style(fx.elem, fx.prop, fx.pos);
+            }
+        }
+    }
+}, hAzzle);
+
+hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
+    set: function(tween) {
+        if (tween.elem.nodeType && tween.elem.parentNode) {
+            tween.elem[tween.prop] = tween.now;
+        }
+    }
+};
