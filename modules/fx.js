@@ -1,5 +1,5 @@
 var frame = hAzzle.RAF(),
-    relarelativesRegEx = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
+    relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     dictionary = [],
     rafId;
@@ -27,20 +27,20 @@ Tween.prototype = {
         this.easing = options.easing || 'linear';
         this.duration = options.duration || 600;
     },
-	
-	cur: function() {
 
-      var hooks = hAzzle.fxAfter[this.prop];	
-		
+    cur: function() {
+
+        var hooks = hAzzle.fxAfter[this.prop];
+
         return hooks && hooks.get ?
             hooks.get(this) :
             hAzzle.fxAfter._default.get(this);
-	},
+    },
 
     run: function(from, to, unit) {
 
         var complete, from, val,
-			
+
             self = this,
             done = true,
             callback = {
@@ -48,7 +48,9 @@ Tween.prototype = {
                 animate: function(currentTime, jumpToEnd) {
 
                     var i, index, delta = currentTime - self.start,
-                     options = self.options, style = self.elem.style, v;
+                        options = self.options,
+                        style = self.elem.style,
+                        v;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -69,13 +71,13 @@ Tween.prototype = {
 
                                 self.update();
                             }
-                     
-                     if ( options.overflow != null) {
 
-                          style.overflow = options.overflow[0];
-                          style.overflowX = options.overflow[1];
-                          style.overflowY = options.overflow[2];
-		              }
+                            if (options.overflow != null) {
+
+                                style.overflow = options.overflow[0];
+                                style.overflowX = options.overflow[1];
+                                style.overflowY = options.overflow[2];
+                            }
                             // Execute the complete function
 
                             complete = options.complete;
@@ -218,22 +220,22 @@ hAzzle.extend({
         return this.each(function() {
 
             var index, val, anim, hooks, name, unit, style = this.style;
-			
-	// Height/width overflow pass
-	if ( this.nodeType === 1 && ( 'height' in opts || 'width' in opts ) ) {
-		opt.overflow = [ style.overflow, style.overflowX, style.overflowY ];
-	}
 
-         if ( opt.overflow ) {
-		    style.overflow = 'hidden';
-	      }
-		  
-		   for (index in opts) {
+            // Height/width overflow pass
+            if (this.nodeType === 1 && ('height' in opts || 'width' in opts)) {
+                opt.overflow = [style.overflow, style.overflowX, style.overflowY];
+            }
+
+            if (opt.overflow) {
+                style.overflow = 'hidden';
+            }
+
+            for (index in opts) {
 
                 val = opts[index];
-               
-			   // Auto-set vendor prefixes. 
-			   // This is cached for better performance
+
+                // Auto-set vendor prefixes. 
+                // This is cached for better performance
 
                 name = hAzzle.camelize(hAzzle.prefixCheck(index)[0]);
 
@@ -258,32 +260,61 @@ hAzzle.extend({
 
                 } else {
 
-					parts = relarelativesRegEx.exec( val );
+                    parts = relarelativesRegEx.exec(val);
 
-					start = anim.cur();
+                    target = anim.cur();
 
-					if ( parts ) {
-						end = parseFloat( parts[2] );
-						unit = parts[3] || ( hAzzle.unitless[ index ] ? '' : 'px' );
+                    if (parts) {
+                        end = parseFloat(parts[2]);
+                        unit = parts[3] || (hAzzle.unitless[index] ? '' : 'px');
 
-						// We need to compute starting value
-						if ( unit !== 'px' ) {
-							hAzzle.style( this, index, (end || 1) + unit);
-							start = ( (end || 1) / anim.cur() ) * start;
-							hAzzle.style( this, index, start + unit);
-						}
+                        // Starting value computation is required for potential unit mismatches
+                        start = (hAzzle.unitless[index] || unit !== "px" && +target) &&
+                            relarelativesRegEx.exec(hAzzle.css(this, index)),
+                            scale = 1,
+                            maxIterations = 20;
 
-						// If a +=/-= token was provided, we're doing a relative animation
-						if ( parts[1] ) {
-							end = ( (parts[ 1 ] === '-=' ? -1 : 1) * end ) + start;
-						}
+                        // We need to compute starting value
+                        if (start && start[3] !== unit) {
 
+                            // Trust units reported by jQuery.css
+                            unit = unit || start[3];
+
+                            // Make sure we update the tween properties later on
+                            parts = parts || [];
+
+                            // Iteratively approximate from a nonzero starting point
+                            start = +target || 1;
+
+
+                            do {
+
+                                scale = scale || ".5";
+
+                                // Adjust and apply
+                                start = start / scale;
+                                hAzzle.style(this, index, start + unit);
+
+                            } while (
+                                scale !== (scale = anim.cur() / target) && scale !== 1 && --maxIterations
+                            );
+                        }
+
+                        if (parts) {
+
+                            start = +start || +target || 0;
+
+                            // If a +=/-= token was provided, we're doing a relative animation
+                            end = parts[1] ?
+                                start + (parts[1] + 1) * parts[2] :
+                                +parts[2];
+                        }
                         anim.run(start, end, unit);
 
-					} else {
-					
-					   anim.run(anim.cur(), val, '');
-					}
+                    } else {
+
+                        anim.run(anim.cur(), val, '');
+                    }
                 }
             }
         });
