@@ -80,7 +80,7 @@ Tween.prototype = {
                     self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
 
                     // Update the CSS style(s)
-                    console.log(self.pos)
+
                     self.update();
 
                     return true;
@@ -132,7 +132,6 @@ Tween.prototype.init.prototype = Tween.prototype;
 hAzzle.extend({
 
     animate: function(options, speed, easing, callback) {
-
 
         var opt;
 
