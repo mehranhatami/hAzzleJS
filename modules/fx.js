@@ -1,4 +1,5 @@
 var frame = hAzzle.RAF(),
+    relativesRegEx = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
     fixTick = false, // feature detected below
     dictionary = [],
     rafId;
@@ -26,11 +27,19 @@ Tween.prototype = {
         this.easing = options.easing || 'linear';
         this.duration = options.duration || 600;
     },
+	
+	cur: function() {
 
-    run: function(to, unit) {
+      var hooks = hAzzle.fxAfter[this.prop];	
+		
+        return hooks && hooks.get ?
+            hooks.get(this) :
+            hAzzle.fxAfter._default.get(this);
+	},
 
-        var hooks = hAzzle.fxAfter[this.prop],
-            complete, from, val,
+    run: function(from, to, unit) {
+
+        var complete, from, val,
 			
             self = this,
             done = true,
@@ -108,9 +117,7 @@ Tween.prototype = {
                 elem: this.elem
             };
 
-        this.from = from = hooks && hooks.get ?
-            hooks.get(this) :
-            hAzzle.fxAfter._default.get(this);
+        this.from = from;
 
         this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
 
@@ -251,7 +258,32 @@ hAzzle.extend({
 
                 } else {
 
-                    anim.run(val, unit);
+					parts = relarelativesRegEx.exec( val );
+
+					start = anim.cur();
+
+					if ( parts ) {
+						end = parseFloat( parts[2] );
+						unit = parts[3] || ( hAzzle.unitless[ index ] ? '' : 'px' );
+
+						// We need to compute starting value
+						if ( unit !== 'px' ) {
+							hAzzle.style( this, index, (end || 1) + unit);
+							start = ( (end || 1) / anim.cur() ) * start;
+							hAzzle.style( this, index, start + unit);
+						}
+
+						// If a +=/-= token was provided, we're doing a relative animation
+						if ( parts[1] ) {
+							end = ( (parts[ 1 ] === '-=' ? -1 : 1) * end ) + start;
+						}
+
+                        anim.run(start, end, unit);
+
+					} else {
+					
+					   anim.run(anim.cur(), val, '');
+					}
                 }
             }
         });
