@@ -1,10 +1,10 @@
 var frame = hAzzle.RAF(),
-    fixTs = false, // feature detected below
+    fixTick = false, // feature detected below
     dictionary = [],
     rafId;
 
 frame.request(function(timestamp) {
-    fixTs = timestamp > 1e12 != frame.perfNow() > 1e12;
+    fixTick = timestamp > 1e12 != frame.perfNow() > 1e12;
 });
 
 function Tween(elem, options, prop) {
@@ -19,13 +19,12 @@ Tween.prototype = {
 
     init: function(elem, options, prop) {
 
-        // Activate RAF and CAF with default framerate
-
         this.elem = elem;
         this.prop = prop;
+        this.currentState = {};
+        this.options = options;
         this.easing = options.easing || 'linear';
         this.duration = options.duration || 600;
-        this.complete = options.complete;
     },
 
     run: function(from, to) {
@@ -37,91 +36,151 @@ Tween.prototype = {
         this.from = from;
 
         var self = this,
+            done = true,
             callback = {
 
                 animate: function(currentTime, jumpToEnd) {
 
-                    return self.step(currentTime, jumpToEnd);
+                    var delta = currentTime - self.start;
+
+                    if (delta > self.duration || jumpToEnd) {
+
+                        self.currentState[self.currentState.prop] = true;
+
+                        for (i in self.currentState) {
+                            if (self.currentState[i] !== true) {
+                                done = false;
+                            }
+                        }
+                        if (done) {
+
+                            if (jumpToEnd) {
+
+                                self.pos = to;
+
+                                // Only do style update if jumpToEnd 
+
+                                self.update();
+                            }
+
+                            // Execute the complete function
+
+                            complete = self.options.complete;
+
+                            if (complete) {
+
+                                self.options.complete = false;
+                                complete.call(self.elem);
+                            }
+                        }
+                        return false;
+                    }
+                    // Calculate position and easing
+
+                    self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
+
+                    // Update the CSS style(s)
+                    console.log(self.pos)
+                    self.update();
+
+                    return true;
                 },
 
                 elem: this.elem
             };
 
-        dictionary.push(callback);
+        if (callback.animate() && dictionary.push(callback)) {
+            if (!rafId) {
+                rafId = frame.request(function render(tick) {
 
-        if (callback.animate()) {
+                    var timer, i = 0;
 
-            rafId = frame.request(raf);
+                    if (fixTick) {
+                        tick = frame.perfNow();
+                    }
+                    frame.request(render);
+
+                    for (; i < dictionary.length; i++) {
+
+                        timer = dictionary[i];
+
+                        if (!timer.animate(tick) && dictionary[i] === timer) {
+                            dictionary.splice(i--, 1);
+                        }
+                    }
+
+                    if (!dictionary.length) {
+
+                        frame.cancel(rafId);
+
+                        // Avoid memory leaks
+
+                        rafId = null;
+                    }
+                });
+            }
         }
     },
 
-    step: function(currentTime, jumpToEnd) {
-
-        var delta = currentTime - this.start;
-
-        if (delta > this.duration || jumpToEnd) {
-
-            this.pos = this.end;
-            //this.elem.style[this.prop] = this.pos + 'px';
-
-            return false;
-        }
-
-        // Calculate position and easing
-
-        this.pos = this.diff * hAzzle.easing[this.easing](delta / this.duration) + this.from;
-
-        // Update the CSS style(s)
-
+    update: function() {
         this.elem.style[this.prop] = this.pos + 'px';
-
-        return this;
     }
 };
 
 Tween.prototype.init.prototype = Tween.prototype;
 
-function raf(timestamp) {
-    if (rafId) {
-        frame.request(raf);
-        tick(timestamp);
-    }
-}
-
-function tick(tock) {
-
-    var timer, i = 0;
-
-    for (; i < dictionary.length; i++) {
-
-        timer = dictionary[i];
-
-        if (!timer.animate(tock) && dictionary[i] === timer) {
-            dictionary.splice(i--, 1);
-        }
-    }
-
-    if (!dictionary.length) {
-
-        frame.cancel(rafId);
-
-        // Avoid memory leaks
-
-        rafId = null;
-    }
-}
-
 hAzzle.extend({
 
-    animate: function(options) {
+    animate: function(options, speed, easing, callback) {
+
+
+        var opt;
+
+        if (typeof speed === 'object') {
+
+            opt = hAzzle.shallowCopy({}, speed);
+
+        } else {
+
+            opt = {
+
+                complete: callback || !callback && easing ||
+                    hAzzle.isFunction(speed) && speed,
+                duration: speed,
+                easing: callback && easing || easing && !hAzzle.isFunction(easing) && easing
+            };
+
+            // Support for jQuery's named durations.
+
+            switch (opt.duration.toString().toLowerCase()) {
+                case 'fast':
+                    opt.duration = 200;
+                    break;
+                case 'normal':
+                    opt.duration = 500;
+                    break;
+                case 'medium':
+                    opt.duration = 400;
+                    break;
+                case 'slow':
+                    opt.duration = 1500;
+                    break;
+                default:
+
+                    // If the user is attempting to set a duration of 0 (in order to produce an immediate style change).
+                    opt.duration = parseFloat(opt.duration) || 1;
+            }
+        }
 
         return this.each(function() {
 
-            for (var i in options) {
+            var index;
 
-                var anim = new Tween(this, options, i);
+            for (index in options) {
 
-                anim.run(parseFloat(hAzzle.css(this, i)), options[i]);
+                var anim = new Tween(this, opt, index);
+
+                anim.run(parseFloat(hAzzle.css(this, index)), options[index]);
             }
         });
     },
@@ -129,14 +188,18 @@ hAzzle.extend({
     stop: function(gotoEnd) {
 
         return this.each(function() {
+
             var timers = dictionary,
                 i = timers.length;
 
             while (i--) {
+
                 if (timers[i].elem === this) {
                     if (gotoEnd) {
-                        // force the next step to be the last
-                        timers[i](null, true);
+
+                        // Force the next step to be the last
+
+                        timers[i].animate(null, true);
                     }
 
                     timers.splice(i, 1);
