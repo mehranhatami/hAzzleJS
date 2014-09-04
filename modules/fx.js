@@ -27,17 +27,17 @@ Tween.prototype = {
         this.duration = options.duration || 600;
     },
 
-    run: function(to) {
+    run: function(to, unit) {
 
         var hooks = hAzzle.fxAfter[this.prop],
-            complete, from,
+            complete, from, val,
             self = this,
             done = true,
             callback = {
 
                 animate: function(currentTime, jumpToEnd) {
 
-                    var i, delta = currentTime - self.start;
+                    var i, delta = currentTime - self.start, v;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -73,7 +73,18 @@ Tween.prototype = {
                     }
                     // Calculate position and easing
 
-                    self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
+                    if (typeof this.diff === 'object') {
+
+                        for (v in this.diff) {
+
+                            self.pos[v] = (this.diff[v].end - this.diff[v].start) * hAzzle.easing[self.easing](delta / self.duration) + self.diff[v].start;
+
+                        }
+
+                    } else {
+
+                        self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
+                    }
 
                     // Update the CSS style(s)
 
@@ -89,7 +100,34 @@ Tween.prototype = {
             hooks.get(this) :
             hAzzle.fxAfter._default.get(this);
 
-        this.diff = to - from;
+        this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
+
+        if (typeof to === 'object') {
+
+            this.diff = {};
+
+            if (typeof from !== 'object') {
+
+                from = {};
+            }
+
+            for (val in to) {
+
+                if (!from.hasOwnProperty(val)) {
+
+                    from[val] = 0;
+                }
+
+                this.diff[val] = {
+                    start: from[val],
+                    end: to[val]
+                };
+            }
+        } else {
+
+            this.diff = to - from;
+        }
+
         this.start = frame.perfNow();
         this.pos = 0;
         this.to = to;
@@ -185,7 +223,7 @@ hAzzle.extend({
 
         return this.each(function() {
 
-            var index, val, anim, hooks, name;
+            var index, val, anim, hooks, name, unit;
 
             for (index in options) {
 
@@ -212,7 +250,7 @@ hAzzle.extend({
 
                 } else {
 
-                    anim.run(val);
+                    anim.run(val, unit);
                 }
             }
         });
@@ -299,7 +337,7 @@ hAzzle.extend({
 
             set: function(fx) {
 
-                hAzzle.style(fx.elem, fx.prop, fx.pos);
+                hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
             }
         }
     }
