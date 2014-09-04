@@ -37,7 +37,7 @@ Tween.prototype = {
 
                 animate: function(currentTime, jumpToEnd) {
 
-                    var i, delta = currentTime - self.start, v;
+                    var i, delta = currentTime - self.start, v, temp;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -71,19 +71,23 @@ Tween.prototype = {
                         }
                         return false;
                     }
-                    // Calculate position and easing
+
+                   // NOTE!! There exist bugs in this calculations for Android 2.3	, but
+                   // hAzzle are not supporting Android 2.x so I'm not going to fix it
 
                     if (typeof this.diff === 'object') {
 
                         for (v in this.diff) {
 
                             self.pos[v] = (this.diff[v].end - this.diff[v].start) * hAzzle.easing[self.easing](delta / self.duration) + self.diff[v].start;
-
                         }
 
                     } else {
-
-                        self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
+						
+     			       // Do not use Math.max for calculations it's much slower!
+                       // http://jsperf.com/math-max-vs-comparison/3
+                       
+					    self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
                     }
 
                     // Update the CSS style(s)
@@ -114,7 +118,6 @@ Tween.prototype = {
             for (val in to) {
 
                 if (!from.hasOwnProperty(val)) {
-
                     from[val] = 0;
                 }
 
@@ -133,34 +136,10 @@ Tween.prototype = {
         this.to = to;
 
         if (callback.animate() && dictionary.push(callback)) {
+			
             if (!rafId) {
-                rafId = frame.request(function render(tick) {
-
-                    var timer, i = 0;
-
-                    if (fixTick) {
-                        tick = frame.perfNow();
-                    }
-                    frame.request(render);
-
-                    for (; i < dictionary.length; i++) {
-
-                        timer = dictionary[i];
-
-                        if (!timer.animate(tick) && dictionary[i] === timer) {
-                            dictionary.splice(i--, 1);
-                        }
-                    }
-
-                    if (!dictionary.length) {
-
-                        frame.cancel(rafId);
-
-                        // Avoid memory leaks
-
-                        rafId = null;
-                    }
-                });
+			
+                rafId = frame.request(raf);
             }
         }
     },
@@ -245,9 +224,11 @@ hAzzle.extend({
                 hooks = hAzzle.fxBefore[index];
 
                 if (hooks) {
-
-                    hooks(this, index, val, anim);
-
+              
+			      // Animation are started from inside of this hook 
+              
+                  anim.run(hooks(this, index, val, anim), ' ', false);
+					 
                 } else {
 
                     anim.run(val, unit);
@@ -279,6 +260,45 @@ hAzzle.extend({
         });
     }
 });
+
+/* ============================ UTILITY METHODS =========================== */
+
+function raf(timestamp) {
+    if (rafId) {
+        window.requestAnimationFrame(raf);
+        render(timestamp);
+    }
+}
+
+function render(tick) {
+
+    if (fixTick) {
+        tick = frame.perfNow();
+    }
+
+   var timer, i = 0;
+
+    for (; i < dictionary.length; i++) {
+
+        timer = dictionary[i];
+
+        if (!timer.animate(tick) && 
+		     dictionary[i] === timer) {
+            dictionary.splice(i--, 1);
+        }
+    }
+
+    if (!dictionary.length) {
+
+        frame.cancel(rafId);
+
+        // Avoid memory leaks
+
+        rafId = null;
+    }
+}
+
+/* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
 
