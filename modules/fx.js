@@ -1,5 +1,5 @@
 var frame = hAzzle.RAF(),
-    relativesRegEx = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
+    relarelativesRegEx = /^([+\-]=)?([\d+.\-]+)([a-z%]*)$/i,
     fixTick = false, // feature detected below
     dictionary = [],
     rafId;
