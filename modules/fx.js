@@ -43,7 +43,6 @@ Tween.prototype = {
 
         var prop = this.prop,
             elem = this.elem,
-            dtaProp = hAzzle.data(elem, fxPrefix).prevState[prop],
             getFXCSS = (function(self, prop) {
                 var hooks = hAzzle.fxAfter[prop];
                 return hooks && hooks.get ?
@@ -55,17 +54,16 @@ Tween.prototype = {
         // Note! This will only be done if it hasn't been created
         // from inside the CSS module yet.
 
-        hAzzle.styleCache(elem);
+	     hAzzle.styleCache(elem);      
 
         // If undefined / not cached yet - cache it, and return
 
         if (hAzzle.data(elem, fxPrefix).prevState[prop] === undefined) {
-
-            return dtaProp = getFXCSS(this, prop);
+            return hAzzle.data(elem, fxPrefix).prevState[prop] = getFXCSS(this, prop);
 
         } else {
 
-            return dtaProp;
+            return hAzzle.data(elem, fxPrefix).prevState[prop];
         }
     },
 
@@ -131,15 +129,16 @@ Tween.prototype = {
                     // NOTE!! There exist bugs in this calculations for Android 2.3, but
                     // hAzzle are not supporting Android 2.x so I'm not going to fix it
 
-                    if (typeof this.diff === 'object') {
+                    if (typeof self.diff === 'object') {
 
                         // Calculate easing for Object.
                         // Example it can be usefull if animation CSS transform
                         // with X, Y, Z values
 
-                        for (v in this.diff) {
+                        for (v in self.diff) {
 
-                            self.pos[v] = (this.diff[v].end - this.diff[v].start) * hAzzle.easing[self.easing](delta / self.duration) + self.diff[v].start;
+                           self.pos = {}
+                           self.pos[v] = (self.diff[v].end - self.diff[v].start) * hAzzle.easing[self.easing](delta / self.duration) + self.diff[v].start;
                         }
 
                     } else {
@@ -308,10 +307,12 @@ hAzzle.extend({
                 hooks = hAzzle.fxBefore[index];
 
                 if (hooks) {
+					
+					hooks = hooks(this, index, val, opts);
 
                     // Animation are started from inside of this hook 
 
-                    anim.run(hooks(this, index, val, anim), ' ', false);
+                    anim.run(anim.cur(), hooks, ' ');
 
                 } else {
 
@@ -366,6 +367,7 @@ hAzzle.extend({
                                 start + (parts[1] + 1) * parts[2] :
                                 +parts[2];
                         }
+						
                         anim.run(start, end, unit);
 
                     } else {
