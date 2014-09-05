@@ -126,30 +126,11 @@ Tween.prototype = {
                         return false;
                     }
 
+                    // Get correct position
 
-                    // NOTE!! There exist bugs in this calculations for Android 2.3, but
-                    // hAzzle are not supporting Android 2.x so I'm not going to fix it
+                    self.pos = getFXPos(delta, from, to, self.easing, self.duration)
 
-                    if (typeof self.from === 'object') {
-
-                        // Calculate easing for Object.
-                        // Example it can be usefull if animation CSS transform
-                        // with X, Y, Z values
-
-                        for (v in self.from) {
-                            self.pos = {}
-                            self.pos[v] = (self.to[v] - self.from[v]) * hAzzle.easing[self.easing](delta / self.duration) + self.from[v];
-                        }
-
-                    } else {
-
-                        // Do not use Math.max for calculations it's much slower!
-                        // http://jsperf.com/math-max-vs-comparison/3
-
-                        self.pos = (to - from) * hAzzle.easing[self.easing](delta / self.duration) + self.from;
-                    }
-
-                    // Update the CSS style(s)
+                    // Set CSS styles
 
                     self.update();
 
@@ -411,6 +392,36 @@ function render(tick) {
 
         rafId = null;
     }
+}
+
+function getFXPos(delta, from, to, easing, duration) {
+
+    var v;
+
+    // NOTE!! There exist bugs in this calculations for Android 2.3, but
+    // hAzzle are not supporting Android 2.x so I'm not going to fix it
+
+    if (typeof from === 'object') {
+
+        // Calculate easing for Object.
+        // Note!! This will only run if the 'start' value are a object
+        // Example it can be usefull if animation CSS transform
+        // with X, Y, Z values
+
+        for (v in from) {
+            pos = {}
+            pos[v] = (to[v] - from[v]) * hAzzle.easing[easing](delta / duration) + from[v];
+        }
+
+    } else {
+
+        // Do not use Math.max for calculations it's much slower!
+        // http://jsperf.com/math-max-vs-comparison/3
+
+        pos = (to - from) * hAzzle.easing[easing](delta / duration) + from;
+    }
+
+    return pos;
 }
 
 /* ============================ INTERNAL =========================== */
