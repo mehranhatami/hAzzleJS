@@ -2,6 +2,9 @@ var frame = hAzzle.RAF(),
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     dictionary = [],
+
+    fxPrefix = 'CSS',
+
     rafId;
 
 frame.request(function(timestamp) {
@@ -28,13 +31,37 @@ Tween.prototype = {
         this.duration = options.duration || 600;
     },
 
+    /**
+     * Get current CSS styles for the animated object.
+     * NOTE!! hAzzle are caching this, so if same object
+     * are animated, you only perform DOM querying once
+     */
+
     cur: function() {
 
-        var hooks = hAzzle.fxAfter[this.prop];
+        var prop = this.prop,
+            elem = this.elem,
+            getFXCSS = (function(self, prop) {
 
-        return hooks && hooks.get ?
-            hooks.get(this) :
-            hAzzle.fxAfter._default.get(this);
+                var hooks = hAzzle.fxAfter[prop];
+                return hooks && hooks.get ?
+                    hooks.get(self) :
+                    hAzzle.fxAfter._default.get(self)
+            });
+
+        // Create cache for new elements
+
+        hAzzle.styleCache(elem);
+
+        // If undefined / not cached yet - cache it, and return
+
+        if (hAzzle.data(elem, fxPrefix).prevState[prop] === undefined) {
+            console.log('caching just NOW')
+            return hAzzle.data(elem, fxPrefix).prevState[prop] = getFXCSS(this, prop);
+        } else {
+            console.log('data cached')
+            return hAzzle.data(elem, fxPrefix).prevState[prop];
+        }
     },
 
     run: function(from, to, unit) {
@@ -260,6 +287,8 @@ hAzzle.extend({
 
                 } else {
 
+                    // Unit Conversion	
+
                     parts = relarelativesRegEx.exec(val);
 
                     target = anim.cur();
@@ -389,18 +418,61 @@ hAzzle.extend({
 
         display: function(elem, value) {
 
-            value = value.toString().toLowerCase();
+            // If the element was hidden in the previous call, revert display 
+            // to 'auto' prior to reversal so that the element is visible again.
+
+            if ((value = hAzzle.data(elem, 'display')) === 'none') {
+                hAzzle.data(elem, 'display', 'auto')
+            }
 
             if (value === 'auto') {
-
                 value = hAzzle.getDisplayType(elem);
+
+                if (value === 'inline' && hAzzle.css(elem, 'float') === 'none') {
+
+                    elem.style.display = 'inline-block';
+                }
+
+            } else {
+
+                value = hAzzle.css(elem, "display");
+
+                // Test default display if display is currently "none"
+                value === "none" ?
+                    hAzzle.getPrivate(elem, "olddisplay") || defaultDisplay(elem.nodeName) : display;
+
+                if (value === 'inline' && hAzzle.css(elem, 'float') === 'none') {
+
+                    elem.style.display = 'inline-block';
+                }
+
+
             }
+
+
+            // Save it!
+
+            hAzzle.data(elem, 'display', value)
+
             return value;
         },
 
         visibility: function(elem, value) {
 
-            return value.toString().toLowerCase();
+            // If the element was hidden in the previous call, revert display 
+            // to 'auto' prior to reversal so that the element is visible again.
+
+            if ((value = hAzzle.data(elem, 'visibility')) === 'hidden') {
+                hAzzle.data(elem, 'visibility', 'visible')
+
+                return value;
+            }
+
+            value = value.toString().toLowerCase()
+
+            hAzzle.data(elem, 'display', value)
+
+            return value;
 
         }
     },
