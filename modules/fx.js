@@ -78,6 +78,7 @@ Tween.prototype = {
 
                     var i, delta = currentTime - self.start,
                         options = self.options,
+                        hook,
                         style = self.elem.style;
 
                     if (delta > self.duration || jumpToEnd) {
@@ -125,14 +126,22 @@ Tween.prototype = {
                         return false;
                     }
 
-                    // Get correct position
+                    var hooks = hAzzle.tickHook[self.prop];
 
-                    self.pos = getFXPos(delta, from, to, self.easing, self.duration);
+                    if (hooks && hooks.set) {
 
-                    // Set CSS styles
+                        hooks.set(delta, from, to, self.easing, self.duration);
 
-                    self.update();
+                    } else {
 
+                        // Get correct position
+
+                        self.pos = getFXPos(delta, from, to, self.easing, self.duration);
+
+                        // Set CSS styles
+
+                        self.update();
+                    }
                     return true;
                 },
 
@@ -409,6 +418,7 @@ function render(tick) {
 
         if (!timer.animate(tick) &&
             dictionary[i] === timer) {
+
             dictionary.splice(i--, 1);
         }
     }
@@ -502,6 +512,10 @@ hAzzle.extend({
             return value;
         }
     },
+
+    // Usefull for color animation
+
+    tickHook: {},
 
     fxBefore: {},
 
