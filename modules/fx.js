@@ -292,7 +292,7 @@ hAzzle.extend({
 
                 // Test default display if display is currently 'none'
                 display === 'none' ?
-                    hAzzle.getPrivate(this, 'olddisplay') || defaultDisplay(this.nodeName) : display;
+                    (hAzzle.getPrivate(this, 'olddisplay') || defaultDisplay(this.nodeName)) : display;
 
                 if (display === 'inline' && hAzzle.css(this, 'float') === 'none') {
 
@@ -428,8 +428,7 @@ function calculateRelatives(elem, parts, index, anim) {
         // Starting value computation is required for potential unit mismatches
         start = (hAzzle.unitless[index] || unit !== 'px' && +target) &&
             relarelativesRegEx.exec(hAzzle.css(elem, index)),
-            scale = 1,
-            maxIterations = 20;
+            scale = 1, maxIterations = 20;
 
         // We need to compute starting value
         if (start && start[3] !== unit) {
@@ -547,7 +546,7 @@ hAzzle.extend({
                 var result,
                     prop = fx.elem[fx.prop];
 
-                if (prop != null && (!getStyles(fx.elem) || prop == null)) {
+                if (prop !== null && (!getStyles(fx.elem) || prop === null)) {
                     return prop;
                 }
 
@@ -560,7 +559,7 @@ hAzzle.extend({
             set: function(fx) {
 
                 if (fx.elem.style &&
-                    (fx.elem.style[hAzzle.cssProps[fx.prop]] != null ||
+                    (fx.elem.style[hAzzle.cssProps[fx.prop]] !== null ||
                         hAzzle.cssHooks[fx.prop])) {
                     hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
                 } else {
