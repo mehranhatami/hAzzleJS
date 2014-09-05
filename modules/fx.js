@@ -57,7 +57,7 @@ Tween.prototype = {
             done = true,
             stop = 0;
 
-        bohi({
+        buhi({
 
             animate: function(currentTime) {
 
@@ -251,14 +251,10 @@ hAzzle.extend({
 
             // Callback
 
-            opt.complete = (!callback && typeof speed === 'function') ? speed : callback;
-
-            // Duration
-
-            opt.duration = typeof speed === 'number' ? speed :
+                opt.duration = typeof speed === 'number' ? speed :
                 opt.duration in hAzzle.speeds ?
                 // Support for jQuery's named durations
-                hAzzle.speeds[opt.duration.toString().toLowerCase()] : /* Default speed */ hAzzle.defaultDuration;
+                hAzzle.speeds[opt.duration] : /* Default speed */ hAzzle.defaultDuration;
 
             // If the user is attempting to set a duration under 100, adjust it back to
             // 100 to avoid bugs that can occur ( 100 is fast enough)
@@ -267,25 +263,27 @@ hAzzle.extend({
                 opt.duration = 100;
             }
         }
+       
+	   opt.duration = hAzzle.speeds[opt.duration] || hAzzle.defaultDuration
 
-        return this.each(function() {
+        return this.each(function(elem) {
 
-            var index, val, anim, hooks, name, style = this.style,
+            var index, val, anim, hooks, name, style = elem.style,
                 parts, display;
 
             // Height/width overflow pass
 
-            if (this.nodeType === 1 && ('height' in opts || 'width' in opts)) {
+            if (elem.nodeType === 1 && ('height' in opts || 'width' in opts)) {
 
                 opt.overflow = [style.overflow, style.overflowX, style.overflowY];
 
-                display = hAzzle.css(this, 'display');
+                display = hAzzle.css(elem, 'display');
 
                 // Test default display if display is currently 'none'
                 display === 'none' ?
-                    (hAzzle.getPrivate(this, 'olddisplay') || defaultDisplay(this.nodeName)) : display;
+                    (hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName)) : display;
 
-                if (display === 'inline' && hAzzle.css(this, 'float') === 'none') {
+                if (display === 'inline' && hAzzle.css(elem, 'float') === 'none') {
 
                     style.display = 'inline-block';
                 }
@@ -310,16 +308,16 @@ hAzzle.extend({
                 }
 
                 if (hAzzle.propertyMap[index]) {
-                    val = hAzzle.propertyMap[index](this, index);
+                    val = hAzzle.propertyMap[index](elem, index);
                 }
 
-                anim = new Tween(this, opt, index);
+                anim = new Tween(elem, opt, index);
 
                 hooks = hAzzle.fxBefore[index];
 
                 if (hooks) {
 
-                    hooks = hooks(this, index, val, opts);
+                    hooks = hooks(elem, index, val, opts);
 
                     // Animation are started from inside of this hook 
 
@@ -331,7 +329,7 @@ hAzzle.extend({
 
                     if ((parts = relarelativesRegEx.exec(val))) {
 
-                        calculateRelatives(this, parts, index, anim);
+                        calculateRelatives(elem, parts, index, anim);
 
                     } else {
 
@@ -456,7 +454,7 @@ function calculateRelatives(elem, parts, index, anim) {
     }
 }
 
-function bohi(callback) {
+function buhi(callback) {
     dictionary.push(callback);
     if (callback.animate()) {
         if (!rafId) {
