@@ -27,7 +27,7 @@ Tween.prototype = {
         this.prop = prop;
         this.currentState = {};
         this.options = options;
-        this.easing = options.easing || 'linear';
+        this.easing = options.easing || hAzzle.defaultEasing;
         this.duration = options.duration || 600;
     },
 
@@ -69,7 +69,7 @@ Tween.prototype = {
 
     run: function(from, to, unit) {
 
-        var complete, val,
+        var complete,
             self = this,
             done = true,
             callback = {
@@ -78,8 +78,7 @@ Tween.prototype = {
 
                     var i, delta = currentTime - self.start,
                         options = self.options,
-                        style = self.elem.style,
-                        v;
+                        style = self.elem.style;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -128,7 +127,7 @@ Tween.prototype = {
 
                     // Get correct position
 
-                    self.pos = getFXPos(delta, from, to, self.easing, self.duration)
+                    self.pos = getFXPos(delta, from, to, self.easing, self.duration);
 
                     // Set CSS styles
 
@@ -178,7 +177,39 @@ Tween.prototype.init.prototype = Tween.prototype;
 
 hAzzle.extend({
 
+    /**
+     *  Perform a custom animation of a set of CSS properties.
+     *
+     *  hAzzle( ELEMENT ).animate ( { PROPERTIES}, { SETTINGS}   )
+     *
+     * Example:
+     *
+     * hAzzle(div).animate ( { width:200, height:200}, {
+     *
+     *   easing: 'linear',
+     *    duration: 900
+     *  })
+     *
+     * Short hand exist also:
+     *
+     *  hAzzle( ELEMENT ).animate ( { PROPERTIES}, DURATION, CALLBACK )
+     *
+     * Example:
+     *
+     * hAzzle(div).animate ( { width:200, height:200}, 999, function() {
+     *
+     * console.log('Hello! I'm a callback!' );
+     * });
+     *
+     */
+
     animate: function(opts, speed, callback) {
+
+        // opts has to be a object, 
+
+        if (typeof opts !== 'object') {
+            return false;
+        }
 
         var opt;
 
@@ -198,10 +229,8 @@ hAzzle.extend({
 
             opt.duration = typeof speed === 'number' ? speed :
                 opt.duration in hAzzle.speeds ?
-                // Support for jQuery			
-                hAzzle.speeds[opt.duration.toString().toLowerCase()] :
-                /* Default speed */
-                550
+                // Support for jQuery's named durations
+                hAzzle.speeds[opt.duration.toString().toLowerCase()] : /* Default speed */ hAzzle.defaultDuration;
 
             // If the user is attempting to set a duration under 100, adjust it back to
             // 100 to avoid bugs that can occur ( 100 is fast enough)
@@ -396,7 +425,7 @@ function render(tick) {
 
 function getFXPos(delta, from, to, easing, duration) {
 
-    var v;
+    var v, pos;
 
     // NOTE!! There exist bugs in this calculations for Android 2.3, but
     // hAzzle are not supporting Android 2.x so I'm not going to fix it
@@ -405,11 +434,9 @@ function getFXPos(delta, from, to, easing, duration) {
 
         // Calculate easing for Object.
         // Note!! This will only run if the 'start' value are a object
-        // Example it can be usefull if animation CSS transform
-        // with X, Y, Z values
 
         for (v in from) {
-            pos = {}
+            pos = {};
             pos[v] = (to[v] - from[v]) * hAzzle.easing[easing](delta / duration) + from[v];
         }
 
@@ -427,6 +454,12 @@ function getFXPos(delta, from, to, easing, duration) {
 /* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
+
+    // Default duration
+
+    defaultDuration: 500,
+
+    defaultEasing: 'swing',
 
     propertyMap: {
 
@@ -467,7 +500,6 @@ hAzzle.extend({
             hAzzle.data(elem, 'display', value);
 
             return value;
-
         }
     },
 
