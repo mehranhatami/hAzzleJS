@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.9d RC3
+ * Version: 0.9.9e RC3
  * Released under the MIT License.
  *
- * Date: 2014-08-25
+ * Date: 2014-09-04
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -196,6 +196,8 @@
     };
 
     hAzzle.extend({
+		
+		defaultFPS: 60,
 
         // documentElement after adjustments
         // Note! This can / will be overwritten 
