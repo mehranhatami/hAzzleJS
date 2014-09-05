@@ -419,7 +419,13 @@ hAzzle.styleCache = function(elem) {
 
             // A cache for CSS transform 
 
-            transform: {}
+            transform: {},
+			
+			opts: {}, 
+			// Note! 
+			prevState: {},
+			
+			isRunning: false
         });
     };
 }

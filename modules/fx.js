@@ -33,16 +33,18 @@ Tween.prototype = {
 
     /**
      * Get current CSS styles for the animated object.
-     * NOTE!! hAzzle are caching this, so if same object
-     * are animated, you only perform DOM querying once
+     *
+     * The current CSS style are cached on the object, so we
+     * only perform DOM querying once when we do a sequence of
+     * animations.
      */
 
     cur: function() {
 
         var prop = this.prop,
             elem = this.elem,
+            dtaProp = hAzzle.data(elem, fxPrefix).prevState[prop],
             getFXCSS = (function(self, prop) {
-
                 var hooks = hAzzle.fxAfter[prop];
                 return hooks && hooks.get ?
                     hooks.get(self) :
@@ -50,15 +52,20 @@ Tween.prototype = {
             });
 
         // Create cache for new elements
+        // Note! This will only be done if it hasn't been created
+        // from inside the CSS module yet.
 
         hAzzle.styleCache(elem);
 
         // If undefined / not cached yet - cache it, and return
 
         if (hAzzle.data(elem, fxPrefix).prevState[prop] === undefined) {
-            return hAzzle.data(elem, fxPrefix).prevState[prop] = getFXCSS(this, prop);
+
+            return dtaProp = getFXCSS(this, prop);
+
         } else {
-            return hAzzle.data(elem, fxPrefix).prevState[prop];
+
+            return dtaProp;
         }
     },
 
@@ -78,6 +85,9 @@ Tween.prototype = {
 
                     if (delta > self.duration || jumpToEnd) {
 
+                        // Save the property state so we know when we have completed 
+                        // the animation
+
                         self.currentState[self.currentState.prop] = true;
 
                         for (i in self.currentState) {
@@ -95,6 +105,9 @@ Tween.prototype = {
 
                                 self.update();
                             }
+
+                            // Set the overflow back to the state the properties 
+                            // had before animation started
 
                             if (options.overflow) {
 
@@ -115,10 +128,14 @@ Tween.prototype = {
                         return false;
                     }
 
-                    // NOTE!! There exist bugs in this calculations for Android 2.3	, but
+                    // NOTE!! There exist bugs in this calculations for Android 2.3, but
                     // hAzzle are not supporting Android 2.x so I'm not going to fix it
 
                     if (typeof this.diff === 'object') {
+
+                        // Calculate easing for Object.
+                        // Example it can be usefull if animation CSS transform
+                        // with X, Y, Z values
 
                         for (v in this.diff) {
 
@@ -187,6 +204,13 @@ Tween.prototype = {
 
     update: function() {
 
+        /**
+         * Future plans after animation queue are finished will be
+         * to cache the end state of each property on the object
+         * so if we have a sequence, it will remember the previous
+         * state, so there will be no need for DOM querying
+         */
+
         var hooks = hAzzle.fxAfter[this.prop];
 
         if (hooks && hooks.set) {
@@ -201,7 +225,7 @@ Tween.prototype.init.prototype = Tween.prototype;
 
 hAzzle.extend({
 
-    animate: function(opts, speed, easing, callback) {
+    animate: function(opts, speed, callback) {
 
         var opt;
 
@@ -211,33 +235,26 @@ hAzzle.extend({
 
         } else {
 
-            opt = {
+            opt = {};
 
-                complete: callback || !callback && easing ||
-                    hAzzle.isFunction(speed) && speed,
-                duration: speed,
-                easing: callback && easing || easing && !hAzzle.isFunction(easing) && easing
-            };
+            // Callback
 
-            // Support for jQuery's named durations.
+            opt.complete = (!callback && typeof speed === 'function') ? speed : callback;
 
-            switch (opt.duration.toString().toLowerCase()) {
-                case 'fast':
-                    opt.duration = 200;
-                    break;
-                case 'normal':
-                    opt.duration = 500;
-                    break;
-                case 'medium':
-                    opt.duration = 400;
-                    break;
-                case 'slow':
-                    opt.duration = 1500;
-                    break;
-                default:
+            // Duration
 
-                    // If the user is attempting to set a duration of 0 (in order to produce an immediate style change).
-                    opt.duration = parseFloat(opt.duration) || 1;
+            opt.duration = typeof speed === 'number' ? speed :
+                opt.duration in hAzzle.speeds ?
+                // Support for jQuery			
+                hAzzle.speeds[opt.duration.toString().toLowerCase()] :
+                /* Default speed */
+                550
+
+            // If the user is attempting to set a duration under 100, adjust it back to
+            // 100 to avoid bugs that can occur ( 100 is fast enough)
+
+            if (opt.duration < 100) {
+                opt.duration = 100;
             }
         }
 
@@ -506,7 +523,13 @@ hAzzle.extend({
                 hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
             }
         }
-    }
+    },
+    speeds: {
+        slow: 1500,
+        medium: 400,
+        fast: 200
+    },
+
 }, hAzzle);
 
 hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
