@@ -1,4 +1,4 @@
-var frame = hAzzle.RAF(),
+var frame = RAF(),
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     dictionary = [],
