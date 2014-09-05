@@ -1,4 +1,4 @@
-var frame = RAF(),
+var frame = hAzzle.RAF(),
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     dictionary = [],
@@ -46,7 +46,7 @@ Tween.prototype = {
                 var hooks = hAzzle.fxAfter[prop];
                 return hooks && hooks.get ?
                     hooks.get(self) :
-                    hAzzle.fxAfter._default.get(self)
+                    hAzzle.fxAfter._default.get(self);
             });
 
         // Create cache for new elements
@@ -56,25 +56,22 @@ Tween.prototype = {
         // If undefined / not cached yet - cache it, and return
 
         if (hAzzle.data(elem, fxPrefix).prevState[prop] === undefined) {
-            console.log('caching just NOW')
             return hAzzle.data(elem, fxPrefix).prevState[prop] = getFXCSS(this, prop);
         } else {
-            console.log('data cached')
             return hAzzle.data(elem, fxPrefix).prevState[prop];
         }
     },
 
     run: function(from, to, unit) {
 
-        var complete, from, val,
-
+        var complete, val,
             self = this,
             done = true,
             callback = {
 
                 animate: function(currentTime, jumpToEnd) {
 
-                    var i, index, delta = currentTime - self.start,
+                    var i, delta = currentTime - self.start,
                         options = self.options,
                         style = self.elem.style,
                         v;
@@ -99,7 +96,7 @@ Tween.prototype = {
                                 self.update();
                             }
 
-                            if (options.overflow != null) {
+                            if (options.overflow) {
 
                                 style.overflow = options.overflow[0];
                                 style.overflowX = options.overflow[1];
@@ -246,11 +243,25 @@ hAzzle.extend({
 
         return this.each(function() {
 
-            var index, val, anim, hooks, name, unit, style = this.style;
+            var index, val, anim, hooks, name, unit, style = this.style,
+                parts, target, end, start, scale, maxIterations, display;
 
             // Height/width overflow pass
+
             if (this.nodeType === 1 && ('height' in opts || 'width' in opts)) {
+
                 opt.overflow = [style.overflow, style.overflowX, style.overflowY];
+
+                display = hAzzle.css(this, 'display');
+
+                // Test default display if display is currently 'none'
+                display === 'none' ?
+                    hAzzle.getPrivate(this, 'olddisplay') || defaultDisplay(this.nodeName) : display;
+
+                if (display === 'inline' && hAzzle.css(this, 'float') === 'none') {
+
+                    style.display = 'inline-block';
+                }
             }
 
             if (opt.overflow) {
@@ -298,7 +309,7 @@ hAzzle.extend({
                         unit = parts[3] || (hAzzle.unitless[index] ? '' : 'px');
 
                         // Starting value computation is required for potential unit mismatches
-                        start = (hAzzle.unitless[index] || unit !== "px" && +target) &&
+                        start = (hAzzle.unitless[index] || unit !== 'px' && +target) &&
                             relarelativesRegEx.exec(hAzzle.css(this, index)),
                             scale = 1,
                             maxIterations = 20;
@@ -318,7 +329,7 @@ hAzzle.extend({
 
                             do {
 
-                                scale = scale || ".5";
+                                scale = scale || '.5';
 
                                 // Adjust and apply
                                 start = start / scale;
@@ -422,37 +433,17 @@ hAzzle.extend({
             // to 'auto' prior to reversal so that the element is visible again.
 
             if ((value = hAzzle.data(elem, 'display')) === 'none') {
-                hAzzle.data(elem, 'display', 'auto')
+                hAzzle.data(elem, 'display', 'auto');
             }
 
             if (value === 'auto') {
                 value = hAzzle.getDisplayType(elem);
 
-                if (value === 'inline' && hAzzle.css(elem, 'float') === 'none') {
-
-                    elem.style.display = 'inline-block';
-                }
-
-            } else {
-
-                value = hAzzle.css(elem, "display");
-
-                // Test default display if display is currently "none"
-                value === "none" ?
-                    hAzzle.getPrivate(elem, "olddisplay") || defaultDisplay(elem.nodeName) : display;
-
-                if (value === 'inline' && hAzzle.css(elem, 'float') === 'none') {
-
-                    elem.style.display = 'inline-block';
-                }
-
-
             }
-
 
             // Save it!
 
-            hAzzle.data(elem, 'display', value)
+            hAzzle.data(elem, 'display', value);
 
             return value;
         },
@@ -463,14 +454,14 @@ hAzzle.extend({
             // to 'auto' prior to reversal so that the element is visible again.
 
             if ((value = hAzzle.data(elem, 'visibility')) === 'hidden') {
-                hAzzle.data(elem, 'visibility', 'visible')
+                hAzzle.data(elem, 'visibility', 'visible');
 
                 return value;
             }
 
-            value = value.toString().toLowerCase()
+            value = value.toString().toLowerCase();
 
-            hAzzle.data(elem, 'display', value)
+            hAzzle.data(elem, 'display', value);
 
             return value;
 
