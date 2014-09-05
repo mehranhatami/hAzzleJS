@@ -25,7 +25,7 @@ Tween.prototype = {
         this.currentState = {};
         this.options = options;
         this.easing = options.easing || hAzzle.defaultEasing;
-        this.duration = options.duration || 600;
+
     },
 
     /**
@@ -65,7 +65,7 @@ Tween.prototype = {
 
                 self.currentTime = currentTime;
 
-                if (delta > self.duration) {
+                if (delta > self.options.duration) {
 
                     // Save the property state so we know when we have completed 
                     // the animation
@@ -121,7 +121,7 @@ Tween.prototype = {
             to = this.to,
             pos = this.pos,
             easing = this.easing,
-            duration = this.duration;
+            duration = this.options.duration;
 
         // NOTE!! There exist bugs in this calculations for Android 2.3, but
         // hAzzle are not supporting Android 2.x so I'm not going to fix it
@@ -251,7 +251,7 @@ hAzzle.extend({
 
             // Callback
 
-                opt.duration = typeof speed === 'number' ? speed :
+            opt.duration = typeof speed === 'number' ? speed :
                 opt.duration in hAzzle.speeds ?
                 // Support for jQuery's named durations
                 hAzzle.speeds[opt.duration] : /* Default speed */ hAzzle.defaultDuration;
@@ -263,8 +263,8 @@ hAzzle.extend({
                 opt.duration = 100;
             }
         }
-       
-	   opt.duration = hAzzle.speeds[opt.duration] || hAzzle.defaultDuration
+
+        opt.duration = (hAzzle.speeds[opt.duration] || opt.duration) || hAzzle.defaultDuration
 
         return this.each(function(elem) {
 
