@@ -81,6 +81,8 @@ Tween.prototype = {
                         hook,
                         style = self.elem.style;
 
+                    self.currentTime = currentTime
+
                     if (delta > self.duration || jumpToEnd) {
 
                         // Save the property state so we know when we have completed 
@@ -125,23 +127,14 @@ Tween.prototype = {
                         }
                         return false;
                     }
+                    // Get correct position
 
-                    var hooks = hAzzle.tickHook[self.prop];
+                    self.pos = getFXPos(delta, from, to, self.easing, self.duration, self.prop);
 
-                    if (hooks && hooks.set) {
+                    // Set CSS styles
 
-                        hooks.set(delta, from, to, self.easing, self.duration);
+                    self.update();
 
-                    } else {
-
-                        // Get correct position
-
-                        self.pos = getFXPos(delta, from, to, self.easing, self.duration);
-
-                        // Set CSS styles
-
-                        self.update();
-                    }
                     return true;
                 },
 
@@ -433,9 +426,9 @@ function render(tick) {
     }
 }
 
-function getFXPos(delta, from, to, easing, duration) {
+function getFXPos(delta, from, to, easing, duration, prop) {
 
-    var v, pos;
+    var v, pos, hooks;
 
     // NOTE!! There exist bugs in this calculations for Android 2.3, but
     // hAzzle are not supporting Android 2.x so I'm not going to fix it
@@ -452,10 +445,19 @@ function getFXPos(delta, from, to, easing, duration) {
 
     } else {
 
-        // Do not use Math.max for calculations it's much slower!
-        // http://jsperf.com/math-max-vs-comparison/3
+        hooks = hAzzle.tickHook[prop];
 
-        pos = (to - from) * hAzzle.easing[easing](delta / duration) + from;
+        if (hooks) {
+
+            pos = hooks(delta, from, to, easing, duration);
+
+        } else {
+
+            // Do not use Math.max for calculations it's much slower!
+            // http://jsperf.com/math-max-vs-comparison/3
+
+            pos = (to - from) * hAzzle.easing[easing](delta / duration) + from;
+        }
     }
 
     return pos;
@@ -486,8 +488,6 @@ hAzzle.extend({
                 value = hAzzle.getDisplayType(elem);
 
             }
-
-            // Save it!
 
             hAzzle.data(elem, 'display', value);
 
@@ -571,3 +571,19 @@ hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
         }
     }
 };
+
+
+
+// this gets you the next hex in line according to a 'position'
+function nextColor(pos, start, finish) {
+    var r = [],
+        i, e, from, to
+    for (i = 0; i < 6; i++) {
+        from = Math.min(15, parseInt(start.charAt(i), 16))
+        to = Math.min(15, parseInt(finish.charAt(i), 16))
+        e = Math.floor((to - from) * pos + from)
+        e = e > 15 ? 15 : e < 0 ? 0 : e
+        r[i] = e.toString(16)
+    }
+    return '#' + r.join('')
+}
