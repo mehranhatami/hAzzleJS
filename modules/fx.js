@@ -40,31 +40,10 @@ Tween.prototype = {
      */
 
     cur: function() {
-
-        var prop = this.prop,
-            elem = this.elem,
-            getFXCSS = (function(self, prop) {
-                var hooks = hAzzle.fxAfter[prop];
-                return hooks && hooks.get ?
-                    hooks.get(self) :
-                    hAzzle.fxAfter._default.get(self);
-            });
-
-        // Create cache for new elements
-        // Note! This will only be done if it hasn't been created
-        // from inside the CSS module yet.
-
-        hAzzle.styleCache(elem);
-
-        // If undefined / not cached yet - cache it, and return
-
-        if (hAzzle.data(elem, fxPrefix).prevState[prop] === undefined) {
-            return hAzzle.data(elem, fxPrefix).prevState[prop] = getFXCSS(this, prop);
-
-        } else {
-
-            return hAzzle.data(elem, fxPrefix).prevState[prop];
-        }
+        var hooks = hAzzle.fxAfter[this.prop];
+        return hooks && hooks.get ?
+            hooks.get(this) :
+            hAzzle.fxAfter._default.get(this);
     },
 
     run: function(from, to, unit) {
@@ -77,9 +56,10 @@ Tween.prototype = {
                 animate: function(currentTime, jumpToEnd) {
 
                     var i, delta = currentTime - self.start,
-                        options = self.options, style = self.elem.style;
-                        
-						self.currentTime = currentTime;
+                        options = self.options,
+                        style = self.elem.style;
+
+                    self.currentTime = currentTime;
 
                     if (delta > self.duration || jumpToEnd) {
 
@@ -148,7 +128,6 @@ Tween.prototype = {
         if (callback.animate() && dictionary.push(callback)) {
 
             if (!rafId) {
-
                 rafId = frame.request(raf);
             }
         }
@@ -301,57 +280,9 @@ hAzzle.extend({
 
                     // Unit Conversion	
 
-                    parts = relarelativesRegEx.exec(val);
+                    if ((parts = relarelativesRegEx.exec(val))) {
 
-                    target = anim.cur();
-
-                    if (parts) {
-                        end = parseFloat(parts[2]);
-                        unit = parts[3] || (hAzzle.unitless[index] ? '' : 'px');
-
-                        // Starting value computation is required for potential unit mismatches
-                        start = (hAzzle.unitless[index] || unit !== 'px' && +target) &&
-                            relarelativesRegEx.exec(hAzzle.css(this, index)),
-                            scale = 1,
-                            maxIterations = 20;
-
-                        // We need to compute starting value
-                        if (start && start[3] !== unit) {
-
-                            // Trust units reported by jQuery.css
-                            unit = unit || start[3];
-
-                            // Make sure we update the tween properties later on
-                            parts = parts || [];
-
-                            // Iteratively approximate from a nonzero starting point
-                            start = +target || 1;
-
-
-                            do {
-
-                                scale = scale || '.5';
-
-                                // Adjust and apply
-                                start = start / scale;
-                                hAzzle.style(this, index, start + unit);
-
-                            } while (
-                                scale !== (scale = anim.cur() / target) && scale !== 1 && --maxIterations
-                            );
-                        }
-
-                        if (parts) {
-
-                            start = +start || +target || 0;
-
-                            // If a +=/-= token was provided, we're doing a relative animation
-                            end = parts[1] ?
-                                start + (parts[1] + 1) * parts[2] :
-                                +parts[2];
-                        }
-
-                        anim.run(start, end, unit);
+                        calculateRelatives(this, parts, index, anim)
 
                     } else {
 
@@ -461,6 +392,60 @@ function getFXPos(delta, from, to, easing, duration, prop) {
     return pos;
 }
 
+
+function calculateRelatives(elem, parts, index, anim) {
+
+    target = anim.cur();
+
+    if (parts) {
+        end = parseFloat(parts[2]);
+        unit = parts[3] || (hAzzle.unitless[index] ? '' : 'px');
+
+        // Starting value computation is required for potential unit mismatches
+        start = (hAzzle.unitless[index] || unit !== 'px' && +target) &&
+            relarelativesRegEx.exec(hAzzle.css(elem, index)),
+            scale = 1,
+            maxIterations = 20;
+
+        // We need to compute starting value
+        if (start && start[3] !== unit) {
+
+            unit = unit || start[3];
+
+            // Make sure we update the tween properties later on
+            parts = parts || [];
+
+            // Iteratively approximate from a nonzero starting point
+            start = +target || 1;
+
+
+            do {
+
+                scale = scale || '.5';
+
+                // Adjust and apply
+                start = start / scale;
+                hAzzle.style(elem, index, start + unit);
+
+            } while (
+                scale !== (scale = anim.cur() / target) && scale !== 1 && --maxIterations
+            );
+        }
+
+        if (parts) {
+
+            start = +start || +target || 0;
+
+            // If a +=/-= token was provided, we're doing a relative animation
+            end = parts[1] ?
+                start + (parts[1] + 1) * parts[2] :
+                +parts[2];
+        }
+
+        anim.run(start, end, unit);
+    }
+}
+
 /* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
@@ -550,7 +535,13 @@ hAzzle.extend({
 
             set: function(fx) {
 
-                hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
+                if (fx.elem.style &&
+                    (fx.elem.style[hAzzle.cssProps[fx.prop]] != null ||
+                        hAzzle.cssHooks[fx.prop])) {
+                    hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
+                } else {
+                    fx.elem[fx.prop] = fx.now;
+                }
             }
         }
     },
@@ -569,3 +560,6 @@ hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
         }
     }
 };
+
+
+
