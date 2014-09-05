@@ -54,7 +54,7 @@ Tween.prototype = {
         // Note! This will only be done if it hasn't been created
         // from inside the CSS module yet.
 
-	     hAzzle.styleCache(elem);      
+        hAzzle.styleCache(elem);
 
         // If undefined / not cached yet - cache it, and return
 
@@ -126,19 +126,19 @@ Tween.prototype = {
                         return false;
                     }
 
+
                     // NOTE!! There exist bugs in this calculations for Android 2.3, but
                     // hAzzle are not supporting Android 2.x so I'm not going to fix it
 
-                    if (typeof self.diff === 'object') {
+                    if (typeof self.from === 'object') {
 
                         // Calculate easing for Object.
                         // Example it can be usefull if animation CSS transform
                         // with X, Y, Z values
 
-                        for (v in self.diff) {
-
-                           self.pos = {}
-                           self.pos[v] = (self.diff[v].end - self.diff[v].start) * hAzzle.easing[self.easing](delta / self.duration) + self.diff[v].start;
+                        for (v in self.from) {
+                            self.pos = {}
+                            self.pos[v] = (self.to[v] - self.from[v]) * hAzzle.easing[self.easing](delta / self.duration) + self.from[v];
                         }
 
                     } else {
@@ -146,7 +146,7 @@ Tween.prototype = {
                         // Do not use Math.max for calculations it's much slower!
                         // http://jsperf.com/math-max-vs-comparison/3
 
-                        self.pos = self.diff * hAzzle.easing[self.easing](delta / self.duration) + self.from;
+                        self.pos = (to - from) * hAzzle.easing[self.easing](delta / self.duration) + self.from;
                     }
 
                     // Update the CSS style(s)
@@ -160,34 +160,7 @@ Tween.prototype = {
             };
 
         this.from = from;
-
         this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
-
-        if (typeof to === 'object') {
-
-            this.diff = {};
-
-            if (typeof from !== 'object') {
-
-                from = {};
-            }
-
-            for (val in to) {
-
-                if (!from.hasOwnProperty(val)) {
-                    from[val] = 0;
-                }
-
-                this.diff[val] = {
-                    start: from[val],
-                    end: to[val]
-                };
-            }
-        } else {
-
-            this.diff = to - from;
-        }
-
         this.start = frame.perfNow();
         this.pos = 0;
         this.to = to;
@@ -307,8 +280,8 @@ hAzzle.extend({
                 hooks = hAzzle.fxBefore[index];
 
                 if (hooks) {
-					
-					hooks = hooks(this, index, val, opts);
+
+                    hooks = hooks(this, index, val, opts);
 
                     // Animation are started from inside of this hook 
 
@@ -367,7 +340,7 @@ hAzzle.extend({
                                 start + (parts[1] + 1) * parts[2] :
                                 +parts[2];
                         }
-						
+
                         anim.run(start, end, unit);
 
                     } else {
