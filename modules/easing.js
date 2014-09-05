@@ -97,22 +97,52 @@ hAzzle.extend({
         return (p == 0) ? 0 : Math.pow(2, 10 * (p - 1));
     },
 
-    wobble: function(pos) {
-        return (-Math.cos(pos * Math.PI * (9 * pos)) / 2) + 0.5;
+    wobble: function(p) {
+        return (-Math.cos(p * Math.PI * (9 * p)) / 2) + 0.5;
     },
 
-    sinusoidal: function(pos) {
-        return (-Math.cos(pos * Math.PI) / 2) + 0.5;
+    sinusoidal: function(p) {
+        return (-Math.cos(p * Math.PI) / 2) + 0.5;
     },
 
-    flicker: function(pos) {
-        var pos = pos + (Math.random() - 0.5) / 5;
-        return easings.sinusoidal(pos < 0 ? 0 : pos > 1 ? 1 : pos);
+    flicker: function(p) {
+        var p = p + (Math.random() - 0.5) / 5;
+        return easings.sinusoidal(p < 0 ? 0 : p > 1 ? 1 : p);
     },
-    mirror: function(pos) {
-        if (pos < 0.5)
-            return easings.sinusoidal(pos * 2);
+    mirror: function(p) {
+        if (p < 0.5)
+            return easings.sinusoidal(p * 2);
         else
-            return easings.sinusoidal(1 - (pos - 0.5) * 2);
+            return easings.sinusoidal(1 - (p - 0.5) * 2);
+    },
+
+    bounceIn: function(p) {
+        return 1 - easings.bounceOut(1 - p);
+    },
+    bounceOut: function(p) {
+        if (p < 1 / 2.75) {
+            return (7.5625 * p * p);
+        } else if (p < 2 / 2.75) {
+            return (7.5625 * (p -= 1.5 / 2.75) * p + 0.75);
+        } else if (p < 2.5 / 2.75) {
+            return (7.5625 * (p -= 2.25 / 2.75) * p + 0.9375);
+        } else {
+            return (7.5625 * (p -= 2.625 / 2.75) * p + 0.984375);
+        }
+    },
+    bounceInOut: function(p) {
+        if (p < 0.5) return easings.bounceIn(p * 2) * .5;
+        return easings.bounceOut(p * 2 - 1) * 0.5 + 0.5;
+    },
+
+    sineInOut: function(p) {
+        return -0.5 * (Math.cos(Math.PI * p) - 1)
+    },
+
+    sineOut: function(p) {
+        return Math.sin(p * Math.PI / 2);
+    },
+    sineIn: function(p) {
+        return 1 - Math.cos(p * Math.PI / 2);
     }
 }, easings);

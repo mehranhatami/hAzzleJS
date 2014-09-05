@@ -1,24 +1,33 @@
 var frame = hAzzle.RAF(),
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
-    dictionary = [],
+    tweens = [],
     rafId;
 
 frame.request(function(timestamp) {
     fixTick = timestamp > 1e12 != frame.perfNow() > 1e12;
 });
 
-function Tween(elem, options, prop) {
-    return new Tween.prototype.init(elem, options, prop);
+function FX(elem, options, prop) {
+    return new FX.prototype.initialize(elem, options, prop);
 }
 
-hAzzle.Tween = Tween;
+hAzzle.FX = FX;
 
-Tween.prototype = {
+FX.prototype = {
 
-    constructor: Tween,
+    // constructor
+	
+    constructor: FX,
 
-    init: function(elem, options, prop) {
+    /**
+     * initialize
+     * @param {Object} elem
+     * @param {Object} options
+     * @param {String} prop
+     */
+
+    initialize: function(elem, options, prop) {
 
         this.elem = elem;
         this.prop = prop;
@@ -43,6 +52,13 @@ Tween.prototype = {
             hAzzle.fxAfter._default.get(this);
     },
 
+    /**
+     * Run animation
+     * @param {Number|Object} from
+     * @param {Number|Object} to
+     * @param {Number} unit
+     */
+
     run: function(from, to, unit) {
 
         this.from = from;
@@ -59,7 +75,7 @@ Tween.prototype = {
 
         buhi({
 
-            animate: function(currentTime) {
+            setPosition: function(currentTime) {
 
                 var i, delta = currentTime - self.start;
 
@@ -92,13 +108,13 @@ Tween.prototype = {
                 return true;
             },
 
-            stop: function(jumpToEnd) {
+            stop: function(jump) {
 
                 stop = 1;
 
-                if (jumpToEnd) {
+                if (jump) {
 
-                    // Only do style update if jumpToEnd 
+                    // Only do style update if jump 
 
                     self.pos = to;
                     self.update();
@@ -114,6 +130,12 @@ Tween.prototype = {
             elem: this.elem
         });
     },
+	
+    /**
+     * Calculate position
+	 *
+     * @param {Number} delta
+     */
 
     calculate: function(delta) {
 
@@ -157,6 +179,8 @@ Tween.prototype = {
         //    return pos;
     },
 
+    // Restore properties, and fire callback
+
     finished: function() {
 
         // Set the overflow back to the state the properties 
@@ -181,8 +205,10 @@ Tween.prototype = {
             complete.call(this.elem);
         }
     },
-
-    update: function() {
+    
+	// Update current CSS properties
+    
+	update: function() {
 
         /**
          * Future plans after animation queue are finished will be
@@ -201,7 +227,7 @@ Tween.prototype = {
     }
 };
 
-Tween.prototype.init.prototype = Tween.prototype;
+FX.prototype.initialize.prototype = FX.prototype;
 
 hAzzle.extend({
 
@@ -311,7 +337,7 @@ hAzzle.extend({
                     val = hAzzle.propertyMap[index](elem, index);
                 }
 
-                anim = new Tween(elem, opt, index);
+                anim = new FX(elem, opt, index);
 
                 hooks = hAzzle.fxBefore[index];
 
@@ -340,24 +366,21 @@ hAzzle.extend({
         });
     },
 
-    stop: function(jumpToEnd) {
+    stop: function(jump) {
 
         return this.each(function() {
 
-            var timers = dictionary,
-                i = timers.length;
+            var tween,
+                target = this,
+                i = tweens.length;
 
             while (i--) {
-
-                if (timers[i].elem === this) {
-                    if (jumpToEnd) {
-
-                        // Force the next step to be the last
-
-                        timers[i].stop(true);
+                tween = tweens[i];
+                if (tween.elem === target) {
+                    if (jump) {
+                        tween.stop(true);
                     }
-
-                    timers.splice(i, 1);
+                    tweens.splice(i, 1);
                 }
             }
         });
@@ -379,22 +402,19 @@ function render(tick) {
         tick = frame.perfNow();
     }
 
-    var timer, i = 0;
+    var tween, i = 0;
 
-    for (; i < dictionary.length; i++) {
-
-        timer = dictionary[i];
-
-        if (!timer.animate(tick) &&
-            dictionary[i] === timer) {
-
-            dictionary.splice(i--, 1);
+    for (; i < tweens.length; i++) {
+        tween = tweens[i];
+      // Check if the tween has not already been removed
+    if (!tween.setPosition(tick) && tweens[i] === tween) {
+            tweens.splice(i--, 1);
         }
     }
 
-    if (!dictionary.length) {
+   if (!tweens.length) {
 
-        frame.cancel(rafId);
+       frame.cancel(rafId);
 
         // Avoid memory leaks
 
@@ -421,7 +441,7 @@ function calculateRelatives(elem, parts, index, anim) {
 
             unit = unit || start[3];
 
-            // Make sure we update the tween properties later on
+            // Make sure we update the FX properties later on
             parts = parts || [];
 
             // Iteratively approximate from a nonzero starting point
@@ -455,13 +475,13 @@ function calculateRelatives(elem, parts, index, anim) {
 }
 
 function buhi(callback) {
-    dictionary.push(callback);
-    if (callback.animate()) {
+    tweens.push(callback);
+    if (callback.setPosition()) {
         if (!rafId) {
             rafId = frame.request(raf);
         }
     } else {
-        dictionary.pop();
+        tweens.pop();
     }
 }
 
@@ -472,8 +492,6 @@ hAzzle.extend({
     // Default duration
 
     defaultDuration: 500,
-
-    defaultEasing: 'swing',
 
     propertyMap: {
 

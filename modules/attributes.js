@@ -168,8 +168,10 @@ hAzzle.extend({
         for (; i < l; i++) {
 
             name = keys[i];
-
-            propName = hAzzle.propMap[name] || name;
+            
+			// Get the properties
+            
+			propName = hAzzle.propMap[name] || name;
 
             if (getBooleanAttrName(el, name)) {
 
@@ -203,7 +205,7 @@ hAzzle.extend({
             return;
         }
 
-        if (!elem.getAttribute) {
+        if (typeof elem.getAttribute === 'undefined') {
 
             return hAzzle.prop(elem, name, value);
         }

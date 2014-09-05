@@ -396,15 +396,19 @@ hAzzle.event = {
 
 hAzzle.Event = function(src, props) {
 
+    // Allow instantiation without the 'new' keyword
+    if (!(this instanceof hAzzle.Event)) {
+        return new hAzzle.Event(src, props);
+    }
+
+    // Event object
+
     if (src && src.type) {
 
         this.originalEvent = src;
         this.type = src.type;
-
         this.isDefaultPrevented = src.defaultPrevented ? returnTrue : returnFalse;
-
-        // Create target properties
-        this.target = src.target;
+        this.target = src.target; // Create target properties
         this.currentTarget = src.currentTarget;
         this.relatedTarget = src.relatedTarget;
 
@@ -417,10 +421,11 @@ hAzzle.Event = function(src, props) {
     }
 
     // Create a timestamp if incoming event doesn't have one
+
     this.timeStamp = src && src.timeStamp || hAzzle.now();
 
     // Mark it as fixed
-    this[hAzzle.expando + 'kf'] = true;
+    this[hAzzle.expando] = true;
 };
 
 /**
@@ -431,20 +436,9 @@ hAzzle.Event = function(src, props) {
  */
 
 hAzzle.Event.prototype = {
-
-    // Set the constructor
-
     constructor: hAzzle.Event,
-
-    // isDefaultPrevented:
-
     isDefaultPrevented: returnFalse,
-
-    // isPropagationStopped
-
     isPropagationStopped: returnFalse,
-
-    // isImmediatePropagationStopped
     isImmediatePropagationStopped: returnFalse,
 
     // preventDefault
@@ -509,44 +503,14 @@ function getTypes(types) {
 
 // Globalize it
 
-hAzzle.extend({
-
-    /**
-     * Check if an event type are supported
-     * Example:
-     *
-     * hAzzle.eventSupport('submit');
-     */
-
-    eventSupport: function(eventName) {
-
-        hAzzle.assert(function(div) {
-
-            var isSupported;
-
-            eventName = 'on' + eventName;
-            isSupported = (eventName in div);
-
-            if (!isSupported) {
-
-                div.setAttribute(eventName, 'return;');
-                isSupported = typeof div[eventName] === 'function';
-            }
-
-            return isSupported
-        });
-
-    },
-
-    addEvent: function(elem, type, handler) {
-        if (elem.addEventListener) {
-            elem.addEventListener(type, handler, false);
-        }
-    },
-
-    removeEvent: function(elem, type, handle) {
-        if (elem.removeEventListener) {
-            elem.removeEventListener(type, handle, false);
-        }
+hAzzle.addEvent = function(elem, type, handler) {
+    if (elem.addEventListener) {
+        elem.addEventListener(type, handler, false);
     }
-}, hAzzle);
+};
+
+hAzzle.removeEvent = function(elem, type, handle) {
+    if (elem.removeEventListener) {
+        elem.removeEventListener(type, handle, false);
+    }
+};
