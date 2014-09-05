@@ -2,9 +2,6 @@ var frame = hAzzle.RAF(),
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     dictionary = [],
-
-    fxPrefix = 'CSS',
-
     rafId;
 
 frame.request(function(timestamp) {
@@ -48,20 +45,19 @@ Tween.prototype = {
 
     run: function(from, to, unit) {
 
-        var complete,
-            self = this,
+        var self = this,
             done = true,
+            stop = 0,
+            end = 0,
             callback = {
 
-                animate: function(currentTime, jumpToEnd) {
+                animate: function(currentTime) {
 
-                    var i, delta = currentTime - self.start,
-                        options = self.options,
-                        style = self.elem.style;
+                    var i, delta = currentTime - self.start;
 
                     self.currentTime = currentTime;
 
-                    if (delta > self.duration || jumpToEnd) {
+                    if (delta > self.duration) {
 
                         // Save the property state so we know when we have completed 
                         // the animation
@@ -73,47 +69,39 @@ Tween.prototype = {
                                 done = false;
                             }
                         }
+
                         if (done) {
-
-                            if (jumpToEnd) {
-
-                                self.pos = to;
-
-                                // Only do style update if jumpToEnd 
-
-                                self.update();
-                            }
-
-                            // Set the overflow back to the state the properties 
-                            // had before animation started
-
-                            if (options.overflow) {
-
-                                style.overflow = options.overflow[0];
-                                style.overflowX = options.overflow[1];
-                                style.overflowY = options.overflow[2];
-                            }
-                            // Execute the complete function
-
-                            complete = options.complete;
-
-                            if (complete) {
-
-                                options.complete = false;
-                                complete.call(self.elem);
-                            }
+                            self.finished();
                         }
+
                         return false;
                     }
-                    // Get correct position
 
-                    self.pos = getFXPos(delta, from, to, self.easing, self.duration, self.prop);
+                    // Calculate position, and update the CSS properties
 
-                    // Set CSS styles
-
-                    self.update();
+                    self.calculate(delta);
 
                     return true;
+                },
+
+                stop: function(jumpToEnd) {
+
+                    stop = 1;
+                    end = jumpToEnd; // jump to end of animation?
+
+                    if (jumpToEnd) {
+
+                        // Only do style update if jumpToEnd 
+
+                        self.pos = to;
+                        self.update();
+
+                    } else {
+
+                        self.options.complete = null; // remove callback if not jumping to end
+                    }
+
+                    self.finished();
                 },
 
                 elem: this.elem
@@ -130,6 +118,76 @@ Tween.prototype = {
             if (!rafId) {
                 rafId = frame.request(raf);
             }
+        }
+    },
+
+    calculate: function(delta) {
+
+
+        var v, hooks, from = this.from,
+            to = this.to,
+            pos = this.pos,
+            easing = this.easing,
+            duration = this.duration;
+
+        // NOTE!! There exist bugs in this calculations for Android 2.3, but
+        // hAzzle are not supporting Android 2.x so I'm not going to fix it
+
+        if (typeof from === 'object') {
+
+            // Calculate easing for Object.
+            // Note!! This will only run if the 'start' value are a object
+
+            for (v in from) {
+                this.pos = {};
+                this.pos[v] = (to[v] - from[v]) * hAzzle.easing[easing](delta / duration) + from[v];
+            }
+
+        } else {
+
+            hooks = hAzzle.tickHook[this.prop];
+
+            if (hooks) {
+
+                pos = hooks(delta, from, to, easing, duration);
+
+            } else {
+
+                // Do not use Math.max for calculations it's much slower!
+                // http://jsperf.com/math-max-vs-comparison/3
+
+                this.pos = (to - from) * hAzzle.easing[easing](delta / duration) + from;
+            }
+        }
+        // Set CSS styles
+
+        this.update();
+
+        //    return pos;
+    },
+
+    finished: function() {
+
+        // Set the overflow back to the state the properties 
+        // had before animation started
+
+        if (this.options.overflow) {
+
+            var style = this.elem.style,
+                options = this.options;
+
+            style.overflow = options.overflow[0];
+            style.overflowX = options.overflow[1];
+            style.overflowY = options.overflow[2];
+        }
+
+        // Execute the complete function
+
+        var complete = this.options.complete;
+
+        if (complete) {
+            this.options.complete = false;
+            complete.call(this.elem);
         }
     },
 
@@ -221,8 +279,8 @@ hAzzle.extend({
 
         return this.each(function() {
 
-            var index, val, anim, hooks, name, unit, style = this.style,
-                parts, target, end, start, scale, maxIterations, display;
+            var index, val, anim, hooks, name, style = this.style,
+                parts, display;
 
             // Height/width overflow pass
 
@@ -282,7 +340,7 @@ hAzzle.extend({
 
                     if ((parts = relarelativesRegEx.exec(val))) {
 
-                        calculateRelatives(this, parts, index, anim)
+                        calculateRelatives(this, parts, index, anim);
 
                     } else {
 
@@ -307,7 +365,7 @@ hAzzle.extend({
 
                         // Force the next step to be the last
 
-                        timers[i].animate(null, true);
+                        timers[i].stop(true);
                     }
 
                     timers.splice(i, 1);
@@ -355,47 +413,13 @@ function render(tick) {
     }
 }
 
-function getFXPos(delta, from, to, easing, duration, prop) {
 
-    var v, pos, hooks;
-
-    // NOTE!! There exist bugs in this calculations for Android 2.3, but
-    // hAzzle are not supporting Android 2.x so I'm not going to fix it
-
-    if (typeof from === 'object') {
-
-        // Calculate easing for Object.
-        // Note!! This will only run if the 'start' value are a object
-
-        for (v in from) {
-            pos = {};
-            pos[v] = (to[v] - from[v]) * hAzzle.easing[easing](delta / duration) + from[v];
-        }
-
-    } else {
-
-        hooks = hAzzle.tickHook[prop];
-
-        if (hooks) {
-
-            pos = hooks(delta, from, to, easing, duration);
-
-        } else {
-
-            // Do not use Math.max for calculations it's much slower!
-            // http://jsperf.com/math-max-vs-comparison/3
-
-            pos = (to - from) * hAzzle.easing[easing](delta / duration) + from;
-        }
-    }
-
-    return pos;
-}
 
 
 function calculateRelatives(elem, parts, index, anim) {
 
-    target = anim.cur();
+    var target = anim.cur(),
+        end, start, unit, maxIterations, scale;
 
     if (parts) {
         end = parseFloat(parts[2]);
@@ -560,6 +584,3 @@ hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
         }
     }
 };
-
-
-
