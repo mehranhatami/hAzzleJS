@@ -45,84 +45,77 @@ Tween.prototype = {
 
     run: function(from, to, unit) {
 
-        var self = this,
-            done = true,
-            stop = 0,
-            end = 0,
-            callback = {
-
-                animate: function(currentTime) {
-
-                    var i, delta = currentTime - self.start;
-
-                    self.currentTime = currentTime;
-
-                    if (delta > self.duration) {
-
-                        // Save the property state so we know when we have completed 
-                        // the animation
-
-                        self.currentState[self.currentState.prop] = true;
-
-                        for (i in self.currentState) {
-                            if (self.currentState[i] !== true) {
-                                done = false;
-                            }
-                        }
-
-                        if (done) {
-                            self.finished();
-                        }
-
-                        return false;
-                    }
-
-                    // Calculate position, and update the CSS properties
-
-                    self.calculate(delta);
-
-                    return true;
-                },
-
-                stop: function(jumpToEnd) {
-
-                    stop = 1;
-                    end = jumpToEnd; // jump to end of animation?
-
-                    if (jumpToEnd) {
-
-                        // Only do style update if jumpToEnd 
-
-                        self.pos = to;
-                        self.update();
-
-                    } else {
-
-                        self.options.complete = null; // remove callback if not jumping to end
-                    }
-
-                    self.finished();
-                },
-
-                elem: this.elem
-            };
-
         this.from = from;
         this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
         this.start = frame.perfNow();
         this.pos = 0;
         this.to = to;
 
-        if (callback.animate() && dictionary.push(callback)) {
+        // Set some variabels
 
-            if (!rafId) {
-                rafId = frame.request(raf);
-            }
-        }
+        var self = this,
+            done = true,
+            stop = 0;
+
+        bohi({
+
+            animate: function(currentTime) {
+
+                var i, delta = currentTime - self.start;
+
+                self.currentTime = currentTime;
+
+                if (delta > self.duration) {
+
+                    // Save the property state so we know when we have completed 
+                    // the animation
+
+                    self.currentState[self.currentState.prop] = true;
+
+                    for (i in self.currentState) {
+                        if (self.currentState[i] !== true) {
+                            done = false;
+                        }
+                    }
+
+                    if (done) {
+                        self.finished();
+                    }
+
+                    return false;
+                }
+
+                // Calculate position, and update the CSS properties
+
+                self.calculate(delta);
+
+                return true;
+            },
+
+            stop: function(jumpToEnd) {
+
+                stop = 1;
+
+                if (jumpToEnd) {
+
+                    // Only do style update if jumpToEnd 
+
+                    self.pos = to;
+                    self.update();
+
+                } else {
+
+                    self.options.complete = null; // remove callback if not jumping to end
+                }
+
+                self.finished();
+            },
+
+            elem: this.elem
+        });
     },
 
     calculate: function(delta) {
-
 
         var v, hooks, from = this.from,
             to = this.to,
@@ -148,9 +141,7 @@ Tween.prototype = {
             hooks = hAzzle.tickHook[this.prop];
 
             if (hooks) {
-
                 pos = hooks(delta, from, to, easing, duration);
-
             } else {
 
                 // Do not use Math.max for calculations it's much slower!
@@ -413,9 +404,6 @@ function render(tick) {
     }
 }
 
-
-
-
 function calculateRelatives(elem, parts, index, anim) {
 
     var target = anim.cur(),
@@ -441,7 +429,6 @@ function calculateRelatives(elem, parts, index, anim) {
             // Iteratively approximate from a nonzero starting point
             start = +target || 1;
 
-
             do {
 
                 scale = scale || '.5';
@@ -466,6 +453,17 @@ function calculateRelatives(elem, parts, index, anim) {
         }
 
         anim.run(start, end, unit);
+    }
+}
+
+function bohi(callback) {
+    dictionary.push(callback);
+    if (callback.animate()) {
+        if (!rafId) {
+            rafId = frame.request(raf);
+        }
+    } else {
+        dictionary.pop();
     }
 }
 
