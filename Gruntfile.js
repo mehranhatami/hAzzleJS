@@ -78,6 +78,7 @@ function conf(grunt) {
                 'position.js',
                 'units.js',
                 'offset.js',
+				'raf.js',
 				'fx.js',
 				'effects.js',	
                 'events.js',
