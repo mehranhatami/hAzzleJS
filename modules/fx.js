@@ -3,7 +3,7 @@ var frame = hAzzle.RAF(),
     fixTick = false, // feature detected below
     tweens = [],
     rafId,
-    properties = ['color',
+    colorProps = ['color',
         'backgroundColor',
         'borderBottomColor',
         'borderLeftColor',
@@ -12,16 +12,18 @@ var frame = hAzzle.RAF(),
         'outlineColor',
         'columnRuleColor',
         'textDecorationColor',
-        'textEmphasisColor'
+        'textEmphasisColor',
+        'borderColor',
+        'stopColor'
     ],
 
-    // Usefull regex
+    // Usefull regexes
 
     aabbcc = /#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/,
     abc = /#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])/,
     rgb = /rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)/,
     rgba = /rgba\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9\.]*)\s*\)/,
-    colors = {
+    colorNames = {
         'aqua': [0, 255, 255, 1],
         'azure': [240, 255, 255, 1],
         'beige': [245, 245, 220, 1],
@@ -135,7 +137,7 @@ FX.prototype = {
 
         var self = this,
             done = true,
-            stop = 0;
+            isRunning = true;
 
         buhi({
 
@@ -145,7 +147,11 @@ FX.prototype = {
 
                 self.currentTime = currentTime;
 
-                if (delta > self.options.duration) {
+                if (delta > self.options.duration && isRunning) {
+                    
+					// Mark it as stopped
+					
+					isRunning = false;
 
                     // Save the property state so we know when we have completed 
                     // the animation
@@ -174,13 +180,14 @@ FX.prototype = {
 
             stop: function(jump) {
 
-                stop = 1;
+                isRunning = false;
 
                 if (jump) {
 
                     // Only do style update if jump 
 
-                    self.pos = to;
+                    self.pos = self.to;
+                    self.deldu = 1;
                     self.update();
 
                 } else {
@@ -563,31 +570,33 @@ function parseColor(color) {
     var match;
 
     // Match #aabbcc
-    if (match = aabbcc.exec(color)) {
+    if ((match = aabbcc.exec(color))) {
         return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16), 1];
     }
     // Match #abc		
-    if (match = abc.exec(color)) {
+    if ((match = abc.exec(color))) {
         return [parseInt(match[1], 16) * 17, parseInt(match[2], 16) * 17, parseInt(match[3], 16) * 17, 1];
     }
     // Match rgb(n, n, n)
-    if (match = rgb.exec(color)) {
+    if ((match = rgb.exec(color))) {
+
+
         return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3]), 1];
     }
     // Match rgb(n, n, n)
-    if (match = rgba.exec(color)) {
+    if ((match = rgba.exec(color))) {
         return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10), parseFloat(match[4])];
 
         // No browser returns rgb(n%, n%, n%), so little reason to support this format.
     }
-    return colors[color];
+    return colorNames[color];
 }
 
 /* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
 
-    colors: colors,
+    colors: colorNames,
 
     // Default duration
 
@@ -688,31 +697,57 @@ hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
     }
 };
 
-hAzzle.each(properties, function(prop) {
+// Color animation are cached on the object itself so we get
+// faster look-up in animation sequences
+
+hAzzle.each(colorProps, function(prop) {
     hAzzle.fxAfter[prop] = {
         set: function(fx) {
+
             if (!fx.init) {
 
-                start = parseColor(hAzzle(fx.elem).css(prop));
-                end = parseColor(fx.to);
+                if (!hAzzle.data(fx.elem, 'CSS').prevState['colorStart' + prop]) {
+                    fx.from = hAzzle.data(fx.elem, 'CSS').prevState['colorStart' + prop] = parseColor(curCSS(fx.elem, prop));
+                } else {
+                    fx.from = hAzzle.data(fx.elem, 'CSS').prevState['colorStart' + prop];
+                }
+
+                if (!hAzzle.data(fx.elem, 'CSS').prevState['colorEnd' + prop]) {
+                    fx.to = hAzzle.data(fx.elem, 'CSS').prevState['colorEnd' + prop] = parseColor(fx.to);
+                } else {
+                    fx.to = hAzzle.data(fx.elem, 'CSS').prevState['colorEnd' + prop];
+                }
+
                 fx.init = true;
             }
-            fx.elem.style[prop] = calculateColor(start, end, fx.deldu);
+
+            fx.elem.style[prop] = calculateColor(fx.from, fx.to, fx.deldu);
         }
     };
 });
 
 hAzzle.fxAfter.borderColor = {
     set: function(fx) {
-        var style = fx.elem.style;
-        var p_begin = [];
-        var borders = properties.slice(2, 6); // All four border properties
-        hAzzle.each(borders, function(property) {
-            p_begin[property] = parseColor(hAzzle(fx.elem).css(property));
+        var i, style = fx.elem.style, end,
+            start = [],
+            borders = colorProps.slice(2, 6); // All four border properties
+        hAzzle.each(borders, function(prop) {
+            if (!hAzzle.data(fx.elem, 'CSS').prevState['colorStart' + prop]) {
+                start[prop] = hAzzle.data(fx.elem, 'CSS').prevState['colorStart' + prop] = parseColor(curCSS(fx.elem, prop));
+            } else {
+                start[prop] = hAzzle.data(fx.elem, 'CSS').prevState['colorStart' + prop];
+            }
         });
-        var p_end = parseColor(fx.to);
-        hAzzle.each(borders, function(property) {
-            style[property] = calculateColor(p_begin[property], p_end, fx.deldu);
-        });
+        if (!hAzzle.data(fx.elem, 'CSS').prevState.colorEndborderColor) {
+            end = hAzzle.data(fx.elem, 'CSS').prevState.colorEndborderColor = parseColor(fx.to);
+        } else {
+            end = hAzzle.data(fx.elem, 'CSS').prevState.colorEndborderColor;
+        }
+
+        i = borders.length;
+
+        while (i--) {
+            style[borders[i]] = calculateColor(start[borders[i]], end, fx.deldu);
+        }
     }
 };
