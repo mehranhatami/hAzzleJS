@@ -2,7 +2,7 @@ var pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     tProps = 'Property Duration TimingFunction'.split(' '),
     BRdirs = 'TopLeft TopRight BottomRight BottomLeft'.split(' '),
     directions = ['Top', 'Right', 'Bottom', 'Left'],
-    xy = ["X", "Y"];
+    xy = ['X', 'Y'];
 
 // CssHooks for margin and padding 
 
@@ -43,7 +43,7 @@ if (!hAzzle.cssCore.has['api-pixelPosition']) {
     });
 }
 
-// Transitions - cssHooks
+// Transitions 
 
 if (hAzzle.cssCore.transition) {
     hAzzle.cssHooks.transition = {
@@ -138,7 +138,7 @@ hAzzle.cssHooks.transform = {
 
 // Column
 
-hAzzle.each("Span Count Gap Width RuleColor RuleStyle RuleWidth".split(' '), function(prop) {
+hAzzle.each('Span Count Gap Width RuleColor RuleStyle RuleWidth'.split(' '), function(prop) {
     hAzzle.cssHooks['column' + prop] = {
         get: function(elem) {
             return hAzzle.css(elem, hAzzle.cssCore['column' + prop]);
@@ -165,44 +165,34 @@ if (hAzzle.cssCore.boxReflect) {
     };
 }
 
+// Helper function to parse out the X and Y values from backgroundPosition
 
-
-
-// backgroundPosition[X,Y] get hooks
-//    var $div = $('<div style="background-position: 3px 5px">');
-
-// BackgroundPosition
-
-
-
-
-// helper function to parse out the X and Y values from backgroundPosition
 function parseBgPos(bgPos) {
     var parts = bgPos.split(/\s/),
         values = {
-            "X": parts[0],
-            "Y": parts[1]
+            'X': parts[0],
+            'Y': parts[1]
         };
     return values;
 }
 
 if (hAzzle.cssCore.backgroundPosition) {
     hAzzle.each(xy, function(l) {
-        hAzzle.cssHooks["backgroundPosition" + l] = {
+        hAzzle.cssHooks['backgroundPosition' + l] = {
             get: function(elem) {
-                var values = parseBgPos(hAzzle.css(elem, "backgroundPosition"));
+                var values = parseBgPos(hAzzle.css(elem, 'backgroundPosition'));
                 return values[l];
             },
             set: function(elem, value) {
-                var values = parseBgPos(hAzzle.css(elem, "backgroundPosition")),
-                    isX = l === "X";
-                elem.style.backgroundPosition = (isX ? value : values.X) + " " +
+                var values = parseBgPos(hAzzle.css(elem, 'backgroundPosition')),
+                    isX = l === 'X';
+                elem.style.backgroundPosition = (isX ? value : values.X) + ' ' +
                     (isX ? values.Y : value);
             }
         };
-        hAzzle.fxAfter["backgroundPosition" + l] = {
+        hAzzle.fxAfter['backgroundPosition' + l] = {
             set: function(fx) {
-                hAzzle.cssHooks["backgroundPosition" + l].set(fx.elem, fx.pos + fx.unit);
+                hAzzle.cssHooks['backgroundPosition' + l].set(fx.elem, fx.pos + fx.unit);
             }
         };
     });

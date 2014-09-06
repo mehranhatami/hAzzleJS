@@ -21,17 +21,17 @@ hAzzle.assert(function(div) {
 
     var pixelPositionVal, boxSizingReliableVal;
 
-    div.style.backgroundClip = "content-box";
-    div.cloneNode(true).style.backgroundClip = "";
+    div.style.backgroundClip = 'content-box';
+    div.cloneNode(true).style.backgroundClip = '';
 
-    cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === "content-box";
+    cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === 'content-box';
 
     if (cssCore.has['api-gCS']) {
 
         div.style.cssText = 'border:1px;padding:1px;width:4px;position:absolute';
         var divStyle = window.getComputedStyle(div, null);
 
-        cssCore.has['api-boxSizing'] = divStyle.boxSizing === "border-box";
+        cssCore.has['api-boxSizing'] = divStyle.boxSizing === 'border-box';
 
         pixelPositionVal = divStyle.top !== '1%';
         boxSizingReliableVal = divStyle.width === '4px';
@@ -102,8 +102,8 @@ hAzzle.assert(function(div) {
 hAzzle.assert(function(div) {
 
     div.style.backgroundPosition = '3px 5px'
-    hAzzle.cssCore.backgroundPosition = hAzzle.curCSS(div, 'backgroundPosition') === "3px 5px" ? true : false;
-    hAzzle.cssCore.backgroundPositionXY = hAzzle.curCSS('backgroundPositionX') === "3px" ? true : false;
+    hAzzle.cssCore.backgroundPosition = hAzzle.curCSS(div, 'backgroundPosition') === '3px 5px' ? true : false;
+    hAzzle.cssCore.backgroundPositionXY = hAzzle.curCSS('backgroundPositionX') === '3px' ? true : false;
 });
 
 
@@ -126,5 +126,5 @@ hAzzle.assert(function(div) {
             has3d = window.getComputedStyle(div).getPropertyValue(transforms[t]);
         }
     }
-    cssCore.translate3d = (has3d !== undefined && has3d.length > 0 && has3d !== "none");
+    cssCore.translate3d = (has3d !== undefined && has3d.length > 0 && has3d !== 'none');
 });
