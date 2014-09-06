@@ -1,4 +1,5 @@
 var frame = hAzzle.RAF(),
+    cRE = /rect\(([0-9\.]{1,})(px|em)[,]?\s+([0-9\.]{1,})(px|em)[,]?\s+([0-9\.]{1,})(px|em)[,]?\s+([0-9\.]{1,})(px|em)\)/,
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     tweens = [],
@@ -468,6 +469,27 @@ function buhi(callback) {
     }
 }
 
+function getClip(elem) {
+    var cssClip = hAzzle.curCSS(elem, 'clip') || '';
+
+    if (!cssClip) {
+        var pieces = {
+            top: hAzzle.curCSS(elem, 'clipTop'),
+            right: hAzzle.curCSS(elem, 'clipRight'),
+            bottom: hAzzle.curCSS(elem, 'clipBottom'),
+            left: hAzzle.curCSS(elem, 'clipLeft')
+        };
+
+        if (pieces.top && pieces.right && pieces.bottom && pieces.left) {
+            cssClip = 'rect(' + pieces.top + ' ' + pieces.right + ' ' + pieces.bottom + ' ' + pieces.left + ')';
+        }
+    }
+
+    // Strip commas and return.
+    return cssClip.replace(/,/g, ' ');
+}
+
+
 /* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
@@ -520,6 +542,47 @@ hAzzle.extend({
 
     fxAfter: {
 
+        opacity: {
+
+            set: function(fx) {
+                fx.elem.style.opacity = fx.pos;
+            }
+        },
+        clip: {
+
+            set: function(fx) {
+
+                if (fx.pos === 0) {
+
+                    fx.from = cRE.exec(getClip(fx.elem));
+                    if (typeof fx.to === 'string') {
+                        fx.to = cRE.exec(fx.to.replace(/,/g, ' '));
+                    }
+                }
+                if (fx.start && fx.end) {
+                    var sarr = [],
+                        earr = [],
+                        spos = fx.from.length,
+                        epos = fx.to.length,
+                        ss = 1,
+                        es = 1,
+                        emOffset = fx.from[ss + 1] == 'em' ? (parseInt(hAzzle.curCSS(fx.elem, 'fontSize')) * 1.333 * parseInt(fx.from[ss])) : 1;
+
+                    for (; ss < spos; ss += 2) {
+                        sarr.push(parseInt(emOffset * fx.from[ss]));
+                    }
+                    for (; es < epos; es += 2) {
+                        earr.push(parseInt(emOffset * fx.to[es]));
+                    }
+                    fx.elem.style.clip = 'rect(' +
+                        parseInt((fx.pos * (earr[0] - sarr[0])) + sarr[0]) + 'px ' +
+                        parseInt((fx.pos * (earr[1] - sarr[1])) + sarr[1]) + 'px ' +
+                        parseInt((fx.pos * (earr[2] - sarr[2])) + sarr[2]) + 'px ' +
+                        parseInt((fx.pos * (earr[3] - sarr[3])) + sarr[3]) + 'px)';
+                }
+            }
+        },
+
         _default: {
 
             /**
@@ -550,7 +613,7 @@ hAzzle.extend({
                         hAzzle.cssHooks[fx.prop])) {
                     hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
                 } else {
-                    fx.elem[fx.prop] = fx.now;
+                    fx.elem[fx.prop] = fx.pos;
                 }
             }
         }
