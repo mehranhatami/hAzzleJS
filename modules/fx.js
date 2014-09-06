@@ -688,37 +688,6 @@ hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
     }
 };
 
-
-
-hAzzle.each(properties, function(prop) {
-    hAzzle.fxAfter[prop] = {
-        set: function(fx) {
-            if (!fx.init) {
-
-                start = parseColor(hAzzle(fx.elem).css(prop));
-                end = parseColor(fx.to);
-                fx.init = true;
-            }
-            fx.elem.style[prop] = calculateColor(start, end, fx.deldu);
-        }
-    };
-});
-
-hAzzle.fxAfter.borderColor = {
-    set: function(fx) {
-        var style = fx.elem.style;
-        var p_begin = [];
-        var borders = properties.slice(2, 6); // All four border properties
-        hAzzle.each(borders, function(property) {
-            p_begin[property] = parseColor(hAzzle(fx.elem).css(property));
-        });
-        var p_end = parseColor(fx.to);
-        hAzzle.each(borders, function(property) {
-            style[property] = calculateColor(p_begin[property], p_end, fx.deldu);
-        });
-    }
-};
-
 hAzzle.each(properties, function(prop) {
     hAzzle.fxAfter[prop] = {
         set: function(fx) {
