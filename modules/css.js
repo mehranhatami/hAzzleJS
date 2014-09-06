@@ -3,6 +3,10 @@ var
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
+    rotskew = /^(rotate|skew)/i,
+    transinp = /(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i,
+    shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
+    longformRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
     inlineregex = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
     listitemregex = /^(li)$/i,
     tablerowregex = /^(tr)$/i,
@@ -173,6 +177,28 @@ hAzzle.extend({
         }
     },
 
+    hexToRgb: function(hex) {
+        var rgbParts;
+        hex = hex.replace(shortformRegex, function(m, r, g, b) {
+            return r + r + g + g + b + b;
+        });
+
+        rgbParts = longformRegex.exec(hex);
+
+        return rgbParts ? [parseInt(rgbParts[1], 16), parseInt(rgbParts[2], 16), parseInt(rgbParts[3], 16)] : [0, 0, 0];
+    },
+
+    getUnitType: function(property) {
+        if (rotskew.test(property)) {
+            return 'deg';
+        } else if (transinp.test(property)) {
+            /* The above properties are unitless. */
+            return '';
+        } else {
+            /* Default to px for all other properties. */
+            return 'px';
+        }
+    },
     getDisplayType: function(element) {
         var tagName = element.tagName.toString().toLowerCase();
         if (inlineregex.test(tagName)) {
@@ -223,7 +249,7 @@ hAzzle.extend({
         // Convert the ''|'auto' values in a correct pixel value (for IE and Firefox)
         if (extra !== 'auto' && /^margin/.test(name) && /^$|auto/.test(val)) {
 
-            val = calculateCorrect(elem, name, val);
+            val = validCalculation(elem, name, val);
 
         }
         // Make numeric if forced or a qualifier was provided and val looks numeric
@@ -341,7 +367,7 @@ hAzzle.extend({
  */
 
 
-function calculateCorrect(elem, name, val) {
+function validCalculation(elem, name, val) {
 
     var mTop, mRight, mBottom, mLeft;
 
@@ -369,8 +395,6 @@ function calculateCorrect(elem, name, val) {
     }
     return val;
 }
-
-
 
 // Populate the unitless list
 

@@ -4,6 +4,7 @@
 var doc = this.document,
     ssv = /\S+/g,
     inseteb = /^(?:input|select|textarea|button)$/i,
+    SVGAttributes = "width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2",
     boolAttr = hAzzle.boolAttr, // Boolean attributes
     boolElem = hAzzle.boolElem; // Boolean elements
 
@@ -83,8 +84,8 @@ hAzzle.extend({
 });
 
 hAzzle.propMap = hAzzle.nodeHook = {
-'class'	: 'className',
-'for': 'htmlFor'	
+    'class': 'className',
+    'for': 'htmlFor'
 };
 
 hAzzle.extend({
@@ -168,10 +169,10 @@ hAzzle.extend({
         for (; i < l; i++) {
 
             name = keys[i];
-            
-			// Get the properties
-            
-			propName = hAzzle.propMap[name] || name;
+
+            // Get the properties
+
+            propName = hAzzle.propMap[name] || name;
 
             if (getBooleanAttrName(el, name)) {
 
@@ -298,7 +299,17 @@ hAzzle.extend({
                 ret :
                 elem[name];
         }
-	}
+    },
+
+    SVGAttribute: function(property) {
+
+        if (hAzzle.ie || (hAzzle.isAndroid && !hAzzle.isChrome)) {
+            SVGAttributes += "|transform";
+        }
+
+        return new RegExp("^(" + SVGAttributes + ")$", "i").test(property);
+    }
+
 
 }, hAzzle);
 
@@ -331,9 +342,9 @@ if (!hAzzle.features['bug-optSelected']) {
 
 hAzzle.each(['cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
     'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',
-    'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex', 'dropZone','spellCheck',
-	'hrefLang','isMap', 'srcDoc', 'mediaGroup', 'autoComplete', 'noValidate',
-	'radioGroup' 
+    'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex', 'dropZone', 'spellCheck',
+    'hrefLang', 'isMap', 'srcDoc', 'mediaGroup', 'autoComplete', 'noValidate',
+    'radioGroup'
 ], function() {
     hAzzle.propMap[this.toLowerCase()] = this;
 });
