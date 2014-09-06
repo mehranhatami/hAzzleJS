@@ -2,76 +2,7 @@ var frame = hAzzle.RAF(),
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     tweens = [],
-    rafId,
-    colorProps = ['color',
-        'backgroundColor',
-        'borderBottomColor',
-        'borderLeftColor',
-        'borderRightColor',
-        'borderTopColor',
-        'outlineColor',
-        'columnRuleColor',
-        'textDecorationColor',
-        'textEmphasisColor',
-        'borderColor',
-        'stopColor'
-    ],
-
-    // Usefull regexes
-
-    aabbcc = /#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/,
-    abc = /#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])/,
-    rgb = /rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)/,
-    rgba = /rgba\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9\.]*)\s*\)/,
-
-    // Color names
-
-    colorNames = {
-        'aqua': [0, 255, 255, 1],
-        'azure': [240, 255, 255, 1],
-        'beige': [245, 245, 220, 1],
-        'black': [0, 0, 0, 1],
-        'blue': [0, 0, 255, 1],
-        'brown': [165, 42, 42, 1],
-        'cyan': [0, 255, 255, 1],
-        'darkblue': [0, 0, 139, 1],
-        'darkcyan': [0, 139, 139, 1],
-        'darkgrey': [169, 169, 169, 1],
-        'darkgreen': [0, 100, 0, 1],
-        'darkkhaki': [189, 183, 107, 1],
-        'darkmagenta': [139, 0, 139, 1],
-        'darkolivegreen': [85, 107, 47, 1],
-        'darkorange': [255, 140, 0, 1],
-        'darkorchid': [153, 50, 204, 1],
-        'darkred': [139, 0, 0, 1],
-        'darksalmon': [233, 150, 122, 1],
-        'darkviolet': [148, 0, 211, 1],
-        'fuchsia': [255, 0, 255, 1],
-        'gold': [255, 215, 0, 1],
-        'green': [0, 128, 0, 1],
-        'indigo': [75, 0, 130, 1],
-        'khaki': [240, 230, 140, 1],
-        'lightblue': [173, 216, 230, 1],
-        'lightcyan': [224, 255, 255, 1],
-        'lightgreen': [144, 238, 144, 1],
-        'lightgrey': [211, 211, 211, 1],
-        'lightpink': [255, 182, 193, 1],
-        'lightyellow': [255, 255, 224, 1],
-        'lime': [0, 255, 0, 1],
-        'magenta': [255, 0, 255, 1],
-        'maroon': [128, 0, 0, 1],
-        'navy': [0, 0, 128, 1],
-        'olive': [128, 128, 0, 1],
-        'orange': [255, 165, 0, 1],
-        'pink': [255, 192, 203, 1],
-        'purple': [128, 0, 128, 1],
-        'violet': [128, 0, 128, 1],
-        'red': [255, 0, 0, 1],
-        'silver': [192, 192, 192, 1],
-        'white': [255, 255, 255, 1],
-        'yellow': [255, 255, 0, 1],
-        'transparent': [255, 255, 255, 0]
-    };
+    rafId;
 
 frame.request(function(timestamp) {
     fixTick = timestamp > 1e12 != frame.perfNow() > 1e12;
@@ -137,7 +68,6 @@ FX.prototype = {
         this.to = to;
 
         // Set some variabels
-
 
 
 
@@ -538,55 +468,9 @@ function buhi(callback) {
     }
 }
 
-// Calculate an in-between color. Returns "#aabbcc"-like string.
-
-function calculateColor(begin, end, pos) {
-    var color = 'rgba' + '(' +
-        parseInt((begin[0] + pos * (end[0] - begin[0])), 10) + ',' +
-        parseInt((begin[1] + pos * (end[1] - begin[1])), 10) + ',' +
-        parseInt((begin[2] + pos * (end[2] - begin[2])), 10);
-    color += ',' + (begin && end ? parseFloat(begin[3] + pos * (end[3] - begin[3])) : 1);
-    color += ')';
-    return color;
-}
-
-/**
- * FIX ME!!  
- * Need to re-write this function!!s
- * and also make sure we test for plusequals += 100 -= 100
- */
-
-function parseColor(color) {
-    var match;
-
-    // Match #aabbcc
-    if ((match = aabbcc.exec(color))) {
-        return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16), 1];
-    }
-    // Match #abc		
-    if ((match = abc.exec(color))) {
-        return [parseInt(match[1], 16) * 17, parseInt(match[2], 16) * 17, parseInt(match[3], 16) * 17, 1];
-    }
-    // Match rgb(n, n, n)
-    if ((match = rgb.exec(color))) {
-
-
-        return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3]), 1];
-    }
-    // Match rgb(n, n, n)
-    if ((match = rgba.exec(color))) {
-        return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10), parseFloat(match[4])];
-
-        // No browser returns rgb(n%, n%, n%), so little reason to support this format.
-    }
-    return colorNames[color];
-}
-
 /* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
-
-    colors: colorNames,
 
     // Default duration
 
@@ -683,75 +567,6 @@ hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
     set: function(fx) {
         if (fx.elem.nodeType && fx.elem.parentNode) {
             fx.elem[fx.prop] = fx.pos;
-        }
-    }
-};
-
-// Color animation are cached on the object itself so we get
-// faster look-up in animation sequences
-
-hAzzle.each(colorProps, function(prop) {
-    hAzzle.fxAfter[prop] = {
-        set: function(fx) {
-
-            var cData = hAzzle.data(fx.elem, 'CSS'),
-                start = cData.prevState['colorStart' + prop],
-                end = cData.prevState['colorEnd' + prop];
-
-            if (!fx.colorInit ) {
-
-                if (!start) {
-                    fx.from = start = parseColor(curCSS(fx.elem, prop));
-                } else {
-                    fx.from = start;
-                }
-
-                if (!end) {
-                    fx.to = end = parseColor(fx.to);
-                } else {
-                    fx.to = end;
-                }
-
-                fx.colorInit = true;
-            }
-
-            fx.elem.style[prop] = calculateColor(fx.from, fx.to, fx.deldu);
-        }
-    };
-});
-
-// Border colors need special treatment
-
-hAzzle.fxAfter.borderColor = {
-    set: function(fx) {
-        var i, style = fx.elem.style,
-            end,  
-            start = [],
-			borders = [],
-			  cData = hAzzle.data(fx.elem, 'CSS'),
-            to = cData.prevState.colorStartborderColor,
-            from = cData.prevState.colorEndborderColor;
-			
-        hAzzle.each(['Top', 'Right', 'Bottom', 'Left'], function(prop) {
-			prop = 'border' + prop + 'Color';
-			borders.push(prop)
-            if (!to) {
-                start[prop] = to = parseColor(curCSS(fx.elem, prop));
-            } else {
-                start[prop] = to;
-            }
-        });
-
-        if (!from) {
-            end = from = parseColor(fx.to);
-        } else {
-            end = from;
-        }
-
-        i = borders.length;
-
-        while (i--) {
-            style[borders[i]] = calculateColor(start[borders[i]], end, fx.deldu);
         }
     }
 };
