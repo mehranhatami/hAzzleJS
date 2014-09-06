@@ -1,7 +1,8 @@
 var pxchk = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i,
     tProps = 'Property Duration TimingFunction'.split(' '),
     BRdirs = 'TopLeft TopRight BottomRight BottomLeft'.split(' '),
-    directions = ['Top', 'Right', 'Bottom', 'Left'];
+    directions = ['Top', 'Right', 'Bottom', 'Left'],
+    xy = ["X", "Y"];
 
 // CssHooks for margin and padding 
 
@@ -118,6 +119,90 @@ if (hAzzle.cssCore.borderRadius) {
             },
             set: function(elem, value) {
                 elem.style[borderCornerRadius(dir, vendor_prefix)] = value;
+            }
+        };
+    });
+}
+
+// Transform
+
+hAzzle.cssHooks.transform = {
+    get: function(elem) {
+        return hAzzle.css(elem, hAzzle.cssCore.transform);
+    },
+    set: function(elem, value) {
+        elem.style[hAzzle.cssCore.transform] = value;
+    }
+
+};
+
+// Column
+
+hAzzle.each("Span Count Gap Width RuleColor RuleStyle RuleWidth".split(' '), function(prop) {
+    hAzzle.cssHooks['column' + prop] = {
+        get: function(elem) {
+            return hAzzle.css(elem, hAzzle.cssCore['column' + prop]);
+        },
+        set: function(elem, value) {
+            elem.style[hAzzle.cssCore['column' + prop]] = value;
+        }
+    };
+});
+
+
+// boxReflect
+// Firefox dosen't support this property
+
+if (hAzzle.cssCore.boxReflect) {
+
+    hAzzle.cssHooks.boxReflect = {
+        get: function(elem) {
+            return hAzzle.css(elem, hAzzle.support.boxReflect);
+        },
+        set: function(elem, value) {
+            elem.style[hAzzle.cssCore.boxReflect] = value;
+        }
+    };
+}
+
+
+
+
+// backgroundPosition[X,Y] get hooks
+//    var $div = $('<div style="background-position: 3px 5px">');
+
+// BackgroundPosition
+
+
+
+
+// helper function to parse out the X and Y values from backgroundPosition
+function parseBgPos(bgPos) {
+    var parts = bgPos.split(/\s/),
+        values = {
+            "X": parts[0],
+            "Y": parts[1]
+        };
+    return values;
+}
+
+if (hAzzle.cssCore.backgroundPosition) {
+    hAzzle.each(xy, function(l) {
+        hAzzle.cssHooks["backgroundPosition" + l] = {
+            get: function(elem) {
+                var values = parseBgPos(hAzzle.css(elem, "backgroundPosition"));
+                return values[l];
+            },
+            set: function(elem, value) {
+                var values = parseBgPos(hAzzle.css(elem, "backgroundPosition")),
+                    isX = l === "X";
+                elem.style.backgroundPosition = (isX ? value : values.X) + " " +
+                    (isX ? values.Y : value);
+            }
+        };
+        hAzzle.fxAfter["backgroundPosition" + l] = {
+            set: function(fx) {
+                hAzzle.cssHooks["backgroundPosition" + l].set(fx.elem, fx.pos + fx.unit);
             }
         };
     });

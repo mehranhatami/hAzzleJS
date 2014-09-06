@@ -2,8 +2,8 @@ var
     cssProperties = hAzzle.cssProperties = ['textShadow', 'opacity', 'clip', 'zIndex',
         'flex', 'order', 'borderCollapse', 'animation', 'animationFillMode', 'animationDirection',
         'animatioName', 'animationTimingFunction', 'animationPlayState', 'perspective', 'boxSizing',
-        'textOverflow', 'columns', 'borderRadius', 'boxshadow', 'borderImage'
-    ],
+        'textOverflow', 'columns', 'borderRadius', 'boxshadow', 'borderImage', 'columnCount', 'boxReflect',
+       'columnSpan', 'columnCount', 'columnGap', 'columnWidth', 'columnRuleColor', 'columnRuleStyle', 'columnRuleWidth'],
     i = cssProperties.length,
     cssCore = hAzzle.cssCore = {
         has: {}, // Feature / bug detection
@@ -97,7 +97,17 @@ hAzzle.assert(function(div) {
     }
 });
 
- // Check if support translate3d
+// BackgroundPosition
+
+hAzzle.assert(function(div) {
+
+    div.style.backgroundPosition = '3px 5px'
+    hAzzle.cssCore.backgroundPosition = hAzzle.curCSS(div, 'backgroundPosition') === "3px 5px" ? true : false;
+    hAzzle.cssCore.backgroundPositionXY = hAzzle.curCSS('backgroundPositionX') === "3px" ? true : false;
+});
+
+
+// Check if support translate3d
 
 hAzzle.assert(function(div) {
 
