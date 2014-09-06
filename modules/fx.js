@@ -2,7 +2,71 @@ var frame = hAzzle.RAF(),
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     tweens = [],
-    rafId;
+    rafId,
+    properties = ['color',
+        'backgroundColor',
+        'borderBottomColor',
+        'borderLeftColor',
+        'borderRightColor',
+        'borderTopColor',
+        'outlineColor',
+        'columnRuleColor',
+        'textDecorationColor',
+        'textEmphasisColor'
+    ],
+
+    // Usefull regex
+
+    aabbcc = /#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/,
+    abc = /#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])/,
+    rgb = /rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)/,
+    rgba = /rgba\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9\.]*)\s*\)/,
+    colors = {
+        'aqua': [0, 255, 255, 1],
+        'azure': [240, 255, 255, 1],
+        'beige': [245, 245, 220, 1],
+        'black': [0, 0, 0, 1],
+        'blue': [0, 0, 255, 1],
+        'brown': [165, 42, 42, 1],
+        'cyan': [0, 255, 255, 1],
+        'darkblue': [0, 0, 139, 1],
+        'darkcyan': [0, 139, 139, 1],
+        'darkgrey': [169, 169, 169, 1],
+        'darkgreen': [0, 100, 0, 1],
+        'darkkhaki': [189, 183, 107, 1],
+        'darkmagenta': [139, 0, 139, 1],
+        'darkolivegreen': [85, 107, 47, 1],
+        'darkorange': [255, 140, 0, 1],
+        'darkorchid': [153, 50, 204, 1],
+        'darkred': [139, 0, 0, 1],
+        'darksalmon': [233, 150, 122, 1],
+        'darkviolet': [148, 0, 211, 1],
+        'fuchsia': [255, 0, 255, 1],
+        'gold': [255, 215, 0, 1],
+        'green': [0, 128, 0, 1],
+        'indigo': [75, 0, 130, 1],
+        'khaki': [240, 230, 140, 1],
+        'lightblue': [173, 216, 230, 1],
+        'lightcyan': [224, 255, 255, 1],
+        'lightgreen': [144, 238, 144, 1],
+        'lightgrey': [211, 211, 211, 1],
+        'lightpink': [255, 182, 193, 1],
+        'lightyellow': [255, 255, 224, 1],
+        'lime': [0, 255, 0, 1],
+        'magenta': [255, 0, 255, 1],
+        'maroon': [128, 0, 0, 1],
+        'navy': [0, 0, 128, 1],
+        'olive': [128, 128, 0, 1],
+        'orange': [255, 165, 0, 1],
+        'pink': [255, 192, 203, 1],
+        'purple': [128, 0, 128, 1],
+        'violet': [128, 0, 128, 1],
+        'red': [255, 0, 0, 1],
+        'silver': [192, 192, 192, 1],
+        'white': [255, 255, 255, 1],
+        'yellow': [255, 255, 0, 1],
+        'transparent': [255, 255, 255, 0]
+    };
 
 frame.request(function(timestamp) {
     fixTick = timestamp > 1e12 != frame.perfNow() > 1e12;
@@ -17,7 +81,7 @@ hAzzle.FX = FX;
 FX.prototype = {
 
     // constructor
-	
+
     constructor: FX,
 
     /**
@@ -130,18 +194,17 @@ FX.prototype = {
             elem: this.elem
         });
     },
-	
+
     /**
      * Calculate position
-	 *
+     *
      * @param {Number} delta
      */
 
     calculate: function(delta) {
 
-        var v, hooks, from = this.from,
+        var v, from = this.from,
             to = this.to,
-            pos = this.pos,
             easing = this.easing,
             duration = this.options.duration;
 
@@ -155,22 +218,17 @@ FX.prototype = {
 
             for (v in from) {
                 this.pos = {};
-                this.pos[v] = (to[v] - from[v]) * hAzzle.easing[easing](delta / duration) + from[v];
+                this.deldu = hAzzle.easing[easing](delta / duration);
+                this.pos[v] = from[v] + (to[v] - from[v]) * this.deldu;
             }
 
         } else {
 
-            hooks = hAzzle.tickHook[this.prop];
+            // Do not use Math.max for calculations it's much slower!
+            // http://jsperf.com/math-max-vs-comparison/3
 
-            if (hooks) {
-                pos = hooks(delta, from, to, easing, duration);
-            } else {
-
-                // Do not use Math.max for calculations it's much slower!
-                // http://jsperf.com/math-max-vs-comparison/3
-
-                this.pos = (to - from) * hAzzle.easing[easing](delta / duration) + from;
-            }
+            this.deldu = hAzzle.easing[easing](delta / duration);
+            this.pos = from + ((to - from) * this.deldu);
         }
         // Set CSS styles
 
@@ -205,10 +263,10 @@ FX.prototype = {
             complete.call(this.elem);
         }
     },
-    
-	// Update current CSS properties
-    
-	update: function() {
+
+    // Update current CSS properties
+
+    update: function() {
 
         /**
          * Future plans after animation queue are finished will be
@@ -277,6 +335,10 @@ hAzzle.extend({
 
             // Callback
 
+            opt.complete = (!callback && typeof speed === 'function') ? speed : callback;
+
+            // Duration
+
             opt.duration = typeof speed === 'number' ? speed :
                 opt.duration in hAzzle.speeds ?
                 // Support for jQuery's named durations
@@ -290,7 +352,7 @@ hAzzle.extend({
             }
         }
 
-        opt.duration = (hAzzle.speeds[opt.duration] || opt.duration) || hAzzle.defaultDuration
+        opt.duration = (hAzzle.speeds[opt.duration] || opt.duration) || hAzzle.defaultDuration;
 
         return this.each(function(elem) {
 
@@ -406,15 +468,15 @@ function render(tick) {
 
     for (; i < tweens.length; i++) {
         tween = tweens[i];
-      // Check if the tween has not already been removed
-    if (!tween.setPosition(tick) && tweens[i] === tween) {
+        // Check if the tween has not already been removed
+        if (!tween.setPosition(tick) && tweens[i] === tween) {
             tweens.splice(i--, 1);
         }
     }
 
-   if (!tweens.length) {
+    if (!tweens.length) {
 
-       frame.cancel(rafId);
+        frame.cancel(rafId);
 
         // Avoid memory leaks
 
@@ -485,9 +547,47 @@ function buhi(callback) {
     }
 }
 
+// Calculate an in-between color. Returns "#aabbcc"-like string.
+
+function calculateColor(begin, end, pos) {
+    var color = 'rgba' + '(' +
+        parseInt((begin[0] + pos * (end[0] - begin[0])), 10) + ',' +
+        parseInt((begin[1] + pos * (end[1] - begin[1])), 10) + ',' +
+        parseInt((begin[2] + pos * (end[2] - begin[2])), 10);
+    color += ',' + (begin && end ? parseFloat(begin[3] + pos * (end[3] - begin[3])) : 1);
+    color += ')';
+    return color;
+}
+
+function parseColor(color) {
+    var match;
+
+    // Match #aabbcc
+    if (match = aabbcc.exec(color)) {
+        return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16), 1];
+    }
+    // Match #abc		
+    if (match = abc.exec(color)) {
+        return [parseInt(match[1], 16) * 17, parseInt(match[2], 16) * 17, parseInt(match[3], 16) * 17, 1];
+    }
+    // Match rgb(n, n, n)
+    if (match = rgb.exec(color)) {
+        return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3]), 1];
+    }
+    // Match rgb(n, n, n)
+    if (match = rgba.exec(color)) {
+        return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10), parseFloat(match[4])];
+
+        // No browser returns rgb(n%, n%, n%), so little reason to support this format.
+    }
+    return colors[color];
+}
+
 /* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
+
+    colors: colors,
 
     // Default duration
 
@@ -533,19 +633,9 @@ hAzzle.extend({
         }
     },
 
-    // Usefull for color animation
-
-    tickHook: {},
-
     fxBefore: {},
 
     fxAfter: {
-
-        opacity: {
-            set: function(fx) {
-                fx.elem.style.opacity = fx.pos;
-            }
-        },
 
         _default: {
 
@@ -595,5 +685,65 @@ hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
         if (fx.elem.nodeType && fx.elem.parentNode) {
             fx.elem[fx.prop] = fx.pos;
         }
+    }
+};
+
+
+
+hAzzle.each(properties, function(prop) {
+    hAzzle.fxAfter[prop] = {
+        set: function(fx) {
+            if (!fx.init) {
+
+                start = parseColor(hAzzle(fx.elem).css(prop));
+                end = parseColor(fx.to);
+                fx.init = true;
+            }
+            fx.elem.style[prop] = calculateColor(start, end, fx.deldu);
+        }
+    };
+});
+
+hAzzle.fxAfter.borderColor = {
+    set: function(fx) {
+        var style = fx.elem.style;
+        var p_begin = [];
+        var borders = properties.slice(2, 6); // All four border properties
+        hAzzle.each(borders, function(property) {
+            p_begin[property] = parseColor(hAzzle(fx.elem).css(property));
+        });
+        var p_end = parseColor(fx.to);
+        hAzzle.each(borders, function(property) {
+            style[property] = calculateColor(p_begin[property], p_end, fx.deldu);
+        });
+    }
+};
+
+hAzzle.each(properties, function(prop) {
+    hAzzle.fxAfter[prop] = {
+        set: function(fx) {
+            if (!fx.init) {
+
+                start = parseColor(hAzzle(fx.elem).css(prop));
+                end = parseColor(fx.to);
+                fx.init = true;
+            }
+            fx.elem.style[prop] = calculateColor(start, end, fx.deldu);
+        }
+    };
+});
+
+hAzzle.fxAfter.borderColor = {
+    set: function(fx) {
+        var style = fx.elem.style;
+        var p_begin = [];
+        var borders = properties.slice(2, 6); // All four border properties
+        hAzzle.each(borders, function(property) {
+            p_begin[property] = parseColor(hAzzle(fx.elem).css(property));
+        });
+        var p_end = parseColor(fx.to);
+        hAzzle.each(borders, function(property) {
+            style[property] = calculateColor(p_begin[property], p_end, fx.deldu);
+        });
     }
 };
