@@ -1,10 +1,10 @@
 var
-    cssProps = ['textShadow', 'opacity', 'clip', 'zIndex',
+    cssProperties = hAzzle.cssProperties = ['textShadow', 'opacity', 'clip', 'zIndex',
         'flex', 'order', 'borderCollapse', 'animation', 'animationFillMode', 'animationDirection',
         'animatioName', 'animationTimingFunction', 'animationPlayState', 'perspective', 'boxSizing',
         'textOverflow', 'columns', 'borderRadius', 'boxshadow', 'borderImage'
     ],
-    i = cssProps.length,
+    i = cssProperties.length,
     cssCore = hAzzle.cssCore = {
         has: {}, // Feature / bug detection
     };
@@ -91,8 +91,8 @@ hAzzle.assert(function(div) {
     // Detect support for other CSS properties
 
     while (i--) {
-        if (getVendorPropertyName(cssProps[i])) {
-            cssCore[cssProps[i]] = getVendorPropertyName(cssProps[i]);
+        if (getVendorPropertyName(cssProperties[i])) {
+            cssCore[cssProperties[i]] = getVendorPropertyName(cssProperties[i]);
         }
     }
 });
