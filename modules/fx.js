@@ -550,6 +550,12 @@ function calculateColor(begin, end, pos) {
     return color;
 }
 
+/**
+ * FIX ME!!  
+ * Need to re-write this function!!s
+ * and also make sure we test for plusequals += 100 -= 100
+ */
+
 function parseColor(color) {
     var match;
 
@@ -692,7 +698,7 @@ hAzzle.each(colorProps, function(prop) {
                 start = cData.prevState['colorStart' + prop],
                 end = cData.prevState['colorEnd' + prop];
 
-            if (!fx.init) {
+            if (!fx.colorInit ) {
 
                 if (!start) {
                     fx.from = start = parseColor(curCSS(fx.elem, prop));
@@ -706,7 +712,7 @@ hAzzle.each(colorProps, function(prop) {
                     fx.to = end;
                 }
 
-                fx.init = true;
+                fx.colorInit = true;
             }
 
             fx.elem.style[prop] = calculateColor(fx.from, fx.to, fx.deldu);
@@ -718,30 +724,34 @@ hAzzle.each(colorProps, function(prop) {
 
 hAzzle.fxAfter.borderColor = {
     set: function(fx) {
-        var prop, style = fx.elem.style,
-            end, start = [],
-            borders = ['Top', 'Right', 'Bottom', 'Left'],
-            i = borders.length,
-            cData = hAzzle.data(fx.elem, 'CSS'),
+        var i, style = fx.elem.style,
+            end,  
+            start = [],
+			borders = [],
+			  cData = hAzzle.data(fx.elem, 'CSS'),
             to = cData.prevState.colorStartborderColor,
             from = cData.prevState.colorEndborderColor;
-
-        while (i--) {
-
-            prop = 'border' + borders[i] + 'Color';
-
+			
+        hAzzle.each(['Top', 'Right', 'Bottom', 'Left'], function(prop) {
+			prop = 'border' + prop + 'Color';
+			borders.push(prop)
             if (!to) {
                 start[prop] = to = parseColor(curCSS(fx.elem, prop));
             } else {
                 start[prop] = to;
             }
+        });
 
-            if (!from) {
-                end = to = parseColor(fx.to);
-            } else {
-                end = to;
-            }
-            style[prop] = calculateColor(start[prop], end, fx.deldu);
+        if (!from) {
+            end = from = parseColor(fx.to);
+        } else {
+            end = from;
+        }
+
+        i = borders.length;
+
+        while (i--) {
+            style[borders[i]] = calculateColor(start[borders[i]], end, fx.deldu);
         }
     }
 };
