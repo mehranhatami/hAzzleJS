@@ -23,6 +23,9 @@ var frame = hAzzle.RAF(),
     abc = /#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])/,
     rgb = /rgb\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*\)/,
     rgba = /rgba\(\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9\.]*)\s*\)/,
+
+    // Color names
+
     colorNames = {
         'aqua': [0, 255, 255, 1],
         'azure': [240, 255, 255, 1],
@@ -135,6 +138,7 @@ FX.prototype = {
 
         // Set some variabels
 
+
         var self = this,
             done = true,
             isRunning = true;
@@ -143,15 +147,20 @@ FX.prototype = {
 
             setPosition: function(currentTime) {
 
-                var i, delta = currentTime - self.start;
+                var i, delta = currentTime - self.start,
+                    options = self.options,
+                    v, from = self.from,
+                    to = self.to,
+                    duration = options.duration;
 
                 self.currentTime = currentTime;
+                self.deldu = hAzzle.easing[self.easing](delta / duration);
 
-                if (delta > self.options.duration && isRunning) {
-                    
-					// Mark it as stopped
-					
-					isRunning = false;
+                if (delta > duration && isRunning) {
+
+                    // Mark it as stopped
+
+                    isRunning = false;
 
                     // Save the property state so we know when we have completed 
                     // the animation
@@ -173,7 +182,24 @@ FX.prototype = {
 
                 // Calculate position, and update the CSS properties
 
-                self.calculate(delta);
+
+
+                // NOTE!! There exist bugs in this calculations for Android 2.3, but
+                // hAzzle are not supporting Android 2.x so I'm not going to fix it
+
+                if (typeof from === 'object') {
+                    for (v in from) {
+                        self.pos = {};
+                        self.pos[v] = from[v] + (to[v] - from[v]) * self.deldu;
+                    }
+
+                } else {
+                    self.pos = from + ((to - from) * self.deldu);
+                }
+                // Set CSS styles
+
+                self.update();
+
 
                 return true;
             },
@@ -200,48 +226,6 @@ FX.prototype = {
 
             elem: this.elem
         });
-    },
-
-    /**
-     * Calculate position
-     *
-     * @param {Number} delta
-     */
-
-    calculate: function(delta) {
-
-        var v, from = this.from,
-            to = this.to,
-            easing = this.easing,
-            duration = this.options.duration;
-
-        // NOTE!! There exist bugs in this calculations for Android 2.3, but
-        // hAzzle are not supporting Android 2.x so I'm not going to fix it
-
-        if (typeof from === 'object') {
-
-            // Calculate easing for Object.
-            // Note!! This will only run if the 'start' value are a object
-
-            for (v in from) {
-                this.pos = {};
-                this.deldu = hAzzle.easing[easing](delta / duration);
-                this.pos[v] = from[v] + (to[v] - from[v]) * this.deldu;
-            }
-
-        } else {
-
-            // Do not use Math.max for calculations it's much slower!
-            // http://jsperf.com/math-max-vs-comparison/3
-
-            this.deldu = hAzzle.easing[easing](delta / duration);
-            this.pos = from + ((to - from) * this.deldu);
-        }
-        // Set CSS styles
-
-        this.update();
-
-        //    return pos;
     },
 
     // Restore properties, and fire callback
@@ -307,6 +291,7 @@ hAzzle.extend({
      *
      *   easing: 'linear',
      *    duration: 900
+
      *  })
      *
      * Short hand exist also:
@@ -728,7 +713,8 @@ hAzzle.each(colorProps, function(prop) {
 
 hAzzle.fxAfter.borderColor = {
     set: function(fx) {
-        var i, style = fx.elem.style, end,
+        var i, style = fx.elem.style,
+            end,
             start = [],
             borders = colorProps.slice(2, 6); // All four border properties
         hAzzle.each(borders, function(prop) {
@@ -738,6 +724,7 @@ hAzzle.fxAfter.borderColor = {
                 start[prop] = hAzzle.data(fx.elem, 'CSS').prevState['colorStart' + prop];
             }
         });
+
         if (!hAzzle.data(fx.elem, 'CSS').prevState.colorEndborderColor) {
             end = hAzzle.data(fx.elem, 'CSS').prevState.colorEndborderColor = parseColor(fx.to);
         } else {
