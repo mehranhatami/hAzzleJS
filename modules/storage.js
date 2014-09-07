@@ -420,11 +420,13 @@ hAzzle.styleCache = function(elem) {
             // A cache for CSS transform 
 
             transform: {},
+
+            // Save this check only once			
 			
-			opts: {}, 
-			// Note! 
+			isSVG: hAzzle.isSVG(elem),
+			
 			prevState: {},
-			
+						
 			isRunning: false
         });
     };

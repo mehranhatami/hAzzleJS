@@ -4,7 +4,7 @@
  * Version: 0.9.9e RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-04
+ * Date: 2014-09-07
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -584,6 +584,10 @@
 
             return type;
 
+        },
+		
+		isSVG: function (elem) {
+            return window.SVGElement && (elem instanceof SVGElement);
         },
 
         hasOwn: natives.hasOwnProperty

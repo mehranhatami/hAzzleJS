@@ -327,6 +327,35 @@ hAzzle.extend({
                 index, val, anim, hooks, name, style = elem.style,
                 parts;
 
+            // Display & Visibility
+            // Note: We strictly check for undefined instead of falsiness because display accepts an empty string value.
+
+            if (opts.display !== undefined && opts.display !== null) {
+                opts.display = opts.display.toString().toLowerCase();
+
+                // Users can pass in a special 'auto' value to instruct hAzzle to set the 
+                // element to its default display value.
+
+                if (opts.display === 'auto') {
+                    opts.display = hAzzle.getDisplayType(elem);
+                }
+            }
+
+            if (opts.visibility) {
+                opts.visibility = opts.visibility.toString().toLowerCase();
+            }
+
+            // Height && width
+            if (elem.nodeType === 1) {
+                if (opts.height || opts.width) {
+                    opt.overflow = [style.overflow, style.overflowX, style.overflowY];
+                }
+
+                if (opt.overflow) {
+                    style.overflow = 'hidden';
+                }
+            }
+
             // Function to be 'fired before the animation starts
             // Executed functions param will be same as the animated element
 
@@ -343,66 +372,52 @@ hAzzle.extend({
                 }
             }
 
-            if (elem.nodeType === 1) {
+            // Can't use hAzzle.each here too slow, but we could optimize this
+            // as you suggested before, Mehran, then we can use hAzzle.each
+            // for the iteration
 
-                // Display & Visibility
-                // Note: We strictly check for undefined instead of falsiness because display accepts an empty string value.
+            for (prop in opts) {
 
-                if (opts.display !== undefined && opts.display !== null) {
-                    opts.display = opts.display.toString().toLowerCase();
+                // Parse CSS properties before animation
 
-                    // Users can pass in a special 'auto' value to instruct hAzzle to set the 
-                    // element to its default display value.
+                val = opts[prop];
 
-                    if (opts.display === 'auto') {
-                        opts.display = hAzzle.getDisplayType(elem);
-                    }
+                // Force the property to its camelCase styling to normalize it for manipulation
+
+                name = hAzzle.camelize(prop);
+
+                // Swap properties if no match
+
+                if (prop !== name) {
+                    opts[name] = opts[prop];
+                    delete opts[prop];
                 }
 
-                if (opts.visibility) {
-                    opts.visibility = opts.visibility.toString().toLowerCase();
+                // Properties that are not supported by the browser will inherently produce no style changes 
+                // when set, so they are skipped in order to decrease animation tick overhead.
+                // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
+                //  there is no way to check for their explicit browser support, and so we skip skip this check for them.
+
+                if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
+                    hAzzle.error("Skipping [" + property + "] due to a lack of browser support.");
+                    continue;
                 }
 
-                // Height && width
+                // propertyMap hook for option parsing
 
-                if (opts.height || opts.width) {
-                    opt.overflow = [style.overflow, style.overflowX, style.overflowY];
-                }
-
-                if (opt.overflow) {
-                    style.overflow = 'hidden';
-                }
-            }
-
-            for (index in opts) {
-
-                val = opts[index];
-
-                // Auto-set vendor prefixes. 
-                // This is cached for better performance
-
-                name = hAzzle.camelize(hAzzle.prefixCheck(index)[0]);
-
-                if (index !== name) {
-                    opts[name] = opts[index];
-                    delete opts[index];
-                }
-
-                // propertyMap hook
-
-                if (hAzzle.propertyMap[index]) {
-                    val = hAzzle.propertyMap[index](elem, index);
+                if (hAzzle.propertyMap[prop]) {
+                    val = hAzzle.propertyMap[prop](elem, prop);
                 }
 
                 // Create a new FX instance
 
-                anim = new FX(elem, opt, index);
+                anim = new FX(elem, opt, prop);
 
-                hooks = hAzzle.fxBefore[index];
+                hooks = hAzzle.fxBefore[prop];
 
                 if (hooks) {
 
-                    hooks = hooks(elem, index, val, opts);
+                    hooks = hooks(elem, prop, val, opts);
 
                     // Animation are started from inside of this hook 
 
@@ -414,7 +429,7 @@ hAzzle.extend({
 
                     if ((parts = relarelativesRegEx.exec(val))) {
 
-                        calculateRelatives(elem, parts, index, anim);
+                        calculateRelatives(elem, parts, prop, anim);
 
                     } else {
 
@@ -738,8 +753,6 @@ hAzzle.extend({
         if (!elem) {
             return;
         }
-
-
 
         var q;
 
