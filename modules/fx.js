@@ -50,6 +50,8 @@ FX.prototype = {
             start = frame.perfNow();
 
         this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
+        this.from = from;
+        this.to = to;
 
         buhi({
 
@@ -70,19 +72,24 @@ FX.prototype = {
                     self.currentState[self.prop] = true;
 
                     for (i in self.currentState) {
+
                         if (self.currentState[i] !== true) {
                             done = false;
                         }
                     }
+
                     if (done) {
+
                         // Restore CSS properties
+
                         self.restore();
                     }
 
                     return false;
                 }
 
-                self.step(hAzzle.easing[self.easing](delta / self.options.duration), to, from);
+                self.step = step = hAzzle.easing[self.easing](delta / self.options.duration)
+                self.calculate(step, to, from);
 
                 return true;
             },
@@ -93,6 +100,8 @@ FX.prototype = {
 
                 if (jump) { // jump to end of animation?
 
+                    self.pos = self.to;
+                    self.step = 1;
                     self.update(to);
 
                 } else {
@@ -117,7 +126,7 @@ FX.prototype = {
 
     // Update current CSS properties
 
-    step: function(pos, to, from) {
+    calculate: function(pos, to, from) {
 
         // Calculate the position
         var v, index;
@@ -134,19 +143,17 @@ FX.prototype = {
             v = ((to - from) * pos + from);
         }
 
+        this.pos = v;
         this.update(v);
     },
     update: function(pos) {
 
-        var prop = this.prop,
-            unit = this.unit,
-            elem = this.elem,
-            hooks = hAzzle.fxAfter[prop];
+        var hooks = hAzzle.fxAfter[prop];
 
         if (hooks && hooks.set) {
-            hooks.set(elem, prop, pos, unit);
+            hooks.set(this);
         } else {
-            hAzzle.fxAfter._default.set(elem, prop, pos, unit);
+            hAzzle.fxAfter._default.set(this);
         }
     },
 
@@ -360,7 +367,6 @@ hAzzle.extend({
                     // Remove the old property
 
                     delete opts[prop];
-
                 }
 
                 // Properties that are not supported by the browser will inherently produce no style changes 
@@ -707,20 +713,20 @@ hAzzle.extend({
 
         opacity: {
 
-            set: function(elem, prop, pos) {
-                elem.style[prop] = pos;
+            set: function(fx) {
+                fx.elem.style[fx.prop] = fx.pos;
             }
         },
         _default: {
 
-            set: function(elem, prop, pos, unit) {
+            set: function(fx) {
 
-                if (elem.style &&
-                    (elem.style[hAzzle.cssProps[prop]] !== null ||
-                        hAzzle.cssHooks[prop])) {
-                    hAzzle.style(elem, prop, pos + unit);
+                if (fx.elem.style &&
+                    (fx.elem.style[hAzzle.cssProps[fx.prop]] !== null ||
+                        hAzzle.cssHooks[fx.prop])) {
+                    hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
                 } else {
-                    elem[prop] = pos;
+                    fx.elem[fx.prop] = fx.pos;
                 }
             }
         }
@@ -787,7 +793,6 @@ hAzzle.extend({
             });
         }
     }
-
 
 }, hAzzle);
 
