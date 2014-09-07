@@ -33,7 +33,7 @@ FX.prototype = {
         this.prop = prop;
         this.currentState = {};
         this.options = options;
-        this.easing = options.easing || hAzzle.defaultEasing;
+        this.easing = options.easing;
 
     },
 
@@ -68,9 +68,6 @@ FX.prototype = {
         this.to = to;
 
         // Set some variabels
-
-
-
 
         var self = this,
             done = true,
@@ -264,9 +261,23 @@ hAzzle.extend({
 
             opt = {};
 
-            // Callback
+            // Callbacks
 
             opt.complete = (!callback && typeof speed === 'function') ? speed : callback;
+
+            // 'begin, 'progress' and 'complete' has to be functions. Otherwise, default to null.
+
+            if (opt.begin && hAzzle.isFunction(opt.begin)) {
+                opt.begin = null;
+            }
+
+            if (opt.progress && hAzzle.isFunction(opt.progress)) {
+                opt.progress = null;
+            }
+
+            if (opt.complete && hAzzle.isFunction(opt.complete)) {
+                opt.complete = null;
+            }
 
             // Duration
 
@@ -284,6 +295,10 @@ hAzzle.extend({
         if (opt.duration < 100) {
             opt.duration = 100;
         }
+
+        // Easing
+
+        opt.easing = getEasing(opt.easing, opt.duration);
 
         // Queue
 
@@ -304,34 +319,59 @@ hAzzle.extend({
             }
         };
 
-        // Run the animation
+        // Begin the animation
 
-        function buildQueue(next) {
+        function buildQueue() {
 
             var elem = this,
                 index, val, anim, hooks, name, style = elem.style,
-                parts, display;
+                parts;
 
-            // Height/width overflow pass
+            // Function to be 'fired before the animation starts
+            // Executed functions param will be same as the animated element
 
-            if (elem.nodeType === 1 && ('height' in opts || 'width' in opts)) {
+            if (opt.begin) {
 
-                opt.overflow = [style.overflow, style.overflowX, style.overflowY];
-
-                display = hAzzle.css(elem, 'display');
-
-                // Test default display if display is currently 'none'
-                display === 'none' ?
-                    (hAzzle.getPrivate(elem, 'olddisplay') || defaultDisplay(elem.nodeName)) : display;
-
-                if (display === 'inline' && hAzzle.css(elem, 'float') === 'none') {
-
-                    style.display = 'inline-block';
+                // We throw callbacks in a setTimeout so that thrown errors don't halt the execution 
+                // of hAzzle itself.
+                try {
+                    opt.begin.call(elem, elem);
+                } catch (error) {
+                    setTimeout(function() {
+                        throw 'Something went wrong!';
+                    }, 1);
                 }
             }
 
-            if (opt.overflow) {
-                style.overflow = 'hidden';
+            if (elem.nodeType === 1) {
+
+                // Display & Visibility
+                // Note: We strictly check for undefined instead of falsiness because display accepts an empty string value.
+
+                if (opts.display !== undefined && opts.display !== null) {
+                    opts.display = opts.display.toString().toLowerCase();
+
+                    // Users can pass in a special 'auto' value to instruct hAzzle to set the 
+                    // element to its default display value.
+
+                    if (opts.display === 'auto') {
+                        opts.display = hAzzle.getDisplayType(elem);
+                    }
+                }
+
+                if (opts.visibility) {
+                    opts.visibility = opts.visibility.toString().toLowerCase();
+                }
+
+                // Height && width
+
+                if (opts.height || opts.width) {
+                    opt.overflow = [style.overflow, style.overflowX, style.overflowY];
+                }
+
+                if (opt.overflow) {
+                    style.overflow = 'hidden';
+                }
             }
 
             for (index in opts) {
@@ -348,9 +388,13 @@ hAzzle.extend({
                     delete opts[index];
                 }
 
+                // propertyMap hook
+
                 if (hAzzle.propertyMap[index]) {
                     val = hAzzle.propertyMap[index](elem, index);
                 }
+
+                // Create a new FX instance
 
                 anim = new FX(elem, opt, index);
 
@@ -443,13 +487,14 @@ hAzzle.extend({
     queue: function(type, data) {
         if (typeof type !== 'string') {
             data = type;
+
             type = 'fx';
         }
 
         if (data === undefined) {
             return hAzzle.queue(this[0], type);
         }
-        return this.each(function(i) {
+        return this.each(function() {
             var queue = hAzzle.queue(this, type, data);
 
             if (type === 'fx' && queue[0] !== 'inprogress') {
@@ -559,11 +604,37 @@ function buhi(callback) {
     tweens.push(callback);
     if (callback.animate()) {
         if (!rafId) {
+
             rafId = frame.request(raf);
         }
     } else {
         tweens.pop();
     }
+}
+
+// Determine the appropriate easing type given an easing input.
+
+function getEasing(value, duration) {
+    var easing = value;
+
+
+    if (typeof value === 'string') {
+        if (!hAzzle.easing[value]) {
+            easing = false;
+        }
+    } else {
+        easing = false;
+    }
+
+    if (easing === false) {
+        if (hAzzle.easing[hAzzle.defaultEasing]) {
+            easing = hAzzle.defaultEasing;
+        } else {
+            easing = 'flicker';
+        }
+    }
+    console.log(easing)
+    return easing;
 }
 
 /* ============================ INTERNAL =========================== */
@@ -585,10 +656,7 @@ hAzzle.extend({
                 hAzzle.data(elem, 'display', 'auto');
             }
 
-            if (value === 'auto') {
-                value = hAzzle.getDisplayType(elem);
-
-            }
+            // Store the display value
 
             hAzzle.data(elem, 'display', value);
 
@@ -606,9 +674,9 @@ hAzzle.extend({
                 return value;
             }
 
-            value = value.toString().toLowerCase();
+            // Store the visibility value
 
-            hAzzle.data(elem, 'display', value);
+            hAzzle.data(elem, 'visibility', value);
 
             return value;
         }
