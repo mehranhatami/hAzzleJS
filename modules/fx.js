@@ -46,12 +46,10 @@ FX.prototype = {
     run: function(from, to, unit) {
 
         var self = this,
-            isRunning = 0,
-            done = true;
+            done = true,
+            start = frame.perfNow();
 
-        this.diff = to - from;
         this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
-        this.start = frame.perfNow();
 
         buhi({
 
@@ -59,10 +57,10 @@ FX.prototype = {
 
             animate: function(currentTime) {
 
-                var delta = currentTime - self.start,
+                var delta = currentTime - start,
                     i;
 
-                if (delta > self.options.duration || isRunning) {
+                if (delta > self.options.duration) {
 
                     self.update(to);
 
@@ -93,18 +91,18 @@ FX.prototype = {
 
             stop: function(jump) {
 
-                isRunning = 1;
-
                 if (jump) { // jump to end of animation?
 
-                    self.update(self.to);
+                    self.update(to);
 
                 } else {
 
                     self.options.complete = null; // remove callback if not jumping to end
                 }
 
-                //    self.restore();
+                // Restore CSS properties to original state
+
+                self.restore();
             },
 
             // Element we are animating
@@ -122,46 +120,41 @@ FX.prototype = {
     step: function(pos, to, from) {
 
         // Calculate the position
-        var v, t;
+        var v, index;
+
         if (typeof from == 'object') {
 
             v = {};
 
-            for (t in from) {
-
-                // Do the calculation
-
-                v[t] = (t in to) ? (to[t] - from[t]) * pos + from[t] : from[t];
+            for (index in from) {
+                v[index] = (index in to) ? (to[index] - from[index]) * pos + from[index] : from[index];
             }
 
         } else {
             v = ((to - from) * pos + from);
         }
 
-
         this.update(v);
-
     },
     update: function(pos) {
 
-        var hooks = hAzzle.fxAfter[this.prop];
+        var prop = this.prop,
+            unit = this.unit,
+            elem = this.elem,
+            hooks = hAzzle.fxAfter[prop];
 
         if (hooks && hooks.set) {
-            hooks.set(this.elem, this.prop, pos, this.unit);
+            hooks.set(elem, prop, pos, unit);
         } else {
-            hAzzle.fxAfter._default.set(this.elem, this.prop, pos, this.unit);
+            hAzzle.fxAfter._default.set(elem, prop, pos, unit);
         }
-
-        this.elem.style[this.prop] = pos + this.unit;
-
     },
 
     // Restore properties, and fire callback
 
     restore: function() {
 
-        // Set the overflow back to the state the properties 
-        // had before animation started
+        // Set the overflow back to original state
 
         if (this.options.overflow) {
 
