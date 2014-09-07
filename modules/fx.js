@@ -78,7 +78,9 @@ FX.prototype = {
 
         buhi({
 
-            setPosition: function(currentTime) {
+            // Do animation on active tween
+
+            animate: function(currentTime) {
 
                 var i, delta = currentTime - self.start,
                     options = self.options,
@@ -133,6 +135,8 @@ FX.prototype = {
                 return true;
             },
 
+            // Stop running animation inside the active tween
+
             stop: function(jump) {
 
                 isRunning = false;
@@ -153,9 +157,11 @@ FX.prototype = {
                 self.finished();
             },
 
-            saveState: function() {},
+            // Element we are animating
 
             elem: self.elem,
+
+            // Queue options
 
             queue: self.options.queue
         });
@@ -279,20 +285,28 @@ hAzzle.extend({
             opt.duration = 100;
         }
 
+        // Queue
+
+        if (opt.queue == null || opt.queue === true) {
+            opt.queue = 'fx';
+        }
 
         opt.old = opt.complete;
+
         opt.complete = function() {
-            if (opt.queue !== false) {
-                hAzzle(this).dequeue();
-            }
+
             if (hAzzle.isFunction(opt.old)) {
                 opt.old.call(this);
             }
+
+            if (opt.queue !== false) {
+                hAzzle.dequeue(this, opt.queue);
+            }
         };
 
-        function buildQueue(next) {
+        // Run the animation
 
-            //        return this.each(function(elem) {
+        function buildQueue(next) {
 
             var elem = this,
                 index, val, anim, hooks, name, style = elem.style,
@@ -368,11 +382,10 @@ hAzzle.extend({
         }
 
         //			return this.each( buildQueue );
-        opt.queue = 'fx';
+
         return opt.queue === false ?
             this.each(buildQueue) :
             this.queue(opt.queue, buildQueue);
-
     },
 
     stop: function(type, clear, jump) {
@@ -475,7 +488,7 @@ function render(tick) {
     for (; i < tweens.length; i++) {
         tween = tweens[i];
         // Check if the tween has not already been removed
-        if (!tween.setPosition(tick) && tweens[i] === tween) {
+        if (!tween.animate(tick) && tweens[i] === tween) {
             tweens.splice(i--, 1);
         }
     }
@@ -544,7 +557,7 @@ function calculateRelatives(elem, parts, index, anim) {
 
 function buhi(callback) {
     tweens.push(callback);
-    if (callback.setPosition()) {
+    if (callback.animate()) {
         if (!rafId) {
             rafId = frame.request(raf);
         }
