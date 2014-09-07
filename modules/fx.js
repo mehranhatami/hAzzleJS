@@ -148,7 +148,7 @@ FX.prototype = {
     },
     update: function(pos) {
 
-        var hooks = hAzzle.fxAfter[prop];
+        var hooks = hAzzle.fxAfter[this.prop];
 
         if (hooks && hooks.set) {
             hooks.set(this);
