@@ -1,5 +1,4 @@
 var frame = hAzzle.RAF(),
-    cRE = /rect\(([0-9\.]{1,})(px|em)[,]?\s+([0-9\.]{1,})(px|em)[,]?\s+([0-9\.]{1,})(px|em)[,]?\s+([0-9\.]{1,})(px|em)\)/,
     relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     tweens = [],
@@ -154,7 +153,11 @@ FX.prototype = {
                 self.finished();
             },
 
-            elem: this.elem
+            saveState: function() {},
+
+            elem: self.elem,
+
+            queue: self.options.queue
         });
     },
 
@@ -276,9 +279,23 @@ hAzzle.extend({
             opt.duration = 100;
         }
 
-        return this.each(function(elem) {
 
-            var index, val, anim, hooks, name, style = elem.style,
+        opt.old = opt.complete;
+        opt.complete = function() {
+            if (opt.queue !== false) {
+                hAzzle(this).dequeue();
+            }
+            if (hAzzle.isFunction(opt.old)) {
+                opt.old.call(this);
+            }
+        };
+
+        function buildQueue(next) {
+
+            //        return this.each(function(elem) {
+
+            var elem = this,
+                index, val, anim, hooks, name, style = elem.style,
                 parts, display;
 
             // Height/width overflow pass
@@ -347,28 +364,95 @@ hAzzle.extend({
                     }
                 }
             }
-        });
+
+        }
+
+        //			return this.each( buildQueue );
+        opt.queue = 'fx';
+        return opt.queue === false ?
+            this.each(buildQueue) :
+            this.queue(opt.queue, buildQueue);
+
     },
 
-    stop: function(jump) {
+    stop: function(type, clear, jump) {
+        var stopQueue = function(elem, data, i) {
+            var runner = data[i];
+            hAzzle.removePrivate(elem, i, true);
+            runner.stop(jump);
+        };
+
+        if (typeof type !== 'string') {
+
+            jump = clear;
+            clear = type;
+            type = undefined;
+        }
+
+        if (clear && type !== false) {
+            this.queue(type || 'fx', []);
+        }
 
         return this.each(function() {
 
-            var tween,
-                target = this,
-                i = tweens.length;
+            var dequeue = true,
+                index, timers = tweens,
+                data = hAzzle.private(this);
 
-            while (i--) {
-                tween = tweens[i];
-                if (tween.elem === target) {
-                    if (jump) {
-                        tween.stop(true);
+
+            if (type) {
+                if (data[index] && data[index].stop)
+                    stopQueue(this, data, index);
+
+            } else {
+                for (index in data) {
+                    if (data[index] && data[index].stop) {
+                        stopQueue(this, data, index);
                     }
-                    tweens.splice(i, 1);
                 }
             }
+
+            for (index = timers.length; index--;) {
+                if (timers[index].elem === this && (!type || tweens[index].queue === type)) {
+                    tweens[index].stop(jump);
+                    dequeue = false;
+                    timers.splice(index, 1);
+                }
+            }
+
+            if (dequeue || jump) {
+                hAzzle.dequeue(this, type);
+            }
+
         });
-    }
+    },
+
+    queue: function(type, data) {
+        if (typeof type !== 'string') {
+            data = type;
+            type = 'fx';
+        }
+
+        if (data === undefined) {
+            return hAzzle.queue(this[0], type);
+        }
+        return this.each(function(i) {
+            var queue = hAzzle.queue(this, type, data);
+
+            if (type === 'fx' && queue[0] !== 'inprogress') {
+                hAzzle.dequeue(this, type);
+            }
+        });
+    },
+    dequeue: function(type) {
+        return this.each(function() {
+            hAzzle.dequeue(this, type);
+        });
+    },
+
+    clearQueue: function(type) {
+        return this.queue(type || 'fx', []);
+    },
 });
 
 /* ============================ UTILITY METHODS =========================== */
@@ -469,27 +553,6 @@ function buhi(callback) {
     }
 }
 
-function getClip(elem) {
-    var cssClip = hAzzle.curCSS(elem, 'clip') || '';
-
-    if (!cssClip) {
-        var pieces = {
-            top: hAzzle.curCSS(elem, 'clipTop'),
-            right: hAzzle.curCSS(elem, 'clipRight'),
-            bottom: hAzzle.curCSS(elem, 'clipBottom'),
-            left: hAzzle.curCSS(elem, 'clipLeft')
-        };
-
-        if (pieces.top && pieces.right && pieces.bottom && pieces.left) {
-            cssClip = 'rect(' + pieces.top + ' ' + pieces.right + ' ' + pieces.bottom + ' ' + pieces.left + ')';
-        }
-    }
-
-    // Strip commas and return.
-    return cssClip.replace(/,/g, ' ');
-}
-
-
 /* ============================ INTERNAL =========================== */
 
 hAzzle.extend({
@@ -548,41 +611,6 @@ hAzzle.extend({
                 fx.elem.style.opacity = fx.pos;
             }
         },
-        clip: {
-
-            set: function(fx) {
-
-                if (fx.pos === 0) {
-
-                    fx.from = cRE.exec(getClip(fx.elem));
-                    if (typeof fx.to === 'string') {
-                        fx.to = cRE.exec(fx.to.replace(/,/g, ' '));
-                    }
-                }
-                if (fx.start && fx.end) {
-                    var sarr = [],
-                        earr = [],
-                        spos = fx.from.length,
-                        epos = fx.to.length,
-                        ss = 1,
-                        es = 1,
-                        emOffset = fx.from[ss + 1] == 'em' ? (parseInt(hAzzle.curCSS(fx.elem, 'fontSize')) * 1.333 * parseInt(fx.from[ss])) : 1;
-
-                    for (; ss < spos; ss += 2) {
-                        sarr.push(parseInt(emOffset * fx.from[ss]));
-                    }
-                    for (; es < epos; es += 2) {
-                        earr.push(parseInt(emOffset * fx.to[es]));
-                    }
-                    fx.elem.style.clip = 'rect(' +
-                        parseInt((fx.pos * (earr[0] - sarr[0])) + sarr[0]) + 'px ' +
-                        parseInt((fx.pos * (earr[1] - sarr[1])) + sarr[1]) + 'px ' +
-                        parseInt((fx.pos * (earr[2] - sarr[2])) + sarr[2]) + 'px ' +
-                        parseInt((fx.pos * (earr[3] - sarr[3])) + sarr[3]) + 'px)';
-                }
-            }
-        },
-
         _default: {
 
             /**
@@ -623,6 +651,66 @@ hAzzle.extend({
         medium: 400,
         fast: 200
     },
+
+    queue: function(elem, type, data) {
+
+        if (!elem) {
+            return;
+        }
+
+
+
+        var q;
+
+        if (elem) {
+
+            type = (type || 'fx') + 'queue';
+            q = hAzzle.private(elem, type);
+
+
+            // Speed up dequeue by getting out quickly if this is just a lookup
+            if (!data) {
+                return q || [];
+            }
+
+            if (!q || hAzzle.isArray(data)) {
+                q = hAzzle.private(elem, type, hAzzle.mergeArray(data));
+
+            } else {
+                q.push(data);
+            }
+
+            return q;
+
+        }
+    },
+
+    dequeue: function(elem, type) {
+
+        type = type || 'fx';
+
+        var queue = hAzzle.queue(elem, type),
+            fn = queue.shift();
+
+        // If the fx queue is dequeued, always remove the progress sentinel
+        if (fn === 'inprogress') {
+            fn = queue.shift();
+        }
+
+        if (fn) {
+            // Add a progress sentinel to prevent the fx queue from being
+            // automatically dequeued
+            if (type === 'fx') {
+                queue.unshift('inprogress');
+            }
+
+            fn.call(elem, function() {
+
+                hAzzle.dequeue(elem, type);
+            });
+        }
+    }
+
 
 }, hAzzle);
 
