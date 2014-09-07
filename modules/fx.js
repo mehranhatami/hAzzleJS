@@ -46,10 +46,23 @@ FX.prototype = {
      */
 
     cur: function() {
-        var hooks = hAzzle.fxAfter[this.prop];
-        return hooks && hooks.get ?
+		
+		var prop = this.prop,
+            hooks = hAzzle.fxAfter[this.prop];
+			
+			
+		return hooks && hooks.get ?
             hooks.get(this) :
             hAzzle.fxAfter._default.get(this);
+			
+	
+		
+		
+
+			
+			
+			
+			
     },
 
     /**
@@ -377,7 +390,7 @@ hAzzle.extend({
             // for the iteration
 
             for (prop in opts) {
-
+				
                 // Parse CSS properties before animation
 
                 val = opts[prop];
@@ -390,16 +403,19 @@ hAzzle.extend({
 
                 if (prop !== name) {
                     opts[name] = opts[prop];
-                    delete opts[prop];
+               
+			    // Remove the old property
+               
+			        delete opts[prop];
                 }
 
                 // Properties that are not supported by the browser will inherently produce no style changes 
                 // when set, so they are skipped in order to decrease animation tick overhead.
                 // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
-                //  there is no way to check for their explicit browser support, and so we skip skip this check for them.
+                //  there is no way to check for their explicit browser support, and so we skip this check for them.
 
                 if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
-                    hAzzle.error("Skipping [" + property + "] due to a lack of browser support.");
+                    hAzzle.error("Skipping [" + prop + "] due to a lack of browser support.");
                     continue;
                 }
 
@@ -410,8 +426,26 @@ hAzzle.extend({
                 }
 
                 // Create a new FX instance
+              
+			    anim = new FX(elem, opt, prop);
+			  
+			    // Get start value
+			  
+			     startValue = anim.cur();
 
-                anim = new FX(elem, opt, prop);
+            // If the display option is being set to a non-"none" (e.g. "block") and opacityis being
+            // animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus 
+            // we forcefeed opacity a startValue of 0 
+			
+		  if( (prop === 'display' && startValue !== 'none') || 
+		      (prop === 'visible' && startValue !== 'hidden' ) &&  
+			   prop === 'opacity' && !startValue && index !== 0) {
+                      startValue = 0;		
+			}
+
+          // 'fxBefore' are hooks used to parse CSS properties before animation starts.
+          // Usefull for CSS transform where the startValue and endValue can be  
+          // converted to a object before the animation tick starts
 
                 hooks = hAzzle.fxBefore[prop];
 
@@ -421,9 +455,11 @@ hAzzle.extend({
 
                     // Animation are started from inside of this hook 
 
-                    anim.run(anim.cur(), hooks, ' ');
-
-                } else {
+                    anim.run(startValue, hooks, ' ');
+              
+			    // If no hooks, continue...
+               
+			    } else {
 
                     // Unit Conversion	
 
@@ -433,14 +469,11 @@ hAzzle.extend({
 
                     } else {
 
-                        anim.run(anim.cur(), val, '');
+                        anim.run(startValue, val, '');
                     }
                 }
             }
-
         }
-
-        //			return this.each( buildQueue );
 
         return opt.queue === false ?
             this.each(buildQueue) :
@@ -563,18 +596,18 @@ function render(tick) {
     }
 }
 
-function calculateRelatives(elem, parts, index, anim) {
+function calculateRelatives(elem, parts, prop, anim) {
 
     var target = anim.cur(),
         end, start, unit, maxIterations, scale;
 
     if (parts) {
         end = parseFloat(parts[2]);
-        unit = parts[3] || (hAzzle.unitless[index] ? '' : 'px');
+        unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
 
         // Starting value computation is required for potential unit mismatches
-        start = (hAzzle.unitless[index] || unit !== 'px' && +target) &&
-            relarelativesRegEx.exec(hAzzle.css(elem, index)),
+        start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
+            relarelativesRegEx.exec(hAzzle.css(elem, prop)),
             scale = 1, maxIterations = 20;
 
         // We need to compute starting value
@@ -594,7 +627,7 @@ function calculateRelatives(elem, parts, index, anim) {
 
                 // Adjust and apply
                 start = start / scale;
-                hAzzle.style(elem, index, start + unit);
+                hAzzle.style(elem, prop, start + unit);
 
             } while (
                 scale !== (scale = anim.cur() / target) && scale !== 1 && --maxIterations
@@ -604,11 +637,19 @@ function calculateRelatives(elem, parts, index, anim) {
         if (parts) {
 
             start = +start || +target || 0;
+			
+
 
             // If a +=/-= token was provided, we're doing a relative animation
             end = parts[1] ?
                 start + (parts[1] + 1) * parts[2] :
                 +parts[2];
+
+                     
+
+			
+		
+
         }
 
         anim.run(start, end, unit);
