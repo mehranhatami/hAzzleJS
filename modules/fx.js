@@ -1,5 +1,5 @@
 var frame = hAzzle.RAF(),
-    relarelativesRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
+    relativeRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     tweens = [],
     rafId;
@@ -45,17 +45,13 @@ FX.prototype = {
 
     run: function(from, to, unit) {
 
-        this.from = from;
+        var self = this,
+            isRunning = 0,
+            done = true;
+
+        this.diff = to - from;
         this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
         this.start = frame.perfNow();
-        this.pos = 0;
-        this.to = to;
-
-        // Set some variabels
-
-        var self = this,
-            done = true,
-            isRunning = true;
 
         buhi({
 
@@ -63,56 +59,32 @@ FX.prototype = {
 
             animate: function(currentTime) {
 
-                var i, delta = currentTime - self.start,
-                    options = self.options,
-                    v, from = self.from,
-                    to = self.to,
-                    duration = options.duration;
+                var delta = currentTime - self.start,
+                    i;
 
-                self.currentTime = currentTime;
-                self.deldu = hAzzle.easing[self.easing](delta / duration);
+                if (delta > self.options.duration || isRunning) {
 
-                if (delta > duration && isRunning) {
-
-                    // Mark it as stopped
-
-                    isRunning = false;
+                    self.update(to);
 
                     // Save the property state so we know when we have completed 
                     // the animation
 
-                    self.currentState[self.currentState.prop] = true;
+                    self.currentState[self.prop] = true;
 
                     for (i in self.currentState) {
                         if (self.currentState[i] !== true) {
                             done = false;
                         }
                     }
-
                     if (done) {
-                        self.finished();
+                        // Restore CSS properties
+                        self.restore();
                     }
 
                     return false;
                 }
 
-                // NOTE!! There exist bugs in this calculations for Android 2.3, but
-                // hAzzle are not supporting Android 2.x so I'm not going to fix it
-
-                if (typeof from === 'object') {
-                    for (v in from) {
-                        self.pos = {};
-                        self.pos[v] = from[v] + (to[v] - from[v]) * self.deldu;
-                        //console.log(self.pos)
-                    }
-
-                } else {
-                    self.pos = from + ((to - from) * self.deldu);
-                }
-                // Set CSS styles
-
-                self.update();
-
+                self.step(hAzzle.easing[self.easing](delta / self.options.duration), to, from);
 
                 return true;
             },
@@ -121,22 +93,18 @@ FX.prototype = {
 
             stop: function(jump) {
 
-                isRunning = false;
+                isRunning = 1;
 
-                if (jump) {
+                if (jump) { // jump to end of animation?
 
-                    // Only do style update if jump 
-
-                    self.pos = self.to;
-                    self.deldu = 1;
-                    self.update();
+                    self.update(self.to);
 
                 } else {
 
                     self.options.complete = null; // remove callback if not jumping to end
                 }
 
-                self.finished();
+                //    self.restore();
             },
 
             // Element we are animating
@@ -149,9 +117,48 @@ FX.prototype = {
         });
     },
 
+    // Update current CSS properties
+
+    step: function(pos, to, from) {
+
+        // Calculate the position
+        var v, t;
+        if (typeof from == 'object') {
+
+            v = {};
+
+            for (t in from) {
+
+                // Do the calculation
+
+                v[t] = (t in to) ? (to[t] - from[t]) * pos + from[t] : from[t];
+            }
+
+        } else {
+            v = ((to - from) * pos + from);
+        }
+
+
+        this.update(v);
+
+    },
+    update: function(pos) {
+
+        var hooks = hAzzle.fxAfter[this.prop];
+
+        if (hooks && hooks.set) {
+            hooks.set(this.elem, this.prop, pos, this.unit);
+        } else {
+            hAzzle.fxAfter._default.set(this.elem, this.prop, pos, this.unit);
+        }
+
+        this.elem.style[this.prop] = pos + this.unit;
+
+    },
+
     // Restore properties, and fire callback
 
-    finished: function() {
+    restore: function() {
 
         // Set the overflow back to the state the properties 
         // had before animation started
@@ -172,27 +179,7 @@ FX.prototype = {
 
         if (complete) {
             this.options.complete = false;
-            complete.call(this.elem);
-        }
-    },
-
-    // Update current CSS properties
-
-    update: function() {
-
-        /**
-         * Future plans after animation queue are finished will be
-         * to cache the end state of each property on the object
-         * so if we have a sequence, it will remember the previous
-         * state, so there will be no need for DOM querying
-         */
-
-        var hooks = hAzzle.fxAfter[this.prop];
-
-        if (hooks && hooks.set) {
-            hooks.set(this);
-        } else {
-            hAzzle.fxAfter._default.set(this);
+            complete.call(this.elem, this.elem);
         }
     }
 };
@@ -421,6 +408,7 @@ hAzzle.extend({
                 }
 
                 // Get endValue
+                // Note! We only parse the endValue if the startValue are a object
 
                 if (typeof startValue === 'object') {
 
@@ -428,15 +416,22 @@ hAzzle.extend({
                         hAzzle.fxBefore[name].end(elem, name, opts[prop], startValue) :
                         hAzzle.fxBefore._default(elem, name, opts[prop], startValue);
 
-                }
+                    // Start the animation
+                    // TODO!! Merge object with string startValue else the queue will see 
+                    // them all as different Tweens and the queue get much bigger!!
 
-                if ((parts = relarelativesRegEx.exec(endValue))) {
-
-                    calculateRelatives(elem, parts, prop, anim);
+                    anim.run(startValue, endValue, '');
 
                 } else {
 
-                    anim.run(startValue, endValue, '');
+                    if ((parts = relativeRegEx.exec(endValue))) {
+
+                        calculateRelatives(elem, parts, prop, anim);
+
+                    } else {
+
+                        anim.run(startValue, endValue, '');
+                    }
                 }
             }
         }
@@ -573,7 +568,7 @@ function calculateRelatives(elem, parts, prop, anim) {
 
         // Starting value computation is required for potential unit mismatches
         start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-            relarelativesRegEx.exec(hAzzle.css(elem, prop)),
+            relativeRegEx.exec(hAzzle.css(elem, prop)),
             scale = 1, maxIterations = 20;
 
         // We need to compute starting value
@@ -719,41 +714,20 @@ hAzzle.extend({
 
         opacity: {
 
-            set: function(fx) {
-                fx.elem.style.opacity = fx.pos;
+            set: function(elem, prop, pos) {
+                elem.style[prop] = pos;
             }
         },
         _default: {
 
-            /**
-             * _default getter / setter default CSS properties. getComputedStyle are
-             * cached on the object itself for better performance, so we only
-             * queuing the DOM once
-             */
+            set: function(elem, prop, pos, unit) {
 
-            get: function(fx) {
-
-                var result,
-                    prop = fx.elem[fx.prop];
-
-                if (prop !== null && (!getStyles(fx.elem) || prop === null)) {
-                    return prop;
-                }
-
-                result = hAzzle.css(fx.elem, fx.prop, '');
-
-                // Empty strings, null, undefined and 'auto' are converted to 0.
-                return !result || result === 'auto' ? 0 : result;
-            },
-
-            set: function(fx) {
-
-                if (fx.elem.style &&
-                    (fx.elem.style[hAzzle.cssProps[fx.prop]] !== null ||
-                        hAzzle.cssHooks[fx.prop])) {
-                    hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
+                if (elem.style &&
+                    (elem.style[hAzzle.cssProps[prop]] !== null ||
+                        hAzzle.cssHooks[prop])) {
+                    hAzzle.style(elem, prop, pos + unit);
                 } else {
-                    fx.elem[fx.prop] = fx.pos;
+                    elem[prop] = pos;
                 }
             }
         }
