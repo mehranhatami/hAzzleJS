@@ -34,23 +34,6 @@ FX.prototype = {
         this.currentState = {};
         this.options = options;
         this.easing = options.easing;
-
-    },
-
-    /**
-     * Get current CSS styles for the animated object.
-     *
-     * The current CSS style are cached on the object, so we
-     * only perform DOM querying once when we do a sequence of
-     * animations.
-     */
-
-    cur: function() {
-
-        var hooks = hAzzle.fxAfter[this.prop];
-        return hooks && hooks.get ?
-            hooks.get(this) :
-            hAzzle.fxAfter._default.get(this);
     },
 
     /**
@@ -120,6 +103,7 @@ FX.prototype = {
                     for (v in from) {
                         self.pos = {};
                         self.pos[v] = from[v] + (to[v] - from[v]) * self.deldu;
+                        //console.log(self.pos)
                     }
 
                 } else {
@@ -325,7 +309,8 @@ hAzzle.extend({
         function runAnimation() {
 
             var elem = this,
-                prop, val, anim, hooks, name, style = elem.style, startValue,
+                prop, endValue, anim, name, style = elem.style,
+                startValue,
                 parts;
 
             // Display & Visibility
@@ -381,7 +366,7 @@ hAzzle.extend({
 
                 // Parse CSS properties before animation
 
-                val = opts[prop];
+                endValue = opts[prop];
 
                 // Force the property to its camelCase styling to normalize it for manipulation
 
@@ -411,20 +396,23 @@ hAzzle.extend({
                 // propertyMap hook for option parsing
 
                 if (hAzzle.propertyMap[prop]) {
-                    val = hAzzle.propertyMap[prop](elem, prop);
+                    endValue = hAzzle.propertyMap[prop](elem, prop);
                 }
 
                 // Create a new FX instance
 
                 anim = new FX(elem, opt, prop);
 
-                // Get start value
+                // Get startValue
 
-                startValue = anim.cur();
+                startValue = hAzzle.fxBefore[name] ?
+                    hAzzle.fxBefore[name].start(elem, name, opts[prop]) :
+                    hAzzle.fxBefore._default(elem, name, opts[prop]);
 
                 // If the display option is being set to a non-'none' (e.g. 'block') and opacityis being
                 // animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus 
                 // we forcefeed opacity a startValue of 0 
+
 
                 if ((prop === 'display' && startValue !== 'none') ||
                     (prop === 'visible' && startValue !== 'hidden') &&
@@ -432,34 +420,23 @@ hAzzle.extend({
                     startValue = 0;
                 }
 
-                // 'fxBefore' are hooks used to parse CSS properties before animation starts.
-                // Usefull for CSS transform where the startValue and endValue can be  
-                // converted to a object before the animation tick starts
+                // Get endValue
 
-                hooks = hAzzle.fxBefore[prop];
+                if (typeof startValue === 'object') {
 
-                if (hooks) {
+                    endValue = hAzzle.fxBefore[name] ?
+                        hAzzle.fxBefore[name].end(elem, name, opts[prop], startValue) :
+                        hAzzle.fxBefore._default(elem, name, opts[prop], startValue);
 
-                    hooks = hooks(elem, prop, val, opts);
+                }
 
-                    // Animation are started from inside of this hook 
+                if ((parts = relarelativesRegEx.exec(endValue))) {
 
-                    anim.run(startValue, hooks, ' ');
-
-                    // If no hooks, continue...
+                    calculateRelatives(elem, parts, prop, anim);
 
                 } else {
 
-                    // Unit Conversion	
-
-                    if ((parts = relarelativesRegEx.exec(val))) {
-
-                        calculateRelatives(elem, parts, prop, anim);
-
-                    } else {
-
-                        anim.run(startValue, val, '');
-                    }
+                    anim.run(startValue, endValue, '');
                 }
             }
         }
@@ -587,7 +564,7 @@ function render(tick) {
 
 function calculateRelatives(elem, parts, prop, anim) {
 
-    var target = anim.cur(),
+    var target = parseFloat(hAzzle.css(elem, prop)),
         end, start, unit, maxIterations, scale;
 
     if (parts) {
@@ -619,7 +596,8 @@ function calculateRelatives(elem, parts, prop, anim) {
                 hAzzle.style(elem, prop, start + unit);
 
             } while (
-                scale !== (scale = anim.cur() / target) && scale !== 1 && --maxIterations
+
+                scale !== (scale = parseFloat(hAzzle.css(elem, prop)) / target) && scale !== 1 && --maxIterations
             );
         }
 
@@ -627,16 +605,10 @@ function calculateRelatives(elem, parts, prop, anim) {
 
             start = +start || +target || 0;
 
-
-
             // If a +=/-= token was provided, we're doing a relative animation
             end = parts[1] ?
                 start + (parts[1] + 1) * parts[2] :
                 +parts[2];
-
-
-
-
         }
 
         anim.run(start, end, unit);
@@ -676,7 +648,7 @@ function getEasing(value, duration) {
             easing = 'flicker';
         }
     }
-    console.log(easing)
+    //console.log(easing)
     return easing;
 }
 
@@ -725,7 +697,23 @@ hAzzle.extend({
         }
     },
 
-    fxBefore: {},
+    fxBefore: {
+
+        _default: function(elem, prop) {
+
+            var result;
+
+            if (prop !== null && (!getStyles(elem) || prop === null)) {
+                return prop;
+            }
+
+            result = hAzzle.css(elem, prop, '');
+
+            // Empty strings, null, undefined and 'auto' are converted to 0.
+            return !result || result === 'auto' ? 0 : result;
+
+        }
+    },
 
     fxAfter: {
 
