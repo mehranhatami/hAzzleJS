@@ -8,8 +8,8 @@ frame.request(function(timestamp) {
     fixTick = timestamp > 1e12 != frame.perfNow() > 1e12;
 });
 
-function FX(elem, options, prop) {
-    return new FX.prototype.initialize(elem, options, prop);
+function FX(elem, options, prop, from, to, unit) {
+    return new FX.prototype.initialize(elem, options, prop, from, to, unit);
 }
 
 hAzzle.FX = FX;
@@ -27,63 +27,20 @@ FX.prototype = {
      * @param {String} prop
      */
 
-    initialize: function(elem, options, prop) {
+    initialize: function(elem, options, prop, from, to, unit) {
 
         this.elem = elem;
         this.prop = prop;
         this.currentState = {};
         this.options = options;
         this.easing = options.easing;
-    },
-
-    update: function() {
-
-        var hooks = hAzzle.fxAfter[this.prop];
-
-        if (hooks && hooks.set) {
-            hooks.set(this);
-        } else {
-            hAzzle.fxAfter._default.set(this);
-        }
-    },
-
-    // Restore properties, and fire callback
-
-    restore: function() {
-
-        // Set CSS values back to original state
-
-        var complete = this.options.complete,
-            orgValueProp,
-            originalValues = this.options.originalValues;
-        for (orgValueProp in originalValues) {
-            this.elem.style[orgValueProp] = originalValues[orgValueProp];
-        }
-
-        // Execute the complete function
-
-        if (complete) {
-            this.options.complete = false;
-            complete.call(this.elem);
-        }
-    },
-
-    /**
-     * Run animation
-     * @param {Number|Object} from
-     * @param {Number|Object} to
-     * @param {Number} unit
-     */
-
-    run: function(from, to, unit) {
+        this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
+        this.from = from;
+        this.to = to;
 
         var self = this,
             done = true,
             start = frame.perfNow();
-
-        this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
-        this.from = from;
-        this.to = to;
 
         buhi({
 
@@ -154,6 +111,47 @@ FX.prototype = {
         });
     },
 
+    update: function() {
+
+        var hooks = hAzzle.fxAfter[this.prop];
+
+        if (hooks && hooks.set) {
+            hooks.set(this);
+        } else {
+            hAzzle.fxAfter._default.set(this);
+        }
+    },
+
+    // Restore properties, and fire callback
+
+    restore: function() {
+
+        // Set CSS values back to original state
+
+        var complete = this.options.complete,
+            orgValueProp,
+            originalValues = this.options.originalValues;
+        for (orgValueProp in originalValues) {
+            this.elem.style[orgValueProp] = originalValues[orgValueProp];
+        }
+
+        // Execute the complete function
+
+        if (complete) {
+            this.options.complete = false;
+            complete.call(this.elem);
+        }
+    },
+
+    /**
+     * Run animation
+     * @param {Number|Object} from
+     * @param {Number|Object} to
+     * @param {Number} unit
+     */
+
+  
+
     // Update current CSS properties
 
     tick: function(pos, to, from) {
@@ -176,7 +174,7 @@ FX.prototype = {
 
         } else {
 
-            this.pos = Math.floor(((to - from) * pos + from) * 1000) / 1000;
+            this.pos = ((to - from) * pos + from);
         }
 
         // Progress / step function
@@ -283,7 +281,6 @@ hAzzle.extend({
             }
         }
 
-
         // Queue
 
         if (opt.queue == null || opt.queue === true) {
@@ -309,7 +306,7 @@ hAzzle.extend({
 
             var elem = this,
                 unit, orgValueProp,
-                prop, endValue, anim, name, style = elem.style,
+                prop, endValue, name, style = elem.style,
                 startValue,
                 parts;
 
@@ -401,12 +398,7 @@ hAzzle.extend({
                 if (hAzzle.propertyMap[prop]) {
                     endValue = hAzzle.propertyMap[prop](elem, prop);
                 }
-
-                // Create a new FX instance
-
-                anim = new FX(elem, opt, prop);
-
-                // Get startValue
+            // Get startValue
 
                 startValue = hAzzle.fxBefore[name] ?
                     hAzzle.fxBefore[name].start(elem, name, opts[prop]) :
@@ -429,16 +421,14 @@ hAzzle.extend({
                     startValue = 0;
                 }
 
-                // Get endValue
-                // Note! We only parse the endValue if the startValue are a object
+                // Only parse the endValue if it's existing a hook for it
 
-                if (typeof startValue === 'object') {
-
-                    endValue = hAzzle.fxBefore[name] ?
-                        hAzzle.fxBefore[name].end(elem, name, opts[prop], startValue) :
-                        hAzzle.fxBefore._default(elem, name, opts[prop], startValue);
-                }
-
+	            endValue = hAzzle.fxBefore[name] ? 
+                           hAzzle.fxBefore[name].end(elem, name, opts[prop], startValue) : 
+						   opts[prop]; 
+                
+				// Units
+				
                 if ((parts = relativeRegEx.exec(endValue))) {
 
                     var target = startValue,
@@ -504,9 +494,10 @@ hAzzle.extend({
                     }
                 }
 
-                //Start the animation
 
-                anim.run(startValue, endValue, unit);
+                // Create a new FX instance, and start the animation
+
+                 new FX(elem, opt, prop, startValue, endValue, unit);
             }
         }
 
