@@ -174,7 +174,7 @@ FX.prototype = {
 
         } else {
 
-            this.pos = ((to - from) * pos + from);
+             this.pos = Math.floor(((to - from) * pos + from) * 1000) / 1000;
         }
 
         // Progress / step function
