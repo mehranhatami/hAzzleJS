@@ -51,21 +51,16 @@ FX.prototype = {
 
     restore: function() {
 
-        // Set the overflow back to original state
+        // Set CSS values back to original state
 
-        if (this.options.overflow) {
-
-            var style = this.elem.style,
-                options = this.options;
-
-            style.overflow = options.overflow[0];
-            style.overflowX = options.overflow[1];
-            style.overflowY = options.overflow[2];
+        var complete = this.options.complete,
+            orgValueProp,
+            originalValues = this.options.originalValues;
+        for (orgValueProp in originalValues) {
+            this.elem.style[orgValueProp] = originalValues[orgValueProp];
         }
 
         // Execute the complete function
-
-        var complete = this.options.complete;
 
         if (complete) {
             this.options.complete = false;
@@ -313,7 +308,7 @@ hAzzle.extend({
         function runAnimation() {
 
             var elem = this,
-                unit,
+                unit, orgValueProp,
                 prop, endValue, anim, name, style = elem.style,
                 startValue,
                 parts;
@@ -336,15 +331,19 @@ hAzzle.extend({
                 opts.visibility = opts.visibility.toString().toLowerCase();
             }
 
-            // Height && width
             if (elem.nodeType === 1) {
-                if (opts.height || opts.width) {
-                    opt.overflow = [style.overflow, style.overflowX, style.overflowY];
+
+                // Backup the original CSS values on the animated object
+
+                opt.originalValues = {};
+
+                for (orgValueProp in hAzzle.originalValues) {
+                    opt.originalValues[orgValueProp] = elem.style[orgValueProp];
                 }
 
-                if (opt.overflow) {
-                    style.overflow = 'hidden';
-                }
+                // Allways set overflow to 'hidden'
+                // Are you agree in this, Mehran??
+                style.overflow = 'hidden';
             }
 
             // Function to be 'fired before the animation starts
@@ -659,6 +658,13 @@ hAzzle.extend({
     // Default duration
 
     defaultDuration: 500,
+
+    originalValues: {
+        overflow: null,
+        overflowX: null,
+        overflowY: null,
+        boxSizing: null,
+    },
 
     propertyMap: {
 
