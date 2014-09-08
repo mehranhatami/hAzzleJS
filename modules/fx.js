@@ -2,7 +2,6 @@ var frame = hAzzle.RAF(),
     relativeRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     tweens = [],
-    timeCurrent = 0,
     rafId;
 
 frame.request(function(timestamp) {
@@ -537,16 +536,9 @@ function buhi(callback) {
 
 function render(timestamp) {
 
-    var timeCurrent = frame.perfNow();
-
     if (fixTick) {
-        timestamp = timeCurrent;
+        timestamp = frame.perfNow();
     }
-
-    // Calculate delta value
-    var delta = timeCurrent - timestamp;
-    //	alert(delta)
-
     var tween, i = 0;
 
     for (; i < tweens.length; i++) {
