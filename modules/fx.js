@@ -279,7 +279,15 @@ hAzzle.extend({
 
         // Easing
 
-        opt.easing = getEasing(opt.easing, opt.duration);
+        if (!hAzzle.easing[opt.easing]) {
+            if (hAzzle.easing[hAzzle.defaultEasing]) {
+                opt.easing = hAzzle.defaultEasing;
+                // Otherwise, use the same easing as jQuery's default easing type
+            } else {
+                opt.easing = 'swing';
+            }
+        }
+
 
         // Queue
 
@@ -404,6 +412,12 @@ hAzzle.extend({
                 startValue = hAzzle.fxBefore[name] ?
                     hAzzle.fxBefore[name].start(elem, name, opts[prop]) :
                     hAzzle.fxBefore._default(elem, name, opts[prop]);
+
+                // Convert CSS null-values to an integer of value 0.
+
+                if (hAzzle.isZeroValue(startValue)) {
+                    startValue = 0;
+                }
 
                 // If the display option is being set to a non-'none' (e.g. 'block') and opacityis being
                 // animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus 
@@ -540,6 +554,7 @@ hAzzle.extend({
             } else {
                 for (index in data) {
                     if (data[index] && data[index].stop) {
+
                         stopQueue(this, data, index);
                     }
                 }
@@ -614,51 +629,27 @@ function buhi(callback) {
 
 function render(timestamp) {
 
-        if (fixTick) {
-            timestamp = frame.perfNow();
-        }
-        var tween, i = 0;
+    if (fixTick) {
+        timestamp = frame.perfNow();
+    }
+    var tween, i = 0;
 
-        for (; i < tweens.length; i++) {
-            tween = tweens[i];
-            // Check if the tween has not already been removed
-            if (!tween.animate(timestamp) && tweens[i] === tween) {
-                tweens.splice(i--, 1);
-            }
-        }
-
-        if (!tweens.length) {
-
-            frame.cancel(rafId);
-
-            // Avoid memory leaks
-
-            rafId = null;
+    for (; i < tweens.length; i++) {
+        tween = tweens[i];
+        // Check if the tween has not already been removed
+        if (!tween.animate(timestamp) && tweens[i] === tween) {
+            tweens.splice(i--, 1);
         }
     }
-    // Determine the appropriate easing type given an easing input.
 
-function getEasing(value, duration) {
-    var easing = value;
+    if (!tweens.length) {
 
+        frame.cancel(rafId);
 
-    if (typeof value === 'string') {
-        if (!hAzzle.easing[value]) {
-            easing = false;
-        }
-    } else {
-        easing = false;
+        // Avoid memory leaks
+
+        rafId = null;
     }
-
-    if (easing === false) {
-        if (hAzzle.easing[hAzzle.defaultEasing]) {
-            easing = hAzzle.defaultEasing;
-        } else {
-            easing = 'flicker';
-        }
-    }
-    //console.log(easing)
-    return easing;
 }
 
 /* ============================ INTERNAL =========================== */

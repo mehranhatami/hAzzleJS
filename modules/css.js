@@ -18,52 +18,14 @@ var
 
     prefixMatches = {},
 
-    // Don't set styles on text and comment nodes
+    // Unitless properties
 
-    excludedProps = [
-        'zoom',
-        'box-flex',
-        'columns',
-        'counter-reset',
-        'volume',
-        'stress',
-        'overflow',
-        'flex-grow',
-        'column-count',
-        'flex-shrink',
-        'flex-height',
-        'order',
-        'orphans',
-        'widows',
-        'rotate3d',
-        'flipped',
-        'transform',
-        'ms-flex-order',
-        'transformOrigin',
-        'perspective',
-        'transformStyle',
-        'perspectiveOrigin',
-        'backfaceVisibility',
-        'ms-flex-negative',
-        'ms-flex-positive',
-        'transform-origin',
-        'transform-style',
-        'perspective',
-        'perspective-origin',
-        'backface-visibility',
-        'scale',
-        'scale-x',
-        'scale-y',
-        'scale-z',
-        'alpha',
-        'z-index',
-        'font-weight',
-        'opacity',
-        'red',
-        'green',
-        'blue'
-    ],
-
+    excludedProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow '+
+                     'column-count flex-shrink flex-height order orphans widows rotate3d flipped '+
+                     'transform ms-flex-order transform-origin perspective transform-style '+
+                     'ms-flex-negative ms-flex-positive transform-origin perspective '+
+                     'perspective-origin backface-visibility scale scale-x scale-y scale-z '+
+                     'alpha z-index font-weight opacity red green blue').split(' '),
 
     // CSS Normal Transforms
 
@@ -72,7 +34,6 @@ var
         letterSpacing: '0',
         fontWeight: '400'
     };
-
 
 hAzzle.extend({
 
@@ -399,5 +360,6 @@ function validCalculation(elem, name, val) {
 // Populate the unitless list
 
 hAzzle.each(excludedProps, function(name) {
+console.log(name)
     hAzzle.unitless[hAzzle.camelize(name)] = true;
 });
