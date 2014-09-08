@@ -38,10 +38,6 @@ FX.prototype = {
 
     update: function() {
 
-        if (this.options.step) {
-            this.options.step.call(this.elem, this.pos, this);
-        }
-
         var hooks = hAzzle.fxAfter[this.prop];
 
         if (hooks && hooks.set) {
@@ -190,8 +186,8 @@ FX.prototype = {
 
         // Progress / step function
 
-        if (this.options.progress) {
-            this.options.progress.call(this.elem, this.elem, this.pos, this);
+        if (this.options.step) {
+            this.options.step.call(this.elem, this.elem, this.pos, this);
         }
     }
 };
@@ -266,15 +262,15 @@ hAzzle.extend({
             opt.duration = 100;
         }
 
-        // 'begin, 'progress' and 'complete' has to be functions. Otherwise, default to null.
+        // 'begin, 'step' and 'complete' has to be functions. Otherwise, default to null.
 
         if (opt.begin && !hAzzle.isFunction(opt.begin)) {
             opt.begin = null;
         }
 
 
-        if (opt.progress && !hAzzle.isFunction(opt.progress)) {
-            opt.progress = null;
+        if (opt.step && !hAzzle.isFunction(opt.step)) {
+            opt.step = null;
         }
 
         if (opt.complete && !hAzzle.isFunction(opt.complete)) {
