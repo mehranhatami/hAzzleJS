@@ -396,13 +396,13 @@ hAzzle.extend({
                 // propertyMap hook for option parsing
 
                 if (hAzzle.propertyMap[prop]) {
-                    endValue = hAzzle.propertyMap[prop](elem, prop);
+                    endValue = hAzzle.propertyMap[name](elem, name);
                 }
             // Get startValue
 
                 startValue = hAzzle.fxBefore[name] ?
-                    hAzzle.fxBefore[name].start(elem, name, opts[prop]) :
-                    hAzzle.fxBefore._default(elem, name, opts[prop]);
+                    hAzzle.fxBefore[name].start(elem, name, opts[name]) :
+                    hAzzle.fxBefore._default(elem, name, opts[name]);
 
                 // Convert CSS null-values to an integer of value 0.
 
@@ -424,8 +424,8 @@ hAzzle.extend({
                 // Only parse the endValue if it's existing a hook for it
 
 	            endValue = hAzzle.fxBefore[name] ? 
-                           hAzzle.fxBefore[name].end(elem, name, opts[prop], startValue) : 
-						   opts[prop]; 
+                           hAzzle.fxBefore[name].end(elem, name, opts[name], startValue) : 
+						   opts[name]; 
                 
 				// Units
 				
@@ -439,10 +439,10 @@ hAzzle.extend({
 
                         endValue = parseFloat(parts[2]);
 
-                        unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
+                        unit = parts[3] || (hAzzle.unitless[name] ? '' : 'px');
 
                         startValue = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                            relativeRegEx.exec(hAzzle.css(elem, prop));
+                            relativeRegEx.exec(hAzzle.css(elem, name));
 
                         // We need to compute starting value
                         if (startValue && startValue[1] !== unit) {
@@ -465,7 +465,7 @@ hAzzle.extend({
 
                             } while (
 
-                                scale !== (scale = parseFloat(hAzzle.css(elem, prop)) / target) && scale !== 1 && --maxIterations
+                                scale !== (scale = parseFloat(hAzzle.css(elem, name)) / target) && scale !== 1 && --maxIterations
                             );
                         }
 
@@ -497,7 +497,7 @@ hAzzle.extend({
 
                 // Create a new FX instance, and start the animation
 
-                 new FX(elem, opt, prop, startValue, endValue, unit);
+                 new FX(elem, opt, name, startValue, endValue, unit);
             }
         }
 
