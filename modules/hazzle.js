@@ -196,8 +196,6 @@
     };
 
     hAzzle.extend({
-		
-		defaultFPS: 60,
 
         // documentElement after adjustments
         // Note! This can / will be overwritten 

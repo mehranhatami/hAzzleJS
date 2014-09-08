@@ -1,5 +1,9 @@
 var nRAF,
-    nCAF;
+    nCAF,
+
+    // Default 60 fps
+	
+	defaultFPS = hAzzle.defaultFPS = 60;
 
 // Grab the native request and cancel functions.
 
@@ -55,23 +59,22 @@ RAF.prototype = {
 
     constructor: RAF,
 
-    // Default 60 fps
-
-    fps: 60,
-
     init: function(options) {
 
         options = options || {};
 
         // It's a frame rate.
 
-        if (typeof options == 'number') options = {
+        if (typeof options == 'number') {
+		
+			options = {
             frameRate: options
-        };
-	
+          };
+		}
+		
         this.frameRate = options.frameRate || hAzzle.defaultFPS.toString();
         this.frameLength = 1000 / this.frameRate;
-        this.isCustomFPS = this.frameRate !== hAzzle.defaultFPS.toString();
+        this.isCustomFPS = this.frameRate !== hAzzle.defaultFPS;
 
 		// Timeout ID
         this.timeoutId = null;
@@ -95,7 +98,7 @@ RAF.prototype = {
         options.useNative != null || (this.useNative = true);
     },
 
-    shim: function(options) {
+    pollify: function(options) {
 
         var _RAF = RAF(options);
 
@@ -114,13 +117,12 @@ RAF.prototype = {
 
     request: function(callback) {
 
-        var self = this,
-            delay;
+        var self = this, delay;
 
         ++this.tickCounter;
 
-        if (RAF.hasNative && self.useNative && !this.isCustomFPS) {
-
+        if (RAF.hasNative && self.useNative && 
+		   !this.isCustomFPS) {
             return nRAF(callback);
         }
 
@@ -142,10 +144,7 @@ RAF.prototype = {
 
                 self.lastTickTime = hAzzle.now();
                 self.timeoutId = null;
-				
-				// Counting backward - slower or not?
-				
-                ++self.tickCounter;
+                self.tickCounter++;
 
                 for (id in self.callbacks) {
 
@@ -178,7 +177,6 @@ RAF.prototype = {
     cancel: function(id) {
 
         if (this.hasNative && this.useNative) {
-			
             nCAF(id);
         }
 
