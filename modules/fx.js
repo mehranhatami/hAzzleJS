@@ -421,9 +421,7 @@ hAzzle.extend({
                     anim.run(startValue, endValue, '');
                 }
 
-                if (separateValue(prop, endValue)[0]) {
-
-                    parts = relativeRegEx.exec(endValue)
+                if ((parts = relativeRegEx.exec(endValue))) {
 
                     var target = startValue,
                         scale = 1,
@@ -436,7 +434,7 @@ hAzzle.extend({
                         unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
 
                         startValue = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                            separateValue(prop, curCSS(elem, prop));
+                             relativeRegEx.exec(hAzzle.css(elem, prop));
 
                         // We need to compute starting value
                         if (startValue && startValue[1] !== unit) {
@@ -648,31 +646,6 @@ function getEasing(value, duration) {
     //console.log(easing)
     return easing;
 }
-
-function separateValue(property, value) {
-    var unitType,
-        numericValue;
-
-    numericValue = (value || 0)
-        .toString()
-        .toLowerCase()
-        /* Match the unit type at the end of the value. */
-        .replace(/[%A-z]+$/, function(match) {
-            /* Grab the unit type. */
-            unitType = match;
-
-            /* Strip the unit type off of value. */
-            return '';
-        });
-
-    /* If no unit type was supplied, assign one that is appropriate for this property (e.g. 'deg' for rotateZ or 'px' for width). */
-    if (!unitType) {
-        unitType = hAzzle.getUnitType(property);
-    }
-
-    return [numericValue, unitType];
-}
-
 
 /* ============================ INTERNAL =========================== */
 
