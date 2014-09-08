@@ -38,6 +38,10 @@ FX.prototype = {
 
     update: function() {
 
+        if (this.options.step) {
+            this.options.step.call(this.elem, this.pos, this);
+        }
+
         var hooks = hAzzle.fxAfter[this.prop];
 
         if (hooks && hooks.set) {
@@ -69,7 +73,7 @@ FX.prototype = {
 
         if (complete) {
             this.options.complete = false;
-            complete.call(this.elem, this.elem);
+            complete.call(this.elem);
         }
     },
 
@@ -124,7 +128,7 @@ FX.prototype = {
                 }
 
                 self.step = hAzzle.easing[self.easing](currentTime / self.options.duration);
-                self.calculate(self.step, to, from);
+                self.tick(self.step, to, from);
                 self.update();
                 return true;
             },
@@ -161,7 +165,8 @@ FX.prototype = {
 
     // Update current CSS properties
 
-    calculate: function(pos, to, from) {
+    tick: function(pos, to, from) {
+
         if (typeof from == 'object') {
             var index;
             this.pos = {};
@@ -170,14 +175,23 @@ FX.prototype = {
             // none of them, but the problem we face are simple. Longer
             // float values - more memory used
 
+
             for (index in from) {
 
-                this.pos[index] = (index in to) ? Math.floor(((to[index] - from[index]) * pos + from[index]) * 1000) / 1000 : from[index];
+                this.pos[index] = (index in to) ?
+                    Math.floor(((to[index] - from[index]) * pos + from[index]) * 1000) / 1000 :
+                    from[index];
             }
 
         } else {
 
             this.pos = Math.floor(((to - from) * pos + from) * 1000) / 1000;
+        }
+
+        // Progress / step function
+
+        if (this.options.progress) {
+            this.options.progress.call(this.elem, this.elem, this.pos, this);
         }
     }
 };
@@ -235,20 +249,6 @@ hAzzle.extend({
 
             opt.complete = (!callback && typeof speed === 'function') ? speed : callback;
 
-            // 'begin, 'progress' and 'complete' has to be functions. Otherwise, default to null.
-
-            if (opt.begin && hAzzle.isFunction(opt.begin)) {
-                opt.begin = null;
-            }
-
-            if (opt.progress && hAzzle.isFunction(opt.progress)) {
-                opt.progress = null;
-            }
-
-            if (opt.complete && hAzzle.isFunction(opt.complete)) {
-                opt.complete = null;
-            }
-
             // Duration
 
             opt.duration = typeof speed === 'number' ? speed :
@@ -264,6 +264,21 @@ hAzzle.extend({
 
         if (opt.duration < 100) {
             opt.duration = 100;
+        }
+
+        // 'begin, 'progress' and 'complete' has to be functions. Otherwise, default to null.
+
+        if (opt.begin && !hAzzle.isFunction(opt.begin)) {
+            opt.begin = null;
+        }
+
+
+        if (opt.progress && !hAzzle.isFunction(opt.progress)) {
+            opt.progress = null;
+        }
+
+        if (opt.complete && !hAzzle.isFunction(opt.complete)) {
+            opt.complete = null;
         }
 
         // Easing
@@ -434,7 +449,7 @@ hAzzle.extend({
                         unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
 
                         startValue = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                             relativeRegEx.exec(hAzzle.css(elem, prop));
+                            relativeRegEx.exec(hAzzle.css(elem, prop));
 
                         // We need to compute starting value
                         if (startValue && startValue[1] !== unit) {
@@ -562,9 +577,12 @@ hAzzle.extend({
         return this.each(function() {
             var queue = hAzzle.queue(this, type, data);
 
+            // Auto-Dequeuing
+
             if (type === 'fx' && queue[0] !== 'inprogress') {
                 hAzzle.dequeue(this, type);
             }
+
         });
     },
     dequeue: function(type) {
