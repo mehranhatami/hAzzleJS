@@ -3,8 +3,6 @@ var
     topBottomRegEx = /Top|Bottom/,
     absoluteRegex = /absolute|fixed/,
     autoRegex = /auto/g,
-    rotskew = /^(rotate|skew)/i,
-    transinp = /(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i,
     shortformRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i,
     longformRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i,
     inlineregex = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
@@ -33,6 +31,7 @@ var
         'flex-grow',
         'column-count',
         'flex-shrink',
+        'flex-height',
         'order',
         'orphans',
         'widows',
@@ -51,8 +50,20 @@ var
         'transform-style',
         'perspective',
         'perspective-origin',
-        'backface-visibility'
+        'backface-visibility',
+        'scale',
+        'scale-x',
+        'scale-y',
+        'scale-z',
+        'alpha',
+        'z-index',
+        'font-weight',
+        'opacity',
+        'red',
+        'green',
+        'blue'
     ],
+
 
     // CSS Normal Transforms
 
@@ -188,17 +199,6 @@ hAzzle.extend({
         return rgbParts ? [parseInt(rgbParts[1], 16), parseInt(rgbParts[2], 16), parseInt(rgbParts[3], 16)] : [0, 0, 0];
     },
 
-    getUnitType: function(property) {
-        if (rotskew.test(property)) {
-            return 'deg';
-        } else if (transinp.test(property)) {
-            /* The above properties are unitless. */
-            return '';
-        } else {
-            /* Default to px for all other properties. */
-            return 'px';
-        }
-    },
     getDisplayType: function(element) {
         var tagName = element.tagName.toString().toLowerCase();
         if (inlineregex.test(tagName)) {

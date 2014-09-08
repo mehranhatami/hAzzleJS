@@ -423,19 +423,19 @@ hAzzle.extend({
                         maxIterations, scale;
 
                     if (parts) {
+
                         endValue = parseFloat(parts[2]);
+
                         unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
 
-                        // Starting value computation is required for potential unit mismatches
                         startValue = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                            relativeRegEx.exec(hAzzle.css(elem, prop)),
+                            separateValue(prop, curCSS(elem, prop)),
                             scale = 1, maxIterations = 20;
 
                         // We need to compute starting value
-                        if (startValue && startValue[3] !== unit) {
+                        if (startValue && startValue[1] !== unit) {
 
-                            unit = unit || startValue[3];
-
+                            unit = unit || startValue[1];
 
                             // Make sure we update the FX properties later on
                             parts = parts || [];
@@ -461,10 +461,23 @@ hAzzle.extend({
 
                             startValue = +startValue || +target || 0;
 
-                            // If a +=/-= token was provided, we're doing a relative animation
-                            endValue = parts[1] ?
-                                startValue + (parts[1] + 1) * parts[2] :
-                                +parts[2];
+                            switch (parts[1]) {
+                                case '+':
+                                    endValue = startValue + endValue;
+                                    break;
+
+                                case '-':
+                                    endValue = startValue - endValue;
+                                    break;
+
+                                case '*':
+                                    endValue = startValue * endValue;
+                                    break;
+
+                                case '/':
+                                    endValue = startValue / endValue;
+                                    break;
+                            }
                         }
                     }
                 }
@@ -583,29 +596,29 @@ function buhi(callback) {
 
 function render(timestamp) {
 
-    if (fixTick) {
-        timestamp = frame.perfNow();
-    }
-    var tween, i = 0;
+        if (fixTick) {
+            timestamp = frame.perfNow();
+        }
+        var tween, i = 0;
 
-    for (; i < tweens.length; i++) {
-        tween = tweens[i];
-        // Check if the tween has not already been removed
-        if (!tween.animate(timestamp) && tweens[i] === tween) {
-            tweens.splice(i--, 1);
+        for (; i < tweens.length; i++) {
+            tween = tweens[i];
+            // Check if the tween has not already been removed
+            if (!tween.animate(timestamp) && tweens[i] === tween) {
+                tweens.splice(i--, 1);
+            }
+        }
+
+        if (!tweens.length) {
+
+            frame.cancel(rafId);
+
+            // Avoid memory leaks
+
+            rafId = null;
         }
     }
-
-    if (!tweens.length) {
-
-        frame.cancel(rafId);
-
-        // Avoid memory leaks
-
-        rafId = null;
-    }
-}
-// Determine the appropriate easing type given an easing input.
+    // Determine the appropriate easing type given an easing input.
 
 function getEasing(value, duration) {
     var easing = value;
@@ -629,6 +642,31 @@ function getEasing(value, duration) {
     //console.log(easing)
     return easing;
 }
+
+function separateValue(property, value) {
+    var unitType,
+        numericValue;
+
+    numericValue = (value || 0)
+        .toString()
+        .toLowerCase()
+        /* Match the unit type at the end of the value. */
+        .replace(/[%A-z]+$/, function(match) {
+            /* Grab the unit type. */
+            unitType = match;
+
+            /* Strip the unit type off of value. */
+            return '';
+        });
+
+    /* If no unit type was supplied, assign one that is appropriate for this property (e.g. 'deg' for rotateZ or 'px' for width). */
+    if (!unitType) {
+        unitType = hAzzle.getUnitType(property);
+    }
+
+    return [numericValue, unitType];
+}
+
 
 /* ============================ INTERNAL =========================== */
 
