@@ -15,7 +15,7 @@ lrmpRegex = /^(left$|right$|margin|padding)/,
      *
      */
 
-    hazRegexzle.units = function(px, unit, elem, prop) {
+    hAzzle.units = function(px, unit, elem, prop) {
 
         if (unit === '' ||
             unit === 'px') {
@@ -51,17 +51,17 @@ lrmpRegex = /^(left$|right$|margin|padding)/,
 
         if (unit === 'em') {
 
-            return px / parseFloat(hazRegexzle.curCSS(elem, 'fontSize'));
+            return px / parseFloat(hAzzle.curCSS(elem, 'fontSize'));
         }
 
         // The first time we calculate how many pixels there is in 1 meter
         // for calculate what is 1 inch/cm/mm/etc.
 
-        if (hazRegexzle.units.unity === undefined) {
+        if (hAzzle.units.unity === undefined) {
 
-            var units = hazRegexzle.units.unity = {};
+            var units = hAzzle.units.unity = {};
 
-            hazRegexzle.assert(function(div) {
+            hAzzle.assert(function(div) {
 
                 div.style.width = '100cm';
                 document.body.appendChild(div);
@@ -76,18 +76,22 @@ lrmpRegex = /^(left$|right$|margin|padding)/,
 
         // If the unity specified is not recognized we return the value.
 
-        unit = hazRegexzle.units.unity[unit];
+        unit = hAzzle.units.unity[unit];
 
         return unit ? px / unit : px;
     };
 
-hazRegexzle.getUnitType = function(property) {
+hAzzle.getUnitType = function(property) {
     if (rotskewRegex.test(property)) {
         return 'deg';
-    } else if (transinpRegex.test(property)) {
-        /* The above properties are unitless. */
-        return '';
     } else {
+      
+	  // Unitless properties
+     
+	 if(hAzzle.unitless[property]) {
+       return '';
+     }
+		
         /* Default to px for all other properties. */
         return 'px';
     }
