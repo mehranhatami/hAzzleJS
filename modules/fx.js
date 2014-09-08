@@ -2,6 +2,7 @@ var frame = hAzzle.RAF(),
     relativeRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     fixTick = false, // feature detected below
     tweens = [],
+    timeCurrent = 0,
     rafId;
 
 frame.request(function(timestamp) {
@@ -36,6 +37,43 @@ FX.prototype = {
         this.easing = options.easing;
     },
 
+    update: function(pos) {
+
+        var hooks = hAzzle.fxAfter[this.prop];
+
+        if (hooks && hooks.set) {
+            hooks.set(this);
+        } else {
+            hAzzle.fxAfter._default.set(this);
+        }
+    },
+
+    // Restore properties, and fire callback
+
+    restore: function() {
+
+        // Set the overflow back to original state
+
+        if (this.options.overflow) {
+
+            var style = this.elem.style,
+                options = this.options;
+
+            style.overflow = options.overflow[0];
+            style.overflowX = options.overflow[1];
+            style.overflowY = options.overflow[2];
+        }
+
+        // Execute the complete function
+
+        var complete = this.options.complete;
+
+        if (complete) {
+            this.options.complete = false;
+            complete.call(this.elem, this.elem);
+        }
+    },
+
     /**
      * Run animation
      * @param {Number|Object} from
@@ -59,38 +97,36 @@ FX.prototype = {
 
             animate: function(currentTime) {
 
-                var delta = currentTime - start,
-                    i;
+                currentTime -= start;
 
-                if (delta > self.options.duration) {
+                if (currentTime > self.options.duration) {
 
-                    self.update(to);
+                    // Do we need it???                    
+
+                    //self.update(to);
 
                     // Save the property state so we know when we have completed 
                     // the animation
 
                     self.currentState[self.prop] = true;
 
-                    for (i in self.currentState) {
+                    for (var i in self.currentState) {
 
                         if (self.currentState[i] !== true) {
                             done = false;
                         }
                     }
 
-                    if (done) {
+                    // Restore CSS properties
 
-                        // Restore CSS properties
-
-                        self.restore();
-                    }
+                    done && self.restore();
 
                     return false;
                 }
 
-                self.step = step = hAzzle.easing[self.easing](delta / self.options.duration)
+                self.step = step = hAzzle.easing[self.easing](currentTime / self.options.duration)
                 self.calculate(step, to, from);
-
+                self.update();
                 return true;
             },
 
@@ -127,59 +163,17 @@ FX.prototype = {
     // Update current CSS properties
 
     calculate: function(pos, to, from) {
-
-        // Calculate the position
-        var v, index;
-
         if (typeof from == 'object') {
-
-            v = {};
+            var index;
+            this.pos = {};
 
             for (index in from) {
-                v[index] = (index in to) ? (to[index] - from[index]) * pos + from[index] : from[index];
+                this.pos[index] = (index in to) ? (to[index] - from[index]) * pos + from[index] : from[index];
             }
 
         } else {
-            v = ((to - from) * pos + from);
-        }
 
-        this.pos = v;
-        this.update(v);
-    },
-    update: function(pos) {
-
-        var hooks = hAzzle.fxAfter[this.prop];
-
-        if (hooks && hooks.set) {
-            hooks.set(this);
-        } else {
-            hAzzle.fxAfter._default.set(this);
-        }
-    },
-
-    // Restore properties, and fire callback
-
-    restore: function() {
-
-        // Set the overflow back to original state
-
-        if (this.options.overflow) {
-
-            var style = this.elem.style,
-                options = this.options;
-
-            style.overflow = options.overflow[0];
-            style.overflowX = options.overflow[1];
-            style.overflowY = options.overflow[2];
-        }
-
-        // Execute the complete function
-
-        var complete = this.options.complete;
-
-        if (complete) {
-            this.options.complete = false;
-            complete.call(this.elem, this.elem);
+            this.pos = ((to - from) * pos + from);
         }
     }
 };
@@ -518,7 +512,7 @@ hAzzle.extend({
 
     clearQueue: function(type) {
         return this.queue(type || 'fx', []);
-    },
+    }
 });
 
 /* ============================ UTILITY METHODS =========================== */
@@ -530,18 +524,35 @@ function raf(timestamp) {
     }
 }
 
-function render(tick) {
+function buhi(callback) {
+    tweens.push(callback);
+    if (callback.animate()) {
+        if (!rafId) {
+            rafId = frame.request(raf);
+        }
+    } else {
+        tweens.pop();
+    }
+}
+
+function render(timestamp) {
+
+    var timeCurrent = frame.perfNow();
 
     if (fixTick) {
-        tick = frame.perfNow();
+        timestamp = timeCurrent;
     }
+
+    // Calculate delta value
+    var delta = timeCurrent - timestamp;
+    //	alert(delta)
 
     var tween, i = 0;
 
     for (; i < tweens.length; i++) {
         tween = tweens[i];
         // Check if the tween has not already been removed
-        if (!tween.animate(tick) && tweens[i] === tween) {
+        if (!tween.animate(timestamp) && tweens[i] === tween) {
             tweens.splice(i--, 1);
         }
     }
@@ -575,6 +586,7 @@ function calculateRelatives(elem, parts, prop, anim) {
 
             unit = unit || start[3];
 
+
             // Make sure we update the FX properties later on
             parts = parts || [];
 
@@ -606,18 +618,6 @@ function calculateRelatives(elem, parts, prop, anim) {
         }
 
         anim.run(start, end, unit);
-    }
-}
-
-function buhi(callback) {
-    tweens.push(callback);
-    if (callback.animate()) {
-        if (!rafId) {
-
-            rafId = frame.request(raf);
-        }
-    } else {
-        tweens.pop();
     }
 }
 
