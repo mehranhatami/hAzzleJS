@@ -36,7 +36,7 @@ FX.prototype = {
         this.easing = options.easing;
     },
 
-    update: function(pos) {
+    update: function() {
 
         var hooks = hAzzle.fxAfter[this.prop];
 
@@ -123,8 +123,8 @@ FX.prototype = {
                     return false;
                 }
 
-                self.step = step = hAzzle.easing[self.easing](currentTime / self.options.duration)
-                self.calculate(step, to, from);
+                self.step = hAzzle.easing[self.easing](currentTime / self.options.duration);
+                self.calculate(self.step, to, from);
                 self.update();
                 return true;
             },
@@ -289,6 +289,7 @@ hAzzle.extend({
         function runAnimation() {
 
             var elem = this,
+                unit,
                 prop, endValue, anim, name, style = elem.style,
                 startValue,
                 parts;
@@ -414,17 +415,63 @@ hAzzle.extend({
 
                     anim.run(startValue, endValue, '');
 
-                } else {
+                }
 
-                    if ((parts = relativeRegEx.exec(endValue))) {
+                if ((parts = relativeRegEx.exec(endValue))) {
 
-                        calculateRelatives(elem, parts, prop, anim);
+                    var target = startValue,
+                        maxIterations, scale;
 
-                    } else {
+                    if (parts) {
+                        endValue = parseFloat(parts[2]);
+                        unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
 
-                        anim.run(startValue, endValue, '');
+                        // Starting value computation is required for potential unit mismatches
+                        startValue = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
+                            relativeRegEx.exec(hAzzle.css(elem, prop)),
+                            scale = 1, maxIterations = 20;
+
+                        // We need to compute starting value
+                        if (startValue && startValue[3] !== unit) {
+
+                            unit = unit || startValue[3];
+
+
+                            // Make sure we update the FX properties later on
+                            parts = parts || [];
+
+                            // Iteratively approximate from a nonzero starting point
+                            startValue = +target || 1;
+
+                            do {
+
+                                scale = scale || '.5';
+
+                                // Adjust and apply
+                                startValue = startValue / scale;
+                                elem.style[prop] = startValue + unit;
+
+                            } while (
+
+                                scale !== (scale = parseFloat(hAzzle.css(elem, prop)) / target) && scale !== 1 && --maxIterations
+                            );
+                        }
+
+                        if (parts) {
+
+                            startValue = +startValue || +target || 0;
+
+                            // If a +=/-= token was provided, we're doing a relative animation
+                            endValue = parts[1] ?
+                                startValue + (parts[1] + 1) * parts[2] :
+                                +parts[2];
+                        }
                     }
                 }
+
+                //Start the animation
+
+                anim.run(startValue, endValue, unit);
             }
         }
 
@@ -558,61 +605,6 @@ function render(timestamp) {
         rafId = null;
     }
 }
-
-function calculateRelatives(elem, parts, prop, anim) {
-
-    var target = parseFloat(hAzzle.css(elem, prop)),
-        end, start, unit, maxIterations, scale;
-
-    if (parts) {
-        end = parseFloat(parts[2]);
-        unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
-
-        // Starting value computation is required for potential unit mismatches
-        start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-            relativeRegEx.exec(hAzzle.css(elem, prop)),
-            scale = 1, maxIterations = 20;
-
-        // We need to compute starting value
-        if (start && start[3] !== unit) {
-
-            unit = unit || start[3];
-
-
-            // Make sure we update the FX properties later on
-            parts = parts || [];
-
-            // Iteratively approximate from a nonzero starting point
-            start = +target || 1;
-
-            do {
-
-                scale = scale || '.5';
-
-                // Adjust and apply
-                start = start / scale;
-                hAzzle.style(elem, prop, start + unit);
-
-            } while (
-
-                scale !== (scale = parseFloat(hAzzle.css(elem, prop)) / target) && scale !== 1 && --maxIterations
-            );
-        }
-
-        if (parts) {
-
-            start = +start || +target || 0;
-
-            // If a +=/-= token was provided, we're doing a relative animation
-            end = parts[1] ?
-                start + (parts[1] + 1) * parts[2] :
-                +parts[2];
-        }
-
-        anim.run(start, end, unit);
-    }
-}
-
 // Determine the appropriate easing type given an easing input.
 
 function getEasing(value, duration) {
