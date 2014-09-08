@@ -166,13 +166,18 @@ FX.prototype = {
             var index;
             this.pos = {};
 
+            // Math.floor are faster then Math.round, but I don't like
+            // none of them, but the problem we face are simple. Longer
+            // float values - more memory used
+
             for (index in from) {
-                this.pos[index] = (index in to) ? (to[index] - from[index]) * pos + from[index] : from[index];
+
+                this.pos[index] = (index in to) ? Math.floor(((to[index] - from[index]) * pos + from[index]) * 1000) / 1000 : from[index];
             }
 
         } else {
 
-            this.pos = ((to - from) * pos + from);
+            this.pos = Math.floor(((to - from) * pos + from) * 1000) / 1000;
         }
     }
 };
@@ -255,7 +260,7 @@ hAzzle.extend({
         opt.duration = (hAzzle.speeds[opt.duration] || opt.duration) || hAzzle.defaultDuration;
 
         // If the user is attempting to set a duration under 100, adjust it back to
-        // 100 to avoid bugs that can occur ( 100 is fast enough)
+        // 100 to avoid bugs that can occur ( 30 is fast enough)
 
         if (opt.duration < 100) {
             opt.duration = 100;
@@ -414,13 +419,15 @@ hAzzle.extend({
                     // them all as different Tweens and the queue get much bigger!!
 
                     anim.run(startValue, endValue, '');
-
                 }
 
-                if ((parts = relativeRegEx.exec(endValue))) {
+                if (separateValue(prop, endValue)[0]) {
+
+                    parts = relativeRegEx.exec(endValue)
 
                     var target = startValue,
-                        maxIterations, scale;
+                        scale = 1,
+                        maxIterations = 20;
 
                     if (parts) {
 
@@ -429,8 +436,7 @@ hAzzle.extend({
                         unit = parts[3] || (hAzzle.unitless[prop] ? '' : 'px');
 
                         startValue = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                            separateValue(prop, curCSS(elem, prop)),
-                            scale = 1, maxIterations = 20;
+                            separateValue(prop, curCSS(elem, prop));
 
                         // We need to compute starting value
                         if (startValue && startValue[1] !== unit) {
