@@ -437,12 +437,6 @@ hAzzle.extend({
                     endValue = hAzzle.fxBefore[name] ?
                         hAzzle.fxBefore[name].end(elem, name, opts[prop], startValue) :
                         hAzzle.fxBefore._default(elem, name, opts[prop], startValue);
-
-                    // Start the animation
-                    // TODO!! Merge object with string startValue else the queue will see 
-                    // them all as different Tweens and the queue get much bigger!!
-
-                    anim.run(startValue, endValue, '');
                 }
 
                 if ((parts = relativeRegEx.exec(endValue))) {
@@ -575,24 +569,24 @@ hAzzle.extend({
     },
 
     queue: function(type, data) {
+
         if (typeof type !== 'string') {
             data = type;
-
             type = 'fx';
         }
 
         if (data === undefined) {
             return hAzzle.queue(this[0], type);
         }
+
         return this.each(function() {
             var queue = hAzzle.queue(this, type, data);
 
             // Auto-Dequeuing
 
-            if (type === 'fx' && queue[0] !== 'inprogress') {
+            if (type === 'fx' && queue[0] !== 'chewing ...') {
                 hAzzle.dequeue(this, type);
             }
-
         });
     },
     dequeue: function(type) {
@@ -751,32 +745,28 @@ hAzzle.extend({
 
     queue: function(elem, type, data) {
 
-        if (!elem) {
-            return;
-        }
-
-        var q;
-
         if (elem) {
 
             type = (type || 'fx') + 'queue';
-            q = hAzzle.private(elem, type);
 
+            var queueDta = hAzzle.getPrivate(elem),
+                q = queueDta.type;
 
             // Speed up dequeue by getting out quickly if this is just a lookup
+
             if (!data) {
                 return q || [];
             }
 
             if (!q || hAzzle.isArray(data)) {
-                q = hAzzle.private(elem, type, hAzzle.mergeArray(data));
+
+                q = queueDta.type = hAzzle.mergeArray(data);
 
             } else {
                 q.push(data);
             }
 
             return q;
-
         }
     },
 
@@ -784,25 +774,26 @@ hAzzle.extend({
 
         type = type || 'fx';
 
-        var queue = hAzzle.queue(elem, type),
+        var queueDta = hAzzle.getPrivate(elem),
+            queue = hAzzle.queue(elem, type),
             fn = queue.shift();
 
-        // If the fx queue is dequeued, always remove the progress sentinel
-        if (fn === 'inprogress') {
+        if (fn === 'chewing ...') {
             fn = queue.shift();
         }
 
         if (fn) {
-            // Add a progress sentinel to prevent the fx queue from being
-            // automatically dequeued
             if (type === 'fx') {
-                queue.unshift('inprogress');
+                queue.unshift('chewing ...');
             }
 
             fn.call(elem, function() {
-
                 hAzzle.dequeue(elem, type);
             });
+        }
+
+        if (!queue.length) {
+            delete queueDta.qtype;
         }
     }
 
