@@ -11,9 +11,9 @@ Tween.prototype = {
         this.elem = elem;
         this.prop = prop;
         this.easing = hAzzle.easing[easing] || hAzzle.easing.swing;
-		this.duration = options.duration,
+        this.duration = options.duration,
         this.step = options.step,
-		this.start = this.now = this.cur();
+        this.start = this.now = this.cur();
         this.end = end;
         this.unit = unit || (hAzzle.unitless[prop] ? '' : 'px');
     },
@@ -24,17 +24,17 @@ Tween.prototype = {
             hooks.get(this) :
             hAzzle.TweenHooks._default.get(this);
     },
-    run: function(percent) {
+    run: function(tick) {
 
         var pos, hooks = hAzzle.TweenHooks[this.prop];
 
         if (this.duration) {
 
-            this.pos = pos = this.easing(percent);
+            this.pos = pos = this.easing(tick);
 
         } else {
 
-            this.pos = pos = percent;
+            this.pos = pos = tick;
         }
         this.now = (this.end - this.start) * pos + this.start;
 
@@ -87,14 +87,11 @@ hAzzle.TweenHooks = {
         },
         set: function(tween) {
 
-            var elem = tween.elem,
-                style = elem.style,
-                prop = tween.prop;
-            if (style && (hAzzle.curCSS(elem, hAzzle.cssProps[prop]) != null ||
-                hAzzle.cssHooks[prop])) {
-                hAzzle.style(elem, prop, tween.now + tween.unit);
+            if (style && (hAzzle.curCSS(tween.elem, hAzzle.cssProps[tween.prop]) != null ||
+                hAzzle.cssHooks[tween.prop])) {
+                hAzzle.style(tween.elem, tween.prop, tween.now + tween.unit);
             } else {
-                elem[prop] = tween.now;
+                tween.elem.style[tween.prop] = tween.now;
             }
         }
     }
