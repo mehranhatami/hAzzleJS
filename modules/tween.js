@@ -87,11 +87,11 @@ hAzzle.TweenHooks = {
         },
         set: function(tween) {
 
-            if (style && (hAzzle.curCSS(tween.elem, hAzzle.cssProps[tween.prop]) != null ||
+            if (tween.elem.style && (hAzzle.curCSS(tween.elem, hAzzle.cssProps[tween.prop]) != null ||
                 hAzzle.cssHooks[tween.prop])) {
                 hAzzle.style(tween.elem, tween.prop, tween.now + tween.unit);
             } else {
-                tween.elem.style[tween.prop] = tween.now;
+                hAzzle.style(tween.elem, tween.prop, tween.now);
             }
         }
     }
