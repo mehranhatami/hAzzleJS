@@ -8,7 +8,6 @@ var
     frame = hAzzle.RAF(),
     relVal = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     queueHooks = /queueHooks$/,
-    fixTick = false, // feature detected below
     sheets = [],
     prefix = 'oTween',
     rafId,
@@ -374,7 +373,6 @@ function parseDefault(elem, props, opts) {
         hooks, oldfire, display, checkDisplay,
         anim = this,
         orgValueProp,
-        originalValues,
         orig = {},
         style = elem.style,
         hidden = elem.nodeType && isHidden(elem),
@@ -402,6 +400,31 @@ function parseDefault(elem, props, opts) {
                     hooks.empty.fire();
                 }
             });
+        });
+    }
+
+
+    /********************
+      Options parsing
+    ********************/
+
+    if (props.display !== undefined && props.display !== null) {
+        props.display = props.display.toString().toLowerCase();
+
+        if (props.display === 'auto') {
+            props.display = hAzzle.getDisplayType(elem);
+        }
+
+        anim.done(function() {
+            elem.style.display = props.display;
+        });
+    }
+
+    if (props.visibility) {
+        props.visibility = props.visibility.toString().toLowerCase();
+
+        anim.done(function() {
+            elem.style.visibility = props.visibility;
         });
     }
 
@@ -439,9 +462,9 @@ function parseDefault(elem, props, opts) {
     // Restore original CSS values after animation are finished 
 
     anim.done(function() {
-        originalValues = opts.originalValues;
-        for (orgValueProp in originalValues) {
-            style[orgValueProp] = originalValues[orgValueProp];
+        var oVP, oValues = opts.originalValues;
+        for (oVP in oValues) {
+            style[oVP] = oValues[oVP];
         }
     });
 
@@ -585,30 +608,6 @@ function parseProperties(elem, props, specialEasing) {
             continue;
         }
 
-
-        /********************
-          Options parsing
-        ********************/
-
-        if (props.display !== undefined && props.display !== null) {
-            props.display = props.display.toString().toLowerCase();
-
-            if (props.display === 'auto') {
-                props.display = hAzzle.getDisplayType(elem);
-            }
-
-            anim.done(function() {
-                elem.style.display = props.display;
-            });
-        }
-
-        if (props.visibility) {
-            props.visibility = props.visibility.toString().toLowerCase();
-
-            anim.done(function() {
-                elem.style.visibility = props.visibility;
-            });
-        }
         // propertyMap hook for option parsing
 
         if (hAzzle.propertyMap[index]) {
@@ -657,10 +656,12 @@ function Animation(elem, properties, options) {
             delete tick.elem;
         }),
         tick = function() {
+
             if (stopped) {
                 return false;
             }
-            var currentTime = hAzzle.now(),
+
+            var currentTime = frame.perfNow(),
                 remaining = animation.startTime + animation.duration - currentTime,
                 // Support: Android 2.3
                 // Archaic crash bug won't allow us to use `1 - ( 0.5 || 0 )` (#12497)
@@ -690,7 +691,7 @@ function Animation(elem, properties, options) {
             }, options),
             originalProperties: properties,
             originalOptions: options,
-            startTime: hAzzle.now(),
+            startTime: frame.perfNow(),
             duration: options.duration,
             tweens: [],
             createTween: function(prop, end) {
