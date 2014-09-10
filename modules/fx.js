@@ -198,7 +198,7 @@ hAzzle.extend({
             opt.complete :
             (callback || !callback && easing || hAzzle.isFunction(speed) && speed);
 
-        // 'complete' has to be functions. Otherwise, default to null.
+        // 'complete' has to be function - otherwise, default to null.
 
         if (opt.complete && typeof opt.complete !== 'function') {
             opt.complete = null;
@@ -208,7 +208,7 @@ hAzzle.extend({
          Option: begin
         **********************/
 
-        // 'begin' has to be functions. Otherwise, default to null.
+        // 'begin' has to be function - otherwise, default to null.
 
         if (opt.begin && typeof opt.begin !== 'function') {
             opt.begin = null;
@@ -234,8 +234,9 @@ hAzzle.extend({
          Option: easing
         **********************/
 
-        opt.easing = callback && easing || easing && !hAzzle.isFunction(easing) && easing;
-        console.log(opt)
+        opt.easing = opt.easing ? 
+		             opt.easing :
+					 callback && easing || easing && typeof easing !== 'function' && easing;
 
         /**********************
          Option: mobile
@@ -246,13 +247,13 @@ hAzzle.extend({
 
         opt.mobile = opt.mobile && hAzzle.isMobile;
 
-        if (opt.queue == null || opt.queue === true) {
-            opt.queue = 'fx';
-        }
-
         /**********************
          Option: Queueing
         **********************/
+
+        if (opt.queue == null || opt.queue === true) {
+            opt.queue = 'fx';
+        }
 
         opt.old = opt.complete;
 
