@@ -3,27 +3,18 @@
  *
  * Saves data on the object private and public
  */
-var camelize = hAzzle.camelize,
 
-    storageRegex = {
-
-        WhiteRegex: (/\S+/g),
-        htmlRegEx: /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
-        charRegEx: /([A-Z])/g
-    };
+var sWhiteRegex = (/\S+/g),
+    shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
+    scharRegEx = /([A-Z])/g
 
 function Storage() {
-    return new Storage.prototype.init();
-
+  this.expando = hAzzle.expando + hAzzle.getID(true, 'storage');
 }
 
 Storage.prototype = {
 
     expando: 0,
-
-    init: function() {
-        this.expando = hAzzle.expando + hAzzle.getID(true, 'storage');
-    },
 
     register: function(owner, initial) {
         var descriptor = {};
@@ -49,6 +40,7 @@ Storage.prototype = {
 
     cache: function(owner, initial) {
 
+
         if (!hAzzle.legalTypes(owner)) {
             return {};
         }
@@ -63,7 +55,6 @@ Storage.prototype = {
 
             return cache;
         }
-
         return this.register(owner, initial);
     },
 
@@ -109,7 +100,7 @@ Storage.prototype = {
             stored = this.get(owner, key);
 
             return stored !== undefined ?
-                stored : this.get(owner, camelize(key));
+                stored : this.get(owner, hAzzle.camelize(key));
         }
 
         this.set(owner, key, value);
@@ -127,11 +118,11 @@ Storage.prototype = {
 
             if (hAzzle.isArray(key)) {
 
-                name = key.concat(key.map(camelize));
+                name = key.concat(key.map(hAzzle.camelize));
 
             } else {
 
-                camel = camelize(key);
+                camel = hAzzle.camelize(key);
 
                 if (key in cache) {
 
@@ -140,7 +131,7 @@ Storage.prototype = {
                 } else {
 
                     name = camel;
-                    name = name in cache ? [name] : (name.match(storageRegex.WhiteRegex) || []);
+                    name = name in cache ? [name] : (name.match(sWhiteRegex) || []);
                 }
             }
 
@@ -166,10 +157,6 @@ Storage.prototype = {
         }
     }
 };
-
-Storage.prototype.init.prototype = Storage.prototype;
-
-
 
 var _privateData = new Storage(),
     _userData = new Storage();
@@ -258,7 +245,7 @@ hAzzle.extend({
 
                             if (name.indexOf('data-') === 0) {
 
-                                name = camelize(name.slice(5));
+                                name = hAzzle.camelize(name.slice(5));
                                 dataAttr(elem, name, data[name]);
                             }
                         }
@@ -282,7 +269,7 @@ hAzzle.extend({
 
         return hAzzle.setter(this, function(value) {
 
-            var data, camelKey = camelize(key);
+            var data, camelKey = hAzzle.camelize(key);
 
             if (elem && value === undefined) {
 
@@ -357,7 +344,7 @@ function dataAttr(elem, key, data) {
 
     if (data === undefined && elem.nodeType === 1) {
 
-        name = 'data-' + key.replace(storageRegex.charRegEx, '-$1').toLowerCase();
+        name = 'data-' + key.replace(scharRegEx, '-$1').toLowerCase();
 
         data = elem.getAttribute(name);
 
@@ -368,7 +355,7 @@ function dataAttr(elem, key, data) {
                     data === 'null' ? null :
                     // Only convert to a number if it doesn't change the string
                     +data + '' === data ? +data :
-                    storageRegex.htmlRegEx.test(data) ? JSON.parse(data + '') : data;
+                    shtmlRegEx.test(data) ? JSON.parse(data + '') : data;
             } catch (e) {}
 
             // Make sure we set the data so it isn't changed later
@@ -401,6 +388,7 @@ function dataAttr(elem, key, data) {
 
 hAzzle.styleCache = function(elem) {
 
+if(!elem) return;
     if (hAzzle.data(elem, 'CSS') === undefined) {
 
         hAzzle.data(elem, 'CSS', {
@@ -433,7 +421,8 @@ hAzzle.styleCache = function(elem) {
 			
 			queue: {},
 						
-			isRunning: false
         });
     };
+	
+	return false;
 }
