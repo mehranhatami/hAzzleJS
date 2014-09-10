@@ -62,9 +62,9 @@ var
                     parts = relVal.exec(value),
                     unit = parts && parts[3] || (hAzzle.unitless[prop] ? '' : 'px'),
 
-					// Note! This start value gives a bug if the propert are uknow or not hooked
-					// Need a fix soon!!
-					
+                    // Note! This start value gives a bug if the propert are uknow or not hooked
+                    // Need a fix soon!!
+
                     start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
                     relVal.exec(hAzzle.css(tween.elem, prop)),
                     scale = 1,
@@ -259,6 +259,11 @@ hAzzle.extend({
                         }, 1);
                     }
                 }
+
+                // Set up the elements cache
+
+                hAzzle.styleCache(this);
+
                 // Operate on a copy of prop so per-property easing won't be lost
                 var anim = Animation(this, quickCopy({}, prop), opt);
 
@@ -275,25 +280,34 @@ hAzzle.extend({
             this.queue(opt.queue, doAnimation);
     },
     stop: function(type, clearQueue, gotoEnd) {
-        var stopQueue = function(hooks) {
-            var stop = hooks.stop;
-            delete hooks.stop;
-            stop(gotoEnd);
-        };
+
+        var i = this.length,
+            elem,
+            dequeue = true,
+            data,
+            index = type != null && type + 'queueHooks',
+            stopQueue = function(hooks) {
+                var stop = hooks.stop;
+                delete hooks.stop;
+                stop(gotoEnd);
+            };
 
         if (typeof type !== 'string') {
             gotoEnd = clearQueue;
             clearQueue = type;
             type = undefined;
         }
+
         if (clearQueue && type !== false) {
             this.queue(type || 'fx', []);
         }
 
-        return this.each(function() {
-            var dequeue = true,
-                index = type != null && type + 'queueHooks',
-                data = hAzzle.private(this);
+        // Faster then hAzzle.each()
+
+        while (i--) {
+
+            elem = this[i];
+            data = hAzzle.private(elem);
 
             if (index) {
                 if (data[index] && data[index].stop) {
@@ -309,7 +323,7 @@ hAzzle.extend({
             }
 
             for (index = sheets.length; index--;) {
-                if (sheets[index].elem === this &&
+                if (sheets[index].elem === elem &&
                     (type == null || sheets[index].queue === type)) {
 
                     sheets[index].anim.stop(gotoEnd);
@@ -319,9 +333,10 @@ hAzzle.extend({
             }
 
             if (dequeue || !gotoEnd) {
-                hAzzle.dequeue(this, type);
+                hAzzle.dequeue(elem, type);
             }
-        });
+        }
+        return this;
     },
     finish: function(type) {
         if (type !== false) {
@@ -416,6 +431,10 @@ function parseDefault(elem, props, opts) {
             props.display = hAzzle.getDisplayType(elem);
         }
 
+        // Save the state
+
+        hAzzle.data(elem, 'CSS').opts.display === props.display;
+
         anim.done(function() {
             elem.style.display = props.display;
         });
@@ -424,9 +443,24 @@ function parseDefault(elem, props, opts) {
     if (props.visibility) {
         props.visibility = props.visibility.toString().toLowerCase();
 
+        // Save the state
+
+        hAzzle.data(elem, 'CSS').opts.visibility === props.visibility;
+
         anim.done(function() {
             elem.style.visibility = props.visibility;
         });
+    }
+
+    if (opts.reverse) {
+
+        // If the element was hidden via the display option in the 
+        // previous call, revert display to block prior to reversal so 
+        // that the element is visible again.
+
+        if (hAzzle.data(elem, 'CSS').opts.display === 'none') {
+            hAzzle.data(elem, 'CSS').opts.display = 'block';
+        }
     }
 
     /********************
