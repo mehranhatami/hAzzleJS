@@ -186,8 +186,7 @@ hAzzle.extend({
         var opt = {};
 
         if (typeof speed === 'object') {
-
-            opt = hAzzle.shallowCopy({}, speed);
+            opt = speed;
         }
 
         /**********************
@@ -196,9 +195,11 @@ hAzzle.extend({
 
         opt.complete = opt.complete ?
             opt.complete :
+            callback ? callback :
+            !callback && easing ? easing :
             (callback || !callback && easing || hAzzle.isFunction(speed) && speed);
 
-        // 'complete' has to be function - otherwise, default to null.
+        // 'complete' has to be function. Otherwise, default to null.
 
         if (opt.complete && typeof opt.complete !== 'function') {
             opt.complete = null;
@@ -208,7 +209,7 @@ hAzzle.extend({
          Option: begin
         **********************/
 
-        // 'begin' has to be function - otherwise, default to null.
+        // 'begin' has to be function. Otherwise, default to null.
 
         if (opt.begin && typeof opt.begin !== 'function') {
             opt.begin = null;
@@ -218,14 +219,15 @@ hAzzle.extend({
          Option: duration
         **********************/
 
-        opt.duration = speed;
+        //        opt.duration = speed;
 
         // Go to the end state if fx are off or if document is hidden
-        if (hAzzle.fx.off || document.hidden) {
+        if (document.hidden) {
             opt.duration = 0;
 
         } else {
-            opt.duration = typeof opt.duration === 'number' ?
+            opt.duration = typeof speed === 'number' ? speed :
+                typeof opt.duration === 'number' ?
                 opt.duration : opt.duration in hAzzle.speeds ?
                 hAzzle.speeds[opt.duration] : hAzzle.defaultDuration;
         }
@@ -234,9 +236,11 @@ hAzzle.extend({
          Option: easing
         **********************/
 
-        opt.easing = opt.easing ? 
-		             opt.easing :
-					 callback && easing || easing && typeof easing !== 'function' && easing;
+        opt.easing = opt.easing ?
+            opt.easing :
+            callback && easing ? easing :
+            !callback && speed && easing ? easing :
+            typeof easing !== 'function' && easing;
 
         /**********************
          Option: mobile
@@ -320,7 +324,7 @@ hAzzle.extend({
         return this.each(function() {
             var dequeue = true,
                 index = type != null && type + 'queueHooks',
-                data = hAzzle.getPrivate(this);
+                data = hAzzle.private(this);
 
             if (index) {
                 if (data[index] && data[index].stop) {
@@ -405,7 +409,7 @@ function parseDefault(elem, props, opts) {
         orig = {},
         style = elem.style,
         hidden = elem.nodeType && isHidden(elem),
-        dataShow = hAzzle.getPrivate(elem, 'fxshow');
+        dataShow = hAzzle.private(elem, 'fxshow');
 
     // Handle queue: false promises
     if (!opts.queue) {
