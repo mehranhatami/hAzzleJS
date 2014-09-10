@@ -128,13 +128,14 @@ if (hAzzle.cssCore.borderRadius) {
 
 hAzzle.cssHooks.transform = {
     get: function(elem) {
-        return hAzzle.css(elem, hAzzle.cssCore.transform);
+        return hAzzle.curCSS(elem, hAzzle.cssCore.transform);
     },
     set: function(elem, value) {
         elem.style[hAzzle.cssCore.transform] = value;
     }
 
 };
+
 
 // Column
 
