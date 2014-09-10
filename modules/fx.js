@@ -10,6 +10,7 @@ var
     queueHooks = /queueHooks$/,
     fixTick = false, // feature detected below
     sheets = [],
+	prefix = 'oTween',
     rafId,
 
     // Ticker 
@@ -137,42 +138,7 @@ hAzzle.extend({
     // Plug-in / hook for overriding the values of CSS properties
     // that are being animated.
 
-    propertyMap: {
-
-        display: function(elem, value) {
-
-            // If the element was hidden in the previous call, revert display 
-            // to 'auto' prior to reversal so that the element is visible again.
-
-            if ((value = hAzzle.data(elem, 'display')) === 'none') {
-                hAzzle.data(elem, 'display', 'auto');
-            }
-
-            // Store the display value
-
-            hAzzle.data(elem, 'display', value);
-
-            return value;
-        },
-
-        visibility: function(elem, value) {
-
-            // If the element was hidden in the previous call, revert display 
-            // to 'auto' prior to reversal so that the element is visible again.
-
-            if ((value = hAzzle.data(elem, 'visibility')) === 'hidden') {
-                hAzzle.data(elem, 'visibility', 'visible');
-
-                return value;
-            }
-
-            // Store the visibility value
-
-            hAzzle.data(elem, 'visibility', value);
-
-            return value;
-        }
-    },
+    propertyMap: {},
 
     // Support for jQuery's named durations
     speeds: {
@@ -412,7 +378,7 @@ function parseDefault(elem, props, opts) {
         orig = {},
         style = elem.style,
         hidden = elem.nodeType && isHidden(elem),
-        dataShow = hAzzle.private(elem, 'fxshow');
+        dataShow = hAzzle.private(elem, prefix);
 
     // Handle queue: false promises
     if (!opts.queue) {
@@ -438,6 +404,30 @@ function parseDefault(elem, props, opts) {
             });
         });
     }
+	
+    /********************
+      Options parsing
+    ********************/
+	
+	 if (opts.display !== undefined && opts.display !== null) {
+         opts.display = opts.display.toString().toLowerCase();
+
+         if (opts.display === 'auto') {
+             opts.display = hAzzle.getDisplayType(elem);
+         }
+		 
+        anim.done(function() {
+         elem.style.display = opts.display; 
+        });
+    }
+	
+    if (opts.visibility) {
+         opts.visibility = opts.visibility.toString().toLowerCase();
+		 
+        anim.done(function() {
+         elem.style.visibility = opts.visibility; 
+        });
+    }
 
     /********************
          Original values
@@ -458,11 +448,6 @@ function parseDefault(elem, props, opts) {
 
     if (props === 'height' ||
         props === 'width') {
-
-    }
-
-    // Height/width overflow pass
-    if (('height' in props || 'width' in props)) {
 
         // Make sure we are not overriding any effects
 
@@ -541,24 +526,32 @@ function parseDefault(elem, props, opts) {
                 hidden = dataShow.hidden;
             }
         } else {
-            dataShow = hAzzle.private(elem, 'fxshow', {});
+            dataShow = hAzzle.private(elem, prefix, {});
         }
 
         // Store state if its toggle - enables .stop().toggle() to 'reverse'
         if (toggle) {
             dataShow.hidden = !hidden;
         }
-        if (hidden) {
+		 
+	    if (hidden ) {
             hAzzle(elem).show();
         } else {
+
+	  // Display can be set as a option, so no need to run
+	  // the 'done' function twice if the user choose to hide / show
+      // the element through the options
+	   
+	   if(!opts.display) {
             anim.done(function() {
                 hAzzle(elem).hide();
             });
         }
+	 }
         anim.done(function() {
             var prop;
 
-            hAzzle.removePrivate(elem, 'fxshow');
+            hAzzle.removePrivate(elem, prefix);
             for (prop in orig) {
                 hAzzle.style(elem, prop, orig[prop]);
             }
@@ -570,7 +563,8 @@ function parseDefault(elem, props, opts) {
                 dataShow[prop] = tween.start;
                 if (hidden) {
                     tween.end = tween.start;
-                    tween.start = prop === 'width' || prop === 'height' ? 1 : 0;
+                    tween.start = prop === 'width' || 
+					prop === 'height' ? 1 : 0;
                 }
             }
         }
@@ -800,3 +794,7 @@ Animation.prefilter = function(callback, prepend) {
         animationPrefilters.push(callback);
     }
 };
+
+
+
+

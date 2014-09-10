@@ -16,6 +16,7 @@ Tween.prototype = {
 		
         this.easing = hAzzle.easing[easing] || hAzzle.easing[hAzzle.defaultEasing];
         this.duration = options.duration;
+        this.options = options;
         this.step = options.step;
         this.start = this.now = this.cur();
         this.end = end;
@@ -65,32 +66,32 @@ Tween.prototype.init.prototype = Tween.prototype;
 hAzzle.TweenHooks = {
     _default: {
         get: function(tween) {
-            var startValue;
+            var cur;
 
             if (tween.elem[tween.prop] != null &&
                 (!tween.elem.style || tween.elem.style[tween.prop] == null)) {
                 return tween.elem[tween.prop];
             }
 
-            startValue = hAzzle.css(tween.elem, tween.prop, '');
+            cur = hAzzle.css(tween.elem, tween.prop, '');
 
             // Convert CSS null-values to an integer of value 0.
 
-            if (hAzzle.isZeroValue(startValue)) {
-                startValue = 0;
+            if (hAzzle.isZeroValue(cur)) {
+                cur = 0;
             }
 
             // If the display option is being set to a non-'none' (e.g. 'block') and opacityis being
             // animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus 
-            // we forcefeed opacity a startValue of 0 
+            // we forcefeed opacity a start value of 0 
 
-            if ((tween.prop === 'display' && startValue !== 'none') ||
-                (tween.prop === 'visible' && startValue !== 'hidden') &&
-                tween.prop === 'opacity' && !startValue && tween.end !== 0) {
-                startValue = 0;
+            if (((tween.options.display !== undefined && tween.options.display !== null && tween.options.display !== 'none') 
+			|| (tween.options.visibility && tween.options.visibility !== 'hidden')) && tween.prop === 'opacity' && 
+			!cur && tween.end !== 0) {
+                cur = 0;
             }
 
-            return startValue;
+            return cur;
         },
         set: function(tween) {
 

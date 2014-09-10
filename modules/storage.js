@@ -426,6 +426,12 @@ hAzzle.styleCache = function(elem) {
 			isSVG: hAzzle.isSVG(elem),
 			
 			prevState: {},
+			
+            opts: {},
+
+            // Used for animation queue
+			
+			queue: {},
 						
 			isRunning: false
         });
