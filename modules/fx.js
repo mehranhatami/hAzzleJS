@@ -9,6 +9,7 @@ var
     relVal = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     queueHooks = /queueHooks$/,
     fixTick = false, // feature detected below
+    bata = [],
     rafId,
 
     // Ticker 
@@ -20,23 +21,22 @@ var
             if (rafId) {
 
                 var timer,
-                    timers = hAzzle.timers,
                     i = 0;
 
                 frame.request(raf);
 
-                for (; i < timers.length; i++) {
+                for (; i < bata.length; i++) {
 
-                    timer = timers[i];
+                    timer = bata[i];
 
-                    if (!timer() && timers[i] === timer) {
-                        timers.splice(i--, 1);
+                    if (!timer() && bata[i] === timer) {
+                        bata.splice(i--, 1);
                     }
                 }
 
                 // If no length, cancel the animation
 
-                if (!timers.length) {
+                if (!bata.length) {
                     frame.cancel(rafId);
                     rafId = null;
                 }
@@ -116,7 +116,7 @@ var
 
 hAzzle.extend({
 
-    timers: [],
+
 
     // Contains a object over CSS properties that should
     // be backed up before animation, and restored after
@@ -174,13 +174,15 @@ hAzzle.extend({
         _default: 400
     }
 
-}, hAzzle)
+}, hAzzle);
 
 
 hAzzle.extend({
 
     animate: function(prop, speed, easing, callback) {
 
+   var opt;
+   
         if (typeof speed === 'object') {
 
             opt = hAzzle.shallowCopy({}, speed);
@@ -230,7 +232,6 @@ hAzzle.extend({
         };
 
         var empty = hAzzle.isEmptyObject(prop),
-            optall = opt,
             doAnimation = function() {
                 // Operate on a copy of prop so per-property easing won't be lost
                 var anim = Animation(this, hAzzle.shallowCopy({}, prop), opt);
@@ -266,7 +267,6 @@ hAzzle.extend({
         return this.each(function() {
             var dequeue = true,
                 index = type != null && type + 'queueHooks',
-                timers = hAzzle.timers,
                 data = hAzzle.getPrivate(this);
 
             if (index) {
@@ -281,13 +281,13 @@ hAzzle.extend({
                 }
             }
 
-            for (index = timers.length; index--;) {
-                if (timers[index].elem === this &&
-                    (type == null || timers[index].queue === type)) {
+            for (index = bata.length; index--;) {
+                if (bata[index].elem === this &&
+                    (type == null || bata[index].queue === type)) {
 
-                    timers[index].anim.stop(gotoEnd);
+                    bata[index].anim.stop(gotoEnd);
                     dequeue = false;
-                    timers.splice(index, 1);
+                    bata.splice(index, 1);
                 }
             }
 
@@ -305,7 +305,6 @@ hAzzle.extend({
                 data = hAzzle.private(this),
                 queue = data[type + 'queue'],
                 hooks = data[type + 'queueHooks'],
-                timers = hAzzle.timers,
                 length = queue ? queue.length : 0;
 
             // Enable finishing flag on private data
@@ -319,10 +318,10 @@ hAzzle.extend({
             }
 
             // Look for any active animations, and finish them
-            for (index = timers.length; index--;) {
-                if (timers[index].elem === this && timers[index].queue === type) {
-                    timers[index].anim.stop(true);
-                    timers.splice(index, 1);
+            for (index = bata.length; index--;) {
+                if (bata[index].elem === this && bata[index].queue === type) {
+                    bata[index].anim.stop(true);
+                    bata.splice(index, 1);
                 }
             }
 
@@ -441,26 +440,9 @@ function defaultPrefilter(elem, props, opts) {
         style.display = 'inline-block';
     }
 
-    // show/hide pass
     for (prop in props) {
 
         value = props[prop];
-
-        // Properties that are not supported by the browser will inherently produce no style changes 
-        // when set, so they are skipped in order to decrease animation tick overhead.
-        // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
-        // there is no way to check for their explicit browser support, and so we skip this check for them.
-
-        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(prop)[1] === false) {
-            hAzzle.error('Skipping [' + prop + '] due to a lack of browser support.');
-            continue;
-        }
-
-        // propertyMap hook for option parsing
-
-        if (hAzzle.propertyMap[prop]) {
-            value = hAzzle.propertyMap[name](elem, name);
-        }
 
         /********************************************
           Support for jQuery's show, hide and toggle
@@ -470,7 +452,6 @@ function defaultPrefilter(elem, props, opts) {
             value === 'show' ||
             value === 'hide'
         ) {
-
             delete props[prop];
 
             toggle = toggle || value === 'toggle';
@@ -539,8 +520,6 @@ function defaultPrefilter(elem, props, opts) {
     }
 }
 
-
-
 // Create Tween
 
 function createTween(value, prop, animation) {
@@ -551,21 +530,34 @@ function createTween(value, prop, animation) {
     for (; index < length; index++) {
 
         if ((tween = collection[index].call(animation, prop, value))) {
-
-            // We're done with this property
             return tween;
         }
     }
 }
 
-
-function propFilter(props, specialEasing) {
+function parseProperties(elem, props, specialEasing) {
 
     var index, name, easing, value, hooks;
 
     for (index in props) {
 
         name = hAzzle.camelize(index);
+
+        // Properties that are not supported by the browser will inherently produce no style changes 
+        // when set, so they are skipped in order to decrease animation tick overhead.
+        // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
+        // there is no way to check for their explicit browser support, and so we skip this check for them.
+
+        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(index)[1] === false) {
+            hAzzle.error('Skipping [' + index + '] due to a lack of browser support.');
+            continue;
+        }
+
+        // propertyMap hook for option parsing
+
+        if (hAzzle.propertyMap[index]) {
+            value = hAzzle.propertyMap[name](elem, index);
+        }
 
         easing = specialEasing[name];
 
@@ -670,12 +662,15 @@ function Animation(elem, properties, options) {
                 } else {
                     deferred.rejectWith(elem, [animation, gotoEnd]);
                 }
+
                 return this;
             }
         }),
         props = animation.props;
 
-    propFilter(props, animation.opts.specialEasing);
+    // Parse CSS properties, and decrease animation tick overhead
+
+    parseProperties(elem, props, animation.opts.specialEasing);
 
     for (; index < length; index++) {
         result = animationPrefilters[index].call(animation, elem, props, animation.opts);
@@ -690,26 +685,21 @@ function Animation(elem, properties, options) {
         animation.opts.start.call(elem, animation);
     }
 
-    var XXX = hAzzle.shallowCopy(tick, {
-        elem: elem,
-        anim: animation,
-        queue: animation.opts.queue
-    });
+    tick.elem = elem;
+    tick.anim = animation;
+    tick.queue = animation.opts.queue;
 
-    hAzzle.timers.push(XXX);
+    bata.push(tick);
 
+    // If 'tick' is a function, start the animation
 
-
-    if (XXX()) {
+    if (tick()) {
 
         runAnimation();
 
     } else {
-        hAzzle.timers.pop();
+        bata.pop();
     }
-
-
-
 
     // attach callbacks from options
     return animation.progress(animation.opts.progress)
@@ -717,9 +707,6 @@ function Animation(elem, properties, options) {
         .fail(animation.opts.fail)
         .always(animation.opts.always);
 }
-
-
-
 
 Animation.tweener = function(props, callback) {
 
@@ -739,7 +726,7 @@ Animation.tweener = function(props, callback) {
         tweeners[prop] = tweeners[prop] || [];
         tweeners[prop].unshift(callback);
     }
-}
+};
 
 Animation.prefilter = function(callback, prepend) {
     if (prepend) {
@@ -747,4 +734,4 @@ Animation.prefilter = function(callback, prepend) {
     } else {
         animationPrefilters.push(callback);
     }
-}
+};
