@@ -2,16 +2,6 @@
  * DOM walker & getters
  */
 var
-// Prototype references.
-
-    ArrayProto = Array.prototype,
-
-    // Save a reference to some core methods
-
-    indexOf = ArrayProto.indexOf,
-    slice = ArrayProto.slice,
-    concat = ArrayProto.concat,
-
     parpreunall = /^(?:parents|prev(?:Until|All))/,
 
     preservesUniquenessAndOrder = {};
@@ -41,18 +31,6 @@ hAzzle.extend({
     },
 
     /**
-     * Reverse all elements in a collection
-     */
-
-    reverse: function() {
-        var arr = [];
-        this.each(function() {
-            arr.push(this);
-        });
-        return hAzzle(arr.reverse());
-    },
-
-    /**
      * Reduce the set of matched elements to the first in the set,
      * OR to the first Nth elements, if index is specified
      *
@@ -73,7 +51,6 @@ hAzzle.extend({
      */
 
     first: function(index) {
-
         return index ? this.slice(0, index) : this.eq(0);
     },
 
@@ -95,7 +72,6 @@ hAzzle.extend({
      */
 
     last: function(index) {
-
         return index ? this.slice(this.length - index) : this.eq(-1);
     },
 
@@ -107,7 +83,6 @@ hAzzle.extend({
      */
 
     slice: function() {
-
         return hAzzle(slice.apply(this, arguments));
     },
 
@@ -229,7 +204,6 @@ hAzzle.extend({
     hasDescendant: function() {
         return this.has.apply(this, arguments);
     },
-
 
     /** Determine the position of an element within the matched set of elements
      *

@@ -4,7 +4,7 @@
  * Version: 0.9.9e RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-07
+ * Date: 2014-09-11
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -65,38 +65,18 @@
         }
 
         if (typeof selector === 'string') {
-
-            selector = hAzzle.find(selector, context);
-
-            // Instanceof hAzzle          
-
+            selector = hAzzle.find(selector, context); // Instanceof hAzzle
         } else if (selector instanceof hAzzle) {
-
             return selector;
-
-            // document fragment
-
-        } else if (selector.nodeType === 11) {
-
-            // collect the child nodes
+        } else if (selector.nodeType === 11) { // document fragment
             selector = selector.childNodes;
-
-            // nodeType			
-
-        } else if (selector.nodeType) {
-
+        } else if (selector.nodeType) { // nodeType
             selector = [selector];
-
         } else if (hAzzle.isNodeList(selector)) {
-
             selector = hAzzle.makeArray(selector);
-
-            // Wrap DOM nodes.
-
         } else if (hAzzle.isElement(selector) ||
             hAzzle.isDocument(selector) ||
             (selector === window)) {
-
             selector = [selector];
         }
 
@@ -181,7 +161,6 @@
         // better performance
 
         if (length === 1) {
-
             extend(target, source[0]);
 
         } else {
@@ -189,7 +168,6 @@
             source = arguments[0];
 
             for (; i < length; i++) {
-
                 extend(target, arguments[i]);
             }
         }
@@ -293,7 +271,6 @@
             }
             return collection;
         },
-
 
         // Convert camelCase to  CSS-style
         // e.g. boxSizing -> box-sizing
@@ -447,7 +424,6 @@
             first.length = i;
 
             return first;
-
         },
 
         // Nothing
@@ -469,7 +445,6 @@
             var results = [];
 
             if (obj === null) {
-
                 return results;
             }
 
@@ -559,32 +534,28 @@
                 str;
 
             if (obj === null) {
-
                 return obj + '';
             }
 
             if (type === 'boolean') {
-
                 return 'boolean';
             }
 
             if (type === 'string') {
-
                 return 'string';
             }
 
             str = hAzzle.str.call(obj);
 
             if (natives[str]) {
-
                 return natives[str];
             }
 
             return type;
 
         },
-		
-		isSVG: function (elem) {
+
+        isSVG: function(elem) {
             return window.SVGElement && (elem instanceof SVGElement);
         },
 
@@ -597,11 +568,11 @@
      *
      * @param{String} str
      * @return{String}
-     *
-     * NOTE! String.prototype.trim() are only supported in IE9+ Standard mode.
      */
 
     hAzzle.trim = (function() {
+
+        // IE9
 
         if (!String.prototype.trim) {
             return function(str) {
@@ -617,7 +588,6 @@
     //  Checks if `obj` is a window object.
 
     var isWindow = hAzzle.isWindow = function(obj) {
-
             return obj !== null && obj === obj.window;
         },
 
