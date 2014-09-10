@@ -1,9 +1,17 @@
-var frame = hAzzle.RAF(),
-    rfxtypes = /^(?:toggle|show|hide)$/,
-    rfxnum = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
-    rrun = /queueHooks$/,
+// fx.js
+var
+// 'frame' is the requestAnimationFrame shim we are using
+// Sending a number into the shim will adjust the 
+// framerate. E.g. hAzzle.RAF(20) change the frame rate to
+// 20 FPS
+
+    frame = hAzzle.RAF(),
+    relVal = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
+    queueHooks = /queueHooks$/,
     fixTick = false, // feature detected below
     rafId,
+
+    // Ticker 
 
     runAnimation = function() {
 
@@ -14,7 +22,7 @@ var frame = hAzzle.RAF(),
                 var timer,
                     timers = hAzzle.timers,
                     i = 0;
-					
+
                 frame.request(raf);
 
                 for (; i < timers.length; i++) {
@@ -25,46 +33,45 @@ var frame = hAzzle.RAF(),
                         timers.splice(i--, 1);
                     }
                 }
-				
-				// If no length, cancel the animation
-				
+
+                // If no length, cancel the animation
+
                 if (!timers.length) {
                     frame.cancel(rafId);
                     rafId = null;
                 }
             }
         });
-      
-	   // Only run the animation if there is no rafId
-       
-	    if (!rafId) {
+
+        // Only run the animation if there is no rafId
+
+        if (!rafId) {
             rafId = frame.request(raf);
         }
     },
-    
-    animationPrefilters = [defaultPrefilter],
+
+    // Support for jQuery API
+    // NOTE!! This will be changed soon
 
     tweeners = {
-			
+
         '*': [
             function(prop, value) {
                 var tween = this.createTween(prop, value),
                     target = tween.cur(),
-                    parts = rfxnum.exec(value),
+                    parts = relVal.exec(value),
                     unit = parts && parts[3] || (hAzzle.unitless[prop] ? '' : 'px'),
 
                     // Starting value computation is required for potential unit mismatches
                     start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                    rfxnum.exec(hAzzle.css(tween.elem, prop)),
+                    relVal.exec(hAzzle.css(tween.elem, prop)),
                     scale = 1,
                     maxIterations = 20;
 
                 if (start && start[3] !== unit) {
-					
 
-                    // Trust units reported by hAzzle.css
                     unit = unit || start[3];
-					//alert(unit)
+
                     // Make sure we update the tween properties later on
                     parts = parts || [];
 
@@ -89,45 +96,98 @@ var frame = hAzzle.RAF(),
 
                 // Update tween properties
                 if (parts) {
-					//alert(parts[2])
-					
-					
-						  start = tween.start = +start || +target || 0;
+
+                    start = tween.start = +start || +target || 0;
                     tween.unit = unit;
+
                     // If a +=/-= token was provided, we're doing a relative animation
-                    tween.end = parts[1] ?
-                        start + (parts[1] + 1) * parts[2] :
-                        +parts[2];
-					
-					
-                   
+                    tween.end = parts[1] ? start + (parts[1] + 1) * parts[2] : +parts[2];
+
                 }
 
                 return tween;
             }
         ]
-    };
+    },
+
+    animationPrefilters = [defaultPrefilter];
+
+// Extend the global hAzzle object
 
 hAzzle.extend({
+
+    timers: [],
+
+    // Contains a object over CSS properties that should
+    // be backed up before animation, and restored after
+    // animation are completed
 
     originalValues: {
         boxSizing: null,
     },
 
-   
-}, hAzzle);
+    // Plug-in / hook for overriding the values of CSS properties
+    // that are being animated.
+
+    propertyMap: {
+
+        display: function(elem, value) {
+
+            // If the element was hidden in the previous call, revert display 
+            // to 'auto' prior to reversal so that the element is visible again.
+
+            if ((value = hAzzle.data(elem, 'display')) === 'none') {
+                hAzzle.data(elem, 'display', 'auto');
+            }
+
+            // Store the display value
+
+            hAzzle.data(elem, 'display', value);
+
+            return value;
+        },
+
+        visibility: function(elem, value) {
+
+            // If the element was hidden in the previous call, revert display 
+            // to 'auto' prior to reversal so that the element is visible again.
+
+            if ((value = hAzzle.data(elem, 'visibility')) === 'hidden') {
+                hAzzle.data(elem, 'visibility', 'visible');
+
+                return value;
+            }
+
+            // Store the visibility value
+
+            hAzzle.data(elem, 'visibility', value);
+
+            return value;
+        }
+    },
+
+    // Support for jQuery's named durations
+    speeds: {
+        slow: 600,
+        fast: 200,
+        // Default speed
+        _default: 400
+    }
+
+}, hAzzle)
+
 
 hAzzle.extend({
 
     animate: function(prop, speed, easing, callback) {
-		
-	   if (typeof speed === 'object') {
+
+        if (typeof speed === 'object') {
 
             opt = hAzzle.shallowCopy({}, speed);
 
         } else {
-			
-			 opt = {};
+
+            opt = {};
 
             // Callbacks
 
@@ -136,21 +196,22 @@ hAzzle.extend({
             // Duration
 
             opt.duration = speed;
-			opt.easing = callback && easing || easing && !hAzzle.isFunction(easing) && easing;
-			
-		}
-		
+
+            // Easing
+
+            opt.easing = callback && easing || easing && !hAzzle.isFunction(easing) && easing;
+        }
+
         // Go to the end state if fx are off or if document is hidden
         if (hAzzle.fx.off || document.hidden) {
             opt.duration = 0;
 
         } else {
             opt.duration = typeof opt.duration === 'number' ?
-                opt.duration : opt.duration in hAzzle.fx.speeds ?
-                hAzzle.fx.speeds[opt.duration] : hAzzle.fx.speeds._default;
+                opt.duration : opt.duration in hAzzle.speeds ?
+                hAzzle.speeds[opt.duration] : hAzzle.speeds._default;
         }
 
-        // Normalize opt.queue - true/undefined/null -> 'fx'
         if (opt.queue == null || opt.queue === true) {
             opt.queue = 'fx';
         }
@@ -168,7 +229,7 @@ hAzzle.extend({
             }
         };
 
-       var empty = hAzzle.isEmptyObject(prop),
+        var empty = hAzzle.isEmptyObject(prop),
             optall = opt,
             doAnimation = function() {
                 // Operate on a copy of prop so per-property easing won't be lost
@@ -181,10 +242,10 @@ hAzzle.extend({
             };
 
         doAnimation.finish = doAnimation;
-       
-		return empty || opt.queue === false ?
-			this.each( doAnimation ) :
-			this.queue( opt.queue, doAnimation );
+
+        return empty || opt.queue === false ?
+            this.each(doAnimation) :
+            this.queue(opt.queue, doAnimation);
     },
     stop: function(type, clearQueue, gotoEnd) {
         var stopQueue = function(hooks) {
@@ -214,7 +275,7 @@ hAzzle.extend({
                 }
             } else {
                 for (index in data) {
-                    if (data[index] && data[index].stop && rrun.test(index)) {
+                    if (data[index] && data[index].stop && queueHooks.test(index)) {
                         stopQueue(data[index]);
                     }
                 }
@@ -230,9 +291,6 @@ hAzzle.extend({
                 }
             }
 
-            // Start the next in the queue if the last step wasn't forced.
-            // Timers currently will call their complete callbacks, which
-            // will dequeue but only if they were gotoEnd.
             if (dequeue || !gotoEnd) {
                 hAzzle.dequeue(this, type);
             }
@@ -281,38 +339,8 @@ hAzzle.extend({
     }
 });
 
-hAzzle.timers = [];
-
-
-
-hAzzle.fx.speeds = {
-    slow: 600,
-    fast: 200,
-    // Default speed
-    _default: 400
-};
 
 /* ============================ UTILITY METHODS =========================== */
-
-
-
-
-// Create Tween
-
-function createTween(value, prop, animation) {
-    var tween, collection = (tweeners[prop] || []).concat(tweeners['*']),
-        index = 0,
-        length = collection.length;
-
-    for (; index < length; index++) {
-
-        if ((tween = collection[index].call(animation, prop, value))) {
-
-            // We're done with this property
-            return tween;
-        }
-    }
-}
 
 function defaultPrefilter(elem, props, opts) {
 
@@ -376,11 +404,11 @@ function defaultPrefilter(elem, props, opts) {
     // Height/width overflow pass
     if (('height' in props || 'width' in props)) {
 
-	// Make sure we are not overriding any effects
-    
-	props.overflow ? props.overflow : opts.originalValues.overflow = style.overflow;
-    props.overflowX ? props.overflowX : opts.originalValues.overflowX = style.overflowX;
-	props.overflowY ? props.overflowY : opts.originalValues.overflowY = style.overflowY;
+        // Make sure we are not overriding any effects
+
+        props.overflow ? props.overflow : opts.originalValues.overflow = style.overflow;
+        props.overflowX ? props.overflowX : opts.originalValues.overflowX = style.overflowX;
+        props.overflowY ? props.overflowY : opts.originalValues.overflowY = style.overflowY;
 
         if (opts.originalValues.overflow) {
             style.overflow = 'hidden';
@@ -401,10 +429,10 @@ function defaultPrefilter(elem, props, opts) {
     ***********************/
 
     // Get correct display. Its faster for us to use hAzzle.curCSS directly then
-	// hAzzle.css. In fact we gain better performance skipping a lot of checks
+    // hAzzle.css. In fact we gain better performance skipping a lot of checks
 
-     display = hAzzle.curCSS(elem, 'display');
-    
+    display = hAzzle.curCSS(elem, 'display');
+
     // Test default display if display is currently 'none'
     checkDisplay = display === 'none' ?
         hAzzle.getPrivate(elem, 'olddisplay') || hAzzle.getDisplayType(elem) : display;
@@ -418,31 +446,31 @@ function defaultPrefilter(elem, props, opts) {
 
         value = props[prop];
 
-    // Properties that are not supported by the browser will inherently produce no style changes 
-    // when set, so they are skipped in order to decrease animation tick overhead.
-    // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
-    // there is no way to check for their explicit browser support, and so we skip this check for them.
+        // Properties that are not supported by the browser will inherently produce no style changes 
+        // when set, so they are skipped in order to decrease animation tick overhead.
+        // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
+        // there is no way to check for their explicit browser support, and so we skip this check for them.
 
-  if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(prop)[1] === false) {
-     hAzzle.error('Skipping [' + prop + '] due to a lack of browser support.');
-      continue;
-  }
-  
-   // propertyMap hook for option parsing
-   
-    if (hAzzle.propertyMap[prop]) {
-       value = hAzzle.propertyMap[name](elem, name);
-    }
-    
-    /********************************************
-      Support for jQuery's show, hide and toggle
-    *******************************************/
+        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(prop)[1] === false) {
+            hAzzle.error('Skipping [' + prop + '] due to a lack of browser support.');
+            continue;
+        }
 
-       if (value === 'toggle' ||
-           value === 'show' ||
-           value === 'hide' 
-          ) {
-			  
+        // propertyMap hook for option parsing
+
+        if (hAzzle.propertyMap[prop]) {
+            value = hAzzle.propertyMap[name](elem, name);
+        }
+
+        /********************************************
+          Support for jQuery's show, hide and toggle
+        *******************************************/
+
+        if (value === 'toggle' ||
+            value === 'show' ||
+            value === 'hide'
+        ) {
+
             delete props[prop];
 
             toggle = toggle || value === 'toggle';
@@ -462,9 +490,9 @@ function defaultPrefilter(elem, props, opts) {
             display = undefined;
         }
     }
- 
-   // End of iteration
- 
+
+    // End of iteration
+
     if (!hAzzle.isEmptyObject(orig)) {
         if (dataShow) {
             if ('hidden' in dataShow) {
@@ -510,6 +538,26 @@ function defaultPrefilter(elem, props, opts) {
         style.display = display;
     }
 }
+
+
+
+// Create Tween
+
+function createTween(value, prop, animation) {
+    var tween, collection = (tweeners[prop] || []).concat(tweeners['*']),
+        index = 0,
+        length = collection.length;
+
+    for (; index < length; index++) {
+
+        if ((tween = collection[index].call(animation, prop, value))) {
+
+            // We're done with this property
+            return tween;
+        }
+    }
+}
+
 
 function propFilter(props, specialEasing) {
 
@@ -700,42 +748,3 @@ Animation.prefilter = function(callback, prepend) {
         animationPrefilters.push(callback);
     }
 }
-
-
-
- hAzzle.propertyMap = {
-
-        display: function(elem, value) {
-
-            // If the element was hidden in the previous call, revert display 
-            // to 'auto' prior to reversal so that the element is visible again.
-
-            if ((value = hAzzle.data(elem, 'display')) === 'none') {
-                hAzzle.data(elem, 'display', 'auto');
-            }
-
-            // Store the display value
-
-            hAzzle.data(elem, 'display', value);
-
-            return value;
-        },
-
-        visibility: function(elem, value) {
-
-            // If the element was hidden in the previous call, revert display 
-            // to 'auto' prior to reversal so that the element is visible again.
-
-            if ((value = hAzzle.data(elem, 'visibility')) === 'hidden') {
-                hAzzle.data(elem, 'visibility', 'visible');
-
-                return value;
-            }
-
-            // Store the visibility value
-
-            hAzzle.data(elem, 'visibility', value);
-
-            return value;
-        }
-    }
