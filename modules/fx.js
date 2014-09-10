@@ -135,8 +135,7 @@ hAzzle.extend({
         boxSizing: null,
     },
 
-    // Plug-in / hook for overriding the values of CSS properties
-    // that are being animated.
+    // Plug-in / hook for animated CSS properties values
 
     propertyMap: {},
 
@@ -192,10 +191,8 @@ hAzzle.extend({
          Option: duration
         **********************/
 
-        // Go to the end state if fx are off or if document is hidden
         if (document.hidden) {
             opt.duration = 0;
-
         } else {
             opt.duration = typeof speed === 'number' ? speed :
                 typeof opt.duration === 'number' ?
@@ -217,8 +214,9 @@ hAzzle.extend({
          Option: mobile
         **********************/
 
-        // For use with hooks. When set to true, and if this is a mobile device, mobile automatically 
+        // When set to true, and if this is a mobile device, mobile automatically 
         // enables hardware acceleration (via a null transform hack) on animating elements.
+        // Note! This are only for plugins such as CSS transformation
 
         opt.mobile = opt.mobile && hAzzle.isMobile;
 
@@ -408,30 +406,6 @@ function parseDefault(elem, props, opts) {
     }
 
     /********************
-      Options parsing
-    ********************/
-
-    if (opts.display !== undefined && opts.display !== null) {
-        opts.display = opts.display.toString().toLowerCase();
-
-        if (opts.display === 'auto') {
-            opts.display = hAzzle.getDisplayType(elem);
-        }
-
-        anim.done(function() {
-            elem.style.display = opts.display;
-        });
-    }
-
-    if (opts.visibility) {
-        opts.visibility = opts.visibility.toString().toLowerCase();
-
-        anim.done(function() {
-            elem.style.visibility = opts.visibility;
-        });
-    }
-
-    /********************
          Original values
       ********************/
 
@@ -462,10 +436,10 @@ function parseDefault(elem, props, opts) {
         }
     }
 
+    // Restore original CSS values after animation are finished 
+
     anim.done(function() {
-
         originalValues = opts.originalValues;
-
         for (orgValueProp in originalValues) {
             style[orgValueProp] = originalValues[orgValueProp];
         }
@@ -558,6 +532,7 @@ function parseDefault(elem, props, opts) {
                 hAzzle.style(elem, prop, orig[prop]);
             }
         });
+
         for (prop in orig) {
             tween = createTween(hidden ? dataShow[prop] : 0, prop, anim);
 
@@ -610,6 +585,30 @@ function parseProperties(elem, props, specialEasing) {
             continue;
         }
 
+
+        /********************
+          Options parsing
+        ********************/
+
+        if (props.display !== undefined && props.display !== null) {
+            props.display = props.display.toString().toLowerCase();
+
+            if (props.display === 'auto') {
+                props.display = hAzzle.getDisplayType(elem);
+            }
+
+            anim.done(function() {
+                elem.style.display = props.display;
+            });
+        }
+
+        if (props.visibility) {
+            props.visibility = props.visibility.toString().toLowerCase();
+
+            anim.done(function() {
+                elem.style.visibility = props.visibility;
+            });
+        }
         // propertyMap hook for option parsing
 
         if (hAzzle.propertyMap[index]) {
