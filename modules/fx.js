@@ -1,657 +1,709 @@
 var frame = hAzzle.RAF(),
-    relativeRegEx = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
+    rfxtypes = /^(?:toggle|show|hide)$/,
+    rfxnum = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
+    rrun = /queueHooks$/,
     fixTick = false, // feature detected below
-    tweens = [],
-    rafId;
+    rafId,
 
-frame.request(function(timestamp) {
-    fixTick = timestamp > 1e12 != frame.perfNow() > 1e12;
-});
+    runAnimation = function() {
 
-function FX(elem, options, prop, from, to, unit) {
-    return new FX.prototype.initialize(elem, options, prop, from, to, unit);
-}
+        var raf = (function() {
 
-hAzzle.FX = FX;
+            if (rafId) {
 
-FX.prototype = {
+                var timer,
+                    timers = hAzzle.timers,
+                    i = 0;
+					
+                frame.request(raf);
 
-    // constructor
+                for (; i < timers.length; i++) {
 
-    constructor: FX,
+                    timer = timers[i];
 
-    /**
-     * initialize
-     * @param {Object} elem
-     * @param {Object} options
-     * @param {String} prop
-     */
-
-    initialize: function(elem, options, prop, from, to, unit) {
-
-        this.elem = elem;
-        this.prop = prop;
-        this.currentState = {};
-        this.options = options;
-        this.easing = options.easing;
-        this.unit = unit || this.unit || (hAzzle.unitless[this.prop] ? '' : 'px');
-        this.from = from;
-        this.to = to;
-
-        var self = this,
-            done = true,
-            start = frame.perfNow();
-
-        buhi({
-
-            // Do animation on active tween
-
-            animate: function(currentTime) {
-
-                currentTime -= start;
-
-                if (currentTime > self.options.duration) {
-
-                    // Do we need it???                    
-
-                    //self.update(to);
-
-                    // Save the property state so we know when we have completed 
-                    // the animation
-
-                    self.currentState[self.prop] = true;
-
-                    for (var i in self.currentState) {
-
-                        if (self.currentState[i] !== true) {
-                            done = false;
-                        }
+                    if (!timer() && timers[i] === timer) {
+                        timers.splice(i--, 1);
                     }
-
-                    // Restore CSS properties
-
-                    done && self.restore();
-
-                    return false;
                 }
-
-                self.step = hAzzle.easing[self.easing](currentTime / self.options.duration);
-                self.tick(self.step, to, from);
-                self.update();
-                return true;
-            },
-
-            // Stop running animation inside the active tween
-
-            stop: function(jump) {
-
-                if (jump) { // jump to end of animation?
-
-                    self.pos = self.to;
-                    self.step = 1;
-                    self.update(to);
-
-                } else {
-
-                    self.options.complete = null; // remove callback if not jumping to end
+				
+				// If no length, cancel the animation
+				
+                if (!timers.length) {
+                    frame.cancel(rafId);
+                    rafId = null;
                 }
-
-                // Restore CSS properties to original state
-
-                self.restore();
-            },
-
-            // Element we are animating
-
-            elem: self.elem,
-
-            // Queue options
-
-            queue: self.options.queue
-        });
-    },
-
-    update: function() {
-
-        var hooks = hAzzle.fxAfter[this.prop];
-
-        if (hooks && hooks.set) {
-            hooks.set(this);
-        } else {
-            hAzzle.fxAfter._default.set(this);
-        }
-    },
-
-    // Restore properties, and fire callback
-
-    restore: function() {
-
-        // Set CSS values back to original state
-
-        var complete = this.options.complete,
-            orgValueProp,
-            originalValues = this.options.originalValues;
-        for (orgValueProp in originalValues) {
-            this.elem.style[orgValueProp] = originalValues[orgValueProp];
-        }
-
-        // Execute the complete function
-
-        if (complete) {
-            this.options.complete = false;
-            complete.call(this.elem);
-        }
-    },
-
-    /**
-     * Run animation
-     * @param {Number|Object} from
-     * @param {Number|Object} to
-     * @param {Number} unit
-     */
-
-  
-
-    // Update current CSS properties
-
-    tick: function(pos, to, from) {
-
-        if (typeof from == 'object') {
-            var index;
-            this.pos = {};
-
-            // Math.floor are faster then Math.round, but I don't like
-            // none of them, but the problem we face are simple. Longer
-            // float values - more memory used
-
-
-            for (index in from) {
-
-                this.pos[index] = (index in to) ?
-                    Math.floor(((to[index] - from[index]) * pos + from[index]) * 1000) / 1000 :
-                    from[index];
             }
-
-        } else {
-
-             this.pos = Math.floor(((to - from) * pos + from) * 1000) / 1000;
+        });
+      
+	   // Only run the animation if there is no rafId
+       
+	    if (!rafId) {
+            rafId = frame.request(raf);
         }
+    },
+    
+    animationPrefilters = [defaultPrefilter],
 
-        // Progress / step function
+    tweeners = {
+			
+        '*': [
+            function(prop, value) {
+                var tween = this.createTween(prop, value),
+                    target = tween.cur(),
+                    parts = rfxnum.exec(value),
+                    unit = parts && parts[3] || (hAzzle.unitless[prop] ? '' : 'px'),
 
-        if (this.options.step) {
-            this.options.step.call(this.elem, this.elem, this.pos, this);
-        }
-    }
-};
+                    // Starting value computation is required for potential unit mismatches
+                    start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
+                    rfxnum.exec(hAzzle.css(tween.elem, prop)),
+                    scale = 1,
+                    maxIterations = 20;
 
-FX.prototype.initialize.prototype = FX.prototype;
+                if (start && start[3] !== unit) {
+					
+
+                    // Trust units reported by hAzzle.css
+                    unit = unit || start[3];
+					//alert(unit)
+                    // Make sure we update the tween properties later on
+                    parts = parts || [];
+
+                    // Iteratively approximate from a nonzero starting point
+                    start = +target || 1;
+
+                    do {
+                        // If previous iteration zeroed out, double until we get *something*.
+                        // Use string for doubling so we don't accidentally see scale as unchanged below
+                        scale = scale || '.5';
+
+                        // Adjust and apply
+                        start = start / scale;
+                        hAzzle.style(tween.elem, prop, start + unit);
+
+                        // Update scale, tolerating zero or NaN from tween.cur(),
+                        // break the loop if scale is unchanged or perfect, or if we've just had enough
+                    } while (
+                        scale !== (scale = tween.cur() / target) && scale !== 1 && --maxIterations
+                    );
+                }
+
+                // Update tween properties
+                if (parts) {
+					//alert(parts[2])
+					
+					
+						  start = tween.start = +start || +target || 0;
+                    tween.unit = unit;
+                    // If a +=/-= token was provided, we're doing a relative animation
+                    tween.end = parts[1] ?
+                        start + (parts[1] + 1) * parts[2] :
+                        +parts[2];
+					
+					
+                   
+                }
+
+                return tween;
+            }
+        ]
+    };
 
 hAzzle.extend({
 
-    /**
-     *  Perform a custom animation of a set of CSS properties.
-     *
-     *  hAzzle( ELEMENT ).animate ( { PROPERTIES}, { SETTINGS}   )
-     *
-     * Example:
-     *
-     * hAzzle(div).animate ( { width:200, height:200}, {
-     *
-     *   easing: 'linear',
-     *    duration: 900
+    originalValues: {
+        boxSizing: null,
+    },
 
-     *  })
-     *
-     * Short hand exist also:
-     *
-     *  hAzzle( ELEMENT ).animate ( { PROPERTIES}, DURATION, CALLBACK )
-     *
-     * Example:
-     *
-     * hAzzle(div).animate ( { width:200, height:200}, 999, function() {
-     *
-     * console.log('Hello! I'm a callback!' );
-     * });
-     *
-     */
+   
+}, hAzzle);
 
-    animate: function(opts, speed, callback) {
+hAzzle.extend({
 
-        // opts has to be a object, 
-
-        if (typeof opts !== 'object') {
-            return false;
-        }
-
-        var opt;
-
-        if (typeof speed === 'object') {
+    animate: function(prop, speed, easing, callback) {
+		
+	   if (typeof speed === 'object') {
 
             opt = hAzzle.shallowCopy({}, speed);
 
         } else {
-
-            opt = {};
+			
+			 opt = {};
 
             // Callbacks
 
-            opt.complete = (!callback && typeof speed === 'function') ? speed : callback;
+            opt.complete = callback || !callback && easing || hAzzle.isFunction(speed) && speed;
 
             // Duration
 
-            opt.duration = typeof speed === 'number' ? speed :
-                opt.duration in hAzzle.speeds ?
-                // Support for jQuery's named durations
-                hAzzle.speeds[opt.duration] : /* Default speed */ hAzzle.defaultDuration;
+            opt.duration = speed;
+			opt.easing = callback && easing || easing && !hAzzle.isFunction(easing) && easing;
+			
+		}
+		
+        // Go to the end state if fx are off or if document is hidden
+        if (hAzzle.fx.off || document.hidden) {
+            opt.duration = 0;
+
+        } else {
+            opt.duration = typeof opt.duration === 'number' ?
+                opt.duration : opt.duration in hAzzle.fx.speeds ?
+                hAzzle.fx.speeds[opt.duration] : hAzzle.fx.speeds._default;
         }
 
-        opt.duration = (hAzzle.speeds[opt.duration] || opt.duration) || hAzzle.defaultDuration;
-
-        // If the user is attempting to set a duration under 100, adjust it back to
-        // 100 to avoid bugs that can occur ( 30 is fast enough)
-
-        if (opt.duration < 100) {
-            opt.duration = 100;
-        }
-
-        // 'begin, 'step' and 'complete' has to be functions. Otherwise, default to null.
-
-        if (opt.begin && !hAzzle.isFunction(opt.begin)) {
-            opt.begin = null;
-        }
-
-
-        if (opt.step && !hAzzle.isFunction(opt.step)) {
-            opt.step = null;
-        }
-
-        if (opt.complete && !hAzzle.isFunction(opt.complete)) {
-            opt.complete = null;
-        }
-
-        // Easing
-
-        if (!hAzzle.easing[opt.easing]) {
-            if (hAzzle.easing[hAzzle.defaultEasing]) {
-                opt.easing = hAzzle.defaultEasing;
-                // Otherwise, use the same easing as jQuery's default easing type
-            } else {
-                opt.easing = 'swing';
-            }
-        }
-
-        // Queue
-
+        // Normalize opt.queue - true/undefined/null -> 'fx'
         if (opt.queue == null || opt.queue === true) {
             opt.queue = 'fx';
         }
 
+        // Queueing
         opt.old = opt.complete;
 
         opt.complete = function() {
-
             if (hAzzle.isFunction(opt.old)) {
                 opt.old.call(this);
             }
 
-            if (opt.queue !== false) {
+            if (opt.queue) {
                 hAzzle.dequeue(this, opt.queue);
             }
         };
 
-        // Begin the animation
+       var empty = hAzzle.isEmptyObject(prop),
+            optall = opt,
+            doAnimation = function() {
+                // Operate on a copy of prop so per-property easing won't be lost
+                var anim = Animation(this, hAzzle.shallowCopy({}, prop), opt);
 
-        function runAnimation() {
-
-            var elem = this,
-                unit, orgValueProp,
-                prop, endValue, name, style = elem.style,
-                startValue,
-                parts;
-
-            // Display & Visibility
-            // Note: We strictly check for undefined instead of falsiness because display accepts an empty string value.
-
-            if (opts.display !== undefined && opts.display !== null) {
-                opts.display = opts.display.toString().toLowerCase();
-
-                // Users can pass in a special 'auto' value to instruct hAzzle to set the 
-                // element to its default display value.
-
-                if (opts.display === 'auto') {
-                    opts.display = hAzzle.getDisplayType(elem);
+                // Empty animations, or finishing resolves immediately
+                if (empty || hAzzle.private(this, 'finish')) {
+                    anim.stop(true);
                 }
-            }
+            };
 
-            if (opts.visibility) {
-                opts.visibility = opts.visibility.toString().toLowerCase();
-            }
-
-            if (elem.nodeType === 1) {
-
-                // Backup the original CSS values on the animated object
-
-                opt.originalValues = {};
-
-                for (orgValueProp in hAzzle.originalValues) {
-                    opt.originalValues[orgValueProp] = elem.style[orgValueProp];
-                }
-
-                // Allways set overflow to 'hidden'
-                // Are you agree in this, Mehran??
-                style.overflow = 'hidden';
-            }
-
-            // Function to be 'fired before the animation starts
-            // Executed functions param will be same as the animated element
-
-            if (opt.begin) {
-
-                // We throw callbacks in a setTimeout so that thrown errors don't halt the execution 
-                // of hAzzle itself.
-                try {
-                    opt.begin.call(elem, elem);
-                } catch (error) {
-                    setTimeout(function() {
-                        throw 'Something went wrong!';
-                    }, 1);
-                }
-            }
-
-            // Can't use hAzzle.each here too slow, but we could optimize this
-            // as you suggested before, Mehran, then we can use hAzzle.each
-            // for the iteration
-
-            for (prop in opts) {
-
-                // Parse CSS properties before animation
-
-                endValue = opts[prop];
-
-                // Force the property to its camelCase styling to normalize it for manipulation
-
-                name = hAzzle.camelize(prop);
-
-                // Swap properties if no match
-
-                if (prop !== name) {
-                    opts[name] = opts[prop];
-
-                    // Remove the old property
-
-                    delete opts[prop];
-                }
-
-                // Properties that are not supported by the browser will inherently produce no style changes 
-                // when set, so they are skipped in order to decrease animation tick overhead.
-                // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
-                //  there is no way to check for their explicit browser support, and so we skip this check for them.
-
-                if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
-                    hAzzle.error('Skipping [' + prop + '] due to a lack of browser support.');
-                    continue;
-                }
-
-                // propertyMap hook for option parsing
-
-                if (hAzzle.propertyMap[prop]) {
-                    endValue = hAzzle.propertyMap[name](elem, name);
-                }
-            // Get startValue
-
-                startValue = hAzzle.fxBefore[name] ?
-                    hAzzle.fxBefore[name].start(elem, name, opts[name]) :
-                    hAzzle.fxBefore._default(elem, name, opts[name]);
-
-                // Convert CSS null-values to an integer of value 0.
-
-                if (hAzzle.isZeroValue(startValue)) {
-                    startValue = 0;
-                }
-
-                // If the display option is being set to a non-'none' (e.g. 'block') and opacityis being
-                // animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus 
-                // we forcefeed opacity a startValue of 0 
-
-
-                if ((prop === 'display' && startValue !== 'none') ||
-                    (prop === 'visible' && startValue !== 'hidden') &&
-                    prop === 'opacity' && !startValue && prop !== 0) {
-                    startValue = 0;
-                }
-
-                // Only parse the endValue if it's existing a hook for it
-
-	            endValue = hAzzle.fxBefore[name] ? 
-                           hAzzle.fxBefore[name].end(elem, name, opts[name], startValue) : 
-						   opts[name]; 
-                
-				// Units
-				
-                if ((parts = relativeRegEx.exec(endValue))) {
-
-                    var target = startValue,
-                        scale = 1,
-                        maxIterations = 20;
-
-                    if (parts) {
-
-                        endValue = parseFloat(parts[2]);
-
-                        unit = parts[3] || (hAzzle.unitless[name] ? '' : 'px');
-
-                        startValue = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                            relativeRegEx.exec(hAzzle.css(elem, name));
-
-                        // We need to compute starting value
-                        if (startValue && startValue[1] !== unit) {
-
-                            unit = unit || startValue[1];
-
-                            // Make sure we update the FX properties later on
-                            parts = parts || [];
-
-                            // Iteratively approximate from a nonzero starting point
-                            startValue = +target || 1;
-
-                            do {
-
-                                scale = scale || '.5';
-
-                                // Adjust and apply
-                                startValue = startValue / scale;
-                                elem.style[prop] = startValue + unit;
-
-                            } while (
-
-                                scale !== (scale = parseFloat(hAzzle.css(elem, name)) / target) && scale !== 1 && --maxIterations
-                            );
-                        }
-
-                        if (parts) {
-
-                            startValue = +startValue || +target || 0;
-
-                            switch (parts[1]) {
-                                case '+':
-                                    endValue = startValue + endValue;
-                                    break;
-
-                                case '-':
-                                    endValue = startValue - endValue;
-                                    break;
-
-                                case '*':
-                                    endValue = startValue * endValue;
-                                    break;
-
-                                case '/':
-                                    endValue = startValue / endValue;
-                                    break;
-                            }
-                        }
-                    }
-                }
-
-
-                // Create a new FX instance, and start the animation
-
-                 new FX(elem, opt, name, startValue, endValue, unit);
-            }
-        }
-
-        return opt.queue === false ?
-            this.each(runAnimation) :
-            this.queue(opt.queue, runAnimation);
+        doAnimation.finish = doAnimation;
+       
+		return empty || opt.queue === false ?
+			this.each( doAnimation ) :
+			this.queue( opt.queue, doAnimation );
     },
-
-    stop: function(type, clear, jump) {
-        var stopQueue = function(elem, data, i) {
-            var runner = data[i];
-            hAzzle.removePrivate(elem, i, true);
-            runner.stop(jump);
+    stop: function(type, clearQueue, gotoEnd) {
+        var stopQueue = function(hooks) {
+            var stop = hooks.stop;
+            delete hooks.stop;
+            stop(gotoEnd);
         };
 
         if (typeof type !== 'string') {
-
-            jump = clear;
-            clear = type;
+            gotoEnd = clearQueue;
+            clearQueue = type;
             type = undefined;
         }
-
-        if (clear && type !== false) {
+        if (clearQueue && type !== false) {
             this.queue(type || 'fx', []);
         }
 
         return this.each(function() {
-
             var dequeue = true,
-                index, timers = tweens,
-                data = hAzzle.private(this);
+                index = type != null && type + 'queueHooks',
+                timers = hAzzle.timers,
+                data = hAzzle.getPrivate(this);
 
-
-            if (type) {
-                if (data[index] && data[index].stop)
-                    stopQueue(this, data, index);
-
+            if (index) {
+                if (data[index] && data[index].stop) {
+                    stopQueue(data[index]);
+                }
             } else {
                 for (index in data) {
-                    if (data[index] && data[index].stop) {
-
-                        stopQueue(this, data, index);
+                    if (data[index] && data[index].stop && rrun.test(index)) {
+                        stopQueue(data[index]);
                     }
                 }
             }
 
             for (index = timers.length; index--;) {
-                if (timers[index].elem === this && (!type || tweens[index].queue === type)) {
-                    tweens[index].stop(jump);
+                if (timers[index].elem === this &&
+                    (type == null || timers[index].queue === type)) {
+
+                    timers[index].anim.stop(gotoEnd);
                     dequeue = false;
                     timers.splice(index, 1);
                 }
             }
 
-            if (dequeue || jump) {
-                hAzzle.dequeue(this, type);
-            }
-
-        });
-    },
-
-    queue: function(type, data) {
-
-        if (typeof type !== 'string') {
-            data = type;
-            type = 'fx';
-        }
-
-        if (data === undefined) {
-            return hAzzle.queue(this[0], type);
-        }
-
-        return this.each(function() {
-            var queue = hAzzle.queue(this, type, data);
-
-            // Auto-Dequeuing
-
-            if (type === 'fx' && queue[0] !== 'chewing ...') {
+            // Start the next in the queue if the last step wasn't forced.
+            // Timers currently will call their complete callbacks, which
+            // will dequeue but only if they were gotoEnd.
+            if (dequeue || !gotoEnd) {
                 hAzzle.dequeue(this, type);
             }
         });
     },
-    dequeue: function(type) {
+    finish: function(type) {
+        if (type !== false) {
+            type = type || 'fx';
+        }
         return this.each(function() {
-            hAzzle.dequeue(this, type);
-        });
-    },
+            var index,
+                data = hAzzle.private(this),
+                queue = data[type + 'queue'],
+                hooks = data[type + 'queueHooks'],
+                timers = hAzzle.timers,
+                length = queue ? queue.length : 0;
 
-    clearQueue: function(type) {
-        return this.queue(type || 'fx', []);
+            // Enable finishing flag on private data
+            data.finish = true;
+
+            // Empty the queue first
+            hAzzle.queue(this, type, []);
+
+            if (hooks && hooks.stop) {
+                hooks.stop.call(this, true);
+            }
+
+            // Look for any active animations, and finish them
+            for (index = timers.length; index--;) {
+                if (timers[index].elem === this && timers[index].queue === type) {
+                    timers[index].anim.stop(true);
+                    timers.splice(index, 1);
+                }
+            }
+
+            // Look for any animations in the old queue and finish them
+            for (index = 0; index < length; index++) {
+                if (queue[index] && queue[index].finish) {
+                    queue[index].finish.call(this);
+                }
+            }
+
+            // Turn off finishing flag
+            delete data.finish;
+        });
     }
 });
 
+hAzzle.timers = [];
+
+
+
+hAzzle.fx.speeds = {
+    slow: 600,
+    fast: 200,
+    // Default speed
+    _default: 400
+};
+
 /* ============================ UTILITY METHODS =========================== */
 
-function raf(timestamp) {
-    if (rafId) {
-        frame.request(raf);
-        render(timestamp);
+
+
+
+// Create Tween
+
+function createTween(value, prop, animation) {
+    var tween, collection = (tweeners[prop] || []).concat(tweeners['*']),
+        index = 0,
+        length = collection.length;
+
+    for (; index < length; index++) {
+
+        if ((tween = collection[index].call(animation, prop, value))) {
+
+            // We're done with this property
+            return tween;
+        }
     }
 }
 
-function buhi(callback) {
-    tweens.push(callback);
-    if (callback.animate()) {
-        if (!rafId) {
-            rafId = frame.request(raf);
+function defaultPrefilter(elem, props, opts) {
+
+    var prop, value, toggle, tween,
+        hooks, oldfire, display, checkDisplay,
+        anim = this,
+        orgValueProp,
+        originalValues,
+        orig = {},
+        style = elem.style,
+        hidden = elem.nodeType && isHidden(elem),
+        dataShow = hAzzle.getPrivate(elem, 'fxshow');
+
+    // Handle queue: false promises
+    if (!opts.queue) {
+        hooks = hAzzle._queueHooks(elem, 'fx');
+        if (hooks.unqueued == null) {
+            hooks.unqueued = 0;
+            oldfire = hooks.empty.fire;
+            hooks.empty.fire = function() {
+                if (!hooks.unqueued) {
+                    oldfire();
+                }
+            };
         }
+        hooks.unqueued++;
+
+        anim.always(function() {
+            // Ensure the complete handler is called before this completes
+            anim.always(function() {
+                hooks.unqueued--;
+                if (!hAzzle.queue(elem, 'fx').length) {
+                    hooks.empty.fire();
+                }
+            });
+        });
+    }
+
+    /********************
+         Original values
+      ********************/
+
+    if (elem.nodeType === 1) {
+
+        opts.originalValues = {};
+
+        for (orgValueProp in hAzzle.originalValues) {
+            opts.originalValues[orgValueProp] = elem.style[orgValueProp];
+        }
+    }
+
+    /********************
+      Height / width
+    ********************/
+
+    if (props === 'height' ||
+        props === 'width') {
+
+    }
+
+    // Height/width overflow pass
+    if (('height' in props || 'width' in props)) {
+
+	// Make sure we are not overriding any effects
+    
+	props.overflow ? props.overflow : opts.originalValues.overflow = style.overflow;
+    props.overflowX ? props.overflowX : opts.originalValues.overflowX = style.overflowX;
+	props.overflowY ? props.overflowY : opts.originalValues.overflowY = style.overflowY;
+
+        if (opts.originalValues.overflow) {
+            style.overflow = 'hidden';
+        }
+    }
+
+    anim.done(function() {
+
+        originalValues = opts.originalValues;
+
+        for (orgValueProp in originalValues) {
+            style[orgValueProp] = originalValues[orgValueProp];
+        }
+    });
+
+    /**********************
+      Display / Visibility
+    ***********************/
+
+    // Get correct display. Its faster for us to use hAzzle.curCSS directly then
+	// hAzzle.css. In fact we gain better performance skipping a lot of checks
+
+     display = hAzzle.curCSS(elem, 'display');
+    
+    // Test default display if display is currently 'none'
+    checkDisplay = display === 'none' ?
+        hAzzle.getPrivate(elem, 'olddisplay') || hAzzle.getDisplayType(elem) : display;
+
+    if (checkDisplay === 'inline') {
+        style.display = 'inline-block';
+    }
+
+    // show/hide pass
+    for (prop in props) {
+
+        value = props[prop];
+
+    // Properties that are not supported by the browser will inherently produce no style changes 
+    // when set, so they are skipped in order to decrease animation tick overhead.
+    // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
+    // there is no way to check for their explicit browser support, and so we skip this check for them.
+
+  if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(prop)[1] === false) {
+     hAzzle.error('Skipping [' + prop + '] due to a lack of browser support.');
+      continue;
+  }
+  
+   // propertyMap hook for option parsing
+   
+    if (hAzzle.propertyMap[prop]) {
+       value = hAzzle.propertyMap[name](elem, name);
+    }
+    
+    /********************************************
+      Support for jQuery's show, hide and toggle
+    *******************************************/
+
+       if (value === 'toggle' ||
+           value === 'show' ||
+           value === 'hide' 
+          ) {
+			  
+            delete props[prop];
+
+            toggle = toggle || value === 'toggle';
+
+            if (value === (hidden ? 'hide' : 'show')) {
+
+                if (value === 'show' && dataShow && dataShow[prop] !== undefined) {
+                    hidden = true;
+                } else {
+                    continue;
+                }
+            }
+            orig[prop] = dataShow && dataShow[prop] || hAzzle.style(elem, prop);
+
+            // Any non-fx value stops us from restoring the original display value
+        } else {
+            display = undefined;
+        }
+    }
+ 
+   // End of iteration
+ 
+    if (!hAzzle.isEmptyObject(orig)) {
+        if (dataShow) {
+            if ('hidden' in dataShow) {
+                hidden = dataShow.hidden;
+            }
+        } else {
+            dataShow = hAzzle.private(elem, 'fxshow', {});
+        }
+
+        // Store state if its toggle - enables .stop().toggle() to 'reverse'
+        if (toggle) {
+            dataShow.hidden = !hidden;
+        }
+        if (hidden) {
+            hAzzle(elem).show();
+        } else {
+            anim.done(function() {
+                hAzzle(elem).hide();
+            });
+        }
+        anim.done(function() {
+            var prop;
+
+            hAzzle.removePrivate(elem, 'fxshow');
+            for (prop in orig) {
+                hAzzle.style(elem, prop, orig[prop]);
+            }
+        });
+        for (prop in orig) {
+            tween = createTween(hidden ? dataShow[prop] : 0, prop, anim);
+
+            if (!(prop in dataShow)) {
+                dataShow[prop] = tween.start;
+                if (hidden) {
+                    tween.end = tween.start;
+                    tween.start = prop === 'width' || prop === 'height' ? 1 : 0;
+                }
+            }
+        }
+
+        // If this is a noop like .hide().hide(), restore an overwritten display value
+    } else if ((display === 'none' ? defaultDisplay(elem.nodeName) : display) === 'inline') {
+        style.display = display;
+    }
+}
+
+function propFilter(props, specialEasing) {
+
+    var index, name, easing, value, hooks;
+
+    for (index in props) {
+
+        name = hAzzle.camelize(index);
+
+        easing = specialEasing[name];
+
+        value = props[index];
+
+        if (hAzzle.isArray(value)) {
+
+            easing = value[1];
+            value = props[index] = value[0];
+        }
+
+        if (index !== name) {
+            props[name] = value;
+            delete props[index];
+        }
+
+        hooks = hAzzle.cssHooks[name];
+        if (hooks && 'expand' in hooks) {
+            value = hooks.expand(value);
+            delete props[name];
+
+            for (index in value) {
+                if (!(index in props)) {
+                    props[index] = value[index];
+                    specialEasing[index] = easing;
+                }
+            }
+        } else {
+            specialEasing[name] = easing;
+        }
+    }
+}
+
+function Animation(elem, properties, options) {
+    var result,
+        stopped,
+        index = 0,
+        length = animationPrefilters.length,
+        deferred = hAzzle.Promises().always(function() {
+            // Don't match elem in the :animated selector
+            delete tick.elem;
+        }),
+        tick = function() {
+            if (stopped) {
+                return false;
+            }
+            var currentTime = hAzzle.now(),
+                remaining = Math.max(0, animation.startTime + animation.duration - currentTime),
+                // Support: Android 2.3
+                // Archaic crash bug won't allow us to use `1 - ( 0.5 || 0 )` (#12497)
+                temp = remaining / animation.duration || 0,
+                percent = 1 - temp,
+                index = 0,
+                length = animation.tweens.length;
+
+            for (; index < length; index++) {
+                animation.tweens[index].run(percent);
+            }
+
+            deferred.notifyWith(elem, [animation, percent, remaining]);
+
+            if (percent < 1 && length) {
+                return remaining;
+            } else {
+                deferred.resolveWith(elem, [animation]);
+                return false;
+            }
+        },
+        animation = deferred.promise({
+            elem: elem,
+            props: hAzzle.shallowCopy({}, properties),
+            opts: hAzzle.shallowCopy(true, {
+                specialEasing: {}
+            }, options),
+            originalProperties: properties,
+            originalOptions: options,
+            startTime: hAzzle.now(),
+            duration: options.duration,
+            tweens: [],
+            createTween: function(prop, end) {
+                var tween = hAzzle.Tween(elem, animation.opts, prop, end,
+                    animation.opts.specialEasing[prop] || animation.opts.easing);
+                animation.tweens.push(tween);
+                return tween;
+            },
+            stop: function(gotoEnd) {
+                var index = 0,
+                    // If we are going to the end, we want to run all the tweens
+                    // otherwise we skip this part
+                    length = gotoEnd ? animation.tweens.length : 0;
+                if (stopped) {
+                    return this;
+                }
+                stopped = true;
+                for (; index < length; index++) {
+                    animation.tweens[index].run(1);
+                }
+
+                // Resolve when we played the last frame; otherwise, reject
+                if (gotoEnd) {
+                    deferred.resolveWith(elem, [animation, gotoEnd]);
+                } else {
+                    deferred.rejectWith(elem, [animation, gotoEnd]);
+                }
+                return this;
+            }
+        }),
+        props = animation.props;
+
+    propFilter(props, animation.opts.specialEasing);
+
+    for (; index < length; index++) {
+        result = animationPrefilters[index].call(animation, elem, props, animation.opts);
+        if (result) {
+            return result;
+        }
+    }
+
+    hAzzle.map(props, createTween, animation);
+
+    if (hAzzle.isFunction(animation.opts.start)) {
+        animation.opts.start.call(elem, animation);
+    }
+
+    var XXX = hAzzle.shallowCopy(tick, {
+        elem: elem,
+        anim: animation,
+        queue: animation.opts.queue
+    });
+
+    hAzzle.timers.push(XXX);
+
+
+
+    if (XXX()) {
+
+        runAnimation();
+
     } else {
-        tweens.pop();
+        hAzzle.timers.pop();
+    }
+
+
+
+
+    // attach callbacks from options
+    return animation.progress(animation.opts.progress)
+        .done(animation.opts.done, animation.opts.complete)
+        .fail(animation.opts.fail)
+        .always(animation.opts.always);
+}
+
+
+
+
+Animation.tweener = function(props, callback) {
+
+    if (hAzzle.isFunction(props)) {
+        callback = props;
+        props = ['*'];
+    } else {
+        props = props.split(' ');
+    }
+
+    var prop,
+        index = 0,
+        length = props.length;
+
+    for (; index < length; index++) {
+        prop = props[index];
+        tweeners[prop] = tweeners[prop] || [];
+        tweeners[prop].unshift(callback);
     }
 }
 
-function render(timestamp) {
-
-    if (fixTick) {
-        timestamp = frame.perfNow();
-    }
-    var tween, i = 0;
-
-    for (; i < tweens.length; i++) {
-        tween = tweens[i];
-        // Check if the tween has not already been removed
-        if (!tween.animate(timestamp) && tweens[i] === tween) {
-            tweens.splice(i--, 1);
-        }
-    }
-
-    if (!tweens.length) {
-
-        frame.cancel(rafId);
-
-        // Avoid memory leaks
-
-        rafId = null;
+Animation.prefilter = function(callback, prepend) {
+    if (prepend) {
+        animationPrefilters.unshift(callback);
+    } else {
+        animationPrefilters.push(callback);
     }
 }
 
-/* ============================ INTERNAL =========================== */
 
-hAzzle.extend({
 
-    // Default duration
-
-    defaultDuration: 500,
-
-    originalValues: {
-        overflow: null,
-        overflowX: null,
-        overflowY: null,
-        boxSizing: null,
-    },
-
-    propertyMap: {
+ hAzzle.propertyMap = {
 
         display: function(elem, value) {
 
@@ -686,114 +738,4 @@ hAzzle.extend({
 
             return value;
         }
-    },
-
-    fxBefore: {
-
-        _default: function(elem, prop) {
-
-            var result;
-
-            if (prop !== null && (!getStyles(elem) || prop === null)) {
-                return prop;
-            }
-
-            result = hAzzle.css(elem, prop, '');
-
-            // Empty strings, null, undefined and 'auto' are converted to 0.
-            return !result || result === 'auto' ? 0 : result;
-
-        }
-    },
-
-    fxAfter: {
-
-        opacity: {
-
-            set: function(fx) {
-                fx.elem.style[fx.prop] = fx.pos;
-            }
-        },
-        _default: {
-
-            set: function(fx) {
-
-                if (fx.elem.style &&
-                    (fx.elem.style[hAzzle.cssProps[fx.prop]] !== null ||
-                        hAzzle.cssHooks[fx.prop])) {
-                    hAzzle.style(fx.elem, fx.prop, fx.pos + fx.unit);
-                } else {
-                    fx.elem[fx.prop] = fx.pos;
-                }
-            }
-        }
-    },
-    speeds: {
-        slow: 1500,
-        medium: 400,
-        fast: 200
-    },
-
-    queue: function(elem, type, data) {
-
-        if (elem) {
-
-            type = (type || 'fx') + 'queue';
-
-            var queueDta = hAzzle.getPrivate(elem),
-                q = queueDta.type;
-
-            // Speed up dequeue by getting out quickly if this is just a lookup
-
-            if (!data) {
-                return q || [];
-            }
-
-            if (!q || hAzzle.isArray(data)) {
-
-                q = queueDta.type = hAzzle.mergeArray(data);
-
-            } else {
-                q.push(data);
-            }
-
-            return q;
-        }
-    },
-
-    dequeue: function(elem, type) {
-
-        type = type || 'fx';
-
-        var queueDta = hAzzle.getPrivate(elem),
-            queue = hAzzle.queue(elem, type),
-            fn = queue.shift();
-
-        if (fn === 'chewing ...') {
-            fn = queue.shift();
-        }
-
-        if (fn) {
-            if (type === 'fx') {
-                queue.unshift('chewing ...');
-            }
-
-            fn.call(elem, function() {
-                hAzzle.dequeue(elem, type);
-            });
-        }
-
-        if (!queue.length) {
-            delete queueDta.qtype;
-        }
     }
-
-}, hAzzle);
-
-hAzzle.fxAfter.scrollTop = hAzzle.fxAfter.scrollLeft = {
-    set: function(fx) {
-        if (fx.elem.nodeType && fx.elem.parentNode) {
-            fx.elem[fx.prop] = fx.pos;
-        }
-    }
-};
