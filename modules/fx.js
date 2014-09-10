@@ -9,7 +9,7 @@ var
     relVal = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
     queueHooks = /queueHooks$/,
     fixTick = false, // feature detected below
-    bata = [],
+    sheets = [],
     rafId,
 
     // Ticker 
@@ -20,23 +20,23 @@ var
 
             if (rafId) {
 
-                var timer,
+                var sheet,
                     i = 0;
 
                 frame.request(raf);
 
-                for (; i < bata.length; i++) {
+                for (; i < sheets.length; i++) {
 
-                    timer = bata[i];
+                    sheet = sheets[i];
 
-                    if (!timer() && bata[i] === timer) {
-                        bata.splice(i--, 1);
+                    if (!sheet() && sheets[i] === sheet) {
+                        sheets.splice(i--, 1);
                     }
                 }
 
                 // If no length, cancel the animation
 
-                if (!bata.length) {
+                if (!sheets.length) {
                     frame.cancel(rafId);
                     rafId = null;
                 }
@@ -110,13 +110,16 @@ var
         ]
     },
 
-    animationPrefilters = [defaultPrefilter];
+    animationPrefilters = [parseDefault];
 
 // Extend the global hAzzle object
 
 hAzzle.extend({
 
+    // Default duration - can be overwritten with
+    // plug-ins
 
+    defaultDuration: 500,
 
     // Contains a object over CSS properties that should
     // be backed up before animation, and restored after
@@ -168,21 +171,20 @@ hAzzle.extend({
 
     // Support for jQuery's named durations
     speeds: {
-        slow: 600,
-        fast: 200,
-        // Default speed
-        _default: 400
+
+        fast: 100,
+        medium: 400,
+        slow: 1200,
     }
 
 }, hAzzle);
-
 
 hAzzle.extend({
 
     animate: function(prop, speed, easing, callback) {
 
-   var opt;
-   
+        var opt;
+
         if (typeof speed === 'object') {
 
             opt = hAzzle.shallowCopy({}, speed);
@@ -211,7 +213,7 @@ hAzzle.extend({
         } else {
             opt.duration = typeof opt.duration === 'number' ?
                 opt.duration : opt.duration in hAzzle.speeds ?
-                hAzzle.speeds[opt.duration] : hAzzle.speeds._default;
+                hAzzle.speeds[opt.duration] : hAzzle.defaultDuration;
         }
 
         if (opt.queue == null || opt.queue === true) {
@@ -276,18 +278,19 @@ hAzzle.extend({
             } else {
                 for (index in data) {
                     if (data[index] && data[index].stop && queueHooks.test(index)) {
+
                         stopQueue(data[index]);
                     }
                 }
             }
 
-            for (index = bata.length; index--;) {
-                if (bata[index].elem === this &&
-                    (type == null || bata[index].queue === type)) {
+            for (index = sheets.length; index--;) {
+                if (sheets[index].elem === this &&
+                    (type == null || sheets[index].queue === type)) {
 
-                    bata[index].anim.stop(gotoEnd);
+                    sheets[index].anim.stop(gotoEnd);
                     dequeue = false;
-                    bata.splice(index, 1);
+                    sheets.splice(index, 1);
                 }
             }
 
@@ -318,10 +321,10 @@ hAzzle.extend({
             }
 
             // Look for any active animations, and finish them
-            for (index = bata.length; index--;) {
-                if (bata[index].elem === this && bata[index].queue === type) {
-                    bata[index].anim.stop(true);
-                    bata.splice(index, 1);
+            for (index = sheets.length; index--;) {
+                if (sheets[index].elem === this && sheets[index].queue === type) {
+                    sheets[index].anim.stop(true);
+                    sheets.splice(index, 1);
                 }
             }
 
@@ -341,7 +344,7 @@ hAzzle.extend({
 
 /* ============================ UTILITY METHODS =========================== */
 
-function defaultPrefilter(elem, props, opts) {
+function parseDefault(elem, props, opts) {
 
     var prop, value, toggle, tween,
         hooks, oldfire, display, checkDisplay,
@@ -679,6 +682,9 @@ function Animation(elem, properties, options) {
         }
     }
 
+    // FIX ME! Has to be changed to a normal loop for
+    // better performance
+
     hAzzle.map(props, createTween, animation);
 
     if (hAzzle.isFunction(animation.opts.start)) {
@@ -689,16 +695,17 @@ function Animation(elem, properties, options) {
     tick.anim = animation;
     tick.queue = animation.opts.queue;
 
-    bata.push(tick);
+    // Create the animation sheets
+
+    sheets.push(tick);
 
     // If 'tick' is a function, start the animation
 
     if (tick()) {
-
         runAnimation();
 
     } else {
-        bata.pop();
+        sheets.pop();
     }
 
     // attach callbacks from options
