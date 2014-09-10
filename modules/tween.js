@@ -50,9 +50,9 @@ Tween.prototype = {
             for (var t in this.now) {
                 this.now[t] = (this.end[t] - this.start[t]) * pos + this.start[t];
             }
+        } else {
+            this.now = (this.end - this.start) * pos + this.start;
         }
-
-        this.now = (this.end - this.start) * pos + this.start;
 
         if (this.step) {
             this.step.call(this.elem, this.now, this);
@@ -98,7 +98,7 @@ hAzzle.TweenHooks = {
                 !cur && tween.end !== 0) {
                 cur = 0;
             }
-			
+
             return cur;
         },
         set: function(tween) {
