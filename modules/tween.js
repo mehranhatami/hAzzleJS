@@ -8,12 +8,12 @@ hAzzle.Tween = Tween;
 Tween.prototype = {
     constructor: Tween,
     init: function(elem, options, prop, end, easing, unit) {
-        
-		this.elem = elem;
+
+        this.elem = elem;
         this.prop = prop;
-		
-		// If we dont check the easing this way, it will throw
-		
+
+        // If we dont check the easing this way, it will throw
+
         this.easing = hAzzle.easing[easing] || hAzzle.easing[hAzzle.defaultEasing];
         this.duration = options.duration;
         this.options = options;
@@ -23,6 +23,7 @@ Tween.prototype = {
         this.unit = unit || (hAzzle.unitless[prop] ? '' : 'px');
     },
     cur: function() {
+        // Handle hooked properties
         var hooks = hAzzle.TweenHooks[this.prop];
 
         return hooks && hooks.get ?
@@ -42,9 +43,16 @@ Tween.prototype = {
             this.pos = pos = tick;
         }
 
-		// Math.round digits
+        if (typeof this.start === 'object') {
 
-        this.now = Math.round(  ( (this.end - this.start) * pos + this.start) * 1000)  / 1000;  
+            this.now = {}
+
+            for (var t in this.now) {
+                this.now[t] = (this.end[t] - this.start[t]) * pos + this.start[t];
+            }
+        }
+
+        this.now = (this.end - this.start) * pos + this.start;
 
         if (this.step) {
             this.step.call(this.elem, this.now, this);
@@ -85,12 +93,12 @@ hAzzle.TweenHooks = {
             // animated to an endValue of non-zero, the user's intention is to fade in from invisible, thus 
             // we forcefeed opacity a start value of 0 
 
-            if (((tween.options.display !== undefined && tween.options.display !== null && tween.options.display !== 'none') 
-			|| (tween.options.visibility && tween.options.visibility !== 'hidden')) && tween.prop === 'opacity' && 
-			!cur && tween.end !== 0) {
+            if (((tween.options.display !== undefined && tween.options.display !== null && tween.options.display !== 'none') ||
+                    (tween.options.visibility && tween.options.visibility !== 'hidden')) && tween.prop === 'opacity' &&
+                !cur && tween.end !== 0) {
                 cur = 0;
             }
-
+			
             return cur;
         },
         set: function(tween) {
@@ -99,7 +107,7 @@ hAzzle.TweenHooks = {
                 hAzzle.cssHooks[tween.prop])) {
                 hAzzle.style(tween.elem, tween.prop, tween.now + tween.unit);
             } else {
-				tween.elem[ tween.prop ] = tween.now;
+                tween.elem[tween.prop] = tween.now;
             }
         }
     }
