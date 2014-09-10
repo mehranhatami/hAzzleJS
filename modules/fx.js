@@ -104,7 +104,6 @@ var
                     tween.end = parts[1] ? start + (parts[1] + 1) * parts[2] : +parts[2];
 
                 }
-
                 return tween;
             }
         ]
@@ -259,7 +258,7 @@ hAzzle.extend({
                     }
                 }
                 // Operate on a copy of prop so per-property easing won't be lost
-                var anim = Animation(this, hAzzle.shallowCopy({}, prop), opt);
+                var anim = Animation(this, quickCopy({}, prop), opt);
 
                 // Empty animations, or finishing resolves immediately
                 if (empty || hAzzle.private(this, 'finish')) {
@@ -646,6 +645,35 @@ function parseProperties(elem, props, specialEasing) {
     }
 }
 
+// Quick and fast copy of objects
+function quickCopy(target, src) {
+    for (var i in src) {
+        target[i] = src[i];
+    }
+    return target;
+}
+
+// Unique Map function for the animation engine
+// Optimized
+
+function TweenMap(elems, callback, arg) {
+
+    var value, i, ret = [];
+
+    for (i in elems) {
+        value = callback(elems[i], i, arg);
+
+
+        if (value !== null) {
+            ret.push(value);
+        }
+    }
+    // Flatten any nested arrays
+
+    return Array.prototype.concat.apply([], ret);
+}
+
+
 function Animation(elem, properties, options) {
     var result,
         stopped,
@@ -685,7 +713,7 @@ function Animation(elem, properties, options) {
         },
         animation = deferred.promise({
             elem: elem,
-            props: hAzzle.shallowCopy({}, properties),
+            props: quickCopy({}, properties),
             opts: hAzzle.shallowCopy(true, {
                 specialEasing: {}
             }, options),
@@ -739,7 +767,7 @@ function Animation(elem, properties, options) {
     // FIX ME! Has to be changed to a normal loop for
     // better performance
 
-    hAzzle.map(props, createTween, animation);
+    TweenMap(props, createTween, animation);
 
     if (hAzzle.isFunction(animation.opts.start)) {
         animation.opts.start.call(elem, animation);

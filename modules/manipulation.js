@@ -1,6 +1,8 @@
 // manipulation.js
 var
+
     manipRegex = {
+        rsingleTag: (/^<(\w+)\s*\/?>(?:<\/\1>|)$/),
         innerHTMLRegexp: /<(script|style|link)/i,
         tagNameRegexp: /<([\w:]+)/,
         htmlRegexp: /<|&#?\w+;/,
@@ -36,21 +38,6 @@ htmlMap.th = htmlMap.td;
 htmlMap.style = htmlMap.table = htmlMap.base;
 
 hAzzle.extend({
-
-    placeholder: function(text) {
-        var elem = hAzzle(this);
-        elem.focus(function(e) {
-            elem.val('');
-        });
-        elem.blur(function(e) {
-            if (hAzzle.trim(elem.val()) === '') {
-                elem.val(text);
-            }
-        });
-        if (hAzzle.trim(elem.val()) === '') {
-            elem.val(text);
-        }
-    },
 
     /**
      * Get html from element.
@@ -174,7 +161,7 @@ hAzzle.extend({
 
     Manipulation: function(args, filterFn, iAH) {
 
-        args = concat.apply([], args);
+        args = Array.prototype.concat.apply([], args);
 
         var fragment, first, scripts, hasScripts, node, doc, tag,
             i = 0,
@@ -311,7 +298,7 @@ hAzzle.each({
 
 
 function insertAdjacent(html, place, set, filterFn) {
-    tag = (manipRegex.tagNameRegexp.exec(html) || ['', ''])[1].toLowerCase();
+  var  tag = (manipRegex.tagNameRegexp.exec(html) || ['', ''])[1].toLowerCase();
 
     if (!manipRegex.iAHRegexp.test(html) && !htmlMap[tag]) {
         return set.each(function(index) {
@@ -457,3 +444,32 @@ hAzzle.each({
         }, iah);
     };
 });
+
+
+
+hAzzle.parseHTML = function( data, context, keepScripts ) {
+	if ( !data || typeof data !== "string" ) {
+		return null;
+	}
+	if ( typeof context === "boolean" ) {
+		keepScripts = context;
+		context = false;
+	}
+	context = context || document;
+
+	var parsed = manipRegex.rsingleTag.exec( data ),
+		scripts = !keepScripts && [];
+
+	// Single tag
+	if ( parsed ) {
+		return [ context.createElement( parsed[1] ) ];
+	}
+
+	parsed = hAzzle.buildFragment( [ data ], context, scripts );
+
+	if ( scripts && scripts.length ) {
+		hAzzle( scripts ).remove();
+	}
+
+	return hAzzle.merge( [], parsed.childNodes );
+};
