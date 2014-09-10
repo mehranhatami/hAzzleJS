@@ -8,11 +8,15 @@ hAzzle.Tween = Tween;
 Tween.prototype = {
     constructor: Tween,
     init: function(elem, options, prop, end, easing, unit) {
-        this.elem = elem;
+        
+		this.elem = elem;
         this.prop = prop;
-        this.easing = hAzzle.easing[easing] || hAzzle.easing.swing;
-        this.duration = options.duration,
-        this.step = options.step,
+		
+		// If we dont check the easing this way, it will throw
+		
+        this.easing = hAzzle.easing[easing] || hAzzle.easing[hAzzle.defaultEasing];
+        this.duration = options.duration;
+        this.step = options.step;
         this.start = this.now = this.cur();
         this.end = end;
         this.unit = unit || (hAzzle.unitless[prop] ? '' : 'px');
@@ -36,7 +40,10 @@ Tween.prototype = {
 
             this.pos = pos = tick;
         }
-        this.now = (this.end - this.start) * pos + this.start;
+
+		// Math.round digits
+
+        this.now = Math.round(  ( (this.end - this.start) * pos + this.start) * 1000)  / 1000;  
 
         if (this.step) {
             this.step.call(this.elem, this.now, this);

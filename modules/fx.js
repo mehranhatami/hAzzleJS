@@ -119,6 +119,11 @@ hAzzle.extend({
     // Default duration - can be overwritten with
     // plug-ins
 
+    defaultEasing: 'swing',
+
+    // Default duration - can be overwritten with
+    // plug-ins
+
     defaultDuration: 500,
 
     // Contains a object over CSS properties that should
@@ -220,7 +225,6 @@ hAzzle.extend({
         **********************/
 
         // Go to the end state if fx are off or if document is hidden
-
         if (document.hidden) {
             opt.duration = 0;
 
@@ -662,7 +666,7 @@ function Animation(elem, properties, options) {
                 return false;
             }
             var currentTime = hAzzle.now(),
-                remaining = Math.max(0, animation.startTime + animation.duration - currentTime),
+                remaining = animation.startTime + animation.duration - currentTime,
                 // Support: Android 2.3
                 // Archaic crash bug won't allow us to use `1 - ( 0.5 || 0 )` (#12497)
                 temp = remaining / animation.duration || 0,
