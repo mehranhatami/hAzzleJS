@@ -43,6 +43,8 @@
         // Whitespace regexp for hAzzle.trim()
 
         trwl = /^\s+|\s+$/g,
+		
+		camelCache = [],
 
         // Define a local copy of hAzzle
 
@@ -287,7 +289,8 @@
          */
 
         camelize: function(property) {
-            return property.replace(/-(\w)/g, function(match, subMatch) {
+			return camelCache[property] ? camelCache[property] :
+            camelCache[property] = property.replace(/-(\w)/g, function(match, subMatch) {
                 return subMatch.toUpperCase();
             });
         },

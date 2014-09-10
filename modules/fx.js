@@ -62,7 +62,9 @@ var
                     parts = relVal.exec(value),
                     unit = parts && parts[3] || (hAzzle.unitless[prop] ? '' : 'px'),
 
-                    // Starting value computation is required for potential unit mismatches
+					// Note! This start value gives a bug if the propert are uknow or not hooked
+					// Need a fix soon!!
+					
                     start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
                     relVal.exec(hAzzle.css(tween.elem, prop)),
                     scale = 1,
@@ -763,9 +765,6 @@ function Animation(elem, properties, options) {
             return result;
         }
     }
-
-    // FIX ME! Has to be changed to a normal loop for
-    // better performance
 
     TweenMap(props, createTween, animation);
 
