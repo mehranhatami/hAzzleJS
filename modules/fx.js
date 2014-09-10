@@ -219,9 +219,8 @@ hAzzle.extend({
          Option: duration
         **********************/
 
-        //        opt.duration = speed;
-
         // Go to the end state if fx are off or if document is hidden
+
         if (document.hidden) {
             opt.duration = 0;
 

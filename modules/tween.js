@@ -91,7 +91,7 @@ hAzzle.TweenHooks = {
                 hAzzle.cssHooks[tween.prop])) {
                 hAzzle.style(tween.elem, tween.prop, tween.now + tween.unit);
             } else {
-                hAzzle.style(tween.elem, tween.prop, tween.now);
+				tween.elem[ tween.prop ] = tween.now;
             }
         }
     }
