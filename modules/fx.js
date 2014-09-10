@@ -183,28 +183,42 @@ hAzzle.extend({
 
     animate: function(prop, speed, easing, callback) {
 
-        var opt;
+        var opt = {};
 
         if (typeof speed === 'object') {
 
             opt = hAzzle.shallowCopy({}, speed);
-
-        } else {
-
-            opt = {};
-
-            // Callbacks
-
-            opt.complete = callback || !callback && easing || hAzzle.isFunction(speed) && speed;
-
-            // Duration
-
-            opt.duration = speed;
-
-            // Easing
-
-            opt.easing = callback && easing || easing && !hAzzle.isFunction(easing) && easing;
         }
+
+        /**********************
+         Option: complete
+        **********************/
+
+        opt.complete = opt.complete ?
+            opt.complete :
+            (callback || !callback && easing || hAzzle.isFunction(speed) && speed);
+
+        // 'complete' has to be functions. Otherwise, default to null.
+
+        if (opt.complete && typeof opt.complete !== 'function') {
+            opt.complete = null;
+        }
+
+        /**********************
+         Option: begin
+        **********************/
+
+        // 'begin' has to be functions. Otherwise, default to null.
+
+        if (opt.begin && typeof opt.begin !== 'function') {
+            opt.begin = null;
+        }
+
+        /**********************
+         Option: duration
+        **********************/
+
+        opt.duration = speed;
 
         // Go to the end state if fx are off or if document is hidden
         if (hAzzle.fx.off || document.hidden) {
@@ -216,11 +230,30 @@ hAzzle.extend({
                 hAzzle.speeds[opt.duration] : hAzzle.defaultDuration;
         }
 
+        /**********************
+         Option: easing
+        **********************/
+
+        opt.easing = callback && easing || easing && !hAzzle.isFunction(easing) && easing;
+        console.log(opt)
+
+        /**********************
+         Option: mobile
+        **********************/
+
+        // For use with hooks. When set to true, and if this is a mobile device, mobile automatically 
+        // enables hardware acceleration (via a null transform hack) on animating elements.
+
+        opt.mobile = opt.mobile && hAzzle.isMobile;
+
         if (opt.queue == null || opt.queue === true) {
             opt.queue = 'fx';
         }
 
-        // Queueing
+        /**********************
+         Option: Queueing
+        **********************/
+
         opt.old = opt.complete;
 
         opt.complete = function() {
@@ -235,6 +268,23 @@ hAzzle.extend({
 
         var empty = hAzzle.isEmptyObject(prop),
             doAnimation = function() {
+
+                // Function to be 'fired before the animation starts
+                // Executed functions param will be same as the animated element
+
+                if (opt.begin) {
+
+                    // We throw callbacks in a setTimeout so that thrown errors don't halt the execution 
+                    // of hAzzle itself.
+
+                    try {
+                        opt.begin.call(this, this);
+                    } catch (error) {
+                        setTimeout(function() {
+                            throw 'Something went wrong!';
+                        }, 1);
+                    }
+                }
                 // Operate on a copy of prop so per-property easing won't be lost
                 var anim = Animation(this, hAzzle.shallowCopy({}, prop), opt);
 
