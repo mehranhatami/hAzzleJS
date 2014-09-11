@@ -216,9 +216,10 @@ hAzzle.extend({
                         break;
 
                     default:
-                        opt.duration = parseFloat(opt.duration) || parseFloat(hAzzle.TweenDefaults.duration) || 400;
+                        opt.duration = parseFloat(opt.duration) || 
+                        parseFloat(hAzzle.TweenDefaults.duration) || 
+                        400;
                 }
-
             }
         }
 
@@ -757,7 +758,7 @@ function Animation(elem, properties, options) {
         stopped,
         index = 0,
         length = animationPrefilters.length,
-        deferred = hAzzle.Promises().always(function() {
+        promise = hAzzle.Promises().always(function() {
             delete tick.elem;
         }),
         tick = function() {
@@ -784,18 +785,18 @@ function Animation(elem, properties, options) {
             // Progress indicator
             // Opt: progress {Function}
 
-            deferred.notifyWith(elem, [animation, percent, remaining]);
+            promise.notifyWith(elem, [animation, percent, remaining]);
 
             if (percent < 1 && length) {
                 return remaining;
             } else {
                 stopped = true;
-                deferred.resolveWith(elem, [animation]);
+                promise.resolveWith(elem, [animation]);
                 return false;
 
             }
         },
-        animation = deferred.promise({
+        animation = promise.promise({
             elem: elem,
             props: quickCopy({}, properties),
             opts: hAzzle.shallowCopy(true, {
@@ -832,9 +833,9 @@ function Animation(elem, properties, options) {
 
                 // Resolve when we played the last frame; otherwise, reject
                 if (gotoEnd) {
-                    deferred.resolveWith(elem, [animation, gotoEnd]);
+                    promise.resolveWith(elem, [animation, gotoEnd]);
                 } else {
-                    deferred.rejectWith(elem, [animation, gotoEnd]);
+                    promise.rejectWith(elem, [animation, gotoEnd]);
                 }
 
                 return this;
