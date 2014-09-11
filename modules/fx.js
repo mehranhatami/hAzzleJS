@@ -127,16 +127,11 @@ hAzzle.extend({
 
     defaultEasing: 'swing',
 
-    // Default duration - can be overwritten with
-    // plug-ins
-
-    defaultDuration: 500,
-
     // Default animation settings     
 
     TweenDefaults: {
         queue: true,
-        duration: hAzzle.defaultDuration,
+        duration: 500,
         easing: hAzzle.defaultEasing,
         complete: null,
         display: null,
@@ -168,7 +163,7 @@ hAzzle.extend({
         // Use default settings and overwrite later 
 
         opt = quickCopy(hAzzle.TweenDefaults, opt),
-
+console.log(opt)
             /**********************
              Option: complete
             **********************/
