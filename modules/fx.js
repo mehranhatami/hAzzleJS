@@ -460,8 +460,7 @@ function parseDefault(elem, props, opts) {
     ********************/
 
     if (opts.reverse) {
-        props = reversing(elem, props)
-        console.log(props)
+        props = reversing(elem, props);
     }
 
     /********************
@@ -673,7 +672,10 @@ function parseProperties(elem, props, specialEasing) {
         } else {
             specialEasing[name] = easing;
         }
+		
+
     }
+	
 }
 
 // Quick and fast copy of objects
@@ -721,12 +723,14 @@ function reversing(elem, props) {
         i = arr.length;
 
     while (i--) {
-        ara[arr[i]] = props[arr[i]]
+        ara[arr[i]] = props[arr[i]];
     }
     return ara;
 }
 
+
 function Animation(elem, properties, options) {
+	
     var result,
         stopped,
         index = 0,
@@ -740,11 +744,8 @@ function Animation(elem, properties, options) {
             if (stopped) {
                 return false;
             }
-
             var currentTime = frame.perfNow(),
                 remaining = animation.startTime + animation.duration - currentTime,
-                // Support: Android 2.3
-                // Archaic crash bug won't allow us to use `1 - ( 0.5 || 0 )` (#12497)
                 temp = remaining / animation.duration || 0,
                 percent = 1 - temp,
                 index = 0,
@@ -759,12 +760,15 @@ function Animation(elem, properties, options) {
             if (percent < 1 && length) {
                 return remaining;
             } else {
+				stopped = true;
                 deferred.resolveWith(elem, [animation]);
                 return false;
-            }
+            
+           }
         },
         animation = deferred.promise({
             elem: elem,
+			stopped: false,
             props: quickCopy({}, properties),
             opts: hAzzle.shallowCopy(true, {
                 specialEasing: {}
