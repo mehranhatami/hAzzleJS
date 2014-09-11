@@ -163,7 +163,7 @@ hAzzle.extend({
         // Use default settings and overwrite later 
 
         opt = quickCopy(hAzzle.TweenDefaults, opt),
-console.log(opt)
+
             /**********************
              Option: complete
             **********************/
