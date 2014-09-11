@@ -5,11 +5,12 @@ var
         'textOverflow', 'columns', 'borderRadius', 'boxshadow', 'borderImage', 'columnCount', 'boxReflect',
        'columnSpan', 'columnCount', 'columnGap', 'columnWidth', 'columnRuleColor', 'columnRuleStyle', 'columnRuleWidth'],
     i = cssProperties.length,
-    cssProps = hAzzle.cssProps,
     cssCore = hAzzle.cssCore = {
         has: {}, // Feature / bug detection
     };
 
+   hAzzle.cssProps = {};
+    
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
 // Check for getComputedStyle support
@@ -131,5 +132,5 @@ hAzzle.assert(function(div) {
 });
 
 
-cssProps[propertyName] = hAzzle.cssCore.transform;
-cssProps[originPropertyName] = hAzzle.cssCore.transformOrigin;
+hAzzle.cssProps.transform = hAzzle.cssCore.transform;
+hAzzle.cssProps.transformOrigin = hAzzle.cssCore.transformOrigin;
