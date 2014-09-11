@@ -5,6 +5,7 @@ var
         'textOverflow', 'columns', 'borderRadius', 'boxshadow', 'borderImage', 'columnCount', 'boxReflect',
        'columnSpan', 'columnCount', 'columnGap', 'columnWidth', 'columnRuleColor', 'columnRuleStyle', 'columnRuleWidth'],
     i = cssProperties.length,
+    cssProps = hAzzle.cssProps,
     cssCore = hAzzle.cssCore = {
         has: {}, // Feature / bug detection
     };
@@ -128,3 +129,7 @@ hAzzle.assert(function(div) {
     }
     cssCore.translate3d = (has3d !== undefined && has3d.length > 0 && has3d !== 'none');
 });
+
+
+cssProps[propertyName] = hAzzle.cssCore.transform;
+cssProps[originPropertyName] = hAzzle.cssCore.transformOrigin;
