@@ -132,22 +132,23 @@ hAzzle.extend({
 
     defaultDuration: 500,
 
+    // Default animation settings     
+
+    TweenDefaults: {
+        queue: true,
+        duration: hAzzle.defaultDuration,
+        easing: hAzzle.defaultEasing,
+        complete: null,
+        display: null,
+        mobile: true,
+    },
+
     // Contains a object over CSS properties that should
     // be backed up before animation, and restored after
     // animation are completed
 
     originalValues: {
         boxSizing: null,
-    },
-
-    // Note! hAzzle are faster then jQuery animation, so 
-    // even if we try to support jQuery's named durations - we 
-    // have to adjust it to match hAzzle. But the names are the same!!
-
-    speeds: {
-        fast: 100,
-        medium: 400,
-        slow: 1200,
     }
 
 }, hAzzle);
@@ -164,11 +165,15 @@ hAzzle.extend({
             opt = speed;
         }
 
-        /**********************
-         Option: complete
-        **********************/
+        // Use default settings and overwrite later 
 
-        opt.complete = opt.complete ?
+        opt = quickCopy(hAzzle.TweenDefaults, opt),
+
+            /**********************
+             Option: complete
+            **********************/
+
+            opt.complete = opt.complete ?
             opt.complete :
             callback ? callback :
             !callback && easing ? easing :
@@ -197,10 +202,29 @@ hAzzle.extend({
         if (document.hidden) {
             opt.duration = 0;
         } else {
-            opt.duration = typeof speed === 'number' ? speed :
-                typeof opt.duration === 'number' ?
-                opt.duration : opt.duration in hAzzle.speeds ?
-                hAzzle.speeds[opt.duration] : hAzzle.defaultDuration;
+
+            if (typeof speed === 'number') {
+                opt.duration = speed;
+            } else {
+
+                switch (opt.duration.toString().toLowerCase()) {
+                    case 'fast':
+                        opt.duration = 200;
+                        break;
+
+                    case "normal":
+                        opt.duration = 400;
+                        break;
+
+                    case "slow":
+                        opt.duration = 600;
+                        break;
+
+                    default:
+                        opt.duration = parseFloat(opt.duration) || parseFloat(hAzzle.TweenDefaults.duration) || 400;
+                }
+
+            }
         }
 
         /**********************
@@ -297,7 +321,8 @@ hAzzle.extend({
 
         var i = this.length,
             index = type != null && type + 'queueHooks',
-            data, dequeue = true, elem,
+            data, dequeue = true,
+            elem,
             stopQueue = function(hooks) {
                 var stop = hooks.stop;
                 delete hooks.stop;
@@ -783,8 +808,8 @@ function Animation(elem, properties, options) {
             }, options),
             originalProperties: properties,
             originalOptions: options,
-            
-           // Use performance.now shim from our RAF() polify
+
+            // Use performance.now shim from our RAF() polify
 
             startTime: frame.perfNow(),
             duration: options.duration,
