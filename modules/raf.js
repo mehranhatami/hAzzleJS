@@ -1,9 +1,14 @@
 var nRAF,
     nCAF,
-
-    // Default 60 fps
-	
-	defaultFPS = hAzzle.defaultFPS = 60;
+    perf = window.performance,
+    perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow),
+    now = hAzzle.pnow = perfNow ? function() {
+        return perfNow.call(perf);
+    } : function() { // -IE9
+        return +new Date();
+    },
+    appleiOS = /iP(ad|hone|od).*OS (6|7)/,
+    nav = window.navigator.userAgent;
 
 // Grab the native request and cancel functions.
 
@@ -15,7 +20,7 @@ var nRAF,
 
     try {
         // Accessing .name will throw SecurityError within a foreign domain.
-        var name = window.top.name
+        window.top.name
         top = window.top;
     } catch (e) {
         top = window;
@@ -39,7 +44,7 @@ var nRAF,
             top.mozCancelAnimationFrame;
     }
 
-    nRAF && nRAF(function() {
+    nRAF && !appleiOS.test(nav) && nRAF(function() {
         RAF.hasNative = true;
     });
 }());
@@ -59,70 +64,52 @@ RAF.prototype = {
 
     constructor: RAF,
 
+    defaultFPS: 60,
+
     init: function(options) {
 
-        options = options || {};
+        options = options ? options :
+            typeof options == 'number' ? {
+                frameRate: options
+            } : {};
 
-        // It's a frame rate.
-
-        if (typeof options == 'number') {
-		
-			options = {
-            frameRate: options
-          };
-		}
-		
-        this.frameRate = options.frameRate || hAzzle.defaultFPS.toString();
+        this.frameRate = options.frameRate || this.defaultFPS;
         this.frameLength = 1000 / this.frameRate;
-        this.isCustomFPS = this.frameRate !== hAzzle.defaultFPS;
+        this.isCustomFPS = this.frameRate !== this.defaultFPS;
 
-		// Timeout ID
+        // Timeout ID
         this.timeoutId = null;
-        
-		// Callback
-		
-		this.callbacks = {};
-        
-		// Last 'tick' time
-		
-		this.lastTickTime = 0;
+
+        // Callback
+
+        this.callbacks = {};
+
+        // Last 'tick' time
+
+        this.lastTickTime = 0;
 
         // Tick counter
 
-		this.tickCounter = 0;
+        this.tickCounter = 0;
 
         // Use native {Booleans}
 
-		this.useNative = false;
+        this.useNative = false;
 
         options.useNative != null || (this.useNative = true);
-    },
-
-    pollify: function(options) {
-
-        var _RAF = RAF(options);
-
-        window.requestAnimationFrame = function(callback) {
-            return _RAF.request(callback);
-        };
-
-        window.cancelAnimationFrame = function(id) {
-            return _RAF.cancel(id);
-        };
-
-        return _RAF;
     },
 
     hasNative: false,
 
     request: function(callback) {
 
-        var self = this, delay;
+        var self = this,
+            delay;
 
         ++this.tickCounter;
 
-        if (RAF.hasNative && self.useNative && 
-		   !this.isCustomFPS) {
+        if (RAF.hasNative && self.useNative &&
+            !this.isCustomFPS) {
             return nRAF(callback);
         }
 
@@ -178,23 +165,14 @@ RAF.prototype = {
 
         if (this.hasNative && this.useNative) {
             nCAF(id);
+
         }
 
         delete this.callbacks[id];
     },
 
     perfNow: function() {
-
-       var wPerf = window.performance;
-
-        if (wPerf) {
-
-			return wPerf.now() ||
-                wPerf.webkitNow() ||
-                wPerf.msNow() ||
-                wPerf.mozNow();
-        }
-        return hAzzle.now() - this.navigationStart;
+        return now() - this.navigationStart;
     },
 
     navigationStart: hAzzle.now()
