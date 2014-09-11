@@ -33,17 +33,6 @@ Tween.prototype = {
     },
     run: function(tick) {
 
-        if (tick === 1) {
-
-            // If this is the last tick pass (if we've reached 100% completion for this animation), 
-            // ensure that 'this.now' is explicitly set to its target end value so that it's 
-            // not subjected to any rounding.
-
-            this.now = this.end;
-
-        } else {
-
-
             var pos, hooks = hAzzle.TweenHooks[this.prop];
 
             if (this.duration) {
@@ -68,7 +57,7 @@ Tween.prototype = {
             } else {
                 hAzzle.TweenHooks._default.set(this);
             }
-        }
+       
         return this;
     }
 };

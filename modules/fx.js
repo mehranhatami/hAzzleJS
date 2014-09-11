@@ -282,65 +282,57 @@ hAzzle.extend({
             return this.queue(opt.queue, doAnimation);
         }
     },
-    stop: function(type, clearQueue, gotoEnd) {
+   stop: function( type, clearQueue, gotoEnd ) {
+		var stopQueue = function( hooks ) {
+			var stop = hooks.stop;
+			delete hooks.stop;
+			stop( gotoEnd );
+		};
 
-        var i = this.length,
-            elem,
-            dequeue = true,
-            data,
-            index = type != null && type + 'queueHooks',
-            stopQueue = function(hooks) {
-                var stop = hooks.stop;
-                delete hooks.stop;
-                stop(gotoEnd);
-            };
+		if ( typeof type !== "string" ) {
+			gotoEnd = clearQueue;
+			clearQueue = type;
+			type = undefined;
+		}
+		if ( clearQueue && type !== false ) {
+			this.queue( type || "fx", [] );
+		}
 
-        if (typeof type !== 'string') {
-            gotoEnd = clearQueue;
-            clearQueue = type;
-            type = undefined;
-        }
+		return this.each(function() {
+			var dequeue = true,
+				index = type != null && type + "queueHooks",
+				data = hAzzle.getPrivate( this );
 
-        if (clearQueue && type !== false) {
-            this.queue(type || 'fx', []);
-        }
+			if ( index ) {
+				if ( data[ index ] && data[ index ].stop ) {
+					stopQueue( data[ index ] );
+				}
+			} else {
+				for ( index in data ) {
+					if ( data[ index ] && data[ index ].stop && queueHooks.test( index ) ) {
+						stopQueue( data[ index ] );
+					}
+				}
+			}
 
-        // Faster then hAzzle.each()
+			for ( index = sheets.length; index--; ) {
+				if ( sheets[ index ].elem === this &&
+					(type == null || sheets[ index ].queue === type) ) {
 
-        while (i--) {
+					sheets[ index ].anim.stop( gotoEnd );
+					dequeue = false;
+					sheets.splice( index, 1 );
+				}
+			}
 
-            elem = this[i];
-            data = hAzzle.private(elem);
-
-            if (index) {
-                if (data[index] && data[index].stop) {
-                    stopQueue(data[index]);
-                }
-            } else {
-                for (index in data) {
-                    if (data[index] && data[index].stop && queueHooks.test(index)) {
-
-                        stopQueue(data[index]);
-                    }
-                }
-            }
-
-            for (index = sheets.length; index--;) {
-                if (sheets[index].elem === elem &&
-                    (type == null || sheets[index].queue === type)) {
-
-                    sheets[index].anim.stop(gotoEnd);
-                    dequeue = false;
-                    sheets.splice(index, 1);
-                }
-            }
-
-            if (dequeue || !gotoEnd) {
-                hAzzle.dequeue(elem, type);
-            }
-        }
-        return this;
-    },
+			// Start the next in the queue if the last step wasn't forced.
+			// sheets currently will call their complete callbacks, which
+			// will dequeue but only if they were gotoEnd.
+			if ( dequeue || !gotoEnd ) {
+				hAzzle.dequeue( this, type );
+			}
+		});
+	},
     finish: function(type) {
         if (type !== false) {
             type = type || 'fx';
@@ -672,9 +664,7 @@ function parseProperties(elem, props, specialEasing) {
         } else {
             specialEasing[name] = easing;
         }
-		
-
-    }
+		    }
 	
 }
 
@@ -745,7 +735,7 @@ function Animation(elem, properties, options) {
                 return false;
             }
             var currentTime = frame.perfNow(),
-                remaining = animation.startTime + animation.duration - currentTime,
+                remaining = Math.max( 0, animation.startTime + animation.duration - currentTime ),
                 temp = remaining / animation.duration || 0,
                 percent = 1 - temp,
                 index = 0,
@@ -768,7 +758,6 @@ function Animation(elem, properties, options) {
         },
         animation = deferred.promise({
             elem: elem,
-			stopped: false,
             props: quickCopy({}, properties),
             opts: hAzzle.shallowCopy(true, {
                 specialEasing: {}
@@ -785,6 +774,7 @@ function Animation(elem, properties, options) {
                 return tween;
             },
             stop: function(gotoEnd) {
+
                 var index = 0,
                     // If we are going to the end, we want to run all the tweens
                     // otherwise we skip this part
@@ -792,13 +782,14 @@ function Animation(elem, properties, options) {
                 if (stopped) {
                     return this;
                 }
+				
                 stopped = true;
                 for (; index < length; index++) {
                     animation.tweens[index].run(1);
                 }
 
                 // Resolve when we played the last frame; otherwise, reject
-                if (gotoEnd) {
+                if (gotoEnd) { 
                     deferred.resolveWith(elem, [animation, gotoEnd]);
                 } else {
                     deferred.rejectWith(elem, [animation, gotoEnd]);
