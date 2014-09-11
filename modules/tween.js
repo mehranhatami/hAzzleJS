@@ -31,6 +31,18 @@ Tween.prototype = {
             hAzzle.TweenHooks._default.get(this);
     },
     run: function(tick) {
+    
+	
+	 if (tick === 1) { 
+	 
+		// If this is the last tick pass (if we've reached 100% completion for this animation), 
+        // ensure that 'this.now' is explicitly set to its target end value so that it's 
+        // not subjected to any rounding.
+		
+          this.now = this.end;
+
+	 } else {
+
 
         var pos, hooks = hAzzle.TweenHooks[this.prop];
 
@@ -43,16 +55,10 @@ Tween.prototype = {
             this.pos = pos = tick;
         }
 
-        if (typeof this.start === 'object') {
-
-            this.now = {}
-
-            for (var t in this.now) {
-                this.now[t] = (this.end[t] - this.start[t]) * pos + this.start[t];
-            }
-        } else {
-            this.now = (this.end - this.start) * pos + this.start;
-        }
+       // Current value
+    
+	   this.now = (this.end - this.start) * pos + this.start;
+		
 
         if (this.step) {
             this.step.call(this.elem, this.now, this);
@@ -63,6 +69,7 @@ Tween.prototype = {
         } else {
             hAzzle.TweenHooks._default.set(this);
         }
+	}	
         return this;
     }
 };
@@ -72,6 +79,12 @@ Tween.prototype.init.prototype = Tween.prototype;
 // TweenHooks
 
 hAzzle.TweenHooks = {
+	
+	transform: {
+		get: function(tween) {},
+		set: function(tween) {}
+    },
+	
     _default: {
         get: function(tween) {
             var cur;

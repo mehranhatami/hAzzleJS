@@ -11,7 +11,8 @@ var
     zerovalue = /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i,
     leftrightRegex = /Left|Right/,
 
-
+    cssCache = [],
+	
     // Create a cached element for re-use when checking for CSS property prefixes.
 
     prefixElement = document.createElement('div'),
@@ -25,6 +26,7 @@ var
                      'transform ms-flex-order transform-origin perspective transform-style '+
                      'ms-flex-negative ms-flex-positive transform-origin perspective '+
                      'perspective-origin backface-visibility scale scale-x scale-y scale-z '+
+                     'scale3d reflect-x-y reflect-z reflect-y reflect '+
                      'alpha z-index font-weight opacity red green blue').split(' '),
 
     // CSS Normal Transforms
@@ -176,11 +178,12 @@ hAzzle.extend({
 
     css: function(elem, name, extra, styles) {
 
+
         var val, num, hooks;
 
         // Create cache for new elements
 
-        hAzzle.styleCache(elem);
+//        hAzzle.styleCache(elem);
 
         name = hAzzle.camelize(hAzzle.prefixCheck(name)[0]);
 
@@ -239,7 +242,7 @@ hAzzle.extend({
 
         // Create cache for new elements
 
-        hAzzle.styleCache(elem);
+//        hAzzle.styleCache(elem);
 
         origName = hAzzle.camelize(name);
 
@@ -360,6 +363,5 @@ function validCalculation(elem, name, val) {
 // Populate the unitless list
 
 hAzzle.each(excludedProps, function(name) {
-console.log(name)
     hAzzle.unitless[hAzzle.camelize(name)] = true;
 });

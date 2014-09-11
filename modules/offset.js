@@ -20,38 +20,34 @@ hAzzle.extend({
                     xy(el, obj, i);
                 });
         }
+        var elem = this[0],
+            parents, owner, scope, box,
+            dummy = {
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+            };
+        if (elem) {
+            // Check for disconnected nodes	
+            parents = this.parents();
 
-        var el = this[0],
-		    parents,
-            d, w, boundingRect;
-
-        if (el) {
-
-            d = el.ownerDocument;
-            boundingRect = el.getBoundingClientRect();
-            w = getWindow(d);
-
-       // Make sure it's not a disconnected DOM node
-
-        parents = this.parents();
-		
-		if ( parents[ parents.length - 1 ] !== docElem ) {
-
-                return {
-                    top: 0,
-                    left: 0
-                };
+            if (parents[parents.length - 1] !== docElem) {
+                return dummy;
             }
 
-            // Return all angeles of the 'offset'
+            box = elem.getBoundingClientRect ? elem.getBoundingClientRect() : dummy;
+            owner = elem.ownerDocument;
+            scope = getWindow(owner);
+
 
             return {
-                top: boundingRect.top + w.pageYOffset - docElem.clientTop,
-                left: boundingRect.left + w.pageXOffset - docElem.clientLeft,
-                right: boundingRect.right + w.pageXOffset - docElem.clientLeft,
-                bottom: boundingRect.bottom + w.pageYOffset - docElem.clientTop,
-                height: boundingRect.bottom - boundingRect.top,
-                width: boundingRect.right - boundingRect.left
+                top: box.top + (scope.pageYOffset || scope.scrollTop || 0) - (scope.clientTop || 0),
+                left: box.left + (scope.pageXOffset || scope.scrollLeft || 0) - (scope.clientLeft || 0),
+                right: box.right + scope.pageXOffset - docElem.clientLeft,
+                bottom: box.bottom + scope.pageYOffset - docElem.clientTop,
+                height: box.bottom - box.top,
+                width: box.right - box.left
             };
         }
     },

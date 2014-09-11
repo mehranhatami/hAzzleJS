@@ -135,10 +135,6 @@ hAzzle.extend({
         boxSizing: null,
     },
 
-    // Plug-in / hook for animated CSS properties values
-
-    propertyMap: {},
-
     // Note! hAzzle are faster then jQuery animation, so 
     // even if we try to support jQuery's named durations - we 
     // have to adjust it to match hAzzle. But the names are the same!!
@@ -154,6 +150,8 @@ hAzzle.extend({
 hAzzle.extend({
 
     animate: function(prop, speed, easing, callback) {
+
+        // Process everything before we start the animation
 
         var opt = {};
 
@@ -208,6 +206,7 @@ hAzzle.extend({
             opt.easing :
             callback && easing ? easing :
             !callback && speed && easing ? easing :
+            !callback && !easing && speed ? speed :
             typeof easing !== 'function' && easing;
 
         /**********************
@@ -240,6 +239,8 @@ hAzzle.extend({
             }
         };
 
+        // Start the animation
+
         var empty = hAzzle.isEmptyObject(prop),
             doAnimation = function() {
 
@@ -264,10 +265,10 @@ hAzzle.extend({
 
                 hAzzle.styleCache(this);
 
-                // Operate on a copy of prop so per-property easing won't be lost
                 var anim = Animation(this, quickCopy({}, prop), opt);
 
                 // Empty animations, or finishing resolves immediately
+
                 if (empty || hAzzle.private(this, 'finish')) {
                     anim.stop(true);
                 }
@@ -275,9 +276,11 @@ hAzzle.extend({
 
         doAnimation.finish = doAnimation;
 
-        return empty || opt.queue === false ?
-            this.each(doAnimation) :
-            this.queue(opt.queue, doAnimation);
+        if (empty || opt.queue === false) {
+            return this.each(doAnimation);
+        } else {
+            return this.queue(opt.queue, doAnimation);
+        }
     },
     stop: function(type, clearQueue, gotoEnd) {
 
@@ -452,15 +455,13 @@ function parseDefault(elem, props, opts) {
         });
     }
 
+    /********************
+      Reversing
+    ********************/
+
     if (opts.reverse) {
-
-        // If the element was hidden via the display option in the 
-        // previous call, revert display to block prior to reversal so 
-        // that the element is visible again.
-
-        if (hAzzle.data(elem, 'CSS').opts.display === 'none') {
-            hAzzle.data(elem, 'CSS').opts.display = 'block';
-        }
+        props = reversing(elem, props)
+        console.log(props)
     }
 
     /********************
@@ -643,12 +644,6 @@ function parseProperties(elem, props, specialEasing) {
             continue;
         }
 
-        // propertyMap hook for option parsing
-
-        if (hAzzle.propertyMap[index]) {
-            value = hAzzle.propertyMap[name](elem, index);
-        }
-
         easing = specialEasing[name];
 
         value = props[index];
@@ -709,6 +704,27 @@ function TweenMap(elems, callback, arg) {
     return Array.prototype.concat.apply([], ret);
 }
 
+function reversing(elem, props) {
+
+    // If the element was hidden via the display option in the 
+    // previous call, revert display to block prior to reversal so 
+    // that the element is visible again.
+
+    if (hAzzle.data(elem, 'CSS').opts.display === 'none') {
+        hAzzle.data(elem, 'CSS').opts.display = 'block';
+    }
+
+    // Swap around the object values
+
+    var ara = {},
+        arr = Object.keys(props),
+        i = arr.length;
+
+    while (i--) {
+        ara[arr[i]] = props[arr[i]]
+    }
+    return ara;
+}
 
 function Animation(elem, properties, options) {
     var result,
