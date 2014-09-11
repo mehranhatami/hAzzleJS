@@ -16,29 +16,34 @@ var
 
     runAnimation = function() {
 
-        var raf = (function() {
+        var raf = (function(timestamp) {
 
-            if (rafId) {
+            // Ignore the first timestamp arguments since it's empty / undefined and indicates that this is 
+            // the first tick occurence since ticking was turned on.
 
-                var sheet,
-                    i = 0;
+            if (timestamp) {
 
-                frame.request(raf);
+                if (rafId) {
 
-                for (; i < sheets.length; i++) {
+                    var sheet, i = 0;
 
-                    sheet = sheets[i];
+                    frame.request(raf);
 
-                    if (!sheet() && sheets[i] === sheet) {
-                        sheets.splice(i--, 1);
+                    for (; i < sheets.length; i++) {
+
+                        sheet = sheets[i];
+
+                        if (!sheet(timestamp) && sheets[i] === sheet) {
+                            sheets.splice(i--, 1);
+                        }
                     }
-                }
 
-                // If no length, cancel the animation
+                    // If no length, cancel the animation
 
-                if (!sheets.length) {
-                    frame.cancel(rafId);
-                    rafId = null;
+                    if (!sheets.length) {
+                        frame.cancel(rafId);
+                        rafId = null;
+                    }
                 }
             }
         });
@@ -282,57 +287,64 @@ hAzzle.extend({
             return this.queue(opt.queue, doAnimation);
         }
     },
-   stop: function( type, clearQueue, gotoEnd ) {
-		var stopQueue = function( hooks ) {
-			var stop = hooks.stop;
-			delete hooks.stop;
-			stop( gotoEnd );
-		};
+    stop: function(type, clearQueue, gotoEnd) {
 
-		if ( typeof type !== "string" ) {
-			gotoEnd = clearQueue;
-			clearQueue = type;
-			type = undefined;
-		}
-		if ( clearQueue && type !== false ) {
-			this.queue( type || "fx", [] );
-		}
+        if (typeof type !== 'string') {
+            gotoEnd = clearQueue;
+            clearQueue = type;
+            type = undefined;
+        }
 
-		return this.each(function() {
-			var dequeue = true,
-				index = type != null && type + "queueHooks",
-				data = hAzzle.getPrivate( this );
+        var i = this.length,
+            index = type != null && type + 'queueHooks',
+            data, dequeue = true, elem,
+            stopQueue = function(hooks) {
+                var stop = hooks.stop;
+                delete hooks.stop;
+                stop(gotoEnd);
+            };
 
-			if ( index ) {
-				if ( data[ index ] && data[ index ].stop ) {
-					stopQueue( data[ index ] );
-				}
-			} else {
-				for ( index in data ) {
-					if ( data[ index ] && data[ index ].stop && queueHooks.test( index ) ) {
-						stopQueue( data[ index ] );
-					}
-				}
-			}
+        if (clearQueue && type !== false) {
+            this.queue(type || 'fx', []);
+        }
 
-			for ( index = sheets.length; index--; ) {
-				if ( sheets[ index ].elem === this &&
-					(type == null || sheets[ index ].queue === type) ) {
+        while (i--) {
 
-					sheets[ index ].anim.stop( gotoEnd );
-					dequeue = false;
-					sheets.splice( index, 1 );
-				}
-			}
+            elem = this[i];
+            data = hAzzle.private(elem);
 
-			// Start the next in the queue if the last step wasn't forced.
-			// sheets currently will call their complete callbacks, which
-			// will dequeue but only if they were gotoEnd.
-			if ( dequeue || !gotoEnd ) {
-				hAzzle.dequeue( this, type );
-			}
-		});
-	},
+            if (index) {
+
+                if (data[index] && data[index].stop) {
+                    stopQueue(data[index]);
+                }
+
+            } else {
+
+                for (index in data) {
+
+                    if (data[index] && data[index].stop && queueHooks.test(index)) {
+                        stopQueue(data[index]);
+                    }
+                }
+            }
+
+            for (index = sheets.length; index--;) {
+                if (sheets[index].elem === elem &&
+                    (type == null || sheets[index].queue === type)) {
+
+                    sheets[index].anim.stop(gotoEnd);
+                    dequeue = false;
+                    sheets.splice(index, 1);
+                }
+            }
+
+            if (dequeue || !gotoEnd) {
+
+                hAzzle.dequeue(elem, type);
+            }
+        }
+    },
     finish: function(type) {
         if (type !== false) {
             type = type || 'fx';
@@ -664,8 +676,8 @@ function parseProperties(elem, props, specialEasing) {
         } else {
             specialEasing[name] = easing;
         }
-		    }
-	
+    }
+
 }
 
 // Quick and fast copy of objects
@@ -720,13 +732,12 @@ function reversing(elem, props) {
 
 
 function Animation(elem, properties, options) {
-	
+
     var result,
         stopped,
         index = 0,
         length = animationPrefilters.length,
         deferred = hAzzle.Promises().always(function() {
-            // Don't match elem in the :animated selector
             delete tick.elem;
         }),
         tick = function() {
@@ -734,27 +745,35 @@ function Animation(elem, properties, options) {
             if (stopped) {
                 return false;
             }
+
             var currentTime = frame.perfNow(),
-                remaining = Math.max( 0, animation.startTime + animation.duration - currentTime ),
+                remaining = Math.max(0, animation.startTime + animation.duration - currentTime),
                 temp = remaining / animation.duration || 0,
                 percent = 1 - temp,
                 index = 0,
                 length = animation.tweens.length;
 
+
+            // Iterate through each active animation
+
             for (; index < length; index++) {
+
                 animation.tweens[index].run(percent);
             }
+
+            // Progress indicator
+            // Opt: progress {Function}
 
             deferred.notifyWith(elem, [animation, percent, remaining]);
 
             if (percent < 1 && length) {
                 return remaining;
             } else {
-				stopped = true;
+                stopped = true;
                 deferred.resolveWith(elem, [animation]);
                 return false;
-            
-           }
+
+            }
         },
         animation = deferred.promise({
             elem: elem,
@@ -764,6 +783,9 @@ function Animation(elem, properties, options) {
             }, options),
             originalProperties: properties,
             originalOptions: options,
+            
+           // Use performance.now shim from our RAF() polify
+
             startTime: frame.perfNow(),
             duration: options.duration,
             tweens: [],
@@ -782,14 +804,14 @@ function Animation(elem, properties, options) {
                 if (stopped) {
                     return this;
                 }
-				
+
                 stopped = true;
                 for (; index < length; index++) {
                     animation.tweens[index].run(1);
                 }
 
                 // Resolve when we played the last frame; otherwise, reject
-                if (gotoEnd) { 
+                if (gotoEnd) {
                     deferred.resolveWith(elem, [animation, gotoEnd]);
                 } else {
                     deferred.rejectWith(elem, [animation, gotoEnd]);

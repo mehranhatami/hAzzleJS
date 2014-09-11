@@ -1,27 +1,22 @@
 // System.js
 hAzzle.extend({
 
-    mergeArray: function(array, results) {
+    mergeArray: function( arr, results ) {
+		var ret = results || [];
 
-        var ret = results || [];
+		if ( arr != null ) {
+			if ( hAzzle.isArraylike( Object(arr) ) ) {
+				hAzzle.merge( ret,
+					typeof arr === "string" ?
+					[ arr ] : arr
+				);
+			} else {
+				push.call( ret, arr );
+			}
+		}
 
-        if (array != null) {
-
-            var type = hAzzle.type(array);
-
-            if (array.length == null ||
-                type === "string" ||
-                type === "function" ||
-                type === "regexp" ||
-                hAzzle.isWindow(array)) {
-                Array.prototype.push.call(ret, array);
-            } else {
-                hAzzle.merge(ret, array);
-            }
-        }
-
-        return ret;
-    },
+		return ret;
+	},
 
     // Get size of Array or Objects
 
@@ -111,7 +106,7 @@ hAzzle.extend({
 
                     // Recurse if we're merging plain objects or arrays
 
-                    if (deep && copy && (hAzzle.isPlainObject(copy) || (copyIsArray = hAzzle.isArray(copy)))) {
+                    if (deep && copy && (isPlainObject(copy) || (copyIsArray = hAzzle.isArray(copy)))) {
 
                         if (copyIsArray) {
 
@@ -229,3 +224,16 @@ hAzzle.extend({
     }
 
 }, hAzzle);
+
+
+function isPlainObject( obj ) {
+		if ( hAzzle.type( obj ) !== "object" || obj.nodeType || hAzzle.isWindow( obj ) ) {
+			return false;
+		}
+
+		if ( obj.constructor &&
+				!hAzzle.hasOwn.call( obj.constructor.prototype, "isPrototypeOf" ) ) {
+			return false;
+		}
+		return true;
+	}
