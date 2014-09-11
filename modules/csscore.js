@@ -1,16 +1,39 @@
-var
-    cssProperties = hAzzle.cssProperties = ['textShadow', 'opacity', 'clip', 'zIndex',
+var cssProperties = hAzzle.cssProperties = ['textShadow', 'opacity', 'clip', 'zIndex',
         'flex', 'order', 'borderCollapse', 'animation', 'animationFillMode', 'animationDirection',
         'animatioName', 'animationTimingFunction', 'animationPlayState', 'perspective', 'boxSizing',
         'textOverflow', 'columns', 'borderRadius', 'boxshadow', 'borderImage', 'columnCount', 'boxReflect',
-       'columnSpan', 'columnCount', 'columnGap', 'columnWidth', 'columnRuleColor', 'columnRuleStyle', 'columnRuleWidth'],
+        'columnSpan', 'columnCount', 'columnGap', 'columnWidth', 'columnRuleColor', 'columnRuleStyle', 'columnRuleWidth'
+    ],
     i = cssProperties.length,
-    cssCore = hAzzle.cssCore = {
+    cssCore = {
         has: {}, // Feature / bug detection
     };
 
-   hAzzle.cssProps = {};
-    
+hAzzle.extend({
+
+    cssCore: cssCore,
+
+    unitless: {},
+
+    cssHooks: {
+
+        opacity: {
+
+            get: function(elem, computed) {
+
+                if (computed) {
+                    // We should always get a number back from opacity
+                    var ret = curCSS(elem, 'opacity');
+                    return ret === '' ? '1' : ret;
+                }
+            }
+        }
+    },
+
+    cssProps: {}
+
+}, hAzzle)
+
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
 // Check for getComputedStyle support
@@ -107,7 +130,6 @@ hAzzle.assert(function(div) {
     hAzzle.cssCore.backgroundPosition = hAzzle.curCSS(div, 'backgroundPosition') === '3px 5px' ? true : false;
     hAzzle.cssCore.backgroundPositionXY = hAzzle.curCSS('backgroundPositionX') === '3px' ? true : false;
 });
-
 
 // Check if support translate3d
 

@@ -74,25 +74,6 @@ hAzzle.extend({
 
 hAzzle.extend({
 
-    unitless: {},
-
-    cssProps: {},
-
-    cssHooks: {
-
-        opacity: {
-
-            get: function(elem, computed) {
-
-                if (computed) {
-                    // We should always get a number back from opacity
-                    var ret = curCSS(elem, 'opacity');
-                    return ret === '' ? '1' : ret;
-                }
-            }
-        }
-    },
-
     isZeroValue: function(value) {
 
         // The browser defaults CSS values that have not been set to either 0 or 
@@ -151,17 +132,6 @@ hAzzle.extend({
         }
     },
 
-    hexToRgb: function(hex) {
-        var rgbParts;
-        hex = hex.replace(shortformRegex, function(m, r, g, b) {
-            return r + r + g + g + b + b;
-        });
-
-        rgbParts = longformRegex.exec(hex);
-
-        return rgbParts ? [parseInt(rgbParts[1], 16), parseInt(rgbParts[2], 16), parseInt(rgbParts[3], 16)] : [0, 0, 0];
-    },
-
     getDisplayType: function(element) {
         var tagName = element.tagName.toString().toLowerCase();
         if (inlineregex.test(tagName)) {
@@ -178,12 +148,7 @@ hAzzle.extend({
 
     css: function(elem, name, extra, styles) {
 
-
         var val, num, hooks;
-
-        // Create cache for new elements
-
-//        hAzzle.styleCache(elem);
 
         name = hAzzle.camelize(hAzzle.prefixCheck(name)[0]);
 
@@ -239,10 +204,6 @@ hAzzle.extend({
         if (nType === 3 || nType === 8 || !elem.style) {
             return;
         }
-
-        // Create cache for new elements
-
-//        hAzzle.styleCache(elem);
 
         origName = hAzzle.camelize(name);
 
@@ -315,7 +276,6 @@ hAzzle.extend({
             // Otherwise just get the value from the style object
             return style[name];
         }
-
     }
 }, hAzzle);
 
@@ -336,19 +296,26 @@ function validCalculation(elem, name, val) {
     var mTop, mRight, mBottom, mLeft;
 
     if (topBottomRegEx.test(name)) {
+        
         val = '0px';
+        
     } else if (val !== '' && absoluteRegex.test(hAzzle.css(elem, 'position'))) {
+        
         val = val.replace(autoRegex, '0px');
+        
     } else if (leftrightRegex.test(name)) {
+        
         mTop = hAzzle.css(elem, name === 'marginLeft' ? 'marginRight' : 'marginLeft', 'auto');
         val = hAzzle.css(elem.parentNode, 'width', '') - hAzzle(elem).outerWidth();
         val = (mTop === 'auto' ? parseInt(val / 2) : val - mTop) + 'px';
+        
     } else {
-        val =
-            mTop = hAzzle.css(elem, 'marginTop');
+        
+        val = mTop = hAzzle.css(elem, 'marginTop');
         mRight = hAzzle.css(elem, 'marginRight');
         mBottom = hAzzle.css(elem, 'marginBottom');
         mLeft = hAzzle.css(elem, 'marginLeft');
+        
         if (mLeft !== mRight) {
             val += ' ' + mRight + ' ' + mBottom + ' ' + mLeft;
         } else if (mTop !== mBottom) {
