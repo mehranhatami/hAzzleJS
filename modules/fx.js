@@ -71,7 +71,7 @@ var
 
                 var tween = this.createTween(prop, value),
                     elem = tween.elem,
-                    start = getCSS(elem, prop),
+                    start = tween.getCSS(elem, prop),
                     end = value,
                     splittedValues,
                     endUnit,
@@ -132,7 +132,7 @@ var
                         endUnit = startUnit;
                     } else {
 
-                        unitConversionData = unitConversionData || hAzzle.calculateUnitRatios(elem);
+                        unitConversionData = unitConversionData || tween.calculateUnitRatios(elem);
 
                         var axis = (mplrwtwlVal.test(prop) ||
                             xVal.test(prop) || prop === 'x') ? 'x' : 'y';
@@ -618,7 +618,7 @@ function parseDefault(elem, props, opts) {
     // Get correct display. Its faster for us to use hAzzle.curCSS directly then
     // getCSS. In fact we gain better performance skipping a lot of checks
 
-    display = computePropertyValue(elem, 'display');
+    display = curCSS(elem, 'display');
 
     // Test default display if display is currently 'none'
     checkDisplay = display === 'none' ?
