@@ -77,8 +77,6 @@ Tween.prototype = {
 
         elem.style[prop] = value;
 
-        console.log([prop, value]);
-
         return [prop, value];
     },
 
@@ -215,10 +213,6 @@ Tween.prototype = {
         callUnitConversionData.parent = sameRatioIndicators.parent;
         callUnitConversionData.position = sameRatioIndicators.position;
         callUnitConversionData.fontSize = sameRatioIndicators.fontSize;
-
-        /***************************
-           Element-Specific Units
-        ***************************/
 
         var measurement = 100,
             unitRatios = {};
