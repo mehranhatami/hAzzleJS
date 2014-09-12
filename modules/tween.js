@@ -26,55 +26,37 @@ Tween.prototype = {
     constructor: Tween,
     init: function(elem, options, prop, end, easing, unit) {
 
-
         this.elem = elem;
         this.prop = prop;
-
-        // If we dont check the easing this way, it will throw
-
         this.easing = hAzzle.easing[easing] || hAzzle.easing[hAzzle.defaultEasing];
         this.duration = options.duration;
         this.options = options;
         this.step = options.step;
-        this.start = this.now = this.getCSS(this.elem, this.prop);
-        this.end = end;
+        this.start = this.end = end;
         this.unit = unit || (hAzzle.unitless[prop] ? '' : 'px');
     },
     run: function(tick) {
 
-        var pos;
-
-        if (this.duration) {
-
-            this.pos = pos = this.easing(tick);
-
-        } else {
-
-            this.pos = pos = tick;
-        }
-
-        // Current value
-
-        this.now = (this.end - this.start) * pos + this.start;
+        var now = (this.end - this.start) * (this.duration ? this.easing(tick) : tick) + this.start;
 
         if (this.step) {
-            this.step.call(this.elem, this.now, this);
+            this.step.call(this.elem, now, this);
         }
 
-        this.setCSS(this.elem, this.prop, this.now + this.unit);
+        this.setCSS(this.elem, this.prop, now + this.unit);
 
         return this;
     },
 
     // Set CSS properties
 
-    setCSS: function(elem, prop, value, /* INTERNAL */ root) {
+    setCSS: function(elem, prop, value) {
 
         prop = prop || this.prop;
         value = value || this.now;
 
         if (hAzzle.TweenHooks.set[prop]) {
-            hAzzle.TweenHooks.set[prop](elem, prop, value)
+            hAzzle.TweenHooks.set[prop](elem, prop, value);
         } else {
 
             // Set the CSS style values
@@ -94,9 +76,9 @@ Tween.prototype = {
         // Check for setter
 
         if (hAzzle.TweenHooks.get[prop]) {
-            return hAzzle.TweenHooks.get[prop](elem, prop)
-        } 
-        
+            return hAzzle.TweenHooks.get[prop](elem, prop);
+        }
+
         if (!/^[\d-]/.test(prop)) {
 
             // For SVG elements, dimensional properties (which SVGAttribute() detects) are tweened via
@@ -272,6 +254,11 @@ Tween.prototype = {
             unitRatios.emToPx = callUnitConversionData.lastEmToPx = (parseFloat(this.getCSS(dummy, 'paddingLeft')) || 1) / measurement;
 
             sameRatioIndicators.parent.removeChild(dummy);
+            
+            // Avoid memory leak in IE
+
+           dummy = null;
+           
         } else {
             unitRatios.emToPx = callUnitConversionData.lastEmToPx;
             unitRatios.pToPW = callUnitConversionData.lastpToPW;
@@ -299,9 +286,7 @@ Tween.prototype = {
         unitRatios.vwToPx = callUnitConversionData.vwToPx;
         unitRatios.vhToPx = callUnitConversionData.vhToPx;
 
-        // Avoid memory leak in IE
-
-        dummy = null;
+        
 
         return unitRatios;
     }

@@ -379,7 +379,8 @@ hAzzle.extend({
 
         var i = this.length,
             index = type != null && type + 'queueHooks',
-            data, dequeue = true, elem,
+            data, dequeue = true,
+            elem,
             stopQueue = function(hooks) {
                 var stop = hooks.stop;
                 delete hooks.stop;
@@ -553,33 +554,30 @@ function parseDefault(elem, props, opts) {
          Original values
       ********************/
 
-    if (elem.nodeType === 1) {
+    opts.originalValues = {};
 
-        opts.originalValues = {};
-
-        for (orgValueProp in hAzzle.originalValues) {
-            opts.originalValues[orgValueProp] = elem.style[orgValueProp];
-        }
+    for (orgValueProp in hAzzle.originalValues) {
+        opts.originalValues[orgValueProp] = elem.style[orgValueProp];
     }
 
     /********************
       Height / width
     ********************/
 
-    if (props === 'height' ||
-        props === 'width') {
+    if (elem.nodeType === 1) {
 
-        // Make sure we are not overriding any effects
+        if ('height' in props ||
+            'width' in props) {
 
-        props.overflow ? props.overflow : opts.originalValues.overflow = style.overflow;
-        props.overflowX ? props.overflowX : opts.originalValues.overflowX = style.overflowX;
-        props.overflowY ? props.overflowY : opts.originalValues.overflowY = style.overflowY;
+            opts.originalValues.overflow = style.overflow;
+            opts.originalValues.overflowX = style.overflowX;
+            opts.originalValues.overflowY = style.overflowY;
 
-        if (opts.originalValues.overflow) {
-            style.overflow = 'hidden';
+            if (opts.originalValues.overflow) {
+                style.overflow = 'hidden';
+            }
         }
     }
-
     // Restore original CSS values after animation are finished 
 
     anim.done(function() {
@@ -812,6 +810,29 @@ function reversing(elem, props) {
     return ara;
 }
 
+// Separates a property value into its numeric value and its unit type.
+
+function splitValues(prop, value) {
+    var unitType,
+        numericValue;
+
+    numericValue = (value || 0)
+        .toString()
+        .toLowerCase()
+        .replace(/[%A-z]+$/, function(match) {
+            unitType = match;
+            return '';
+        });
+
+    // If no unit type was supplied, assign one that is appropriate for this 
+    // property (e.g. 'deg' for rotateZ or 'px' for width)
+
+    if (!unitType) {
+        unitType = hAzzle.getUnitType(prop);
+    }
+
+    return [numericValue, unitType];
+}
 
 function Animation(elem, properties, options) {
 
@@ -865,8 +886,8 @@ function Animation(elem, properties, options) {
             }, options),
             originalProperties: properties,
             originalOptions: options,
-            
-           // Use performance.now shim from our RAF() polify
+
+            // Use performance.now shim from our RAF() polify
 
             startTime: frame.perfNow(),
             duration: options.duration,
@@ -972,31 +993,3 @@ Animation.prefilter = function(callback, prepend) {
         animationPrefilters.push(callback);
     }
 };
-
-
-
-
-
-// Separates a property value into its numeric value and its unit type.
-
-function splitValues(prop, value) {
-    var unitType,
-        numericValue;
-
-    numericValue = (value || 0)
-        .toString()
-        .toLowerCase()
-        .replace(/[%A-z]+$/, function(match) {
-            unitType = match;
-            return '';
-        });
-
-    // If no unit type was supplied, assign one that is appropriate for this 
-    // property (e.g. 'deg' for rotateZ or 'px' for width)
-
-    if (!unitType) {
-        unitType = hAzzle.getUnitType(prop);
-    }
-
-    return [numericValue, unitType];
-}
