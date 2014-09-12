@@ -1,4 +1,6 @@
 // fx.js
+var elementUnitConversionData;
+
 var
 // 'frame' is the requestAnimationFrame shim we are using
 // Sending a number into the shim will adjust the 
@@ -6,7 +8,13 @@ var
 // 20 FPS
 
     frame = hAzzle.RAF(),
-    relVal = /^(?:([+-])=|)([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]*)$/i,
+    relVal = /^([+-\/*])=/,
+    fontLineVal = /^(fontSize|lineHeight)$/,
+    scaleVal = /^scale/,
+    reGrBlVal = /(Red|Green|Blue)$/i,
+    opVal = /[\/*]/,
+    mplrwtwlVal = /margin|padding|left|right|width|text|word|letter/i,
+    xVal = /X$/,
     queueHooks = /queueHooks$/,
     sheets = [],
     prefix = 'oTween',
@@ -55,62 +63,127 @@ var
         }
     },
 
-    // Support for jQuery API
-    // NOTE!! This will be changed soon
-
     tweeners = {
 
         '*': [
-            function(prop, value) {
-                var tween = this.createTween(prop, value),
-                    target = tween.cur(),
-                    parts = relVal.exec(value),
-                    unit = parts && parts[3] || (hAzzle.unitless[prop] ? '' : 'px'),
+            function(property, value) {
 
-                    // Note! This start value gives a bug if the propert are uknow or not hooked
-                    // Need a fix soon!!
+                // Create a new 'tween' instance
 
-                    start = (hAzzle.unitless[prop] || unit !== 'px' && +target) &&
-                    relVal.exec(hAzzle.css(tween.elem, prop)),
-                    scale = 1,
-                    maxIterations = 20;
+                var tween = this.createTween(property, value),
+                    elem = tween.elem,
+                    start = getCSS(elem, property),
+                    end = value,
+                    separatedValue,
+                    endUnit,
+                    startUnit,
+                    operator;
 
-                if (start && start[3] !== unit) {
+                // Split the start value
 
-                    unit = unit || start[3];
+                separatedValue = separateValue(property, start);
+                start = separatedValue[0];
+                startUnit = separatedValue[1];
 
-                    // Make sure we update the tween properties later on
-                    parts = parts || [];
 
-                    // Iteratively approximate from a nonzero starting point
-                    start = +target || 1;
+                // Split the end value 
 
-                    do {
-                        // If previous iteration zeroed out, double until we get *something*.
-                        // Use string for doubling so we don't accidentally see scale as unchanged below
-                        scale = scale || '.5';
+                separatedValue = separateValue(property, end);
 
-                        // Adjust and apply
-                        start = start / scale;
-                        hAzzle.style(tween.elem, prop, start + unit);
+                // Extract a value operator (e.g. '+=', '-=') if one exists
 
-                        // Update scale, tolerating zero or NaN from tween.cur(),
-                        // break the loop if scale is unchanged or perfect, or if we've just had enough
-                    } while (
-                        scale !== (scale = tween.cur() / target) && scale !== 1 && --maxIterations
-                    );
+                end = separatedValue[0].replace(relVal, function(match, subMatch) {
+                    operator = subMatch;
+                    // Strip the operator off of the value.
+                    return '';
+                });
+
+                endUnit = separatedValue[1];
+
+                // Parse float values from endValue and start. Default to 0 if NaN is returned.
+
+                start = parseFloat(start) || 0;
+                end = parseFloat(end) || 0;
+
+                if (endUnit === '%') {
+
+                    if (fontLineVal.test(property)) {
+                        end = end / 100;
+                        endUnit = 'em';
+                    } else if (scaleVal.test(property)) {
+                        end = end / 100;
+                        endUnit = '';
+                    } else if (reGrBlVal.test(property)) {
+                        end = (end / 100) * 255;
+                        endUnit = '';
+                    }
                 }
 
-                // Update tween properties
-                if (parts) {
+                // The * and / operators, which are not passed in with an associated unit,
+                // inherently use start's unit. Skip value and unit conversion.
 
-                    start = tween.start = +start || +target || 0;
-                    tween.unit = unit;
+                if (opVal.test(operator)) {
+                    endUnit = startUnit;
+                } else if ((startUnit !== endUnit) && start !== 0) {
 
-                    // If a +=/-= token was provided, we're doing a relative animation
-                    tween.end = parts[1] ? start + (parts[1] + 1) * parts[2] : +parts[2];
+                    if (end === 0) {
+                        endUnit = startUnit;
+                    } else {
 
+                        elementUnitConversionData = elementUnitConversionData || hAzzle.calculateUnitRatios(elem);
+
+                        var axis = (mplrwtwlVal.test(property) ||
+                            xVal.test(property) || property === 'x') ? 'x' : 'y';
+
+                        switch (startUnit) {
+
+                            case '%':
+
+                                start *= (axis === 'x' ? elementUnitConversionData.percentToPxWidth :
+                                    elementUnitConversionData.percentToPxHeight);
+                                break;
+
+                            case 'px':
+
+                                // px acts as our midpoint in the unit conversion process; do nothing.
+                                break;
+
+                            default:
+
+                                start *= elementUnitConversionData[startUnit + 'ToPx'];
+                        }
+
+                        // Invert the px ratios to convert into to the target unit.
+
+                        switch (endUnit) {
+
+                            case '%':
+                                start *= 1 / (axis === 'x' ? elementUnitConversionData.percentToPxWidth :
+                                    elementUnitConversionData.percentToPxHeight);
+                                break;
+
+                            case 'px':
+                                /* start is already in px, do nothing; we're done. */
+                                break;
+
+                            default:
+                                start *= 1 / elementUnitConversionData[endUnit + 'ToPx'];
+                        }
+                    }
                 }
+
+                if (operator === '+') {
+                    end = start + end;
+                } else if (operator === '-') {
+                    end = start - end;
+                } else if (operator === '*') {
+                    end = start * end;
+                } else if (operator === '/') {
+                    end = start / end;
+                }
+                tween.end = end;
+                tween.start = start;
+                tween.unit = endUnit;
                 return tween;
             }
         ]
@@ -207,18 +280,18 @@ hAzzle.extend({
                         opt.duration = 200;
                         break;
 
-                    case "normal":
+                    case 'normal':
                         opt.duration = 400;
                         break;
 
-                    case "slow":
+                    case 'slow':
                         opt.duration = 600;
                         break;
 
                     default:
-                        opt.duration = parseFloat(opt.duration) || 
-                        parseFloat(hAzzle.TweenDefaults.duration) || 
-                        400;
+                        opt.duration = parseFloat(opt.duration) ||
+                            parseFloat(hAzzle.TweenDefaults.duration) ||
+                            400;
                 }
             }
         }
@@ -533,9 +606,9 @@ function parseDefault(elem, props, opts) {
     ***********************/
 
     // Get correct display. Its faster for us to use hAzzle.curCSS directly then
-    // hAzzle.css. In fact we gain better performance skipping a lot of checks
+    // getCSS. In fact we gain better performance skipping a lot of checks
 
-    display = hAzzle.curCSS(elem, 'display');
+    display = computePropertyValue(elem, 'display');
 
     // Test default display if display is currently 'none'
     checkDisplay = display === 'none' ?
@@ -751,6 +824,29 @@ function reversing(elem, props) {
     return ara;
 }
 
+// Separates a property value into its numeric value and its unit type.
+
+function separateValue(property, value) {
+    var unitType,
+        numericValue;
+
+    numericValue = (value || 0)
+        .toString()
+        .toLowerCase()
+        .replace(/[%A-z]+$/, function(match) {
+            unitType = match;
+            return '';
+        });
+
+    // If no unit type was supplied, assign one that is appropriate for this 
+    // property (e.g. 'deg' for rotateZ or 'px' for width)
+
+    if (!unitType) {
+        unitType = hAzzle.getUnitType(property);
+    }
+
+    return [numericValue, unitType];
+}
 
 function Animation(elem, properties, options) {
 
@@ -773,7 +869,6 @@ function Animation(elem, properties, options) {
                 percent = 1 - temp,
                 index = 0,
                 length = animation.tweens.length;
-
 
             // Iterate through each active animation
 
@@ -827,6 +922,7 @@ function Animation(elem, properties, options) {
                 }
 
                 stopped = true;
+
                 for (; index < length; index++) {
                     animation.tweens[index].run(1);
                 }
