@@ -65,13 +65,13 @@ var
     tweeners = {
 
         '*': [
-            function(property, value) {
+            function(prop, value) {
 
                 // Create a new 'tween' instance
 
-                var tween = this.createTween(property, value),
+                var tween = this.createTween(prop, value),
                     elem = tween.elem,
-                    start = getCSS(elem, property),
+                    start = getCSS(elem, prop),
                     end = value,
                     splittedValues,
                     endUnit,
@@ -80,7 +80,7 @@ var
 
                 // Split the start value ...
 
-                splittedValues = splitValues(property, start);
+                splittedValues = splitValues(prop, start);
 
                 // .. grab it, and...
 
@@ -90,10 +90,9 @@ var
 
                 startUnit = splittedValues[1];
 
-
                 // Same process for end value as for start value
 
-                splittedValues = splitValues(property, end);
+                splittedValues = splitValues(prop, end);
 
                 // Extract a value operator (e.g. '+=', '*=', '/=') if one exists
 
@@ -110,13 +109,13 @@ var
                 end = parseFloat(end) || 0;
 
                 if (endUnit === '%') {
-                    if (fontLineVal.test(property)) {
+                    if (fontLineVal.test(prop)) {
                         end = end / 100;
                         endUnit = 'em';
-                    } else if (scaleVal.test(property)) {
+                    } else if (scaleVal.test(prop)) {
                         end = end / 100;
                         endUnit = '';
-                    } else if (reGrBlVal.test(property)) {
+                    } else if (reGrBlVal.test(prop)) {
                         end = (end / 100) * 255;
                         endUnit = '';
                     }
@@ -135,8 +134,8 @@ var
 
                         unitConversionData = unitConversionData || hAzzle.calculateUnitRatios(elem);
 
-                        var axis = (mplrwtwlVal.test(property) ||
-                            xVal.test(property) || property === 'x') ? 'x' : 'y';
+                        var axis = (mplrwtwlVal.test(prop) ||
+                            xVal.test(prop) || prop === 'x') ? 'x' : 'y';
 
                         switch (startUnit) {
 
@@ -837,7 +836,7 @@ function reversing(elem, props) {
 
 // Separates a property value into its numeric value and its unit type.
 
-function splitValues(property, value) {
+function splitValues(prop, value) {
     var unitType,
         numericValue;
 
@@ -853,7 +852,7 @@ function splitValues(property, value) {
     // property (e.g. 'deg' for rotateZ or 'px' for width)
 
     if (!unitType) {
-        unitType = hAzzle.getUnitType(property);
+        unitType = hAzzle.getUnitType(prop);
     }
 
     return [numericValue, unitType];
