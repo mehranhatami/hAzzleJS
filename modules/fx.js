@@ -1,6 +1,4 @@
 // fx.js
-var elementUnitConversionData;
-
 var
 // 'frame' is the requestAnimationFrame shim we are using
 // Sending a number into the shim will adjust the 
@@ -16,6 +14,7 @@ var
     mplrwtwlVal = /margin|padding|left|right|width|text|word|letter/i,
     xVal = /X$/,
     queueHooks = /queueHooks$/,
+    unitConversionData,
     sheets = [],
     prefix = 'oTween',
     rafId,
@@ -74,39 +73,43 @@ var
                     elem = tween.elem,
                     start = getCSS(elem, property),
                     end = value,
-                    separatedValue,
+                    splittedValues,
                     endUnit,
                     startUnit,
                     operator;
 
-                // Split the start value
+                // Split the start value ...
 
-                separatedValue = separateValue(property, start);
-                start = separatedValue[0];
-                startUnit = separatedValue[1];
+                splittedValues = splitValues(property, start);
+
+                // .. grab it, and...
+
+                start = splittedValues[0];
+
+                // get the correct unit type
+
+                startUnit = splittedValues[1];
 
 
-                // Split the end value 
+                // Same process for end value as for start value
 
-                separatedValue = separateValue(property, end);
+                splittedValues = splitValues(property, end);
 
-                // Extract a value operator (e.g. '+=', '-=') if one exists
+                // Extract a value operator (e.g. '+=', '*=', '/=') if one exists
 
-                end = separatedValue[0].replace(relVal, function(match, subMatch) {
+                end = splittedValues[0].replace(relVal, function(match, subMatch) {
                     operator = subMatch;
-                    // Strip the operator off of the value.
                     return '';
                 });
 
-                endUnit = separatedValue[1];
+                endUnit = splittedValues[1];
 
-                // Parse float values from endValue and start. Default to 0 if NaN is returned.
+                // ParseFloat end and start value. Default to 0 if NaN is returned.
 
                 start = parseFloat(start) || 0;
                 end = parseFloat(end) || 0;
 
                 if (endUnit === '%') {
-
                     if (fontLineVal.test(property)) {
                         end = end / 100;
                         endUnit = 'em';
@@ -119,7 +122,7 @@ var
                     }
                 }
 
-                // The * and / operators, which are not passed in with an associated unit,
+                // The '*' and '/' operators, which are not passed in with an associated unit,
                 // inherently use start's unit. Skip value and unit conversion.
 
                 if (opVal.test(operator)) {
@@ -130,7 +133,7 @@ var
                         endUnit = startUnit;
                     } else {
 
-                        elementUnitConversionData = elementUnitConversionData || hAzzle.calculateUnitRatios(elem);
+                        unitConversionData = unitConversionData || hAzzle.calculateUnitRatios(elem);
 
                         var axis = (mplrwtwlVal.test(property) ||
                             xVal.test(property) || property === 'x') ? 'x' : 'y';
@@ -139,8 +142,8 @@ var
 
                             case '%':
 
-                                start *= (axis === 'x' ? elementUnitConversionData.percentToPxWidth :
-                                    elementUnitConversionData.percentToPxHeight);
+                                start *= (axis === 'x' ? unitConversionData.percentToPxWidth :
+                                    unitConversionData.percentToPxHeight);
                                 break;
 
                             case 'px':
@@ -150,7 +153,7 @@ var
 
                             default:
 
-                                start *= elementUnitConversionData[startUnit + 'ToPx'];
+                                start *= unitConversionData[startUnit + 'ToPx'];
                         }
 
                         // Invert the px ratios to convert into to the target unit.
@@ -158,8 +161,8 @@ var
                         switch (endUnit) {
 
                             case '%':
-                                start *= 1 / (axis === 'x' ? elementUnitConversionData.percentToPxWidth :
-                                    elementUnitConversionData.percentToPxHeight);
+                                start *= 1 / (axis === 'x' ? unitConversionData.percentToPxWidth :
+                                    unitConversionData.percentToPxHeight);
                                 break;
 
                             case 'px':
@@ -167,10 +170,12 @@ var
                                 break;
 
                             default:
-                                start *= 1 / elementUnitConversionData[endUnit + 'ToPx'];
+                                start *= 1 / unitConversionData[endUnit + 'ToPx'];
                         }
                     }
                 }
+
+                // Support for relative movement via '+=n', '-=n', '*=n' or '/=n'
 
                 if (operator === '+') {
                     end = start + end;
@@ -181,9 +186,15 @@ var
                 } else if (operator === '/') {
                     end = start / end;
                 }
+
+                // Prototype value...
+
                 tween.end = end;
                 tween.start = start;
                 tween.unit = endUnit;
+
+                // Return the newly created tween object
+
                 return tween;
             }
         ]
@@ -736,8 +747,8 @@ function parseProperties(elem, props, specialEasing) {
         // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
         // there is no way to check for their explicit browser support, and so we skip this check for them.
 
-        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(index)[1] === false) {
-            hAzzle.error('Skipping [' + index + '] due to a lack of browser support.');
+        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
+            hAzzle.error('Skipping [' + name + '] due to a lack of browser support.');
             continue;
         }
 
@@ -826,7 +837,7 @@ function reversing(elem, props) {
 
 // Separates a property value into its numeric value and its unit type.
 
-function separateValue(property, value) {
+function splitValues(property, value) {
     var unitType,
         numericValue;
 
@@ -970,6 +981,7 @@ function Animation(elem, properties, options) {
         runAnimation();
 
     } else {
+
         sheets.pop();
     }
 
