@@ -198,7 +198,6 @@ var
             }
         ]
     },
-
     animationPrefilters = [parseDefault];
 
 // Extend the global hAzzle object
@@ -210,16 +209,10 @@ hAzzle.extend({
 
     defaultEasing: 'swing',
 
-    // Default animation settings     
+    // Default duration - can be overwritten with
+    // plug-ins
 
-    TweenDefaults: {
-        queue: true,
-        duration: 500,
-        easing: hAzzle.defaultEasing,
-        complete: null,
-        display: null,
-        mobile: true,
-    },
+    defaultDuration: 500,
 
     // Contains a object over CSS properties that should
     // be backed up before animation, and restored after
@@ -227,6 +220,16 @@ hAzzle.extend({
 
     originalValues: {
         boxSizing: null,
+    },
+
+    // Note! hAzzle are faster then jQuery animation, so 
+    // even if we try to support jQuery's named durations - we 
+    // have to adjust it to match hAzzle. But the names are the same!!
+
+    speeds: {
+        fast: 100,
+        medium: 400,
+        slow: 1200,
     }
 
 }, hAzzle);
@@ -243,15 +246,11 @@ hAzzle.extend({
             opt = speed;
         }
 
-        // Use default settings and overwrite later 
+        /**********************
+         Option: complete
+        **********************/
 
-        opt = quickCopy(hAzzle.TweenDefaults, opt),
-
-            /**********************
-             Option: complete
-            **********************/
-
-            opt.complete = opt.complete ?
+        opt.complete = opt.complete ?
             opt.complete :
             callback ? callback :
             !callback && easing ? easing :
@@ -280,30 +279,10 @@ hAzzle.extend({
         if (document.hidden) {
             opt.duration = 0;
         } else {
-
-            if (typeof speed === 'number') {
-                opt.duration = speed;
-            } else {
-
-                switch (opt.duration.toString().toLowerCase()) {
-                    case 'fast':
-                        opt.duration = 200;
-                        break;
-
-                    case 'normal':
-                        opt.duration = 400;
-                        break;
-
-                    case 'slow':
-                        opt.duration = 600;
-                        break;
-
-                    default:
-                        opt.duration = parseFloat(opt.duration) ||
-                            parseFloat(hAzzle.TweenDefaults.duration) ||
-                            400;
-                }
-            }
+            opt.duration = typeof speed === 'number' ? speed :
+                typeof opt.duration === 'number' ?
+                opt.duration : opt.duration in hAzzle.speeds ?
+                hAzzle.speeds[opt.duration] : hAzzle.defaultDuration;
         }
 
         /**********************
@@ -400,8 +379,7 @@ hAzzle.extend({
 
         var i = this.length,
             index = type != null && type + 'queueHooks',
-            data, dequeue = true,
-            elem,
+            data, dequeue = true, elem,
             stopQueue = function(hooks) {
                 var stop = hooks.stop;
                 delete hooks.stop;
@@ -616,9 +594,9 @@ function parseDefault(elem, props, opts) {
     ***********************/
 
     // Get correct display. Its faster for us to use hAzzle.curCSS directly then
-    // getCSS. In fact we gain better performance skipping a lot of checks
+    // hAzzle.css. In fact we gain better performance skipping a lot of checks
 
-    display = curCSS(elem, 'display');
+    display = hAzzle.curCSS(elem, 'display');
 
     // Test default display if display is currently 'none'
     checkDisplay = display === 'none' ?
@@ -746,8 +724,8 @@ function parseProperties(elem, props, specialEasing) {
         // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
         // there is no way to check for their explicit browser support, and so we skip this check for them.
 
-        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
-            hAzzle.error('Skipping [' + name + '] due to a lack of browser support.');
+        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(index)[1] === false) {
+            hAzzle.error('Skipping [' + index + '] due to a lack of browser support.');
             continue;
         }
 
@@ -834,29 +812,6 @@ function reversing(elem, props) {
     return ara;
 }
 
-// Separates a property value into its numeric value and its unit type.
-
-function splitValues(prop, value) {
-    var unitType,
-        numericValue;
-
-    numericValue = (value || 0)
-        .toString()
-        .toLowerCase()
-        .replace(/[%A-z]+$/, function(match) {
-            unitType = match;
-            return '';
-        });
-
-    // If no unit type was supplied, assign one that is appropriate for this 
-    // property (e.g. 'deg' for rotateZ or 'px' for width)
-
-    if (!unitType) {
-        unitType = hAzzle.getUnitType(prop);
-    }
-
-    return [numericValue, unitType];
-}
 
 function Animation(elem, properties, options) {
 
@@ -864,7 +819,7 @@ function Animation(elem, properties, options) {
         stopped,
         index = 0,
         length = animationPrefilters.length,
-        promise = hAzzle.Promises().always(function() {
+        promises = hAzzle.Promises().always(function() {
             delete tick.elem;
         }),
         tick = function() {
@@ -880,6 +835,7 @@ function Animation(elem, properties, options) {
                 index = 0,
                 length = animation.tweens.length;
 
+
             // Iterate through each active animation
 
             for (; index < length; index++) {
@@ -890,18 +846,18 @@ function Animation(elem, properties, options) {
             // Progress indicator
             // Opt: progress {Function}
 
-            promise.notifyWith(elem, [animation, percent, remaining]);
+            promises.notifyWith(elem, [animation, percent, remaining]);
 
             if (percent < 1 && length) {
                 return remaining;
             } else {
                 stopped = true;
-                promise.resolveWith(elem, [animation]);
+                promises.resolveWith(elem, [animation]);
                 return false;
 
             }
         },
-        animation = promise.promise({
+        animation = promises.promise({
             elem: elem,
             props: quickCopy({}, properties),
             opts: hAzzle.shallowCopy(true, {
@@ -909,8 +865,8 @@ function Animation(elem, properties, options) {
             }, options),
             originalProperties: properties,
             originalOptions: options,
-
-            // Use performance.now shim from our RAF() polify
+            
+           // Use performance.now shim from our RAF() polify
 
             startTime: frame.perfNow(),
             duration: options.duration,
@@ -932,16 +888,15 @@ function Animation(elem, properties, options) {
                 }
 
                 stopped = true;
-
                 for (; index < length; index++) {
                     animation.tweens[index].run(1);
                 }
 
                 // Resolve when we played the last frame; otherwise, reject
                 if (gotoEnd) {
-                    promise.resolveWith(elem, [animation, gotoEnd]);
+                    promises.resolveWith(elem, [animation, gotoEnd]);
                 } else {
-                    promise.rejectWith(elem, [animation, gotoEnd]);
+                    promises.rejectWith(elem, [animation, gotoEnd]);
                 }
 
                 return this;
@@ -980,7 +935,6 @@ function Animation(elem, properties, options) {
         runAnimation();
 
     } else {
-
         sheets.pop();
     }
 
@@ -1018,3 +972,31 @@ Animation.prefilter = function(callback, prepend) {
         animationPrefilters.push(callback);
     }
 };
+
+
+
+
+
+// Separates a property value into its numeric value and its unit type.
+
+function splitValues(prop, value) {
+    var unitType,
+        numericValue;
+
+    numericValue = (value || 0)
+        .toString()
+        .toLowerCase()
+        .replace(/[%A-z]+$/, function(match) {
+            unitType = match;
+            return '';
+        });
+
+    // If no unit type was supplied, assign one that is appropriate for this 
+    // property (e.g. 'deg' for rotateZ or 'px' for width)
+
+    if (!unitType) {
+        unitType = hAzzle.getUnitType(prop);
+    }
+
+    return [numericValue, unitType];
+}

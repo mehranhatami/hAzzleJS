@@ -73,17 +73,30 @@ Tween.prototype = {
         prop = prop || this.prop;
         value = value || this.now;
 
-        // Set the CSS style values
+        if (hAzzle.TweenHooks.set[prop]) {
+            hAzzle.TweenHooks.set[prop](elem, prop, value)
+        } else {
 
-        elem.style[prop] = value;
+            // Set the CSS style values
 
-        return [prop, value];
+            elem.style[prop] = value;
+
+            console.log([prop, value]);
+
+            return [prop, value];
+        }
     },
 
     // Get CSS properties
 
     getCSS: function(elem, prop, root, force) {
 
+        // Check for setter
+
+        if (hAzzle.TweenHooks.get[prop]) {
+            return hAzzle.TweenHooks.get[prop](elem, prop)
+        } 
+        
         if (!/^[\d-]/.test(prop)) {
 
             // For SVG elements, dimensional properties (which SVGAttribute() detects) are tweened via
@@ -157,7 +170,7 @@ Tween.prototype = {
                 return contentBoxWidth;
             }
         }
-         var computedStyle = getStyles(elem);
+        var computedStyle = getStyles(elem);
 
         // IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
         // As a polyfill for querying individual border side colors, just return the top border's color.
@@ -291,6 +304,21 @@ Tween.prototype = {
         dummy = null;
 
         return unitRatios;
+    }
+};
+
+// TweenHooks
+
+hAzzle.TweenHooks = {
+    set: {},
+    get: {}
+};
+
+// Support: IE9
+// Panic based approach to setting things on disconnected nodes
+hAzzle.TweenHooks.set.scrollTop = hAzzle.TweenHooks.set.scrollLeft = function(elem, prop, value) {
+    if (elem.nodeType && elem.parentNode) {
+        elem[prop] = value;
     }
 };
 
