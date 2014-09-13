@@ -5,14 +5,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     prefixMatches = {},
 
-    // CSS Normal Transforms
-
-    cssNormalTransform = {
-
-        letterSpacing: '0',
-        fontWeight: '400'
-    },
-
     vendors = ['', 'Webkit', 'Moz', 'ms', 'O'],
 
     cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
@@ -42,11 +34,24 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             cHeightWidth: /^(height|width)$/i
         },
 
-        cssProps: {},
+        // Add in properties whose names you wish to fix before
+        // setting or getting the value
+        // NOTE! Only added for compbaility with jQuery API
+
+        cssProps: {
+
+            'float': 'cssFloat'
+
+        },
 
         unitless: {},
 
-        has: {},
+        has: {
+
+            // Check for getComputedStyle support
+
+            ComputedStyle: !!document.defaultView.getComputedStyle
+        },
 
         support: {},
 
@@ -144,8 +149,137 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             return [prop, false];
         }
     },
-    cssHook = cssCore.hooks;
+    cssHook = cssCore.hooks,
 
+    // The names in this two functions are kept due to compability
+    // with the jQuery API.
+
+    getCSS = function(elem, prop, extra, force) {
+
+        var value, num;
+
+        if (cssHook[prop]) {
+            value = cssHook[prop].get(elem, prop);
+        }
+
+        if (!cssCore.regEx.gCSSVal.test(value)) {
+
+            // SVG elements
+
+            if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
+
+                if (cssCore.regEx.cHeightWidth.test(prop)) {
+                    value = elem.getBBox()[prop];
+                } else {
+                    value = elem.getAttribute(prop);
+                }
+            } else {
+                value = curCSS(elem, prop, null, force);
+            }
+        }
+
+        if (extra === '' || extra) {
+            num = parseFloat(value);
+            return extra === true || hAzzle.isNumeric(num) ? num || 0 : value;
+        }
+
+        return value;
+    },
+
+    setCSS = function(elem, prop, value, animate) {
+
+        // Don't set styles on text and comment nodes
+        if (elem.nodeType === 3 || elem.nodeType === 8 || !elem) {
+            return;
+        }
+
+        var type, ret, oldValue;
+
+        // Check if we're setting a value
+
+        if (value !== undefined) {
+
+            // Check for 'cssHook'
+
+            if (cssHook[prop]) {
+                value = cssHook[prop].set(elem, prop, value);
+                prop = cssHook[prop].name;
+
+            } else { // Only 'camelize' if no hook exist
+                prop = hAzzle.camelize(prop);
+            }
+
+            // Assign the appropriate vendor prefix before perform an official style update.
+
+            prop = hAzzle.prefixCheck(prop)[0];
+
+            // No need to set / get relative values and other things that
+            // kills the performance when we are animating
+
+            if (!animate) {
+
+                type = typeof value;
+
+                // Convert relative number strings
+
+                if (type === 'string' && (ret = cssCore.regEx.numbs.exec(value))) {
+                    value = hAzzle.css(elem, prop, '');
+                    value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    type = 'number';
+                }
+
+                // Make sure that null and NaN values aren't set.
+
+                if (value === null || value !== value) {
+
+                    return;
+                }
+
+                // If a number was passed in, add 'px' to the number (except for certain CSS properties)
+
+                if (type === 'number' && !hAzzle.unitless[prop]) {
+
+                    value += ret && ret[3] ? ret[3] : 'px';
+                }
+
+                if (cssCore.has['bug-clearCloneStyle'] &&
+                    value === '' && prop.indexOf('background') === 0) {
+                    elem.style[hAzzle.camelize(prop)] = 'inherit';
+                }
+
+                oldValue = elem.style[name];
+                elem.style[name] = value;
+
+                // Revert to the old value if the browser didn't accept the new rule to
+                // not break the cascade.
+
+                if (value && !elem.style[name]) {
+                    elem.style[name] = oldValue;
+                }
+            }
+
+            if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
+
+                // Note: For SVG attributes, vendor-prefixed property names are never used
+
+                elem.setAttribute(prop, value);
+
+            } else {
+                elem.style[prop] = value;
+            }
+
+        } else {
+
+            // If a hook was provided get the non-computed value from there
+
+            if (cssHook[prop]) {
+                return cssHook[prop].get(elem, prop);
+            }
+
+            // Otherwise just get the value from the style object
+            return elem.style[prop];
+        }
+    };
 
 hAzzle.extend({
 
@@ -174,136 +308,6 @@ hAzzle.extend({
     }
 });
 
-
-// The names in this two functions are kept due to compability
-// with the jQuery API.
-
-var getCSS = hAzzle.css = function(elem, prop, extra, force) {
-
-    var value, num;
-
-    if (cssHook[prop]) {
-        value = cssHook[prop].get(elem, prop);
-    }
-
-    if (!cssCore.regEx.gCSSVal.test(value)) {
-
-        // SVG elements
-
-        if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
-
-            if (cssCore.regEx.cHeightWidth.test(prop)) {
-                value = elem.getBBox()[prop];
-            } else {
-                value = elem.getAttribute(prop);
-            }
-        } else {
-            value = curCSS(elem, prop, null, force);
-        }
-    }
-
-    if (extra === '' || extra) {
-        num = parseFloat(value);
-        return extra === true || hAzzle.isNumeric(num) ? num || 0 : value;
-    }
-
-    return value;
-};
-
-var setCSS = hAzzle.style = function(elem, prop, value, animate) {
-
-    // Don't set styles on text and comment nodes
-    if (elem.nodeType === 3 || elem.nodeType === 8 || !elem) {
-        return;
-    }
-
-    var type, ret, oldValue;
-
-    if (value !== undefined) {
-
-        // Check for 'cssHook'
-
-        if (cssHook[prop]) {
-            value = cssHook[prop].set(elem, prop, value);
-            prop = cssHook[prop].name;
-
-        } else { // Only 'camelize' if no hook exist
-            prop = hAzzle.camelize(prop);
-        }
-
-        // Assign the appropriate vendor prefix before perform an official style update.
-
-        prop = hAzzle.prefixCheck(prop)[0];
-
-        // No need to set / get relative values and other things that
-        // kills the performance when we are animating
-
-        if (!animate) {
-
-            type = typeof value;
-
-            // Convert relative number strings
-
-            if (type === 'string' && (ret = cssCore.regEx.numbs.exec(value))) {
-                value = hAzzle.css(elem, prop, '');
-                value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
-                type = 'number';
-            }
-
-            // Make sure that null and NaN values aren't set.
-
-            if (value === null || value !== value) {
-
-                return;
-            }
-
-            // If a number was passed in, add 'px' to the number (except for certain CSS properties)
-
-            if (type === 'number' && !hAzzle.unitless[prop]) {
-
-                value += ret && ret[3] ? ret[3] : 'px';
-            }
-
-            if (cssCore.has['bug-clearCloneStyle'] &&
-                value === '' && prop.indexOf('background') === 0) {
-                elem.style[hAzzle.camelize(prop)] = 'inherit';
-            }
-
-            oldValue = elem.style[name];
-            elem.style[name] = value;
-
-            // Revert to the old value if the browser didn't accept the new rule to
-            // not break the cascade.
-
-            if (value && !elem.style[name]) {
-                elem.style[name] = oldValue;
-            }
-        }
-
-        if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
-
-            // Note: For SVG attributes, vendor-prefixed property names are never used
-
-            elem.setAttribute(prop, value);
-
-        } else {
-            elem.style[prop] = value;
-        }
-
-    } else {
-
-        // If a hook was provided get the non-computed value from there
-
-        if (cssHook[prop]) {
-            return cssHook[prop].get(elem, prop);
-        }
-
-        // Otherwise just get the value from the style object
-        return elem.style[prop];
-    }
-};
-
-
 // Expose
 
 hAzzle.cssCore = cssCore;
@@ -312,19 +316,14 @@ hAzzle.cssProperties = cssProperties;
 hAzzle.cssSupport = cssCore.support;
 hAzzle.cssProps = cssCore.cssProps;
 hAzzle.cssHas = cssCore.has;
-hAzzle.cssProps = cssCore.cssProps;
 hAzzle.getDisplayType = getDisplayType;
 hAzzle.isZeroValue = isZeroValue;
 hAzzle.prefixCheck = prefixCheck;
 hAzzle.cssHooks = cssHook;
+hAzzle.css = getCSS;
+hAzzle.style = setCSS;
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
-
-// Check for getComputedStyle support
-
-cssCore.has.ComputedStyle = !!document.defaultView.getComputedStyle;
-
-// Bug detection
 
 hAzzle.assert(function(div) {
 
@@ -335,7 +334,9 @@ hAzzle.assert(function(div) {
 
     cssCore.has['bug-clearCloneStyle'] = div.style.backgroundClip === 'content-box';
 
-    if (cssCore.has['api-gCS']) {
+    // Only if ComputedStyle are supported
+
+    if (hAzzle.cssHas.ComputedStyle) {
 
         div.style.cssText = 'border:1px;padding:1px;width:4px;position:absolute';
         var divStyle = window.getComputedStyle(div, null);
@@ -351,21 +352,24 @@ hAzzle.assert(function(div) {
 
 hAzzle.assert(function(div) {
 
-    var support = {};
+    var support = {}, style = div.style;
 
     // Helper function to get the proper vendor property name.
     // (`transition` => `WebkitTransition`)
     function getVendorPropertyName(prop) {
-        // Handle unprefixed versions (FF16+, for example)
-        if (prop in div.style) return prop;
 
-        var vendorProp, i = vendors.length,
-            prop_ = prop.charAt(0).toUpperCase() + prop.substr(1);
+        // Shortcut for names that are not vendor prefixed
+        if (prop in style) {
+            return prop;
+        }
+        // Check for vendor prefixed names
+        var name, i = vendors.length,
+            capName = prop.charAt(0).toUpperCase() + prop.slice(1);
 
         while (i--) {
-            vendorProp = vendors[i] + prop_;
-            if (vendorProp in div.style) {
-                return vendorProp;
+            name = vendors[i] + capName;
+            if (name in div.style) {
+                return name;
             }
         }
     }
@@ -374,9 +378,9 @@ hAzzle.assert(function(div) {
     // Should return true for Webkits and Firefox 10+.
 
     function checkTransform3dSupport() {
-        div.style[support.transform] = '';
-        div.style[support.transform] = 'rotateY(90deg)';
-        return div.style[support.transform] !== '';
+        style[support.transform] = '';
+        style[support.transform] = 'rotateY(90deg)';
+        return style[support.transform] !== '';
     }
 
     // Check for the browser's transitions support.
@@ -414,7 +418,7 @@ hAzzle.assert(function(div) {
     hAzzle.cssSupport.backgroundPositionXY = hAzzle.curCSS('backgroundPositionX') === '3px' ? true : false;
 });
 
-// Check if support translate3d
+// Check for translate3d support
 
 hAzzle.assert(function(div) {
 
