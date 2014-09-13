@@ -3,6 +3,7 @@ var cHeightWidth = /^(height|width)$/i,
     cWidthHeight = /^(width|height)$/,
     cToprbLeft = /^(top|right|bottom|left)$/i,
     cTopLeft = /top|left/i,
+    cPrefix = 'CSS',
     computedValues = function(elem) {
 
         if (elem && elem !== window) {
@@ -10,47 +11,44 @@ var cHeightWidth = /^(height|width)$/i,
             if (elem.ownerDocument !== undefined) {
                 var view = elem.ownerDocument.defaultView;
             }
-            return view && hAzzle.cssCore.has['api-gCS'] ? (view.opener ? view.getComputedStyle(elem, null) :
-                window.getComputedStyle(elem, null)) : elem.style;
+            return view && hAzzle.cssCore.has.ComputedStyle ? 
+                        (view.opener ? view.getComputedStyle(elem, null) :
+                        window.getComputedStyle(elem, null)) : elem.style;
         }
         return null;
     },
     getStyles = function(elem) {
-
         var computed;
 
-        // We save the computedStyle on the object to avoid stressing the DOM
+        // We save the computedStyle on the object to minimize DOM querying
 
-        if (hAzzle.private(elem, 'CSS') === undefined) {
+        if (hAzzle.private(elem, cPrefix) === undefined) {
             return computedValues(elem);
 
-            /* If the computedStyle object has yet to be cached, do so now. */
-        } else if (!hAzzle.private(elem, 'CSS').computedStyle) {
-            computed = hAzzle.private(elem, 'CSS').computedStyle = computedValues(elem);
+        // If the computedStyle object has yet to be cached, do so now.
+        } else if (!hAzzle.private(elem, cPrefix).computedStyle) {
+            computed = hAzzle.private(elem, cPrefix).computedStyle = computedValues(elem);
 
             // If computedStyle is cached, use it.
 
         } else {
-            computed = hAzzle.private(elem, 'CSS').computedStyle;
+            computed = hAzzle.private(elem, cPrefix).computedStyle;
         }
 
         return computed;
     },
 
-    curCSS = hAzzle.curCSS = function(elem, prop, force, extra) {
+    curCSS = function(elem, prop, force) {
 
     var computedValue = 0,
-        toggleDisplay = false;
-
-
-    function revertDisplay() {
+        toggleDisplay = false,
+        revertDisplay = function() {
         if (toggleDisplay) {
             setCSS(elem, 'display', 'none');
         }
-    }
+    };
 
     if (cWidthHeight.test(prop) && getCSS(elem, 'display') === 0) {
-
         toggleDisplay = true;
         setCSS(elem, 'display', hAzzle.getDisplayType(elem));
     }
@@ -114,14 +112,11 @@ var cHeightWidth = /^(height|width)$/i,
             computedValue = hAzzle(elem).position()[prop] + 'px';
         }
     }
-    
-     if (extra === '' || extra) { 
-            num = parseFloat(computedValue);
-            
-            alert(computedValue)
-            
-            return extra === true || hAzzle.isNumeric(num) ? num || 0 : computedValue;
-        }
-    
-    return computedValue;
+     return computedValue;
 };
+
+// Expose
+
+hAzzle.computedValues = computedValues;
+hAzzle.getStyles = getStyles;
+hAzzle.curCSS = curCSS;

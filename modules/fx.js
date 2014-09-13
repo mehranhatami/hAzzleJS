@@ -119,7 +119,7 @@ var
                         end = (end / 100) * 255;
                         endUnit = '';
                     }
-                } 
+                }
 
                 // The '*' and '/' operators, which are not passed in with an associated unit,
                 // inherently use start's unit. Skip value and unit conversion.
@@ -162,7 +162,7 @@ var
                             case '%':
                                 start *= 1 / (axis === 'x' ? unitConversionData.lastpToPW :
                                     unitConversionData.lastToPH);
-                                    
+
                                 break;
 
                             case 'px':
@@ -483,7 +483,7 @@ function parseDefault(elem, props, opts) {
         orig = {},
         style = elem.style,
         hidden = elem.nodeType && isHidden(elem),
-        dataShow = hAzzle.private(elem, prefix);
+        storage = hAzzle.private(elem, prefix);
 
     // Handle queue: false promises
     if (!opts.queue) {
@@ -623,14 +623,14 @@ function parseDefault(elem, props, opts) {
 
             if (value === (hidden ? 'hide' : 'show')) {
 
-                if (value === 'show' && dataShow && dataShow[prop] !== undefined) {
+                if (value === 'show' && storage && storage[prop] !== undefined) {
                     hidden = true;
                 } else {
                     continue;
                 }
             }
-      
-            orig[prop] = dataShow && dataShow[prop] || elem.style[prop];
+
+            orig[prop] = storage && storage[prop] || elem.style[prop];
 
             // Any non-fx value stops us from restoring the original display value
         } else {
@@ -641,17 +641,17 @@ function parseDefault(elem, props, opts) {
     // End of iteration
 
     if (!hAzzle.isEmptyObject(orig)) {
-        if (dataShow) {
-            if ('hidden' in dataShow) {
-                hidden = dataShow.hidden;
+        if (storage) {
+            if ('hidden' in storage) {
+                hidden = storage.hidden;
             }
         } else {
-            dataShow = hAzzle.private(elem, prefix, {});
+            storage = hAzzle.private(elem, prefix, {});
         }
 
         // Store state if its toggle - enables .stop().toggle() to 'reverse'
         if (toggle) {
-            dataShow.hidden = !hidden;
+            storage.hidden = !hidden;
         }
 
         if (hidden) {
@@ -678,10 +678,10 @@ function parseDefault(elem, props, opts) {
         });
 
         for (prop in orig) {
-            tween = createTween(hidden ? dataShow[prop] : 0, prop, anim);
+            tween = createTween(hidden ? storage[prop] : 0, prop, anim);
 
-            if (!(prop in dataShow)) {
-                dataShow[prop] = tween.start;
+            if (!(prop in storage)) {
+                storage[prop] = tween.start;
                 if (hidden) {
                     tween.end = tween.start;
                     tween.start = prop === 'width' ||
@@ -691,7 +691,9 @@ function parseDefault(elem, props, opts) {
         }
 
         // If this is a noop like .hide().hide(), restore an overwritten display value
-    } else if ((display === 'none' ? defaultDisplay(elem.nodeName) : display) === 'inline') {
+    } else if ((display === 'none' ?
+        defaultDisplay(elem.nodeName) :
+        display) === 'inline') {
         style.display = display;
     }
 }

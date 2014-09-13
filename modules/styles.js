@@ -235,8 +235,8 @@ var setCSS = hAzzle.style = function(elem, prop, value, animate) {
 
         prop = hAzzle.prefixCheck(prop)[0];
 
-        // If animation - no need to set / get relative values and other
-        // things that kills the performance
+        // No need to set / get relative values and other things that
+        // kills the performance when we are animating
 
         if (!animate) {
 
@@ -322,7 +322,7 @@ hAzzle.cssHooks = cssHook;
 
 // Check for getComputedStyle support
 
-cssCore.has['api-gCS'] = !!document.defaultView.getComputedStyle;
+cssCore.has.ComputedStyle = !!document.defaultView.getComputedStyle;
 
 // Bug detection
 
