@@ -52,7 +52,6 @@ module.exports = function(config) {
         'ajax.js',
         'raf.js',
         'fx.js',
-        'dom.js',
         'traversing.js',
         'jsonxml.js',
     ];
