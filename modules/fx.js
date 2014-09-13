@@ -524,7 +524,7 @@ function parseDefault(elem, props, opts) {
 
         // Save the state
 
-        hAzzle.data(elem, 'CSS').opts.display === props.display;
+        hAzzle.private(elem, 'CSS').opts.display === props.display;
 
         anim.done(function() {
             elem.style.display = props.display;
@@ -536,7 +536,7 @@ function parseDefault(elem, props, opts) {
 
         // Save the state
 
-        hAzzle.data(elem, 'CSS').opts.visibility === props.visibility;
+        hAzzle.private(elem, 'CSS').opts.visibility === props.visibility;
 
         anim.done(function() {
             elem.style.visibility = props.visibility;
@@ -673,7 +673,6 @@ function parseDefault(elem, props, opts) {
 
             hAzzle.removePrivate(elem, prefix);
             for (prop in orig) {
-                console.log(prop)
                 setCSS(elem, prop, orig[prop]);
             }
         });
@@ -797,8 +796,8 @@ function reversing(elem, props) {
     // previous call, revert display to block prior to reversal so 
     // that the element is visible again.
 
-    if (hAzzle.data(elem, 'CSS').opts.display === 'none') {
-        hAzzle.data(elem, 'CSS').opts.display = 'block';
+    if (hAzzle.private(elem, 'CSS').opts.display === 'none') {
+        hAzzle.private(elem, 'CSS').opts.display = 'block';
     }
 
     // Swap around the object values

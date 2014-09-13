@@ -6,6 +6,17 @@ lrmpRegex = /^(left$|right$|margin|padding)/,
     rotskewRegex = /^(rotate|skew)/i,
     transinpRegex = /(^(scale|scaleX|scaleY|scaleZ|alpha|flexGrow|flexHeight|zIndex|fontWeight)$)|((opacity|red|green|blue|alpha)$)/i,
 
+    callUnitConversionData = {
+        parent: null,
+        position: null,
+        fontSize: null,
+        lastpToPW: null,
+        lastToPH: null,
+        lastEmToPx: null,
+        remToPx: null,
+        vwToPx: null,
+        vhToPx: null
+    }
     /**
      * Converts one unit to another
      *
@@ -96,3 +107,110 @@ hAzzle.getUnitType = function(property) {
         return 'px';
     }
 }
+
+ // Calculate unit ratios
+
+     function calculateUnitRatios(elem) {
+
+        var sameRatioIndicators = {
+                parent: elem.parentNode || document.body,
+                position: getCSS(elem, 'position'),
+                fontSize: getCSS(elem, 'fontSize')
+            },
+
+            // Determine if the same % ratio can be used. % is based on 
+            // the elem's position value and its parent's width and height dimensions.
+
+            samePercentRatio = ((sameRatioIndicators.position === callUnitConversionData.position) &&
+                (sameRatioIndicators.parent === callUnitConversionData.parent)),
+
+            // Determine if the same em ratio can be used. em is relative to the elem's fontSize.
+
+            sameEmRatio = (sameRatioIndicators.fontSize === callUnitConversionData.fontSize);
+
+        // Store these ratio indicators call-wide for the next elem to compare against.
+        callUnitConversionData.parent = sameRatioIndicators.parent;
+        callUnitConversionData.position = sameRatioIndicators.position;
+        callUnitConversionData.fontSize = sameRatioIndicators.fontSize;
+
+        var measurement = 100,
+            unitRatios = {};
+
+        if (!sameEmRatio || !samePercentRatio) {
+
+            var overflowxy = ['overflow', 'overflowX', 'overflowY'],
+                dim = ['minWidth', 'maxWidth', 'width', 'minHeight', 'maxHeight', 'height'],
+                i = overflowxy.length,
+                x = dim.length,
+                dummy = hAzzle.private(elem).isSVG ?
+                document.createElementNS('http://www.w3.org/TR/SVG/', 'rect') :
+                document.createElement('div');
+
+            hAzzle.styleCache(dummy);
+            
+            sameRatioIndicators.parent.appendChild(dummy);
+
+            // To accurately and consistently calculate conversion ratios, the element's cascaded overflow and box-sizing are stripped.
+            // Similarly, since width/height can be artificially constrained by their min-/max- equivalents, these are controlled for as well.
+            // Note: Overflow must be also be controlled for per-axis since the overflow property overwrites its per-axis values.
+
+            while (i--) {
+                setCSS(dummy, overflowxy[i], 'hidden');
+            }
+
+            setCSS(dummy, 'position', sameRatioIndicators.position);
+            setCSS(dummy, 'fontSize', sameRatioIndicators.fontSize);
+            setCSS(dummy, 'boxSizing', 'content-box');
+
+            // Width and height act as our proxy properties for measuring the horizontal and vertical % ratios.
+
+            while (x--) {
+                setCSS(dummy, dim[x], measurement + '%');
+            }
+
+            // PaddingLeft arbitrarily acts as our proxy property for the em ratio.
+
+            setCSS(dummy, 'paddingLeft', measurement + 'em');
+
+            // Divide the returned value by the measurement to get the ratio between 1% and 1px. Default to 1 since working with 0 can produce Infinite.
+
+            unitRatios.lastpToPW = callUnitConversionData.lastpToPW = (parseFloat(getCSS(dummy, 'width', null, true)) || 1) / measurement;
+           
+            
+            unitRatios.lastToPH = callUnitConversionData.lastToPH = (parseFloat(getCSS(dummy, 'height', null, true)) || 1) / measurement;
+            unitRatios.emToPx = callUnitConversionData.lastEmToPx = (parseFloat(getCSS(dummy, 'paddingLeft')) || 1) / measurement;
+
+            sameRatioIndicators.parent.removeChild(dummy);
+            
+            // Avoid memory leak in IE
+
+           dummy = null;
+           
+        } else {
+            unitRatios.lastEmToPx = callUnitConversionData.lastEmToPx;
+            unitRatios.lastpToPW = callUnitConversionData.lastpToPW;
+            unitRatios.lastToPH = callUnitConversionData.lastToPH;
+        }
+
+        // Whereas % and em ratios are determined on a per-element basis, the rem unit only needs to be checked
+        // once per call since it's exclusively dependant upon document.body's fontSize. If this is the first time
+        // that calculateUnitRatios() is being run during this call, remToPx will still be set to its default value of null,
+        // so we calculate it now.
+
+        if (callUnitConversionData.remToPx === null) {
+            // Default to browsers' default fontSize of 16px in the case of 0.
+            callUnitConversionData.remToPx = parseFloat(getCSS(document.body, 'fontSize')) || 16;
+        }
+
+        // Similarly, viewport units are %-relative to the window's inner dimensions.
+
+        if (callUnitConversionData.vwToPx === null) {
+            callUnitConversionData.vwToPx = parseFloat(window.innerWidth) / 100;
+            callUnitConversionData.vhToPx = parseFloat(window.innerHeight) / 100;
+        }
+
+        unitRatios.remToPx = callUnitConversionData.remToPx;
+        unitRatios.vwToPx = callUnitConversionData.vwToPx;
+        unitRatios.vhToPx = callUnitConversionData.vhToPx;
+        return unitRatios;
+    }

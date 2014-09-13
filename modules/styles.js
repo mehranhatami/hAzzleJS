@@ -77,6 +77,7 @@ hAzzle.unitless = cssCore.unitless;
 hAzzle.cssProperties = cssProperties;
 hAzzle.cssSupport = cssCore.support;
 hAzzle.cssProps = cssCore.cssProps;
+hAzzle.cssHas = cssCore.has;
 
 hAzzle.extend({
 
@@ -192,7 +193,7 @@ var getCSS = hAzzle.css = function(elem, prop, extra, force) {
 
         // SVG elements
 
-        if (hAzzle.data(elem) && hAzzle.data(elem).isSVG && hAzzle.SVGAttribute(prop)) {
+        if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
 
             if (cssCore.regEx.cHeightWidth.test(prop)) {
                 value = elem.getBBox()[prop];
@@ -222,6 +223,7 @@ var setCSS = hAzzle.style = function(elem, prop, value, animate) {
     var type, ret, oldValue;
 
     if (value !== undefined) {
+        
         // Check for 'cssHook'
 
         if (cssHook[prop]) {
@@ -246,7 +248,7 @@ var setCSS = hAzzle.style = function(elem, prop, value, animate) {
             // Convert relative number strings
 
             if (type === 'string' && (ret = cssCore.regEx.numbs.exec(value))) {
-                value = hAzzle.css(elem, name, '');
+                value = hAzzle.css(elem, prop, '');
                 value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = 'number';
             }
@@ -260,15 +262,14 @@ var setCSS = hAzzle.style = function(elem, prop, value, animate) {
 
             // If a number was passed in, add 'px' to the number (except for certain CSS properties)
 
-            if (type === 'number' && !hAzzle.unitless[name]) {
+            if (type === 'number' && !hAzzle.unitless[prop]) {
 
                 value += ret && ret[3] ? ret[3] : 'px';
             }
 
-            if (hAzzle.cssCore.has['bug-clearCloneStyle'] &&
-                value === '' && name.indexOf('background') === 0) {
-
-                elem.style[hAzzle.camelize(name)] = 'inherit';
+            if (cssCore.has['bug-clearCloneStyle'] &&
+                value === '' && prop.indexOf('background') === 0) {
+                elem.style[hAzzle.camelize(prop)] = 'inherit';
             }
 
             oldValue = elem.style[name];
@@ -282,7 +283,7 @@ var setCSS = hAzzle.style = function(elem, prop, value, animate) {
             }
         }
 
-        if (hAzzle.data(elem) && hAzzle.data(elem).isSVG && hAzzle.SVGAttribute(prop)) {
+        if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
 
             // Note: For SVG attributes, vendor-prefixed property names are never used
 

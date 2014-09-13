@@ -389,9 +389,9 @@ function dataAttr(elem, key, data) {
 hAzzle.styleCache = function(elem) {
 
 if(!elem) return;
-    if (hAzzle.data(elem, 'CSS') === undefined) {
+    if (hAzzle.private(elem, 'CSS') === undefined) {
 
-        hAzzle.data(elem, 'CSS', {
+        hAzzle.private(elem, 'CSS', {
 
             // A reference to the element's live computedStyle object.
 
@@ -416,12 +416,7 @@ if(!elem) return;
 			prevState: {},
 			
             opts: {},
-
-            // Used for animation queue
-			
-			queue: {},
-						
-        });
+	   });
     };
 	
 	return false;

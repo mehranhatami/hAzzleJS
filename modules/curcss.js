@@ -21,20 +21,17 @@ var cHeightWidth = /^(height|width)$/i,
 
         // We save the computedStyle on the object to avoid stressing the DOM
 
-        if (hAzzle.data(elem, 'CSS') === undefined) {
-            console.log('not cached')
+        if (hAzzle.private(elem, 'CSS') === undefined) {
             return computedValues(elem);
 
             /* If the computedStyle object has yet to be cached, do so now. */
-        } else if (!hAzzle.data(elem, 'CSS').computedStyle) {
-            console.log('caching just NOW')
-            computed = hAzzle.data(elem, 'CSS').computedStyle = computedValues(elem);
+        } else if (!hAzzle.private(elem, 'CSS').computedStyle) {
+            computed = hAzzle.private(elem, 'CSS').computedStyle = computedValues(elem);
 
             // If computedStyle is cached, use it.
 
         } else {
-            // console.log('data cached')
-            computed = hAzzle.data(elem, 'CSS').computedStyle;
+            computed = hAzzle.private(elem, 'CSS').computedStyle;
         }
 
         return computed;
