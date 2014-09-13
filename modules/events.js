@@ -421,7 +421,7 @@ var
             return new Event.prototype.init(src, props);
         }
         return new Event.prototype.init(src, props);
-    }
+    };
 
 Event.prototype = {
     constructor: Event,

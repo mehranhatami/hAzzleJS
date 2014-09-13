@@ -746,20 +746,7 @@ function parseProperties(elem, props, specialEasing) {
             delete props[index];
         }
 
-        hooks = hAzzle.cssHooks[name];
-        if (hooks && 'expand' in hooks) {
-            value = hooks.expand(value);
-            delete props[name];
-
-            for (index in value) {
-                if (!(index in props)) {
-                    props[index] = value[index];
-                    specialEasing[index] = easing;
-                }
-            }
-        } else {
-            specialEasing[name] = easing;
-        }
+        specialEasing[name] = easing;
     }
 
 }
