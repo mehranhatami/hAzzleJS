@@ -1,7 +1,5 @@
 // styles.js
-var i,
-
-    // Create a cached element for re-use when checking for CSS property prefixes.
+var // Create a cached element for re-use when checking for CSS property prefixes.
 
     prefixElement = document.createElement('div'),
 
@@ -15,12 +13,20 @@ var i,
         fontWeight: '400'
     },
 
-    cssProperties = ['textShadow', 'opacity', 'clip', 'zIndex',
-        'flex', 'order', 'borderCollapse', 'animation', 'animationFillMode', 'animationDirection',
-        'animatioName', 'animationTimingFunction', 'animationPlayState', 'perspective', 'boxSizing',
-        'textOverflow', 'columns', 'borderRadius', 'boxshadow', 'borderImage', 'columnCount', 'boxReflect',
-        'columnSpan', 'columnCount', 'columnGap', 'columnWidth', 'columnRuleColor', 'columnRuleStyle', 'columnRuleWidth'
-    ],
+    vendors = ['', 'Webkit', 'Moz', 'ms', 'O'],
+
+    cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
+        'animationDirection animatioName animationTimingFunction animationPlayState perspective boxSizing ' +
+        'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect ' +
+        'columnSpan columnCount columnGap columnWidth columnRuleColor columnRuleStyle columnRuleWidth').split(' '),
+
+    unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
+        'column-count flex-shrink flex-height order orphans widows rotate3d flipped ' +
+        'transform ms-flex-order transform-origin perspective transform-style ' +
+        'ms-flex-negative ms-flex-positive transform-origin perspective ' +
+        'perspective-origin backface-visibility scale scale-x scale-y scale-z ' +
+        'scale3d reflect-x-y reflect-z reflect-y reflect ' +
+        'alpha z-index font-weight opacity red green blue').split(' '),
 
     cssCore = {
 
@@ -66,18 +72,80 @@ var i,
                 }
             }
         }
-    };
+    },
 
-// Expose
+    getDisplayType = function(elem) {
+        var tagName = elem.tagName.toString().toLowerCase();
+        if (cssCore.regEx.inlineregex.test(tagName)) {
+            return 'inline';
+        } else if (cssCore.regEx.listitemregex.test(tagName)) {
+            return 'list-item';
+        } else if (cssCore.regEx.tablerowregex.test(tagName)) {
+            return 'table-row';
+            // Default to 'block' when no match is found.
+        } else {
+            return 'block';
+        }
+    },
 
-var cssHook = hAzzle.cssHooks = cssCore.hooks;
+    isZeroValue = function(value) {
 
-hAzzle.cssCore = cssCore;
-hAzzle.unitless = cssCore.unitless;
-hAzzle.cssProperties = cssProperties;
-hAzzle.cssSupport = cssCore.support;
-hAzzle.cssProps = cssCore.cssProps;
-hAzzle.cssHas = cssCore.has;
+        // The browser defaults CSS values that have not been set to either 0 or 
+        // one of several possible null-value strings. Thus, we check for both falsiness and these special strings. 
+        // Note: Chrome returns 'rgba(0, 0, 0, 0)' for an undefined color whereas IE returns 'transparent'.
+        return (value === 0 || cssCore.regEx.zerovalue.test(value));
+    },
+
+    prefixCheck = function(prop) {
+
+        // If this property has already been checked, return the cached value.
+
+        if (prefixMatches[prop]) {
+
+            return [prefixMatches[prop], true];
+
+        } else {
+
+            var i = 0,
+                vendorsLength = vendors.length,
+                propPrefixed;
+
+            for (; i < vendorsLength; i++) {
+
+                if (i === 0) {
+
+                    propPrefixed = prop;
+
+                } else {
+
+                    // Capitalize the first letter of the property to conform to JavaScript vendor 
+                    //prefix notation (e.g. webkitFilter). 
+
+                    propPrefixed = vendors[i] + prop.replace(/^\w/, function(match) {
+                        return match.toUpperCase();
+                    });
+                }
+
+                // Check if the browser supports this property as prefixed.
+
+                if (typeof prefixElement.style[propPrefixed] === 'string') {
+
+                    // Cache the match.
+
+                    prefixMatches[prop] = propPrefixed;
+
+                    return [propPrefixed, true];
+                }
+            }
+
+            // If the browser doesn't support this property in any form, include a 
+            // false flag so that the caller can decide how to proceed.
+
+            return [prop, false];
+        }
+    },
+    cssHook = cssCore.hooks;
+
 
 hAzzle.extend({
 
@@ -106,77 +174,6 @@ hAzzle.extend({
     }
 });
 
-hAzzle.isZeroValue = function(value) {
-
-    // The browser defaults CSS values that have not been set to either 0 or 
-    // one of several possible null-value strings. Thus, we check for both falsiness and these special strings. 
-    // Note: Chrome returns 'rgba(0, 0, 0, 0)' for an undefined color whereas IE returns 'transparent'.
-    return (value === 0 || cssCore.regEx.zerovalue.test(value));
-};
-
-hAzzle.prefixCheck = function(prop) {
-
-    // If this property has already been checked, return the cached value.
-
-    if (prefixMatches[prop]) {
-
-        return [prefixMatches[prop], true];
-
-    } else {
-
-        var vendors = ['', 'Webkit', 'Moz', 'ms', 'O'],
-            i = 0,
-            vendorsLength = vendors.length,
-            propPrefixed;
-
-        for (; i < vendorsLength; i++) {
-
-            if (i === 0) {
-
-                propPrefixed = prop;
-
-            } else {
-
-                // Capitalize the first letter of the property to conform to JavaScript vendor 
-                //prefix notation (e.g. webkitFilter). 
-
-                propPrefixed = vendors[i] + prop.replace(/^\w/, function(match) {
-                    return match.toUpperCase();
-                });
-            }
-
-            // Check if the browser supports this property as prefixed.
-
-            if (typeof prefixElement.style[propPrefixed] === 'string') {
-
-                // Cache the match.
-
-                prefixMatches[prop] = propPrefixed;
-
-                return [propPrefixed, true];
-            }
-        }
-
-        // If the browser doesn't support this property in any form, include a 
-        // false flag so that the caller can decide how to proceed.
-
-        return [prop, false];
-    }
-};
-
-hAzzle.getDisplayType = function(element) {
-    var tagName = element.tagName.toString().toLowerCase();
-    if (cssCore.regEx.inlineregex.test(tagName)) {
-        return 'inline';
-    } else if (cssCore.regEx.listitemregex.test(tagName)) {
-        return 'list-item';
-    } else if (cssCore.regEx.tablerowregex.test(tagName)) {
-        return 'table-row';
-        // Default to 'block' when no match is found.
-    } else {
-        return 'block';
-    }
-};
 
 // The names in this two functions are kept due to compability
 // with the jQuery API.
@@ -223,7 +220,7 @@ var setCSS = hAzzle.style = function(elem, prop, value, animate) {
     var type, ret, oldValue;
 
     if (value !== undefined) {
-        
+
         // Check for 'cssHook'
 
         if (cssHook[prop]) {
@@ -306,6 +303,21 @@ var setCSS = hAzzle.style = function(elem, prop, value, animate) {
     }
 };
 
+
+// Expose
+
+hAzzle.cssCore = cssCore;
+hAzzle.unitless = cssCore.unitless;
+hAzzle.cssProperties = cssProperties;
+hAzzle.cssSupport = cssCore.support;
+hAzzle.cssProps = cssCore.cssProps;
+hAzzle.cssHas = cssCore.has;
+hAzzle.cssProps = cssCore.cssProps;
+hAzzle.getDisplayType = getDisplayType;
+hAzzle.isZeroValue = isZeroValue;
+hAzzle.prefixCheck = prefixCheck;
+hAzzle.cssHooks = cssHook;
+
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
 // Check for getComputedStyle support
@@ -347,12 +359,11 @@ hAzzle.assert(function(div) {
         // Handle unprefixed versions (FF16+, for example)
         if (prop in div.style) return prop;
 
-        var prefixes = ['Moz', 'Webkit', 'O', 'ms'],
-            vendorProp, i = prefixes.length,
+        var vendorProp, i = vendors.length,
             prop_ = prop.charAt(0).toUpperCase() + prop.substr(1);
 
         while (i--) {
-            vendorProp = prefixes[i] + prop_;
+            vendorProp = vendors[i] + prop_;
             if (vendorProp in div.style) {
                 return vendorProp;
             }
@@ -387,11 +398,11 @@ hAzzle.assert(function(div) {
 
     // Detect support for other CSS properties
 
-    while (i--) {
-        if (getVendorPropertyName(cssProperties[i])) {
-            hAzzle.cssSupport[cssProperties[i]] = getVendorPropertyName(cssProperties[i]);
+    hAzzle.each(cssProperties, function(prop) {
+        if (getVendorPropertyName(prop)) {
+            hAzzle.cssSupport[prop] = getVendorPropertyName(prop);
         }
-    }
+    });
 });
 
 // BackgroundPosition
@@ -425,17 +436,11 @@ hAzzle.assert(function(div) {
     hAzzle.cssSupport.translate3d = (has3d !== undefined && has3d.length > 0 && has3d !== 'none');
 });
 
-hAzzle.cssProps.transform = hAzzle.cssCore.transform;
-hAzzle.cssProps.transformOrigin = hAzzle.cssCore.transformOrigin;
+hAzzle.cssProps.transform = cssCore.support.transform;
+hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
 
 // Populate the unitless properties list
 
-hAzzle.each(('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
-    'column-count flex-shrink flex-height order orphans widows rotate3d flipped ' +
-    'transform ms-flex-order transform-origin perspective transform-style ' +
-    'ms-flex-negative ms-flex-positive transform-origin perspective ' +
-    'perspective-origin backface-visibility scale scale-x scale-y scale-z ' +
-    'scale3d reflect-x-y reflect-z reflect-y reflect ' +
-    'alpha z-index font-weight opacity red green blue').split(' '), function(name) {
+hAzzle.each(unitlessProps, function(name) {
     hAzzle.unitless[hAzzle.camelize(name)] = true;
 });
