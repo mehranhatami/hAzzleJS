@@ -33,10 +33,8 @@
             path + 'attributes.js',
             path + 'removeable.js',
             path + 'units.js',
-            path + 'csscore.js',
             path + 'curcss.js',
-            path + 'css.js',
-            path + 'cssHooks.js',			
+            path + 'styles.js',
             path + 'position.js',
             path + 'offset.js',
             path + 'showhide.js',
@@ -47,8 +45,10 @@
             path + 'eventhooks.js',
             path + 'ajax.js',
             path + 'clone.js',
+            path + 'tween.js',
             path + 'fx.js',
-           path + 'jsonxml.js'
+            path + 'effects.js', 
+            path + 'jsonxml.js'
         ];
     if (typeof exports === 'object') {
         // node export

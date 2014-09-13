@@ -1,6 +1,8 @@
 // url: ehttp://caniuse.com/getcomputedstyle
-var topribol = /^(top|right|bottom|left)$/i,
-    topleft = /top|left/i,
+var cHeightWidth = /^(height|width)$/i,
+    cWidthHeight = /^(width|height)$/,
+    cToprbLeft = /^(top|right|bottom|left)$/i,
+    cTopLeft = /top|left/i,
     computedValues = function(elem) {
 
         if (elem && elem !== window) {
@@ -20,12 +22,12 @@ var topribol = /^(top|right|bottom|left)$/i,
         // We save the computedStyle on the object to avoid stressing the DOM
 
         if (hAzzle.data(elem, 'CSS') === undefined) {
-            //console.log('not cached')
+            console.log('not cached')
             return computedValues(elem);
 
             /* If the computedStyle object has yet to be cached, do so now. */
         } else if (!hAzzle.data(elem, 'CSS').computedStyle) {
-            //console.log('caching just NOW')
+            console.log('caching just NOW')
             computed = hAzzle.data(elem, 'CSS').computedStyle = computedValues(elem);
 
             // If computedStyle is cached, use it.
@@ -38,66 +40,91 @@ var topribol = /^(top|right|bottom|left)$/i,
         return computed;
     },
 
-    curCSS = hAzzle.curCSS = function(elem, prop, computed) {
+    curCSS = hAzzle.curCSS = function(elem, prop, force, extra) {
 
-        computed = computed || getStyles(elem);
+    var computedValue = 0,
+        toggleDisplay = false;
 
-        if (prop === 'height' && computed.getPropertyValue(elem, 'boxSizing').toLowerCase() !== 'border-box') {
 
-            return hAzzle.curCSSHeight(elem, computed);
-
-        } else if (prop === 'width' && computed.getPropertyValue(elem, 'boxSizing').toLowerCase() !== 'border-box') {
-
-            return hAzzle.curCSSWidth(elem, computed);
+    function revertDisplay() {
+        if (toggleDisplay) {
+            setCSS(elem, 'display', 'none');
         }
+    }
 
-        // Internet Explorer doesn't return a value for borderColor - it only returns 
-        // individual values for each border side's color. 
-        // As a polyfill, default to querying for just the top border's color
+    if (cWidthHeight.test(prop) && getCSS(elem, 'display') === 0) {
 
-        if (hAzzle.ie && prop === 'borderColor') {
+        toggleDisplay = true;
+        setCSS(elem, 'display', hAzzle.getDisplayType(elem));
+    }
 
-            prop = 'borderTopColor';
+    if (!force) {
+
+        if (prop === 'height' &&
+            getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+
+            var contentBoxHeight = elem.offsetHeight -
+                (parseFloat(getCSS(elem, 'borderTopWidth')) || 0) -
+                (parseFloat(getCSS(elem, 'borderBottomWidth')) || 0) -
+                (parseFloat(getCSS(elem, 'paddingTop')) || 0) -
+                (parseFloat(getCSS(elem, 'paddingBottom')) || 0);
+            revertDisplay();
+
+            return contentBoxHeight;
+
+        } else if (prop === 'width' &&
+            getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+
+            var contentBoxWidth = elem.offsetWidth -
+                (parseFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
+                (parseFloat(getCSS(elem, 'borderRightWidth')) || 0) -
+                (parseFloat(getCSS(elem, 'paddingLeft')) || 0) -
+                (parseFloat(getCSS(elem, 'paddingRight')) || 0);
+
+            revertDisplay();
+
+            return contentBoxWidth;
         }
+    }
 
-        // IE9 has a bug in which the "filter" property must be accessed from computedStyle 
-        // using the getPropertyValue method instead of a direct property lookup.  The getPropertyValue
-        // method is slower than a direct lookup, which is why we avoid it by default.
+    var computedStyle = getStyles(elem);
 
-        if (hAzzle.ie === 9 && prop === 'filter') {
+    // IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
+    // As a polyfill for querying individual border side colors, just return the top border's color.
 
-            computed = computed.getPropertyValue(prop);
+    if ((hAzzle.ie || hAzzle.isFirefox) && prop === 'borderColor') {
+        prop = 'borderTopColor';
+    }
+
+    if (hAzzle.ie === 9 && prop === 'filter') {
+        computedValue = computedStyle.getPropertyValue(prop);
+    } else {
+
+        computedValue = computedStyle[prop];
+    }
+
+    if (computedValue === '' || computedValue === null) {
+        computedValue = elem.style[prop];
+    }
+
+    revertDisplay();
+
+    if (computedValue === 'auto' && cToprbLeft.test(prop)) {
+
+        var position = curCSS(elem, 'position');
+
+        if (position === 'fixed' || (position === 'absolute' && cTopLeft.test(prop))) {
+            computedValue = hAzzle(elem).position()[prop] + 'px';
         }
-
-        if (computed === 'auto' && topribol.test(prop)) {
-
-            var position = hAzzle.css(elem, 'position');
-
-            if (position === 'fixed' || (position === 'absolute' && topleft.test(prop))) {
-
-                // hAzzle strips the pixel unit from its returned values; we re-add it here 
-                // to conform with computePropertyValue's behavior.
-
-                computed = hAzzle(elem).position()[prop] + 'px';
-            }
-
-        } else {
-            if (computed != null) {
-                computed = computed[prop];
-            }
+    }
+    
+     if (extra === '' || extra) { 
+            num = parseFloat(computedValue);
+            
+            alert(computedValue)
+            
+            return extra === true || hAzzle.isNumeric(num) ? num || 0 : computedValue;
         }
-
-        return computed;
-    };
-
-hAzzle.each(['Width', 'Height'], function(prop) {
-    hAzzle['curCSS' + prop] = function(elem, computed) {
-        if (computed) {
-            return elem.offsetHeight - (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderTopWidth')) || 0) -
-                (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'borderLeftWidth' : 'borderBottomWidth')) || 0) -
-                (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingLeft' : 'paddingTop')) || 0) -
-                (parseFloat(computed.getPropertyValue(prop === 'Width' ? 'paddingRight' : 'paddingBottom')) || 0);
-        }
-        return null;
-    };
-});
+    
+    return computedValue;
+};

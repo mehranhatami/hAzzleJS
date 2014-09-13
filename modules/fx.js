@@ -71,7 +71,7 @@ var
 
                 var tween = this.createTween(prop, value),
                     elem = tween.elem,
-                    start = tween.getCSS(elem, prop),
+                    start = tween.cur(),
                     end = value,
                     splittedValues,
                     endUnit,
@@ -119,7 +119,7 @@ var
                         end = (end / 100) * 255;
                         endUnit = '';
                     }
-                }
+                } 
 
                 // The '*' and '/' operators, which are not passed in with an associated unit,
                 // inherently use start's unit. Skip value and unit conversion.
@@ -132,7 +132,7 @@ var
                         endUnit = startUnit;
                     } else {
 
-                        unitConversionData = unitConversionData || tween.calculateUnitRatios(elem);
+                        unitConversionData = unitConversionData || calculateUnitRatios(elem);
 
                         var axis = (mplrwtwlVal.test(prop) ||
                             xVal.test(prop) || prop === 'x') ? 'x' : 'y';
@@ -160,8 +160,9 @@ var
                         switch (endUnit) {
 
                             case '%':
-                                start *= 1 / (axis === 'x' ? unitConversionData.percentToPxWidth :
-                                    unitConversionData.percentToPxHeight);
+                                start *= 1 / (axis === 'x' ? unitConversionData.lastpToPW :
+                                    unitConversionData.lastToPH);
+                                    
                                 break;
 
                             case 'px':
@@ -293,7 +294,7 @@ hAzzle.extend({
             opt.easing :
             callback && easing ? easing :
             !callback && speed && easing ? easing :
-            !callback && !easing && speed ? speed :
+            !callback && !easing && typeof speed === 'number' ? speed :
             typeof easing !== 'function' && easing;
 
         /**********************
@@ -628,7 +629,8 @@ function parseDefault(elem, props, opts) {
                     continue;
                 }
             }
-            orig[prop] = dataShow && dataShow[prop] || hAzzle.style(elem, prop);
+      
+            orig[prop] = dataShow && dataShow[prop] || elem.style[prop];
 
             // Any non-fx value stops us from restoring the original display value
         } else {
@@ -671,7 +673,8 @@ function parseDefault(elem, props, opts) {
 
             hAzzle.removePrivate(elem, prefix);
             for (prop in orig) {
-                hAzzle.style(elem, prop, orig[prop]);
+                console.log(prop)
+                setCSS(elem, prop, orig[prop]);
             }
         });
 
@@ -722,8 +725,8 @@ function parseProperties(elem, props, specialEasing) {
         // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
         // there is no way to check for their explicit browser support, and so we skip this check for them.
 
-        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(index)[1] === false) {
-            hAzzle.error('Skipping [' + index + '] due to a lack of browser support.');
+        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
+            hAzzle.error('Skipping [' + name + '] due to a lack of browser support.');
             continue;
         }
 

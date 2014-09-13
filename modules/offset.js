@@ -64,7 +64,7 @@ hAzzle.extend({
             var offsetParent = this.offsetParent || docElem;
 
             while (offsetParent && (!hAzzle.nodeName(offsetParent, 'html') &&
-                hAzzle.css(offsetParent, 'position') === 'static')) {
+                hAzzle.curCSS(offsetParent, 'position', true) === 'static')) {
                 offsetParent = offsetParent.offsetParent;
             }
 
@@ -72,7 +72,6 @@ hAzzle.extend({
         });
     }
 });
-
 
 /**
  * sets an element to an explicit x/y position on the page
