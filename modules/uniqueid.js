@@ -1,9 +1,18 @@
-// Unique ID
-hAzzle.extend({
+// uniqueid.js
 
-    // A global UID counter for objects
+function tamperFix(node, name) {
+    var tmp = node.hiD.replace(name, '');
+	// The counter should be a number
+    if (typeof tmp !== 'number') {
+        // set a new valid number
+        node.hiD = name + hAzzle.UID++;
+    }
+    return node.hiD;
+}
 
-    UID: 1,
+// A global UID counter for objects
+
+hAzzle.UID = 1;
 
     /**
      * Set / Get Unique ID
@@ -13,7 +22,7 @@ hAzzle.extend({
      * @return {Number|Object}
      */
 
-    getID: function(node, name, /* OPTIONAL */ exposed) {
+hAzzle.getID = function(node, name, /* OPTIONAL */ exposed) {
 
         name = name || 'hAzzle_';
 
@@ -21,11 +30,7 @@ hAzzle.extend({
         // a new UID without attaching it to a object
 
         if (typeof node === 'boolean') {
-
             return hAzzle.UID++;
-
-            // If we are dealing with a Object, we are happy :)
-
         } else if (typeof node === 'object') {
 
             // If 'exposed' are true, we are setting the UID as
@@ -57,9 +62,6 @@ hAzzle.extend({
                 node.hiD = name + hAzzle.UID++;
             }
 
-            // What we do if someone tamper with the UID??
-            // Yep, fix it!
-
             // tamperFix(node, name);
 
             return node.hiD;
@@ -68,18 +70,4 @@ hAzzle.extend({
         // If no boolean or Object, return false;
 
         return false;
-    }
-
-}, hAzzle);
-
-/* ============================ UTILITY METHODS =========================== */
-
-function tamperFix(node, name) {
-    var tmp = node.hiD.replace(name, '');
-	// The counter should be a number
-    if (typeof tmp !== 'number') {
-        // set a new valid number
-        node.hiD = name + hAzzle.UID++;
-    }
-    return node.hiD;
-}
+    };

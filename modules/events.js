@@ -25,418 +25,435 @@
  * - jQuery
  */
 var
-// Wrap it inside a object to avoid variable conflicts
+// Use 'e' as prefix to avoid variable conflicts
 
-    eventRegex = {
-    nameL: '(^|\\.)',
-    nameR: '\\.(?:.*\\.|)',
-    nameFR: '(\\.|$)',
-    whiteRegex: (/\S+/g),
-    gtl: /\.+\s/,
-    gtr: /\.+$/,
-    namespaceRegex: /^([^.]*)(?:\.(.+)|)$/
-};
+    eNameL = '(^|\\.)',
+    eNameR = '\\.(?:.*\\.|)',
+    eNameFR = '(\\.|$)',
+    ewhiteRegex = (/\S+/g),
+    egtl = /\.+\s/,
+    egtr = /\.+$/,
+    enamespaceRegex = /^([^.]*)(?:\.(.+)|)$/,
+    returnTrue = function() {
+        return true;
+    },
 
-// hAzzle event
+    returnFalse = function() {
+        return false;
+    },
 
-hAzzle.event = {
+    // Handle multiple events separated by a space
 
-    global: {},
-
-    /**
-     * Add event to element.
-     *
-     * @param {Object} elem
-     * @param {String|Object} types
-     * @param {Function} handler
-     * @param {String|Undefined} data
-     * @param {String|Undefined} selector
-     */
-
-    add: function(elem, types, handler, data, selector) {
-
-        var objHandler, eventHandler, tmp,
-            special, handlers, type, namespaces, origType,
-            eventData = hAzzle.getPrivate(elem),
-            events, handleObj, t;
-
-        if (!eventData) {
-            return;
-        }
-
-        if (handler.handler) {
-            objHandler = handler;
-            handler = objHandler.handler;
-            selector = objHandler.selector;
-        }
-
-        // Assign each event handler a unique ID
-
-        if (!handler.guid) {
-            handler.guid = hAzzle.getID(true, 'hEvt_');
-        }
-
-        // Create handler storage of event types for the element
-
-        if (!(events = eventData.events)) {
-
-            events = eventData.events = {};
-        }
-
-        // Create a hash table of event handlers for each element/event pair
-
-        if (!(eventHandler = eventData.handle)) {
-
-            eventHandler = eventData.handle = function(e) {
-                return typeof hAzzle !== 'undefined' && hAzzle.event.triggered !== e.type ?
-                    hAzzle.event.handle.apply(this, arguments) :
-                    undefined;
-            };
-        }
-
-        // Get multiple events
-
-        types = getTypes(types);
-
-        t = types.length;
-
-        while (t--) {
-
-            // event type	
-
-            tmp = eventRegex.namespaceRegex.exec(types[t]) || [];
-            type = origType = tmp[1];
-            namespaces = (tmp[2] || '').split('.').sort();
-
-            // There *must* be a type, no attaching namespace-only handlers
-
-            if (!type) {
-                continue;
-            }
-
-            special = hAzzle.event.special[type] || {};
-
-            type = (selector ? special.delegateType : special.bindType) || type;
-
-            special = hAzzle.event.special[type] || {};
-
-            // Take a shallowCopy of the object
-
-            handleObj = hAzzle.shallowCopy({
-                type: type,
-                origType: origType,
-                data: data,
-                handler: handler,
-                guid: handler.guid,
-                selector: selector,
-                needsContext: selector && eoeglnfl.test(selector),
-                namespace: namespaces.join('.')
-            }, objHandler);
-
-            // Init the event handler queue if we're the first
-
-            if (!(handlers = events[type])) {
-
-                handlers = events[type] = [];
-                handlers.delegateCount = 0;
-
-                if (!special.setup ||
-                    special.setup.call(elem, data, namespaces, eventHandler) === false) {
-
-                    // Add the listener
-
-                    hAzzle.addEvent(elem, type, eventHandler);
-                }
-            }
-
-            if (special.add) {
-
-                special.add.call(elem, handleObj);
-
-                if (!handleObj.handler.guid) {
-
-                    handleObj.handler.guid = handler.guid;
-                }
-            }
-
-            if (selector) {
-
-                handlers.splice(handlers.delegateCount++, 0, handleObj);
-
-            } else {
-
-                handlers.push(handleObj);
-            }
-
-            hAzzle.event.global[type] = true;
+    getTypes = function(types) {
+        return (types || '').match(ewhiteRegex) || [''];
+    },
+    addEvent = function(elem, type, handler) {
+        if (elem.addEventListener) {
+            elem.addEventListener(type, handler, false);
         }
     },
 
-    /**
-     * Remove an event handler.
-     *
-     * @param {Object} elem
-     * @param {String} types
-     * @param {Function} handler
-     * @param {String} selector
-     * @param {String} mt
-     * @param {Function} fn
-     *
-     */
-
-    remove: function(elem, types, handler, selector, mt) {
-
-        var j, origCount, tmp,
-            events, t, handleObj,
-            special, handlers, type, namespaces, origType,
-            eventData = hAzzle.hasPrivate(elem) && hAzzle.getPrivate(elem);
-
-        if (!eventData || !(events = eventData.events)) {
-            return;
-        }
-
-        // Remove empty namespace (ie trailing dots)
-
-        types = types.replace(eventRegex.gtl, ' ').replace(eventRegex.gtr, '');
-
-        // Get multiple events
-
-        types = getTypes(types);
-
-        t = types.length;
-
-        while (t--) {
-
-            tmp = eventRegex.namespaceRegex.exec(types[t]) || [];
-            type = origType = tmp[1];
-            namespaces = (tmp[2] || '').split('.').sort();
-
-            if (!type) {
-
-                for (type in events) {
-
-                    hAzzle.event.remove(elem, type + types[t], handler, selector, true);
-                }
-
-                continue;
-            }
-
-            special = hAzzle.event.special[type] || {};
-            type = (selector ? special.delegateType : special.bindType) || type;
-            handlers = events[type] || [];
-            tmp = tmp[2] && new RegExp(eventRegex.nameL + namespaces.join(eventRegex.nameR) + eventRegex.nameFR);
-            // Remove matching events
-
-            origCount = j = handlers.length;
-
-            while (j--) {
-
-                handleObj = handlers[j];
-
-                if ((mt || origType === handleObj.origType) &&
-                    (!handler || handler.guid === handleObj.guid) &&
-                    (!tmp || tmp.test(handleObj.namespace)) &&
-                    (!selector || selector === handleObj.selector ||
-                        selector === 'sub' && handleObj.selector)) {
-                    handlers.splice(j, 1);
-
-                    if (handleObj.selector) {
-
-                        handlers.delegateCount--;
-                    }
-
-                    if (special.remove) {
-
-                        special.remove.call(elem, handleObj);
-                    }
-                }
-            }
-
-            if (origCount && !handlers.length) {
-                if (!special.shutdown ||
-                    special.shutdown.call(elem, namespaces, eventData.handle) === false) {
-
-                    hAzzle.removeEvent(type, eventData.handle, false);
-                }
-
-                delete events[type];
-            }
-        }
-
-        if (hAzzle.isEmptyObject(events)) {
-
-            delete eventData.handle;
-            delete eventData.events;
+    removeEvent = function(elem, type, handle) {
+        if (elem.removeEventListener) {
+            elem.removeEventListener(type, handle, false);
         }
     },
 
-    handle: function(evt) {
+    event = {
 
-        // Grab the event object
+        global: {},
 
-        evt = hAzzle.event.fix(evt);
+        /**
+         * Add event to element.
+         *
+         * @param {Object} elem
+         * @param {String|Object} types
+         * @param {Function} handler
+         * @param {String|Undefined} data
+         * @param {String|Undefined} selector
+         */
 
-        var i, j, ret, matched, handleObj,
-            queue = [],
-            args = slice.call(arguments),
-            handlers = (hAzzle.getPrivate(this, 'events') || {})[evt.type] || [],
-            special = hAzzle.event.special[evt.type] || {};
+        add: function(elem, types, handler, data, selector) {
 
-        args[0] = evt;
-        evt.delegateTarget = this;
+            var objHandler, eventHandler, tmp,
+                special, handlers, type, namespaces, origType,
+                eventData = hAzzle.getPrivate(elem),
+                events, handleObj, t;
 
-        // Call the prePreparation hook for the mapped type, and let it bail if desired
-        if (special.prePrep && special.prePrep.call(this, evt) === false) {
-            return;
-        }
+            if (!eventData) {
+                return;
+            }
 
-        // Determine handlers
+            if (handler.handler) {
+                objHandler = handler;
+                handler = objHandler.handler;
+                selector = objHandler.selector;
+            }
 
-        queue = hAzzle.event.handlers.call(this, evt, handlers);
+            // Assign each event handler a unique ID
 
-        i = queue.length;
+            if (!handler.guid) {
+                handler.guid = hAzzle.getID(true, 'hEvt_');
+            }
 
-        while (i-- && !evt.isPropagationStopped()) {
+            // Create handler storage of event types for the element
 
-            matched = queue[i];
+            if (!(events = eventData.events)) {
 
-            evt.currentTarget = matched.elem;
+                events = eventData.events = {};
+            }
 
-            j = 0;
+            // Create a hash table of event handlers for each element/event pair
 
-            while ((handleObj = matched.handlers[j++]) &&
-                !evt.isImmediatePropagationStopped()) {
-                if (handleObj.namespace === "_" ||
-                    !evt.rnamespace || evt.rnamespace.test(handleObj.namespace)) {
-                    evt.handleObj = handleObj;
-                    evt.data = handleObj.data;
-                    ret = ((hAzzle.event.special[handleObj.origType] || {}).handle ||
-                        handleObj.handler).apply(matched.elem, args);
+            if (!(eventHandler = eventData.handle)) {
 
-                    if (ret !== undefined) {
-                        if ((evt.result = ret) === false) {
-                            evt.preventDefault();
-                            evt.stopPropagation();
+                eventHandler = eventData.handle = function(e) {
+                    return typeof hAzzle !== 'undefined' && hAzzle.event.triggered !== e.type ?
+                        hAzzle.event.handle.apply(this, arguments) :
+                        undefined;
+                };
+            }
+
+            // Get multiple events
+
+            types = getTypes(types);
+
+            t = types.length;
+
+            while (t--) {
+
+                // event type	
+
+                tmp = enamespaceRegex.exec(types[t]) || [];
+                type = origType = tmp[1];
+                namespaces = (tmp[2] || '').split('.').sort();
+
+                // There *must* be a type, no attaching namespace-only handlers
+
+                if (!type) {
+                    continue;
+                }
+
+                special = hAzzle.event.special[type] || {};
+
+                type = (selector ? special.delegateType : special.bindType) || type;
+
+                special = hAzzle.event.special[type] || {};
+
+                // Take a shallowCopy of the object
+
+                handleObj = hAzzle.shallowCopy({
+                    type: type,
+                    origType: origType,
+                    data: data,
+                    handler: handler,
+                    guid: handler.guid,
+                    selector: selector,
+                    needsContext: selector && eoeglnfl.test(selector),
+                    namespace: namespaces.join('.')
+                }, objHandler);
+
+                // Init the event handler queue if we're the first
+
+                if (!(handlers = events[type])) {
+
+                    handlers = events[type] = [];
+                    handlers.delegateCount = 0;
+
+                    if (!special.setup ||
+                        special.setup.call(elem, data, namespaces, eventHandler) === false) {
+
+                        // Add the listener
+
+                        hAzzle.addEvent(elem, type, eventHandler);
+                    }
+                }
+
+                if (special.add) {
+
+                    special.add.call(elem, handleObj);
+
+                    if (!handleObj.handler.guid) {
+
+                        handleObj.handler.guid = handler.guid;
+                    }
+                }
+
+                if (selector) {
+
+                    handlers.splice(handlers.delegateCount++, 0, handleObj);
+
+                } else {
+
+                    handlers.push(handleObj);
+                }
+
+                hAzzle.event.global[type] = true;
+            }
+        },
+
+        /**
+         * Remove an event handler.
+         *
+         * @param {Object} elem
+         * @param {String} types
+         * @param {Function} handler
+         * @param {String} selector
+         * @param {String} mt
+         * @param {Function} fn
+         *
+         */
+
+        remove: function(elem, types, handler, selector, mt) {
+
+            var j, origCount, tmp,
+                events, t, handleObj,
+                special, handlers, type, namespaces, origType,
+                eventData = hAzzle.hasPrivate(elem) && hAzzle.getPrivate(elem);
+
+            if (!eventData || !(events = eventData.events)) {
+                return;
+            }
+
+            // Remove empty namespace (ie trailing dots)
+
+            types = types.replace(egtl, ' ').replace(egtr, '');
+
+            // Get multiple events
+
+            types = getTypes(types);
+
+            t = types.length;
+
+            while (t--) {
+
+                tmp = enamespaceRegex.exec(types[t]) || [];
+                type = origType = tmp[1];
+                namespaces = (tmp[2] || '').split('.').sort();
+
+                if (!type) {
+
+                    for (type in events) {
+
+                        hAzzle.event.remove(elem, type + types[t], handler, selector, true);
+                    }
+
+                    continue;
+                }
+
+                special = hAzzle.event.special[type] || {};
+                type = (selector ? special.delegateType : special.bindType) || type;
+                handlers = events[type] || [];
+                tmp = tmp[2] && new RegExp(eNameL + namespaces.join(eNameR) + eNameFR);
+                // Remove matching events
+
+                origCount = j = handlers.length;
+
+                while (j--) {
+
+                    handleObj = handlers[j];
+
+                    if ((mt || origType === handleObj.origType) &&
+                        (!handler || handler.guid === handleObj.guid) &&
+                        (!tmp || tmp.test(handleObj.namespace)) &&
+                        (!selector || selector === handleObj.selector ||
+                            selector === 'sub' && handleObj.selector)) {
+                        handlers.splice(j, 1);
+
+                        if (handleObj.selector) {
+
+                            handlers.delegateCount--;
+                        }
+
+                        if (special.remove) {
+
+                            special.remove.call(elem, handleObj);
+                        }
+                    }
+                }
+
+                if (origCount && !handlers.length) {
+                    if (!special.shutdown ||
+                        special.shutdown.call(elem, namespaces, eventData.handle) === false) {
+
+                        hAzzle.removeEvent(type, eventData.handle, false);
+                    }
+
+                    delete events[type];
+                }
+            }
+
+            if (hAzzle.isEmptyObject(events)) {
+
+                delete eventData.handle;
+                delete eventData.events;
+            }
+        },
+
+        handle: function(evt) {
+
+            // Grab the event object
+
+            evt = hAzzle.event.fix(evt);
+
+            var i, j, ret, matched, handleObj,
+                queue = [],
+                args = slice.call(arguments),
+                handlers = (hAzzle.getPrivate(this, 'events') || {})[evt.type] || [],
+                special = hAzzle.event.special[evt.type] || {};
+
+            args[0] = evt;
+            evt.delegateTarget = this;
+
+            // Call the prePreparation hook for the mapped type, and let it bail if desired
+            if (special.prePrep && special.prePrep.call(this, evt) === false) {
+                return;
+            }
+
+            // Determine handlers
+
+            queue = hAzzle.event.handlers.call(this, evt, handlers);
+
+            i = queue.length;
+
+            while (i-- && !evt.isPropagationStopped()) {
+
+                matched = queue[i];
+
+                evt.currentTarget = matched.elem;
+
+                j = 0;
+
+                while ((handleObj = matched.handlers[j++]) &&
+                    !evt.isImmediatePropagationStopped()) {
+                    if (handleObj.namespace === "_" ||
+                        !evt.rnamespace || evt.rnamespace.test(handleObj.namespace)) {
+                        evt.handleObj = handleObj;
+                        evt.data = handleObj.data;
+                        ret = ((hAzzle.event.special[handleObj.origType] || {}).handle ||
+                            handleObj.handler).apply(matched.elem, args);
+
+                        if (ret !== undefined) {
+                            if ((evt.result = ret) === false) {
+                                evt.preventDefault();
+                                evt.stopPropagation();
+                            }
                         }
                     }
                 }
             }
-        }
 
-        // Call the postDispatch hook for the mapped type
-        if (special.postDispatch) {
-            special.postDispatch.call(this, evt);
-        }
+            // Call the postDispatch hook for the mapped type
+            if (special.postDispatch) {
+                special.postDispatch.call(this, evt);
+            }
 
-        return evt.result;
-    },
+            return evt.result;
+        },
 
-    handlers: function(evt, handlers) {
+        handlers: function(evt, handlers) {
 
-        var i, matches, sel, handleObj,
-            queue = [],
-            cur = evt.target,
-            delegateCount = handlers.delegateCount;
+            var i, matches, sel, handleObj,
+                queue = [],
+                cur = evt.target,
+                delegateCount = handlers.delegateCount;
 
-        if (delegateCount && cur.nodeType && (!evt.button || evt.type !== 'click')) {
+            if (delegateCount && cur.nodeType && (!evt.button || evt.type !== 'click')) {
 
-            for (; cur !== this; cur = cur.parentNode || this) {
+                for (; cur !== this; cur = cur.parentNode || this) {
 
-                // Don't process clicks on disabled elements
+                    // Don't process clicks on disabled elements
 
-                if (cur.disabled !== true || evt.type !== 'click') {
+                    if (cur.disabled !== true || evt.type !== 'click') {
 
-                    matches = [];
+                        matches = [];
 
-                    i = delegateCount;
+                        i = delegateCount;
 
-                    while (i--) {
+                        while (i--) {
 
-                        handleObj = handlers[i];
+                            handleObj = handlers[i];
 
-                        // Don't conflict with Object.prototype properties
+                            // Don't conflict with Object.prototype properties
 
-                        sel = handleObj.selector + ' ';
+                            sel = handleObj.selector + ' ';
 
-                        if (matches[sel] === undefined) {
+                            if (matches[sel] === undefined) {
 
-                            matches[sel] = handleObj.needsContext ?
-                                hAzzle(sel, this).index(cur) >= 0 :
-                                hAzzle.matches(sel, [cur]).length;
+                                matches[sel] = handleObj.needsContext ?
+                                    hAzzle(sel, this).index(cur) >= 0 :
+                                    hAzzle.matches(sel, [cur]).length;
+                            }
+
+                            if (matches[sel]) {
+
+                                matches.push(handleObj);
+                            }
                         }
 
-                        if (matches[sel]) {
+                        if (matches.length) {
 
-                            matches.push(handleObj);
+                            queue.push({
+                                elem: cur,
+                                handlers: matches
+                            });
                         }
-                    }
-
-                    if (matches.length) {
-
-                        queue.push({
-                            elem: cur,
-                            handlers: matches
-                        });
                     }
                 }
             }
+
+            if (delegateCount < handlers.length) {
+
+                queue.push({
+                    elem: this,
+                    handlers: handlers.slice(delegateCount)
+                });
+            }
+
+            return queue;
+        }
+    },
+
+    Event = function(src, props) {
+
+        // Allow instantiation without the 'new' keyword
+        if (!(this instanceof Event)) {
+            return new Event.prototype.init(src, props);
+        }
+        return new Event.prototype.init(src, props);
+    }
+
+Event.prototype = {
+    constructor: Event,
+    init: function(src, props) {
+
+        // Event object
+
+        if (src && src.type) {
+
+            this.originalEvent = src;
+            this.type = src.type;
+            this.isDefaultPrevented = src.defaultPrevented ? returnTrue : returnFalse;
+            this.target = src.target; // Create target properties
+            this.currentTarget = src.currentTarget;
+            this.relatedTarget = src.relatedTarget;
+
+        } else {
+            this.type = src;
         }
 
-        if (delegateCount < handlers.length) {
-
-            queue.push({
-                elem: this,
-                handlers: handlers.slice(delegateCount)
-            });
+        if (props) {
+            hAzzle.shallowCopy(this, props);
         }
 
-        return queue;
-    }
-};
+        // Create a timestamp if incoming event doesn't have one
 
-hAzzle.Event = function(src, props) {
+        this.timeStamp = src && src.timeStamp || hAzzle.now();
 
-    // Allow instantiation without the 'new' keyword
-    if (!(this instanceof hAzzle.Event)) {
-        return new hAzzle.Event(src, props);
-    }
+        // Mark it as fixed
+        this[hAzzle.expando] = true;
+    },
 
-    // Event object
-
-    if (src && src.type) {
-
-        this.originalEvent = src;
-        this.type = src.type;
-        this.isDefaultPrevented = src.defaultPrevented ? returnTrue : returnFalse;
-        this.target = src.target; // Create target properties
-        this.currentTarget = src.currentTarget;
-        this.relatedTarget = src.relatedTarget;
-
-    } else {
-        this.type = src;
-    }
-
-    if (props) {
-        hAzzle.shallowCopy(this, props);
-    }
-
-    // Create a timestamp if incoming event doesn't have one
-
-    this.timeStamp = src && src.timeStamp || hAzzle.now();
-
-    // Mark it as fixed
-    this[hAzzle.expando] = true;
-};
-
-/**
- * PreventDefault/stopPropagation/stopImmediatePropagation supports
- * chaining, so we can chain i.e.
- *
- * e.preventDefault().stopPropagation();
- */
-
-hAzzle.Event.prototype = {
-    constructor: hAzzle.Event,
     isDefaultPrevented: returnFalse,
     isPropagationStopped: returnFalse,
     isImmediatePropagationStopped: returnFalse,
@@ -485,32 +502,11 @@ hAzzle.Event.prototype = {
     }
 };
 
-/* ============================ UTILITY METHODS =========================== */
+Event.prototype.init.prototype = Event.prototype;
 
-function returnTrue() {
-    return true;
-}
+// Expose
 
-function returnFalse() {
-    return false;
-}
-
-// Handle multiple events separated by a space
-
-function getTypes(types) {
-    return (types || '').match(eventRegex.whiteRegex) || [''];
-}
-
-// Globalize it
-
-hAzzle.addEvent = function(elem, type, handler) {
-    if (elem.addEventListener) {
-        elem.addEventListener(type, handler, false);
-    }
-};
-
-hAzzle.removeEvent = function(elem, type, handle) {
-    if (elem.removeEventListener) {
-        elem.removeEventListener(type, handle, false);
-    }
-};
+hAzzle.addEvent = addEvent;
+hAzzle.removeEvent = removeEvent;
+hAzzle.event = event;
+hAzzle.Event = Event;

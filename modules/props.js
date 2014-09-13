@@ -1,6 +1,5 @@
-var i,
-    propKeyfixRegex = /^key/,
-    propMousefixRegex = /^(?:mouse|pointer|contextmenu)|click/,
+var pKeyfixRegex = /^key/,
+    pMousefixRegex = /^(?:mouse|pointer|contextmenu)|click/,
 
     // Includes all common event props including KeyEvent and MouseEvent specific props
 
@@ -20,7 +19,38 @@ var i,
 
         // Touch / Pointer
 
-        'touches targetTouches changedTouches scale rotation').split(' ');
+        'touches targetTouches changedTouches scale rotation').split(' '),
+
+    addEventProps = function(name) {
+
+        var OdP = Object.defineProperty;
+
+        OdP(hAzzle.Event.prototype, name, {
+            enumerable: true,
+            configurable: true,
+
+            get: function() {
+                var value, hooks;
+                if (this.originalEvent) {
+                    if ((hooks = hAzzle.event.fixHooks[name])) {
+                        value = hooks(this.originalEvent);
+                    } else {
+                        value = this.originalEvent[name];
+                    }
+                }
+                return this[name] = value;
+            },
+
+            set: function(value) {
+                OdP(this, name, {
+                    enumerable: true,
+                    configurable: true,
+                    writable: true,
+                    value: value
+                });
+            }
+        });
+    };
 
 // Extend
 
@@ -41,13 +71,13 @@ hAzzle.extend({
             var button = evt.button;
 
             // Add which for key events
-            if (evt.which == null && propKeyfixRegex.test(evt.type)) {
+            if (evt.which == null && pKeyfixRegex.test(evt.type)) {
                 return evt.charCode != null ? evt.charCode : evt.keyCode;
             }
 
             // Add which for click: 1 === left; 2 === middle; 3 === right
             // Note: button is not normalized, so don't use it
-            if (!evt.which && button !== undefined && propMousefixRegex.test(evt.type)) {
+            if (!evt.which && button !== undefined && pMousefixRegex.test(evt.type)) {
                 return (button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0)));
             }
 
@@ -128,51 +158,20 @@ hAzzle.extend({
 
 }, hAzzle.event);
 
-/* ============================ UTILITY METHODS =========================== */
-
-function addEventProps(name) {
-
-    var OdP = Object.defineProperty;
-
-    OdP(hAzzle.Event.prototype, name, {
-        enumerable: true,
-        configurable: true,
-
-        get: function() {
-            var value, hooks;
-            if (this.originalEvent) {
-                if ((hooks = hAzzle.event.fixHooks[name])) {
-                    value = hooks(this.originalEvent);
-                } else {
-                    value = this.originalEvent[name];
-                }
-            }
-            return this[name] = value;
-        },
-
-        set: function(value) {
-            OdP(this, name, {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: value
-            });
-        }
-    });
-}
-
 // Firefox
 
 if (hAzzle.isFirefox) {
+    // Append special events for Firefox 
     commonProps.concat('mozMovementY mozMovementX'.split(' '));
 }
 
 // WebKit 
 
 if (hAzzle.isChrome || hAzzle.isOpera) {
+    // Append special events for Chrome / Opera
     commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
 }
 
-for (i in commonProps) {
-    addEventProps(commonProps[i]);
-}
+hAzzle.each(commonProps, function(props) {
+    addEventProps(props);
+});

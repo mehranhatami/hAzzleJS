@@ -1,4 +1,4 @@
-// Wrap into a Object to avoid conflicts
+// units.js
 var urmpRegex = /^(left$|right$|margin|padding)/,
     ureafRegex = /^(relative|absolute|fixed)$/,
     utopbotRegex = /^(top|bottom)$/,
