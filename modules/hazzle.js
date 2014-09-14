@@ -576,29 +576,12 @@
          */
 
         type: function(obj) {
-
-            var type = typeof obj,
-                str;
-
-            if (obj === null) {
+            if (obj == null) {
                 return obj + '';
             }
-
-            if (type === 'boolean') {
-                return 'boolean';
-            }
-
-            if (type === 'string') {
-                return 'string';
-            }
-
-            str = hAzzle.str.call(obj);
-
-            if (natives[str]) {
-                return natives[str];
-            }
-
-            return type;
+            return typeof obj === 'object' || typeof obj === 'function' ?
+                natives[toString.call(obj)] || 'object' :
+                typeof obj;
 
         },
 
@@ -675,20 +658,21 @@
 
     hAzzle.documentIsHTML = true;
     hAzzle.natives = natives;
-   // Populate the native list
 
-        hAzzle.each(['Boolean',
-            'String',
-            'Function',
-            'Array',
-            'Date',
-            'RegExp',
-            'Object',
-            'Error',
-            'Arguments'
-        ], function() {
-            natives['[object ' + this + ']'] = this.toLowerCase();
-        });
+    // Populate the native list
+
+    hAzzle.each(['Boolean',
+        'Number',
+        'String',
+        'Function',
+        'Array',
+        'Date',
+        'RegExp',
+        'Object',
+        'Error',
+    ], function() {
+        natives['[object ' + this + ']'] = this.toLowerCase();
+    });
 
     // Expose hAzzle to the global object
 

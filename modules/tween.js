@@ -676,13 +676,11 @@ function defaultPrefilter(elem, props, opts) {
                 storage[prop] = tween.start;
                 if (hidden) {
                     tween.end = tween.start;
-                    tween.start = prop === 'width' ||
-                        prop === 'height' ? 1 : 0;
+                    tween.start = prop === 'width' || prop === 'height' ? 1 : 0;
                 }
             }
         }
 
-        // If this is a noop like .hide().hide(), restore an overwritten display value
     } else if ((display === 'none' ?
         defaultDisplay(elem.nodeName) :
         display) === 'inline') {
@@ -705,7 +703,7 @@ function createTween(value, prop, animation) {
     }
 }
 
-function parseProperties(elem, props, specialEasing) {
+function propFilter(elem, props, specialEasing) {
 
     var index, name, easing, value, hooks;
 
@@ -826,11 +824,9 @@ function Animation(elem, properties, options) {
             delete tick.elem;
         }),
         tick = function() {
-
             if (stopped) {
                 return false;
             }
-
             var currentTime = fxFrame.perfNow(),
                 remaining = Math.max(0, animation.startTime + animation.duration - currentTime),
                 temp = remaining / animation.duration || 0,
@@ -857,7 +853,6 @@ function Animation(elem, properties, options) {
                 stopped = true;
                 promises.resolveWith(elem, [animation]);
                 return false;
-
             }
         },
         animation = promises.promise({
@@ -868,9 +863,6 @@ function Animation(elem, properties, options) {
             }, options),
             originalProperties: properties,
             originalOptions: options,
-
-            // Use performance.now shim from our RAF() polify
-
             startTime: fxFrame.perfNow(),
             duration: options.duration,
             tweens: [],
@@ -909,7 +901,7 @@ function Animation(elem, properties, options) {
 
     // Parse CSS properties, and decrease animation tick overhead
 
-    parseProperties(elem, props, animation.opts.specialEasing);
+    propFilter(elem, props, animation.opts.specialEasing);
 
     for (; index < length; index++) {
         result = animationPrefilters[index].call(animation, elem, props, animation.opts);
@@ -920,7 +912,7 @@ function Animation(elem, properties, options) {
 
     TweenMap(props, createTween, animation);
 
-    if (hAzzle.isFunction(animation.opts.start)) {
+    if (typeof animation.opts.start === 'function') {
         animation.opts.start.call(elem, animation);
     }
 
