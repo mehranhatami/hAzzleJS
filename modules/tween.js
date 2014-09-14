@@ -1,4 +1,7 @@
 // fx.js
+// NOTE!! For 'converters' from jQuery to hAzzle, this
+// animation engine have the same basics as jQuery regarding
+// tweening and preFilters, but the code itself are different.
 var
 // 'fxFrame' is the requestAnimationFrame shim we are using
 // Sending a number into the shim will adjust the 
@@ -60,6 +63,8 @@ var
             rafId = fxFrame.request(raf);
         }
     },
+
+    // Compability with jQuery API
 
     tweeners = {
 
@@ -186,7 +191,7 @@ var
             }
         ]
     },
-    animationPrefilters = [parseDefault];
+    animationPrefilters = [defaultPrefilter];
 
 // Extend the global hAzzle object
 
@@ -210,9 +215,7 @@ hAzzle.extend({
         boxSizing: null,
     },
 
-    // Note! hAzzle are faster then jQuery animation, so 
-    // even if we try to support jQuery's named durations - we 
-    // have to adjust it to match hAzzle. But the names are the same!!
+    // Support jQuery's named durations
 
     speeds: {
         fast: 100,
@@ -367,7 +370,8 @@ hAzzle.extend({
 
         var i = this.length,
             index = type != null && type + 'fxQueueHooks',
-            data, dequeue = true, elem,
+            data, dequeue = true,
+            elem,
             stopQueue = function(hooks) {
                 var stop = hooks.stop;
                 delete hooks.stop;
@@ -398,6 +402,7 @@ hAzzle.extend({
                     }
                 }
             }
+
 
             for (index = sheets.length; index--;) {
                 if (sheets[index].elem === elem &&
@@ -457,10 +462,9 @@ hAzzle.extend({
     }
 });
 
-
 /* ============================ UTILITY METHODS =========================== */
 
-function parseDefault(elem, props, opts) {
+function defaultPrefilter(elem, props, opts) {
 
     var prop, value, toggle, tween,
         hooks, oldfire, display, checkDisplay,
@@ -545,24 +549,6 @@ function parseDefault(elem, props, opts) {
         opts.originalValues[orgValueProp] = elem.style[orgValueProp];
     }
 
-    /********************
-      Height / width
-    ********************/
-
-    if (elem.nodeType === 1) {
-
-        if ('height' in props ||
-            'width' in props) {
-
-            opts.originalValues.overflow = style.overflow;
-            opts.originalValues.overflowX = style.overflowX;
-            opts.originalValues.overflowY = style.overflowY;
-
-            if (opts.originalValues.overflow) {
-                style.overflow = 'hidden';
-            }
-        }
-    }
     // Restore original CSS values after animation are finished 
 
     anim.done(function() {
@@ -572,21 +558,43 @@ function parseDefault(elem, props, opts) {
         }
     });
 
-    /**********************
-      Display / Visibility
-    ***********************/
+    /********************
+      Height / width
+    ********************/
 
-    // Get correct display. Its faster for us to use hAzzle.curCSS directly then
-    // hAzzle.css. In fact we gain better performance skipping a lot of checks
+    if (elem.nodeType === 1) {
 
-    display = curCSS(elem, 'display');
+        if ('height' in props ||
+            'width' in props) {
 
-    // Test default display if display is currently 'none'
-    checkDisplay = display === 'none' ?
-        hAzzle.getPrivate(elem, 'olddisplay') || getDisplayType(elem) : display;
+            opts.overflow = [style.overflow, style.overflowX, style.overflowY];
+        }
 
-    if (checkDisplay === 'inline') {
-        style.display = 'inline-block';
+        /**********************
+          Display / Visibility
+        ***********************/
+
+        // Get correct display. Its faster for us to use hAzzle.curCSS directly then
+        // hAzzle.css. In fact we gain better performance skipping a lot of checks
+
+        display = curCSS(elem, 'display');
+
+        // Test default display if display is currently 'none'
+        checkDisplay = display === 'none' ?
+            hAzzle.getPrivate(elem, 'olddisplay') || getDisplayType(elem) : display;
+
+        if (checkDisplay === 'inline') {
+            style.display = 'inline-block';
+        }
+    }
+
+    if (opts.overflow) {
+        style.overflow = 'hidden';
+        anim.always(function() {
+            style.overflow = opts.overflow[0];
+            style.overflowX = opts.overflow[1];
+            style.overflowY = opts.overflow[2];
+        });
     }
 
     for (prop in props) {
@@ -961,9 +969,11 @@ Animation.tweener = function(props, callback) {
 };
 
 Animation.prefilter = function(callback, prepend) {
+
     if (prepend) {
         animationPrefilters.unshift(callback);
     } else {
+        alert(callback)
         animationPrefilters.push(callback);
     }
 };
