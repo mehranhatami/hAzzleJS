@@ -1,22 +1,21 @@
 // fx.js
 var
-// 'frame' is the requestAnimationFrame shim we are using
+// 'fxFrame' is the requestAnimationFrame shim we are using
 // Sending a number into the shim will adjust the 
 // framerate. E.g. hAzzle.RAF(20) change the frame rate to
 // 20 FPS
 
-    frame = hAzzle.RAF(),
-    relVal = /^([+-\/*])=/,
-    fontLineVal = /^(fontSize|lineHeight)$/,
-    scaleVal = /^scale/,
-    reGrBlVal = /(Red|Green|Blue)$/i,
-    opVal = /[\/*]/,
-    mplrwtwlVal = /margin|padding|left|right|width|text|word|letter/i,
-    xVal = /X$/,
-    queueHooks = /queueHooks$/,
-    unitConversionData,
+    fxFrame = hAzzle.RAF(),
+    fxRelVal = /^([+-\/*])=/,
+    fxFontLineVal = /^(fontSize|lineHeight)$/,
+    fxScaleVal = /^scale/,
+    fxReGrBlVal = /(Red|Green|Blue)$/i,
+    fxOpVal = /[\/*]/,
+    fxMplrwtwlVal = /margin|padding|left|right|width|text|word|letter/i,
+    fxVal = /X$/,
+    fxQueueHooks = /fxQueueHooks$/,
     sheets = [],
-    prefix = 'oTween',
+    fxPrefix = 'oTween',
     rafId,
 
     // Ticker 
@@ -34,7 +33,7 @@ var
 
                     var sheet, i = 0;
 
-                    frame.request(raf);
+                    fxFrame.request(raf);
 
                     for (; i < sheets.length; i++) {
 
@@ -48,7 +47,7 @@ var
                     // If no length, cancel the animation
 
                     if (!sheets.length) {
-                        frame.cancel(rafId);
+                        fxFrame.cancel(rafId);
                         rafId = null;
                     }
                 }
@@ -58,7 +57,7 @@ var
         // Only run the animation if there is no rafId
 
         if (!rafId) {
-            rafId = frame.request(raf);
+            rafId = fxFrame.request(raf);
         }
     },
 
@@ -73,6 +72,7 @@ var
                     elem = tween.elem,
                     start = tween.cur(),
                     end = value,
+                    unitConversionData,
                     splittedValues,
                     endUnit,
                     startUnit,
@@ -96,7 +96,7 @@ var
 
                 // Extract a value operator (e.g. '+=', '*=', '/=') if one exists
 
-                end = splittedValues[0].replace(relVal, function(match, subMatch) {
+                end = splittedValues[0].replace(fxRelVal, function(match, subMatch) {
                     operator = subMatch;
                     return '';
                 });
@@ -109,13 +109,13 @@ var
                 end = parseFloat(end) || 0;
 
                 if (endUnit === '%') {
-                    if (fontLineVal.test(prop)) {
+                    if (fxFontLineVal.test(prop)) {
                         end = end / 100;
                         endUnit = 'em';
-                    } else if (scaleVal.test(prop)) {
+                    } else if (fxScaleVal.test(prop)) {
                         end = end / 100;
                         endUnit = '';
-                    } else if (reGrBlVal.test(prop)) {
+                    } else if (fxReGrBlVal.test(prop)) {
                         end = (end / 100) * 255;
                         endUnit = '';
                     }
@@ -124,7 +124,7 @@ var
                 // The '*' and '/' operators, which are not passed in with an associated unit,
                 // inherently use start's unit. Skip value and unit conversion.
 
-                if (opVal.test(operator)) {
+                if (fxOpVal.test(operator)) {
                     endUnit = startUnit;
                 } else if ((startUnit !== endUnit) && start !== 0) {
 
@@ -134,43 +134,30 @@ var
 
                         unitConversionData = unitConversionData || calculateUnitRatios(elem);
 
-                        var axis = (mplrwtwlVal.test(prop) ||
-                            xVal.test(prop) || prop === 'x') ? 'x' : 'y';
+                        var axis = (fxMplrwtwlVal.test(prop) ||
+                            fxVal.test(prop) || prop === 'x') ? 'x' : 'y';
 
-                        switch (startUnit) {
+                        if (startUnit === '%') {
 
-                            case '%':
+                            start *= (axis === 'x' ? unitConversionData.percentToPxWidth :
+                                unitConversionData.percentToPxHeight);
 
-                                start *= (axis === 'x' ? unitConversionData.percentToPxWidth :
-                                    unitConversionData.percentToPxHeight);
-                                break;
+                            // px acts as our midpoint in the unit conversion process; do nothing.                                    
 
-                            case 'px':
-
-                                // px acts as our midpoint in the unit conversion process; do nothing.
-                                break;
-
-                            default:
-
-                                start *= unitConversionData[startUnit + 'ToPx'];
+                        } else if (startUnit === 'px') {} else {
+                            start *= unitConversionData[startUnit + 'ToPx'];
                         }
 
                         // Invert the px ratios to convert into to the target unit.
 
-                        switch (endUnit) {
+                        if (endUnit === '%') {
 
-                            case '%':
-                                start *= 1 / (axis === 'x' ? unitConversionData.lastpToPW :
-                                    unitConversionData.lastToPH);
+                            start *= 1 / (axis === 'x' ? unitConversionData.lastpToPW :
+                                unitConversionData.lastToPH);
+                            // start is already in px, do nothing; we're done.                                    
 
-                                break;
-
-                            case 'px':
-                                /* start is already in px, do nothing; we're done. */
-                                break;
-
-                            default:
-                                start *= 1 / unitConversionData[endUnit + 'ToPx'];
+                        } else if (endUnit === 'px') {} else {
+                            start *= 1 / unitConversionData[endUnit + 'ToPx'];
                         }
                     }
                 }
@@ -379,9 +366,8 @@ hAzzle.extend({
         }
 
         var i = this.length,
-            index = type != null && type + 'queueHooks',
-            data, dequeue = true,
-            elem,
+            index = type != null && type + 'fxQueueHooks',
+            data, dequeue = true, elem,
             stopQueue = function(hooks) {
                 var stop = hooks.stop;
                 delete hooks.stop;
@@ -407,7 +393,7 @@ hAzzle.extend({
 
                 for (index in data) {
 
-                    if (data[index] && data[index].stop && queueHooks.test(index)) {
+                    if (data[index] && data[index].stop && fxQueueHooks.test(index)) {
                         stopQueue(data[index]);
                     }
                 }
@@ -437,7 +423,7 @@ hAzzle.extend({
             var index,
                 data = hAzzle.private(this),
                 queue = data[type + 'queue'],
-                hooks = data[type + 'queueHooks'],
+                hooks = data[type + 'fxQueueHooks'],
                 length = queue ? queue.length : 0;
 
             // Enable finishing flag on private data
@@ -483,11 +469,10 @@ function parseDefault(elem, props, opts) {
         orig = {},
         style = elem.style,
         hidden = elem.nodeType && isHidden(elem),
-        storage = hAzzle.private(elem, prefix);
+        storage = hAzzle.private(elem, fxPrefix);
 
-    // Handle queue: false promises
     if (!opts.queue) {
-        hooks = hAzzle._queueHooks(elem, 'fx');
+        hooks = hAzzle._fxQueueHooks(elem, 'fx');
         if (hooks.unqueued == null) {
             hooks.unqueued = 0;
             oldfire = hooks.empty.fire;
@@ -509,7 +494,6 @@ function parseDefault(elem, props, opts) {
             });
         });
     }
-
 
     /********************
       Options parsing
@@ -595,11 +579,11 @@ function parseDefault(elem, props, opts) {
     // Get correct display. Its faster for us to use hAzzle.curCSS directly then
     // hAzzle.css. In fact we gain better performance skipping a lot of checks
 
-    display = hAzzle.curCSS(elem, 'display');
+    display = curCSS(elem, 'display');
 
     // Test default display if display is currently 'none'
     checkDisplay = display === 'none' ?
-        hAzzle.getPrivate(elem, 'olddisplay') || hAzzle.getDisplayType(elem) : display;
+        hAzzle.getPrivate(elem, 'olddisplay') || getDisplayType(elem) : display;
 
     if (checkDisplay === 'inline') {
         style.display = 'inline-block';
@@ -646,7 +630,7 @@ function parseDefault(elem, props, opts) {
                 hidden = storage.hidden;
             }
         } else {
-            storage = hAzzle.private(elem, prefix, {});
+            storage = hAzzle.private(elem, fxPrefix, {});
         }
 
         // Store state if its toggle - enables .stop().toggle() to 'reverse'
@@ -671,7 +655,7 @@ function parseDefault(elem, props, opts) {
         anim.done(function() {
             var prop;
 
-            hAzzle.removePrivate(elem, prefix);
+            hAzzle.removePrivate(elem, fxPrefix);
             for (prop in orig) {
                 setCSS(elem, prop, orig[prop]);
             }
@@ -748,7 +732,6 @@ function parseProperties(elem, props, specialEasing) {
 
         specialEasing[name] = easing;
     }
-
 }
 
 // Quick and fast copy of objects
@@ -840,7 +823,7 @@ function Animation(elem, properties, options) {
                 return false;
             }
 
-            var currentTime = frame.perfNow(),
+            var currentTime = fxFrame.perfNow(),
                 remaining = Math.max(0, animation.startTime + animation.duration - currentTime),
                 temp = remaining / animation.duration || 0,
                 percent = 1 - temp,
@@ -880,7 +863,7 @@ function Animation(elem, properties, options) {
 
             // Use performance.now shim from our RAF() polify
 
-            startTime: frame.perfNow(),
+            startTime: fxFrame.perfNow(),
             duration: options.duration,
             tweens: [],
             createTween: function(prop, end) {
@@ -904,7 +887,7 @@ function Animation(elem, properties, options) {
                     animation.tweens[index].run(1);
                 }
 
-                // Resolve when we played the last frame; otherwise, reject
+                // Resolve when we played the last fxFrame; otherwise, reject
                 if (gotoEnd) {
                     promises.resolveWith(elem, [animation, gotoEnd]);
                 } else {
@@ -1004,18 +987,18 @@ Tween.prototype = {
         this.unit = '';
     },
     cur: function() {
-        
+
         var value;
-        
+
         // 'cssHook - animation' are special hooks' not natively supported
         // by the CSS module
-        
+
         if (cssHook.animation[this.prop]) {
             value = cssHook.animation.get[this.prop](this.elem, this.prop)
         } else {
             value = getCSS(this.elem, this.prop);
         }
-        
+
         // Since property lookups are for animation purposes (which entails 
         // computing the numeric delta between start and end values),
         // convert CSS null-values to an integer of value 0.
