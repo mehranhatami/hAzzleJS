@@ -1,5 +1,6 @@
 // traversing.js
 var tparpreunall = /^(?:parents|prev(?:Until|All))/,
+    indexOf = Array.prototype.indexOf,
     preservesUniquenessAndOrder = {},
     isnot = function(els, selector, not) {
 

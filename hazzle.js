@@ -24,7 +24,6 @@
             path + 'cl3.js',
 			path + 'cl4.js',
             path + 'matchesselector.js',
-            path + 'matches.js',
             path + 'raf.js',
             path + 'html.js',
             path + 'shims/classlist.js',

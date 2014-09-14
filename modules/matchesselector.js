@@ -1,110 +1,93 @@
-// hAzzle.matchesselector
-var documentIsHTML = hAzzle.documentIsHTML,
-    docElem = hAzzle.docElem,
-    quickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
-    ntapi = {};
-	
-
-    var matches = hAzzle.features['api-mS'] ? function(node, selector) {
-        // 'matches' standard in DOM Level 4 and replacement for
-        // matchesselector
-        return node.matches(selector);
-//        return !Jiesa.has['bug-mS'] && typeof node === 'function' ? node.matches(selector) : hAzzle.find(node, selector);
-    } : hAzzle.find();
-
+// matchesselector.js
+var docElem = hAzzle.docElem,
+    mQuickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
+    propName = 'm oM msM mozM webkitM'.split(' ').reduce(function(result, prefix) {
+        var propertyName = prefix + 'atchesSelector';
+        return result || docElem[propertyName] && propertyName;
+    }, null);
 
 // Expose to the global hAzzle Object
 
 hAzzle.matchesSelector = function(elem, selector) {
 
-    var j, found,
-        matched = false,
-        results = [];
+    var index, len, result, found,
+        quick = mQuickMatch.exec(selector);
 
-    if (typeof selector === 'string') {
+    if (quick) {
+        //   0  1    2   3          4
+        // [ _, tag, id, attribute, class ]
+        if (quick[1]) quick[1] = quick[1].toLowerCase();
+        if (quick[3]) quick[3] = quick[3].split('=');
+        if (quick[4]) quick[4] = ' ' + quick[4] + ' ';
+    }
 
-        // Always make sure we have a nodeName
+    if (!quick && !propName) {
+        found = hAzzle.find(selector, elem || document);
+    }
 
-        if ((found = quickMatch.exec(selector))) {
+    for (; elem && elem.nodeType === 1; elem = elem.parentNode) {
+        if (quick) {
+            result = (
+                (!quick[1] || elem.nodeName.toLowerCase() === quick[1]) &&
+                (!quick[2] || elem.id === quick[2]) &&
+                (!quick[3] || (quick[3][1] ? elem.getAttribute(quick[3][0]) === quick[3][1] : elem.hasAttribute(quick[3][0]))) &&
+                (!quick[4] || (' ' + elem.className + ' ').indexOf(quick[4]) >= 0)
+            );
+        } else {
 
-            // Find a match, Mehran !!
+            if (propName) {
+                result = elem[propName](selector);
+            } else {
+                index = 0;
+                len = found.length;
+                for (var n; index < len;) {
 
-            return findAMatchMehran(elem, found);
-        }
+                    n = (found[index++]);
 
-        // If no XML doc, and not a document fragment, use
-        // Matchesselector
-
-        if (documentIsHTML && elem.nodeType !== 11) {
-
-            return matches(elem, selector);
-        }
-
-        // Fall back to compiler.js
-        return hAzzle.find();
-
-    } else { // Object
-
-        if (typeof selector === 'object') {
-
-            for (j in selector) {
-
-                matched = false;
-
-                if (j === 'className') {
-
-                    if ((' ' + elem.className.replace(/\s+/g, ' ') + ' ').indexOf(' ' + selector[j] + ' ') > -1) {
-                        matched = true;
-                    }
-
-                } else if (j === 'nodeName' || j === 'tagName') {
-
-                    if (elem[j].toLowerCase() === selector[j].toLowerCase()) {
-                        matched = true;
-                    }
-
-                } else if (ntapi[j]) {
-
-                    // handle matching nested objects ntapi
-                    matched = hAzzle.matchesSelector(elem[j], selector[j]);
-
-                } else {
-
-                    // handle matching other properties
-
-                    if (elem[j] === selector[j]) {
-
-                        matched = true;
+                    if (n === elem) {
+                        return n;
                     }
                 }
-                results.push(matched);
+                // Fix IE memory leaks
+                index = len = void 0;
             }
+        }
+
+        if (result || !selector || elem === selector) break;
+    }
+
+    return result && elem;
+};
+
+hAzzle.matches = function(selector, context) {
+
+    if (typeof selector !== 'string') {
+        return null;
+    }
+    var i = 0,
+        l = context.length,
+        cl3 = selector.replace(':', '').toUpperCase(),
+        result = [];
+
+    if (!l) { // if no length
+
+        // We are here using the CL3 module, same as we do with Jiesa.
+        // No point in reinventing the wheel!!
+
+        return hAzzle.Expr[cl3] ? hAzzle.Expr[cl3](context) :
+            hAzzle.matchesSelector(context, selector);
+    }
+
+    // loop through
+
+    for (; i < l; i++) {
+
+        if (hAzzle.Expr[cl3] && hAzzle.Expr[cl3](context[i])) {
+            result.push(context[i]);
+        } else if (hAzzle.matchesSelector(context[i], selector)) {
+            result.push(context[i]);
         }
     }
 
-    return hAzzle.inArray(results.join('|'), 'false') < 0;
+    return result;
 };
-
-/* ============================ INTERNAL FUNCTIONS =========================== */
-
-
-function findAMatchMehran(elem, m) {
-    if (m[1]) m[1] = m[1].toLowerCase();
-    if (m[3]) m[3] = m[3].split("=");
-    if (m[4]) m[4] = " " + m[4] + " ";
-    if (elem && elem.nodeName) {
-        return (
-            (!m[1] || elem.nodeName.toLowerCase() === m[1]) &&
-            (!m[2] || elem.id === m[2]) &&
-            (!m[3] || (m[3][1] ? elem.getAttribute(m[3][0]) === m[3][1] : elem.hasAttribute(m[3][0]))) &&
-            (!m[4] || (' ' + elem.className + ' ').indexOf(m[4]) >= 0)
-        );
-    }
-}
-
-/* ============================ INTERNAL =========================== */
-
-hAzzle.each(('parentNode lastChild firstChild nextSibling previousSibling lastElementChild ' +
-    'firstElementChild nextElementSibling previousElementSibling').split(' '), function(value) {
-    ntapi[value] = true;
-});
