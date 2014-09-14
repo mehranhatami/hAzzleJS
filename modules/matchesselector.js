@@ -30,7 +30,8 @@ hAzzle.matchesSelector = function(elem, selector) {
             result = (
                 (!quick[1] || elem.nodeName.toLowerCase() === quick[1]) &&
                 (!quick[2] || elem.id === quick[2]) &&
-                (!quick[3] || (quick[3][1] ? elem.getAttribute(quick[3][0]) === quick[3][1] : elem.hasAttribute(quick[3][0]))) &&
+                (!quick[3] || (quick[3][1] ? elem.getAttribute(quick[3][0]) === quick[3][1] : 
+                elem.hasAttribute(quick[3][0]))) &&
                 (!quick[4] || (' ' + elem.className + ' ').indexOf(quick[4]) >= 0)
             );
         } else {
@@ -65,11 +66,11 @@ hAzzle.matches = function(selector, context) {
         return null;
     }
     var i = 0,
-        l = context.length,
+        len = context.length,
         cl3 = selector.replace(':', '').toUpperCase(),
         result = [];
 
-    if (!l) { // if no length
+    if (!len) { // if no length
 
         // We are here using the CL3 module, same as we do with Jiesa.
         // No point in reinventing the wheel!!
@@ -80,7 +81,7 @@ hAzzle.matches = function(selector, context) {
 
     // loop through
 
-    for (; i < l; i++) {
+    for (; i < len; i++) {
 
         if (hAzzle.Expr[cl3] && hAzzle.Expr[cl3](context[i])) {
             result.push(context[i]);
