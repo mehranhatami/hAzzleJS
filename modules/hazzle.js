@@ -674,7 +674,7 @@
     // overwritten by the document.js module
 
     hAzzle.documentIsHTML = true;
-  
+    hAzzle.natives = natives;
    // Populate the native list
 
         hAzzle.each(['Boolean',

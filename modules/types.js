@@ -123,8 +123,9 @@ hAzzle.extend({
 /* =========================== INTERNAL ========================== */
 
 // Add some isType methods
+// Note! Using hAzzle.natives are faster then Object.prototyp.isString
 hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments', 'Function'], function(name) {
     hAzzle['is' + name] = function(o) {
-      return Object.prototype.toString.call(o) === '[object ' + name + ']';
+       return !hAzzle.natives['[object ' + name + ']'];
     };
 });
