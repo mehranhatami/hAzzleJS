@@ -354,22 +354,16 @@
          * Check if an element exist in an array
          */
 
-        inArray: function(array, value, index) {
+        inArray: function(val, arr, i) {
 
-            if (!array) {
+            var len = arr.length;
+            i = i ? i < 0 ? Math.max(0, l + i) : i : 0;
 
-                return;
-            }
+            for (; i < len; i++) {
 
-            var i = (index || 0),
-                m = array.length;
+                if (i in arr && arr[i] === val) {
 
-            for (; i < m; i++) {
-
-                if (array[i] === value) {
-
-                    return i;
-
+                    return true;
                 }
             }
             return -1;
