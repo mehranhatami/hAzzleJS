@@ -100,6 +100,12 @@ var // Create a cached element for re-use when checking for CSS property prefixe
         return (value === 0 || cssCore.regEx.zerovalue.test(value));
     },
 
+    capitalize = function(str) {
+        return str.replace(/^\w/, function(match) {
+            return match.toUpperCase();
+        });
+    },
+
     prefixCheck = function(prop) {
 
         // If this property has already been checked, return the cached value.
@@ -124,10 +130,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
                     // Capitalize the first letter of the property to conform to JavaScript vendor 
                     //prefix notation (e.g. webkitFilter). 
-
-                    propPrefixed = vendors[i] + prop.replace(/^\w/, function(match) {
-                        return match.toUpperCase();
-                    });
+                    propPrefixed = capitalize(vendors[i] + prop);
                 }
 
                 // Check if the browser supports this property as prefixed.
@@ -186,12 +189,15 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     setCSS = function(elem, prop, value, animate) {
 
+        var type, ret, oldValue,
+            nType = elem.nodeType,
+            style = elem.style;
+
         // Don't set styles on text and comment nodes
-        if (elem.nodeType === 3 || elem.nodeType === 8 || !elem) {
+        if (nType === 3 ||
+            nType === 8 || !elem) {
             return;
         }
-
-        var type, ret, oldValue;
 
         // Check if we're setting a value
 
@@ -205,7 +211,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                     prop = cssHook.animation[prop].name;
                 }
             }
-            
+
             if (cssHook[prop]) {
                 value = cssHook[prop].set(elem, prop, value);
                 prop = cssHook[prop].name;
@@ -242,6 +248,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
                 // If a number was passed in, add 'px' to the number (except for certain CSS properties)
 
+
                 if (type === 'number' && !hAzzle.unitless[prop]) {
 
                     value += ret && ret[3] ? ret[3] : 'px';
@@ -249,17 +256,17 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
                 if (cssCore.has['bug-clearCloneStyle'] &&
                     value === '' && prop.indexOf('background') === 0) {
-                    elem.style[hAzzle.camelize(prop)] = 'inherit';
+                    style[hAzzle.camelize(prop)] = 'inherit';
                 }
 
                 oldValue = elem.style[name];
-                elem.style[name] = value;
+                style[name] = value;
 
                 // Revert to the old value if the browser didn't accept the new rule to
                 // not break the cascade.
 
                 if (value && !elem.style[name]) {
-                    elem.style[name] = oldValue;
+                    style[name] = oldValue;
                 }
             }
 
@@ -270,7 +277,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                 elem.setAttribute(prop, value);
 
             } else {
-                elem.style[prop] = value;
+                style[prop] = value;
             }
 
         } else {
@@ -282,7 +289,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             }
 
             // Otherwise just get the value from the style object
-            return elem.style[prop];
+            return style[prop];
         }
     };
 
@@ -350,6 +357,7 @@ hAzzle.prefixCheck = prefixCheck;
 hAzzle.cssHooks = cssHook;
 hAzzle.css = getCSS;
 hAzzle.style = setCSS;
+hAzzle.capitalize = capitalize;
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
