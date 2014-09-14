@@ -303,7 +303,29 @@ hAzzle.extend({
                 setCSS(elem, name, value) :
                 getCSS(elem, name);
         }, name, value, arguments.length > 1);
-    }
+    },
+    
+    zIndex: function( zIndex ) {
+		if ( zIndex !== undefined ) {
+			return this.css( 'zIndex', zIndex );
+		}
+
+		if ( this.length ) {
+			var elem = hAzzle( this[ 0 ] ), position, value;
+			while ( elem.length && elem[ 0 ] !== document ) {
+				position = elem.css( 'position' );
+				if ( position === 'absolute' || position === 'relative' || position === 'fixed' ) {
+					value = parseInt( elem.css( 'zIndex' ), 10 );
+					if ( !isNaN( value ) && value !== 0 ) {
+						return value;
+					}
+				}
+				elem = elem.parent();
+			}
+		}
+
+		return 0;
+	}
 });
 
 // Expose
@@ -446,4 +468,16 @@ hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
 
 hAzzle.each(unitlessProps, function(name) {
     hAzzle.unitless[hAzzle.camelize(name)] = true;
+});
+
+// Example plug-in for the cssHooks - animation object
+
+hAzzle.each([ 'borderLeftStyle', 'borderRightStyle', 'borderBottomStyle', 'borderTopStyle' ], function( prop ) {
+	cssCore.hooks.animation[ prop ] = function( tween ) {
+		if ( tween.end !== 'none' && !tween.setAttr || 
+             tween.pos === 1 && !tween.setAttr ) {
+			setCSS( tween.elem, prop, tween.end );
+			tween.setAttr = true;
+		}
+	};
 });
