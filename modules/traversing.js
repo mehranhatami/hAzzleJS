@@ -1,10 +1,27 @@
-/*!
- * DOM walker & getters
- */
-var
-    parpreunall = /^(?:parents|prev(?:Until|All))/,
+// traversing.js
+var tparpreunall = /^(?:parents|prev(?:Until|All))/,
+    preservesUniquenessAndOrder = {},
+    isnot = function(els, selector, not) {
 
-    preservesUniquenessAndOrder = {};
+        var type = typeof selector;
+
+        if (type === 'string') {
+            selector = hAzzle.matches(selector, els);
+            return hAzzle.grep(els, function(elem) {
+                return (indexOf.call(selector, elem) >= 0) !== not;
+            });
+        }
+
+        return type === 'function' ?
+            hAzzle.grep(els, function(elem, i) {
+                return !!selector.call(elem, i, elem) !== not;
+            }) : selector.nodeType ?
+            hAzzle.grep(els, function(elem) {
+                return (elem === selector) !== not;
+            }) : hAzzle.grep(els, function(elem) {
+                return (indexOf.call(selector, elem) >= 0) !== not;
+            });
+    };
 
 hAzzle.extend({
 
@@ -386,7 +403,6 @@ hAzzle.extend({
     }
 });
 
-
 hAzzle.extend({
     traverse: function(elem, dir, until) {
         var matched = [],
@@ -568,7 +584,7 @@ hAzzle.forOwn({
                 hAzzle.unique(matched);
             }
 
-            if (parpreunall.test(name)) {
+            if (tparpreunall.test(name)) {
 
                 matched.reverse();
             }
@@ -578,27 +594,6 @@ hAzzle.forOwn({
     };
 });
 
-function isnot(els, selector, not) {
-
-    var type = typeof selector;
-
-    if (type === 'string') {
-        selector = hAzzle.matches(selector, els);
-        return hAzzle.grep(els, function(elem) {
-            return (indexOf.call(selector, elem) >= 0) !== not;
-        });
-    }
-
-    return type === 'function' ?
-        hAzzle.grep(els, function(elem, i) {
-            return !!selector.call(elem, i, elem) !== not;
-        }) : selector.nodeType ?
-        hAzzle.grep(els, function(elem) {
-            return (elem === selector) !== not;
-        }) : hAzzle.grep(els, function(elem) {
-            return (indexOf.call(selector, elem) >= 0) !== not;
-        });
-}
 
 hAzzle.each(['children', 'contents', 'next prev'], function(prop) {
     preservesUniquenessAndOrder[prop] = true;

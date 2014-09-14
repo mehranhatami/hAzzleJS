@@ -84,7 +84,6 @@ function conf(grunt) {
                 'offset.js',
 				'raf.js',
 				'tween.js',
-                'fx.js',
 				'effects.js',	
 				'traversing.js',
                 'ajax.js',

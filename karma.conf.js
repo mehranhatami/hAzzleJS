@@ -51,7 +51,7 @@ module.exports = function(config) {
         'eventHooks.js',
         'ajax.js',
         'raf.js',
-        'fx.js',
+        'tween.js',
         'traversing.js',
         'jsonxml.js',
     ];
