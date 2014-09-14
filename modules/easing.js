@@ -1,16 +1,5 @@
-// Default easing value
-hAzzle.defaultEasing = 'swing';
+var easings = {
 
-var easings = hAzzle.easing = {};
-
-
-hAzzle.each(['Quad', 'Cubic', 'Quart', 'Quint', 'Expo'], function(name, i) {
-    easings[name] = function(p) {
-        return Math.pow(p, i + 2);
-    };
-});
-
-hAzzle.extend({
     sine: function(p) {
         return 1 - Math.cos(p * Math.PI / 2);
     },
@@ -30,29 +19,8 @@ hAzzle.extend({
 
         while (p < ((pow2 = Math.pow(2, --bounce)) - 1) / 11) {}
         return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) / 22 - p, 2);
-    }
-}, easings);
+    },
 
-hAzzle.each(easings, function(easeIn, name) {
-    easings['easeIn' + name] = easeIn;
-    easings['easeOut' + name] = function(p) {
-        return 1 - easeIn(1 - p);
-    };
-    easings['easeInOut' + name] = function(p) {
-        return p < 0.5 ?
-            easeIn(p * 2) / 2 :
-            1 - easeIn(p * -2 + 2) / 2;
-    };
-});
-
-// Bonus 'spring' easing, which is a less exaggerated version of easeInOutElastic.
-easings.spring = function(p) {
-    return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
-};
-
-// And a few more
-
-hAzzle.extend({
     easeFrom: function(p) {
         return Math.pow(p, 4);
     },
@@ -110,10 +78,11 @@ hAzzle.extend({
         return easings.sinusoidal(p < 0 ? 0 : p > 1 ? 1 : p);
     },
     mirror: function(p) {
-        if (p < 0.5)
+        if (p < 0.5) {
             return easings.sinusoidal(p * 2);
-        else
-            return easings.sinusoidal(1 - (p - 0.5) * 2);
+       } else {
+         return easings.sinusoidal(1 - (p - 0.5) * 2);
+       }     
     },
 
     bounceIn: function(p) {
@@ -144,5 +113,31 @@ hAzzle.extend({
     },
     sineIn: function(p) {
         return 1 - Math.cos(p * Math.PI / 2);
+    },
+    spring: function(p) {
+        return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
     }
-}, easings);
+};
+
+hAzzle.each(['Quad', 'Cubic', 'Quart', 'Quint', 'Expo'], function(name, i) {
+    easings[name] = function(p) {
+        return Math.pow(p, i + 2);
+    };
+});
+
+hAzzle.each(easings, function(easeIn, name) {
+    easings['easeIn' + name] = easeIn;
+    easings['easeOut' + name] = function(p) {
+        return 1 - easeIn(1 - p);
+    };
+    easings['easeInOut' + name] = function(p) {
+        return p < 0.5 ?
+            easeIn(p * 2) / 2 :
+            1 - easeIn(p * -2 + 2) / 2;
+    };
+});
+
+// Expose
+
+hAzzle.defaultEasing = 'swing';
+hAzzle.easing = easings;

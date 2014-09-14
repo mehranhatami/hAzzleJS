@@ -66,6 +66,7 @@ function conf(grunt) {
                 'matches.js',
                 'html.js',
                 'clone.js',
+                'showhide.js',
                 'shims/classlist.js',
                 'val.js',
                 'manipulation.js',
