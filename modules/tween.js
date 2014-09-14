@@ -1011,7 +1011,7 @@ Tween.prototype = {
         // by the CSS module
         
         if (cssHook.animation[this.prop]) {
-            value = cssHook.animation[prop](this.elem, this.prop)
+            value = cssHook.animation.get[this.prop](this.elem, this.prop)
         } else {
             value = getCSS(this.elem, this.prop);
         }
