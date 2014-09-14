@@ -148,7 +148,6 @@ hAzzle.each({
         'delegateType': delegateType,
 
         'setup': function() {
-            // Claim the first click handler
             return useNative(this, type, !hAzzle.features.focusinBubbles);
         },
 
@@ -165,8 +164,6 @@ hAzzle.each({
         }
     };
 });
-
-
 
 function useNative(el, type, handlers, noop) {
     var buffer, active;

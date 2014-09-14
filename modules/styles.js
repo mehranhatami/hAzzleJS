@@ -41,7 +41,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
         cssProps: {
 
             'float': 'cssFloat'
-
         },
 
         unitless: {},
@@ -151,8 +150,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
     },
     cssHook = cssCore.hooks,
 
-    // The names in this two functions are kept due to compability
-    // with the jQuery API.
+    // The two following functions are kept due to jQuery API compability
 
     getCSS = function(elem, prop, extra, force) {
 
@@ -352,7 +350,8 @@ hAzzle.assert(function(div) {
 
 hAzzle.assert(function(div) {
 
-    var support = {}, style = div.style;
+    var support = {},
+        style = div.style;
 
     // Helper function to get the proper vendor property name.
     // (`transition` => `WebkitTransition`)
@@ -364,11 +363,11 @@ hAzzle.assert(function(div) {
         }
         // Check for vendor prefixed names
         var name, i = vendors.length,
-            capName = prop.charAt(0).toUpperCase() + prop.slice(1);
+            ucProp = prop.charAt(0).toUpperCase() + prop.slice(1);
 
         while (i--) {
-            name = vendors[i] + capName;
-            if (name in div.style) {
+            name = vendors[i] + ucProp;
+            if (name in style) {
                 return name;
             }
         }
@@ -442,6 +441,54 @@ hAzzle.assert(function(div) {
 
 hAzzle.cssProps.transform = cssCore.support.transform;
 hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
+
+/* ======== REQUESTANIMATIONFRAME / CANCELREQUESTANIMATIONFRAME DETECTION ========= */
+
+(function() {
+
+    var top, i = vendors.length,
+        nRAF, nCAF;
+
+    // Test if we are within a foreign domain. Use raf from the top if possible.
+
+    try {
+        // Accessing .name will throw SecurityError within a foreign domain.
+        window.top.name;
+        top = window.top;
+    } catch (e) {
+        top = window;
+    }
+
+    nRAF = top.requestAnimationFrame;
+    nCAF = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+
+    // Now try to determine the requestAnimationFrame and cancelAnimationFrame functions 
+    // and if none are found, we'll use a setTimeout()/clearTimeout() polyfill.
+
+    while (--i > -1 && !nRAF) {
+        nRAF = top[vendors[i] + "RequestAnimationFrame"];
+        nCAF = top[vendors[i] + "CancelAnimationFrame"] || top[vendors[i] + "CancelRequestAnimationFrame"];
+    }
+
+    // IE9    
+
+    if (!nRAF && !nCAF) {
+
+        nRAF = function(callback) {
+           window.setTimeout(function() {
+                callback(hAzzle.now());
+            }, 17); // when I was 17..
+        };
+
+        nCAF = function() {};
+    }
+
+    // Expose
+
+    hAzzle.cssHas.requestFrame = nRAF;
+    hAzzle.cssHas.cancelFrame = nCAF;
+
+}());
 
 // Populate the unitless properties list
 
