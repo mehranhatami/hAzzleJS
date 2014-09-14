@@ -442,54 +442,6 @@ hAzzle.assert(function(div) {
 hAzzle.cssProps.transform = cssCore.support.transform;
 hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
 
-/* ======== REQUESTANIMATIONFRAME / CANCELREQUESTANIMATIONFRAME DETECTION ========= */
-
-(function() {
-
-    var top, i = vendors.length,
-        nRAF, nCAF;
-
-    // Test if we are within a foreign domain. Use raf from the top if possible.
-
-    try {
-        // Accessing .name will throw SecurityError within a foreign domain.
-        window.top.name;
-        top = window.top;
-    } catch (e) {
-        top = window;
-    }
-
-    nRAF = top.requestAnimationFrame;
-    nCAF = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
-
-    // Now try to determine the requestAnimationFrame and cancelAnimationFrame functions 
-    // and if none are found, we'll use a setTimeout()/clearTimeout() polyfill.
-
-    while (--i > -1 && !nRAF) {
-        nRAF = top[vendors[i] + "RequestAnimationFrame"];
-        nCAF = top[vendors[i] + "CancelAnimationFrame"] || top[vendors[i] + "CancelRequestAnimationFrame"];
-    }
-
-    // IE9    
-
-    if (!nRAF && !nCAF) {
-
-        nRAF = function(callback) {
-           window.setTimeout(function() {
-                callback(hAzzle.now());
-            }, 17); // when I was 17..
-        };
-
-        nCAF = function() {};
-    }
-
-    // Expose
-
-    hAzzle.cssHas.requestFrame = nRAF;
-    hAzzle.cssHas.cancelFrame = nCAF;
-
-}());
-
 // Populate the unitless properties list
 
 hAzzle.each(unitlessProps, function(name) {

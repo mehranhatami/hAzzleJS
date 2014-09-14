@@ -1,18 +1,67 @@
-var nRAF = hAzzle.cssHas.requestFrame,
-    nCAF = hAzzle.cssHas.cancelFrame,
+var nRAF,
+    nCAF,
     perf = window.performance,
     perfNow = perf && (perf.now || perf.webkitNow || perf.msNow || perf.mozNow),
     now = hAzzle.pnow = perfNow ? function() {
         return perfNow.call(perf);
-    } : function() { // IE9
+    } : function() { // -IE9
         return hAzzle.now();
     },
     appleiOS = /iP(ad|hone|od).*OS (6|7)/,
     nav = window.navigator.userAgent;
 
+// Grab the native request and cancel functions.
+
+(function() {
+
+    var top, timeLast;
+
+    // Test if we are within a foreign domain. Use raf from the top if possible.
+
+    try {
+        // Accessing .name will throw SecurityError within a foreign domain.
+        window.top.name;
+        top = window.top;
+    } catch (e) {
+        top = window;
+    }
+
+    nRAF = top.requestAnimationFrame;
+    nCAF = top.cancelAnimationFrame || top.cancelRequestAnimationFrame;
+
+    if (!nRAF) {
+
+        // Get the prefixed one
+
+        nRAF = top.webkitRequestAnimationFrame || // Chrome <= 23, Safari <= 6.1, Blackberry 10
+            top.msRequestAnimationFrame ||
+            top.mozRequestAnimationFrame ||
+            top.msRequestAnimationFrame || function(callback) {
+                var timeCurrent = hAzzle.now(),
+                    timeDelta;
+
+                /* Dynamically set delay on a per-tick basis to match 60fps. */
+                /* Technique by Erik Moller. MIT license: https://gist.github.com/paulirish/1579671 */
+                timeDelta = Math.max(0, 16 - (timeCurrent - timeLast));
+                timeLast = timeCurrent + timeDelta;
+
+                return setTimeout(function() {
+                    callback(timeCurrent + timeDelta);
+                }, timeDelta);
+            };
+
+        nCAF = top.webkitCancelAnimationFrame ||
+            top.webkitCancelRequestAnimationFrame ||
+            top.msCancelRequestAnimationFrame ||
+            top.mozCancelAnimationFrame || function(id) {
+                clearTimeout(id);
+            };
+    }
+
     nRAF && !appleiOS.test(nav) && nRAF(function() {
         RAF.hasNative = true;
     });
+}());
 
 function RAF(options) {
 
