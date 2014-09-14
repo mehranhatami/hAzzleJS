@@ -1,35 +1,29 @@
 // hAzzle feature detection
-var docElem = hAzzle.docElem,
 
-    mArgsL = /(^| )a( |$)/,
-    mArgsR = /(^| )b( |$)/,
-    cnative = /^[^{]+\{\s*\[native \w/,
-
+var fMargsL = /(^| )a( |$)/,
+    fMargsR = /(^| )b( |$)/,
+    fNative = /^[^{]+\{\s*\[native \w/,
     matches,
-
     expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
-
-    _features = {
-
-        // Check if hAzzle support querySelectorAll
-
-        'api-QSA': !!document.querySelectorAll,
-
-        // Support: IE<=11+
-        // Make sure textarea (and checkbox) defaultValue is properly cloned
-
-        'feature-cloneCheck': hAzzle.assert(function(div) {
-            div.innerHTML = "<textarea>the unknown</textarea>";
-            return !!div.cloneNode(true).firstChild.defaultValue;
-        })
-
-    };
-
-function addFeature(name, fn) {
+    addFeature = function(name, fn) {
     if (typeof fn === 'function') {
         _features[name] = fn;
     }
-}
+},
+    _features = {
+
+     // querySelectorAll support
+
+     'api-QSA': !!document.querySelectorAll,
+
+     // Support: IE<=11+
+    // Make sure textarea (and checkbox) defaultValue is properly cloned
+
+    'feature-cloneCheck': hAzzle.assert(function(div) {
+            div.innerHTML = "<textarea>the unknown</textarea>";
+            return !!div.cloneNode(true).firstChild.defaultValue;
+        })
+    };
 
 /* ============================ BUG / FEATURE DETECTION =========================== */
 
@@ -56,13 +50,6 @@ function addFeature(name, fn) {
 
 })();
 
-// Check if XML document
-
-_features.isXML = (function(document) {
-//    return (!!document.xmlVersion) || (!!document.xml) || (toString.call(document) == '[object XMLDocument]') ||
-//        (document.nodeType == 9 && document.documentElement.nodeName != 'HTML');
-}(document));
-
 hAzzle.assert(function(div) {
 
     div.classList.add('a', 'b');
@@ -70,9 +57,9 @@ hAzzle.assert(function(div) {
     _features['api-classList'] = !!document.documentElement.classList;
     // Detect if the classList API supports multiple arguments
     // IE11-- don't support it
-    _features['api-MultiArgs'] = mArgsL.test(div.className) && mArgsR.test(div.className);
+    _features['api-MultiArgs'] = fMargsL.test(div.className) && fMargsR.test(div.className);
 
-    _features['api-mS'] = cnative.test((_features.matches = docElem.matches ||
+    _features['api-mS'] = fNative.test((_features.matches = docElem.matches ||
         docElem.webkitMatchesSelector ||
         docElem.mozMatchesSelector ||
         docElem.oMatchesSelector ||

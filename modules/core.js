@@ -2,76 +2,77 @@ var winDoc = this.document,
     docElem = winDoc.documentElement,
     setDocument,
     contains,
-    cnative = /^[^{]+\{\s*\[native \w/,
-
-    indexOf = Array.prototype.indexOf,
-
     me = 1 << 31,
-
     hasDuplicate,
-
     sortOrder = function(a, b) {
         if (a === b) {
             hasDuplicate = true;
         }
         return 0;
+    },
+
+    // Convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
+
+    setDocument = function(node) {
+
+        var doc = node ? node.ownerDocument || node : winDoc,
+            parent = doc.defaultView;
+
+        // If no document and documentElement is available, return
+
+        if (doc === document || doc.nodeType !== 9 || !hAzzle.docElem) {
+
+            return document;
+        }
+
+        // set the new document
+
+        winDoc = document = doc;
+
+        // Set correct documentElement for hAzzle to use
+
+        docElem = doc.documentElement;
+
+        // Checks if this is an XML or HTML doc
+        // If XML doc, set to false, else keep it's original value
+
+        hAzzle.documentIsHTML = !hAzzle.isXML(doc);
+
+        // Quick iFrame check
+
+        if (parent && parent !== parent.top) {
+
+            parent.addEventListener("unload", function() {
+
+                setDocument();
+
+            }, false);
+        }
+
+        // Return the document
+
+        return doc;
     };
-
-hAzzle.features['api-stableSort'] = hAzzle.expando.split("").sort(sortOrder).join("") === hAzzle.expando;
-hAzzle.features['api-sortInput'] = false;
-hAzzle.features['bug-detectDuplicates'] = !!hasDuplicate;
-hAzzle.features['sortOrder'] = sortOrder;
-hAzzle.features['sort-bug'] = hAzzle.assert(function(div1) {
-    // Should return 1, but returns 4 (following)
-    return div1.compareDocumentPosition(document.createElement('div')) & 1;
-});
-
-// Convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
-
-var setDocument = hAzzle.setDocument = function(node) {
-
-    var doc = node ? node.ownerDocument || node : winDoc,
-        parent = doc.defaultView;
-
-    // If no document and documentElement is available, return
-
-    if (doc === document || doc.nodeType !== 9 || !hAzzle.docElem) {
-
-        return document;
-    }
-
-    // set the new document
-
-    winDoc = document = doc;
-
-    // Set correct documentElement for hAzzle to use
-
-    docElem = doc.documentElement;
-
-    // Checks if this is an XML or HTML doc
-    // If XML doc, set to false, else keep it's original value
-
-    hAzzle.documentIsHTML = !hAzzle.isXML(doc);
-
-    // Quick iFrame check
-
-    if (parent && parent !== parent.top) {
-
-        parent.addEventListener("unload", function() {
-
-            setDocument();
-
-        }, false);
-    }
-
-    // Return the document
-
-    return doc;
-};
 
 // Set correct document
 
 winDoc = setDocument();
+
+
+// Extend the hAzzle feature object
+
+hAzzle.extend({
+
+    'api-stableSort': hAzzle.expando.split('').sort(sortOrder).join('') === hAzzle.expando,
+    'api-sortInput': false,
+    'bug-detectDuplicates': !!hasDuplicate,
+    'sortOrder': sortOrder,
+    'sort-bug': hAzzle.assert(function(div1) {
+        // Should return 1, but returns 4 (following)
+        return div1.compareDocumentPosition(document.createElement('div')) & 1;
+    })
+
+}, hAzzle.features);
 
 /**
  * Check if an element contains another element
@@ -108,8 +109,10 @@ contains = (docElem.contains || docElem.compareDocumentPosition) ? function(pare
 };
 
 // Sort
+// NOTE! fNative defined in features.js
+// Overwirte allready defined sortOrder
 
-hAzzle.features.sortOrder = sortOrder = cnative.test(docElem.compareDocumentPosition) ?
+hAzzle.features.sortOrder = sortOrder = fNative.test(docElem.compareDocumentPosition) ?
 
     function(a, b) {
 
@@ -281,3 +284,6 @@ hAzzle.unique = function(results) {
 
     return results;
 };
+
+// Expose
+hAzzle.setDocument = setDocument;
