@@ -12,12 +12,17 @@ var // Create a cached element for re-use when checking for CSS property prefixe
         'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect ' +
         'columnSpan columnCount columnGap columnWidth columnRuleColor columnRuleStyle columnRuleWidth').split(' '),
 
-    unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
-        'column-count flex-shrink flex-height order orphans widows rotate3d flipped ' +
-        'transform ms-flex-order transform-origin perspective transform-style ' +
-        'ms-flex-negative ms-flex-positive transform-origin perspective ' +
-        'perspective-origin backface-visibility scale scale-x scale-y scale-z ' +
-        'scale3d reflect-x-y reflect-z reflect-y reflect ' +
+     // In hAzzle unitless properties are CSS properties that are not 'ending' with a unit (e.g. width 20px, height 2em)
+     // CSS Properties like transform are also seen as unitless because we can't set transform translate(2px 2px)em
+     // For special propterties like transform it has to be handled inside plug-ins
+
+    unitlessProps = ('textShadow background-color zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
+        'column-count flex-shrink flex-height order orphans widows rotate3d flipped transform-origin ' +
+        'transform ms-flex-order transform-origin perspective transform-style boxShadow clip ' +
+        'ms-flex-negative ms-flex-positive transform-origin perspective background-position ' +
+        'perspective-origin backface-visibility scale scale-x scale-y scale-z perspective-origin' +
+        'scale3d reflect-x-y reflect-z reflect-y reflect border-bottom-bolor border-left-color ' +
+        'border-right-color border-top-color color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
         'alpha z-index font-weight opacity red green blue').split(' '),
 
     cssCore = {

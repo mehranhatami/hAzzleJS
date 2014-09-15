@@ -82,111 +82,111 @@ var
                     endUnit,
                     startUnit,
                     operator;
+                if (!hAzzle.unitless[prop]) {
+                    // Split the start value ...
 
-                // Split the start value ...
+                    splittedValues = splitValues(prop, start);
 
-                splittedValues = splitValues(prop, start);
+                    // .. grab it, and...
 
-                // .. grab it, and...
+                    start = splittedValues[0];
 
-                start = splittedValues[0];
+                    // get the correct unit type
 
-                // get the correct unit type
+                    startUnit = splittedValues[1];
 
-                startUnit = splittedValues[1];
+                    // Same process for end value as for start value
 
-                // Same process for end value as for start value
+                    splittedValues = splitValues(prop, end);
 
-                splittedValues = splitValues(prop, end);
+                    // Extract a value operator (e.g. '+=', '*=', '/=') if one exists
 
-                // Extract a value operator (e.g. '+=', '*=', '/=') if one exists
+                    end = splittedValues[0].replace(fxRelVal, function(match, subMatch) {
+                        operator = subMatch;
+                        return '';
+                    });
 
-                end = splittedValues[0].replace(fxRelVal, function(match, subMatch) {
-                    operator = subMatch;
-                    return '';
-                });
+                    endUnit = splittedValues[1];
 
-                endUnit = splittedValues[1];
+                    // ParseFloat end and start value. Default to 0 if NaN is returned.
 
-                // ParseFloat end and start value. Default to 0 if NaN is returned.
+                    start = parseFloat(start) || 0;
+                    end = parseFloat(end) || 0;
 
-                start = parseFloat(start) || 0;
-                end = parseFloat(end) || 0;
-
-                if (endUnit === '%') {
-                    if (fxFontLineVal.test(prop)) {
-                        end = end / 100;
-                        endUnit = 'em';
-                    } else if (fxScaleVal.test(prop)) {
-                        end = end / 100;
-                        endUnit = '';
-                    } else if (fxReGrBlVal.test(prop)) {
-                        end = (end / 100) * 255;
-                        endUnit = '';
+                    if (endUnit === '%') {
+                        if (fxFontLineVal.test(prop)) {
+                            end = end / 100;
+                            endUnit = 'em';
+                        } else if (fxScaleVal.test(prop)) {
+                            end = end / 100;
+                            endUnit = '';
+                        } else if (fxReGrBlVal.test(prop)) {
+                            end = (end / 100) * 255;
+                            endUnit = '';
+                        }
                     }
-                }
 
-                // The '*' and '/' operators, which are not passed in with an associated unit,
-                // inherently use start's unit. Skip value and unit conversion.
+                    // The '*' and '/' operators, which are not passed in with an associated unit,
+                    // inherently use start's unit. Skip value and unit conversion.
 
-                if (fxOpVal.test(operator)) {
-                    endUnit = startUnit;
-                } else if ((startUnit !== endUnit) && start !== 0) {
-
-                    if (end === 0) {
+                    if (fxOpVal.test(operator)) {
                         endUnit = startUnit;
-                    } else {
+                    } else if ((startUnit !== endUnit) && start !== 0) {
 
-                        unitConversionData = unitConversionData || calculateUnitRatios(elem);
+                        if (end === 0) {
+                            endUnit = startUnit;
+                        } else {
 
-                        var axis = (fxMplrwtwlVal.test(prop) ||
-                            fxVal.test(prop) || prop === 'x') ? 'x' : 'y';
+                            unitConversionData = unitConversionData || calculateUnitRatios(elem);
 
-                        if (startUnit === '%') {
+                            var axis = (fxMplrwtwlVal.test(prop) ||
+                                fxVal.test(prop) || prop === 'x') ? 'x' : 'y';
 
-                            start *= (axis === 'x' ? unitConversionData.percentToPxWidth :
-                                unitConversionData.percentToPxHeight);
+                            if (startUnit === '%') {
 
-                            // px acts as our midpoint in the unit conversion process; do nothing.                                    
+                                start *= (axis === 'x' ? unitConversionData.percentToPxWidth :
+                                    unitConversionData.percentToPxHeight);
 
-                        } else if (startUnit === 'px') {} else {
-                            start *= unitConversionData[startUnit + 'ToPx'];
-                        }
+                                // px acts as our midpoint in the unit conversion process; do nothing.                                    
 
-                        // Invert the px ratios to convert into to the target unit.
+                            } else if (startUnit === 'px') {} else {
+                                start *= unitConversionData[startUnit + 'ToPx'];
+                            }
 
-                        if (endUnit === '%') {
+                            // Invert the px ratios to convert into to the target unit.
 
-                            start *= 1 / (axis === 'x' ? unitConversionData.lastpToPW :
-                                unitConversionData.lastToPH);
-                            // start is already in px, do nothing; we're done.                                    
+                            if (endUnit === '%') {
 
-                        } else if (endUnit === 'px') {} else {
-                            start *= 1 / unitConversionData[endUnit + 'ToPx'];
+                                start *= 1 / (axis === 'x' ? unitConversionData.lastpToPW :
+                                    unitConversionData.lastToPH);
+                                // start is already in px, do nothing; we're done.                                    
+
+                            } else if (endUnit === 'px') {} else {
+                                start *= 1 / unitConversionData[endUnit + 'ToPx'];
+                            }
                         }
                     }
+
+                    // Support for relative movement via '+=n', '-=n', '*=n' or '/=n'
+
+                    if (operator === '+') {
+                        end = start + end;
+                    } else if (operator === '-') {
+                        end = start - end;
+                    } else if (operator === '*') {
+                        end = start * end;
+                    } else if (operator === '/') {
+                        end = start / end;
+                    }
+
+                    // Prototype value...
+
+                    tween.end = end;
+                    tween.start = start;
+                    tween.unit = endUnit;
+
+                    // Return the newly created tween object
                 }
-
-                // Support for relative movement via '+=n', '-=n', '*=n' or '/=n'
-
-                if (operator === '+') {
-                    end = start + end;
-                } else if (operator === '-') {
-                    end = start - end;
-                } else if (operator === '*') {
-                    end = start * end;
-                } else if (operator === '/') {
-                    end = start / end;
-                }
-
-                // Prototype value...
-
-                tween.end = end;
-                tween.start = start;
-                tween.unit = endUnit;
-
-                // Return the newly created tween object
-
                 return tween;
             }
         ]
@@ -675,6 +675,7 @@ function defaultPrefilter(elem, props, opts) {
             if (!(prop in storage)) {
                 storage[prop] = tween.start;
                 if (hidden) {
+
                     tween.end = tween.start;
                     tween.start = prop === 'width' || prop === 'height' ? 1 : 0;
                 }

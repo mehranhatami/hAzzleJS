@@ -1,32 +1,21 @@
-// Generate HTML
-
-var doc = this.document,
-    slice = Array.prototype.slice,
+// html.js
+var slice = Array.prototype.slice,
     call = Function.prototype.call,
     trim = String.prototype.trim,
+    hWhite = /\$(\w+)/g,
+    hTrimspaces = /^\s*|\s*$/g,
+    hRepl = /['"]/g,
+    hId = /#([\w-$]+)/g,
+    hTagname = /^\w+/,
+    hClassname = /\.[\w-$]+/g,
+    hOperators = /[>+]/g,
+    hMultiplier = /\*(\d+)$/,
+    hAttributes = /\[([^\]]+)\]/g,
+    hValues = /([\w-]+)(\s*=\s*(['"]?)([^,\]]+)(\3))?/g,
+    hNumbers = /[$]+/g,
+    hText = /\{(.+)\}/,
 
-    // Various regEx
-
-    matchExpr = {
-        
-		// Should we accept creation of script tags or not??
-		// I put it here in case we decide not to
-        scripttag: /\s*<script +src=['"]([^'"]+)['"]>/,
-        white: /\$(\w+)/g,
-        trimspaces: /^\s*|\s*$/g,
-        repl: /['"]/g,
-        id: /#([\w-$]+)/g,
-        tagname: /^\w+/,
-        classname: /\.[\w-$]+/g,
-        operators: /[>+]/g,
-        multiplier: /\*(\d+)$/,
-        attributes: /\[([^\]]+)\]/g,
-        values: /([\w-]+)(\s*=\s*(['"]?)([^,\]]+)(\3))?/g,
-        numbers: /[$]+/g,
-        text: /\{(.+)\}/
-    },
-
-    twist = function (arr, fn, scope) {
+    twist = function(arr, fn, scope) {
         var result = [],
             i = 0,
             l = arr.length;
@@ -35,15 +24,11 @@ var doc = this.document,
         return result;
     },
 
-    // MEHRAN!
-    // Todo! Add more operators
-
     operators = {
 
-        '>': function (parents) {
-
-            return hAzzle.reduce(parents, function (p, c) {
-                return p.concat(slice.call(c.childNodes, 0).filter(function (el) {
+        '>': function(parents) {
+            return hAzzle.reduce(parents, function(p, c) {
+                return p.concat(slice.call(c.childNodes, 0).filter(function(el) {
                     return el.nodeType === 1 && !el._sibling;
                 }));
             }, []);
@@ -52,254 +37,219 @@ var doc = this.document,
 
     Adjacents = {
 
-        '+': function (el) {
+        '+': function(el) {
             return el._sibling = true;
         },
-        '-': function (el) {
+        '-': function(el) {
             return el._sibling = false;
         }
-    };
+    },
+    pad = function(n, ln) {
 
-// Limit for how many DOM elements that can be
-// created at the same time (default: 100);
+        n = n.toString();
 
-hAzzle.maxTags = 100;
+        while (n.length < ln) {
 
-/**
- * Create HTML
- *
- * @param {String} str
- * @param {Undefined/Object} data
- * @return {Object}
- */
-
-hAzzle.html = function (str, data) {
-
-    if (!str) {
-
-        return;
-    }
-
-    // Remove whitespace
-
-    str = str.replace(matchExpr.trimspaces, '');
-
-    var nodes = [],
-        parts = twist(str.split(matchExpr.operators), call, trim),
-        fragment = doc.createDocumentFragment(),
-        aa = [],
-        i, parents = [fragment],
-        matches, matched,
-        op = (matchExpr.operators.exec(str) || [])[0],
-        attrs = {};
-
-    hAzzle.each(parts, function (part) {
-
-        var count = 1,
-            tag, id,
-            classes, text, index, _index, element;
-
-        // Check for attribute match
-
-        if ((matches = part.match(matchExpr.attributes))) {
-
-            matched = matches[matches.length - 1];
-        
-		// Mehran!!
-        // Make sure regEx check are not happening inside a while-loop
-        
-		while ((matches = matchExpr.values.exec(matched))) {
-
-                attrs[matches[1]] = (matches[4] || '').replace(matchExpr.repl, '').trim();
-            }
-
-            part = part.replace(matchExpr.attributes, '');
+            n = '0' + n;
         }
 
-        // Multipliers
-		
-        if ((matches = part.match(matchExpr.multiplier))) {
+        return n;
+    },
+    numbered = function(value, num) {
 
-            count = +matches[1];
+        return value.replace(hNumbers, function(m) {
+            return pad(num + 1, m.length);
+        });
+    },
+    createDOMElement = function(index, tag, id, className, text, attrs) {
 
-            // We don't want to create millions of the same DOM element, 
-            // so we set an limit (default:100)
+        var key, element = document.createElement(tag);
 
-            if (count > hAzzle.maxTags) {
+        if (id) {
 
-                count = hAzzle.maxTags;
-            }
+            element.id = numbered(id, index);
         }
 
-        // ID
-		
-        if ((matches = part.match(matchExpr.id))) {
-			
-            id = matches[matches.length - 1].slice(1);
+        if (className) {
+
+            element.className = numbered(className, index);
         }
 
-        // Tag
+        if (text) {
 
-        if ((matches = part.match(matchExpr.tagname))) {
-
-            tag = matches[0];
-
-        } else {
-
-            tag = 'div';
+            element.appendChild(document.createTextNode(text));
         }
 
-        // Class
+        if (attrs) {
 
-        if ((matches = part.match(matchExpr.classname))) {
+            for (key in attrs) {
 
-            classes = twist(matches, function (c) {
-                return c.slice(1);
-            }).join(' ');
-        }
+                if (!attrs.hasOwnProperty(key)) {
 
-        // Text
-
-        if ((matches = part.match(matchExpr.text))) {
-            text = matches[1];
-
-            if (data) {
-
-                text = text.replace(matchExpr.white, function (m, key) {
-                    return data[key];
-                });
-            }
-        }
-
-        aa = slice.call(parents, 0);
-
-        i = aa.length;
-
-        while (i--) {
-
-            for (index = 0; index < count; index++) {
-
-                // Use parentIndex if this element has a count of 1
-
-                _index = count > 1 ? index : i;
-
-                element = createDOMElement(_index, tag, id, classes, text, attrs);
-
-                // Adjacents selectors
-
-                if (Adjacents[op]) {
-                    Adjacents[op];
+                    continue;
                 }
 
-                aa[i].appendChild(element);
+                element.setAttribute(key, numbered(attrs[key], index));
             }
         }
 
-        if (operators[op]) {
-            // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
+        return element;
+    };
 
-            if (op === '>') {
+hAzzle.extend({
 
-                parents = operators[op](parents) || parents;
-            }
+    // Limit for how many DOM elements that can be
+    // created at the same time (default: 100);
+
+    maxTags: 100,
+
+    /**
+     * Create HTML
+     *
+     * @param {String} str
+     * @param {Undefined/Object} data
+     * @return {Object}
+     */
+
+    html: function(str, data) {
+
+        if (!str) {
+
+            return;
         }
 
-    });
+        // Remove whitespace
 
-    // Remove wrapper from fragment
+        str = str.replace(hTrimspaces, '');
 
-    nodes = hAzzle.merge(nodes, fragment.childNodes);
+        var nodes = [],
+            parts = twist(str.split(hOperators), call, trim),
+            fragment = document.createDocumentFragment(),
+            aa = [],
+            i, parents = [fragment],
+            matches, matched,
+            op = (hOperators.exec(str) || [])[0],
+            attrs = {};
 
-    fragment.innerHTML = '';
-    fragment.textContent = '';
+        hAzzle.each(parts, function(part) {
 
-    return hAzzle(nodes);
+            var count = 1,
+                tag, id,
+                classes, text, index, _index, element;
 
-};
+            // Check for attribute match
 
-/**
- * Pads number `n` with `ln` zeroes.
- * @param {Number} n
- * @param {Number} ln
- * @return {String}
- */
+            if ((matches = part.match(hAttributes))) {
 
-function pad(n, ln) {
+                matched = matches[matches.length - 1];
 
-    n = n.toString();
+                // Mehran!!
+                // Make sure regEx check are not happening inside a while-loop
 
-    while (n.length < ln) {
+                while ((matches = hValues.exec(matched))) {
 
-        n = '0' + n;
-    }
+                    attrs[matches[1]] = (matches[4] || '').replace(hRepl, '').trim();
+                }
 
-    return n;
-}
-
-/**
- * Replaces ocurrences of '$' with the equivalent padded
- * index (e.g  `$$ == 01`, `$$$$ == 0001` )
- *
- * @param {String} value
- * @param {number} num
- *
- *
- */
-
-
-function numbered(value, num) {
-
-   return value.replace(matchExpr.numbers, function (m) {
-        return pad(num + 1, m.length);
-    });
-}
-
-/**
- * Create a DOM element.
- *
- * @param {Number} index
- * @param {string|undefined} tag
- * @param {string|undefined} id
- * @param {string|undefined} className
- * @param {string|undefined} text
- * @param {Object} attrs
- *
- */
-
-		// Mehran!!
-       // If you create a img tag, it doesent close. You need to fix that
-
-function createDOMElement(index, tag, id, className, text, attrs) {
-
-    var key, element = doc.createElement(tag);
-
-    if (id) {
-
-        element.id = numbered(id, index);
-    }
-
-    if (className) {
-
-        element.className = numbered(className, index);
-    }
-
-    if (text) {
-
-        element.appendChild(doc.createTextNode(text));
-    }
-
-    if (attrs) {
-
-        for (key in attrs) {
-
-            if (!attrs.hasOwnProperty(key)) {
-
-                continue;
+                part = part.replace(hAttributes, '');
             }
 
-            element.setAttribute(key, numbered(attrs[key], index));
-        }
-    }
+            // Multipliers
 
-    return element;
-}
+            if ((matches = part.match(hMultiplier))) {
+
+                count = +matches[1];
+
+                // We don't want to create millions of the same DOM element, 
+                // so we set an limit (default:100)
+
+                if (count > hAzzle.maxTags) {
+
+                    count = hAzzle.maxTags;
+                }
+            }
+
+            // ID
+
+            if ((matches = part.match(hId))) {
+
+                id = matches[matches.length - 1].slice(1);
+            }
+
+            // Tag
+
+            if ((matches = part.match(hTagname))) {
+
+                tag = matches[0];
+
+            } else {
+
+                tag = 'div';
+            }
+
+            // Class
+
+            if ((matches = part.match(hClassname))) {
+
+                classes = twist(matches, function(c) {
+                    return c.slice(1);
+                }).join(' ');
+            }
+
+            // Text
+
+            if ((matches = part.match(hText))) {
+                text = matches[1];
+
+                if (data) {
+
+                    text = text.replace(hWhite, function(m, key) {
+                        return data[key];
+                    });
+                }
+            }
+
+            aa = slice.call(parents, 0);
+
+            i = aa.length;
+
+            while (i--) {
+
+                for (index = 0; index < count; index++) {
+
+                    // Use parentIndex if this element has a count of 1
+
+                    _index = count > 1 ? index : i;
+
+                    element = createDOMElement(_index, tag, id, classes, text, attrs);
+
+                    // Adjacents selectors
+
+                    if (Adjacents[op]) {
+                        Adjacents[op];
+                    }
+
+                    aa[i].appendChild(element);
+                }
+            }
+
+            if (operators[op]) {
+                // If the next operator is '>' replace `parents` with their childNodes for the next iteration.
+
+                if (op === '>') {
+
+                    parents = operators[op](parents) || parents;
+                }
+            }
+        });
+
+        // Remove wrapper from fragment
+
+        nodes = hAzzle.merge(nodes, fragment.childNodes);
+
+        fragment.innerHTML = '';
+        fragment.textContent = '';
+
+        return hAzzle(nodes);
+    }
+});
