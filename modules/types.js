@@ -125,7 +125,6 @@ hAzzle.extend({
 // Add some isType methods
 hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments', 'Function'], function(name) {
     hAzzle['is' + name] = function(o) {
- 
-     return hAzzle. natives.toString.call(o) === '[object ' + name + ']';
+      return Object.prototype.toString.call(o) === '[object ' + name + ']';
     };
 });

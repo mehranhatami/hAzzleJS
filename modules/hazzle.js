@@ -6,7 +6,6 @@
  *
  * Date: 2014-09-14
  */
-
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
@@ -375,6 +374,7 @@
             }
             return -1;
         },
+
         map: function(elems, callback, arg) {
 
             var value,
@@ -576,12 +576,29 @@
          */
 
         type: function(obj) {
-            if (obj == null) {
+
+            var type = typeof obj,
+                str;
+
+            if (obj === null) {
                 return obj + '';
             }
-            return typeof obj === 'object' || typeof obj === 'function' ?
-                natives[toString.call(obj)] || 'object' :
-                typeof obj;
+
+            if (type === 'boolean') {
+                return 'boolean';
+            }
+
+            if (type === 'string') {
+                return 'string';
+            }
+
+            str = hAzzle.str.call(obj);
+
+            if (natives[str]) {
+                return natives[str];
+            }
+
+            return type;
 
         },
 
@@ -657,22 +674,21 @@
     // overwritten by the document.js module
 
     hAzzle.documentIsHTML = true;
-    hAzzle.natives = natives;
+  
+   // Populate the native list
 
-    // Populate the native list
-
-    hAzzle.each(['Boolean',
-        'Number',
-        'String',
-        'Function',
-        'Array',
-        'Date',
-        'RegExp',
-        'Object',
-        'Error',
-    ], function() {
-        natives['[object ' + this + ']'] = this.toLowerCase();
-    });
+        hAzzle.each(['Boolean',
+            'String',
+            'Function',
+            'Array',
+            'Date',
+            'RegExp',
+            'Object',
+            'Error',
+            'Arguments'
+        ], function() {
+            natives['[object ' + this + ']'] = this.toLowerCase();
+        });
 
     // Expose hAzzle to the global object
 
