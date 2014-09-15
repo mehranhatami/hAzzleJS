@@ -6,6 +6,7 @@
  *
  * Date: 2014-09-14
  */
+
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
@@ -354,21 +355,26 @@
          * Check if an element exist in an array
          */
 
-        inArray: function(val, arr, i) {
+        inArray: function(array, value, index) {
 
-            var len = arr.length;
-            i = i ? i < 0 ? Math.max(0, l + i) : i : 0;
+            if (!array) {
 
-            for (; i < len; i++) {
+                return;
+            }
 
-                if (i in arr && arr[i] === val) {
+            var i = (index || 0),
+                m = array.length;
 
-                    return true;
+            for (; i < m; i++) {
+
+                if (array[i] === value) {
+
+                    return i;
+
                 }
             }
             return -1;
         },
-
         map: function(elems, callback, arg) {
 
             var value,
