@@ -100,22 +100,35 @@ hAzzle.extend({
         return elem == 'null';
     },
 
-    isNode: function(elem){
-     return !!elem && typeof elem == 'object' && 'nodeType' in elem;
-   },
-    isText: function(elem){
-         return elem && elem.nodeType === 3;
-   },
-    isFragment: function(elem){
-         return elem && elem.nodeType === 11;
-   },
+    isNode: function(elem) {
+        return !!elem && typeof elem == 'object' && 'nodeType' in elem;
+    },
+    isText: function(elem) {
+        return elem && elem.nodeType === 3;
+    },
+    isFragment: function(elem) {
+        return elem && elem.nodeType === 11;
+    },
 
-	isNodeList: function(obj) {
+    isNodeList: function(obj) {
         return obj && hAzzle.is([
             'nodelist',
             'htmlcollection',
             'htmlformcontrolscollection'
         ], obj);
+    },
+
+    isPlainObject: function(obj) {
+
+        if (hAzzle.type(obj) !== "object" || obj.nodeType || hAzzle.isWindow(obj)) {
+            return false;
+        }
+
+        if (obj.constructor &&
+            !hAzzle.hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+            return false;
+        }
+        return true;
     }
 
 }, hAzzle);
@@ -125,6 +138,6 @@ hAzzle.extend({
 // Add some isType methods
 hAzzle.each(['File', 'Blob', 'RegExp', 'Date', 'Arguments', 'Function'], function(name) {
     hAzzle['is' + name] = function(o) {
-      return Object.prototype.toString.call(o) === '[object ' + name + ']';
+        return Object.prototype.toString.call(o) === '[object ' + name + ']';
     };
 });

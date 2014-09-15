@@ -10,6 +10,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
     cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
         'animationDirection animatioName animationTimingFunction animationPlayState perspective boxSizing ' +
         'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect ' +
+        'columnRuleColor outlineColor textDecorationColor textEmphasisColor ' +
         'columnSpan columnCount columnGap columnWidth columnRuleColor columnRuleStyle columnRuleWidth').split(' '),
 
     unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +

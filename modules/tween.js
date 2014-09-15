@@ -83,7 +83,6 @@ var
                     startUnit,
                     operator;
 
-
                 // 'cssHook - animation' are special hooks' not natively supported
                 // by the CSS module
 
