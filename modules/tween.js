@@ -82,7 +82,9 @@ var
                     endUnit,
                     startUnit,
                     operator;
-                if (!hAzzle.unitless[prop]) {
+
+                if (!(hAzzle.unitless[prop] || hAzzle.transformProps[prop])) {
+
                     // Split the start value ...
 
                     splittedValues = splitValues(prop, start);
@@ -184,9 +186,9 @@ var
                     tween.end = end;
                     tween.start = start;
                     tween.unit = endUnit;
-
-                    // Return the newly created tween object
                 }
+                // Return the newly created tween object
+
                 return tween;
             }
         ]
@@ -388,6 +390,7 @@ hAzzle.extend({
             data = hAzzle.private(elem);
 
             if (index) {
+
 
                 if (data[index] && data[index].stop) {
                     stopQueue(data[index]);
@@ -675,7 +678,6 @@ function defaultPrefilter(elem, props, opts) {
             if (!(prop in storage)) {
                 storage[prop] = tween.start;
                 if (hidden) {
-
                     tween.end = tween.start;
                     tween.start = prop === 'width' || prop === 'height' ? 1 : 0;
                 }
@@ -717,10 +719,10 @@ function propFilter(elem, props, specialEasing) {
         // Note: Since SVG elements have some of their properties directly applied as HTML attributes,
         // there is no way to check for their explicit browser support, and so we skip this check for them.
 
-        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
-            hAzzle.error('Skipping [' + name + '] due to a lack of browser support.');
-            continue;
-        }
+        //        if (!hAzzle.private(elem).isSVG && hAzzle.prefixCheck(name)[1] === false) {
+        //            hAzzle.error('Skipping [' + name + '] due to a lack of browser support.');
+        //            continue;
+        //        }
 
         easing = specialEasing[name];
 
@@ -966,7 +968,6 @@ Animation.prefilter = function(callback, prepend) {
     if (prepend) {
         animationPrefilters.unshift(callback);
     } else {
-        alert(callback)
         animationPrefilters.push(callback);
     }
 };

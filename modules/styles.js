@@ -12,18 +12,17 @@ var // Create a cached element for re-use when checking for CSS property prefixe
         'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect ' +
         'columnSpan columnCount columnGap columnWidth columnRuleColor columnRuleStyle columnRuleWidth').split(' '),
 
-     // In hAzzle unitless properties are CSS properties that are not 'ending' with a unit (e.g. width 20px, height 2em)
-     // CSS Properties like transform are also seen as unitless because we can't set transform translate(2px 2px)em
-     // For special propterties like transform it has to be handled inside plug-ins
-
-    unitlessProps = ('textShadow background-color zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
-        'column-count flex-shrink flex-height order orphans widows rotate3d flipped transform-origin ' +
-        'transform ms-flex-order transform-origin perspective transform-style boxShadow clip ' +
-        'ms-flex-negative ms-flex-positive transform-origin perspective background-position ' +
-        'perspective-origin backface-visibility scale scale-x scale-y scale-z perspective-origin' +
-        'scale3d reflect-x-y reflect-z reflect-y reflect border-bottom-bolor border-left-color ' +
-        'border-right-color border-top-color color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
+    unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
+        'column-count flex-shrink flex-height order orphans widows rotate3d flipped ' +
+        'transform ms-flex-order transform-origin perspective transform-style ' +
+        'ms-flex-negative ms-flex-positive transform-origin perspective ' +
+        'perspective-origin backface-visibility scale scale-x scale-y scale-z ' +
+        'scale3d reflect-x-y reflect-z reflect-y reflect ' +
+        'background-color border-bottom-color border-left-color border-right-color border-top-color ' +
+        'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
         'alpha z-index font-weight opacity red green blue').split(' '),
+
+    transformProps = ('clip transformOrigin perspectiveOrigin translateX translateY scaleX scaleY skewX skewY rotateZ').split(' '),
 
     cssCore = {
 
@@ -39,9 +38,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             cHeightWidth: /^(height|width)$/i
         },
 
-        // Add in properties whose names you wish to fix before
-        // setting or getting the value
-        // NOTE! Only added for compbaility with jQuery API
+        transformProps: {},
 
         cssProps: {
 
@@ -107,6 +104,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     capitalize = function(str) {
         return str.replace(/^\w/, function(match) {
+
             return match.toUpperCase();
         });
     },
@@ -363,6 +361,7 @@ hAzzle.cssHooks = cssHook;
 hAzzle.css = getCSS;
 hAzzle.style = setCSS;
 hAzzle.capitalize = capitalize;
+hAzzle.transformProps = cssCore.transformProps;
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
@@ -489,4 +488,15 @@ hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
 
 hAzzle.each(unitlessProps, function(name) {
     hAzzle.unitless[hAzzle.camelize(name)] = true;
+});
+
+
+ if (hAzzle.ie !== 9) { 
+     // Append 3D transform properties onto transformProperties.
+     transformProps = transformProps.concat([ 'translateZ', 'scaleZ', 'rotateX', 'rotateY' ]);
+   } 
+
+hAzzle.each(transformProps, function(name) {
+    console.log(name)
+    hAzzle.transformProps[hAzzle.camelize(name)] = true;
 });
