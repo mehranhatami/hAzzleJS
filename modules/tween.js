@@ -75,16 +75,31 @@ var
 
                 var tween = this.createTween(prop, value),
                     elem = tween.elem,
-                    start = tween.cur(),
                     end = value,
+                    start,
                     unitConversionData,
                     splittedValues,
                     endUnit,
                     startUnit,
                     operator;
 
-                if (!(hAzzle.unitless[prop] || hAzzle.transformProps[prop])) {
 
+                // 'cssHook - animation' are special hooks' not natively supported
+                // by the CSS module
+
+                if (cssHook.animation[prop]) {
+                    start = cssHook.animation[prop].get(elem, prop);
+                } else {
+
+                    start = getCSS(elem, prop);
+
+                    // Since property lookups are for animation purposes (which entails 
+                    // computing the numeric delta between start and end values),
+                    // convert CSS null-values to an integer of value 0.
+
+                    if (hAzzle.isZeroValue(value)) {
+                        value = 0;
+                    }
                     // Split the start value ...
 
                     splittedValues = splitValues(prop, start);
@@ -706,9 +721,9 @@ function createTween(value, prop, animation) {
     }
 }
 
-function propFilter(elem, props, specialEasing) {
+function propFilter(props, specialEasing) {
 
-    var index, name, easing, value, hooks;
+    var index, name, easing, value;
 
     for (index in props) {
 
@@ -904,7 +919,7 @@ function Animation(elem, properties, options) {
 
     // Parse CSS properties, and decrease animation tick overhead
 
-    propFilter(elem, props, animation.opts.specialEasing);
+    propFilter(props, animation.opts.specialEasing);
 
     for (; index < length; index++) {
         result = animationPrefilters[index].call(animation, elem, props, animation.opts);
@@ -986,32 +1001,11 @@ Tween.prototype = {
         this.duration = options.duration;
         this.options = options;
         this.step = options.step;
-        this.start = this.now = this.cur();
+        this.start = this.now;
         this.end = end;
         this.unit = '';
     },
-    cur: function() {
 
-        var value;
-
-        // 'cssHook - animation' are special hooks' not natively supported
-        // by the CSS module
-
-        if (cssHook.animation[this.prop]) {
-            value = cssHook.animation[this.prop].get(this.elem, this.prop)
-        } else {
-            value = getCSS(this.elem, this.prop);
-        }
-
-        // Since property lookups are for animation purposes (which entails 
-        // computing the numeric delta between start and end values),
-        // convert CSS null-values to an integer of value 0.
-
-        if (hAzzle.isZeroValue(value)) {
-            value = 0;
-        }
-        return value;
-    },
     run: function(tick) {
 
         var pos;
