@@ -208,13 +208,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
             // Check for 'cssHook'
 
-            if (animate) {
-                if (cssHook.animation[prop]) {
-                    value = cssHook.animation[prop].set(elem, prop, value);
-                    prop = cssHook.animation[prop].name;
-                }
-            }
-
             if (cssHook[prop]) {
                 value = cssHook[prop].set(elem, prop, value);
                 prop = cssHook[prop].name;
@@ -497,6 +490,5 @@ hAzzle.each(unitlessProps, function(name) {
    } 
 
 hAzzle.each(transformProps, function(name) {
-    console.log(name)
     hAzzle.transformProps[hAzzle.camelize(name)] = true;
 });

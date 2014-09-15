@@ -998,7 +998,7 @@ Tween.prototype = {
         // by the CSS module
 
         if (cssHook.animation[this.prop]) {
-            value = cssHook.animation.get[this.prop](this.elem, this.prop)
+            value = cssHook.animation[this.prop].get(this.elem, this.prop)
         } else {
             value = getCSS(this.elem, this.prop);
         }
@@ -1026,14 +1026,20 @@ Tween.prototype = {
         }
 
         // Current value
+
         this.now = (this.end - this.start) * pos + this.start;
 
         if (this.step) {
             this.step.call(this.elem, this.now, this);
         }
 
-        setCSS(this.elem, this.prop, this.now + this.unit, true);
+        // cssHook.animation for compability with jQuery API
 
+        if (cssHook.animation[this.prop]) {
+            cssHook.animation[this.prop].set(this);
+        } else {
+            setCSS(this.elem, this.prop, this.now + this.unit, true);
+        }
         return this;
     }
 };
