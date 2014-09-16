@@ -119,7 +119,7 @@ hAzzle.extend({
                         }
 
                         // Never move original objects, clone them
-                        target[name] = hAzzle.extend(deep, clone, copy);
+                        target[name] = hAzzle.shallowCopy(deep, clone, copy);
 
                         // Don't bring in undefined values
 
