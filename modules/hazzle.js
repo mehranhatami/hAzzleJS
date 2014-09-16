@@ -189,6 +189,11 @@
 
         now: Date.now,
 
+        // Default promise library are ES6 by default, but this 
+        // can be overwritten with a third-party promises library.
+        
+        promise: window.Promise,
+
         /**
          * Error function
          */
