@@ -1,6 +1,125 @@
 // easings.js
+// Note! Uses general easing function found everywhere online
+
 var defaultEasing = 'swing',
     supportFloat32Array = 'Float32Array' in window,
+
+    // Easings
+    // Supports jQuery easing for compability reasons
+
+    easings = {
+
+        sine: function(p) {
+            return 1 - Math.cos(p * Math.PI / 2);
+        },
+        circ: function(p) {
+            return 1 - Math.sqrt(1 - p * p);
+        },
+        back: function(p) {
+            return p * p * (3 * p - 2);
+        },
+        bounce: function(p) {
+            var pow2,
+                bounce = 4;
+
+            while (p < ((pow2 = Math.pow(2, --bounce)) - 1) / 11) {}
+            return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) / 22 - p, 2);
+        },
+
+        easeFrom: function(p) {
+            return Math.pow(p, 4);
+        },
+
+        easeTo: function(p) {
+            return Math.pow(p, 0.25);
+        },
+
+        elastic: function(p) {
+            return -1 * Math.pow(4, -8 * p) * Math.sin((p * 6 - 1) * (2 * Math.PI) / 2) + 1;
+        },
+        swingFrom: function(p) {
+            var s = 1.70158;
+            return p * p * ((s + 1) * p - s);
+        },
+
+        swingTo: function(p) {
+            var s = 1.70158;
+            return (p -= 1) * p * ((s + 1) * p + s) + 1;
+        },
+
+        linear: function(p) {
+            return p;
+        },
+        swing: function(p) {
+            return 0.5 - Math.cos(p * Math.PI) / 2;
+        },
+
+        easeOut: function(p) {
+            return Math.sin(p * Math.PI / 2);
+        },
+
+        easeOutStrong: function(p) {
+            return (p == 1) ? 1 : 1 - Math.pow(2, -10 * p);
+        },
+
+        easeIn: function(p) {
+            return p * p;
+        },
+
+        easeInStrong: function(p) {
+            return (p == 0) ? 0 : Math.pow(2, 10 * (p - 1));
+        },
+
+        wobble: function(p) {
+            return (-Math.cos(p * Math.PI * (9 * p)) / 2) + 0.5;
+        },
+
+        sinusoidal: function(p) {
+            return (-Math.cos(p * Math.PI) / 2) + 0.5;
+        },
+
+        flicker: function(p) {
+            p = p + (Math.random() - 0.5) / 5;
+            return easings.sinusoidal(p < 0 ? 0 : p > 1 ? 1 : p);
+        },
+        mirror: function(p) {
+            if (p < 0.5) {
+                return easings.sinusoidal(p * 2);
+            } else {
+                return easings.sinusoidal(1 - (p - 0.5) * 2);
+            }
+        },
+
+        bounceIn: function(p) {
+            return 1 - easings.bounceOut(1 - p);
+        },
+        bounceOut: function(p) {
+            if (p < 1 / 2.75) {
+                return (7.5625 * p * p);
+            } else if (p < 2 / 2.75) {
+                return (7.5625 * (p -= 1.5 / 2.75) * p + 0.75);
+            } else if (p < 2.5 / 2.75) {
+                return (7.5625 * (p -= 2.25 / 2.75) * p + 0.9375);
+            } else {
+                return (7.5625 * (p -= 2.625 / 2.75) * p + 0.984375);
+            }
+        },
+        bounceInOut: function(p) {
+            if (p < 0.5) return easings.bounceIn(p * 2) * .5;
+            return easings.bounceOut(p * 2 - 1) * 0.5 + 0.5;
+        },
+
+        sineInOut: function(p) {
+            return -0.5 * (Math.cos(Math.PI * p) - 1);
+        },
+
+        sineOut: function(p) {
+            return Math.sin(p * Math.PI / 2);
+        },
+        sineIn: function(p) {
+            return 1 - Math.cos(p * Math.PI / 2);
+        }
+    },
 
     // Default to a pleasant-to-the-eye easeOut (like native animations)
     generateStep = function(steps) {
@@ -243,16 +362,19 @@ var defaultEasing = 'swing',
     }()),
 
     getEasing = function(value, duration) {
-        var easing = value;
+        
+        var easing = value,
+        len = value.length;
+        
         if (typeof value === 'string') {
             if (!easings[value]) {
                 easing = false;
             }
-        } else if (hAzzle.isArray(value) && value.length === 1) {
+        } else if (hAzzle.isArray(value) && len === 1) {
             easing = generateStep.apply(null, value);
-        } else if (hAzzle.isArray(value) && value.length === 2) {
+        } else if (hAzzle.isArray(value) && len === 2) {
             easing = generateSpringRK4.apply(null, value.concat([duration]));
-        } else if (hAzzle.isArray(value) && value.length === 4) {
+        } else if (hAzzle.isArray(value) && len === 4) {
             easing = generateBezier.apply(null, value);
         } else {
             easing = false;
@@ -267,152 +389,25 @@ var defaultEasing = 'swing',
         }
 
         return easing;
-    },
-
-    // Easings
-
-    easings = {
-
-        sine: function(p) {
-            return 1 - Math.cos(p * Math.PI / 2);
-        },
-        circ: function(p) {
-            return 1 - Math.sqrt(1 - p * p);
-        },
-        back: function(p) {
-            return p * p * (3 * p - 2);
-        },
-        bounce: function(p) {
-            var pow2,
-                bounce = 4;
-
-            while (p < ((pow2 = Math.pow(2, --bounce)) - 1) / 11) {}
-            return 1 / Math.pow(4, 3 - bounce) - 7.5625 * Math.pow((pow2 * 3 - 2) / 22 - p, 2);
-        },
-
-        easeFrom: function(p) {
-            return Math.pow(p, 4);
-        },
-
-        easeTo: function(p) {
-            return Math.pow(p, 0.25);
-        },
-
-        elastic: function(p) {
-            return -1 * Math.pow(4, -8 * p) * Math.sin((p * 6 - 1) * (2 * Math.PI) / 2) + 1;
-        },
-        swingFrom: function(p) {
-            var s = 1.70158;
-            return p * p * ((s + 1) * p - s);
-        },
-
-        swingTo: function(p) {
-            var s = 1.70158;
-            return (p -= 1) * p * ((s + 1) * p + s) + 1;
-        },
-
-        linear: function(p) {
-            return p;
-        },
-        swing: function(p) {
-            return 0.5 - Math.cos(p * Math.PI) / 2;
-        },
-
-        easeOutStrong: function(p) {
-            return (p == 1) ? 1 : 1 - Math.pow(2, -10 * p);
-        },
-
-        easeInStrong: function(p) {
-            return (p === 0) ? 0 : Math.pow(2, 10 * (p - 1));
-        },
-
-        wobble: function(p) {
-            return (-Math.cos(p * Math.PI * (9 * p)) / 2) + 0.5;
-        },
-
-        sinusoidal: function(p) {
-            return (-Math.cos(p * Math.PI) / 2) + 0.5;
-        },
-
-        flicker: function(p) {
-            p = p + (Math.random() - 0.5) / 5;
-            return easings.sinusoidal(p < 0 ? 0 : p > 1 ? 1 : p);
-        },
-        mirror: function(p) {
-            if (p < 0.5) {
-                return easings.sinusoidal(p * 2);
-            } else {
-                return easings.sinusoidal(1 - (p - 0.5) * 2);
-            }
-        },
-
-        bounceIn: function(p) {
-            return 1 - easings.bounceOut(1 - p);
-        },
-        bounceOut: function(p) {
-            if (p < 1 / 2.75) {
-                return (7.5625 * p * p);
-            } else if (p < 2 / 2.75) {
-                return (7.5625 * (p -= 1.5 / 2.75) * p + 0.75);
-            } else if (p < 2.5 / 2.75) {
-                return (7.5625 * (p -= 2.25 / 2.75) * p + 0.9375);
-            } else {
-                return (7.5625 * (p -= 2.625 / 2.75) * p + 0.984375);
-            }
-        },
-        bounceInOut: function(p) {
-            if (p < 0.5) return easings.bounceIn(p * 2) * .5;
-            return easings.bounceOut(p * 2 - 1) * 0.5 + 0.5;
-        },
-
-        sineInOut: function(p) {
-            return -0.5 * (Math.cos(Math.PI * p) - 1);
-        },
-
-        sineOut: function(p) {
-            return Math.sin(p * Math.PI / 2);
-        },
-        sineIn: function(p) {
-            return 1 - Math.cos(p * Math.PI / 2);
-        },
-        spring: function(p) {
-            return 1 - (Math.cos(p * 4.5 * Math.PI) * Math.exp(-p * 6));
-        }
     };
 
+hAzzle.each(['Quad', 'Cubic', 'Quart', 'Quint', 'Expo'], function(name, i) {
+    easings[name] = function(p) {
+        return Math.pow(p, i + 2);
+    };
+});
 
-hAzzle.each(
-    [
-        /* CSS3's named easing types. */
-        ['ease', [0.25, 0.1, 0.25, 1.0]],
-        ['easeIn', [0.42, 0.0, 1.00, 1.0]],
-        ['easeOut', [0.00, 0.0, 0.58, 1.0]],
-        ['easeInOut', [0.42, 0.0, 0.58, 1.0]],
-        /* Robert Penner easing equations. */
-        ['easeInSine', [0.47, 0, 0.745, 0.715]],
-        ['easeOutSine', [0.39, 0.575, 0.565, 1]],
-        ['easeInOutSine', [0.445, 0.05, 0.55, 0.95]],
-        ['easeInQuad', [0.55, 0.085, 0.68, 0.53]],
-        ['easeOutQuad', [0.25, 0.46, 0.45, 0.94]],
-        ['easeInOutQuad', [0.455, 0.03, 0.515, 0.955]],
-        ['easeInCubic', [0.55, 0.055, 0.675, 0.19]],
-        ['easeOutCubic', [0.215, 0.61, 0.355, 1]],
-        ['easeInOutCubic', [0.645, 0.045, 0.355, 1]],
-        ['easeInQuart', [0.895, 0.03, 0.685, 0.22]],
-        ['easeOutQuart', [0.165, 0.84, 0.44, 1]],
-        ['easeInOutQuart', [0.77, 0, 0.175, 1]],
-        ['easeInQuint', [0.755, 0.05, 0.855, 0.06]],
-        ['easeOutQuint', [0.23, 1, 0.32, 1]],
-        ['easeInOutQuint', [0.86, 0, 0.07, 1]],
-        ['easeInExpo', [0.95, 0.05, 0.795, 0.035]],
-        ['easeOutExpo', [0.19, 1, 0.22, 1]],
-        ['easeInOutExpo', [1, 0, 0, 1]],
-        ['easeInCirc', [0.6, 0.04, 0.98, 0.335]],
-        ['easeOutCirc', [0.075, 0.82, 0.165, 1]],
-        ['easeInOutCirc', [0.785, 0.135, 0.15, 0.86]]
-    ], function(easingArray) {
-        easings[easingArray[0]] = generateBezier.apply(null, easingArray[1]);
-    });
+hAzzle.each(easings, function(easeIn, name) {
+    easings['easeIn' + name] = easeIn;
+    easings['easeOut' + name] = function(p) {
+        return 1 - easeIn(1 - p);
+    };
+    easings['easeInOut' + name] = function(p) {
+        return p < 0.5 ?
+            easeIn(p * 2) / 2 :
+            1 - easeIn(p * -2 + 2) / 2;
+    };
+});
 
 // Expose
 hAzzle.defaultEasing = defaultEasing;
