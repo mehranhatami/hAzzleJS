@@ -413,7 +413,6 @@ hAzzle.each(
     ], function(easingArray) {
         easings[easingArray[0]] = generateBezier.apply(null, easingArray[1]);
     });
-console.log(easings)
 
 // Expose
 hAzzle.defaultEasing = defaultEasing;
