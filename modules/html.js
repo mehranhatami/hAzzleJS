@@ -111,7 +111,7 @@ hAzzle.extend({
      * @return {Object}
      */
 
-    html: function(str, data) {
+    parseHTML: function(str, data) {
 
         if (!str) {
 

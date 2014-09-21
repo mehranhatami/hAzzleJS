@@ -25,9 +25,18 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     transformProps = ('clip transformOrigin perspectiveOrigin translateX translateY scaleX scaleY skewX skewY rotateZ').split(' '),
 
+    cssNormalTransform = {
+        letterSpacing: '0',
+        fontWeight: '400'
+    },
+
+    templates = {
+        'clip': ['Top Right Bottom Left', '0px 0px 0px 0px'],
+    },
+
     cssCore = {
 
-        regEx: {
+        RegEx: {
 
             inlineregex: /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
             listitemregex: /^(li)$/i,
@@ -36,7 +45,11 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             leftrightRegex: /Left|Right/,
             numbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
             gCSSVal: /^[\d-]/,
-            cHeightWidth: /^(height|width)$/i
+            cHeightWidth: /^(height|width)$/i,
+            isHex: /^#([A-f\d]{3}){1,2}$/i,
+            valueUnwrap: /^[A-z]+\((.*)\)$/i,
+            wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
+            valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig
         },
 
         transformProps: {},
@@ -57,21 +70,85 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
         support: {},
 
+
+        // Animation
+
+        FX: {
+
+            // CSS Properties activated for the animation engine
+
+            activated: {},
+
+            cssHooks: {
+
+                clip: {
+
+                    name: 'clip',
+                    set: function(element, propertyValue) {
+                        return 'rect(' + propertyValue + ')';
+                    },
+
+                    get: function(element, propertyValue) {
+
+                        var extracted;
+
+                        if (cssCore.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
+                            extracted = propertyValue;
+                        } else {
+                            /* Remove the 'rect()' wrapper. */
+                            extracted = propertyValue.toString().match(cssCore.RegEx.valueUnwrap);
+
+                            /* Strip off commas. */
+                            extracted = extracted ? extracted[1].replace(/,(\s+)?/g, ' ') : propertyValue;
+                        }
+
+                        return extracted;
+                    }
+                },
+
+                blur: {
+
+                    name: '-webkit-filter',
+                    set: function(element, propertyValue) {
+
+                        if (!parseFloat(propertyValue)) {
+                            return 'none';
+                        } else {
+                            return 'blur(' + propertyValue + ')';
+                        }
+                    },
+                    get: function(element, propertyValue) {
+
+                        var extracted = parseFloat(propertyValue);
+                        if (!(extracted || extracted === 0)) {
+                            var blurComponent = propertyValue.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
+
+                            /* If the filter string had a blur component, return just the blur value and unit type. */
+                            if (blurComponent) {
+                                extracted = blurComponent[1];
+                                /* If the component doesn't exist, default blur to 0. */
+                            } else {
+                                extracted = 0;
+                            }
+                        }
+                        return extracted;
+                    }
+                }
+            }
+        },
+
+        // CSS hooks
+
         hooks: {
-
-            // Special hooks for animation
-
-            animation: {},
 
             opacity: {
                 name: 'opacity',
-                set: function(elem, prop, value) {
+                set: function(elem, value) {
                     return value;
                 },
                 get: function(elem, value) {
 
                     if (value) {
-
                         // We should always get a number back from opacity
                         var ret = curCSS(elem, 'opacity');
                         return ret === '' ? '1' : ret;
@@ -83,11 +160,11 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     getDisplayType = function(elem) {
         var tagName = elem.tagName.toString().toLowerCase();
-        if (cssCore.regEx.inlineregex.test(tagName)) {
+        if (cssCore.RegEx.inlineregex.test(tagName)) {
             return 'inline';
-        } else if (cssCore.regEx.listitemregex.test(tagName)) {
+        } else if (cssCore.RegEx.listitemregex.test(tagName)) {
             return 'list-item';
-        } else if (cssCore.regEx.tablerowregex.test(tagName)) {
+        } else if (cssCore.RegEx.tablerowregex.test(tagName)) {
             return 'table-row';
             // Default to 'block' when no match is found.
         } else {
@@ -96,16 +173,11 @@ var // Create a cached element for re-use when checking for CSS property prefixe
     },
 
     isZeroValue = function(value) {
-
-        // The browser defaults CSS values that have not been set to either 0 or 
-        // one of several possible null-value strings. Thus, we check for both falsiness and these special strings. 
-        // Note: Chrome returns 'rgba(0, 0, 0, 0)' for an undefined color whereas IE returns 'transparent'.
-        return (value === 0 || cssCore.regEx.zerovalue.test(value));
+        return (value === 0 || cssCore.RegEx.zerovalue.test(value));
     },
 
     capitalize = function(str) {
         return str.replace(/^\w/, function(match) {
-
             return match.toUpperCase();
         });
     },
@@ -155,43 +227,98 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             return [prop, false];
         }
     },
+
+    getRoot = function(property) {
+        var hookData = cssCore.FX.activated[property];
+
+        if (hookData) {
+            return hookData[0];
+        } else {
+            // If there was no hook match, return the property name untouched
+            return property;
+        }
+    },
+
+    cleanRootPropertyValue = function(rootProperty, rootPropertyValue) {
+
+        if (cssCore.RegEx.valueUnwrap.test(rootPropertyValue)) {
+            rootPropertyValue = rootPropertyValue.match(cssCore.FX.RegEx.valueUnwrap)[1];
+        }
+
+        if (hAzzle.isZeroValue(rootPropertyValue)) {
+            rootPropertyValue = templates[rootProperty][1];
+        }
+
+        return rootPropertyValue;
+    },
+
+    extractValue = function(name, value) {
+        var hookData = cssCore.FX.activated[name];
+        if (hookData) {
+            var hookRoot = hookData[0],
+                hookPosition = hookData[1];
+            value = cleanRootPropertyValue(hookRoot, value);
+            return value.toString().match(cssCore.RegEx.valueSplit)[hookPosition];
+        } else {
+            return value;
+        }
+    },
+
+    // Inject value
+
+    injectValue = function(name, value, root) {
+        var hookData = cssCore.FX.activated[name];
+        if (hookData) {
+            var hookRoot = hookData[0],
+                hookPosition = hookData[1],
+                rootParts,
+                rootUpdated;
+            root = cleanRootPropertyValue(hookRoot, root);
+            rootParts = root.match(cssCore.RegEx.valueSplit);
+            rootParts[hookPosition] = value;
+            rootUpdated = rootParts.join(' ');
+
+            return rootUpdated;
+        } else {
+            return root;
+        }
+    },
+
     cssHook = cssCore.hooks,
 
     // The two following functions are kept due to jQuery API compability
 
-    getCSS = function(elem, prop, extra, force) {
+    getCSS = function(elem, prop, extra, styles) {
 
-        var value, num;
+        var val, num;
+        
+    
+			prop = hAzzle.camelize( prop );
 
         if (cssHook[prop]) {
-            value = cssHook[prop].get(elem, prop);
+            val = cssHook[prop].get(elem, prop);
         }
 
-        if (!cssCore.regEx.gCSSVal.test(value)) {
+        // Otherwise, if a way to get the computed value exists, use that
 
-            // SVG elements
+        if (val === undefined) {
+            val = curCSS(elem, prop, null, styles);
+        }
 
-            if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
-
-                if (cssCore.regEx.cHeightWidth.test(prop)) {
-                    value = elem.getBBox()[prop];
-                } else {
-                    value = elem.getAttribute(prop);
-                }
-            } else {
-                value = curCSS(elem, prop, null, force);
-            }
+        // Convert "normal" to computed value
+        if (val === 'normal' && prop in cssNormalTransform) {
+            val = cssNormalTransform[prop];
         }
 
         if (extra === '' || extra) {
-            num = parseFloat(value);
-            return extra === true || hAzzle.isNumeric(num) ? num || 0 : value;
+            num = parseFloat(val);
+            return extra === true || hAzzle.isNumeric(num) ? num || 0 : val;
         }
 
-        return value;
+        return val;
     },
 
-    setCSS = function(elem, prop, value, animate) {
+    setCSS = function(elem, prop, value, extra) {
 
         var type, ret, oldValue,
             nType = elem.nodeType,
@@ -210,7 +337,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             // Check for 'cssHook'
 
             if (cssHook[prop]) {
-                value = cssHook[prop].set(elem, prop, value);
+                value = cssHook[prop].set(elem, value, extra);
                 prop = cssHook[prop].name;
 
             } else { // Only 'camelize' if no hook exist
@@ -221,61 +348,47 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
             prop = hAzzle.prefixCheck(prop)[0];
 
-            // No need to set / get relative values and other things that
-            // kills the performance when we are animating
+            type = typeof value;
 
-            if (!animate) {
+            // Convert relative number strings
 
-                type = typeof value;
-
-                // Convert relative number strings
-
-                if (type === 'string' && (ret = cssCore.regEx.numbs.exec(value))) {
-                    value = hAzzle.css(elem, prop, '');
-                    value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
-                    type = 'number';
-                }
-
-                // Make sure that null and NaN values aren't set.
-
-                if (value === null || value !== value) {
-
-                    return;
-                }
-
-                // If a number was passed in, add 'px' to the number (except for certain CSS properties)
-
-
-                if (type === 'number' && !hAzzle.unitless[prop]) {
-
-                    value += ret && ret[3] ? ret[3] : 'px';
-                }
-
-                if (cssCore.has['bug-clearCloneStyle'] &&
-                    value === '' && prop.indexOf('background') === 0) {
-                    style[hAzzle.camelize(prop)] = 'inherit';
-                }
-
-                oldValue = elem.style[name];
-                style[name] = value;
-
-                // Revert to the old value if the browser didn't accept the new rule to
-                // not break the cascade.
-
-                if (value && !elem.style[name]) {
-                    style[name] = oldValue;
-                }
+            if (type === 'string' && (ret = cssCore.RegEx.numbs.exec(value))) {
+                value = hAzzle.css(elem, prop, '');
+                value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                type = 'number';
             }
 
-            if (hAzzle.private(elem) && hAzzle.private(elem).isSVG && hAzzle.SVGAttribute(prop)) {
+            // Make sure that null and NaN values aren't set.
 
-                // Note: For SVG attributes, vendor-prefixed property names are never used
+            if (value === null || value !== value) {
 
-                elem.setAttribute(prop, value);
-
-            } else {
-                style[prop] = value;
+                return;
             }
+
+            // If a number was passed in, add 'px' to the number (except for certain CSS properties)
+
+
+            if (type === 'number' && !hAzzle.unitless[prop]) {
+
+                value += ret && ret[3] ? ret[3] : 'px';
+            }
+
+            if (cssCore.has['bug-clearCloneStyle'] &&
+                value === '' && prop.indexOf('background') === 0) {
+                style[hAzzle.camelize(prop)] = 'inherit';
+            }
+
+            oldValue = elem.style[name];
+            style[name] = value;
+
+            // Revert to the old value if the browser didn't accept the new rule to
+            // not break the cascade.
+
+            if (value && !elem.style[name]) {
+                style[name] = oldValue;
+            }
+
+            style[prop] = value;
 
         } else {
 
@@ -485,11 +598,118 @@ hAzzle.each(unitlessProps, function(name) {
 });
 
 
- if (hAzzle.ie !== 9) { 
-     // Append 3D transform properties onto transformProperties.
-     transformProps = transformProps.concat([ 'translateZ', 'scaleZ', 'rotateX', 'rotateY' ]);
-   } 
+if (hAzzle.ie !== 9) {
+    // Append 3D transform properties onto transformProperties.
+    transformProps = transformProps.concat(['translateZ', 'scaleZ', 'rotateX', 'rotateY']);
+}
 
 hAzzle.each(transformProps, function(name) {
     hAzzle.transformProps[hAzzle.camelize(name)] = true;
 });
+
+
+
+
+// Style getter / setter for animation engine
+
+function getPropertyValue(elem, prop, root, force) {
+    var propertyValue;
+
+    // Check for FX hook
+
+    if (cssCore.FX.activated[prop]) {
+
+        var hook = prop,
+            hookRoot = getRoot(hook);
+
+        if (root === undefined) {
+            root = getPropertyValue(elem, hAzzle.prefixCheck(hookRoot)[0]);
+        }
+
+        if (cssCore.FX.cssHooks[hookRoot]) {
+            root = cssCore.FX.cssHooks[hookRoot].get(elem, root);
+        }
+
+        propertyValue = extractValue(hook, root);
+
+    } else if (cssCore.FX.cssHooks[prop]) {
+        var normalizedPropertyName = cssCore.FX.cssHooks[prop].name,
+            normalizedPropertyValue;
+
+        if (normalizedPropertyName !== 'transform') {
+            normalizedPropertyValue = curCSS(elem, hAzzle.prefixCheck(normalizedPropertyName)[0], force);
+
+            if (hAzzle.isZeroValue(normalizedPropertyValue) && templates[prop]) {
+                normalizedPropertyValue = templates[prop][1];
+            }
+        }
+
+        propertyValue = cssCore.FX.cssHooks[prop].get(elem, normalizedPropertyValue);
+    }
+
+    if (!/^[\d-]/.test(propertyValue)) {
+        if (hAzzle.private(elem, 'CSS') && hAzzle.private(elem, 'CSS').isSVG && cssCore.Names.SVGAttribute(prop)) {
+
+            if (/^(height|width)$/i.test(prop)) {
+                propertyValue = elem.getBBox()[prop];
+            } else {
+                propertyValue = elem.getAttribute(prop);
+            }
+        } else {
+            propertyValue = curCSS(elem, hAzzle.prefixCheck(prop)[0]);
+        }
+    }
+
+    if (hAzzle.isZeroValue(propertyValue)) {
+        propertyValue = 0;
+    }
+    return propertyValue;
+}
+
+
+function setPropertyValue(elem, prop, value, root, scrollData) {
+    var propertyName = prop;
+
+    if (prop === 'scroll') {
+        if (scrollData.container) {
+            scrollData.container['scroll' + scrollData.direction] = value;
+        } else {
+            if (scrollData.direction === 'Left') {
+                window.scrollTo(value, scrollData.alternateValue);
+            } else {
+                window.scrollTo(scrollData.alternateValue, value);
+            }
+        }
+    } else {
+
+        if (cssCore.FX.cssHooks[prop] && cssCore.FX.cssHooks[prop].name === 'transform') {
+            cssCore.FX.cssHooks[prop].set(elem, value);
+            propertyName = 'transform';
+            value = hAzzle.private(elem, 'CSS').transformCache[prop];
+        } else {
+            if (cssCore.FX.activated[prop]) {
+                var hookName = prop,
+                    hookRoot = getRoot(prop);
+
+                root = root || getPropertyValue(elem, hookRoot);
+
+                value = injectValue(hookName, value, root);
+                prop = hookRoot;
+            }
+
+            if (cssCore.FX.cssHooks[prop]) {
+                value = cssCore.FX.cssHooks[prop].set(elem, value);
+                prop = cssCore.FX.cssHooks[prop].name;
+            }
+
+            propertyName = hAzzle.prefixCheck(prop)[0];
+
+            if (hAzzle.private(elem, 'CSS') && hAzzle.private(elem, 'CSS').isSVG && cssCore.Names.SVGAttribute(prop)) {
+                hAzzle.setAttribute(elem, prop, value);
+            } else {
+                elem.style[propertyName] = value;
+            }
+        }
+    }
+    return [propertyName, value];
+}

@@ -195,7 +195,7 @@ hAzzle.extend({
 
     attr: function(elem, name, value) {
 
-        var hooks, ret,
+        var hooks, ret, notxml,
             nType = elem.nodeType;
 
         if (!elem ||
@@ -211,7 +211,9 @@ hAzzle.extend({
             return hAzzle.prop(elem, name, value);
         }
 
-        if (nType !== 1 || hAzzle.isXML(elem)) {
+        notxml = nType !== 1 || !hAzzle.isXML(elem);
+
+		if ( notxml ) {
 
             name = name.toLowerCase();
 
