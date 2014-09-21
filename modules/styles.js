@@ -23,8 +23,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
         'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
         'alpha z-index font-weight opacity red green blue').split(' '),
 
-    transformProps = ('clip transformOrigin perspectiveOrigin translateX translateY scaleX scaleY skewX skewY rotateZ').split(' '),
-
     cssNormalTransform = {
         letterSpacing: '0',
         fontWeight: '400'
@@ -52,12 +50,12 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig
         },
 
-        transformProps: {},
-
         cssProps: {
 
             'float': 'cssFloat'
         },
+
+        // Unitless CSS properties
 
         unitless: {},
 
@@ -69,7 +67,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
         },
 
         support: {},
-
 
         // Animation
 
@@ -84,22 +81,22 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                 clip: {
 
                     name: 'clip',
-                    set: function(element, propertyValue) {
-                        return 'rect(' + propertyValue + ')';
+                    set: function(elem, value) {
+                        return 'rect(' + value + ')';
                     },
 
-                    get: function(element, propertyValue) {
+                    get: function(elem, value) {
 
                         var extracted;
 
-                        if (cssCore.RegEx.wrappedValueAlreadyExtracted.test(propertyValue)) {
-                            extracted = propertyValue;
+                        if (cssCore.RegEx.wrappedValueAlreadyExtracted.test(value)) {
+                            extracted = value;
                         } else {
                             /* Remove the 'rect()' wrapper. */
-                            extracted = propertyValue.toString().match(cssCore.RegEx.valueUnwrap);
+                            extracted = value.toString().match(cssCore.RegEx.valueUnwrap);
 
                             /* Strip off commas. */
-                            extracted = extracted ? extracted[1].replace(/,(\s+)?/g, ' ') : propertyValue;
+                            extracted = extracted ? extracted[1].replace(/,(\s+)?/g, ' ') : value;
                         }
 
                         return extracted;
@@ -109,24 +106,21 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                 blur: {
 
                     name: '-webkit-filter',
-                    set: function(element, propertyValue) {
+                    set: function(elem, value) {
 
-                        if (!parseFloat(propertyValue)) {
+                        if (!parseFloat(value)) {
                             return 'none';
                         } else {
-                            return 'blur(' + propertyValue + ')';
+                            return 'blur(' + value + ')';
                         }
                     },
-                    get: function(element, propertyValue) {
+                    get: function(elem, value) {
 
-                        var extracted = parseFloat(propertyValue);
+                        var extracted = parseFloat(value);
                         if (!(extracted || extracted === 0)) {
-                            var blurComponent = propertyValue.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
-
-                            /* If the filter string had a blur component, return just the blur value and unit type. */
+                            var blurComponent = value.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
                             if (blurComponent) {
                                 extracted = blurComponent[1];
-                                /* If the component doesn't exist, default blur to 0. */
                             } else {
                                 extracted = 0;
                             }
@@ -286,14 +280,117 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     cssHook = cssCore.hooks,
 
+    // Style getter / setter for animation engine
+
+    getFXCss = function(elem, prop, root, force) {
+        var propertyValue;
+
+        // Check for FX hook
+
+        if (cssCore.FX.activated[prop]) {
+
+            var hook = prop,
+                hookRoot = getRoot(hook);
+
+            if (root === undefined) {
+                root = getFXCss(elem, hAzzle.prefixCheck(hookRoot)[0]);
+            }
+
+            if (cssCore.FX.cssHooks[hookRoot]) {
+                root = cssCore.FX.cssHooks[hookRoot].get(elem, root);
+            }
+
+            propertyValue = extractValue(hook, root);
+
+        } else if (cssCore.FX.cssHooks[prop]) {
+            var normalizedPropertyName = cssCore.FX.cssHooks[prop].name,
+                normalizedPropertyValue;
+
+            if (normalizedPropertyName !== 'transform') {
+                normalizedPropertyValue = curCSS(elem, hAzzle.prefixCheck(normalizedPropertyName)[0], force);
+
+                if (hAzzle.isZeroValue(normalizedPropertyValue) && templates[prop]) {
+                    normalizedPropertyValue = templates[prop][1];
+                }
+            }
+
+            propertyValue = cssCore.FX.cssHooks[prop].get(elem, normalizedPropertyValue);
+        }
+
+        if (!/^[\d-]/.test(propertyValue)) {
+            if (hAzzle.private(elem, 'CSS') && hAzzle.private(elem, 'CSS').isSVG && cssCore.Names.SVGAttribute(prop)) {
+
+                if (/^(height|width)$/i.test(prop)) {
+                    propertyValue = elem.getBBox()[prop];
+                } else {
+                    propertyValue = elem.getAttribute(prop);
+                }
+            } else {
+                propertyValue = curCSS(elem, hAzzle.prefixCheck(prop)[0]);
+            }
+        }
+
+        if (hAzzle.isZeroValue(propertyValue)) {
+            propertyValue = 0;
+        }
+        return propertyValue;
+    },
+
+    setFXCss = function(elem, prop, value, root, scrollData) {
+        var propertyName = prop;
+
+        if (prop === 'scroll') {
+            if (scrollData.container) {
+                scrollData.container['scroll' + scrollData.direction] = value;
+            } else {
+                if (scrollData.direction === 'Left') {
+                    window.scrollTo(value, scrollData.alternateValue);
+                } else {
+                    window.scrollTo(scrollData.alternateValue, value);
+                }
+            }
+        } else {
+
+            if (cssCore.FX.cssHooks[prop] && cssCore.FX.cssHooks[prop].name === 'transform') {
+                cssCore.FX.cssHooks[prop].set(elem, value);
+                propertyName = 'transform';
+                value = hAzzle.private(elem, 'CSS').transformCache[prop];
+            } else {
+                if (cssCore.FX.activated[prop]) {
+                    var hookName = prop,
+                        hookRoot = getRoot(prop);
+
+                    root = root || getFXCss(elem, hookRoot);
+
+                    value = injectValue(hookName, value, root);
+                    prop = hookRoot;
+                }
+
+                if (cssCore.FX.cssHooks[prop]) {
+                    value = cssCore.FX.cssHooks[prop].set(elem, value);
+                    prop = cssCore.FX.cssHooks[prop].name;
+                }
+
+                propertyName = hAzzle.prefixCheck(prop)[0];
+
+                if (hAzzle.private(elem, 'CSS') && hAzzle.private(elem, 'CSS').isSVG && cssCore.Names.SVGAttribute(prop)) {
+                    hAzzle.setAttribute(elem, prop, value);
+                } else {
+                    elem.style[propertyName] = value;
+                }
+            }
+        }
+        return [propertyName, value];
+    },
+
     // The two following functions are kept due to jQuery API compability
 
     getCSS = function(elem, prop, extra, styles) {
 
         var val, num;
-        
-    
-			prop = hAzzle.camelize( prop );
+
+
+        prop = hAzzle.camelize(prop);
 
         if (cssHook[prop]) {
             val = cssHook[prop].get(elem, prop);
@@ -468,7 +565,7 @@ hAzzle.cssHooks = cssHook;
 hAzzle.css = getCSS;
 hAzzle.style = setCSS;
 hAzzle.capitalize = capitalize;
-hAzzle.transformProps = cssCore.transformProps;
+
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
@@ -582,7 +679,7 @@ hAzzle.assert(function(div) {
 
         if (div.style[t] !== undefined) {
             div.style[t] = 'translate3d(1px,1px,1px)';
-            has3d = window.getComputedStyle(div).getPropertyValue(transforms[t]);
+            has3d = window.getComputedStyle(div).getFXCss(transforms[t]);
         }
     }
     hAzzle.cssSupport.translate3d = (has3d !== undefined && has3d.length > 0 && has3d !== 'none');
@@ -596,120 +693,3 @@ hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
 hAzzle.each(unitlessProps, function(name) {
     hAzzle.unitless[hAzzle.camelize(name)] = true;
 });
-
-
-if (hAzzle.ie !== 9) {
-    // Append 3D transform properties onto transformProperties.
-    transformProps = transformProps.concat(['translateZ', 'scaleZ', 'rotateX', 'rotateY']);
-}
-
-hAzzle.each(transformProps, function(name) {
-    hAzzle.transformProps[hAzzle.camelize(name)] = true;
-});
-
-
-
-
-// Style getter / setter for animation engine
-
-function getPropertyValue(elem, prop, root, force) {
-    var propertyValue;
-
-    // Check for FX hook
-
-    if (cssCore.FX.activated[prop]) {
-
-        var hook = prop,
-            hookRoot = getRoot(hook);
-
-        if (root === undefined) {
-            root = getPropertyValue(elem, hAzzle.prefixCheck(hookRoot)[0]);
-        }
-
-        if (cssCore.FX.cssHooks[hookRoot]) {
-            root = cssCore.FX.cssHooks[hookRoot].get(elem, root);
-        }
-
-        propertyValue = extractValue(hook, root);
-
-    } else if (cssCore.FX.cssHooks[prop]) {
-        var normalizedPropertyName = cssCore.FX.cssHooks[prop].name,
-            normalizedPropertyValue;
-
-        if (normalizedPropertyName !== 'transform') {
-            normalizedPropertyValue = curCSS(elem, hAzzle.prefixCheck(normalizedPropertyName)[0], force);
-
-            if (hAzzle.isZeroValue(normalizedPropertyValue) && templates[prop]) {
-                normalizedPropertyValue = templates[prop][1];
-            }
-        }
-
-        propertyValue = cssCore.FX.cssHooks[prop].get(elem, normalizedPropertyValue);
-    }
-
-    if (!/^[\d-]/.test(propertyValue)) {
-        if (hAzzle.private(elem, 'CSS') && hAzzle.private(elem, 'CSS').isSVG && cssCore.Names.SVGAttribute(prop)) {
-
-            if (/^(height|width)$/i.test(prop)) {
-                propertyValue = elem.getBBox()[prop];
-            } else {
-                propertyValue = elem.getAttribute(prop);
-            }
-        } else {
-            propertyValue = curCSS(elem, hAzzle.prefixCheck(prop)[0]);
-        }
-    }
-
-    if (hAzzle.isZeroValue(propertyValue)) {
-        propertyValue = 0;
-    }
-    return propertyValue;
-}
-
-
-function setPropertyValue(elem, prop, value, root, scrollData) {
-    var propertyName = prop;
-
-    if (prop === 'scroll') {
-        if (scrollData.container) {
-            scrollData.container['scroll' + scrollData.direction] = value;
-        } else {
-            if (scrollData.direction === 'Left') {
-                window.scrollTo(value, scrollData.alternateValue);
-            } else {
-                window.scrollTo(scrollData.alternateValue, value);
-            }
-        }
-    } else {
-
-        if (cssCore.FX.cssHooks[prop] && cssCore.FX.cssHooks[prop].name === 'transform') {
-            cssCore.FX.cssHooks[prop].set(elem, value);
-            propertyName = 'transform';
-            value = hAzzle.private(elem, 'CSS').transformCache[prop];
-        } else {
-            if (cssCore.FX.activated[prop]) {
-                var hookName = prop,
-                    hookRoot = getRoot(prop);
-
-                root = root || getPropertyValue(elem, hookRoot);
-
-                value = injectValue(hookName, value, root);
-                prop = hookRoot;
-            }
-
-            if (cssCore.FX.cssHooks[prop]) {
-                value = cssCore.FX.cssHooks[prop].set(elem, value);
-                prop = cssCore.FX.cssHooks[prop].name;
-            }
-
-            propertyName = hAzzle.prefixCheck(prop)[0];
-
-            if (hAzzle.private(elem, 'CSS') && hAzzle.private(elem, 'CSS').isSVG && cssCore.Names.SVGAttribute(prop)) {
-                hAzzle.setAttribute(elem, prop, value);
-            } else {
-                elem.style[propertyName] = value;
-            }
-        }
-    }
-    return [propertyName, value];
-}
