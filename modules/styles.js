@@ -94,10 +94,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                         if (cssCore.RegEx.wrappedValueAlreadyExtracted.test(value)) {
                             extracted = value;
                         } else {
-                            /* Remove the 'rect()' wrapper. */
                             extracted = value.toString().match(cssCore.RegEx.valueUnwrap);
-
-                            /* Strip off commas. */
                             extracted = extracted ? extracted[1].replace(/,(\s+)?/g, ' ') : value;
                         }
 
@@ -400,7 +397,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                 value = cssHook[prop].set(elem, value, extra);
                 prop = cssHook[prop].name;
 
-            } else { // Only 'camelize' if no hook exist
+            } else {
                 prop = cssCore.cssCamelized[prop];
             }
 
@@ -426,7 +423,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             }
 
             // If a number was passed in, add 'px' to the number (except for certain CSS properties)
-
 
             if (type === 'number' && !hAzzle.unitless[prop]) {
 
@@ -460,7 +456,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
             // Otherwise just get the value from the style object
             return style[prop];
-
         }
     };
 
@@ -530,7 +525,6 @@ hAzzle.css = getCSS;
 hAzzle.style = setCSS;
 hAzzle.capitalize = capitalize;
 
-
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
 hAzzle.assert(function(div) {
@@ -564,7 +558,6 @@ hAzzle.each(cssProperties, function(prop) {
         hAzzle.cssSupport[prop] = hAzzle.prefixCheck(prop)[0];
     }
 });
-
 
 // Check for translate3d support
 
