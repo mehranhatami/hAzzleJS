@@ -59,6 +59,10 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
         unitless: {},
 
+        // Pre-camelized CSS properties
+
+        cssCamelized: {},
+
         has: {
 
             // Check for getComputedStyle support
@@ -178,48 +182,10 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     prefixCheck = function(prop) {
 
-        // If this property has already been checked, return the cached value.
-
         if (prefixMatches[prop]) {
-
             return [prefixMatches[prop], true];
-
-        } else {
-
-            var i = 0,
-                vendorsLength = vendors.length,
-                propPrefixed;
-
-            for (; i < vendorsLength; i++) {
-
-                if (i === 0) {
-
-                    propPrefixed = prop;
-
-                } else {
-
-                    // Capitalize the first letter of the property to conform to JavaScript vendor 
-                    //prefix notation (e.g. webkitFilter). 
-                    propPrefixed = capitalize(vendors[i] + prop);
-                }
-
-                // Check if the browser supports this property as prefixed.
-
-                if (typeof prefixElement.style[propPrefixed] === 'string') {
-
-                    // Cache the match.
-
-                    prefixMatches[prop] = propPrefixed;
-
-                    return [propPrefixed, true];
-                }
-            }
-
-            // If the browser doesn't support this property in any form, include a 
-            // false flag so that the caller can decide how to proceed.
-
-            return [prop, false];
         }
+        return [prop, false];
     },
 
     getRoot = function(property) {
@@ -389,8 +355,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
         var val, num;
 
-
-        prop = hAzzle.camelize(prop);
+        prop = cssCore.cssCamelized[prop]
 
         if (cssHook[prop]) {
             val = cssHook[prop].get(elem, prop);
@@ -438,7 +403,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                 prop = cssHook[prop].name;
 
             } else { // Only 'camelize' if no hook exist
-                prop = hAzzle.camelize(prop);
+                prop = cssCore.cssCamelized[prop]
             }
 
             // Assign the appropriate vendor prefix before perform an official style update.
@@ -472,7 +437,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
             if (cssCore.has['bug-clearCloneStyle'] &&
                 value === '' && prop.indexOf('background') === 0) {
-                style[hAzzle.camelize(prop)] = 'inherit';
+                style[cssCore.cssCamelized[prop]] = 'inherit';
             }
 
             oldValue = elem.style[name];
@@ -630,8 +595,57 @@ hAzzle.assert(function(div) {
 hAzzle.cssProps.transform = cssCore.support.transform;
 hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
 
+/* ============================ AUTO-PREFIXING / CAMELIZING =========================== */
+
+var computed = getStyles(document.documentElement),
+    reDash = /\-./g,
+    i, vendorsLength = vendors.length,
+    props = Array.prototype.slice.call(computed, 0);
+
+// Iterate through    
+
+hAzzle.each(props, function(propName) {
+    var prefix = propName[0] === "-" ? propName.substr(1, propName.indexOf("-", 1) - 1) : null,
+        unprefixedName = prefix ? propName.substr(prefix.length + 2) : propName,
+        stylePropName = propName.replace(reDash, function(str) {
+            return str[1].toUpperCase()
+        });
+    // Most of browsers starts vendor specific props in lowercase
+    if (!(stylePropName in computed)) {
+        stylePropName = stylePropName[0].toLowerCase() + stylePropName.substr(1);
+    }
+
+    for (i = 0; i < vendorsLength; i++) {
+
+        if (i === 0) {
+
+            propPrefixed = propName;
+
+        } else {
+
+            // Capitalize the first letter of the property to conform to JavaScript vendor 
+            //prefix notation (e.g. webkitFilter). 
+            propPrefixed = capitalize(vendors[i] + propName);
+        }
+
+        // Check if the browser supports this property as prefixed.
+
+        if (typeof prefixElement.style[propPrefixed] === 'string') {
+
+            // Cache the match.
+
+            prefixMatches[propName] = propPrefixed;
+        }
+    }
+
+    cssCore.cssCamelized[unprefixedName] = stylePropName;
+});
+
+// Fix memory leak in IE
+prefixElement = null;
+
 // Populate the unitless properties list
 
-hAzzle.each(unitlessProps, function(name) {
-    hAzzle.unitless[hAzzle.camelize(name)] = true;
+hAzzle.each(unitlessProps, function(prop) {
+    hAzzle.unitless[cssCore.cssCamelized[prop]] = true;
 });
