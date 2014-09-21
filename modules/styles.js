@@ -540,12 +540,6 @@ hAzzle.assert(function(div) {
     }
 });
 
-// Detect support for other CSS properties
-hAzzle.each(cssProperties, function(prop) {
-    if (hAzzle.prefixCheck(prop)[1]) {
-        hAzzle.cssSupport[prop] = hAzzle.prefixCheck(prop)[0];
-    }
-});
 
 // Check for translate3d support
 
@@ -626,3 +620,11 @@ hAzzle.each(unitlessProps, function(prop) {
 hAzzle.autoCamelize = function(prop) {
     return cssCore.cssCamelized[prop]
 };
+
+
+// Detect support for other CSS properties
+hAzzle.each(cssProperties, function(prop) {
+    if (prefixMatches[prop]) {
+        hAzzle.cssSupport[prop] = true;
+    }
+});
