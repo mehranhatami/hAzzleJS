@@ -1,9 +1,5 @@
 // styles.js
-var // Create a cached element for re-use when checking for CSS property prefixes.
-
-    prefixElement = document.createElement('div'),
-
-    prefixMatches = {},
+var prefixMatches = {},
 
     cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
         'animationDirection animatioName animationTimingFunction animationPlayState perspective boxSizing ' +
@@ -26,6 +22,8 @@ var // Create a cached element for re-use when checking for CSS property prefixe
         fontWeight: '400'
     },
 
+    // Templates for use with animation engine
+
     templates = {
         'clip': ['Top Right Bottom Left', '0px 0px 0px 0px'],
     },
@@ -33,19 +31,16 @@ var // Create a cached element for re-use when checking for CSS property prefixe
     cssCore = {
 
         RegEx: {
-
-            inlineregex: /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
-            listitemregex: /^(li)$/i,
-            tablerowregex: /^(tr)$/i,
-            zerovalue: /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i,
-            leftrightRegex: /Left|Right/,
-            numbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
-            gCSSVal: /^[\d-]/,
-            cHeightWidth: /^(height|width)$/i,
+            sLnline: /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
+            sListitem: /^(li)$/i,
+            sTablerow: /^(tr)$/i,
+            sZeroValue: /^(none|auto|transparent|(rgba\(0, ?0, ?0, ?0\)))$/i,
+            sLeftright: /Left|Right/,
+            sNumbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
             isHex: /^#([A-f\d]{3}){1,2}$/i,
-            valueUnwrap: /^[A-z]+\((.*)\)$/i,
-            wrappedValueAlreadyExtracted: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
-            valueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig
+            sUnwrap: /^[A-z]+\((.*)\)$/i,
+            sWrappetVAE: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
+            sValueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig
         },
 
         cssProps: {
@@ -91,10 +86,10 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
                         var extracted;
 
-                        if (cssCore.RegEx.wrappedValueAlreadyExtracted.test(value)) {
+                        if (cssCore.RegEx.sWrappetVAE.test(value)) {
                             extracted = value;
                         } else {
-                            extracted = value.toString().match(cssCore.RegEx.valueUnwrap);
+                            extracted = value.toString().match(cssCore.RegEx.sUnwrap);
                             extracted = extracted ? extracted[1].replace(/,(\s+)?/g, ' ') : value;
                         }
 
@@ -152,27 +147,21 @@ var // Create a cached element for re-use when checking for CSS property prefixe
     },
 
     getDisplayType = function(elem) {
-        var tagName = elem.tagName.toString().toLowerCase();
-        if (cssCore.RegEx.inlineregex.test(tagName)) {
+        var tagName = elem.tagName.toLowerCase();
+        if (cssCore.RegEx.sLnline.test(tagName)) {
             return 'inline';
-        } else if (cssCore.RegEx.listitemregex.test(tagName)) {
-            return 'list-item';
-        } else if (cssCore.RegEx.tablerowregex.test(tagName)) {
-            return 'table-row';
-            // Default to 'block' when no match is found.
-        } else {
-            return 'block';
         }
+        if (cssCore.RegEx.sListitem.test(tagName)) {
+            return 'list-item';
+        }
+        if (cssCore.RegEx.sTablerow.test(tagName)) {
+            return 'table-row';
+        }
+        return 'block';
     },
 
     isZeroValue = function(value) {
-        return (value === 0 || cssCore.RegEx.zerovalue.test(value));
-    },
-
-    capitalize = function(str) {
-        return str.replace(/^\w/, function(match) {
-            return match.toUpperCase();
-        });
+        return (value === 0 || cssCore.RegEx.sZeroValue.test(value));
     },
 
     prefixCheck = function(prop) {
@@ -196,8 +185,8 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     cleanRootPropertyValue = function(rootProperty, rootPropertyValue) {
 
-        if (cssCore.RegEx.valueUnwrap.test(rootPropertyValue)) {
-            rootPropertyValue = rootPropertyValue.match(cssCore.FX.RegEx.valueUnwrap)[1];
+        if (cssCore.RegEx.sUnwrap.test(rootPropertyValue)) {
+            rootPropertyValue = rootPropertyValue.match(cssCore.FX.RegEx.sUnwrap)[1];
         }
 
         if (hAzzle.isZeroValue(rootPropertyValue)) {
@@ -213,7 +202,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
             var hookRoot = hookData[0],
                 hookPosition = hookData[1];
             value = cleanRootPropertyValue(hookRoot, value);
-            return value.toString().match(cssCore.RegEx.valueSplit)[hookPosition];
+            return value.toString().match(cssCore.RegEx.sValueSplit)[hookPosition];
         } else {
             return value;
         }
@@ -229,7 +218,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                 rootParts,
                 rootUpdated;
             root = cleanRootPropertyValue(hookRoot, root);
-            rootParts = root.match(cssCore.RegEx.valueSplit);
+            rootParts = root.match(cssCore.RegEx.sValueSplit);
             rootParts[hookPosition] = value;
             rootUpdated = rootParts.join(' ');
 
@@ -409,7 +398,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
             // Convert relative number strings
 
-            if (type === 'string' && (ret = cssCore.RegEx.numbs.exec(value))) {
+            if (type === 'string' && (ret = cssCore.RegEx.sNumbs.exec(value))) {
                 value = hAzzle.css(elem, prop, '');
                 value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = 'number';
@@ -523,7 +512,6 @@ hAzzle.prefixCheck = prefixCheck;
 hAzzle.cssHooks = cssHook;
 hAzzle.css = getCSS;
 hAzzle.style = setCSS;
-hAzzle.capitalize = capitalize;
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
@@ -627,9 +615,6 @@ hAzzle.each(props, function(propName) {
     cssCore.cssCamelized[unprefixedName] = stylePropName;
 });
 
-// Fix memory leak in IE
-prefixElement = null;
-
 // Populate the unitless properties list
 
 hAzzle.each(unitlessProps, function(prop) {
@@ -638,4 +623,6 @@ hAzzle.each(unitlessProps, function(prop) {
 
 // Expose
 
-hAzzle.autoCamelize = cssCore.cssCamelized;
+hAzzle.autoCamelize = function(prop) {
+    return cssCore.cssCamelized[prop]
+};

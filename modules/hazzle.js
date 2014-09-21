@@ -4,7 +4,7 @@
  * Version: 0.9.9d RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-14
+ * Date: 2014-09-22
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -191,7 +191,7 @@
 
         // Default promise library are ES6 by default, but this 
         // can be overwritten with a third-party promises library.
-        
+
         promise: window.Promise,
 
         /**
@@ -261,7 +261,6 @@
          */
 
         each: function(collection, callback, reverse) {
-
             if (!collection) {
                 return;
             }
@@ -323,6 +322,11 @@
             return collection;
         },
 
+        capitalize: function(str) {
+            return str.replace(/^\w/, function(match) {
+                return match.toUpperCase();
+            });
+        },
         // Convert camelCase to  CSS-style
         // e.g. boxSizing -> box-sizing
 
@@ -666,6 +670,8 @@
 
             type = hAzzle.type(obj);
 
+
+
             return type === 'array' || length === 0 ||
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
         };
@@ -679,21 +685,21 @@
     // overwritten by the document.js module
 
     hAzzle.documentIsHTML = true;
-  
-   // Populate the native list
 
-        hAzzle.each(['Boolean',
-            'String',
-            'Function',
-            'Array',
-            'Date',
-            'RegExp',
-            'Object',
-            'Error',
-            'Arguments'
-        ], function() {
-            natives['[object ' + this + ']'] = this.toLowerCase();
-        });
+    // Populate the native list
+
+    hAzzle.each(['Boolean',
+        'String',
+        'Function',
+        'Array',
+        'Date',
+        'RegExp',
+        'Object',
+        'Error',
+        'Arguments'
+    ], function() {
+        natives['[object ' + this + ']'] = this.toLowerCase();
+    });
 
     // Expose hAzzle to the global object
 
