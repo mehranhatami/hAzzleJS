@@ -3,13 +3,13 @@
  *
  * Saves data on the object private and public
  */
-
 var sWhiteRegex = (/\S+/g),
     shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
-    scharRegEx = /([A-Z])/g
+    scharRegEx = /([A-Z])/g,
+    camelize = hAzzle.camelize;
 
 function Storage() {
-  this.expando = hAzzle.expando + hAzzle.getID(true, 'storage');
+    this.expando = hAzzle.expando + hAzzle.getID(true, 'storage');
 }
 
 Storage.prototype = {
@@ -19,27 +19,19 @@ Storage.prototype = {
     register: function(owner, initial) {
         var descriptor = {};
 
-        // Secure it in a non-enumerable, writable property
+        // Secure cache in a non-enumerable, configurable, writable property
 
-        try {
-            descriptor[this.expando] = {
-                value: initial || {},
-                writable: true,
-                configurable: true
-            };
-            Object.defineProperties(owner, descriptor);
-
-        } catch (e) {
-
-            descriptor[this.expando] = initial || {};
-            hAzzle.shallowCopy(owner, descriptor);
-        }
+        descriptor[this.expando] = {
+            value: initial || {},
+            writable: true,
+            configurable: true
+        };
+        Object.defineProperties(owner, descriptor);
 
         return owner[this.expando];
     },
 
     cache: function(owner, initial) {
-
 
         if (!hAzzle.legalTypes(owner)) {
             return {};
@@ -52,15 +44,16 @@ Storage.prototype = {
         // If so, return it
 
         if (cache) {
-
             return cache;
         }
+        // If not, register one
         return this.register(owner, initial);
     },
 
     set: function(owner, data, value) {
-        var prop,
-            cache = this.cache(owner);
+        var prop, cache = this.cache(owner);
+
+        // Handle: [ owner, key, value ] args
 
         if (typeof data === 'string') {
             cache[data] = value;
@@ -74,7 +67,6 @@ Storage.prototype = {
             } else {
 
                 for (prop in data) {
-
                     cache[prop] = data[prop];
                 }
             }
@@ -86,10 +78,7 @@ Storage.prototype = {
 
         var cache = this.cache(owner);
 
-        if(cache !== undefined ) {
-        return cache && key === undefined ?
-            cache : cache[key];
-		}
+        return cache !== undefined && key === undefined ? cache : cache[key];
     },
     access: function(owner, key, value) {
         var stored;
@@ -100,7 +89,7 @@ Storage.prototype = {
             stored = this.get(owner, key);
 
             return stored !== undefined ?
-                stored : this.get(owner, hAzzle.camelize(key));
+                stored : this.get(owner, camelize(key));
         }
 
         this.set(owner, key, value);
@@ -118,14 +107,13 @@ Storage.prototype = {
 
             if (hAzzle.isArray(key)) {
 
-                name = key.concat(key.map(hAzzle.camelize));
+                name = key.concat(key.map(camelize));
 
             } else {
 
-                camel = hAzzle.camelize(key);
+                camel = camelize(key);
 
                 if (key in cache) {
-
                     name = [key, camel];
 
                 } else {
@@ -138,21 +126,19 @@ Storage.prototype = {
             i = name.length;
 
             while (i--) {
-
                 delete cache[name[i]];
             }
         }
     },
     hasData: function(owner) {
 
-        var cache = owner[this.expando];
-        return !!cache && !hAzzle.isEmptyObject(cache);
-
+        return !hAzzle.isEmptyObject(
+            owner[this.expando] || {}
+        );
     },
     flush: function(owner) {
 
         if (owner[this.expando]) {
-
             delete owner[this.expando];
         }
     }
@@ -245,7 +231,7 @@ hAzzle.extend({
 
                             if (name.indexOf('data-') === 0) {
 
-                                name = hAzzle.camelize(name.slice(5));
+                                name = camelize(name.slice(5));
                                 dataAttr(elem, name, data[name]);
                             }
                         }
@@ -269,7 +255,7 @@ hAzzle.extend({
 
         return hAzzle.setter(this, function(value) {
 
-            var data, camelKey = hAzzle.camelize(key);
+            var data, camelKey = camelize(key);
 
             if (elem && value === undefined) {
 
@@ -388,7 +374,7 @@ function dataAttr(elem, key, data) {
 
 hAzzle.styleCache = function(elem) {
 
-if(!elem) return;
+    if (!elem) return;
     if (hAzzle.private(elem, 'CSS') === undefined) {
 
         hAzzle.private(elem, 'CSS', {
@@ -407,17 +393,19 @@ if(!elem) return;
 
             // A cache for CSS transform 
 
-            transform: {},
+            transformCache: {},
 
             // Save this check only once			
-			
-			isSVG: hAzzle.isSVG(elem),
-			
-			prevState: {},
-			
+
+            isSVG: hAzzle.isSVG(elem),
+
+            prevState: {},
+
+            rootPropertyValueCache: {},
+
             opts: {},
-	   });
-    };
-	
-	return false;
-}
+        });
+    }
+
+    return false;
+};
