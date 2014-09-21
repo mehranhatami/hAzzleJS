@@ -42,8 +42,8 @@ if (hAzzle.cssSupport.transform) {
 
                 name: 'transform',
 
-                get: function(element) {
-                    var _private = getCached(element);
+                get: function(elem) {
+                    var _private = getCached(elem);
 
                     if (_private === undefined ||
                         _private.transformCache[name] === undefined) {
@@ -53,28 +53,29 @@ if (hAzzle.cssSupport.transform) {
                     }
                 },
 
-                set: function(element, propertyValue) {
+                set: function(elem, value) {
 
                     var invalid = false,
-                        _private = getCached(element),
+                        _private = getCached(elem),
                         shortName = name.substr(0, name.length - 1);
 
                     if (shortName === 'translate') {
-                        invalid = !tUnits.test(propertyValue);
+                        invalid = !tUnits.test(value);
                     } else if (shortName === 'scale' || shortName === 'scal') {
-                        if (hAzzle.isAndroid && _private.transformCache[name] === undefined && propertyValue < 1) {
-                            propertyValue = 1;
+                        if (hAzzle.isAndroid &&
+                            _private.transformCache[name] === undefined && value < 1) {
+                            value = 1;
                         }
 
-                        invalid = !tDigit.test(propertyValue);
+                        invalid = !tDigit.test(value);
                     } else if (shortName === 'skew') {
-                        invalid = !tDeg.test(propertyValue);
+                        invalid = !tDeg.test(value);
                     } else if (shortName === 'rotate') {
-                        invalid = !tDeg.test(propertyValue);
+                        invalid = !tDeg.test(value);
                     }
 
                     if (!invalid) {
-                        _private.transformCache[name] = '(' + propertyValue + ')';
+                        _private.transformCache[name] = '(' + value + ')';
                     }
 
                     return _private.transformCache[name];
@@ -87,15 +88,14 @@ if (hAzzle.cssSupport.transform) {
         return hAzzle.private(elem, 'CSS');
     }
 
-    function flushTransformCache(element) {
+    function flushTransformCache(elem) {
         var transformString = '',
-            name,
-            transformValue;
+            name, value;
 
-        if ((hAzzle.ie || (hAzzle.isAndroid && !hAzzle.isChrome)) && getCached(element).isSVG) {
+        if ((hAzzle.ie || (hAzzle.isAndroid && !hAzzle.isChrome)) && getCached(elem).isSVG) {
 
             function getTransformFloat(transformProperty) {
-                return parseFloat(getFXCss(element, transformProperty));
+                return parseFloat(getFXCss(elem, transformProperty));
             }
 
             var SVGTransforms = {
@@ -108,7 +108,7 @@ if (hAzzle.cssSupport.transform) {
                 rotate: [getTransformFloat('rotateZ'), 0, 0]
             };
 
-            for (name in getCached(element).transformCache) {
+            for (name in getCached(elem).transformCache) {
 
                 if (tTranslate.test(name)) {
                     name = 'translate';
@@ -118,8 +118,6 @@ if (hAzzle.cssSupport.transform) {
                     name = 'rotate';
                 }
 
-
-
                 if (SVGTransforms[name]) {
                     transformString += name + '(' + SVGTransforms[name].join(' ') + ')' + ' ';
                     delete SVGTransforms[name];
@@ -128,13 +126,13 @@ if (hAzzle.cssSupport.transform) {
 
         } else {
 
-            var  perspective;
+            var perspective;
 
-            for (name in getCached(element).transformCache) {
-                transformValue = getCached(element).transformCache[name];
+            for (name in getCached(elem).transformCache) {
+                value = getCached(elem).transformCache[name];
 
                 if (name === 'transformPerspective') {
-                    perspective = transformValue;
+                    perspective = value;
                     return true;
                 }
 
@@ -144,13 +142,13 @@ if (hAzzle.cssSupport.transform) {
                     name = 'rotate';
                 }
 
-                transformString += name + transformValue + ' ';
+                transformString += name + value + ' ';
             }
 
             if (perspective) {
                 transformString = 'perspective' + perspective + ' ' + transformString;
             }
         }
-        setFXCss(element, 'transform', transformString);
+        setFXCss(elem, 'transform', transformString);
     }
 }
