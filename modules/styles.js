@@ -619,13 +619,14 @@ hAzzle.each(props, function(propName) {
 
         if (i === 0) {
 
-            propPrefixed = propName;
+            propPrefixed = stylePropName;
 
         } else {
 
+
             // Capitalize the first letter of the property to conform to JavaScript vendor 
             //prefix notation (e.g. webkitFilter). 
-            propPrefixed = capitalize(vendors[i] + propName);
+            propPrefixed = capitalize(vendors[i] + stylePropName);
         }
 
         // Check if the browser supports this property as prefixed.
@@ -634,7 +635,10 @@ hAzzle.each(props, function(propName) {
 
             // Cache the match.
 
-            prefixMatches[propName] = propPrefixed;
+            prefixMatches[stylePropName] = propPrefixed;
+            
+            
+            
         }
     }
 
