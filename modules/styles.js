@@ -5,8 +5,6 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     prefixMatches = {},
 
-    vendors = ['', 'Webkit', 'Moz', 'ms', 'O'],
-
     cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
         'animationDirection animatioName animationTimingFunction animationPlayState perspective boxSizing ' +
         'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect transform transformOrigin ' +
@@ -355,7 +353,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
         var val, num;
 
-        prop = cssCore.cssCamelized[prop]
+        prop = cssCore.cssCamelized[prop];
 
         if (cssHook[prop]) {
             val = cssHook[prop].get(elem, prop);
@@ -403,7 +401,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
                 prop = cssHook[prop].name;
 
             } else { // Only 'camelize' if no hook exist
-                prop = cssCore.cssCamelized[prop]
+                prop = cssCore.cssCamelized[prop];
             }
 
             // Assign the appropriate vendor prefix before perform an official style update.
@@ -599,7 +597,6 @@ hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
 
 var computed = getStyles(document.documentElement),
     reDash = /\-./g,
-    i, vendorsLength = vendors.length,
     props = Array.prototype.slice.call(computed, 0);
 
 // Iterate through    
@@ -608,39 +605,31 @@ hAzzle.each(props, function(propName) {
     var prefix = propName[0] === "-" ? propName.substr(1, propName.indexOf("-", 1) - 1) : null,
         unprefixedName = prefix ? propName.substr(prefix.length + 2) : propName,
         stylePropName = propName.replace(reDash, function(str) {
-            return str[1].toUpperCase()
+            return str[1].toUpperCase();
         });
     // Most of browsers starts vendor specific props in lowercase
     if (!(stylePropName in computed)) {
         stylePropName = stylePropName[0].toLowerCase() + stylePropName.substr(1);
     }
 
-    for (i = 0; i < vendorsLength; i++) {
+    // 'prefixMatches' contains:
+    // camelized properties to left - camelized vendor prefixed properties to right
+    // To get a prefixed property, just to:
+    //
+    // prefixMatches[boxAlign]
+    //
+    // Result in Firefox would be: MozBoxAlign
 
-        if (i === 0) {
+    prefixMatches[hAzzle.camelize(unprefixedName)] = stylePropName;
 
-            propPrefixed = stylePropName;
+    // 'cssCamelized' contains:
+    // un-prefixed CSS properties to left - camelized properties to right
+    // To get a camelized property, just to:
+    //
+    // hAzzle.autoCamelize[animation-iteration-count]
 
-        } else {
-
-
-            // Capitalize the first letter of the property to conform to JavaScript vendor 
-            //prefix notation (e.g. webkitFilter). 
-            propPrefixed = capitalize(vendors[i] + stylePropName);
-        }
-
-        // Check if the browser supports this property as prefixed.
-
-        if (typeof prefixElement.style[propPrefixed] === 'string') {
-
-            // Cache the match.
-
-            prefixMatches[stylePropName] = propPrefixed;
-            
-            
-            
-        }
-    }
+    //
+    // Result: 'animationIterationCount'
 
     cssCore.cssCamelized[unprefixedName] = stylePropName;
 });
@@ -653,3 +642,7 @@ prefixElement = null;
 hAzzle.each(unitlessProps, function(prop) {
     hAzzle.unitless[cssCore.cssCamelized[prop]] = true;
 });
+
+// Expose
+
+hAzzle.autoCamelize = cssCore.cssCamelized;
