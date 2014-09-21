@@ -17,9 +17,12 @@ var cHeightWidth = /^(height|width)$/i,
         }
         return null;
     },
-    getStyles = function(elem) {
+    getStyles = function(elem, styles) {
         var computed;
-
+     
+     if(styles) {
+       return styles;  
+      }
         // We save the computedStyle on the object to minimize DOM querying
 
         if (hAzzle.private(elem, cPrefix) === undefined) {
@@ -38,7 +41,7 @@ var cHeightWidth = /^(height|width)$/i,
         return computed;
     },
 
-    curCSS = function(elem, prop, force) {
+    curCSS = function(elem, prop, force, styles) {
 
         var computedValue = 0,
             toggleDisplay = false,
@@ -48,7 +51,7 @@ var cHeightWidth = /^(height|width)$/i,
                 }
             };
 
-        if (cWidthHeight.test(prop) && getCSS(elem, 'display') === 0) {
+        if (cWidthHeight.test(prop) && getFXCss(elem, 'display') === 0) {
             toggleDisplay = true;
             setCSS(elem, 'display', hAzzle.getDisplayType(elem));
         }
@@ -56,7 +59,7 @@ var cHeightWidth = /^(height|width)$/i,
         if (!force) {
 
             if (prop === 'height' &&
-                getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                getFXCss(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
 
                 var contentBoxHeight = elem.offsetHeight -
                     (parseFloat(getCSS(elem, 'borderTopWidth')) || 0) -
@@ -68,7 +71,7 @@ var cHeightWidth = /^(height|width)$/i,
                 return contentBoxHeight;
 
             } else if (prop === 'width' &&
-                getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                getFXCss(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
 
                 var contentBoxWidth = elem.offsetWidth -
                     (parseFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
@@ -82,7 +85,7 @@ var cHeightWidth = /^(height|width)$/i,
             }
         }
 
-        var computedStyle = getStyles(elem);
+        var computedStyle = getStyles(elem, styles);
 
         // IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
         // As a polyfill for querying individual border side colors, just return the top border's color.

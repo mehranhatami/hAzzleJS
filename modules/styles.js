@@ -9,8 +9,8 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
     cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
         'animationDirection animatioName animationTimingFunction animationPlayState perspective boxSizing ' +
-        'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect ' +
-        'columnRuleColor outlineColor textDecorationColor textEmphasisColor ' +
+        'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect transform transformOrigin ' +
+        'columnRuleColor outlineColor textDecorationColor textEmphasisColor transition transitionDelay filter ' +
         'columnSpan columnCount columnGap columnWidth columnRuleColor columnRuleStyle columnRuleWidth').split(' '),
 
     unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
@@ -497,6 +497,7 @@ var // Create a cached element for re-use when checking for CSS property prefixe
 
             // Otherwise just get the value from the style object
             return style[prop];
+
         }
     };
 
@@ -594,74 +595,13 @@ hAzzle.assert(function(div) {
     }
 });
 
-hAzzle.assert(function(div) {
-
-    var support = {},
-        style = div.style;
-
-    // Helper function to get the proper vendor property name.
-    // (`transition` => `WebkitTransition`)
-    function getVendorPropertyName(prop) {
-
-        // Shortcut for names that are not vendor prefixed
-        if (prop in style) {
-            return prop;
-        }
-        // Check for vendor prefixed names
-        var name, i = vendors.length,
-            ucProp = prop.charAt(0).toUpperCase() + prop.slice(1);
-
-        while (i--) {
-            name = vendors[i] + ucProp;
-            if (name in style) {
-                return name;
-            }
-        }
+// Detect support for other CSS properties
+hAzzle.each(cssProperties, function(prop) {
+    if (hAzzle.prefixCheck(prop)[1]) {
+        hAzzle.cssSupport[prop] = hAzzle.prefixCheck(prop)[0];
     }
-
-    // Helper function to check if transform3D is supported.
-    // Should return true for Webkits and Firefox 10+.
-
-    function checkTransform3dSupport() {
-        style[support.transform] = '';
-        style[support.transform] = 'rotateY(90deg)';
-        return style[support.transform] !== '';
-    }
-
-    // Check for the browser's transitions support.
-    support.transition = getVendorPropertyName('transition');
-    support.transitionDelay = getVendorPropertyName('transitionDelay');
-    support.transform = getVendorPropertyName('transform');
-    support.transformOrigin = getVendorPropertyName('transformOrigin');
-    support.filter = getVendorPropertyName('Filter');
-    support.transform3d = checkTransform3dSupport();
-
-    // Detect the 'transitionend' event needed.
-    var key;
-
-    for (key in support) {
-        if (support.hasOwnProperty(key) && typeof cssCore[key] === 'undefined') {
-            hAzzle.cssSupport[key] = support[key];
-        }
-    }
-
-    // Detect support for other CSS properties
-
-    hAzzle.each(cssProperties, function(prop) {
-        if (getVendorPropertyName(prop)) {
-            hAzzle.cssSupport[prop] = getVendorPropertyName(prop);
-        }
-    });
 });
 
-// BackgroundPosition
-
-hAzzle.assert(function(div) {
-
-    div.style.backgroundPosition = '3px 5px';
-    hAzzle.cssSupport.backgroundPosition = hAzzle.curCSS(div, 'backgroundPosition') === '3px 5px' ? true : false;
-    hAzzle.cssSupport.backgroundPositionXY = hAzzle.curCSS('backgroundPositionX') === '3px' ? true : false;
-});
 
 // Check for translate3d support
 
@@ -676,14 +616,16 @@ hAzzle.assert(function(div) {
     };
 
     for (t in transforms) {
-
         if (div.style[t] !== undefined) {
             div.style[t] = 'translate3d(1px,1px,1px)';
-            has3d = window.getComputedStyle(div).getFXCss(transforms[t]);
+            has3d = window.getComputedStyle(div).getPropertyValue(transforms[t]);
         }
     }
+
     hAzzle.cssSupport.translate3d = (has3d !== undefined && has3d.length > 0 && has3d !== 'none');
 });
+
+// Extend CSS properties
 
 hAzzle.cssProps.transform = cssCore.support.transform;
 hAzzle.cssProps.transformOrigin = cssCore.support.transformOrigin;
