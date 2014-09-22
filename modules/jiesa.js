@@ -15,7 +15,7 @@ var join = Array.prototype.join,
 
     // Expando used for attributes and the translation
 
-    attrExpando = 'Jiesa-' + String(Math.random()).replace(/\D/g, ''),
+    attrExpando = 'Jiesa-' + 1 * hAzzle.now(),
 
     escaped = /'|\\/g,
 
@@ -413,7 +413,7 @@ var fakePath = (function() {
 
             // Do a quick look-up         
 
-            if ((found = rquickExpr.exec(selector))) {
+            if (context.nodeType !== 11 && (found = rquickExpr.exec(selector))) {
 
                 if ((m = found[1])) {
                     if (context.nodeType === 9) {

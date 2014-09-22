@@ -552,11 +552,11 @@
 
         assert: function(fn) {
 
-            var div = document.createElement('div');
+            var el = document.createElement('fieldset');
 
             try {
 
-                return !!fn(div);
+                return !!fn(el);
 
             } catch (e) {
 
@@ -565,11 +565,11 @@
             } finally {
 
                 // Remove from its parent by default
-                if (div.parentNode) {
-                    div.parentNode.removeChild(div);
+                if (el.parentNode) {
+                    el.parentNode.removeChild(el);
                 }
                 // release memory in IE
-                div = null;
+                el = null;
             }
         },
 
