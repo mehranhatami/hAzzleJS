@@ -191,9 +191,7 @@ var fakePath = (function() {
 
     Expr = {
 
-        'filter': {
-
-        },
+        'filter': {},
 
         /* ============================ INTERNAL =========================== */
 
@@ -257,23 +255,19 @@ var fakePath = (function() {
         },
 
         'EVEN': function() {
-            var info = this;
-            return !Boolean(info.currentIndex % 2);
+            return !Boolean(this.currentIndex % 2);
         },
 
         'ODD': function() {
-            var info = this;
-            return Boolean(info.currentIndex % 2);
+            return Boolean(this.currentIndex % 2);
         },
 
         'EQ': function(el, args) {
-            var info = this;
-            return (hAzzle.isNumeric(args) && parseInt(args, 10) === info.currentIndex);
+            return (hAzzle.isNumeric(args) && parseInt(args, 10) === this.currentIndex);
         },
 
         'FIRST': function() {
-            var info = this;
-            return (info.currentIndex === 0);
+            return (this.currentIndex === 0);
         },
 
         'LAST': function() {
@@ -323,19 +317,19 @@ var fakePath = (function() {
 
             if (selector) {
 
-                markElements(KenRa(selector, ctx), attr, attrValue, returnTrue);
+                markElements(JiesaFind(selector, ctx), attr, attrValue, returnTrue);
             }
         },
 
         'NOT': function(args, attr, attrValue, p, context, arrfunc) {
-            return ':not(' + markElements(KenRa(args, context, arrfunc), attr, attrValue, returnTrue) + ')';
+            return ':not(' + markElements(JiesaFind(args, context, arrfunc), attr, attrValue, returnTrue) + ')';
         },
 
         'REFERENCED-BY': function(args, attr, attrValue, p, context, arrfunc) {
             var element, refEl, found = compileExpr.referencedByArg.match(args),
                 ctx = context.ownerDocument || context,
                 referenceAttr = found[1],
-                elements = KenRa(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, arrfunc),
+                elements = JiesaFind(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, arrfunc),
                 l = elements.length;
 
             while ((element = elements[--l])) {
@@ -367,13 +361,12 @@ var fakePath = (function() {
          */
 
         'MATCHES': function(args, attr, attrValue, p, context, arrfunc) {
-            markElements(KenRa(args, context.ownerDocument || context, arrfunc), attr, attrValue, returnTrue);
+            markElements(JiesaFind(args, context.ownerDocument || context, arrfunc), attr, attrValue, returnTrue);
         }
     },
 
     /*
-
-     * kenRa
+     * JiesaFind
      *
      * @param {String} selector
      * @param {Array|Object|String} context
@@ -389,7 +382,7 @@ var fakePath = (function() {
      *
      */
 
-    KenRa = function(selector, context, arrfunc) {
+    JiesaFind = function(selector, context, arrfunc) {
 
         var found, results = [],
             m, elem,isDoc = isDocument(context),
@@ -501,14 +494,11 @@ var fakePath = (function() {
 
             return {
                 'next': function() {
-
                     // For positive slopes increment x, otherwise decrement
-
                     return x < 0 || (!a && y == b) ? -1 : (y = a * (posSlope ? x++ : x--) + b);
 
                 },
                 'reset': function() {
-
                     x = startX;
                     y = undefined;
                 },
@@ -570,7 +560,7 @@ var fakePath = (function() {
             scopedContext = context;
         }
 
-        //new caching approach
+        // New caching approach
         contextCached = tokenCache.val(scopedContext);
         if (contextCached) {
             if ((cached = contextCached[baseSelector])) {
@@ -582,7 +572,7 @@ var fakePath = (function() {
 
         ctx = context.ownerDocument || context;
 
-        //if no other instances of KenRa are in progress
+        //if no other instances of JiesaFind are in progress
 
         if (!(runningCount++)) {
 
@@ -610,8 +600,6 @@ var fakePath = (function() {
                         group = cScope;
 
                     } else {
-
-
 
                         group += found[2];
                     }
@@ -711,8 +699,10 @@ var fakePath = (function() {
                 }
             }
 
-            // new caching approach
+            // New caching approach
+            
             cached = hAzzle.trim(wholeSelector + group + selector);
+            
             if (contextCached) {
                 contextCached[baseSelector] = cached;
             } else {
@@ -951,7 +941,7 @@ transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr
     var element,
         ofPos = args.indexOf('of'),
         anbIterator = anb(args.substr(0, ofPos)),
-        elements = KenRa(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
+        elements = JiesaFind(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
         l = elements.length - 1,
         nthMatch = pseudo[4] !== 'L';
     while ((element = elements[nthMatch ? anbIterator.next() : l - anbIterator.next()])) {
@@ -985,7 +975,6 @@ transformers.scoped = transformers.scope = function() {
     return scope;
 };
 
-
 /* ============================ PLUGIN METHODS =========================== */
 
 hAzzle.addFilter = function(pseudo, fn) {
@@ -1001,7 +990,7 @@ hAzzle.addTransformer = function(pseudo, fn) {
 // Expose
 
 hAzzle.Expr = Expr;
-hAzzle.find = KenRa;
+hAzzle.find = JiesaFind;
 hAzzle.grab = grab;
 hAzzle.anb = anb;
 hAzzle.tokenize = tokenize;

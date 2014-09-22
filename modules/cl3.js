@@ -1,14 +1,9 @@
-/* ============================ CL3 SELECTORS =========================== */
+// cl3.js
 var header = /^h\d$/i,
-    inputs = /^(?:input|select|textarea|button)$/i,
-    identifier = "(?:\\\\.|[\\w-]|[^\\x00-\\xa0])+",
-
-    ridentifier = new RegExp("^" + identifier + "$"),
-
-    // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
-
-    runescape = new RegExp("\\\\([\\da-f]{1,6}" + '[\\x20\\t\\r\\n\\f]' + "?|(" + '[\\x20\\t\\r\\n\\f]' + ")|.)", "ig"),
-    funescape = function(_, escaped, escapedWhitespace) {
+   inputs = /^(?:input|select|textarea|button)$/i,
+   ridentifier = /^(?:\\.|[\w-]|[^\x00-\xa0])+$/,
+   runescape =/\\([\da-f]{1,6}[\x20\t\r\n\f]?|([\x20\t\r\n\f])|.)/ig;
+   funescape = function(_, escaped, escapedWhitespace) {
         var high = "0x" + escaped - 0x10000;
         return high !== high || escapedWhitespace ?
             escaped :
