@@ -3,7 +3,9 @@ var cHeightWidth = /^(height|width)$/i,
     cWidthHeight = /^(width|height)$/,
     cToprbLeft = /^(top|right|bottom|left)$/i,
     cTopLeft = /top|left/i,
-    cPrefix = 'CSS',
+    _private = function(elem) {
+        return hAzzle.private(elem, 'CSS');
+    },
     computedValues = function(elem) {
         var view = false;
         if (elem && elem !== window) {
@@ -19,23 +21,23 @@ var cHeightWidth = /^(height|width)$/i,
     },
     getStyles = function(elem, styles) {
         var computed;
-     
-     if(styles) {
-       return styles;  
-      }
+
+        if (styles) {
+            return styles;
+        }
         // We save the computedStyle on the object to minimize DOM querying
 
-        if (hAzzle.private(elem, cPrefix) === undefined) {
+        if (_private(elem) === undefined) {
             return computedValues(elem);
 
             // If the computedStyle object has yet to be cached, do so now.
-        } else if (!hAzzle.private(elem, cPrefix).computedStyle) {
-            computed = hAzzle.private(elem, cPrefix).computedStyle = computedValues(elem);
+        } else if (!_private(elem).computedStyle) {
+            computed = _private(elem).computedStyle = computedValues(elem);
 
             // If computedStyle is cached, use it.
 
         } else {
-            computed = hAzzle.private(elem, cPrefix).computedStyle;
+            computed = _private(elem).computedStyle;
         }
 
         return computed;
@@ -97,7 +99,6 @@ var cHeightWidth = /^(height|width)$/i,
         if (hAzzle.ie === 9 && prop === 'filter') {
             computedValue = computedStyle.getPropertyValue(prop);
         } else {
-
             computedValue = computedStyle[prop];
         }
 

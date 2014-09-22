@@ -39,33 +39,33 @@ var join = Array.prototype.join,
     combineRegEx = function combineRegEx() {
         return '(?:(?:' + join.call(arguments, ')|(?:') + '))';
     },
-    whitespace = '[^\\x00-\\xFF]',
-    wrapps = '\\\\' + combineRegEx('[\\da-fA-F]{1,6}(?:(?:\\r\\n)|\\s)?', '[^\\n\\r\\f\\da-fA-F]'),
-    newLine = '\\n|(?:\\r\\n)|\\f',
-    firstString = '\'(?:[^\\n\\r\\f\\\\\']|(?:\\\\' + newLine + ')|(?:' + wrapps + '))*\'',
-    secondString = firstString.replace('\'', '"'),
-    combinedString = combineRegEx(firstString, secondString),
-    commaCombinators = '\\s*([+>~,\\s])\\s*',
-    argReference = '{[^}]+}',
-    numbstart = combineRegEx('[_a-zA-Z]', whitespace, wrapps),
-    dumbchar = combineRegEx(numbstart, '[\\w-]'),
-    identifier = '-?' + numbstart + dumbchar + '*',
-    identityFlag = '(' + combineRegEx(identifier, combinedString, argReference) + ')(?:\\s+([a-zA-Z]*))?',
-    attributeQuotes = '\\[\\s*(\\.?' + identifier + ')\\s*(?:([|^$*~!]?=)\\s*' + identityFlag + '\\s*)?\\]',
-    kfpseudo = '[:.](' + combineRegEx(identifier, argReference) + ')',
-    hashes = '#' + dumbchar + '+',
-    rtype = combineRegEx(identifier, '\\*'),
-    spaceReplace = /\s+/g,
-    stripReplace = /^\s*--/,
-    escapeReplace = /\\./g,
+    jwhitespace = '[^\\x00-\\xFF]',
+    jwrapps = '\\\\' + combineRegEx('[\\da-fA-F]{1,6}(?:(?:\\r\\n)|\\s)?', '[^\\n\\r\\f\\da-fA-F]'),
+    jnewLine = '\\n|(?:\\r\\n)|\\f',
+    jfirstString = '\'(?:[^\\n\\r\\f\\\\\']|(?:\\\\' + jnewLine + ')|(?:' + jwrapps + '))*\'',
+    jsecondString = jfirstString.replace('\'', '"'),
+    jcombinedString = combineRegEx(jfirstString, jsecondString),
+    jcommaCombinators = '\\s*([+>~,\\s])\\s*',
+    jargReference = '{[^}]+}',
+    jnumbstart = combineRegEx('[_a-zA-Z]', jwhitespace, jwrapps),
+    jdumbchar = combineRegEx(jnumbstart, '[\\w-]'),
+    jidentifier = '-?' + jnumbstart + jdumbchar + '*',
+    jidentityFlag = '(' + combineRegEx(jidentifier, jcombinedString, jargReference) + ')(?:\\s+([a-zA-Z]*))?',
+    jattributeQuotes = '\\[\\s*(\\.?' + jidentifier + ')\\s*(?:([|^$*~!]?=)\\s*' + jidentityFlag + '\\s*)?\\]',
+    jkfpseudo = '[:.](' + combineRegEx(jidentifier, jargReference) + ')',
+    jhashes = '#' + jdumbchar + '+',
+    jrtype = combineRegEx(jidentifier, '\\*'),
+    jspaceReplace = /\s+/g,
+    jstripReplace = /^\s*--/,
+    jescapeReplace = /\\./g,
 
     // regEx we are using through the code
 
     compileExpr = {
-        regexPattern: new RegExp('^(' + combineRegEx(commaCombinators, rtype, hashes, kfpseudo, attributeQuotes) + ')(.*)$'),
+        regexPattern: new RegExp('^(' + combineRegEx(jcommaCombinators, jrtype, jhashes, jkfpseudo, jattributeQuotes) + ')(.*)$'),
         anbPattern: /(?:([+-]?\d*)n([+-]\d+)?)|((?:[+-]?\d+)|(?:odd)|(?:even)|(?:first))/i,
-        identPattern: new RegExp('^' + identifier + '$'),
-        containsArg: new RegExp('^' + identityFlag + '$'),
+        identPattern: new RegExp('^' + jidentifier + '$'),
+        containsArg: new RegExp('^' + jidentityFlag + '$'),
         referencedByArg: /^\s*(\S+)(?:\s+in\s+([\s\S]*))?\s*$/i,
         beginEndQuoteReplace: /^(['"])(.*)\1$/,
     },
@@ -156,10 +156,8 @@ function objValue(obj, props) {
     var keys = props.split(propsExpr).filter(function(value) {
             return value !== '';
         }),
-        current = obj,
-        i = 0,
-        len = keys.length,
-        key;
+        current = obj, key,
+        i = 0, len = keys.length;
 
     for (; i < len; i += 1) {
         key = keys[i];
@@ -223,8 +221,8 @@ var fakePath = (function() {
                 operator === '!*=' ? reg ? reg.test(result) : result.indexOf(check) === 0 :
                 operator === '$=' ? check && result.slice(-check.length) === check :
                 operator === '!$=' ? check && result.slice(-check.length) !== check :
-                operator === '~=' ? (' ' + result.replace(spaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') > -1 :
-                operator === '!~=' ? (' ' + result.replace(spaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') === -1 :
+                operator === '~=' ? (' ' + result.replace(jspaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') > -1 :
+                operator === '!~=' ? (' ' + result.replace(jspaceReplace, ' ') + ' ').indexOf(' ' + check + ' ') === -1 :
                 operator === '|=' ? result == check || !result.indexOf(check + '-') :
                 operator === '!|=' ? result == check || result.indexOf(check + '-') :
                 property in el;
@@ -452,7 +450,7 @@ var fakePath = (function() {
 
     anb = function(str) {
         //remove all spaces and parse the string
-        var match = str.replace(spaceReplace, '')
+        var match = str.replace(jspaceReplace, '')
             .match(compileExpr.anbPattern),
             a = match[1],
             n = !match[3],
@@ -581,7 +579,7 @@ var fakePath = (function() {
             scope = cScope;
         }
 
-        selector = selector.replace(stripReplace, '');
+        selector = selector.replace(jstripReplace, '');
 
         // Mehran! Find an better solution then try / catch
 
@@ -630,7 +628,7 @@ var fakePath = (function() {
                             // Locate the position of the closing parents
                             selector = hAzzle.trim(selector.slice(1));
                             // Blank out any escaped characters
-                            str = selector.replace(escapeReplace, '  ');
+                            str = selector.replace(jescapeReplace, '  ');
                             n = 1;
 
                             // If the args start with a quote, search for the closing parents after the closing quote
@@ -923,7 +921,7 @@ function returnTrue() {
 /**
  * The nth-match and nth-last-match selectors work similar to the match and nth-child/nth-last-child pseudo
  * selectors by selecting the nth element which matches the sub-selector. The grammar for the
- * argument works by specifying an anb value followed by whitespace, the word "of", whitespace and a sub-selector.
+ * argument works by specifying an anb value followed by jwhitespace, the word "of", jwhitespace and a sub-selector.
  *
  * EXAMPLES:
  * ---------
@@ -985,7 +983,7 @@ hAzzle.addTransformer = function(pseudo, fn) {
     return typeof fn === 'function' && extend(pseudo, transformers, fn);
 };
 
-/* ============================ GLOBAL =========================== */
+
 
 // Expose
 

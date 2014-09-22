@@ -1,8 +1,5 @@
-/**
- * Storage.js
- *
- * Saves data on the object private and public
- */
+// Storage.js
+
 var sWhiteRegex = (/\S+/g),
     shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     scharRegEx = /([A-Z])/g,
@@ -14,6 +11,8 @@ function Storage() {
 
 Storage.prototype = {
 
+    constructor: Storage,
+    
     expando: 0,
 
     register: function(owner, initial) {
@@ -167,7 +166,6 @@ hAzzle.each({
         return prop.get(elem, data);
     };
 
-
     // Set user / private data
 
     hAzzle['set' + name] = function(elem, data, value) {
@@ -188,7 +186,6 @@ hAzzle.each({
     hAzzle['remove' + name] = function(elem, name) {
         return prop.release(elem, name);
     };
-
 });
 
 // Expand hAzzle Core
@@ -268,10 +265,8 @@ hAzzle.extend({
 
                 data = _userData.get(elem, camelKey);
 
-                var
-                    hasDataAttrs = _privateData.get(this, 'hasDataAttrs'),
+                var hasDataAttrs = _privateData.get(this, 'hasDataAttrs'),
                     isHyphenated = key.indexOf('-') !== -1;
-
 
                 if (data !== undefined) {
 
@@ -355,57 +350,3 @@ function dataAttr(elem, key, data) {
 
     return data;
 }
-
-/**
- * Cache for CSS styles
- *
- * A primary design goal of hAzzle is to cache data wherever possible in
- * order to avoid DOM requerying. Accordingly, each element has a data cache
- * instantiated on it.
- *
- * hAzzle Core are only using the computedStyle object, the others are for plugins.
- *
- * - properties
- *
- * - transitions
- *
- * - transform
- */
-
-hAzzle.styleCache = function(elem) {
-
-    if (!elem) return;
-    if (hAzzle.private(elem, 'CSS') === undefined) {
-
-        hAzzle.private(elem, 'CSS', {
-
-            // A reference to the element's live computedStyle object.
-
-            computedStyle: null,
-
-            // A cache for CSS properties
-
-            properties: {},
-
-            // A cache for CSS transitions
-
-            transitions: {},
-
-            // A cache for CSS transform 
-
-            transformCache: {},
-
-            // Save this check only once			
-
-            isSVG: hAzzle.isSVG(elem),
-
-            prevState: {},
-
-            rootPropertyValueCache: {},
-
-            opts: {},
-        });
-    }
-
-    return false;
-};

@@ -26,11 +26,6 @@ var tparpreunall = /^(?:parents|prev(?:Until|All))/,
 
 hAzzle.extend({
 
-    empty: function() {
-        this.length = 0;
-        return this;
-    },
-
     /**
      * Adds one element to the set of matched elements.
      *
@@ -111,22 +106,20 @@ hAzzle.extend({
      */
 
     eq: function(i) {
-
+      var _this = this;
         i = +i;
 
         // Use the first identity optimization if possible
 
-        if (i === 0 && this.length <= i) {
-
-            return this;
+        if (i === 0 && _this.length <= i) {
+            return _this;
         }
 
         if (i < 0) {
-
-            i = this.length + i;
+            i = _this.length + i;
         }
 
-        return hAzzle(this[i] ? this[i] : []);
+        return hAzzle(_this[i] ? _this[i] : []);
     },
 
     toArray: function() {
@@ -142,13 +135,13 @@ hAzzle.extend({
      */
 
     get: function(index) {
-        var result;
+        var result, _this = this;
         if (index === undefined) {
-            result = slice.call(this, 0);
+            result = slice.call(_this, 0);
         } else if (index < 0) {
-            result = this[this.length + index];
+            result = _this[_this.length + index];
         } else {
-            result = this[index];
+            result = _this[index];
         }
 
         return result;
@@ -248,7 +241,6 @@ hAzzle.extend({
         } else {
 
             haystack = this;
-
             needle = selector.length ? selector[0] : selector;
         }
 
