@@ -1,4 +1,7 @@
 // transform.js
+// NOTE! Not all browsers are supporting this, so we have to check for it and
+// only allow CSS Transform if browser supported
+
 var specialTransform = ('translateX translateY scale scaleX scaleY skewX skewY rotateZ').split(' '),
     transforms3D = ('transformPerspective translateZ scaleZ rotateX rotateY').split(' '),
     tTranslate = /^translate/i,

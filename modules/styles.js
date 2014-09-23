@@ -6,63 +6,105 @@ var sHeightWidth = /^(height|width)$/i,
         letterSpacing: '0',
         fontWeight: '400'
     },
-    getRoot = function(property) {
-        var hookData = cssCore.FX.activated[property];
 
-        if (hookData) {
-            return hookData[0];
+    /**
+     * Check if a CSS property are activated before using it
+     *
+     * @param {String} prop
+     * @return {String}
+     *
+     */
+
+    checkActivation = function(prop) {
+
+        var active = cssCore.FX.activated[prop];
+
+        // Try to return the activated property
+
+        if (active) {
+            return active[0];
         } else {
-            // If there was no hook match, return the property name untouched
-            return property;
+            return prop;
         }
     },
 
-    cleanRootPropertyValue = function(rootProperty, rootPropertyValue) {
+    /**
+     * Removes a activated CSS property
+     *
+     * @param {String} prop
+     * @return {String}
+     *
+     */
 
-        if (cssCore.RegEx.sUnwrap.test(rootPropertyValue)) {
-            rootPropertyValue = rootPropertyValue.match(cssCore.FX.RegEx.sUnwrap)[1];
+    removeActivation = function(prop, value) {
+
+        if (cssCore.RegEx.sUnwrap.test(value)) {
+            value = value.match(cssCore.FX.RegEx.sUnwrap)[1];
         }
 
-        if (hAzzle.isZeroValue(rootPropertyValue)) {
-            rootPropertyValue = templates[rootProperty][1];
+        if (hAzzle.isZeroValue(value)) {
+            value = templates[prop][1];
         }
 
-        return rootPropertyValue;
+        return value;
     },
 
-    extractValue = function(name, value) {
-        var hookData = cssCore.FX.activated[name];
-        if (hookData) {
-            var hookRoot = hookData[0],
-                hookPosition = hookData[1];
-            value = cleanRootPropertyValue(hookRoot, value);
-            return value.toString().match(cssCore.RegEx.sValueSplit)[hookPosition];
+    /**
+     * Wrap out activated values
+     *
+     * @param {String} name
+     * @param {String} value
+     * @return {String}
+     *
+     */
+
+    wrapOut = function(name, value) {
+        var activated = cssCore.FX.activated[name];
+        if (activated) {
+            var root = activated[0],
+                position = activated[1];
+            value = removeActivation(root, value);
+            return (value + '').match(cssCore.RegEx.sValueSplit)[position];
         } else {
             return value;
         }
     },
 
-    // Inject value
+    /**
+     * Wrap in, and activate values
+     *
+     * @param {String} name
+     * @param {String} value
+     * @param {String} root
+     * @return {String}
+     *
+     */
 
-    injectValue = function(name, value, root) {
-        var hookData = cssCore.FX.activated[name];
-        if (hookData) {
-            var hookRoot = hookData[0],
-                hookPosition = hookData[1],
-                rootParts,
-                rootUpdated;
-            root = cleanRootPropertyValue(hookRoot, root);
-            rootParts = root.match(cssCore.RegEx.sValueSplit);
-            rootParts[hookPosition] = value;
-            rootUpdated = rootParts.join(' ');
+    WrapIn = function(name, value, root) {
+        var activated = cssCore.FX.activated[name];
+        if (activated) {
+            var parts,
+                refreshed;
+            root = removeActivation(activated[0], root);
+            parts = root.match(cssCore.RegEx.sValueSplit);
+            parts[activated[1]] = value;
+            refreshed = parts.join(' ');
 
-            return rootUpdated;
+            return refreshed;
         } else {
             return root;
         }
     },
 
-    // The two following functions are kept due to jQuery API compability
+    /**
+     * Get CSS property values
+     *
+     * @param {Object} elem
+     * @param {String|Function|Array} prop
+     * @param {String} extra
+     * @param {String} styles
+     * @return {hAzzle|String|Function}
+     */
 
     getCSS = function(elem, prop, extra, styles) {
 
@@ -92,6 +134,16 @@ var sHeightWidth = /^(height|width)$/i,
 
         return val;
     },
+
+    /**
+     * Set CSS property values
+     *
+     * @param {Object} elem
+     * @param {String|Function|Array} prop
+     * @param {String} value
+     * @param {String} extra
+     * @return {hAzzle|String|Function}
+     */
 
     setCSS = function(elem, prop, value, extra) {
 
@@ -187,7 +239,7 @@ var sHeightWidth = /^(height|width)$/i,
         if (cssCore.FX.activated[prop]) {
 
             var hook = prop,
-                hookRoot = getRoot(hook);
+                hookRoot = checkActivation(hook);
 
             if (root === undefined) {
                 root = getFXCss(elem, hAzzle.prefixCheck(hookRoot)[0]);
@@ -197,7 +249,7 @@ var sHeightWidth = /^(height|width)$/i,
                 root = cssCore.FX.cssHooks[hookRoot].get(elem, root);
             }
 
-            propertyValue = extractValue(hook, root);
+            propertyValue = wrapOut(hook, root);
 
         } else if (cssCore.FX.cssHooks[prop]) {
             var normalizedPropertyName = cssCore.FX.cssHooks[prop].name,
@@ -254,11 +306,11 @@ var sHeightWidth = /^(height|width)$/i,
             } else {
                 if (cssCore.FX.activated[prop]) {
                     var hookName = prop,
-                        hookRoot = getRoot(prop);
+                        hookRoot = checkActivation(prop);
 
                     root = root || getFXCss(elem, hookRoot);
 
-                    value = injectValue(hookName, value, root);
+                    value = WrapIn(hookName, value, root);
                     prop = hookRoot;
                 }
 

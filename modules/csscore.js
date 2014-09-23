@@ -1,7 +1,5 @@
-// styles.js
-var prefixMatches = {},
-
-    cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
+// csscore.js
+var cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse animation animationFillMode ' +
         'animationDirection animatioName animationTimingFunction animationPlayState perspective boxSizing ' +
         'textOverflow columns borderRadius boxshadow borderImage columnCount boxReflect transform transformOrigin ' +
         'columnRuleColor outlineColor textDecorationColor textEmphasisColor transition transitionDelay filter ' +
@@ -17,7 +15,8 @@ var prefixMatches = {},
         'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
         'alpha z-index font-weight opacity red green blue').split(' '),
 
-  
+    prefixCache = {},
+    
     // Templates for use with animation engine
 
     templates = {
@@ -25,6 +24,8 @@ var prefixMatches = {},
     },
 
     cssCore = {
+     
+     // RegEx we are using
 
         RegEx: {
             sLnline: /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
@@ -40,7 +41,6 @@ var prefixMatches = {},
         },
 
         cssProps: {
-
             'float': 'cssFloat'
         },
 
@@ -70,54 +70,7 @@ var prefixMatches = {},
             activated: {},
 
             cssHooks: {
-
-                clip: {
-
-                    name: 'clip',
-                    set: function(elem, value) {
-                        return 'rect(' + value + ')';
-                    },
-
-                    get: function(elem, value) {
-
-                        var extracted;
-
-                        if (cssCore.RegEx.sWrappetVAE.test(value)) {
-                            extracted = value;
-                        } else {
-                            extracted = value.toString().match(cssCore.RegEx.sUnwrap);
-                            extracted = extracted ? extracted[1].replace(/,(\s+)?/g, ' ') : value;
-                        }
-
-                        return extracted;
-                    }
-                },
-
-                blur: {
-
-                    name: '-webkit-filter',
-                    set: function(elem, value) {
-
-                        if (!parseFloat(value)) {
-                            return 'none';
-                        } else {
-                            return 'blur(' + value + ')';
-                        }
-                    },
-                    get: function(elem, value) {
-
-                        var extracted = parseFloat(value);
-                        if (!(extracted || extracted === 0)) {
-                            var blurComponent = value.toString().match(/blur\(([0-9]+[A-z]+)\)/i);
-                            if (blurComponent) {
-                                extracted = blurComponent[1];
-                            } else {
-                                extracted = 0;
-                            }
-                        }
-                        return extracted;
-                    }
-                }
+             
             }
         },
 
@@ -141,13 +94,14 @@ var prefixMatches = {},
             },
         }
     },
-
+    
+    // Expose
+    
     cssHook = cssCore.hooks,
 
     prefixCheck = function(prop) {
-
-        if (prefixMatches[prop]) {
-            return [prefixMatches[prop], true];
+        if (prefixCache[prop]) {
+            return [prefixCache[prop], true];
         }
         return [prop, false];
     },
@@ -181,6 +135,7 @@ hAzzle.getDisplayType = getDisplayType;
 hAzzle.isZeroValue = isZeroValue;
 hAzzle.prefixCheck = prefixCheck;
 hAzzle.cssHooks = cssHook;
+hAzzle.fxHooks = cssCore.FX.cssHooks;
 
 /* ============================ FEATURE / BUG DETECTION =========================== */
 
@@ -255,15 +210,15 @@ hAzzle.each(props, function(propName) {
         stylePropName = stylePropName[0].toLowerCase() + stylePropName.substr(1);
     }
 
-    // 'prefixMatches' contains:
+    // 'prefixCache' contains:
     // camelized properties to left - camelized vendor prefixed properties to right
     // To get a prefixed property, just to:
     //
-    // prefixMatches[boxAlign]
+    // prefixCache[boxAlign]
     //
     // Result in Firefox would be: MozBoxAlign
 
-    prefixMatches[hAzzle.camelize(unprefixedName)] = stylePropName;
+    prefixCache[hAzzle.camelize(unprefixedName)] = stylePropName;
 
     // 'cssCamelized' contains:
     // un-prefixed CSS properties to left - camelized properties to right
@@ -292,7 +247,7 @@ hAzzle.autoCamelize = function(prop) {
 
 // Detect support for other CSS properties
 hAzzle.each(cssProperties, function(prop) {
-    if (prefixMatches[prop]) {
+    if (prefixCache[prop]) {
         hAzzle.cssSupport[prop] = true;
     }
 });
