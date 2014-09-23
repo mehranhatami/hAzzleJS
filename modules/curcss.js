@@ -6,6 +6,24 @@ var cHeightWidth = /^(height|width)$/i,
     _private = function(elem) {
         return hAzzle.private(elem, 'CSS');
     },
+    computedValues;
+// Webkit
+if (hAzzle.isWebkit) {
+    computedValues = function(elem) {
+        var s;
+        if (elem.nodeType === 1) {
+            var dv = elem.ownerDocument.defaultView;
+            s = dv.getComputedStyle(elem, null);
+            if (!s && node.style) {
+                elem.style.display = '';
+                s = dv.getComputedStyle(elem, null);
+            }
+        }
+        return s || {};
+    };
+
+
+} else { // All others
     computedValues = function(elem) {
         var view = false;
         if (elem && elem !== window) {
@@ -18,8 +36,10 @@ var cHeightWidth = /^(height|width)$/i,
                     window.getComputedStyle(elem, null)) : elem.style;
         }
         return null;
-    },
-    getStyles = function(elem, styles) {
+    };
+}
+
+var getStyles = function(elem, styles) {
         var computed;
 
         if (styles) {

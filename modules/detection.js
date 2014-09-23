@@ -10,11 +10,12 @@ var i, ua = navigator.userAgent,
         Firefox: typeof InstallTrigger !== 'undefined', // Firefox
         Chrome: !!window.chrome && !window.opera || ua.indexOf(' OPR/') >= 0, // Chrome 1+
         Safari: Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0,
-        IE: false || !!document.documentMode // IE
+        IE: false || !!document.documentMode, // IE
+        // Webkit detection
+        Webkit: 'WebkitAppearance' in document.documentElement.style
     }
 
 // Expose
 hAzzle.each(Detection, function(bool, name) {
     hAzzle['is' + name] = bool;
 });
-

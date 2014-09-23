@@ -82,19 +82,22 @@ function animateTransform(elem) {
 
     if ((hAzzle.ie || (hAzzle.isAndroid && !hAzzle.isChrome)) && getCached(elem).isSVG) {
 
-        function getTransformFloat(transformProperty) {
-            return parseFloat(getFXCss(elem, transformProperty));
-        }
+        var translateX = getFXCss(elem, 'translateX'),
+            translateY = getFXCss(elem, 'translateY'),
+            skewX = getFXCss(elem, 'skewX'),
+            skewY = getFXCss(elem, 'skewY'),
+            scale = getFXCss(elem, 'scale'),
+            scaleX = getFXCss(elem, 'scaleX'),
+            scaleY = getFXCss(elem, 'scaleY'),
+            rotateZ = getFXCss(elem, 'rotateZ'),
 
-        var SVGTransforms = {
-            translate: [getTransformFloat('translateX'), getTransformFloat('translateY')],
-            skewX: [getTransformFloat('skewX')],
-            skewY: [getTransformFloat('skewY')],
-
-            scale: getTransformFloat('scale') !== 1 ? [getTransformFloat('scale'), getTransformFloat('scale')] : [getTransformFloat('scaleX'), getTransformFloat('scaleY')],
-
-            rotate: [getTransformFloat('rotateZ'), 0, 0]
-        };
+            SVGTransforms = {
+                translate: [parseFloat(translateX), parseFloat(translateY)],
+                skewX: [parseFloat(skewX)],
+                skewY: [parseFloat(skewY)],
+                scale: scale !== 1 ? [scale, scale] : [scaleX, scaleY],
+                rotate: [rotateZ, 0, 0]
+            };
 
         for (name in getCached(elem).transformCache) {
 
@@ -114,15 +117,20 @@ function animateTransform(elem) {
 
     } else {
 
-        for (name in getCached(elem).transformCache) {
-            transformValue = getCached(elem).transformCache[name];
+        // Avoid stressing storage.js for each iteration
+
+        var gCElem = getCached(elem);
+
+        for (name in gCElem.transformCache) {
+
+            transformValue = gCElem.transformCache[name];
 
             if (name === 'transformPerspective') {
                 perspective = transformValue;
                 return true;
             }
 
-            // IE9 only supports one rotation type, rotateZ, which it refers to as 'rotate'.
+            // IE9 only supports rotateZ, which it refers to as 'rotate'.
 
             if (hAzzle.ie === 9 && name === 'rotateZ') {
                 name = 'rotate';
