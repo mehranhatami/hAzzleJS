@@ -1,157 +1,139 @@
 // transform.js
-// NOTE! Not all browsers are supporting this, so we have to check for it and
-// only allow CSS Transform if browser supported
-
-var specialTransform = ('translateX translateY scale scaleX scaleY skewX skewY rotateZ').split(' '),
-    transforms3D = ('transformPerspective translateZ scaleZ rotateX rotateY').split(' '),
+var specialTransform = ['translateX', 'translateY', 'scale', 'scaleX', 'scaleY', 'skewX', 'skewY', 'rotateZ'],
+    transforms3D = ['transformPerspective', 'translateZ', 'scaleZ', 'rotateX', 'rotateY'],
+    // Note! 3D transform not working either in older Android versions, but we are not supporting
+    // this versions anyways
+    transformProps = (hAzzle.ie !== 9) ? specialTransform.concat(transforms3D) : specialTransform,
     tTranslate = /^translate/i,
     tScale = /^scale/i,
     tRotate = /^rotate/i,
+    tWrap = /[()]/g,
     tUnits = /(%|px|em|rem|vw|vh|\d)$/i,
     tDigit = /(\d)$/i,
-    tDeg = /(deg|\d)$/i;
+    tDeg = /(deg|\d)$/i,
 
-// 3D transform not supported in IE 9
+    getTransform = function(elem) {
+        if (getCached(elem) === undefined ||
+            getCached(elem).transformCache[name] === undefined) {
+            return tScale.test(name) ? 1 : 0;
+        } else {
+            return getCached(elem).transformCache[name].replace(tWrap, '');
+        }
+    },
+    setTransform = function(elem, value) {
 
-if (hAzzle.ie !== 9) {
-    specialTransform = specialTransform.concat(transforms3D);
-}
+        var invalid = false,
+            shortName = name.slice(0, name.length - 1);
+        if (shortName === 'translate') {
+            invalid = !tUnits.test(value);
+        } else if (shortName === 'scale' || shortName === 'scal') {
+            if (hAzzle.isAndroid && getCached(elem).transformCache[name] === undefined && value < 1) {
+                value = 1;
+            }
+            invalid = !tDigit.test(value);
+        } else if (shortName === 'skew') {
+            invalid = !tDeg.test(value);
+        } else if (shortName === 'rotate') {
+            invalid = !tDeg.test(value);
+        }
 
-// Extend 'templates' object 
+        if (!invalid) {
+            getCached(elem).transformCache[name] = '(' + value + ')';
+        }
 
-hAzzle.extend({
-    'backgroundPosition': ['X Y', '0% 0%'],
-    'transformOrigin': ['X Y Z', '50% 50% 0px'],
-    'perspectiveOrigin': ['X Y', '50% 50%']
+        return getCached(elem).transformCache[name];
+    };
 
-}, templates);
+// Add some templates
 
-// Check if we are supporting CSS Transform
+templates.backgroundPosition = ['X Y', '0% 0%'];
+templates.transformOrigin = ['X Y Z', '50% 50% 0px'];
+templates.perspectiveOrigin = ['X Y', '50% 50%'];
+
+// Only continue if the browser support CSS 3D transform...
 
 if (hAzzle.cssSupport.transform) {
 
     var i = 0,
-        len = specialTransform.length;
+        name, len = transformProps.length;
 
     for (; i < len; i++) {
 
-        (function() {
+        name = transformProps[i];
 
-            var name = specialTransform[i];
+        // Extend FX animation hooks
 
-            // Extend FX animation hooks
-
-            cssCore.FX.cssHooks[name] = {
-
-                name: 'transform',
-
-                get: function(elem) {
-                    var _private = getCached(elem);
-
-                    if (_private === undefined ||
-                        _private.transformCache[name] === undefined) {
-                        return tScale.test(name) ? 1 : 0;
-                    } else {
-                        return _private.transformCache[name].replace(/[()]/g, '');
-                    }
-                },
-
-                set: function(elem, value) {
-
-                    var invalid = false,
-                        _private = getCached(elem),
-                        shortName = name.substr(0, name.length - 1);
-
-                    if (shortName === 'translate') {
-                        invalid = !tUnits.test(value);
-                    } else if (shortName === 'scale' || shortName === 'scal') {
-                        if (hAzzle.isAndroid &&
-                            _private.transformCache[name] === undefined && value < 1) {
-                            value = 1;
-                        }
-
-                        invalid = !tDigit.test(value);
-                    } else if (shortName === 'skew') {
-                        invalid = !tDeg.test(value);
-                    } else if (shortName === 'rotate') {
-                        invalid = !tDeg.test(value);
-                    }
-
-                    if (!invalid) {
-                        _private.transformCache[name] = '(' + value + ')';
-                    }
-
-                    return _private.transformCache[name];
-                }
-            };
-        })();
+        cssCore.FX.cssHooks[name] = {
+            name: 'transform',
+            get: getTransform,
+            set: setTransform
+        };
     }
+}
 
-    function getCached(elem) {
-        return hAzzle.private(elem, 'CSS');
-    }
+function getCached(elem) {
+    return hAzzle.private(elem, 'CSS');
+}
 
-    function flushTransformCache(elem) {
-        var transformString = '',
-            name, value;
+function animateTransform(elem) {
+    var transformString = '',
+        perspective,
+        name, transformValue;
 
-        if ((hAzzle.ie || (hAzzle.isAndroid && !hAzzle.isChrome)) && getCached(elem).isSVG) {
+    if ((hAzzle.ie || (hAzzle.isAndroid && !hAzzle.isChrome)) && getCached(elem).isSVG) {
 
-            function getTransformFloat(transformProperty) {
-                return parseFloat(getFXCss(elem, transformProperty));
+        function getTransformFloat(transformProperty) {
+            return parseFloat(getFXCss(elem, transformProperty));
+        }
+
+        var SVGTransforms = {
+            translate: [getTransformFloat('translateX'), getTransformFloat('translateY')],
+            skewX: [getTransformFloat('skewX')],
+            skewY: [getTransformFloat('skewY')],
+
+            scale: getTransformFloat('scale') !== 1 ? [getTransformFloat('scale'), getTransformFloat('scale')] : [getTransformFloat('scaleX'), getTransformFloat('scaleY')],
+
+            rotate: [getTransformFloat('rotateZ'), 0, 0]
+        };
+
+        for (name in getCached(elem).transformCache) {
+
+            if (tTranslate.test(name)) {
+                name = 'translate';
+            } else if (tScale.test(name)) {
+                name = 'scale';
+            } else if (tRotate.test(name)) {
+                name = 'rotate';
             }
 
-            var SVGTransforms = {
-                translate: [getTransformFloat('translateX'), getTransformFloat('translateY')],
-                skewX: [getTransformFloat('skewX')],
-                skewY: [getTransformFloat('skewY')],
-
-                scale: getTransformFloat('scale') !== 1 ? [getTransformFloat('scale'), getTransformFloat('scale')] : [getTransformFloat('scaleX'), getTransformFloat('scaleY')],
-
-                rotate: [getTransformFloat('rotateZ'), 0, 0]
-            };
-
-            for (name in getCached(elem).transformCache) {
-
-                if (tTranslate.test(name)) {
-                    name = 'translate';
-                } else if (tScale.test(name)) {
-                    name = 'scale';
-                } else if (tRotate.test(name)) {
-                    name = 'rotate';
-                }
-
-                if (SVGTransforms[name]) {
-                    transformString += name + '(' + SVGTransforms[name].join(' ') + ')' + ' ';
-                    delete SVGTransforms[name];
-                }
-            }
-
-        } else {
-
-            var perspective;
-
-            for (name in getCached(elem).transformCache) {
-                value = getCached(elem).transformCache[name];
-
-                if (name === 'transformPerspective') {
-                    perspective = value;
-                    return true;
-                }
-
-                // IE9 only supports one rotation type, rotateZ, which it refers to as 'rotate'.
-
-                if (hAzzle.ie === 9 && name === 'rotateZ') {
-                    name = 'rotate';
-                }
-
-                transformString += name + value + ' ';
-            }
-
-            if (perspective) {
-                transformString = 'perspective' + perspective + ' ' + transformString;
+            if (SVGTransforms[name]) {
+                transformString += name + '(' + SVGTransforms[name].join(' ') + ')' + ' ';
+                delete SVGTransforms[name];
             }
         }
-        setFXCss(elem, 'transform', transformString);
+
+    } else {
+
+        for (name in getCached(elem).transformCache) {
+            transformValue = getCached(elem).transformCache[name];
+
+            if (name === 'transformPerspective') {
+                perspective = transformValue;
+                return true;
+            }
+
+            // IE9 only supports one rotation type, rotateZ, which it refers to as 'rotate'.
+
+            if (hAzzle.ie === 9 && name === 'rotateZ') {
+                name = 'rotate';
+            }
+
+            transformString += name + transformValue + ' ';
+        }
+
+        if (perspective) {
+            transformString = 'perspective' + perspective + ' ' + transformString;
+        }
     }
+    setFXCss(elem, 'transform', transformString);
 }
