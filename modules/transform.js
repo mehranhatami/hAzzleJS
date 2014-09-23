@@ -92,9 +92,9 @@ function animateTransform(elem) {
             rotateZ = getFXCss(elem, 'rotateZ'),
 
             SVGTransforms = {
-                translate: [parseFloat(translateX), parseFloat(translateY)],
-                skewX: [parseFloat(skewX)],
-                skewY: [parseFloat(skewY)],
+                translate: [toFloat(translateX), toFloat(translateY)],
+                skewX: [toFloat(skewX)],
+                skewY: [toFloat(skewY)],
                 scale: scale !== 1 ? [scale, scale] : [scaleX, scaleY],
                 rotate: [rotateZ, 0, 0]
             };

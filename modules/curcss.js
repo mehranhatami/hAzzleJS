@@ -39,7 +39,10 @@ if (hAzzle.isWebkit) {
     };
 }
 
-var getStyles = function(elem, styles) {
+var toFloat = function(str) {
+        return parseFloat(str);
+    },
+    getStyles = function(elem, styles) {
         var computed;
 
         if (styles) {
@@ -84,10 +87,10 @@ var getStyles = function(elem, styles) {
                 getFXCss(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
 
                 var contentBoxHeight = elem.offsetHeight -
-                    (parseFloat(getCSS(elem, 'borderTopWidth')) || 0) -
-                    (parseFloat(getCSS(elem, 'borderBottomWidth')) || 0) -
-                    (parseFloat(getCSS(elem, 'paddingTop')) || 0) -
-                    (parseFloat(getCSS(elem, 'paddingBottom')) || 0);
+                    (toFloat(getCSS(elem, 'borderTopWidth')) || 0) -
+                    (toFloat(getCSS(elem, 'borderBottomWidth')) || 0) -
+                    (toFloat(getCSS(elem, 'paddingTop')) || 0) -
+                    (toFloat(getCSS(elem, 'paddingBottom')) || 0);
                 revertDisplay();
 
                 return contentBoxHeight;
@@ -96,10 +99,10 @@ var getStyles = function(elem, styles) {
                 getFXCss(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
 
                 var contentBoxWidth = elem.offsetWidth -
-                    (parseFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
-                    (parseFloat(getCSS(elem, 'borderRightWidth')) || 0) -
-                    (parseFloat(getCSS(elem, 'paddingLeft')) || 0) -
-                    (parseFloat(getCSS(elem, 'paddingRight')) || 0);
+                    (toFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
+                    (toFloat(getCSS(elem, 'borderRightWidth')) || 0) -
+                    (toFloat(getCSS(elem, 'paddingLeft')) || 0) -
+                    (toFloat(getCSS(elem, 'paddingRight')) || 0);
 
                 revertDisplay();
 

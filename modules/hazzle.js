@@ -4,7 +4,7 @@
  * Version: 0.9.9d RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-22
+ * Date: 2014-09-24
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -44,7 +44,9 @@
 
         // Whitespace regexp for hAzzle.trim()
 
-        trwl = /^\s+|\s+$/g,
+        hTrwl = /^\s+|\s+$/g,
+        hHyphenate = /[A-Z]/g,
+        hCapitalize = /\b[a-z]/g,
 
         camelCache = [],
 
@@ -152,10 +154,12 @@
     hAzzle.extend = function() {
         var length = arguments.length,
             source = arguments,
+
+
             target = arguments[1],
             i = 0,
-            k,
             extend = function(target, source) {
+                var k;
                 for (k in source) {
                     source.hasOwnProperty(k) && ((target || Core.prototype)[k] = source[k]);
                 }
@@ -242,8 +246,6 @@
                     node.hiD = name + hAzzle.UID++;
                 }
 
-                // tamperFix(node, name);
-
                 return node.hiD;
             }
 
@@ -323,15 +325,17 @@
         },
 
         capitalize: function(str) {
-            return str.replace(/^\w/, function(match) {
+            return str.replace(hCapitalize, function(match) {
                 return match.toUpperCase();
             });
         },
         // Convert camelCase to  CSS-style
         // e.g. boxSizing -> box-sizing
 
-        decamelize: function(str) {
-            return str ? str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase() : str;
+        hyphenate: function(str) {
+            return str.replace(hHyphenate, function(match) {
+                return ('-' + match.charAt(0).toLowerCase());
+            });
         },
 
         /**
@@ -341,11 +345,23 @@
          * @return {string}
          */
 
-        camelize: function(property) {
-            return camelCache[property] ? camelCache[property] :
-                camelCache[property] = property.replace(/-(\w)/g, function(match, subMatch) {
-                    return subMatch.toUpperCase();
+        camelize: function(str) {
+            return camelCache[str] ? camelCache[str] :
+                camelCache[str] = str.replace(/-\D/g, function(match) {
+                    return match.charAt(1).toUpperCase();
                 });
+        },
+
+        /**
+         * Remove leading and trailing whitespaces of the specified string.
+         *
+         * @param{String} str
+         * @return{String}
+         */
+
+        trim: function(str) {
+            return String.prototype.trim ? (typeof str === 'string' ? str.trim() : str) :
+                str.replace(hTrwl, '');
         },
 
         /**
@@ -618,37 +634,6 @@
         hasOwn: natives.hasOwnProperty
 
     }, hAzzle);
-
-    /**
-     * Remove leading and trailing whitespaces of the specified string.
-     *
-     * @param{String} str
-     * @return{String}
-     */
-
-    hAzzle.trim = (function() {
-
-        // IE9
-
-        if (!String.prototype.trim) {
-            return function(str) {
-                return str.replace(trwl, '');
-            };
-        }
-        return function(str) {
-            return typeof str === 'string' ? str.trim() : str;
-        };
-    })();
-
-    function tamperFix(node, name) {
-        var tmp = node.hiD.replace(name, '');
-        // The counter should be a number
-        if (typeof tmp !== 'number') {
-            // set a new valid number
-            node.hiD = name + hAzzle.UID++;
-        }
-        return node.hiD;
-    }
 
     //  Checks if `obj` is a window object.
 
