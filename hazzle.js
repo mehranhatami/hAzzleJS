@@ -6,16 +6,12 @@
     var path = 'modules/',
         hazzleModules = [
             path + 'hazzle.js',
-            path + 'uniqueid.js',
             path + 'booleans.js',
             path + 'doml4.js',
             path + 'query.js',
             path + 'types.js',
             path + 'ready.js',
-            path + 'shims/pnow.js',
-            path + 'system.js',
             path + 'text.js',
-            path + 'features.js',
             path + 'core.js',
             path + 'cache.js',			
             path + 'setter.js',			
@@ -44,9 +40,6 @@
             path + 'eventhooks.js',
             path + 'ajax.js',
             path + 'clone.js',
-            path + 'tween.js',
-            path + 'fx.js',
-            path + 'effects.js', 
             path + 'jsonxml.js'
         ];
     if (typeof exports === 'object') {

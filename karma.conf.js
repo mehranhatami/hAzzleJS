@@ -14,15 +14,12 @@ module.exports = function(config) {
 
     var modules = [
         'hazzle.js',
-        'features.js',
         'core.js',
         'cache.js',
         'doml4.js',
         'query.js',
         'types.js',
         'ready.js',
-        'shims/pnow.js',
-        'system.js',
         'text.js',
         'setter.js',
         'detection.js',
@@ -43,7 +40,6 @@ module.exports = function(config) {
         'csscore.js',
         'styles.js',
         'csshooks.js',
-        'fxhooks.js', 
         'position.js',
         'offset.js',
         'events.js',
@@ -52,7 +48,6 @@ module.exports = function(config) {
         'eventHooks.js',
         'ajax.js',
         'raf.js',
-        'tween.js',
         'traversing.js',
         'jsonxml.js',
     ];
