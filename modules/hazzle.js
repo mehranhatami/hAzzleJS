@@ -468,18 +468,7 @@
                 node.nodeType === 11);
         },
 
-        /**
-         * Check if it's an XML or HTML document
-         */
-
-        isXML: function(elem) {
-            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-            return documentElement ? documentElement.nodeName !== 'HTML' : false;
-        },
-
-        /**
-         * Return the elements nodeName
-         */
+        // Return the elements nodeName
 
         nodeName: function(el, name) {
             return el.nodeName && el.nodeName.toLowerCase() === name.toLowerCase();
