@@ -173,7 +173,7 @@ function createDisabledPseudo( disabled ) {
 				// Otherwise, assume any non-<option> under fieldset[disabled] is disabled
 				/* jshint -W018 */
 				elem.isDisabled !== !disabled &&
-					('label' in elem || !disabledAncestor( elem )) !== disabled
+					('label' in elem) !== disabled
 			);
 	};
 }
