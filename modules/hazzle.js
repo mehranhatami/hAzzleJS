@@ -4,8 +4,9 @@
  * Version: 0.9.9d RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-24
+ * Date: 2014-09-25
  */
+ 
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?

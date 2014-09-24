@@ -1,5 +1,4 @@
-// classList pollify for hAzzle - only needed for IE9 and a few 
-// other  browsers (mobile platform)
+// classList pollify
 
 if ('document' in self) {
 
@@ -10,7 +9,6 @@ if ('document' in self) {
             'use strict';
 
             if (!('Element' in view)) {
-				
                  return;
 			} 
 
@@ -47,8 +45,8 @@ if ('document' in self) {
 
                     var trimmedClasses = strTrim.call(elem.getAttribute('class') || ''),
                         classes = trimmedClasses ? trimmedClasses.split(/\s+/) : [],
-                        i = 0,
-                        len = classes.length;
+                        i = 0, len = classes.length;
+                        
                     for (; i < len; i++) {
                         this.push(classes[i]);
                     }
@@ -70,8 +68,7 @@ if ('document' in self) {
                 return checkTokenAndGetIndex(this, token) !== -1;
             };
             classListProto.add = function() {
-                var
-                    tokens = arguments,
+                var tokens = arguments,
                     i = 0,
                     l = tokens.length,
                     token,
@@ -140,14 +137,7 @@ if ('document' in self) {
                     enumerable: true,
                     configurable: true
                 };
-                try {
                     objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-                } catch (ex) { // IE 8 doesn't support enumerable:true
-                    if (ex.number === -0x7FF5EC54) {
-                        classListPropDesc.enumerable = false;
-                        objCtr.defineProperty(elemCtrProto, classListProp, classListPropDesc);
-                    }
-                }
             } else if (objCtr[protoProp].__defineGetter__) {
                 elemCtrProto.__defineGetter__(classListProp, classListGetter);
             }

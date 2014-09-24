@@ -9,7 +9,7 @@ var i, ua = navigator.userAgent,
 
         Opera: !!window.opera || ua.indexOf(' OPR/') >= 0,
         Firefox: typeof InstallTrigger !== 'undefined', // Firefox
-        Chrome: !!window.chrome && !window.opera || ua.indexOf(' OPR/') >= 0, // Chrome 1+
+        Chrome: window.chrome,
         Safari: Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0,
         IE: false || !!document.documentMode, // IE
         // Webkit detection

@@ -16,16 +16,10 @@ var cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse a
         'alpha z-index font-weight opacity red green blue').split(' '),
 
     prefixCache = {},
-    
-    // Templates for use with animation engine
-
-    templates = {
-        'clip': ['Top Right Bottom Left', '0px 0px 0px 0px'],
-    },
 
     cssCore = {
-     
-     // RegEx we are using
+
+        // RegEx we are using
 
         RegEx: {
             sLnline: /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
@@ -36,8 +30,6 @@ var cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse a
             sNumbs: /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
             isHex: /^#([A-f\d]{3}){1,2}$/i,
             sUnwrap: /^[A-z]+\((.*)\)$/i,
-            sWrappetVAE: /[0-9.]+ [0-9.]+ [0-9.]+( [0-9.]+)?/,
-            sValueSplit: /([A-z]+\(.+\))|(([A-z0-9#-.]+?)(?=\s|$))/ig
         },
 
         cssProps: {
@@ -70,7 +62,7 @@ var cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse a
             activated: {},
 
             cssHooks: {
-             
+
             }
         },
 
@@ -79,10 +71,6 @@ var cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse a
         hooks: {
 
             opacity: {
-                name: 'opacity',
-                set: function(elem, value) {
-                    return value;
-                },
                 get: function(elem, value) {
 
                     if (value) {
@@ -94,9 +82,9 @@ var cssProperties = ('textShadow opacity clip zIndex flex order borderCollapse a
             },
         }
     },
-    
+
     // Expose
-    
+
     cssHook = cssCore.hooks,
 
     prefixCheck = function(prop) {

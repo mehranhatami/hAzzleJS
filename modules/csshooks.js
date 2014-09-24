@@ -1,10 +1,6 @@
 // Fixes Chrome bug / issue
 if (hAzzle.isChrome) {
     hAzzle.cssHooks.textDecoration = {
-        name: 'textDecoration',
-        set: function(elem, value) {
-            return value;
-        },
         get: function(elem, computed) {
             if (computed) {
 
@@ -24,7 +20,6 @@ if (hAzzle.isChrome) {
 if (!cssCore.has['api-pixelPosition']) {
     hAzzle.each(['top', 'left', 'bottom', 'right'], function(prop) {
         hAzzle.cssHooks[prop] = {
-            name: prop,
             get: function(elem, computed) {
                 if (computed) {
                     var isAutoPosition,
