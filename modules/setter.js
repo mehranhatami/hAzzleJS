@@ -1,22 +1,26 @@
 // setter.js
 var setter = hAzzle.setter = function(elems, fn, key, value, chainable, eG, raw) {
 
-    var i = 0,
-        len = elems.length,
-        bulk = key === null;
+    var i = 0, l = elems.length, elem, bulk = key === null;
 
     // Set multiple values
 
     if (hAzzle.type(key) === 'object') {
+
         chainable = true;
+
         for (i in key) {
             setter(elems, fn, i, key[i], true, eG, raw);
         }
 
         // Sets one value
+
     } else if (typeof value !== 'undefined') {
+
         chainable = true;
-        if (!hAzzle.isFunction(value)) {
+
+        if (typeof value !== 'function') {
+
             raw = true;
         }
 
@@ -37,13 +41,17 @@ var setter = hAzzle.setter = function(elems, fn, key, value, chainable, eG, raw)
         }
 
         if (fn) {
-            for (; i < len; i++) {
-                fn(elems[i], key, raw ? value : value.call(elems[i], i, fn(elems[i], key)));
+
+            while (l--) {
+                elem = elems[l];
+                fn(elems[l], key, raw ?
+                    value :
+                    value.call(elem, l, fn(elem, key)));
             }
         }
     }
 
     return chainable ? elems : bulk ?
-        fn.call(elems) : len ?
+        fn.call(elems) : l ?
         fn(elems[0], key) : eG;
-};
+}

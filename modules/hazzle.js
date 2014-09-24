@@ -6,6 +6,7 @@
  *
  * Date: 2014-09-25
  */
+ 
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
@@ -125,24 +126,24 @@
         },
 
         /**
-         * @param {Function} fn
+         * @param {Function} callback
          * @param {Boolean} reverse
          * @return {hAzzle}
          */
 
-        each: function(fn, reverse) {
-            return hAzzle.each(this, fn, reverse);
+        each: function(callback, reverse) {
+            return hAzzle.each(this, callback, reverse);
         },
 
         /**
-         * @param {Function} fn
+         * @param {Function} callback
          * @param {Boolean} rev
          * @return {Array}
          */
 
-        map: function(fn) {
+        map: function(callback) {
             return hAzzle(hAzzle.map(this, function(elem, i) {
-                return fn.call(elem, i, elem);
+                return callback.call(elem, i, elem);
             }));
         }
     };
@@ -257,12 +258,12 @@
         /**
          * Run callback for each element in the collection
          * @param {Array|Function|Object} obj
-         * @param {Function} fn
+         * @param {Function} callback
          * @param {String} context
          * @return {hAzzle}
          */
 
-        each: function(collection, fn, scope, reverse) {
+        each: function(collection, callback, reverse) {
             if (!collection) {
                 return;
             }
@@ -273,10 +274,11 @@
             // Iterate through array	
 
             if (isArraylike(collection)) {
+
                 if (reverse) {
-                    for (i = l - 1; i > -1; i--) {
+                    for (i = collection.length - 1; i >= 0; i--) {
                         element = collection[i];
-                        if (fn.call(scope || element, element, i) === false) {
+                        if (callback.call(element, element, i) === false) {
                             break;
                         }
                     }
@@ -284,17 +286,36 @@
 
                     for (; i < l; i++) {
                         element = collection[i];
-                        if (fn.call(scope || element, element, i) === false) {
+                        if (callback.call(element, element, i) === false) {
                             break;
                         }
                     }
                 }
+
+                // Iterate through functions
+
+            } else if (typeof collection === 'function') {
+
+                for (i in collection) {
+
+                    if (i != 'prototype' && i != 'length' &&
+                        i != 'name' && (!collection.hasOwnProperty ||
+                            collection.hasOwnProperty(i))) {
+                        element = collection[i];
+                        if (callback.call(element, element, i) === false) {
+
+                            break;
+                        }
+                    }
+                }
+
+                // Iterate through 
             } else {
 
                 for (i in collection) {
                     if (collection.hasOwnProperty(i)) {
                         element = collection[i];
-                        if (fn.call(scope || element, element, i) === false) {
+                        if (callback.call(element, element, i) === false) {
                             break;
                         }
                     }
@@ -380,13 +401,13 @@
             return -1;
         },
 
-        map: function(elems, fn, arg) {
+        map: function(elems, callback, arg) {
 
             var value,
                 i = 0,
                 length = elems.length,
                 isArray = isArraylike(elems),
-                results = [];
+                ret = [];
 
             // Go through the array, translating each of the items to their new values
 
@@ -394,10 +415,10 @@
 
                 for (; i < length; i++) {
 
-                    value = fn(elems[i], i, arg);
+                    value = callback(elems[i], i, arg);
 
                     if (value !== null) {
-                        results[i] = value;
+                        ret.push(value);
                     }
                 }
 
@@ -406,17 +427,17 @@
             } else {
 
                 for (i in elems) {
-                    value = fn(elems[i], i, arg);
+                    value = callback(elems[i], i, arg);
 
                     if (value !== null) {
-                        results[i] = value;
+                        ret.push(value);
                     }
                 }
             }
 
             // Flatten any nested arrays
 
-            return concat.apply([], results);
+            return concat.apply([], ret);
         },
 
         /**
@@ -427,7 +448,7 @@
          * @param {Object} initial value
          */
 
-        reduce: function(arr, fn, val) {
+        reduce: function(arr, callback, val) {
 
             var rval = val,
                 i = 0,
@@ -435,7 +456,7 @@
 
             for (; i < l; i++) {
 
-                rval = fn(rval, arr[i], i, arr);
+                rval = callback(rval, arr[i], i, arr);
             }
             return rval;
         },
@@ -471,6 +492,34 @@
 
 
         noop: function() {},
+
+        /**
+         * Return only nodes matching the filter
+         *
+         * @param {String|nodeType|Function} sel
+         * @return {Array}
+         
+         *
+         */
+
+        filter: function(obj, predicate, context) {
+
+            var results = [];
+
+            if (obj === null) {
+                return results;
+            }
+
+            hAzzle.each(obj, function(value, index, list) {
+
+                if (predicate.call(context, value, index, list)) {
+
+                    results.push(value);
+                }
+            });
+
+            return hAzzle(results);
+        },
 
         makeArray: function(nodeList) {
 
@@ -605,7 +654,7 @@
     // Expose
 
     hAzzle.docElem = docElem;
-
+  
     // Populate the native list
 
     hAzzle.each(['Boolean',
