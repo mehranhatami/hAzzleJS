@@ -157,3 +157,25 @@ function createButtonPseudo(type) {
         return (name === 'input' || name === 'button') && elem.type === type.toLowerCase();
     };
 }
+
+function createDisabledPseudo( disabled ) {
+	// Known :disabled false positives:
+	// IE: *[disabled]:not(button, input, select, textarea, optgroup, option, menuitem, fieldset)
+	// not IE: fieldset[disabled] fieldset
+	return function( elem ) {
+		// :enabled ignores ancestry for optgroup, a[href], area[href], link[href]
+		return (disabled || 'label' in elem || elem.href) && elem.disabled === disabled ||
+			'form' in elem && elem.disabled === false && (
+				// Support: IE6-11+
+				// Ancestry is covered for us
+				elem.isDisabled === disabled ||
+
+				// Otherwise, assume any non-<option> under fieldset[disabled] is disabled
+				/* jshint -W018 */
+				elem.isDisabled !== !disabled &&
+					('label' in elem || !disabledAncestor( elem )) !== disabled
+			);
+	};
+}
+hAzzle.Expr.ENABLED = createDisabledPseudo(false);
+hAzzle.Expr.DISABLED = createDisabledPseudo(true);
