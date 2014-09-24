@@ -1,10 +1,13 @@
 // cl3.js
-var header = /^h\d$/i,
-   inputs = /^(?:input|select|textarea|button)$/i,
-   ridentifier = /^(?:\\.|[\w-]|[^\x00-\xa0])+$/,
-   runescape =/\\([\da-f]{1,6}[\x20\t\r\n\f]?|([\x20\t\r\n\f])|.)/ig;
-   funescape = function(_, escaped, escapedWhitespace) {
-        var high = "0x" + escaped - 0x10000;
+var clHeader = /^h\d$/i,
+    clInputs = /^(?:input|select|textarea|button)$/i,
+    clIdentifier = /^(?:\\.|[\w-]|[^\x00-\xa0])+$/,
+
+    // CSS escapes http://www.w3.org/TR/CSS21/syndata.html#escaped-characters
+
+   clRunescape = /\\([\da-f]{1,6}[\x20\t\r\n\f]?|([\x20\t\r\n\f])|.)/ig,
+   clFunescape = function(_, escaped, escapedWhitespace) {
+        var high = '0x' + escaped - 0x10000;
         return high !== high || escapedWhitespace ?
             escaped :
             high < 0 ?
@@ -14,12 +17,7 @@ var header = /^h\d$/i,
             String.fromCharCode(high >> 10 | 0xD800, high & 0x3FF | 0xDC00);
     };
 
-// NOTE!! This pseudo selectors are not nativelly supported by
-// QSA, query (DL 4) / queryAll (DL 4), and added here just to
-// keep up with Sizzle
 hAzzle.extend({
-
-    // Nativelly supported, but buggy
 
     'EMPTY': function(elem) {
         // DomQuery and jQuery get this wrong, oddly enough.
@@ -59,15 +57,12 @@ hAzzle.extend({
     'ACTIVE': function(elem) {
         return elem === document.activeElement;
     },
-
     'HOVER': function(elem) {
         return elem === document.hoverElement;
     },
-
     'VISIBLE': function(elem) {
         return !hAzzle.Expr.HIDDEN(elem);
     },
-
     'TEXT': function(elem) {
         var attr;
         return elem.nodeName.toLowerCase() === 'input' &&
@@ -76,7 +71,7 @@ hAzzle.extend({
                 attr.toLowerCase() === 'text');
     },
     'HEADER': function(elem) {
-        return header.test(elem.nodeName);
+        return clHeader.test(elem.nodeName);
     },
     'BUTTON': function(elem) {
         var name = elem.nodeName.toLowerCase();
@@ -84,7 +79,7 @@ hAzzle.extend({
             name === 'button';
     },
     'INPUT': function(elem) {
-        return inputs.test(elem.nodeName);
+        return clInputs.test(elem.nodeName);
     },
     'PARENT': function(elem) {
         return !hAzzle.Expr.EMPTY(elem);
@@ -99,19 +94,19 @@ hAzzle.extend({
     },
     'LANG': function(lang) {
         // lang value must be a valid identifier
-        if (!ridentifier.test(lang || "")) {
-            hAzzle.error("unsupported lang: " + lang);
+        if (!clIdentifier.test(lang || '')) {
+            hAzzle.error('unsupported lang: ' + lang);
         }
-        lang = lang.replace(runescape, funescape).toLowerCase();
+        lang = lang.replace(clRunescape, clFunescape).toLowerCase();
         return function(elem) {
             var elemLang;
             do {
                 if ((elemLang = hAzzle.documentIsHTML ?
                     elem.lang :
-                    elem.getAttribute("xml:lang") || elem.getAttribute("lang"))) {
+                    elem.getAttribute('xml:lang') || elem.getAttribute('lang'))) {
 
                     elemLang = elemLang.toLowerCase();
-                    return elemLang === lang || elemLang.indexOf(lang + "-") === 0;
+                    return elemLang === lang || elemLang.indexOf(lang + '-') === 0;
                 }
             } while ((elem = elem.parentNode) && elem.nodeType === 1);
             return false;

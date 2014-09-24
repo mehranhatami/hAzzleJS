@@ -93,6 +93,26 @@ var join = Array.prototype.join,
 
     runningCount = 0,
 
+    attributeGetters = {
+
+        'class': function(elem, attr) {
+            attr = elem.className;
+
+            if (attr === '' && elem.getAttribute('class') === null) {
+                attr = null;
+            }
+            return attr;
+        },
+        'href': function(elem) {
+            return elem.getAttribute('href', 2);
+        },
+        'title': function(elem) {
+            // getAttribute('title') can be '' when non-existent sometimes?
+            return elem.getAttribute('title') || null;
+        }
+
+    },
+
     isNative = function(context, name) {
         if (!context[name]) {
             return false;
@@ -156,8 +176,10 @@ function objValue(obj, props) {
     var keys = props.split(propsExpr).filter(function(value) {
             return value !== '';
         }),
-        current = obj, key,
-        i = 0, len = keys.length;
+        current = obj,
+        key,
+        i = 0,
+        len = keys.length;
 
     for (; i < len; i += 1) {
         key = keys[i];
@@ -383,7 +405,7 @@ var fakePath = (function() {
     JiesaFind = function(selector, context, arrfunc) {
 
         var found, results = [],
-            m, elem,isDoc = isDocument(context),
+            m, elem, isDoc = isDocument(context),
             scopedContext = context;
 
         if (!selector || typeof selector !== 'string') {
@@ -698,9 +720,9 @@ var fakePath = (function() {
             }
 
             // New caching approach
-            
+
             cached = hAzzle.trim(wholeSelector + group + selector);
-            
+
             if (contextCached) {
                 contextCached[baseSelector] = cached;
             } else {
@@ -835,46 +857,22 @@ function extend(pseudo, type, fn) {
 }
 
 function getAttr(elem, attr) {
-
-    if (!elem) {
-        return '';
-    }
-
     // Set document vars if needed
 
     if ((elem.ownerDocument || elem) !== document) {
         hAzzle.setDocument(elem);
     }
-
-    // Performance speed-up
-
-    if (attr === 'class') {
-        // className is '' when non-existent
-        // getAttribute('class') is null
-
-        attr = elem.className;
-
-        if (attr === '' && elem.getAttribute('class') === null) {
-            attr = null;
+    if (features.isHTMLDocument) {
+        var method = attributeGetters[attr];
+        if (method) {
+            return method.call(elem, elem, attr);
         }
-        return attr;
+        var attributeNode = node.getAttributeNode(attr);
+        return (attributeNode) ? attributeNode.nodeValue : null;
+    } else {
+        var method = attributeGetters[attr];
+        return (method) ? method.call(elem, elem, attr) : elem.getAttribute(attr);
     }
-    if (attr === 'href') {
-        return elem.getAttribute('href', 2);
-    }
-    if (attr === 'title') {
-        // getAttribute('title') can be '' when non-existent sometimes?
-        return elem.getAttribute('title') || null;
-    }
-    if (attr === 'style') {
-        return elem.style.cssText || '';
-    }
-    var val;
-    return hAzzle.documentIsHTML ?
-        elem.getAttribute(attr) :
-        (val = elem.getAttributeNode(attr)) && val.specified ?
-        val.value :
-        null;
 }
 
 /* ============================ FEATURE / BUG DETECTION =========================== */

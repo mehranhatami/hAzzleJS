@@ -654,13 +654,7 @@
     // Expose
 
     hAzzle.docElem = docElem;
-
-    // Tells if the document are XML or HTML
-    // Set to true as default, but it can be
-    // overwritten by the document.js module
-
-    hAzzle.documentIsHTML = true;
-
+  
     // Populate the native list
 
     hAzzle.each(['Boolean',

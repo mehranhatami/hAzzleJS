@@ -3,12 +3,11 @@ var features = {},
     toString = Object.prototype.toString,
     fMargsL = /(^| )a( |$)/,
     fMargsR = /(^| )b( |$)/,
-    fNative = /^[^{]+\{\s*\[native \w/,
-    matches,
-    expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, '');
+    fNative = /\{\s*\[native code\]\s*\}/,
+    matches, expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, '');
 
 features.isNativeCode = function(fn) {
-    return (/\{\s*\[native code\]\s*\}/).test('' + fn);
+    return (fNative).test('' + fn);
 };
 
 features.isXML = function(document) {
@@ -18,16 +17,26 @@ features.isXML = function(document) {
 
 features.setDocument = function(document) {
 
-    // Convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
+    // Convert elements / window arguments to document. 
+    // If document cannot be extrapolated, the function returns.
+
     var nodeType = document.nodeType;
+
     if (nodeType == 9); // document
-    else if (nodeType) document = document.ownerDocument; // node
-    else if (document.navigator) document = document.document; // window
-    else return;
+    else if (nodeType) {
+        document = document.ownerDocument; // node
+    } else if (document.navigator) {
+        document = document.document; // window
+    } else {
+        return;
+    }
 
     // Check if it's the old document
 
-    if (this.document === document) return;
+    if (this.document === document) {
+        return;
+    }
+
     this.document = document;
 
     // Check if we have done feature detection on this document before
@@ -45,8 +54,9 @@ features.setDocument = function(document) {
         return;
     }
 
-    features = featuresCache[rootUid] = {};
+    // Cache for better performance
 
+    features = featuresCache[rootUid] = {};
     features.root = root;
     features.isXMLDocument = this.isXML(document);
     features['bug-GEBTN'] = features.starSelectsClosedQSA =
@@ -72,7 +82,7 @@ features.setDocument = function(document) {
     } catch (e) {}
 
     // If HTML
-    
+
     if (features.isHTMLDocument) {
 
         testNode.style.display = 'none';
@@ -98,27 +108,17 @@ features.setDocument = function(document) {
             features.idGetsName = document.getElementById(id) === testNode.firstChild;
         } catch (e) {}
 
+        // Webkit and Opera dont return selected options on querySelectorAll
+        try {
+            testNode.innerHTML = '<select><option selected="selected">a</option></select>';
+            features.brokenCheckedQSA = (testNode.querySelectorAll(':checked').length === 0);
+        } catch (e) {}
 
-        if (testNode.querySelectorAll) {
-            // IE 8 returns closed nodes (EG:"</foo>") for querySelectorAll('*') for some documents
-            try {
-                testNode.innerHTML = 'foo</foo>';
-                selected = testNode.querySelectorAll('*');
-                features.starSelectsClosedQSA = (selected && !!selected.length && selected[0].nodeName.charAt(0) == '/');
-            } catch (e) {}
-
-            // Webkit and Opera dont return selected options on querySelectorAll
-            try {
-                testNode.innerHTML = '<select><option selected="selected">a</option></select>';
-                features.brokenCheckedQSA = (testNode.querySelectorAll(':checked').length === 0);
-            } catch (e) {}
-
-            // IE returns incorrect results for attr[*^$]="" selectors on querySelectorAll
-            try {
-                testNode.innerHTML = '<a class=""></a>';
-                features.brokenEmptyAttributeQSA = (testNode.querySelectorAll('[class*=""]').length !== 0);
-            } catch (e) {}
-        }
+        // IE returns incorrect results for attr[*^$]="" selectors on querySelectorAll
+        try {
+            testNode.innerHTML = '<a class=""></a>';
+            features.brokenEmptyAttributeQSA = (testNode.querySelectorAll('[class*=""]').length !== 0);
+        } catch (e) {}
     }
 
     try {
@@ -147,7 +147,9 @@ features.setDocument = function(document) {
     } : function(context, node) {
         if (node)
             do {
-                if (node === context) return true;
+                if (node === context) {
+                    return true;
+                }
             } while ((node = node.parentNode));
         return false;
     };
@@ -156,13 +158,19 @@ features.setDocument = function(document) {
     // Credits to Sizzle (http://sizzlejs.com/)
 
     features.documentSorter = (root.compareDocumentPosition) ? function(a, b) {
-        if (!a.compareDocumentPosition || !b.compareDocumentPosition) return 0;
+        if (!a.compareDocumentPosition || !b.compareDocumentPosition) {
+            return 0;
+        }
         return a.compareDocumentPosition(b) & 4 ? -1 : a === b ? 0 : 1;
     } : ('sourceIndex' in root) ? function(a, b) {
-        if (!a.sourceIndex || !b.sourceIndex) return 0;
+        if (!a.sourceIndex || !b.sourceIndex) {
+            return 0;
+        }
         return a.sourceIndex - b.sourceIndex;
     } : (document.createRange) ? function(a, b) {
-        if (!a.ownerDocument || !b.ownerDocument) return 0;
+        if (!a.ownerDocument || !b.ownerDocument) {
+            return 0;
+        }
         var aRange = a.ownerDocument.createRange(),
             bRange = b.ownerDocument.createRange();
         aRange.setStart(a, 0);
@@ -198,12 +206,13 @@ features.getUIDHTML = function(node) {
 // sort based on the setDocument documentSorter method.
 
 features.sort = function(results) {
-    if (!this.documentSorter) return results;
+    if (!this.documentSorter) {
+        return results;
+    }
     results.sort(this.documentSorter);
     return results;
 };
 
-console.log(features);
 
 /* ============================ BUG / FEATURE DETECTION =========================== */
 
@@ -292,23 +301,25 @@ features['bug-GEBI'] = hAzzle.assert(function(div) {
  * @return {Boolean}
  */
 hAzzle.contains = function(context, elem) {
-    // Set document vars if needed
-    if ((context.ownerDocument || context) !== document) {
-        features.setDocument(context);
-    }
+    features.setDocument(context);
     return features.contains(context, elem);
 };
 
 hAzzle.unique = features.sort;
 
-// Set document
-features.setDocument(document);
-
-window.document = features.document;
 
 // Expose
 
 hAzzle.expando = expando;
 hAzzle.features = features;
-hAzzle.isXML = features.isXML(document);
 
+hAzzle.setDocument = function() {
+    // Set document
+    features.setDocument(document);
+
+    window.document = features.document;
+    // hAzzle.isXML = features.isXML(document);
+    hAzzle.documentIsHTML = hAzzle.isXML ? false : true;
+    hAzzle.docElem = features.root;
+
+}
