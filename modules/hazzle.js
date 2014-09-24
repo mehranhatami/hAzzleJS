@@ -351,7 +351,6 @@
         str: Object.prototype.toString,
 
         indexOf: function(elem, arr, i) {
-
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
 
@@ -419,27 +418,6 @@
             return concat.apply([], results);
         },
 
-        /**
-         * Faster alternative till native prototype reduce
-         *
-         * @param {Array} array
-         * @param {Function} fn
-         * @param {Object} initial value
-         */
-
-        reduce: function(arr, fn, val) {
-
-            var rval = val,
-                i = 0,
-                l = arr.length;
-
-            for (; i < l; i++) {
-
-                rval = fn(rval, arr[i], i, arr);
-            }
-            return rval;
-        },
-
         isNode: function(node) {
 
             return node && node.nodeName && (node.nodeType === 1 ||
@@ -468,7 +446,6 @@
         },
 
         // Nothing
-
 
         noop: function() {},
 
@@ -595,8 +572,6 @@
             }
 
             type = hAzzle.type(obj);
-
-
 
             return type === 'array' || length === 0 ||
                 typeof length === 'number' && length > 0 && (length - 1) in obj;
