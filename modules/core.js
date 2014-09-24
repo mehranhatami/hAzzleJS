@@ -312,14 +312,14 @@ hAzzle.unique = features.sort;
 
 hAzzle.expando = expando;
 hAzzle.features = features;
-
-hAzzle.setDocument = function() {
+hAzzle.setDocument = function(doc) {
     // Set document
-    features.setDocument(document);
+    features.setDocument(doc);
 
     window.document = features.document;
-    // hAzzle.isXML = features.isXML(document);
+    hAzzle.isXML = features.isXML(document);
     hAzzle.documentIsHTML = hAzzle.isXML ? false : true;
     hAzzle.docElem = features.root;
-
 }
+
+hAzzle.setDocument (document);

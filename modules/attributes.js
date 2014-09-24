@@ -1,6 +1,4 @@
-/*!
- * attributes.js
- */
+// attributes.js
 var doc = this.document,
     ssv = /\S+/g,
     inseteb = /^(?:input|select|textarea|button)$/i,
@@ -64,8 +62,8 @@ hAzzle.extend({
      */
 
     toggleProp: function(prop) {
-        return this.each(function() {
-            return this.prop(prop, !this.prop(prop));
+        return this.each(function(elem) {
+            return elem.prop(prop, !elem.prop(prop));
         });
     },
 
@@ -106,20 +104,43 @@ hAzzle.extend({
         set: function(elem, value, name) {
 
             if (value === false) {
-
                 // Remove boolean attributes when set to false
                 hAzzle.removeAttr(elem, name);
-
             } else {
-
                 elem.setAttribute(name, name);
             }
-
             return name;
         }
 
     },
     attrHooks: {
+
+        href: {
+
+            get: function(elem) {
+                return ('href' in elem) ? elem.getAttribute('href', 2) : elem.getAttribute('href');
+            }
+        },
+
+        style: {
+            get: function(elem) {
+                return (elem.style) ? elem.style.cssText : elem.getAttribute('style');
+            }
+        },
+
+        tabindex: {
+            get: function(elem) {
+                var attributeNode = elem.getAttributeNode('tabindex');
+                return (attributeNode && attributeNode.specified) ? attributeNode.nodeValue : null;
+            }
+        },
+
+        maxlength: {
+            get: function(elem) {
+                var attributeNode = elem.getAttributeNode('maxLength');
+                return (attributeNode && attributeNode.specified) ? attributeNode.nodeValue : null;
+            }
+        },
 
         type: {
             set: function(elem, value) {
@@ -198,22 +219,17 @@ hAzzle.extend({
         var hooks, ret, notxml,
             nType = elem.nodeType;
 
-        if (!elem ||
-            nType === 2 ||
-            nType === 3 ||
-            nType === 8) {
-
+        if (!elem || nType === 3 || nType === 8 || nType === 2) {
             return;
         }
 
         if (typeof elem.getAttribute === 'undefined') {
-
             return hAzzle.prop(elem, name, value);
         }
 
-        notxml = nType !== 1 || !hAzzle.isXML(elem);
+        notxml = nType !== 1 || !features.isXML(elem);
 
-		if ( notxml ) {
+        if (notxml) {
 
             name = name.toLowerCase();
 
