@@ -23,7 +23,7 @@ var sHeightWidth = /^(height|width)$/i,
 
         prop = cssCore.cssCamelized[prop];
 
-        if (cssHook[prop]) {
+        if (cssHook[prop] && cssHook[prop].get) {
             val = cssHook[prop].get(elem, prop);
         }
 
@@ -58,7 +58,7 @@ var sHeightWidth = /^(height|width)$/i,
 
     setCSS = function(elem, prop, value, extra) {
 
-        var type, ret, oldValue,
+        var type, ret, oldValue, oldProp,
             nType = elem.nodeType,
             style = elem.style;
 
@@ -74,17 +74,22 @@ var sHeightWidth = /^(height|width)$/i,
 
             // Check for 'cssHook'
 
-            if (cssHook[prop]) {
+            if (cssHook[prop] && cssHook[prop].set) {
                 value = cssHook[prop].set(elem, value, extra);
-                prop = cssHook[prop].name;
+            }
 
+            // Pre-camelize 
+            // E.g. Firefox don't understand border-color
+            
+            if ((oldProp = cssCore.cssCamelized[prop])) {
+                prop = oldProp
             } else {
-                prop = cssCore.cssCamelized[prop];
+                prop = oldProp = hAzzle.camelize(prop);
             }
 
             // Assign the appropriate vendor prefix before perform an official style update.
 
-            prop = hAzzle.prefixCheck(prop)[0];
+            prop = hAzzle.prefixCheck(prop)[0] ;
 
             type = typeof value;
 
@@ -139,8 +144,6 @@ var sHeightWidth = /^(height|width)$/i,
             return style[prop];
         }
     };
-
-  
 
 hAzzle.extend({
 

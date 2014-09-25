@@ -4,8 +4,9 @@
  * Version: 0.9.9d RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-25
+ * Date: 2014-09-26
  */
+ 
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
@@ -326,6 +327,7 @@
          */
 
         camelize: function(str) {
+            if(!str) return;
             return camelCache[str] ? camelCache[str] :
                 camelCache[str] = str.replace(/-\D/g, function(match) {
                     return match.charAt(1).toUpperCase();
@@ -663,23 +665,24 @@
          * Finds the elements of an array which satisfy a filter function.
          */
 
-        grep: function(elems, callback, invert) {
-            var callbackInverse,
-                matches = [],
-                i = 0,
-                length = elems.length,
-                callbackExpect = !invert;
+      grep: function( elems, callback, invert ) {
+		var callbackInverse,
+			matches = [],
+			i = 0,
+			length = elems.length,
+			callbackExpect = !invert;
 
-            for (; i < length; i++) {
+		// Go through the array, only saving the items
+		// that pass the validator function
+		for ( ; i < length; i++ ) {
+			callbackInverse = !callback( elems[ i ], i );
+			if ( callbackInverse !== callbackExpect ) {
+				matches.push( elems[ i ] );
+			}
+		}
 
-                callbackInverse = !callback(elems[i], i);
-                if (callbackInverse !== callbackExpect) {
-                    matches.push(elems[i]);
-                }
-            }
-
-            return matches;
-        },
+		return matches;
+	},
         /**
          * Bind a function to a context, optionally partially applying any
          *

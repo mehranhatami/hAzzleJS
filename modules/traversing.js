@@ -1,18 +1,21 @@
 // traversing.js
-var tparpreunall = /^(?:parents|prev(?:Until|All))/,
+var tMethods = /^(?:parents|prev(?:Until|All))/,
     indexOf = Array.prototype.indexOf,
-    preservesUniquenessAndOrder = {},
+    preservesUniquenessAndOrder = {
+        children: 1,
+        contents: 1,
+        next: 1,
+        prev: 1
+    },
+
     isnot = function(els, selector, not) {
-
         var type = typeof selector;
-
         if (type === 'string') {
             selector = hAzzle.matches(selector, els);
             return hAzzle.grep(els, function(elem) {
                 return (indexOf.call(selector, elem) >= 0) !== not;
             });
         }
-
         return type === 'function' ?
             hAzzle.grep(els, function(elem, i) {
                 return !!selector.call(elem, i, elem) !== not;
@@ -22,6 +25,7 @@ var tparpreunall = /^(?:parents|prev(?:Until|All))/,
             }) : hAzzle.grep(els, function(elem) {
                 return (indexOf.call(selector, elem) >= 0) !== not;
             });
+
     };
 
 hAzzle.extend({
@@ -106,7 +110,7 @@ hAzzle.extend({
      */
 
     eq: function(i) {
-      var _this = this;
+        var _this = this;
         i = +i;
 
         // Use the first identity optimization if possible
@@ -183,6 +187,8 @@ hAzzle.extend({
     is: function(selector) {
         return !!isnot(
             this,
+            typeof selector === 'string' && eoeglnfl.test(selector) ?
+            hAzzle(selector) :
             selector || [],
             false
         ).length;
@@ -475,6 +481,7 @@ hAzzle.forOwn({
      * in the set of matched  elements, optionally filtered by a
      * selector.
      *
+
      * @param {Object} elem
      * @return {hAzzle}
      */
@@ -507,7 +514,8 @@ hAzzle.forOwn({
      */
 
     childrenAll: function(elem) {
-        return elem.contentDocument || hAzzle.merge([], elem.childNodes);
+        return elem.contentDocument || 
+        hAzzle.merge([], elem.childNodes);
     },
 
     /**
@@ -534,7 +542,6 @@ hAzzle.forOwn({
      */
 
     nextUntil: function(elem, i, until) {
-
         return hAzzle.traverse(elem, 'nextElementSibling', until);
     },
 
@@ -544,24 +551,20 @@ hAzzle.forOwn({
      */
 
     prevUntil: function(elem, i, until) {
-
         return hAzzle.traverse(elem, 'previousElementSibling', until);
     }
 
 }, function(fn, name) {
 
     hAzzle.Core[name] = function(until, selector) {
-
-        //   var matched = hAzzle.map(this, fn, until);
-
         var matched = hAzzle.map(this, function(elem) {
             var type = elem.nodeType;
-
-            if (type === 1 || type === 11 || type === 9) {
+            if (type === 1 ||
+                type === 11 ||
+                type === 9) {
                 return fn.apply(this, arguments);
             }
         }, until);
-
 
         if (name.slice(-5) !== 'Until') {
             selector = until;
@@ -577,7 +580,7 @@ hAzzle.forOwn({
                 hAzzle.unique(matched);
             }
 
-            if (tparpreunall.test(name)) {
+            if (tMethods.test(name)) {
 
                 matched.reverse();
             }
@@ -585,11 +588,6 @@ hAzzle.forOwn({
 
         return hAzzle(matched);
     };
-});
-
-
-hAzzle.each(['children', 'contents', 'next prev'], function(prop) {
-    preservesUniquenessAndOrder[prop] = true;
 });
 
 // Aliases
