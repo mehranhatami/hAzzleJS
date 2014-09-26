@@ -1,10 +1,14 @@
 // manipulation.js
-var simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
+var mRxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+    miAH = /<script|\[object/i,
+    mScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
     table = ['<table>', '</table>', 1],
     td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
     option = ['<select>', '</select>', 1],
     noscope = ['_', '', 0, 1],
     tagMap = {
+        style: table,
+        table: table,
         thead: table,
         tbody: table,
         tfoot: table,
@@ -27,12 +31,11 @@ var simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
 
     createScriptFromHtml = function(html) {
         var scriptEl = document.createElement('script'),
-            matches = html.match(simpleScriptTagRe);
+            matches = html.match(mScriptTagRe);
         scriptEl.src = matches[1];
         return scriptEl;
     },
     normalize = function(node, clone) {
-
         if (typeof node === 'string') {
             return hAzzle.create(node);
         }
@@ -107,9 +110,6 @@ hAzzle.extend({
             self = this,
             r = [],
             nodes = typeof target == 'string' && target.charAt(0) !== '<' ? hAzzle(target) : target;
-
-        // Normalize each node in case it's still a string and we need to create nodes on the fly
-
         hAzzle.each(normalize(nodes), function(t, j) {
             hAzzle.each(self, function(el) {
                 fn(t, r[i++] = j > 0 ? el.cloneNode(true) : el);
@@ -126,7 +126,7 @@ hAzzle.extend({
 hAzzle.create = function(node) {
     return typeof node == 'string' && node !== '' ?
         function() {
-            if (simpleScriptTagRe.test(node)) {
+            if (mScriptTagRe.test(node)) {
                 return [createScriptFromHtml(node)];
             }
             var tag = node.match(/^\s*<([^\s>]+)/),
@@ -159,27 +159,32 @@ hAzzle.create = function(node) {
         }() : hAzzle.isNode(node) ? [node.cloneNode(true)] : [];
 };
 
-
-
 // append, prepend
+// Note! We are only using iAH for append / prepend, for better performance
 
-hAzzle.each([
-    'append',
-    'prepend'
-], function(name) {
+hAzzle.each({
+    append: 'beforeend',
+    prepend: 'afterbegin'
+}, function(iah, name) {
     hAzzle.Core[name] = function(node) {
         return this.each(function(el, i) {
             if (el.nodeType === 1 ||
                 el.nodeType === 11 ||
                 el.nodeType === 9
             ) {
-                hAzzle.each(normalize(node, i), function(i) {
-                    if (name === 'append') {
-                        el.append(i);
-                    } else {
-                        el.prepend(i, el.firstChild);
-                    }
-                });
+                if (typeof node === 'string' &&
+                    el.insertAdjacentHTML &&
+                    el.parentNode && el.parentNode.nodeType === 1) {
+                    el.insertAdjacentHTML(iah, node.replace(mRxhtmlTag, '<$1></$2>'));
+                } else {
+                    hAzzle.each(normalize(node, i), function(i) {
+                        if (name === 'append') {
+                            el.append(i);
+                        } else {
+                            el.prepend(i, el.firstChild);
+                        }
+                    });
+                }
             }
         });
     };
