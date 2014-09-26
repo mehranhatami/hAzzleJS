@@ -22,15 +22,17 @@ hAzzle.Core.offset = function(options) {
         };
     }
     var de = elem.ownerDocument.documentElement,
-        bcr = elem.getBoundingClientRect();
+        bcr = elem.getBoundingClientRect(),
+        doc = document,
+        docElem = doc.documentElement;
 
     return {
         top: bcr.top + (window.pageYOffset ||
-                document.documentElement.scrollTop) -
-            Math.max(0, de && de.clientTop, document.body.clientTop),
+                docElem.scrollTop) -
+            Math.max(0, de && de.clientTop, doc.body.clientTop),
         left: bcr.left + (window.pageXOffset ||
-                document.documentElement.scrollLeft) -
-            Math.max(0, de && de.clientLeft, document.body.clientLeft),
+                docElem.scrollLeft) -
+            Math.max(0, de && de.clientLeft, doc.body.clientLeft),
         height: elem.offsetHeight,
         width: elem.offsetWidth
     };
@@ -69,10 +71,10 @@ function setOffset(elem, ops, i) {
         ops = ops.call(elem, i, curOffset);
     }
 
-    if (ops.top != null) {
+    if (ops.top !== null) {
         props.top = (ops.top - curOffset.top) + curTop;
     }
-    if (ops.left != null) {
+    if (ops.left !== null) {
         props.left = (ops.left - curOffset.left) + curLeft;
     }
 
