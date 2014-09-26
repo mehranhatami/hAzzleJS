@@ -4,16 +4,17 @@ var isBrowser =
     typeof window !== 'undefined' &&
     typeof location !== 'undefined' &&
     typeof document !== 'undefined' &&
-    window.location === location && window.document == document,
+    window.location === location &&
+    window.document === document,
     doc = isBrowser && document,
     element = doc && doc.createElement('DiV'),
     hasCache = {};
 
 hAzzle.extend({
     has: function(name) {
-        return typeof hasCache[name] === 'function' ? 
-                      (hasCache[name] = hasCache[name](window, doc, element)) : 
-                      hasCache[name]; // Boolean
+        return typeof hasCache[name] === 'function' ?
+            (hasCache[name] = hasCache[name](window, doc, element)) :
+            hasCache[name]; // Boolean
     },
 
     add: function(name, test, now, force) {
@@ -28,4 +29,15 @@ hAzzle.extend({
         }
         return element;
     }
- }, hAzzle);
+}, hAzzle);
+
+// XPath support
+
+hAzzle.add('xpath', function() {
+    return !!(document.evaluate);
+});
+
+// Air 
+hAzzle.add('air', function() {
+    return !!(window.runtime);
+});

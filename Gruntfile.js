@@ -47,6 +47,7 @@ function conf(grunt) {
                 'doml4.js',
                 'query.js',
                 'types.js',
+                'has.js',                
                 'ready.js',
                 'text.js',
 				'cache.js',

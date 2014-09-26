@@ -19,6 +19,7 @@ module.exports = function(config) {
         'doml4.js',
         'query.js',
         'types.js',
+        'has.js',        
         'ready.js',
         'text.js',
         'setter.js',
