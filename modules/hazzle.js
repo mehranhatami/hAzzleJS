@@ -4,7 +4,7 @@
  * Version: 0.9.9d RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-26
+ * Date: 2014-09-27
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -43,14 +43,6 @@
         // Holds javascript natives
 
         natives = {},
-
-        // Whitespace regexp for hAzzle.trim()
-
-        hTrwl = /^\s+|\s+$/g,
-        hHyphenate = /[A-Z]/g,
-        hCapitalize = /\b[a-z]/g,
-
-        camelCache = [],
 
         // Define a local copy of hAzzle
 
@@ -304,48 +296,7 @@
             return collection;
         },
 
-        capitalize: function(str) {
-            return str.replace(hCapitalize, function(match) {
-                return match.toUpperCase();
-            });
-        },
-        // Convert camelCase to  CSS-style
-        // e.g. boxSizing -> box-sizing
-
-        hyphenate: function(str) {
-            return str.replace(hHyphenate, function(match) {
-                return ('-' + match.charAt(0).toLowerCase());
-            });
-        },
-
-        /**
-         *  Convert dashed to camelCase
-         *
-         * @param {string} str
-         * @return {string}
-         */
-
-        camelize: function(str) {
-            if (!str) return;
-            return camelCache[str] ? camelCache[str] :
-                camelCache[str] = str.replace(/-\D/g, function(match) {
-                    return match.charAt(1).toUpperCase();
-                });
-        },
-
-        /**
-         * Remove leading and trailing whitespaces of the specified string.
-         *
-         * @param{String} str
-         * @return{String}
-         */
-
-        trim: function(str) {
-            return String.prototype.trim ? (typeof str === 'string' ? str.trim() : str) :
-                str.replace(hTrwl, '');
-        },
-
-        /**
+/**
          * toString
          */
 
@@ -544,7 +495,6 @@
         },
 
         hasOwn: natives.hasOwnProperty,
-
 
         mergeArray: function(arr, results) {
             var ret = results || [];
