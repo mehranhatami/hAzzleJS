@@ -56,7 +56,6 @@ hAzzle.extend({
     },
     isNumeric: function(obj) {
         return !hAzzle.isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
-
     },
 
     isBlank: function(str) {
@@ -99,10 +98,12 @@ hAzzle.extend({
     isNull: function(elem) {
         return elem == 'null';
     },
+    isNode: function(node) {
 
-    isNode: function(elem) {
-        return !!elem && typeof elem == 'object' && 'nodeType' in elem;
-    },
+            return node && node.nodeName && (node.nodeType === 1 ||
+                node.nodeType === 9 ||
+                node.nodeType === 11);
+     },
     isText: function(elem) {
         return elem && elem.nodeType === 3;
     },

@@ -419,13 +419,6 @@
             return concat.apply([], results);
         },
 
-        isNode: function(node) {
-
-            return node && node.nodeName && (node.nodeType === 1 ||
-                node.nodeType === 9 ||
-                node.nodeType === 11);
-        },
-
         // Return the elements nodeName
 
         nodeName: function(el, name) {

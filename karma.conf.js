@@ -23,6 +23,7 @@ module.exports = function(config) {
         'ready.js',
         'text.js',
         'setter.js',
+        'scroll.js',
         'detection.js',
         'storage.js',
         'jiesa.js',
