@@ -1,13 +1,7 @@
-/*!
- * Clone DOM nodes
- *
- * Supports:
- *
- * - data cloning
- * - event cloning
- */
-var filterSpace = /\s+/gi,
-    rcheckableType = /^(?:checkbox|radio)$/i;
+// clone.js
+
+var cSpace = /\s+/gi,
+    cCheckableType = /^(?:checkbox|radio)$/i;
 
 /**
  * Clone events - copy events from an element to another
@@ -49,12 +43,10 @@ hAzzle.Core.cloneEvent = function(source, filter) {
     hAzzle.Core.clone = function(shallow, deep) {
 
         if (shallow === null) {
-
             shallow = false;
         }
 
         if (deep === null) {
-
             deep = shallow;
         }
 
@@ -81,12 +73,11 @@ function getEventList(source, filter) {
 
         selectedEventList = hAzzle.isArray(filter) ?
             filter :
-            filter.replace(filterSpace, ' ').split(' ');
+            filter.replace(cSpace, ' ').split(' ');
 
         for (eventKey in eventList) {
 
             if (!eventList.hasOwnProperty(eventKey)) {
-
                 continue;
             }
 
@@ -120,14 +111,12 @@ function copyEvent(eventList) {
     for (eventKey in eventList) {
 
         if (!eventList.hasOwnProperty(eventKey)) {
-
             continue;
         }
 
         i = eventList[eventKey].length;
 
         while (i--) {
-
             hAzzle.event.add(this[0], eventKey, eventList[eventKey][i]);
         }
     }
@@ -270,7 +259,7 @@ function cloneCopyEvent(src, dest) {
 function fixInput(src, dest) {
     var nodeName = dest.nodeName.toLowerCase();
     // checkbox / radio
-    if (nodeName === 'input' && rcheckableType.test(src.type)) {
+    if (nodeName === 'input' && cCheckableType.test(src.type)) {
         dest.checked = src.checked;
         // textarea
     } else if (nodeName === 'input' || 'textarea' === nodeName) {
