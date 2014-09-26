@@ -22,23 +22,19 @@ hAzzle.Core.offset = function(options) {
         };
     }
     var de = elem.ownerDocument.documentElement,
-        bcr = elem.getBoundingClientRect(),
-        scroll = getWindowScroll();
+        bcr = elem.getBoundingClientRect();
 
     return {
-        top: bcr.top + scroll.y - Math.max(0, de && de.clientTop, document.body.clientTop),
-        left: bcr.left + scroll.x - Math.max(0, de && de.clientLeft, document.body.clientLeft),
+        top: bcr.top + (window.pageYOffset ||
+                document.documentElement.scrollTop) -
+            Math.max(0, de && de.clientTop, document.body.clientTop),
+        left: bcr.left + (window.pageXOffset ||
+                document.documentElement.scrollLeft) -
+            Math.max(0, de && de.clientLeft, document.body.clientLeft),
         height: elem.offsetHeight,
         width: elem.offsetWidth
     };
 };
-
-function getWindowScroll() {
-    return {
-        x: window.pageXOffset || document.documentElement.scrollLeft,
-        y: window.pageYOffset || document.documentElement.scrollTop
-    };
-}
 
 function setOffset(elem, ops, i) {
     var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
