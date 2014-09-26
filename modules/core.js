@@ -299,6 +299,16 @@ features['bug-GEBI'] = hAzzle.assert(function(div) {
     return document.getElementsByName > 0 || document.getElementsByName(expando).length;
 });
 
+
+(function() {
+    var fragment = document.createDocumentFragment(),
+        div = fragment.appendChild(document.createElement("div"));
+    // Support: IE<=11+
+    // Make sure textarea (and checkbox) defaultValue is properly cloned
+    div.innerHTML = "<textarea>x</textarea>";
+    features.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+})();
+
 /* ============================ EXPOSE =========================== */
 
 /**

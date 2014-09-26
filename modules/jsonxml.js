@@ -1,7 +1,7 @@
 // jsonxml.js
 // Parse JSON
 hAzzle.parseJSON = function(data) {
-    return JSON.parse(data + '');
+    return JSON.parse( data + '' );
 };
 
 // Parse XML

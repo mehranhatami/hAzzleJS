@@ -6,7 +6,6 @@
  *
  * Date: 2014-09-26
  */
- 
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
@@ -40,7 +39,7 @@
         concat = ArrayProto.concat,
         slice = ArrayProto.slice,
         push = ArrayProto.push,
-                
+
         // Holds javascript natives
 
         natives = {},
@@ -327,7 +326,7 @@
          */
 
         camelize: function(str) {
-            if(!str) return;
+            if (!str) return;
             return camelCache[str] ? camelCache[str] :
                 camelCache[str] = str.replace(/-\D/g, function(match) {
                     return match.charAt(1).toUpperCase();
@@ -430,7 +429,7 @@
         // Return the elements nodeName
 
         nodeName: function(el, name) {
-            return el.nodeName && el.nodeName.toLowerCase() === name.toLowerCase();
+            return el && el.nodeName && el.nodeName.toLowerCase() === name.toLowerCase();
         },
 
         merge: function(first, second) {
@@ -665,24 +664,24 @@
          * Finds the elements of an array which satisfy a filter function.
          */
 
-      grep: function( elems, callback, invert ) {
-		var callbackInverse,
-			matches = [],
-			i = 0,
-			length = elems.length,
-			callbackExpect = !invert;
+        grep: function(elems, callback, invert) {
+            var callbackInverse,
+                matches = [],
+                i = 0,
+                length = elems.length,
+                callbackExpect = !invert;
 
-		// Go through the array, only saving the items
-		// that pass the validator function
-		for ( ; i < length; i++ ) {
-			callbackInverse = !callback( elems[ i ], i );
-			if ( callbackInverse !== callbackExpect ) {
-				matches.push( elems[ i ] );
-			}
-		}
+            // Go through the array, only saving the items
+            // that pass the validator function
+            for (; i < length; i++) {
+                callbackInverse = !callback(elems[i], i);
+                if (callbackInverse !== callbackExpect) {
+                    matches.push(elems[i]);
+                }
+            }
 
-		return matches;
-	},
+            return matches;
+        },
         /**
          * Bind a function to a context, optionally partially applying any
          *

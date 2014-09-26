@@ -76,7 +76,7 @@ var toFloat = function(str) {
                 }
             };
 
-        if (cWidthHeight.test(prop) && getFXCss(elem, 'display') === 0) {
+        if (cWidthHeight.test(prop) && getCSS(elem, 'display') === 0) {
             toggleDisplay = true;
             setCSS(elem, 'display', hAzzle.getDisplayType(elem));
         }
@@ -84,7 +84,7 @@ var toFloat = function(str) {
         if (!force) {
 
             if (prop === 'height' &&
-                getFXCss(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
 
                 var contentBoxHeight = elem.offsetHeight -
                     (toFloat(getCSS(elem, 'borderTopWidth')) || 0) -
@@ -96,7 +96,7 @@ var toFloat = function(str) {
                 return contentBoxHeight;
 
             } else if (prop === 'width' &&
-                getFXCss(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
 
                 var contentBoxWidth = elem.offsetWidth -
                     (toFloat(getCSS(elem, 'borderLeftWidth')) || 0) -

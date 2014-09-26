@@ -30,7 +30,7 @@
             path + 'units.js',
             path + 'curcss.js',
             path + 'styles.js',
-            path + 'position.js',
+            path + 'dimensions.js',
             path + 'offset.js',
             path + 'showhide.js',
             path + 'detection.js',

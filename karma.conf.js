@@ -40,7 +40,7 @@ module.exports = function(config) {
         'csscore.js',
         'styles.js',
         'csshooks.js',
-        'position.js',
+        'dimensions.js',
         'offset.js',
         'events.js',
         'trigger.js',

@@ -6,7 +6,6 @@
  * - data cloning
  * - event cloning
  */
-
 var filterSpace = /\s+/gi,
     rcheckableType = /^(?:checkbox|radio)$/i;
 
@@ -140,7 +139,7 @@ hAzzle.clone = function(elem, shallow, deep) {
         clone = elem.cloneNode(true),
         nType = elem.nodeType;
 
-    if (!hAzzle.features['feature-cloneCheck'] && (nType === 1 || nType === 11) &&
+    if (!hAzzle.features.noCloneChecked && (nType === 1 || nType === 11) &&
         !hAzzle.isXML(elem)) {
 
         destElements = getAll(clone);
@@ -180,12 +179,12 @@ hAzzle.clone = function(elem, shallow, deep) {
             cloneCopyEvent(elem, clone);
         }
     }
-	
-	// Preserve script evaluation history
-		destElements = hAzzle.grab( clone, 'script' );
-		if ( destElements.length > 0 ) {
-			setGlobalEval( destElements, !inPage && hAzzle.grab( elem, 'script' ) );
-		}
+
+    // Preserve script evaluation history
+    destElements = hAzzle.grab(clone, 'script');
+    if (destElements.length > 0) {
+        setGlobalEval(destElements, !inPage && hAzzle.grab(elem, 'script'));
+    }
 
     // Return the cloned set
     return clone;
@@ -266,7 +265,6 @@ function cloneCopyEvent(src, dest) {
     }
 }
 
-
 // Fix the input
 
 function fixInput(src, dest) {
@@ -279,4 +277,3 @@ function fixInput(src, dest) {
         dest.defaultValue = src.defaultValue;
     }
 }
-

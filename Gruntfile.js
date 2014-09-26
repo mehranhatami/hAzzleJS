@@ -78,7 +78,7 @@ function conf(grunt) {
                 'aliases.js',
                 'eventHooks.js',
                 'classes.js',
-                'position.js',
+                'dimensions.js',
                 'units.js',
                 'offset.js',
 				'raf.js',

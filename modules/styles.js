@@ -21,7 +21,8 @@ var sHeightWidth = /^(height|width)$/i,
 
         var val, num;
 
-        prop = cssCore.cssCamelized[prop];
+if( ( prop = cssCore.cssCamelized[prop]))
+        prop = cssCore.cssCamelized[prop] || prop;
 
         if (cssHook[prop] && cssHook[prop].get) {
             val = cssHook[prop].get(elem, prop);
@@ -30,7 +31,7 @@ var sHeightWidth = /^(height|width)$/i,
         // Otherwise, if a way to get the computed value exists, use that
 
         if (val === undefined) {
-            val = curCSS(elem, prop, null, styles);
+            val = curCSS(elem, prop, true, styles);
         }
 
         // Convert 'normal' to computed value
