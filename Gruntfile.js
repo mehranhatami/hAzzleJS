@@ -42,6 +42,7 @@ function conf(grunt) {
             },
             hAzzleModules = [
                 'hazzle.js',
+                'shallowcopy.js',
                 'core.js',
                 'booleans.js',
                 'doml4.js',

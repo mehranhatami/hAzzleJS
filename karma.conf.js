@@ -14,6 +14,7 @@ module.exports = function(config) {
 
     var modules = [
         'hazzle.js',
+        'shallowcopy.js',        
         'core.js',
         'cache.js',
         'doml4.js',
