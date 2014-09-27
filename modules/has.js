@@ -41,3 +41,13 @@ hAzzle.add('xpath', function() {
 hAzzle.add('air', function() {
     return !!(window.runtime);
 });
+
+// matchesSelector
+hAzzle.add('matchesSelector', function() {
+    return fNative.test((matches = docElem.matches ||
+        docElem.webkitMatchesSelector ||
+        docElem.mozMatchesSelector ||
+        docElem.oMatchesSelector ||
+        docElem.msMatchesSelector))
+
+});

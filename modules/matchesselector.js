@@ -1,14 +1,10 @@
 // matchesselector.js
-var docElem = hAzzle.docElem,
-    mQuickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
-    propName = 'm oM msM mozM webkitM'.split(' ').reduce(function(result, prefix) {
-        var propertyName = prefix + 'atchesSelector';
-        return result || docElem[propertyName] && propertyName;
-    }, null);
+var docElem = document.documentElement,
+    mQuickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/;
 
 // Expose to the global hAzzle Object
 
-hAzzle.matchesSelector = function(elem, selector) {
+var matchesSelector = hAzzle.matchesSelector = function(elem, selector) {
 
     var index, len, result, found,
         quick = mQuickMatch.exec(selector);
@@ -16,28 +12,35 @@ hAzzle.matchesSelector = function(elem, selector) {
     if (quick) {
         //   0  1    2   3          4
         // [ _, tag, id, attribute, class ]
-        if (quick[1]) quick[1] = quick[1].toLowerCase();
-        if (quick[3]) quick[3] = quick[3].split('=');
-        if (quick[4]) quick[4] = ' ' + quick[4] + ' ';
+        if (quick[1]) {
+            quick[1] = quick[1].toLowerCase();
+        }
+        if (quick[3]) {
+            quick[3] = quick[3].split('=');
+        }
+        if (quick[4]) {
+            quick[4] = ' ' + quick[4] + ' ';
+        }
     }
 
-    if (!quick && !propName) {
+    if (!quick && !hAzzle.has('matchesSelector')) {
         found = hAzzle.find(selector, elem || document);
     }
 
     for (; elem && elem.nodeType === 1; elem = elem.parentNode) {
-        if (quick) {
+        if (!quick) {
             result = (
                 (!quick[1] || elem.nodeName.toLowerCase() === quick[1]) &&
                 (!quick[2] || elem.id === quick[2]) &&
-                (!quick[3] || (quick[3][1] ? elem.getAttribute(quick[3][0]) === quick[3][1] : 
-                elem.hasAttribute(quick[3][0]))) &&
+                (!quick[3] || (quick[3][1] ? elem.getAttribute(quick[3][0]) === quick[3][1] :
+                    elem.hasAttribute(quick[3][0]))) &&
                 (!quick[4] || (' ' + elem.className + ' ').indexOf(quick[4]) >= 0)
             );
         } else {
 
-            if (propName) {
-                result = elem[propName](selector);
+            if (hAzzle.has('matchesSelector')) {
+                // Better to use DOM Level 4 shim here so we reduce code
+                result = elem.matches(selector);
             } else {
                 index = 0;
                 len = found.length;
@@ -76,7 +79,7 @@ hAzzle.matches = function(selector, context) {
         // No point in reinventing the wheel!!
 
         return hAzzle.Expr[cl3] ? hAzzle.Expr[cl3](context) :
-            hAzzle.matchesSelector(context, selector);
+            matchesSelector(context, selector);
     }
 
     // loop through
@@ -85,7 +88,7 @@ hAzzle.matches = function(selector, context) {
 
         if (hAzzle.Expr[cl3] && hAzzle.Expr[cl3](context[i])) {
             result.push(context[i]);
-        } else if (hAzzle.matchesSelector(context[i], selector)) {
+        } else if (matchesSelector(context[i], selector)) {
             result.push(context[i]);
         }
     }

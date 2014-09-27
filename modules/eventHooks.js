@@ -1,4 +1,47 @@
 // eventHooks.js
+var slice = Array.prototype.slice,
+    useNative = function(el, type, handlers, noop) {
+        var buffer, active;
+
+        if (hAzzle.private(el, type)) {
+            return false;
+        }
+
+        // If triggering, force setup through hAzzle.event.add
+        if (noop) {
+            return hAzzle.event.add(el, type, noop);
+        }
+
+        // Register the reentrant controller for all namespaces
+        hAzzle.event.add(el, type + '._', function(evt) {
+            // If this is the outermost with-native-handlers event, fire a native one
+            if ((evt.isTrigger & 1) && !active) {
+                // Remember provided arguments
+                buffer = active = slice.call(arguments);
+
+                this[type]();
+
+                // Outermost synthetic does not pass Go
+                evt.stopImmediatePropagation();
+                evt.preventDefault();
+
+                return buffer;
+
+            } else if (!evt.isTrigger && active) {
+
+                buffer = hAzzle.event.trigger(hAzzle.shallowCopy(buffer.shift(), hAzzle.Event.prototype),
+                    buffer, this, handlers);
+
+                active = false;
+
+                evt.stopImmediatePropagation();
+            }
+        });
+
+        // Note that the intercepting handler exists, but don't abort .add
+        return !hAzzle.private(el, type, true);
+    }
+
 hAzzle.extend({
 
     'special': {
@@ -53,16 +96,13 @@ hAzzle.extend({
         );
 
         if (bubble) {
-
             hAzzle.event.trigger(e, null, elem);
 
         } else {
-
             hAzzle.event.handle.call(elem, e);
         }
 
         if (e.isDefaultPrevented()) {
-
             evt.preventDefault();
         }
     }
@@ -96,9 +136,8 @@ hAzzle.each({
     };
 });
 
-/* =========================== INTERNAL ========================== */
-
 // Create 'bubbling' focus and blur events
+
 if (!hAzzle.features.focusinBubbles) {
     hAzzle.each({
         focus: 'focusin',
@@ -126,12 +165,10 @@ if (!hAzzle.features.focusinBubbles) {
                     attaches = hAzzle.private(doc, fix) - 1;
 
                 if (!attaches) {
-
                     doc.removeEventListener(orig, handler, true);
                     hAzzle.removePrivate(doc, fix);
 
                 } else {
-
                     hAzzle.private(doc, fix, attaches);
                 }
             }
@@ -157,52 +194,7 @@ hAzzle.each({
                 if ((this === document.activeElement) === (type === 'blur') && this[type]) {
                     useNative(this, type, !hAzzle.features.focusinBubbles, returnTrue);
                 }
-
-                // Support: IE9
-                // Iframes and document.activeElement don't mix well
             } catch (err) {}
         }
     };
 });
-
-function useNative(el, type, handlers, noop) {
-    var buffer, active;
-
-    if (hAzzle.private(el, type)) {
-        return false;
-    }
-
-    // If triggering, force setup through hAzzle.event.add
-    if (noop) {
-        return hAzzle.event.add(el, type, noop);
-    }
-
-    // Register the reentrant controller for all namespaces
-    hAzzle.event.add(el, type + '._', function(evt) {
-        // If this is the outermost with-native-handlers event, fire a native one
-        if ((evt.isTrigger & 1) && !active) {
-            // Remember provided arguments
-            buffer = active = slice.call(arguments);
-
-            this[type]();
-
-            // Outermost synthetic does not pass Go
-            evt.stopImmediatePropagation();
-            evt.preventDefault();
-
-            return buffer;
-
-        } else if (!evt.isTrigger && active) {
-
-            buffer = hAzzle.event.trigger(hAzzle.shallowCopy(buffer.shift(), hAzzle.Event.prototype),
-                buffer, this, handlers);
-
-            active = false;
-
-            evt.stopImmediatePropagation();
-        }
-    });
-
-    // Note that the intercepting handler exists, but don't abort .add
-    return !hAzzle.private(el, type, true);
-}

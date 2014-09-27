@@ -56,13 +56,15 @@ var pKeyfixRegex = /^key/,
 
 hAzzle.extend({
 
-    // The fixHooks API are different then jQuery, but works the same way.
-    // For example, to set a hook for the 'drop' event that copies the dataTransfer 
+    // The fixHooks API are following the ES5 specs.
+    // Example, to set a hook for the 'drop' event that copies the dataTransfer 
     // property, assign an object to hAzzle.event.fixHooks.drop:
     //
     // hAzzle.event.fixHooks.drop = {
     //    props: [ "dataTransfer" ]
     // };
+    //
+    // TODO! Fix the code so it supports ES6
 
     fixHooks: {
 
