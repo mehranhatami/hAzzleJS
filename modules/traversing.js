@@ -8,6 +8,37 @@ var tMethods = /^(?:parents|prev(?:Until|All))/,
         prev: 1
     },
 
+    traverse = function(elem, dir, until) {
+        var matched = [],
+            cur = elem[dir];
+        while (cur && cur !== document) {
+            if (typeof until !== 'undefined' && hAzzle(cur).is(until)) {
+                break;
+            }
+            matched.push(cur);
+            cur = cur[dir];
+        }
+        return matched;
+    },
+
+    sibling = function(elem, skip) {
+
+        var ret = [],
+            tmp = elem.children,
+            i = 0,
+            l = tmp.length;
+
+        if (skip) {
+            for (; i < l; i++) {
+                if (tmp[i] !== skip) {
+                    ret.push(tmp[i]);
+                }
+            }
+        }
+
+        return ret;
+    },
+
     isnot = function(els, selector, not) {
         var type = typeof selector;
         if (type === 'string') {
@@ -402,39 +433,6 @@ hAzzle.extend({
     }
 });
 
-hAzzle.extend({
-    traverse: function(elem, dir, until) {
-        var matched = [],
-            cur = elem[dir];
-        while (cur && cur !== document) {
-            if (typeof until !== 'undefined' && hAzzle(cur).is(until)) {
-                break;
-            }
-            matched.push(cur);
-            cur = cur[dir];
-        }
-        return matched;
-    },
-
-    sibling: function(elem, skip) {
-
-        var ret = [],
-            tmp = elem.children,
-            i = 0,
-            l = tmp.length;
-
-        if (skip) {
-            for (; i < l; i++) {
-                if (tmp[i] !== skip) {
-                    ret.push(tmp[i]);
-                }
-            }
-        }
-
-        return ret;
-    }
-}, hAzzle);
-
 hAzzle.forOwn({
 
     /**
@@ -453,7 +451,7 @@ hAzzle.forOwn({
      */
 
     parents: function(elem) {
-        return hAzzle.traverse(elem, 'parentElement');
+        return traverse(elem, 'parentElement');
     },
 
     /**
@@ -462,7 +460,7 @@ hAzzle.forOwn({
      */
 
     parentsUntil: function(elem, i, until) {
-        return hAzzle.traverse(elem, 'parentElement', until);
+        return traverse(elem, 'parentElement', until);
     },
 
     /**
@@ -481,7 +479,6 @@ hAzzle.forOwn({
      * in the set of matched  elements, optionally filtered by a
      * selector.
      *
-
      * @param {Object} elem
      * @return {hAzzle}
      */
@@ -496,7 +493,7 @@ hAzzle.forOwn({
      */
 
     siblings: function(elem) {
-        return hAzzle.sibling(elem.parentElement, elem);
+        return sibling(elem.parentElement, elem);
     },
 
     /**
@@ -505,7 +502,7 @@ hAzzle.forOwn({
      */
 
     children: function(elem) {
-        return elem && hAzzle.sibling(elem, true);
+        return elem && sibling(elem, true);
     },
 
     /**
@@ -514,8 +511,8 @@ hAzzle.forOwn({
      */
 
     childrenAll: function(elem) {
-        return elem.contentDocument || 
-        hAzzle.merge([], elem.childNodes);
+        return elem.contentDocument ||
+            hAzzle.merge([], elem.childNodes);
     },
 
     /**
@@ -524,7 +521,7 @@ hAzzle.forOwn({
      */
 
     nextAll: function(elem) {
-        return hAzzle.traverse(elem, 'nextElementSibling');
+        return traverse(elem, 'nextElementSibling');
     },
 
     /**
@@ -533,7 +530,7 @@ hAzzle.forOwn({
      */
 
     prevAll: function(elem) {
-        return hAzzle.traverse(elem, 'previousElementSibling');
+        return traverse(elem, 'previousElementSibling');
     },
 
     /**
@@ -542,7 +539,7 @@ hAzzle.forOwn({
      */
 
     nextUntil: function(elem, i, until) {
-        return hAzzle.traverse(elem, 'nextElementSibling', until);
+        return traverse(elem, 'nextElementSibling', until);
     },
 
     /**
@@ -551,7 +548,7 @@ hAzzle.forOwn({
      */
 
     prevUntil: function(elem, i, until) {
-        return hAzzle.traverse(elem, 'previousElementSibling', until);
+        return traverse(elem, 'previousElementSibling', until);
     }
 
 }, function(fn, name) {

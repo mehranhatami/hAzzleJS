@@ -1,6 +1,4 @@
-var iframe, iframeDoc,
-    iframe,
-    cssExpand = ['Top', 'Right', 'Bottom', 'Left'],
+var iframe,
     elemdisplay = {
 
         HTML: 'block',
@@ -141,84 +139,49 @@ function showHide(elements, show) {
 // Try to determine the default display value of an element
 function defaultDisplay(nodeName) {
 
+    var doc = document,
+        display = elemdisplay[nodeName];
 
-    if (!elemdisplay[nodeName]) {
+    if (!display) {
+        display = actualDisplay(nodeName, doc);
 
-        var body = document.body,
-            elem = hAzzle(hAzzle.html(nodeName)).appendTo(body),
-            display = elem.css('display');
-        elem.remove();
+        // If the simple way fails, read from inside an iframe
+        if (display === "none" || !display) {
 
-        // If the simple way fails,
-        // get element's real default display by attaching it to a temp iframe
-        if (display === 'none' || display === '') {
-            // No iframe to use yet, so create it
-            if (!iframe) {
-                iframe = document.createElement('iframe');
-                iframe.frameBorder = iframe.width = iframe.height = 0;
-            }
+            // Use the already-created iframe if possible
+            iframe = (iframe || hAzzle(hAzzle.create("<iframe frameborder='0' width='0' height='0'/>")))
+                .appendTo(doc.documentElement);
 
-            body.appendChild(iframe);
+            // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
+            doc = (iframe[0].contentWindow || iframe[0].contentDocument).document;
 
-            // Create a cacheable copy of the iframe document on first call.
-            // IE and Opera will allow us to reuse the iframeDoc without re-writing the fake HTML
-            // document to it; WebKit & Firefox won't allow reusing the iframe document.
-            if (!iframeDoc || !iframe.createElement) {
-                iframeDoc = (iframe.contentWindow || iframe.contentDocument).document;
-                iframeDoc.write('<!doctype html>' + '<html><body>');
-                iframeDoc.close();
-            }
+            // Support: IE
+            doc.write();
+            doc.close();
 
-            elem = iframeDoc.createElement(nodeName);
-
-            iframeDoc.body.appendChild(elem);
-
-            display = hAzzle.css(elem, 'display');
-            body.removeChild(iframe);
+            display = actualDisplay(nodeName, doc);
+            iframe.detach();
         }
 
         // Store the correct default display
         elemdisplay[nodeName] = display;
     }
 
-    return elemdisplay[nodeName];
+    return display;
 }
 
 // Expose to the global hAzzle Object
 
 hAzzle.isHidden = isHidden;
 
+function actualDisplay(name, doc) {
+    var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
 
+        display = hAzzle.css(elem[0], "display");
 
+    // We don't have any data stored on the element,
+    // so use "detach" method as fast way to get rid of the element
+    elem.detach();
 
-// Generate parameters to create a standard animation
-function genFx(type, includeWidth) {
-    var which,
-        i = 0,
-        attrs = {
-            height: type
-        };
-
-    // if we include width, step value is 1 to do all cssExpand values,
-    // if we don't include width, step value is 2 to skip over Left and Right
-    includeWidth = includeWidth ? 1 : 0;
-    for (; i < 4; i += 2 - includeWidth) {
-        which = cssExpand[i];
-        attrs['margin' + which] = attrs['padding' + which] = type;
-    }
-
-    if (includeWidth) {
-        attrs.opacity = attrs.width = type;
-    }
-
-    return attrs;
+    return display;
 }
-
-hAzzle.each(['toggle', 'show', 'hide'], function(name) {
-    var cssFn = hAzzle.Core[name];
-    hAzzle.Core[name] = function(speed, easing, callback) {
-        return speed == null || typeof speed === 'boolean' ?
-            cssFn.apply(this, arguments) :
-            this.animate(genFx(name, true), speed, easing, callback);
-    };
-});

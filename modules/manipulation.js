@@ -294,9 +294,9 @@ hAzzle.each([
     hAzzle.Core[name] = function(target) {
         return this.domManip(target, function(t, el) {
             if (name === 'appendTo') {
-                t.append(el);
+                t.appendChild(el)
             } else {
-                t.prepend(el, t.firstChild);
+              t.insertBefore(el, t.firstChild)
             }
         });
     };
