@@ -18,7 +18,7 @@ hAzzle.matches = function(selector, context) {
         // No point in reinventing the wheel!!
 
         return hAzzle.Expr[cl3] ? hAzzle.Expr[cl3](context) :
-            matchesSelector(context, selector);
+            hAzzle.matchesSelector(context, selector);
     }
 
     // loop through
@@ -39,7 +39,9 @@ hAzzle.matchesSelector = function(elem, selector) {
     selector = selector.replace(mAtrquote, "='$1']");
 
     if (hAzzle.has('matchesSelector')) {
-
-        return elem.matches(selector);
+try {
+    return elem.matches(selector);
+    }catch(e) {}
+     
     }
 };

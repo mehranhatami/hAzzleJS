@@ -2,7 +2,6 @@
 
 var rreturn = /\r/g;
 
-
     /**
      * Get value for input/select elements
      * Set value for input/select elements
@@ -10,7 +9,6 @@ var rreturn = /\r/g;
      * @param {String} value
      * @return {Object|String}
      */
-
 
 hAzzle.Core.val = function(value) {
 
@@ -24,7 +22,6 @@ hAzzle.Core.val = function(value) {
             hooks = hAzzle.valHooks[elem.type] || hAzzle.valHooks[elem.nodeName.toLowerCase()];
 
             if (hooks && 'get' in hooks && (ret = hooks.get(elem, 'value')) !== undefined) {
-
                 return ret;
             }
 
@@ -36,7 +33,7 @@ hAzzle.Core.val = function(value) {
         return;
     }
 
-    return this.each(function(el, i) {
+    return this.each(function(el, index) {
 
         var val;
 
@@ -45,8 +42,7 @@ hAzzle.Core.val = function(value) {
         }
 
         if (typeof value === 'function') {
-
-            val = value.call(el, i, hAzzle(el).val());
+            val = value.call(el, index, hAzzle(el).val());
 
         } else {
 
@@ -64,9 +60,7 @@ hAzzle.Core.val = function(value) {
             val += '';
 
         } else if (hAzzle.isArray(val)) {
-
             val = hAzzle.map(val, function(value) {
-
                 return value === null ? '' : value + '';
             });
         }
@@ -80,9 +74,6 @@ hAzzle.Core.val = function(value) {
         }
     });
 };
-
-
-// Extend the globale hAzzle Object
 
 hAzzle.extend({
 
@@ -100,18 +91,15 @@ hAzzle.extend({
         select: {
             get: function(elem) {
 
-                // selectbox has special case
+                // Selectbox has special case
 
                 var option,
                     options = elem.options,
                     index = elem.selectedIndex,
                     one = elem.type === 'select-one' || index < 0,
-                    values = one ? null : [],
-                    value,
+                    values = one ? null : [], value,
                     max = one ? index + 1 : options.length,
-                    i = index < 0 ?
-                    max :
-                    one ? index : 0;
+                    i = index < 0 ? max : one ? index : 0;
 
                 for (; i < max; i++) {
 
@@ -128,7 +116,6 @@ hAzzle.extend({
                         // We don't need an array for one selects
 
                         if (one) {
-
                             return value;
                         }
 

@@ -1,6 +1,5 @@
-/**
- * trigger.js - triggers an event of specific type
- */
+// trigger.js
+
 var doc = this.document,
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/;
 
@@ -16,7 +15,7 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
 
     // Check if valid type
 
-    if (!dritassa(elem, type)) {
+    if (!validity(elem, type)) {
         return;
     }
 
@@ -108,7 +107,6 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
                 tmp = elem[ontype];
 
                 if (tmp) {
-
                     elem[ontype] = null;
                 }
 
@@ -132,7 +130,7 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
 
 // Check for valid nodeType, and not triggered before
 
-function dritassa(elem, type) {
+function validity(elem, type) {
     if ((elem.nodeType === 3 || elem.nodeType === 8) ||
         focusinoutblur.test(type + hAzzle.event.triggered)) {
         return false;
@@ -181,9 +179,6 @@ function getEvent(elem, evt, handler, ns, type) {
     evt.result = undefined;
 
     if (!evt.target) {
-
-        // try to use evt.srcElement if we can
-
         evt.target = evt.srcElement || elem;
     }
 
