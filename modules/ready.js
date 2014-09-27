@@ -15,6 +15,8 @@ hAzzle.extend({
      */
 
     ready: function(callback) {
+       
+       
         // Handler
         var readyHandler = function() {
             if (!hAzzle.isReady) {
@@ -32,6 +34,7 @@ hAzzle.extend({
                 hAzzle.readyList = []; // Clear the ready list
             }
         };
+        
         // Catch cases where hAzzle.ready() is called after the browser event has already occurred.
         if (document.readyState === 'complete') {
             readyHandler();

@@ -2,20 +2,7 @@ var docElem = document.documentElement,
     mAtrquote = /=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g,
     mQuickMatch = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/;
 
-hAzzle.matches = function( expr, elements ) {
-    
-    var results = [], elem, i = elements.length;
-    while(i--) {
-       elem = elements[i];
-    if (elem.matches( expr ) ) {
-          results.push( elem );
-         }
-        }
-return results;    
-    
-};
-
-hAzzle.matchesSelector = function( elem, expr ) {
+hAzzle.matches = function(selector, context) {
 
     if (typeof selector !== 'string') {
         return null;
@@ -31,7 +18,7 @@ hAzzle.matchesSelector = function( elem, expr ) {
         // No point in reinventing the wheel!!
 
         return hAzzle.Expr[cl3] ? hAzzle.Expr[cl3](context) :
-            hAzzle.matchesSelector(context, selector);
+            matchesSelector(context, selector);
     }
 
     // loop through
@@ -46,4 +33,13 @@ hAzzle.matchesSelector = function( elem, expr ) {
     }
 
     return result;
+};
+
+hAzzle.matchesSelector = function(elem, selector) {
+    selector = selector.replace(mAtrquote, "='$1']");
+
+    if (hAzzle.has('matchesSelector')) {
+
+        return elem.matches(selector);
+    }
 };
