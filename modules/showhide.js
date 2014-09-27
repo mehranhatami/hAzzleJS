@@ -3,7 +3,17 @@ var iframe,
 
         HTML: 'block',
         BODY: 'block'
+    },
+    actualDisplay = function(name, doc) {
+        var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
 
+            display = hAzzle.css(elem[0], 'display');
+
+        // We don't have any data stored on the element,
+        // so use 'detach' method as fast way to get rid of the element
+        elem.detach();
+
+        return display;
     };
 
 hAzzle.extend({
@@ -53,8 +63,6 @@ hAzzle.extend({
     }
 });
 
-/* =========================== PRIVATE FUNCTIONS ========================== */
-
 /**
  * Check if an element is hidden
  *  @return {Boolean}
@@ -62,7 +70,7 @@ hAzzle.extend({
 
 function isHidden(elem, el) {
     elem = el || elem;
-    return hAzzle.css(elem, 'display') === 'none' ||
+    return curCSS(elem, 'display') === 'none' ||
         !hAzzle.contains(elem.ownerDocument, elem);
 }
 
@@ -77,13 +85,15 @@ function isHidden(elem, el) {
 function showHide(elements, show) {
     var display, elem, hidden,
         values = [],
+        style,
         i = 0,
         length = elements.length;
 
     for (; i < length; i++) {
         elem = elements[i];
+        style = elem.style;
 
-        if (!elem.style) {
+        if (!style) {
             continue;
         }
 
@@ -92,16 +102,16 @@ function showHide(elements, show) {
         // Cache the computedStyle on the Object, we may use
         // it later
 
-        display = hAzzle.curCSS(elem, 'style');
+        display = curCSS(elem, 'style');
 
         if (show) {
 
             if (!values[i] && display === 'none') {
 
-                elem.style.display = '';
+                style.display = '';
             }
 
-            if (elem.style.display === '' && isHidden(elem)) {
+            if (style.display === '' && isHidden(elem)) {
 
                 values[i] = hAzzle.private(
                     elem,
@@ -116,7 +126,7 @@ function showHide(elements, show) {
                 hAzzle.setPrivate(
                     elem,
                     'olddisplay',
-                    hidden ? display : hAzzle.css(elem, 'display')
+                    hidden ? display : curCSS(elem, 'display')
                 );
             }
         }
@@ -146,7 +156,7 @@ function defaultDisplay(nodeName) {
         display = actualDisplay(nodeName, doc);
 
         // If the simple way fails, read from inside an iframe
-        if (display === "none" || !display) {
+        if (display === 'none' || !display) {
 
             // Use the already-created iframe if possible
             iframe = (iframe || hAzzle(hAzzle.create("<iframe frameborder='0' width='0' height='0'/>")))
@@ -154,8 +164,6 @@ function defaultDisplay(nodeName) {
 
             // Always write a new HTML skeleton so Webkit and Firefox don't choke on reuse
             doc = (iframe[0].contentWindow || iframe[0].contentDocument).document;
-
-            // Support: IE
             doc.write();
             doc.close();
 
@@ -166,22 +174,6 @@ function defaultDisplay(nodeName) {
         // Store the correct default display
         elemdisplay[nodeName] = display;
     }
-
-    return display;
-}
-
-// Expose to the global hAzzle Object
-
-hAzzle.isHidden = isHidden;
-
-function actualDisplay(name, doc) {
-    var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
-
-        display = hAzzle.css(elem[0], "display");
-
-    // We don't have any data stored on the element,
-    // so use "detach" method as fast way to get rid of the element
-    elem.detach();
 
     return display;
 }
