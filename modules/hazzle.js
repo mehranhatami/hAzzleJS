@@ -44,6 +44,8 @@
 
         natives = {},
 
+        nativeList = ('Boolean String Function Array Date RegExp Object Error Arguments').split(' '),
+
         // Define a local copy of hAzzle
 
         hAzzle = function(selector, context) {
@@ -54,46 +56,68 @@
             return typeof selector === 'function' ?
                 hAzzle.ready(selector) :
                 new Core(selector, context);
-        };
+        },
 
-    // Access to main function.
+        // Converts the specified string to lowercase.
+        lowercase = function(string) {
+            return typeof string === 'string' ? string.toLowerCase() : string;
+        },
+        // Converts the specified string to uppercase
+        uppercase = function(string) {
+            return typeof string === 'string' ? string.toUpperCase() : string;
+        },
 
-    function Core(selector, context) {
+        manualLowercase = function(s) {
+            /* jshint bitwise: false */
+            return isString(s) ? s.replace(/[A-Z]/g, function(ch) {
+                return String.fromCharCode(ch.charCodeAt(0) | 32);
+            }) : s;
+        },
+        var manualUppercase = function(s) {
+                /* jshint bitwise: false */
+                return isString(s) ? s.replace(/[a-z]/g, function(ch) {
+                    return String.fromCharCode(ch.charCodeAt(0) & ~32);
+                }) : s;
+            },
 
-        if (!selector) {
-            return this;
-        }
+            // Core
 
-        if (typeof selector === 'string') {
-            selector = hAzzle.find(selector, context); // Instanceof hAzzle
-        } else if (selector instanceof hAzzle) {
-            return selector;
-        } else if (selector.nodeType === 11) { // document fragment
-            selector = selector.childNodes;
-        } else if (selector.nodeType) { // nodeType
-            selector = [selector];
-        } else if (hAzzle.isNodeList(selector)) {
-            selector = hAzzle.makeArray(selector);
-        } else if (hAzzle.isElement(selector) ||
-            hAzzle.isDocument(selector) ||
-            (selector === window)) {
-            selector = [selector];
-        }
+            Core = function(selector, context) {
 
-        if (selector) {
+                if (!selector) {
+                    return this;
+                }
 
-            // Initialize a new hAzzle Object with the
-            // given `selector`
+                if (typeof selector === 'string') {
+                    selector = hAzzle.find(selector, context); // Instanceof hAzzle
+                } else if (selector instanceof hAzzle) {
+                    return selector;
+                } else if (selector.nodeType === 11) { // document fragment
+                    selector = selector.childNodes;
+                } else if (selector.nodeType) { // nodeType
+                    selector = [selector];
+                } else if (hAzzle.isNodeList(selector)) {
+                    selector = hAzzle.makeArray(selector);
+                } else if (hAzzle.isElement(selector) ||
+                    hAzzle.isDocument(selector) ||
+                    (selector === window)) {
+                    selector = [selector];
+                }
 
-            var i = this.length = this.size = selector.length;
+                if (selector) {
 
-            while (i--) {
+                    // Initialize a new hAzzle Object with the
+                    // given `selector`
 
-                this[i] = selector[i];
+                    var i = this.length = this.size = selector.length;
+
+                    while (i--) {
+
+                        this[i] = selector[i];
+                    }
+                }
+                return this;
             }
-        }
-        return this;
-    }
 
     // Easy access variable for the Prototype function
 
@@ -284,6 +308,7 @@
             } else {
 
                 for (i in collection) {
+
                     if (collection.hasOwnProperty(i)) {
                         element = collection[i];
                         if (fn.call(scope || element, element, i) === false) {
@@ -296,7 +321,7 @@
             return collection;
         },
 
-/**
+        /**
          * toString
          */
 
@@ -330,44 +355,36 @@
             }
             return -1;
         },
-
-        map: function(elems, fn, arg) {
-
+        map: function(elems, callback, arg) {
             var value,
                 i = 0,
                 length = elems.length,
                 isArray = isArraylike(elems),
-                results = [];
+                ret = [];
 
             // Go through the array, translating each of the items to their new values
-
             if (isArray) {
-
                 for (; i < length; i++) {
+                    value = callback(elems[i], i, arg);
 
-                    value = fn(elems[i], i, arg);
-
-                    if (value !== null) {
-                        results[i] = value;
+                    if (value != null) {
+                        ret.push(value);
                     }
                 }
 
-                // Go through every key on the object
-
+                // Go through every key on the object,
             } else {
-
                 for (i in elems) {
-                    value = fn(elems[i], i, arg);
+                    value = callback(elems[i], i, arg);
 
-                    if (value !== null) {
-                        results[i] = value;
+                    if (value != null) {
+                        ret.push(value);
                     }
                 }
             }
 
             // Flatten any nested arrays
-
-            return concat.apply([], results);
+            return concat.apply([], ret);
         },
 
         // Return the elements nodeName
@@ -590,15 +607,16 @@
 
     //  Checks if `obj` is a window object.
 
-    var isWindow = hAzzle.isWindow = function(obj) {
+
+    var isWindow = function(obj) {
             return obj !== null && obj === obj.window;
         },
 
-        isArraylike = hAzzle.isArraylike = function(obj) {
+        isArraylike = function(obj) {
             var length = obj.length,
-                type;
+                type = hAzzle.type(obj);
 
-            if (typeof obj === 'function' || isWindow(obj)) {
+            if (type === "function" || hAzzle.isWindow(obj)) {
                 return false;
             }
 
@@ -606,10 +624,8 @@
                 return true;
             }
 
-            type = hAzzle.type(obj);
-
-            return type === 'array' || length === 0 ||
-                typeof length === 'number' && length > 0 && (length - 1) in obj;
+            return type === "array" || length === 0 ||
+                typeof length === "number" && length > 0 && (length - 1) in obj;
         };
 
 
@@ -650,20 +666,21 @@
 
     // Expose
 
-    hAzzle.docElem = docElem;
+    hAzzle.lowercase = lowercase;
+    hAzzle.uppcase = uppercase;
+    hAzzle.isWindow = isWindow;
 
+    // Credit: AngularJS    
+    // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
+    // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
+    // with correct but slower alternatives.
+    if ('i' !== 'I'.toLowerCase()) {
+        lowercase = manualLowercase;
+        uppercase = manualUppercase;
+    }
     // Populate the native list
 
-    hAzzle.each(['Boolean',
-        'String',
-        'Function',
-        'Array',
-        'Date',
-        'RegExp',
-        'Object',
-        'Error',
-        'Arguments'
-    ], function() {
+    hAzzle.each(nativeList, function() {
         natives['[object ' + this + ']'] = this.toLowerCase();
     });
 
