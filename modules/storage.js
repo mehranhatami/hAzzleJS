@@ -24,8 +24,13 @@ Storage.prototype = {
             writable: true,
             configurable: true
         };
-        Object.defineProperties(owner, descriptor);
 
+        if (owner.nodeType) {
+            owner[this.expando] = descriptor;
+            // Only use ES5 defineProperty for non-nodes
+        } else {
+            Object.defineProperties(owner, descriptor);
+        }
         return owner[this.expando];
     },
 
