@@ -26,7 +26,7 @@ Storage.prototype = {
         };
 
         if (owner.nodeType) {
-            owner[this.expando] = descriptor;
+            owner[this.expando] = {value: initial || {}};
             // Only use ES5 defineProperty for non-nodes
         } else {
             Object.defineProperties(owner, descriptor);

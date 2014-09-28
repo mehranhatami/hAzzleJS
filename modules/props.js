@@ -120,7 +120,7 @@ var fixHooks = {
             evt.target = evt.target.parentNode;
         }
 
-        return fixHook && fixHook.filter ? fixHook.filter(evt, originalEvent) : evt;
+        return fHook && fHook.filter ? fHook.filter(evt, originalEvent) : evt;
     }
 
 // Expose
