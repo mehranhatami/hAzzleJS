@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.9d RC3
+ * Version: 0.9.9e RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-27
+ * Date: 2014-09-28
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -29,18 +29,20 @@
 
         // Prototype references.
 
-        ArrayProto = Array.prototype,
+        AP = Array.prototype,
 
-        // Save a reference to some core methods
+        // Save a reference to some core methods    
 
-        indexOf = ArrayProto.indexOf,
-        concat = ArrayProto.concat,
-        slice = ArrayProto.slice,
-        push = ArrayProto.push,
+        indexOf = AP.indexOf,
+        concat = AP.concat,
+        slice = AP.slice,
+        push = AP.push,
 
         // Holds javascript natives
 
         natives = {},
+
+        // Javascript native list
 
         nativeList = ('Boolean String Function Array Date RegExp Object Error Arguments').split(' '),
 
@@ -48,69 +50,42 @@
 
         hAzzle = function(selector, context) {
 
-            // Force domReady if the selector is a
-            // function
+            // NOTE!! domReady() will be triggered only if the selector is a
+            // function. hAzzle ready function are not designed to work selector
+            // based (e.g. hAzzle(#'test').ready()
 
             return typeof selector === 'function' ?
                 hAzzle.ready(selector) :
                 new Core(selector, context);
         },
 
-        // Converts the specified string to lowercase.
-        lowercase = function(string) {
-            return typeof string === 'string' ? string.toLowerCase() : string;
-        },
-        // Converts the specified string to uppercase
-        uppercase = function(string) {
-            return typeof string === 'string' ? string.toUpperCase() : string;
-        },
-
-        manualLowercase = function(s) {
-            /* jshint bitwise: false */
-            return typeof s === 'string' ? s.replace(/[A-Z]/g, function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) | 32);
-            }) : s;
-        },
-        manualUppercase = function(s) {
-            /* jshint bitwise: false */
-            return typeof s === 'string' ? s.replace(/[a-z]/g, function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) & ~32);
-            }) : s;
-        },
-
         // Core
 
         Core = function(selector, context) {
 
-            if (!selector) {
-                return this;
-            }
-
-            if (typeof selector === 'string') {
-                selector = hAzzle.find(selector, context); // Instanceof hAzzle
-            } else if (selector instanceof hAzzle) {
-                return selector;
-            } else if (selector.nodeType === 11) { // document fragment
-                selector = selector.childNodes;
-            } else if (selector.nodeType) { // nodeType
-                selector = [selector];
-            } else if (hAzzle.isNodeList(selector)) {
-                selector = hAzzle.makeArray(selector);
-            } else if (hAzzle.isElement(selector) ||
-                hAzzle.isDocument(selector) ||
-                (selector === window)) {
-                selector = [selector];
-            }
-
             if (selector) {
 
-                // Initialize a new hAzzle Object with the
-                // given `selector`
+                if (typeof selector === 'string') {
+                    selector = hAzzle.find(selector, context); // Instanceof hAzzle
+                } else if (selector instanceof hAzzle) {
+                    return selector;
+                } else if (selector.nodeType === 11) { // document fragment
+                    selector = selector.childNodes;
+                } else if (selector.nodeType) { // nodeType
+                    selector = [selector];
+                } else if (hAzzle.isNodeList(selector)) {
+                    selector = hAzzle.makeArray(selector);
+                } else if (hAzzle.isElement(selector) ||
+                    hAzzle.isDocument(selector) ||
+                    (selector === window)) {
+                    selector = [selector];
+                }
+
+                // Initialize a new hAzzle Object with the given `selector`
 
                 var i = this.length = this.size = selector.length;
 
                 while (i--) {
-
                     this[i] = selector[i];
                 }
             }
@@ -191,19 +166,6 @@
             }
         }
     };
-
-    /**
-     * Set or clear the hashkey for an object.
-     * @param obj object
-     * @param h the hashkey (!truthy to delete the hashkey)
-     */
-    function setHashKey(obj, h) {
-        if (h) {
-            obj.$$hashKey = h;
-        } else {
-            delete obj.$$hashKey;
-        }
-    }
 
     Implement({
 
@@ -327,6 +289,7 @@
 
         /**
          * toString
+
          */
 
         str: Object.prototype.toString,
@@ -360,15 +323,16 @@
             return -1;
         },
         map: function(elems, callback, arg) {
+
             var value,
                 i = 0,
                 length = elems.length,
-                isArray = isArraylike(elems),
                 ret = [];
 
-            // Go through the array, translating each of the items to their new values
-            if (isArray) {
+            if (isArraylike(elems)) {
+
                 for (; i < length; i++) {
+
                     value = callback(elems[i], i, arg);
 
                     if (value != null) {
@@ -582,8 +546,8 @@
         bind: function(fn, context) {
 
             var curryArgs = arguments.length > 2 ?
-                sliceArgs(arguments, 2) : [],
-                tmp, args, bind;
+                slice.call(arguments, 2) : [],
+                tmp;
 
             if (typeof context === 'string') {
 
@@ -670,29 +634,18 @@
 
     // Expose
 
-    hAzzle.lowercase = lowercase;
-    hAzzle.uppcase = uppercase;
     hAzzle.isWindow = isWindow;
     hAzzle.isArray = Array.isArray;
     hAzzle.isPlainObject = isPlainObject;
     hAzzle.extend = Implement;
     hAzzle.natives = natives;
-    
-    // Credit: AngularJS    
-    // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
-    // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
-    // with correct but slower alternatives.
 
-    if ('i' !== 'I'.toLowerCase()) {
-        lowercase = manualLowercase;
-        uppercase = manualUppercase;
-    }
     // Populate the native list
 
     hAzzle.each(nativeList, function() {
         natives['[object ' + this + ']'] = this.toLowerCase();
     });
-    
+
     // Expose hAzzle to the global object
 
     if (typeof noGlobal === 'undefined') {

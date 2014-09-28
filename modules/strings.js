@@ -1,50 +1,97 @@
-    // Whitespace regexp for hAzzle.trim()
-   var hTrwl = /^\s+|\s+$/g,
-       hHyphenate = /[A-Z]/g,
-       hCapitalize = /\b[a-z]/g,
+// strings.js
+var
+// Save a reference to some core methods
 
-       camelCache = [];
+    trim = String.prototype.trim,
 
-   hAzzle.extend({
-       capitalize: function(str) {
-           return str.replace(hCapitalize, function(match) {
-               return match.toUpperCase();
-           });
-       },
-       // Convert camelCase to  CSS-style
-       // e.g. boxSizing -> box-sizing
+    sTrwl = /^\s+|\s+$/g,
 
-       hyphenate: function(str) {
-           return str.replace(hHyphenate, function(match) {
-               return ('-' + match.charAt(0).toLowerCase());
-           });
-       },
+    // Hyphenate RegExp
 
-       /**
-        *  Convert dashed to camelCase
-        *
-        * @param {string} str
-        * @return {string}
-        */
+    sHyphenate = /[A-Z]/g,
 
-       camelize: function(str) {
-           if (!str) return;
-           return camelCache[str] ? camelCache[str] :
-               camelCache[str] = str.replace(/-\D/g, function(match) {
-                   return match.charAt(1).toUpperCase();
-               });
-       },
+    // Capitalize RegExp
 
-       /**
-        * Remove leading and trailing whitespaces of the specified string.
-        *
-        * @param{String} str
-        * @return{String}
-        */
+    sCapitalize = /\b[a-z]/g,
 
-       trim: function(str) {
-           return String.prototype.trim ? (typeof str === 'string' ? str.trim() : str) :
-               str.replace(hTrwl, '');
-       },
+    // Cache array for hAzzle.camelize()
 
-   }, hAzzle);
+    camelCache = [],
+
+    // Converts the specified string to lowercase.
+
+    lowercase = function(string) {
+        return typeof string === 'string' ? string.toLowerCase() : string;
+    },
+    // Converts the specified string to uppercase
+    uppercase = function(string) {
+        return typeof string === 'string' ? string.toUpperCase() : string;
+    },
+
+    manualLowercase = function(s) {
+        /* jshint bitwise: false */
+        return typeof s === 'string' ? s.replace(/[A-Z]/g, function(ch) {
+            return String.fromCharCode(ch.charCodeAt(0) | 32);
+        }) : s;
+    },
+    manualUppercase = function(s) {
+        /* jshint bitwise: false */
+        return typeof s === 'string' ? s.replace(/[a-z]/g, function(ch) {
+            return String.fromCharCode(ch.charCodeAt(0) & ~32);
+        }) : s;
+    };
+
+hAzzle.extend({
+
+    capitalize: function(str) {
+        return str.replace(sCapitalize, function(match) {
+            return match.toUpperCase();
+        });
+    },
+
+    // Convert camelCase to hyphenate
+    // e.g. boxSizing -> box-sizing
+
+    hyphenate: function(str) {
+        if (str) {
+            return str.replace(sHyphenate, function(match) {
+                return ('-' + match.charAt(0).toLowerCase());
+            });
+        }
+        return str;
+    },
+
+    // Convert dashed to camelCase
+
+    camelize: function(str) {
+        if (str) {
+            return camelCache[str] ? camelCache[str] :
+                camelCache[str] = str.replace(/-\D/g, function(match) {
+                    return match.charAt(1).toUpperCase();
+                });
+        }
+        return str;
+    },
+
+    // Remove leading and trailing whitespaces of the specified string.
+
+    trim: function(str) {
+        return trim ? (typeof str === 'string' ? str.trim() : str) :
+            str.replace(sTrwl, '');
+    },
+
+    lowercase: lowercase,
+    uppcase: uppercase
+
+}, hAzzle);
+
+
+// Credit: AngularJS    
+// String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
+// locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
+// with correct but slower alternatives.
+
+if ('i' !== 'I'.toLowerCase()) {
+    lowercase = manualLowercase;
+    uppercase = manualUppercase;
+}
