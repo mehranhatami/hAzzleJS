@@ -1,8 +1,7 @@
 // create.js
 var
-    cSpace = /^\s*<([^\s>]+)/
-cTagR = /\s*<script +src=['"]([^'"]+)['"]>/,
-    cHTML = /<|&#?\w+;/,
+    cSpace = /^\s*<([^\s>]+)/,
+    cTagR = /\s*<script +src=['"]([^'"]+)['"]>/,
     table = ['<table>', '</table>', 1],
     td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
     option = ['<select>', '</select>', 1],
@@ -29,42 +28,41 @@ cTagR = /\s*<script +src=['"]([^'"]+)['"]>/,
         base: noscope,
     },
 
-    createScriptFromHtml = function(context, html) {
-        var scriptEl = document.createElement('script'),
+    createScriptFromHtml = function(html, context) {
+        var scriptEl = context.createElement('script'),
             matches = html.match(cTagR);
 
-        scriptEl.src = matches[1]
-        return scriptEl
+        scriptEl.src = matches[1];
+        return scriptEl;
     },
-
-    // Simple function for creating HTML
-    // Shall never be part of the documented public API
-    // For HTML creating, use html.js
 
     create = function(node, context) {
 
         // Mitigate XSS vulnerability
 
-        var defaultContext = hAzzle.isFunction(document.implementation.createHTMLDocument) ? document.implementation.createHTMLDocument() : document,
+        var defaultContext = hAzzle.isFunction(document.implementation.createHTMLDocument) ? 
+            document.implementation.createHTMLDocument() : 
+            document,
             ctx = context || defaultContext,
             fragment = ctx.createDocumentFragment();
 
         if (typeof node == 'string' && node !== '') {
-            s
 
             if (cTagR.test(node)) {
-                return [createScriptFromHtml(context, node)];
+                return [createScriptFromHtml(node, context)];
             }
 
-            var tag = node.match(cSpace),
-                el = fragment.appendChild(ctx.createElement("div")),
+            // Deserialize a standard representation
+
+            var i, tag = node.match(cSpace),
+                el = fragment.appendChild(ctx.createElement('div')),
                 els = [],
-                p = tag ? tagMap[tag[1].toLowerCase()] : null,
-                dep = p ? p[2] + 1 : 1,
-                ns = p && p[3],
+                map = tag ? tagMap[tag[1].toLowerCase()] : null,
+                dep = map ? map[2] + 1 : 1,
+                ns = map && map[3],
                 pn = 'parentNode';
 
-            el.innerHTML = p ? (p[0] + node + p[1]) : node;
+            el.innerHTML = map ? (map[0] + node + map[1]) : node;
 
             while (dep--) {
                 el = el.firstChild;
@@ -78,17 +76,19 @@ cTagR = /\s*<script +src=['"]([^'"]+)['"]>/,
 
             do {
                 if (!tag || el.nodeType == 1) {
-                    els.push(el)
+                    els.push(el);
                 }
-            } while (el = el.nextSibling)
+            } while (el = el.nextSibling);
 
-            hAzzle.each(els, function(el) {
-                el[pn] && el[pn].removeChild(el)
-            })
-            return els
+            for (i in els) {
+                if (els[i][pn]) {
+                    els[i][pn].removeChild(els[i]);
+                }
+            }
+            return els;
 
         } else if (hAzzle.isNode(node)) {
-            return [node.cloneNode(true)]
+            return [node.cloneNode(true)];
         }
     };
 
@@ -100,4 +100,4 @@ hAzzle.create = create;
 
 hAzzle.parseHTML = function(html, context) {
     return hAzzle(hAzzle.create(html, context));
-}
+};
