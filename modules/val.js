@@ -43,13 +43,11 @@ hAzzle.Core.val = function(value) {
 
         if (typeof value === 'function') {
             val = value.call(el, index, hAzzle(el).val());
-
         } else {
-
             val = value;
         }
 
-        // Treat null/undefined as ""; convert numbers to string
+        // Treat null/undefined as ''; convert numbers to string
 
         if (val === null) {
 
@@ -75,9 +73,9 @@ hAzzle.Core.val = function(value) {
     });
 };
 
-hAzzle.extend({
+// valHooks
 
-    valHooks: {
+hAzzle.valHooks = {
         option: {
             get: function(elem) {
 
@@ -93,8 +91,7 @@ hAzzle.extend({
 
                 // Selectbox has special case
 
-                var option,
-                    options = elem.options,
+                var option, options = elem.options,
                     index = elem.selectedIndex,
                     one = elem.type === 'select-one' || index < 0,
                     values = one ? null : [], value,
@@ -138,23 +135,18 @@ hAzzle.extend({
                     option = options[i];
 
                     if ((option.selected = hAzzle.indexOf(option.value, values) >= 0)) {
-
                         optionSet = true;
                     }
                 }
 
                 // Force browsers to behave consistently when non-matching value is set
                 if (!optionSet) {
-
                     elem.selectedIndex = -1;
                 }
                 return values;
             }
         }
-    }
-
-}, hAzzle);
-
+    };
 
 // Radios and checkboxes setter
 
@@ -164,7 +156,6 @@ hAzzle.each(['radio', 'checkbox'], function() {
             if (hAzzle.isArray(value)) {
                 var val = hAzzle(elem).val(),
                     checked = hAzzle.indexOf(val, value) >= 0;
-                // Set the value
                 elem.checked = checked;
                 return;
             }

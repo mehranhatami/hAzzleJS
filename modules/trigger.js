@@ -1,5 +1,4 @@
 // trigger.js
-
 var doc = this.document,
     focusinoutblur = /^(?:focusinfocus|focusoutblur)$/;
 
@@ -74,7 +73,6 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
         // If handler exist, 'apply' data to it
 
         if (handle) {
-
             handle.apply(cur, data);
         }
 
@@ -115,7 +113,6 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
                 hAzzle.event.triggered = undefined;
 
                 if (tmp) {
-
                     elem[ontype] = tmp;
                 }
             }
@@ -125,13 +122,11 @@ hAzzle.event.trigger = function(evt, data, elem, handlers) {
     return evt.result;
 };
 
-/* ============================ UTILITY METHODS =========================== */
-
-
 // Check for valid nodeType, and not triggered before
 
 function validity(elem, type) {
-    if ((elem.nodeType === 3 || elem.nodeType === 8) ||
+    if ((elem.nodeType === 3 ||
+            elem.nodeType === 8) ||
         focusinoutblur.test(type + hAzzle.event.triggered)) {
         return false;
     }

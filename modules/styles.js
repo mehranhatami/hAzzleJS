@@ -21,8 +21,8 @@ var sHeightWidth = /^(height|width)$/i,
 
         var val, num;
 
-if( ( prop = cssCore.cssCamelized[prop]))
-        prop = cssCore.cssCamelized[prop] || prop;
+        if ((prop = cssCore.cssCamelized[prop]))
+            prop = cssCore.cssCamelized[prop] || prop;
 
         if (cssHook[prop] && cssHook[prop].get) {
             val = cssHook[prop].get(elem, prop);
@@ -81,7 +81,7 @@ if( ( prop = cssCore.cssCamelized[prop]))
 
             // Pre-camelize 
             // E.g. Firefox don't understand border-color
-            
+
             if ((oldProp = cssCore.cssCamelized[prop])) {
                 prop = oldProp
             } else {
@@ -90,7 +90,7 @@ if( ( prop = cssCore.cssCamelized[prop]))
 
             // Assign the appropriate vendor prefix before perform an official style update.
 
-            prop = hAzzle.prefixCheck(prop)[0] ;
+            prop = hAzzle.prefixCheck(prop)[0];
 
             type = typeof value;
 
@@ -105,14 +105,12 @@ if( ( prop = cssCore.cssCamelized[prop]))
             // Make sure that null and NaN values aren't set.
 
             if (value === null || value !== value) {
-
                 return;
             }
 
             // If a number was passed in, add 'px' to the number (except for certain CSS properties)
 
             if (type === 'number' && !hAzzle.unitless[prop]) {
-
                 value += ret && ret[3] ? ret[3] : 'px';
             }
 
@@ -170,29 +168,6 @@ hAzzle.extend({
                 setCSS(elem, name, value) :
                 getCSS(elem, name);
         }, name, value, arguments.length > 1);
-    },
-
-    zIndex: function(zIndex) {
-        if (zIndex !== undefined) {
-            return this.css('zIndex', zIndex);
-        }
-
-        if (this.length) {
-            var elem = hAzzle(this[0]),
-                position, value;
-            while (elem.length && elem[0] !== document) {
-                position = elem.css('position');
-                if (position === 'absolute' || position === 'relative' || position === 'fixed') {
-                    value = parseInt(elem.css('zIndex'), 10);
-                    if (!isNaN(value) && value !== 0) {
-                        return value;
-                    }
-                }
-                elem = elem.parent();
-            }
-        }
-
-        return 0;
     }
 });
 
