@@ -40,8 +40,8 @@ var
 
         // Mitigate XSS vulnerability
 
-        var defaultContext = hAzzle.isFunction(document.implementation.createHTMLDocument) ? 
-            document.implementation.createHTMLDocument() : 
+        var defaultContext = hAzzle.isFunction(document.implementation.createHTMLDocument) ?
+            document.implementation.createHTMLDocument() :
             document,
             ctx = context || defaultContext,
             fragment = ctx.createDocumentFragment();
@@ -85,6 +85,7 @@ var
                     els[i][pn].removeChild(els[i]);
                 }
             }
+
             return els;
 
         } else if (hAzzle.isNode(node)) {
@@ -98,6 +99,16 @@ hAzzle.create = create;
 
 // Create it parseable
 
-hAzzle.parseHTML = function(html, context) {
-    return hAzzle(hAzzle.create(html, context));
+hAzzle.parseHTML = function(html, props) {
+    var key,
+        els = hAzzle.create(html),
+        i = els.length;
+    if (hAzzle.isPlainObject(props)) {
+        while (i--) {
+            for (key in props) {
+                hAzzle.attr(els[i], key, props[key])
+            }
+        }
+    }
+    return hAzzle(els);
 };
