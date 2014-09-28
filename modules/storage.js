@@ -151,9 +151,6 @@ hAzzle.extend({
     getPrivate: function(elem, data) {
         return _privateData.get(elem, data);
     },
-
-    // Set user / private data
-
     setPrivate: function(elem, data, value) {
         return _privateData.set(elem, data, value);
     },
@@ -164,9 +161,6 @@ hAzzle.extend({
     private: function(elem, name, data) {
         return _privateData.access(elem, name, data);
     },
-
-    // Remove user / private data
-
     removePrivate: function(elem, name) {
         return _privateData.release(elem, name);
     },
@@ -174,27 +168,16 @@ hAzzle.extend({
     flushData: function(elem) {
         return _userData.flush(elem);
     },
-
-    // Check if 'elem' has user / private data
-
     hasData: function(elem) {
         return _userData.hasData(elem);
     },
     data: function(elem, name, data) {
         return _userData.access(elem, name, data);
     },
-
-    // Remove user / private data
-
     removeData: function(elem, name) {
         return _userData.release(elem, name);
     }
 });
-
-// Expand the global hAzzle Object
-
-
-// Expand hAzzle Core
 
 hAzzle.extend({
 
@@ -203,7 +186,7 @@ hAzzle.extend({
      * value at the named data store for the first element in the set of matched
      * elements.
      *
-     * @param  {String|Object|Array}  key(s)
+     * @param  {String|Object|Array}  key
      * @param  {Object}               value
      * @return {Object|String }
      */
