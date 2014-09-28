@@ -49,7 +49,6 @@ hAzzle.shallowCopy = function() {
                                 clone = src && hAzzle.isArray(src) ? src : [];
 
                             } else {
-
                                 clone = src && hAzzle.isPlainObject(src) ? src : {};
                             }
 
@@ -69,3 +68,4 @@ hAzzle.shallowCopy = function() {
             // Return the modified object
             return target;
         };
+  

@@ -177,7 +177,7 @@ hAzzle.extend({
     removeData: function(elem, name) {
         return _userData.release(elem, name);
     }
-});
+}, hAzzle);
 
 hAzzle.extend({
 

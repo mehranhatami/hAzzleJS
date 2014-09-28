@@ -62,8 +62,6 @@ hAzzle.extend({
         return hAzzle.trim(str).length === 0;
     },
 
-    isArray: Array.isArray,
-
     isDocument: function(obj) {
         return obj.nodeType && obj.nodeType === 9;
     },
