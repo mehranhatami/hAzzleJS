@@ -1,36 +1,43 @@
 // jsonxml.js
-// Parse JSON
-hAzzle.parseJSON = function(data) {
-    return JSON.parse( data + '' );
-};
+hAzzle.extend({
 
-// Parse XML
+    // Parse JSON    
 
-hAzzle.parseXML = function(data) {
+    parseJSON: function(data) {
+        return typeof data === 'string' ?
+            JSON.parse(data + '') :
+            data;
+    },
 
-    var xml, tmp;
+    // Parse XML
 
-    // If no string, return null 
+    parseXML: function(data) {
 
-    if (!data || typeof data !== 'string') {
+        var xml, tmp;
 
-        return null;
+        // If no string, return null 
+
+        if (!data || typeof data !== 'string') {
+
+            return null;
+        }
+
+        // Support: IE9
+        try {
+
+            tmp = new DOMParser();
+            xml = tmp.parseFromString(data, 'text/xml');
+
+        } catch (e) {
+
+            xml = undefined;
+        }
+
+        if (!xml || xml.getElementsByTagName('parsererror').length) {
+
+            return hAzzle.error('Invalid XML: ' + data);
+        }
+        return xml;
     }
 
-    // Support: IE9
-    try {
-
-        tmp = new DOMParser();
-        xml = tmp.parseFromString(data, 'text/xml');
-
-    } catch (e) {
-
-        xml = undefined;
-    }
-
-    if (!xml || xml.getElementsByTagName('parsererror').length) {
-
-        return hAzzle.error('Invalid XML: ' + data);
-    }
-    return xml;
-};
+});

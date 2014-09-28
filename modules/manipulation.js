@@ -6,38 +6,7 @@ var
     mSpace = /^\s*<([^\s>]+)/,
     mRxhtmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
     mScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/,
-    table = ['<table>', '</table>', 1],
-    td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
-    option = ['<select>', '</select>', 1],
-    noscope = ['_', '', 0, 1],
-    tagMap = {
-        style: table,
-        table: table,
-        thead: table,
-        tbody: table,
-        tfoot: table,
-        colgroup: table,
-        caption: table,
-        tr: ['<table><tbody>', '</tbody></table>', 2],
-        th: td,
-        td: td,
-        col: ['<table><colgroup>', '</colgroup></table>', 2],
-        fieldset: ['<form>', '</form>', 1],
-        legend: ['<form><fieldset>', '</fieldset></form>', 2],
-        option: option,
-        optgroup: option,
-        script: noscope,
-        link: noscope,
-        param: noscope,
-        base: noscope,
-    },
 
-    createScriptFromHtml = function(html) {
-        var scriptEl = document.createElement('script'),
-            matches = html.match(mScriptTagRe);
-        scriptEl.src = matches[1];
-        return scriptEl;
-    },
     stabilize = function(html, clone) {
 
         if (typeof html === 'string') {
@@ -59,38 +28,6 @@ var
             return ret;
         }
         return html;
-    },
-    createStrNode = function(html) {
-        if (mScriptTagRe.test(html)) {
-            return [createScriptFromHtml(html)];
-        }
-
-        var tag = html.match(mSpace),
-            el = document.createElement('div'),
-            els = [],
-            p = tag ? tagMap[tag[1].toLowerCase()] : null,
-            dep = p ? p[2] + 1 : 1,
-            ns = p && p[3],
-            pn = 'parentNode';
-
-        el.innerHTML = p ? (p[0] + html + p[1]) : html;
-        while (dep--) {
-            el = el.firstChild;
-        }
-        // for IE NoScope, we may insert cruft at the begining just to get it to work
-        if (ns && el && el.nodeType !== 1) {
-            el = el.nextSibling;
-        }
-        do {
-            if (!tag || el.nodeType == 1) {
-                els.push(el);
-            }
-        } while (el = el.nextSibling);
-
-        hAzzle.each(els, function(el) {
-            el[pn] && el[pn].removeChild(el);
-        });
-        return els;
     };
 
 hAzzle.extend({
@@ -238,21 +175,6 @@ hAzzle.extend({
     }
 });
 
-// Simple function for creating HTML
-// Shall never be part of the documented public API
-// For HTML creating, use html.js
-
-hAzzle.create = function(html) {
-    if (typeof html == 'string' && html !== '') {
-        return createStrNode(html);
-    }
-
-    if (hAzzle.isNode(html)) {
-        return [html.cloneNode(true)];
-    }
-    return [];
-};
-
 /* ============================ INTERNAL =========================== */
 
 // append, prepend
@@ -294,9 +216,9 @@ hAzzle.each([
     hAzzle.Core[name] = function(target) {
         return this.domManip(target, function(t, el) {
             if (name === 'appendTo') {
-                t.appendChild(el)
+                t.appendChild(el);
             } else {
-              t.insertBefore(el, t.firstChild)
+               t.insertBefore(el, t.firstChild);
             }
         });
     };

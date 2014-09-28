@@ -62,7 +62,7 @@ function conf(grunt) {
                 'cl3.js',
                 'cl4.js',								
                 'matchesselector.js',
-                'html.js',
+                'create.js',
                 'clone.js',
                 'showhide.js',
                 'shims/classlist.js',

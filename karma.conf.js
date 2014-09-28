@@ -33,7 +33,7 @@ module.exports = function(config) {
         'cl4.js',
 		'clone.js',
         'matchesselector.js',
-        'html.js',
+        'create.js',
         'shims/classlist.js',
         'classes.js',
         'manipulation.js',

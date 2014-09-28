@@ -676,7 +676,8 @@
     hAzzle.isArray = Array.isArray;
     hAzzle.isPlainObject = isPlainObject;
     hAzzle.extend = Implement;
-
+    hAzzle.natives = natives;
+    
     // Credit: AngularJS    
     // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
     // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
@@ -691,7 +692,7 @@
     hAzzle.each(nativeList, function() {
         natives['[object ' + this + ']'] = this.toLowerCase();
     });
-
+    
     // Expose hAzzle to the global object
 
     if (typeof noGlobal === 'undefined') {
