@@ -595,9 +595,13 @@
             if (typeof fn === 'function' && !(context instanceof RegExp)) {
 
                 return curryArgs.length ? function() {
-                    return arguments.length ? fn.apply(context || this, curryArgs.concat(slice.call(arguments, 0))) : fn.apply(context || this, curryArgs);
+                    return arguments.length ?
+                        fn.apply(context || this, curryArgs.concat(slice.call(arguments, 0))) :
+                        fn.apply(context || this, curryArgs);
                 } : function() {
-                    return arguments.length ? fn.apply(context || this, arguments) : fn.call(context || this);
+                    return arguments.length ?
+                        fn.apply(context || this, arguments) :
+                        fn.call(context || this);
                 };
 
             } else {
