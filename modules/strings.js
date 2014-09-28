@@ -18,6 +18,23 @@ var
 
     camelCache = [],
 
+    // Used by hAzzle.capitalize as callback to replace()
+
+    fcapitalize = function(match) {
+        return match.toUpperCase();
+    },
+
+    // Used by hAzzle.camelize as callback to replace()
+
+    fcamelize = function(match) {
+        return match.charAt(1).toUpperCase();
+    },
+    // Used by hAzzle.hyphenate as callback to replace()
+
+    fhyphenate = function(match) {
+        return ('-' + match.charAt(0).toLowerCase());
+    },
+
     // Converts the specified string to lowercase.
 
     lowercase = function(string) {
@@ -44,31 +61,21 @@ var
 hAzzle.extend({
 
     capitalize: function(str) {
-        return str.replace(sCapitalize, function(match) {
-            return match.toUpperCase();
-        });
+        return str ? str.replace(sCapitalize, fcapitalize) : str;
     },
 
     // Convert camelCase to hyphenate
     // e.g. boxSizing -> box-sizing
 
     hyphenate: function(str) {
-        if (str) {
-            return str.replace(sHyphenate, function(match) {
-                return ('-' + match.charAt(0).toLowerCase());
-            });
-        }
-        return str;
+        return str ? str.replace(sHyphenate, fhyphenate) : str;
     },
 
     // Convert dashed to camelCase
-
     camelize: function(str) {
         if (str) {
             return camelCache[str] ? camelCache[str] :
-                camelCache[str] = str.replace(/-\D/g, function(match) {
-                    return match.charAt(1).toUpperCase();
-                });
+                camelCache[str] = str.replace(/-\D/g, fcamelize);
         }
         return str;
     },
