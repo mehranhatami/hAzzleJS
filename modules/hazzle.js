@@ -245,33 +245,27 @@
          * @param {Array|Function|Object} obj
          * @param {Function} fn
          * @param {String} scope
+         * @param {Boolean} rev
          * @return {hAzzle}
          */
 
-        each: function(obj, fn, scope, reverse) {
+        each: function(obj, fn, scope, rev) {
 
             if (obj) {
 
-                var key = 0,
+                var key = 0, i,
                     len = obj.length;
 
                 // Iterate through array	
 
-                if (hAzzle.isArray(obj) || isArraylike(obj)) {
-                    if (reverse) {
-                        for (key = len - 1; key > -1; key--) {
-                            if (fn.call(scope || obj[key], obj[key], key) === false) {
-                                break;
-                            }
-                        }
-                    } else {
+                if (isArraylike(obj)) {
 
                         for (; key < len; key++) {
-                            if (fn.call(scope || obj[key], obj[key], key) === false) {
+                            i = rev ? obj.length - key - 1 : key;
+                            if (fn.call(scope || obj[i], obj[i], i) === false) {
                                 break;
                             }
                         }
-                    }
                 } else {
 
                     for (key in obj) {
