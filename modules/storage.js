@@ -1,5 +1,4 @@
 // Storage.js
-
 var sWhiteRegex = (/\S+/g),
     shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     scharRegEx = /([A-Z])/g,
@@ -12,7 +11,7 @@ function Storage() {
 Storage.prototype = {
 
     constructor: Storage,
-    
+
     expando: 0,
 
     register: function(owner, initial) {
@@ -60,11 +59,8 @@ Storage.prototype = {
         } else {
 
             if (hAzzle.isEmptyObject(cache)) {
-
                 hAzzle.shallowCopy(cache, data);
-
             } else {
-
                 for (prop in data) {
                     cache[prop] = data[prop];
                 }
@@ -146,47 +142,57 @@ Storage.prototype = {
 var _privateData = new Storage(),
     _userData = new Storage();
 
-// Expand the global hAzzle Object
+hAzzle.extend({
 
-hAzzle.each({
-    'Data': _userData,
-    'Private': _privateData
+    flushPrivate: function(elem) {
+        return _privateData.flush(elem);
+    },
 
-}, function(prop, name) {
-
-    // Flush user / private data
-
-    hAzzle['flush' + name] = function(elem) {
-        return prop.flush(elem);
-    };
-
-    // Get user / private data	
-
-    hAzzle['get' + name] = function(elem, data) {
-        return prop.get(elem, data);
-    };
+    getPrivate: function(elem, data) {
+        return _privateData.get(elem, data);
+    },
 
     // Set user / private data
 
-    hAzzle['set' + name] = function(elem, data, value) {
-        return prop.set(elem, data, value);
-    };
+    setPrivate: function(elem, data, value) {
+        return _privateData.set(elem, data, value);
+    },
 
-    // Check if 'elem' has user / private data
-
-    hAzzle['has' + name] = function(elem) {
-        return prop.hasData(elem);
-    };
-    hAzzle[name.toLowerCase()] = function(elem, name, data) {
-        return prop.access(elem, name, data);
-    };
+    hasPrivate: function(elem) {
+        return _privateData.hasData(elem);
+    },
+    private: function(elem, name, data) {
+        return _privateData.access(elem, name, data);
+    },
 
     // Remove user / private data
 
-    hAzzle['remove' + name] = function(elem, name) {
-        return prop.release(elem, name);
-    };
+    removePrivate: function(elem, name) {
+        return _privateData.release(elem, name);
+    },
+
+    flushData: function(elem) {
+        return _userData.flush(elem);
+    },
+
+    // Check if 'elem' has user / private data
+
+    hasData: function(elem) {
+        return _userData.hasData(elem);
+    },
+    data: function(elem, name, data) {
+        return _userData.access(elem, name, data);
+    },
+
+    // Remove user / private data
+
+    removeData: function(elem, name) {
+        return _userData.release(elem, name);
+    }
 });
+
+// Expand the global hAzzle Object
+
 
 // Expand hAzzle Core
 
@@ -315,9 +321,6 @@ hAzzle.extend({
         });
     }
 });
-
-
-/* =========================== INTERNAL ========================== */
 
 function dataAttr(elem, key, data) {
 
