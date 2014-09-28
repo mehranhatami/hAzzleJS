@@ -1,18 +1,13 @@
+// showhide.js
 var iframe,
     elemdisplay = {
-
         HTML: 'block',
         BODY: 'block'
     },
     actualDisplay = function(name, doc) {
         var elem = hAzzle(doc.createElement(name)).appendTo(doc.body),
-
             display = hAzzle.css(elem[0], 'display');
-
-        // We don't have any data stored on the element,
-        // so use 'detach' method as fast way to get rid of the element
         elem.detach();
-
         return display;
     };
 
@@ -84,9 +79,7 @@ function isHidden(elem, el) {
 
 function showHide(elements, show) {
     var display, elem, hidden,
-        values = [],
-        style,
-        i = 0,
+        values = [], style, i = 0,
         length = elements.length;
 
     for (; i < length; i++) {
@@ -99,15 +92,11 @@ function showHide(elements, show) {
 
         values[i] = hAzzle.getPrivate(elem, 'olddisplay');
 
-        // Cache the computedStyle on the Object, we may use
-        // it later
-
         display = curCSS(elem, 'style');
 
         if (show) {
 
             if (!values[i] && display === 'none') {
-
                 style.display = '';
             }
 

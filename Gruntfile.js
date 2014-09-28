@@ -77,7 +77,7 @@ function conf(grunt) {
                 'events.js',
 				'props.js',
                 'trigger.js',
-                'aliases.js',
+                'shorthand.js',
                 'eventHooks.js',
                 'classes.js',
                 'dimensions.js',

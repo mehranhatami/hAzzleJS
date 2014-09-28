@@ -1,4 +1,4 @@
-// Storage.js
+// storage.js
 var sWhiteRegex = (/\S+/g),
     shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
     scharRegEx = /([A-Z])/g,
@@ -70,9 +70,7 @@ Storage.prototype = {
     },
 
     get: function(owner, key) {
-
         var cache = this.cache(owner);
-
         return cache !== undefined && key === undefined ? cache : cache[key];
     },
     access: function(owner, key, value) {
@@ -101,9 +99,7 @@ Storage.prototype = {
         } else {
 
             if (hAzzle.isArray(key)) {
-
                 name = key.concat(key.map(camelize));
-
             } else {
 
                 camel = camelize(key);

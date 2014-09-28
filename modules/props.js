@@ -19,54 +19,19 @@ var pKeyfixRegex = /^key/,
 
         // Touch / Pointer
 
-        'touches targetTouches changedTouches scale rotation').split(' '),
+        'touches targetTouches changedTouches scale rotation').split(' ');
 
-    addEventProps = function(name) {
+// The fixHooks API are following the ES5 specs.
+// Example, to set a hook for the 'drop' event that copies the dataTransfer 
+// property, assign an object to hAzzle.event.fixHooks.drop:
+//
+// hAzzle.event.fixHooks.drop = {
+//    props: [ "dataTransfer" ]
+// };
+//
+// TODO! Fix the code so it supports ES6
 
-        var OdP = Object.defineProperty;
-
-        OdP(hAzzle.Event.prototype, name, {
-            enumerable: true,
-            configurable: true,
-
-            get: function() {
-                var value, hooks;
-                if (this.originalEvent) {
-                    if ((hooks = hAzzle.event.fixHooks[name])) {
-                        value = hooks(this.originalEvent);
-                    } else {
-                        value = this.originalEvent[name];
-                    }
-                }
-                return this[name] = value;
-            },
-
-            set: function(value) {
-                OdP(this, name, {
-                    enumerable: true,
-                    configurable: true,
-                    writable: true,
-                    value: value
-                });
-            }
-        });
-    };
-
-// Extend
-
-hAzzle.extend({
-
-    // The fixHooks API are following the ES5 specs.
-    // Example, to set a hook for the 'drop' event that copies the dataTransfer 
-    // property, assign an object to hAzzle.event.fixHooks.drop:
-    //
-    // hAzzle.event.fixHooks.drop = {
-    //    props: [ "dataTransfer" ]
-    // };
-    //
-    // TODO! Fix the code so it supports ES6
-
-    fixHooks: {
+var fixHooks = {
 
         which: function(evt) {
 
@@ -128,7 +93,7 @@ hAzzle.extend({
         },
     },
 
-    fix: function(evt) {
+    fix = function(evt) {
 
         if (evt[hAzzle.expando]) {
             return evt;
@@ -137,10 +102,10 @@ hAzzle.extend({
         // Create a writable copy of the event object and normalize some properties
 
         var originalEvent = evt,
-            fixHook = this.fixHooks[evt.type];
+            fHook = this.fixHooks[evt.type];
 
-        if (fixHook && fixHook.props && fixHook.props.length) {
-            hAzzle.each(fixHook.props.splice(0), addEventProps);
+        if (fHook && fHook.props && fHook.props.length) {
+            hAzzle.each(fHook.props.splice(0), addEventProps);
         }
 
         evt = new hAzzle.Event(originalEvent);
@@ -158,7 +123,10 @@ hAzzle.extend({
         return fixHook && fixHook.filter ? fixHook.filter(evt, originalEvent) : evt;
     }
 
-}, hAzzle.event);
+// Expose
+
+hAzzle.event.fixHooks = fixHooks;
+hAzzle.event.fix = fix;
 
 // Firefox
 
@@ -173,6 +141,41 @@ if (hAzzle.isChrome || hAzzle.isOpera) {
     // Append special events for Chrome / Opera
     commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
 }
+
+// Add new event props
+
+function addEventProps(name) {
+
+    var OdP = Object.defineProperty;
+
+    OdP(hAzzle.Event.prototype, name, {
+        enumerable: true,
+        configurable: true,
+
+        get: function() {
+            var value, hooks;
+            if (this.originalEvent) {
+                if ((hooks = hAzzle.event.fixHooks[name])) {
+                    value = hooks(this.originalEvent);
+                } else {
+                    value = this.originalEvent[name];
+                }
+            }
+            return this[name] = value;
+        },
+
+        set: function(value) {
+            OdP(this, name, {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: value
+            });
+        }
+    });
+};
+
+// Add common props
 
 hAzzle.each(commonProps, function(props) {
     addEventProps(props);

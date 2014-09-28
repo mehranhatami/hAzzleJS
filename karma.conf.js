@@ -48,7 +48,7 @@ module.exports = function(config) {
         'offset.js',
         'events.js',
         'trigger.js',
-        'aliases.js',
+        'shorthand.js',
         'eventHooks.js',
         'ajax.js',
         'raf.js',

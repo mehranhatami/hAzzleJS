@@ -1,3 +1,5 @@
+// scroll.js
+
 hAzzle.each( { scrollLeft: 'pageXOffset', scrollTop: 'pageYOffset' }, function( prop, method ) {
 	var top = 'pageYOffset' === prop;
 
