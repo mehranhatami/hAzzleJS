@@ -1,8 +1,10 @@
 // sort.js
 // NOTE! fNative defined in core.js
 // Overwirte already defined sortOrder
+var indexOf = Array.prototype.indexOf,
+    MAX_NEGATIVE = 1 << 31;
 
-hAzzle.features.sortOrder = sortOrder = fNative.test(features.root.compareDocumentPosition) ?
+hAzzle.features.sortOrder = sortOrder = fNative.test(Core.root.compareDocumentPosition) ?
 
     function(a, b) {
 
@@ -31,10 +33,10 @@ hAzzle.features.sortOrder = sortOrder = fNative.test(features.root.compareDocume
             (!features['sort-bug'] && b.compareDocumentPosition(a) === compare)) {
 
             // Choose the first element that is related to our preferred document
-            if (a === document || a.ownerDocument === document && contains(document, a)) {
+            if (a === document || a.ownerDocument === document && Core.contains(document, a)) {
                 return -1;
             }
-            if (b === document || b.ownerDocument === document && contains(document, b)) {
+            if (b === document || b.ownerDocument === document && Core.contains(document, b)) {
                 return 1;
             }
 
@@ -95,8 +97,8 @@ hAzzle.features.sortOrder = sortOrder = fNative.test(features.root.compareDocume
             siblingCheck(ap[i], bp[i]) :
 
             // Otherwise nodes in our document sort first
-            ap[i] === winDoc ? -1 :
-            bp[i] === winDoc ? 1 :
+            ap[i] === document ? -1 :
+            bp[i] === document ? 1 :
             0;
     };
 
@@ -126,3 +128,26 @@ hAzzle.unique = function(results) {
 
     return results;
 };
+
+function siblingCheck(a, b) {
+    var cur = b && a,
+        diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
+        (~b.sourceIndex || MAX_NEGATIVE) -
+        (~a.sourceIndex || MAX_NEGATIVE);
+
+    // Use IE sourceIndex if available on both nodes
+    if (diff) {
+        return diff;
+    }
+
+    // Check if b follows a
+    if (cur) {
+        while ((cur = cur.nextSibling)) {
+            if (cur === b) {
+                return -1;
+            }
+        }
+    }
+
+    return a ? 1 : -1;
+}

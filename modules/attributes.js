@@ -115,33 +115,6 @@ hAzzle.extend({
     },
     attrHooks: {
 
-        href: {
-
-            get: function(elem) {
-                return ('href' in elem) ? elem.getAttribute('href', 2) : elem.getAttribute('href');
-            }
-        },
-
-        style: {
-            get: function(elem) {
-                return (elem.style) ? elem.style.cssText : elem.getAttribute('style');
-            }
-        },
-
-        tabindex: {
-            get: function(elem) {
-                var attributeNode = elem.getAttributeNode('tabindex');
-                return (attributeNode && attributeNode.specified) ? attributeNode.nodeValue : null;
-            }
-        },
-
-        maxlength: {
-            get: function(elem) {
-                var attributeNode = elem.getAttributeNode('maxLength');
-                return (attributeNode && attributeNode.specified) ? attributeNode.nodeValue : null;
-            }
-        },
-
         type: {
             set: function(elem, value) {
 
