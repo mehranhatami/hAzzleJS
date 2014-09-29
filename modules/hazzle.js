@@ -253,26 +253,25 @@
 
             if (obj) {
 
-                var key = 0, i,
+                var key = 0,
+                    i,
                     len = obj.length;
 
                 // Iterate through array	
 
                 if (isArraylike(obj)) {
 
-                        for (; key < len; key++) {
-                            i = rev ? obj.length - key - 1 : key;
-                            if (fn.call(scope || obj[i], obj[i], i) === false) {
-                                break;
-                            }
+                    for (; key < len; key++) {
+                        i = rev ? obj.length - key - 1 : key;
+                        if (fn.call(scope || obj[i], obj[i], i) === false) {
+                            break;
                         }
+                    }
                 } else {
 
                     for (key in obj) {
-                        if (obj.hasOwnProperty(key)) {
-                            if (fn.call(scope || obj[key], obj[key], key) === false) {
-                                break;
-                            }
+                        if (fn.call(scope || obj[key], obj[key], key) === false) {
+                            break;
                         }
                     }
 
@@ -280,11 +279,6 @@
             }
             return obj;
         },
-
-        /**
-         * toString
-
-         */
 
         str: Object.prototype.toString,
 
@@ -299,7 +293,6 @@
         inArray: function(array, value, index) {
 
             if (!array) {
-
                 return;
             }
 
@@ -309,9 +302,7 @@
             for (; i < m; i++) {
 
                 if (array[i] === value) {
-
                     return i;
-
                 }
             }
             return -1;
@@ -508,9 +499,7 @@
             }
         },
 
-        /*
-         * Finds the elements of an array which satisfy a filter function.
-         */
+        // Finds the elements of an array which satisfy a filter function.
 
         grep: function(elems, callback, invert) {
             var callbackInverse,
@@ -530,6 +519,7 @@
 
             return matches;
         },
+        
         /**
          * Bind a function to a context, optionally partially applying any
          *
