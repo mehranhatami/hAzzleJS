@@ -6,10 +6,7 @@ var cHeightWidth = /^(height|width)$/i,
     _private = function(elem) {
         return hAzzle.private(elem, 'CSS');
     },
-    computedValues;
-// Webkit
-if (hAzzle.isWebkit) {
-    computedValues = function(elem) {
+    computedValues = hAzzle.isWebkit ? function(elem) {
         var s;
         if (elem.nodeType === 1) {
             var dv = elem.ownerDocument.defaultView;
@@ -20,11 +17,9 @@ if (hAzzle.isWebkit) {
             }
         }
         return s || {};
-    };
+    } :
 
-
-} else { // All others
-    computedValues = function(elem) {
+    function(elem) {
         var view = false;
         if (elem && elem !== window) {
 
@@ -36,12 +31,31 @@ if (hAzzle.isWebkit) {
                     window.getComputedStyle(elem, null)) : elem.style;
         }
         return null;
-    };
-}
-
-var toFloat = function(str) {
-        return parseFloat(str);
     },
+
+    curHeight = function(elem) {
+        var contentBoxHeight = elem.offsetHeight -
+            (parseFloat(getCSS(elem, 'borderTopWidth')) || 0) -
+            (parseFloat(getCSS(elem, 'borderBottomWidth')) || 0) -
+            (parseFloat(getCSS(elem, 'paddingTop')) || 0) -
+            (parseFloat(getCSS(elem, 'paddingBottom')) || 0);
+
+        revertDisplay();
+
+        return contentBoxHeight;
+    },
+    curWidth = function(elem) {
+        var contentBoxWidth = elem.offsetWidth -
+            (parseFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
+            (parseFloat(getCSS(elem, 'borderRightWidth')) || 0) -
+            (parseFloat(getCSS(elem, 'paddingLeft')) || 0) -
+            (parseFloat(getCSS(elem, 'paddingRight')) || 0);
+
+        revertDisplay();
+
+        return contentBoxWidth;
+    },
+
     getStyles = function(elem, styles) {
         var computed;
 
@@ -85,35 +99,18 @@ var toFloat = function(str) {
 
             if (prop === 'height' &&
                 getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-
-                var contentBoxHeight = elem.offsetHeight -
-                    (toFloat(getCSS(elem, 'borderTopWidth')) || 0) -
-                    (toFloat(getCSS(elem, 'borderBottomWidth')) || 0) -
-                    (toFloat(getCSS(elem, 'paddingTop')) || 0) -
-                    (toFloat(getCSS(elem, 'paddingBottom')) || 0);
-                revertDisplay();
-
-                return contentBoxHeight;
-
+                return curHeight(elem);
             } else if (prop === 'width' &&
                 getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-
-                var contentBoxWidth = elem.offsetWidth -
-                    (toFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
-                    (toFloat(getCSS(elem, 'borderRightWidth')) || 0) -
-                    (toFloat(getCSS(elem, 'paddingLeft')) || 0) -
-                    (toFloat(getCSS(elem, 'paddingRight')) || 0);
-
-                revertDisplay();
-
-                return contentBoxWidth;
+                return curWidth(elem);
             }
         }
 
         var computedStyle = getStyles(elem, styles);
 
-        // IE and Firefox do not return a value for the generic borderColor -- they only return individual values for each border side's color.
-        // As a polyfill for querying individual border side colors, just return the top border's color.
+        // IE and Firefox do not return a value for the generic borderColor -- they only return individual values 
+        // for each border side's color. As a polyfill for querying individual border side colors, just return the 
+        // top border's color.
 
         if ((hAzzle.ie || hAzzle.isFirefox) && prop === 'borderColor') {
             prop = 'borderTopColor';
