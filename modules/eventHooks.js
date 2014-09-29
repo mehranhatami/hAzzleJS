@@ -17,7 +17,7 @@ var slice = Array.prototype.slice,
             // If this is the outermost with-native-handlers event, fire a native one
             if ((evt.isTrigger & 1) && !active) {
                 // Remember provided arguments
-                buffer = active = hAzzle.quickSlice(arguments);
+                buffer = active = slice.call(arguments);
 
                 this[type]();
 

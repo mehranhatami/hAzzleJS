@@ -473,7 +473,7 @@
             var ret = results || [];
 
             if (arr != null) {
-                if (hAzzle.isArraylike(Object(arr))) {
+                if (isArraylike(Object(arr))) {
                     hAzzle.merge(ret,
                         typeof arr === 'string' ? [arr] : arr
                     );
@@ -557,29 +557,6 @@
             } else {
                 return context;
             }
-        },
-
-        // Quick slicing - faster alternative then slice.call
-        // See: http://jsperf.com/array-prototype-slice-call-vs-slice-call/17
-
-        quickSlice: function(itm, start) {
-        
-        // For Firefox, 'slice.call' are fastest
-            if (hAzzle.isFirefox) {
-                return slice.call(itm, start);
-            } 
-                start = ~~start;
-                var len = itm.length,
-                    index = start,
-                    newArray;
-
-                newArray = new Array(len - start);
-
-                for (; index < len; i++) {
-                    newArray[index - start] = itm[index];
-                }
-
-                return newArray;
         }
     }, hAzzle);
 
