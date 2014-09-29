@@ -17,6 +17,8 @@ module.exports = function(config) {
         'strings.js',        
         'shallowcopy.js',        
         'core.js',
+        'features.js',
+        'sort.js',
         'cache.js',
         'doml4.js',
         'types.js',

@@ -45,6 +45,8 @@ function conf(grunt) {
                 'shallowcopy.js',
                 'strings.js',
                 'core.js',
+                'features.js',
+                'sort.js',
                 'booleans.js',
                 'doml4.js',
                 'types.js',
