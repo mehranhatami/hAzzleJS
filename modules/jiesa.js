@@ -1,17 +1,6 @@
 // Jiesa - selector engine
 var join = Array.prototype.join,
     push = Array.prototype.push,
-    funcToString = Function.prototype.toString,
-
-    // Holder for querySelector / query (DOM Level 4)
-    // Default: querySelector
-
-    _query = 'querySelector',
-
-    // Holder for querySelectorAll / queryAll (DOM Level 4)
-    // Default: querySelectorAll
-
-    _queryAll = 'querySelectorAll',
 
     // Expando used for attributes and the translation
 
@@ -111,33 +100,7 @@ var join = Array.prototype.join,
             return elem.getAttribute('title') || null;
         }
 
-    },
-
-    isNative = function(context, name) {
-        if (!context[name]) {
-            return false;
-        }
-        return (
-            funcToString.call(context[name]) ===
-            funcToString.call(document.querySelector).replace(/\bquerySelector\b/g, name)
-        );
     };
-
-/* ============================ AUTO-DETECTION =========================== */
-
-// Auto-detect if the browsers supports the new DOM Level 4 query / queryAll
-// If zero support, fallback to querySelector, and querySelectorAll
-
-if ('Element' in window) {
-
-    if (!isNative(Element.prototype, 'query')) {
-        _query = 'query';
-    }
-
-    if (!isNative(Element.prototype, 'queryAll')) {
-        _queryAll = 'queryAll';
-    }
-}
 
 function markElements(elems, attr, attrValue, filterFn, args) {
 
@@ -193,23 +156,7 @@ function objValue(obj, props) {
     return current;
 }
 
-// Create a fake path for comparison
-
-var fakePath = (function() {
-        var path,
-            a = document.createElement('a');
-        a.href = '/';
-
-        path = a.pathname;
-
-        // release memory in IE
-        a = null;
-
-        return path;
-
-    }()),
-
-    Expr = {
+var Expr = {
 
         'filter': {},
 
@@ -248,142 +195,10 @@ var fakePath = (function() {
                 operator === '|=' ? result == check || !result.indexOf(check + '-') :
                 operator === '!|=' ? result == check || result.indexOf(check + '-') :
                 property in el;
-        },
-
-        /* ============================ GLOBAL =========================== */
-
-        'CONTAINS': function(el, args, p, arrfunc) {
-            args = compileExpr.containsArg.exec(args);
-            return Expr.attr(el, '.textContent', '*=', args[1], args[2], arrfunc);
-        },
-
-        // Same as the 'has' pseudo - what is the point?
-
-        'WITH': function(el, args, p, arrfunc) {
-            return quickQuery(tokenize(args, el, arrfunc), el.ownerDocument);
-        },
-
-        'HAS': function(el, args, p, arrfunc) {
-            return quickQuery(tokenize(args, el, arrfunc), el.ownerDocument);
-        },
-
-        'ANY-LINK': function(el) {
-            var id = el.id;
-            if (id) {
-                return quickQuery('a[href$=\'#' + id + '\']', el.ownerDocument);
-            }
-        },
-
-        'EVEN': function() {
-            return !Boolean(this.currentIndex % 2);
-        },
-
-        'ODD': function() {
-            return Boolean(this.currentIndex % 2);
-        },
-
-        'EQ': function(el, args) {
-            return (hAzzle.isNumeric(args) && parseInt(args, 10) === this.currentIndex);
-        },
-
-        'FIRST': function() {
-            return (this.currentIndex === 0);
-        },
-
-        'LAST': function() {
-            var info = this;
-            return (info.currentIndex === info.elems.length - 1);
-        },
-
-        'GT': function(el, args) {
-            var info = this,
-                ind = parseInt(args, 10),
-                len = info.elems.length;
-
-            return (info.currentIndex > (len + ind) % len);
-        },
-
-        'LT': function(el, args) {
-            var info = this,
-                ind = parseInt(args, 10),
-                len = info.elems.length;
-
-            return (info.currentIndex < (len + ind) % len);
         }
     },
-    transformers = {
 
-        'LOCAL-LINK': function(args, attr, attrValue, p, context) {
-            var pathnameParts, selector,
-                ctx = context.ownerDocument || context,
-                pathname = ctx.location.pathname;
-
-            pathname = fakePath ? pathname : pathname.slice(1);
-
-            if (!args) {
-
-                selector = 'a[.protocol=\'' + ctx.location.protocol + '\'][.host=\'' + ctx.location.host + '\'][.pathname=\'' + pathname + '\']';
-
-            } else {
-
-                //convert the string to a number
-                args -= fakePath ? -1 : 0;
-                pathnameParts = pathname.split('/');
-                if (pathnameParts.length >= args) {
-                    pathname = pathnameParts.slice(0, args).join('/');
-                    selector = 'a[.host=\'' + ctx.location.host + '\'][.pathname^=\'' + pathname + '\']';
-                }
-            }
-
-            if (selector) {
-
-                markElements(JiesaFind(selector, ctx), attr, attrValue, returnTrue);
-            }
-        },
-
-        'NOT': function(args, attr, attrValue, p, context, arrfunc) {
-            return ':not(' + markElements(JiesaFind(args, context, arrfunc), attr, attrValue, returnTrue) + ')';
-        },
-
-        'REFERENCED-BY': function(args, attr, attrValue, p, context, arrfunc) {
-            var element, refEl, found = compileExpr.referencedByArg.match(args),
-                ctx = context.ownerDocument || context,
-                referenceAttr = found[1],
-                elements = JiesaFind(':matches(' + (found[2] || '*') + ')[' + referenceAttr + ']', ctx, arrfunc),
-                l = elements.length;
-
-            while ((element = elements[--l])) {
-
-                refEl = grabID(referenceAttr[0] == '.' ?
-                    element[referenceAttr.slice(1)] :
-                    getAttr(element, referenceAttr), ctx);
-
-                if (refEl) {
-                    refEl.setAttribute(attr, attrValue);
-                }
-
-            }
-        },
-
-        /**
-         * The matches pseudo selector selects elements which meet the sub-selector. This can be especially helpful
-         * in simplifying complex selectors.
-         *
-         * Example:
-         * -------
-         *
-         * div > p:nth-child(2n+1), div > a:nth-child(2n+1), div > h1:nth-child(2n+1)
-         *
-         * can be simplified too:
-         *
-         * div > :matches(p, a, h1):nth-child(2n+1)
-         *
-         */
-
-        'MATCHES': function(args, attr, attrValue, p, context, arrfunc) {
-            markElements(JiesaFind(args, context.ownerDocument || context, arrfunc), attr, attrValue, returnTrue);
-        }
-    },
+    transformers = {},
 
     /*
      * JiesaFind
@@ -811,7 +626,7 @@ function quickQueryAll(selector, context) {
     try {
 
         return context.nodeType === 9 ?
-            context[_queryAll](selector + '') : [];
+            context.querySelectorAll(selector + '') : [];
 
     } finally {
 
@@ -820,14 +635,6 @@ function quickQueryAll(selector, context) {
             context.removeAttribute('id');
         }
     }
-}
-
-function quickQuery(selector, context) {
-
-    if (!selector || !context) {
-        return [];
-    }
-    return context[_query](selector + '');
 }
 
 function isElement(o) {
@@ -858,118 +665,22 @@ function extend(pseudo, type, fn) {
 
 function getAttr(elem, attr) {
     // Set document vars if needed
-
+    var method;
     if ((elem.ownerDocument || elem) !== document) {
         hAzzle.setDocument(elem);
     }
     if (features.isHTMLDocument) {
-        var method = attributeGetters[attr];
+        method = attributeGetters[attr];
         if (method) {
             return method.call(elem, elem, attr);
         }
-        var attributeNode = node.getAttributeNode(attr);
+        var attributeNode = elem.getAttributeNode(attr);
         return (attributeNode) ? attributeNode.nodeValue : null;
     } else {
-        var method = attributeGetters[attr];
+        method = attributeGetters[attr];
         return (method) ? method.call(elem, elem, attr) : elem.getAttribute(attr);
     }
 }
-
-/* ============================ FEATURE / BUG DETECTION =========================== */
-
-// Avoid getElementById bug
-// Support: IE<10
-// Check if getElementById returns elements by name
-// The broken getElementById methods don't pick up programatically-set names,
-// so use a roundabout getElementsByName test
-
-var grabID = hAzzle.features['bug-GEBI'] ? function(id, context) {
-        var elem = null;
-        if (hAzzle.documentIsHTML || context.nodeType !== 9) {
-            return byIdRaw(id, context.getElementsByTagName('*'));
-        }
-        if ((elem = context.getElementById(id)) &&
-            elem.name == id && context.getElementsByName) {
-            return byIdRaw(id, context.getElementsByName(id));
-        }
-        return elem;
-    } :
-    function(id, context) {
-        var m = context.getElementById(id);
-        return m && m.parentNode ? [m] : [];
-    };
-
-function byIdRaw(id, elements) {
-    var i = -1,
-        element = null;
-    while ((element = elements[++i])) {
-        if (getAttr(element, 'id') === id) {
-            break;
-        }
-    }
-    return element;
-}
-
-function returnTrue() {
-    return true;
-}
-
-/* ============================ UTILITY METHODS =========================== */
-
-/**
- * The nth-match and nth-last-match selectors work similar to the match and nth-child/nth-last-child pseudo
- * selectors by selecting the nth element which matches the sub-selector. The grammar for the
- * argument works by specifying an anb value followed by jwhitespace, the word "of", jwhitespace and a sub-selector.
- *
- * EXAMPLES:
- * ---------
- *
- * Select the odd elements which match the selector "div > mehran.js":
- *
- * hAzzle(":nth-match(odd of div > mehran.js)");
- *
- * Select the "4n-2" last elements which match the selector "footer :any-link":
- *
- * hAzzle(":nth-last-match(4n-2 of footer :any-link)");
- */
-
-transformers['NTH-MATCH'] = transformers['NTH-LAST-MATCH'] = function(args, attr, attrValue, pseudo, context, arrfunc) {
-    var element,
-        ofPos = args.indexOf('of'),
-        anbIterator = anb(args.substr(0, ofPos)),
-        elements = JiesaFind(args.substr(ofPos + 2), (context.ownerDocument || context), arrfunc),
-        l = elements.length - 1,
-        nthMatch = pseudo[4] !== 'L';
-    while ((element = elements[nthMatch ? anbIterator.next() : l - anbIterator.next()])) {
-        element.setAttribute(attr, attrValue);
-    }
-};
-
-/* ============================ TRANSFORMERS =========================== */
-
-/**
- * The scope pseudo selector matches the context element that was passed into hAzzle.find()() or
- * hAzzle.tokenize(). When no context element is provided, scope is the equivalent of :root.
- *
- * EXAMPLE:
- * --------
- *
- * Select even div elements that are descendants of the provided context element:
- *
- * hAzzle(":nth-match(even of :scope div)", document.getElementsByTagName("footer")[0]);
- *
- *
- * NOTE!! The name on the 'scope' selector have changed from draft to draft, and still
- * we can't be sure what name to be used. It has been known as 'SCOPE', but in
- * the new DOM Level 4 drafts, it named 'SCOPED' and used in the
- * query() and queryAll() that will replace querySelectorAll():
- 
- *
- * For now hAzzle are supporting both names
- */
-transformers.scoped = transformers.scope = function() {
-    return scope;
-};
 
 /* ============================ PLUGIN METHODS =========================== */
 
