@@ -6,7 +6,6 @@
  *
  * Date: 2014-09-28
  */
- 
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
@@ -40,10 +39,10 @@
         push = AP.push,
 
         isArray = Array.isArray;
-        
-        // Holds javascript natives
 
-        natives = {},
+    // Holds javascript natives
+
+    natives = {},
 
         // Javascript native list
 
@@ -304,6 +303,8 @@
 
             for (; i < m; i++) {
 
+
+
                 if (array[i] === value) {
                     return i;
                 }
@@ -456,10 +457,11 @@
             }
 
             return type;
-s        },
-        
+            s
+        },
+
         // Check for SVG support
-        
+
         isSVG: function(elem) {
             return window.SVGElement && (elem instanceof SVGElement);
         },
@@ -530,7 +532,7 @@ s        },
         bind: function(fn, context) {
 
             var curryArgs = arguments.length > 2 ?
-                slice.call(arguments, 2) : [],
+                hAzzle.quickSlice(arguments, 2) : [],
                 tmp;
 
             if (typeof context === 'string') {
@@ -543,7 +545,7 @@ s        },
             if (typeof fn === 'function' && !(context instanceof RegExp)) {
                 return curryArgs.length ? function() {
                     return arguments.length ?
-                        fn.apply(context || this, curryArgs.concat(slice.call(arguments, 0))) :
+                        fn.apply(context || this, curryArgs.concat(hAzzle.quickSlice(arguments, 0))) :
                         fn.apply(context || this, curryArgs);
                 } : function() {
                     return arguments.length ?
@@ -554,8 +556,23 @@ s        },
             } else {
                 return context;
             }
-        }
+        },
 
+        // Quick slicing
+
+        quickSlice: function(item, start) {
+            start = ~~start;
+            var len = item.length,
+                i, newArray;
+
+            newArray = new Array(len - start);
+
+            for (i = start; i < len; i++) {
+                newArray[i - start] = item[i];
+            }
+
+            return newArray;
+        }
     }, hAzzle);
 
     //  Checks if `obj` is a window object.
@@ -602,6 +619,7 @@ s        },
     hAzzle.ie = (function() {
         if (document.documentMode) {
             return document.documentMode;
+
         } else {
 
             hAzzle.assert(function(div) {

@@ -80,10 +80,8 @@
             'matches', (
                 ElementPrototype.matchesSelector ||
                 ElementPrototype.webkitMatchesSelector ||
-                //    ElementPrototype.khtmlMatchesSelector ||
                 ElementPrototype.mozMatchesSelector ||
                 ElementPrototype.msMatchesSelector ||
-                //    ElementPrototype.oMatchesSelector ||
                 function matches(selector) {
                     var parentNode = this.parentNode;
                     return !!parentNode && -1 < indexOf.call(
@@ -93,7 +91,7 @@
                 }
             ),
         ],
-        slice = properties.slice,
+       // slice = properties.slice,
         i = properties.length;
 
     // Loop through
@@ -106,12 +104,10 @@
         }
     }
 
-    /* ============================ UTILITY METHODS =========================== */
-
     // Create TextNode if string, else
     // return the node untouched
 
-    function stringNode(node) {
+    function stringNode(node) { 
         return typeof node === 'string' ?
             window.document.createTextNode(node) : node;
     }
@@ -121,12 +117,10 @@
     function applyToFragment(nodes) {
 
         var fragment = window.document.createDocumentFragment(),
-            container = slice.call(nodes),
-            i = 0,
-            l = nodes.length;
+            container = hAzzle.quickSlice(nodes),
+            i = 0, l = nodes.length;
 
         if (nodes.length === 1) {
-
             return stringNode(nodes[0]);
         }
 
