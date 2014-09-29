@@ -1,5 +1,6 @@
 //  offset.js
 hAzzle.Core.offset = function(options) {
+
     if (arguments.length) {
         return options === undefined ?
             this :
@@ -8,33 +9,41 @@ hAzzle.Core.offset = function(options) {
             });
     }
 
-    var elem = this[0];
-
-    if (!elem ||
-        // Make sure it's not a disconnected DOM node 
-        !hAzzle.contains(document.documentElement, elem)) {
-
-        return {
+    var docElem, win,
+        elem = this[0],
+        box = {
             top: 0,
             left: 0,
             height: 0,
             width: 0
-        };
+        },
+        doc = elem && elem.ownerDocument;
+
+    if (!doc) {
+        return;
     }
-    var de = elem.ownerDocument.documentElement,
-        bcr = elem.getBoundingClientRect(),
-        doc = document,
-        docElem = doc.documentElement;
+
+    docElem = doc.documentElement;
+
+    if (!elem ||
+        // Make sure it's not a disconnected DOM node 
+        !hAzzle.contains(docElem, elem)) {
+        return box;
+    }
+
+    if (!doc) {
+        return;
+    }
+    win = hAzzle.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
+    box = elem.getBoundingClientRect();
 
     return {
-        top: bcr.top + (window.pageYOffset ||
-                docElem.scrollTop) -
-            Math.max(0, de && de.clientTop, doc.body.clientTop),
-        left: bcr.left + (window.pageXOffset ||
-                docElem.scrollLeft) -
-            Math.max(0, de && de.clientLeft, doc.body.clientLeft),
+        top: box.top + (win.pageYOffset || doc.scrollTop  || 0)  - (doc.clientTop  || 0),
+        left: box.left + (win.pageXOffset || doc.scrollLeft  || 0) - (doc.clientLeft || 0),
         height: elem.offsetHeight,
         width: elem.offsetWidth
+        
+        
     };
 };
 
