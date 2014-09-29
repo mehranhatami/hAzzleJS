@@ -433,7 +433,7 @@ hAzzle.extend({
     }
 });
 
-hAzzle.forOwn({
+hAzzle.each({
 
     /**
      * Get the parent of each element in the current set of matched

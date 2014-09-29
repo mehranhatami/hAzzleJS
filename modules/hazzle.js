@@ -4,7 +4,7 @@
  * Version: 0.9.9f RC3
  * Released under the MIT License.
  *
- * Date: 2014-09-28
+ * Date: 2014-09-29
  */
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -38,11 +38,11 @@
         slice = AP.slice,
         push = AP.push,
 
-        isArray = Array.isArray;
+        isArray = Array.isArray,
 
-    // Holds javascript natives
+        // Holds javascript natives
 
-    natives = {},
+        natives = {},
 
         // Javascript native list
 
@@ -59,6 +59,71 @@
             return typeof selector === 'function' ?
                 hAzzle.ready(selector) :
                 new Core(selector, context);
+        },
+
+        Implement = function() {
+            var length = arguments.length,
+                source = arguments,
+                target = arguments[1],
+                i = 0,
+                extend = function(target, source) {
+                    var k;
+                    for (k in source) {
+                        source.hasOwnProperty(k) && ((target || Core.prototype)[k] = source[k]);
+                    }
+                };
+
+            // Don't do iteration if we can avoid it,
+            // better performance
+
+            if (length === 1) {
+                extend(target, source[0]);
+            } else {
+
+                source = arguments[0];
+
+                for (; i < length; i++) {
+                    extend(target, arguments[i]);
+                }
+            }
+        },
+
+        //  Checks if `obj` is a window object.
+
+        isWindow = function(obj) {
+            return obj !== null && obj === obj.window;
+        },
+
+        isArraylike = function(obj) {
+
+            if (obj == null || isWindow(obj)) {
+                return false;
+            }
+
+            var length = obj.length;
+
+            if (obj.nodeType === 1 && length) {
+                return true;
+            }
+
+            return typeof obj === 'string' ||
+                isArray(obj) ||
+                length === 0 ||
+                typeof length === 'number' && length > 0 && (length - 1) in obj;
+        },
+
+        isPlainObject = function(obj) {
+            if (hAzzle.type(obj) !== 'object' ||
+                obj.nodeType ||
+                isWindow(obj)) {
+                return false;
+            }
+
+            if (obj.constructor &&
+                !hAzzle.hasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
+                return false;
+            }
+            return true;
         },
 
         // Core
@@ -140,44 +205,13 @@
         }
     };
 
-    // Extend the contents of two objects
-
-    var Implement = function() {
-        var length = arguments.length,
-            source = arguments,
-            target = arguments[1],
-            i = 0,
-            extend = function(target, source) {
-                var k;
-                for (k in source) {
-                    source.hasOwnProperty(k) && ((target || Core.prototype)[k] = source[k]);
-                }
-            };
-
-        // Don't do iteration if we can avoid it,
-        // better performance
-
-        if (length === 1) {
-            extend(target, source[0]);
-        } else {
-
-            source = arguments[0];
-
-            for (; i < length; i++) {
-                extend(target, arguments[i]);
-            }
-        }
-    };
-
     Implement({
 
         // A global UID counter for objects
 
         UID: 1,
 
-        /** 
-         * Return current time
-         */
+        // Return current time
 
         now: Date.now,
 
@@ -186,9 +220,7 @@
 
         promise: window.Promise,
 
-        /**
-         * Error function
-         */
+        // Error function
 
         error: function(msg) {
             throw new Error(msg);
@@ -198,29 +230,23 @@
 
             name = name || 'hAzzle_';
 
-            // if boolean true / false value, we are returning
-            // a new UID without attaching it to a object
+            // If boolean true / false value - return a new UID
+            // without attaching it to a object 
 
             if (typeof node === 'boolean') {
                 return hAzzle.UID++;
             } else if (typeof node === 'object') {
 
-                // If 'exposed' are true, we are setting the UID as
-                // an attribute value on the node,
-                // This could be tampered with
+                // If 'exposed' are true - set the UID as an attribute
+                // value on the node.
 
                 if (exposed) {
-
-                    // Try to get the id
 
                     var uid = node.getAttribute(hAzzle.UID);
 
                     if (!uid) {
 
                         uid = hAzzle.UID++;
-
-                        // Set the new ID
-
                         node.setAttribute(name, uid);
                     }
 
@@ -288,9 +314,7 @@
             return arr === null ? -1 : indexOf.call(arr, elem, i);
         },
 
-        /**
-         * Check if an element exist in an array
-         */
+        // Check if an element exist in an array
 
         inArray: function(array, value, index) {
 
@@ -384,24 +408,11 @@
             return array;
         },
 
-        // Loop through Objects
-
-        forOwn: function(obj, iterator, context) {
-            var key;
-            if (obj === null) return obj;
-            for (key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    iterator.call(context, obj[key], key);
-                }
-            }
-            return obj;
-        },
-
         /**
          * Feature detection of elements
          *
          * @param {Function} fn
-         * @return {Boolean}
+         * @return {hAzzle|Boolean}
          */
 
         assert: function(fn) {
@@ -409,17 +420,13 @@
             var el = document.createElement('fieldset');
 
             try {
-
                 return !!fn(el);
-
             } catch (e) {
-
                 return false;
-
             } finally {
 
                 // Remove from its parent by default
-                if (el.parentNode) {
+                if (el.parentNode && el.tagName !== 'BODY') {
                     el.parentNode.removeChild(el);
                 }
                 // release memory in IE
@@ -427,12 +434,7 @@
             }
         },
 
-        /**
-         * Determine the type of object being tested.
-         *
-         * @param {Mixed} object
-         * @return {String} object type
-         */
+        // Determine the type of object being tested.
 
         type: function(obj) {
 
@@ -458,7 +460,6 @@
             }
 
             return type;
-            s
         },
 
         // Check for SVG support
@@ -470,6 +471,7 @@
         hasOwn: natives.hasOwnProperty,
 
         mergeArray: function(arr, results) {
+
             var ret = results || [];
 
             if (arr != null) {
@@ -483,23 +485,6 @@
             }
 
             return ret;
-        },
-
-        // Get the size of Array or Objects
-
-        size: function(obj, ownPropsOnly) {
-            var size = 0,
-                prop;
-            if (isArray(obj) || typeof obj === 'string') {
-                return obj.length;
-            } else if (hAzzle.isObject(obj)) {
-                for (prop in obj) {
-                    if (!ownPropsOnly || obj.hasOwnProperty(prop)) {
-                        size++;
-                    }
-                }
-                return size;
-            }
         },
 
         // Finds the elements of an array which satisfy a filter function.
@@ -533,7 +518,7 @@
         bind: function(fn, context) {
 
             var curryArgs = arguments.length > 2 ?
-                hAzzle.quickSlice(arguments, 2) : [],
+                slice.call(arguments, 2) : [],
                 tmp;
 
             if (typeof context === 'string') {
@@ -546,7 +531,7 @@
             if (typeof fn === 'function' && !(context instanceof RegExp)) {
                 return curryArgs.length ? function() {
                     return arguments.length ?
-                        fn.apply(context || this, curryArgs.concat(hAzzle.quickSlice(arguments, 0))) :
+                        fn.apply(context || this, curryArgs.concat(slice.call(arguments, 0))) :
                         fn.apply(context || this, curryArgs);
                 } : function() {
                     return arguments.length ?
@@ -560,51 +545,13 @@
         }
     }, hAzzle);
 
-    //  Checks if `obj` is a window object.
-
-    function isWindow(obj) {
-        return obj !== null && obj === obj.window;
-    }
-
-    function isArraylike(obj) {
-
-        if (obj == null || isWindow(obj)) {
-            return false;
-        }
-
-        var length = obj.length;
-
-        if (obj.nodeType === 1 && length) {
-            return true;
-        }
-
-        return typeof obj === 'string' ||
-            isArray(obj) ||
-            length === 0 ||
-            typeof length === 'number' && length > 0 && (length - 1) in obj;
-    }
-
-    function isPlainObject(obj) {
-        if (hAzzle.type(obj) !== 'object' ||
-            obj.nodeType ||
-            hAzzle.isWindow(obj)) {
-            return false;
-        }
-
-        if (obj.constructor &&
-            !hAzzle.hasOwn.call(obj.constructor.prototype, 'isPrototypeOf')) {
-            return false;
-        }
-        return true;
-    }
-
     // Special detection for IE, because we got a lot of trouble
     // with it. Damn IE!!
 
     hAzzle.ie = (function() {
+
         if (document.documentMode) {
             return document.documentMode;
-
         } else {
 
             hAzzle.assert(function(div) {
@@ -622,6 +569,12 @@
         return undefined;
     })();
 
+    // Populate the native list
+
+    hAzzle.each(nativeList, function() {
+        natives['[object ' + this + ']'] = this.toLowerCase();
+    });
+
     // Expose
 
     hAzzle.isWindow = isWindow;
@@ -629,12 +582,6 @@
     hAzzle.isPlainObject = isPlainObject;
     hAzzle.extend = Implement;
     hAzzle.natives = natives;
-
-    // Populate the native list
-
-    hAzzle.each(nativeList, function() {
-        natives['[object ' + this + ']'] = this.toLowerCase();
-    });
 
     // Expose hAzzle to the global object
 
