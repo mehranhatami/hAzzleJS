@@ -302,7 +302,6 @@
                             break;
                         }
                     }
-
                 }
             }
             return obj;
@@ -326,9 +325,6 @@
                 m = array.length;
 
             for (; i < m; i++) {
-
-
-
 
                 if (array[i] === value) {
                     return i;
