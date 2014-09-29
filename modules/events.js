@@ -298,7 +298,7 @@ var
 
             var i, j, ret, matched, handleObj,
                 queue = [],
-                args = slice.call(arguments),
+                args = hAzzle.quickSlice(arguments),
                 handlers = (hAzzle.getPrivate(this, 'events') || {})[evt.type] || [],
                 special = hAzzle.event.special[evt.type] || {};
 

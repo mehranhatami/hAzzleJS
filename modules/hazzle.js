@@ -305,6 +305,7 @@
 
 
 
+
                 if (array[i] === value) {
                     return i;
                 }
@@ -558,20 +559,27 @@
             }
         },
 
-        // Quick slicing
+        // Quick slicing - faster alternative then slice.call
+        // See: http://jsperf.com/array-prototype-slice-call-vs-slice-call/17
 
-        quickSlice: function(item, start) {
-            start = ~~start;
-            var len = item.length,
-                i, newArray;
+        quickSlice: function(itm, start) {
+        
+        // For Firefox, 'slice.call' are fastest
+            if (hAzzle.isFirefox) {
+                return slice.call(itm, start);
+            } 
+                start = ~~start;
+                var len = itm.length,
+                    index = start,
+                    newArray;
 
-            newArray = new Array(len - start);
+                newArray = new Array(len - start);
 
-            for (i = start; i < len; i++) {
-                newArray[i - start] = item[i];
-            }
+                for (; index < len; i++) {
+                    newArray[index - start] = itm[index];
+                }
 
-            return newArray;
+                return newArray;
         }
     }, hAzzle);
 

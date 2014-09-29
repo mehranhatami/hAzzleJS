@@ -117,7 +117,7 @@
     function applyToFragment(nodes) {
 
         var fragment = window.document.createDocumentFragment(),
-            container = hAzzle.quickSlice(nodes),
+            container = slice.call(nodes, 0),
             i = 0, l = nodes.length;
 
         if (nodes.length === 1) {
