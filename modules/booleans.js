@@ -1,22 +1,20 @@
-	var i,
-	    boolElemArray = ['input', 'select', 'option', 'textarea', 'button', 'form', 'details'],
-	    boolAttrArray = ('multiple selected checked disabled readOnly required ' +
-	        'async autofocus compact nowrap declare noshade hreflang ' +
-	        'noresize defaultChecked autoplay controls defer autocomplete ' +
-	        'hidden tabindex readonly type accesskey dropzone spellcheck ismap loop scoped open').split(' ');
+// booleans.js
+var boolElemArray = ('input select option textarea button form details').split(' '),
+    boolAttrArray = ('multiple selected checked disabled readOnly required ' +
+        'async autofocus compact nowrap declare noshade hreflang ' +
+        'noresize defaultChecked autoplay controls defer autocomplete ' +
+        'hidden tabindex readonly type accesskey dropzone spellcheck ismap loop scoped open').split(' '),
+    boolAttr = {}, // Boolean attributes
+    boolElem = {}; // Boolean elements
 
-	 // boolean.js - Shared with attributes.js and compile.js
+hAzzle.each(boolAttrArray, function(prop) {
+    boolAttr[boolAttrArray[prop]] = boolAttrArray[prop];
+});
+hAzzle.each(boolElemArray, function(prop) {
+    boolElem[prop.toUpperCase()] = true;
+});
 
-	hAzzle.boolAttr = {}; // Boolean attributes
-	hAzzle.boolElem = {}; // Boolean elements
+// Expose
 
-	i = boolAttrArray.length;
-
-	while (i--) {
-	    hAzzle.boolAttr[boolAttrArray[i]] = boolAttrArray[i];
-	}
-	i = boolElemArray.length;
-
-	while (i--) {
-	    hAzzle.boolElem[boolElemArray[i].toUpperCase()] = true;
-	}
+hAzzle.boolAttr = boolAttr;
+hAzzle.boolElem = boolElem;

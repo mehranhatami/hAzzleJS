@@ -1,4 +1,3 @@
-
 // removeable.js
 var clearData = function(elems) {
     var data, elem, type, i = 0,

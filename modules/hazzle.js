@@ -1,11 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight & Mehran Hatami
- * Version: 0.9.9e RC3
+ * Version: 0.9.9f RC3
  * Released under the MIT License.
  *
  * Date: 2014-09-28
  */
+ 
 (function(global, factory) {
     if (typeof module === 'object' && typeof module.exports === 'object') {
         module.exports = global.document ?
@@ -38,6 +39,8 @@
         slice = AP.slice,
         push = AP.push,
 
+        isArray = Array.isArray;
+        
         // Holds javascript natives
 
         natives = {},
@@ -427,10 +430,6 @@
          *
          * @param {Mixed} object
          * @return {String} object type
-         *
-         * NOTE! Use of switch{} here will slow down the
-         * performance with 1 -2% in all browsers
-         *
          */
 
         type: function(obj) {
@@ -457,9 +456,10 @@
             }
 
             return type;
-
-        },
-
+s        },
+        
+        // Check for SVG support
+        
         isSVG: function(elem) {
             return window.SVGElement && (elem instanceof SVGElement);
         },
@@ -487,7 +487,7 @@
         size: function(obj, ownPropsOnly) {
             var size = 0,
                 prop;
-            if (hAzzle.isArray(obj) || typeof obj === 'string') {
+            if (isArray(obj) || typeof obj === 'string') {
                 return obj.length;
             } else if (hAzzle.isObject(obj)) {
                 for (prop in obj) {
@@ -519,7 +519,7 @@
 
             return matches;
         },
-        
+
         /**
          * Bind a function to a context, optionally partially applying any
          *
@@ -541,7 +541,6 @@
             }
 
             if (typeof fn === 'function' && !(context instanceof RegExp)) {
-
                 return curryArgs.length ? function() {
                     return arguments.length ?
                         fn.apply(context || this, curryArgs.concat(slice.call(arguments, 0))) :
@@ -577,12 +576,16 @@
             return true;
         }
 
-        return typeof obj === 'string' || hAzzle.isArray(obj) || length === 0 ||
+        return typeof obj === 'string' ||
+            isArray(obj) ||
+            length === 0 ||
             typeof length === 'number' && length > 0 && (length - 1) in obj;
     }
 
     function isPlainObject(obj) {
-        if (hAzzle.type(obj) !== 'object' || obj.nodeType || hAzzle.isWindow(obj)) {
+        if (hAzzle.type(obj) !== 'object' ||
+            obj.nodeType ||
+            hAzzle.isWindow(obj)) {
             return false;
         }
 
@@ -619,7 +622,7 @@
     // Expose
 
     hAzzle.isWindow = isWindow;
-    hAzzle.isArray = Array.isArray;
+    hAzzle.isArray = isArray;
     hAzzle.isPlainObject = isPlainObject;
     hAzzle.extend = Implement;
     hAzzle.natives = natives;
