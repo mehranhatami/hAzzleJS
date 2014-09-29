@@ -97,8 +97,7 @@ var sHeightWidth = /^(height|width)$/i,
             // Convert relative number strings
 
             if (type === 'string' && (ret = cssCore.RegEx.sNumbs.exec(value))) {
-                value = hAzzle.css(elem, prop, '');
-                value = hAzzle.units(value, ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                value = hAzzle.units(hAzzle.css(elem, prop, ''), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                 type = 'number';
             }
 
@@ -148,13 +147,12 @@ hAzzle.extend({
 
     css: function(name, value) {
 
-        return hAzzle.setter(this, function(elem, name, value) {
-            var map = {},
-                i = 0;
+        return setter(this, function(elem, name, value) {
 
             if (hAzzle.isArray(name)) {
 
-                i = name.length;
+                var map = {},
+                    i = name.length;
 
                 while (i--) {
 
@@ -167,6 +165,7 @@ hAzzle.extend({
             return value !== undefined ?
                 setCSS(elem, name, value) :
                 getCSS(elem, name);
+
         }, name, value, arguments.length > 1);
     }
 });

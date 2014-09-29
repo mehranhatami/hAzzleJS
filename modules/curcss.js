@@ -33,25 +33,25 @@ var cHeightWidth = /^(height|width)$/i,
         return null;
     },
 
-    curHeight = function(elem) {
+    curHeight = function(elem, toggleDisplay) {
         var contentBoxHeight = elem.offsetHeight -
             (parseFloat(getCSS(elem, 'borderTopWidth')) || 0) -
             (parseFloat(getCSS(elem, 'borderBottomWidth')) || 0) -
             (parseFloat(getCSS(elem, 'paddingTop')) || 0) -
             (parseFloat(getCSS(elem, 'paddingBottom')) || 0);
 
-        revertDisplay();
+        revertDisplay(elem, toggleDisplay);
 
         return contentBoxHeight;
     },
-    curWidth = function(elem) {
+    curWidth = function(elem, toggleDisplay) {
         var contentBoxWidth = elem.offsetWidth -
             (parseFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
             (parseFloat(getCSS(elem, 'borderRightWidth')) || 0) -
             (parseFloat(getCSS(elem, 'paddingLeft')) || 0) -
             (parseFloat(getCSS(elem, 'paddingRight')) || 0);
 
-        revertDisplay();
+        revertDisplay(elem, toggleDisplay);
 
         return contentBoxWidth;
     },
@@ -80,15 +80,16 @@ var cHeightWidth = /^(height|width)$/i,
         return computed;
     },
 
+    revertDisplay = function(elem, toggleDisplay) {
+        if (toggleDisplay) {
+            setCSS(elem, 'display', 'none');
+        }
+    },
+
     curCSS = function(elem, prop, force, styles) {
 
         var computedValue = 0,
-            toggleDisplay = false,
-            revertDisplay = function() {
-                if (toggleDisplay) {
-                    setCSS(elem, 'display', 'none');
-                }
-            };
+            toggleDisplay = false;
 
         if (cWidthHeight.test(prop) && getCSS(elem, 'display') === 0) {
             toggleDisplay = true;
@@ -99,10 +100,10 @@ var cHeightWidth = /^(height|width)$/i,
 
             if (prop === 'height' &&
                 getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                return curHeight(elem);
+                return curHeight(elem, toggleDisplay);
             } else if (prop === 'width' &&
-                getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                return curWidth(elem);
+                curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                return curWidth(elem, toggleDisplay);
             }
         }
 
@@ -126,7 +127,7 @@ var cHeightWidth = /^(height|width)$/i,
             computedValue = elem.style[prop];
         }
 
-        revertDisplay();
+        revertDisplay(elem, toggleDisplay);
 
         if (computedValue === 'auto' && cToprbLeft.test(prop)) {
 

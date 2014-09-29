@@ -25,7 +25,7 @@ var dNumber = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)$/,
     },
     setWH = function(elem, computed, extra) {
         if (computed) {
-            return dTNT.test(curCSS(elem, 'display', true)) &&
+            return dNT.test(curCSS(elem, 'display', true)) &&
                 elem.offsetWidth === 0 ?
                 swap(elem, cssShow, function() {
                     return getWidthOrHeight(elem, name, extra);
