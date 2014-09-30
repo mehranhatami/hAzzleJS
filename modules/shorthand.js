@@ -1,6 +1,6 @@
 // shorthand.js
 
-var short = 
+var shortHand = 
    ('blur focus focusin focusout load resize scroll unload click dblclick ' + // Common
     'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' + // Mouse
     'change select submit'                                                  + // General
@@ -172,7 +172,7 @@ hAzzle.extend({
 /* ============================ INTERNAL =========================== */
 
 
-hAzzle.each(short, function(name) {
+hAzzle.each(shortHand, function(name) {
         hAzzle.Core[name] = function(data, fn) {
             return arguments.length > 0 ?
                 this.on(name, null, data, fn) :
