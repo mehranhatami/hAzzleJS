@@ -1,4 +1,11 @@
-// aliases.js
+// shorthand.js
+
+var short = 
+   ('blur focus focusin focusout load resize scroll unload click dblclick ' + // Common
+    'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' + // Mouse
+    'change select submit'                                                  + // General
+    'keydown keypress keyup error contextmenu').split(' ');                   // Keyboard
+
 hAzzle.extend({
 
     /**
@@ -25,7 +32,6 @@ hAzzle.extend({
             }
 
             for (type in types) {
-
                 this.on(type, selector, data, types[type], one);
             }
             return this;
@@ -52,11 +58,8 @@ hAzzle.extend({
         }
 
         if (fn === false) {
-
             fn = returnFalse;
-
         } else if (!fn) {
-
             return this;
         }
 
@@ -168,10 +171,8 @@ hAzzle.extend({
 
 /* ============================ INTERNAL =========================== */
 
-hAzzle.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
-        'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
-        'change select submit keydown keypress keyup error contextmenu').split(' '),
-    function(name) {
+
+hAzzle.each(short, function(name) {
         hAzzle.Core[name] = function(data, fn) {
             return arguments.length > 0 ?
                 this.on(name, null, data, fn) :
