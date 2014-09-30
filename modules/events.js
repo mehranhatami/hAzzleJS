@@ -99,7 +99,6 @@ var
             // Create handler storage of event types for the element
 
             if (!(events = eventData.events)) {
-
                 events = eventData.events = {};
             }
 
@@ -174,17 +173,13 @@ var
                     special.add.call(elem, handleObj);
 
                     if (!handleObj.handler.guid) {
-
                         handleObj.handler.guid = handler.guid;
                     }
                 }
 
                 if (selector) {
-
                     handlers.splice(handlers.delegateCount++, 0, handleObj);
-
                 } else {
-
                     handlers.push(handleObj);
                 }
 
@@ -232,9 +227,7 @@ var
                 namespaces = (tmp[2] || '').split('.').sort();
 
                 if (!type) {
-
                     for (type in events) {
-
                         hAzzle.event.remove(elem, type + types[t], handler, selector, true);
                     }
 
@@ -261,12 +254,10 @@ var
                         handlers.splice(j, 1);
 
                         if (handleObj.selector) {
-
                             handlers.delegateCount--;
                         }
 
                         if (special.remove) {
-
                             special.remove.call(elem, handleObj);
                         }
                     }
@@ -275,8 +266,7 @@ var
                 if (origCount && !handlers.length) {
                     if (!special.shutdown ||
                         special.shutdown.call(elem, namespaces, eventData.handle) === false) {
-
-                        hAzzle.removeEvent(type, eventData.handle, false);
+                        removeEvent(type, eventData.handle, false);
                     }
 
                     delete events[type];

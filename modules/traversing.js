@@ -300,18 +300,19 @@ hAzzle.extend({
             i = 0,
             l = this.length,
             ret = [],
-            pos = (typeof selector !== 'string' || eoeglnfl.test(selector)) &&
-            hAzzle(selector, context);
+            pos = eoeglnfl.test(selector) || typeof selector !== "string" ?
+            hAzzle(selector, context) :
+            0;
 
         for (; i < l; i++) {
 
             for (cur = this[i]; cur && cur !== context; cur = cur.parentNode) {
                 // Always skip document fragments
                 if (cur.nodeType < 11 && (pos ?
-                    pos.index(cur) >= 0 :
+                    pos.index(cur) > -1 :
 
                     cur.nodeType === 1 &&
-                    hAzzle.matches(selector, cur))) {
+                    hAzzle.matchesSelector(cur, selector))) {
 
                     ret.push(cur);
                     break;

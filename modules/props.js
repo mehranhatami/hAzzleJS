@@ -2,24 +2,16 @@ var pKeyfixRegex = /^key/,
     pMousefixRegex = /^(?:mouse|pointer|contextmenu)|click/,
 
     // Includes all common event props including KeyEvent and MouseEvent specific props
+    commonProps =
 
-    commonProps = ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble altGraphKey ctrlKey currentTarget ' +
-        'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
-        'button buttons clientX clientY offsetX offsetY pageX pageY ' +
-        'screenX screenY toElement dataTransfer fromElement data state ' +
-        'srcElement target timeStamp type view which propertyName ' +
-
-        // Mousewheel
-
-        'wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ axis ' +
-
-        // Keys
-
-        'char charCode key keyCode keyIdentifier keyLocation location clipboardData ' +
-
-        // Touch / Pointer
-
-        'touches targetTouches changedTouches scale rotation').split(' ');
+    ('altKey attrChange cancelable attrName bubbles cancelable cancelBubble '                   + // Common
+        'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget '       +
+        'button buttons clientX clientY offsetX offsetY pageX pageY altGraphKey '               +
+        'screenX screenY toElement dataTransfer fromElement data state ctrlKey currentTarget '  +
+        'srcElement target timeStamp type view which propertyName shiftKey'                     +
+        'wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ deltaY deltaX deltaZ axis '             + // Mousewheel
+        'char charCode key keyCode keyIdentifier keyLocation location clipboardData '           + // Keys
+        'touches targetTouches changedTouches scale rotation').split(' ');                        // Touch / Pointer
 
 // The fixHooks API are following the ES5 specs.
 // Example, to set a hook for the 'drop' event that copies the dataTransfer 
@@ -29,7 +21,7 @@ var pKeyfixRegex = /^key/,
 //    props: [ "dataTransfer" ]
 // };
 //
-// TODO! Fix the code so it supports ES6
+// TODO! Fix the code so it supports ES6. Should give better performance
 
 var fixHooks = {
 
@@ -128,17 +120,16 @@ var fixHooks = {
 hAzzle.event.fixHooks = fixHooks;
 hAzzle.event.fix = fix;
 
-// Firefox
+// Firefox eventTypes
 
 if (hAzzle.isFirefox) {
-    // Append special events for Firefox 
-    commonProps.concat('mozMovementY mozMovementX'.split(' '));
+  commonProps.concat('mozMovementY mozMovementX'.split(' '));
 }
 
-// WebKit 
+// WebKit eventTypes
+// Support: Chrome / Opera
 
-if (hAzzle.isChrome || hAzzle.isOpera) {
-    // Append special events for Chrome / Opera
+if (hAzzle.isWebkit) {
     commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
 }
 
