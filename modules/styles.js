@@ -58,88 +58,89 @@ var sHeightWidth = /^(height|width)$/i,
      */
 
     setCSS = function(elem, prop, value, extra) {
+        if (elem) {
+            var type, ret, oldValue, oldProp,
+                nType = elem.nodeType,
+                style = elem.style;
 
-        var type, ret, oldValue, oldProp,
-            nType = elem.nodeType,
-            style = elem.style;
-
-        // Don't set styles on text and comment nodes
-        if (nType === 3 ||
-            nType === 8 || !elem) {
-            return;
-        }
-
-        // Check if we're setting a value
-
-        if (value !== undefined) {
-
-            // Check for 'cssHook'
-
-            if (cssHook[prop] && cssHook[prop].set) {
-                value = cssHook[prop].set(elem, value, extra);
-            }
-
-            // Pre-camelize 
-            // E.g. Firefox don't understand border-color
-
-            if ((oldProp = cssCore.cssCamelized[prop])) {
-                prop = oldProp
-            } else {
-                prop = oldProp = hAzzle.camelize(prop);
-            }
-
-            // Assign the appropriate vendor prefix before perform an official style update.
-
-            prop = hAzzle.prefixCheck(prop)[0];
-
-            type = typeof value;
-
-            // Convert relative number strings
-
-            if (type === 'string' && (ret = cssCore.RegEx.sNumbs.exec(value))) {
-                value = hAzzle.units(hAzzle.css(elem, prop, ''), ret[3], elem, name) + (ret[1] + 1) * ret[2];
-                type = 'number';
-            }
-
-            // Make sure that null and NaN values aren't set.
-
-            if (value === null || value !== value) {
+            // Don't set styles on text and comment nodes
+            if (nType === 3 ||
+                nType === 8) {
                 return;
             }
 
-            // If a number was passed in, add 'px' to the number (except for certain CSS properties)
+            // Check if we're setting a value
 
-            if (type === 'number' && !hAzzle.unitless[prop]) {
-                value += ret && ret[3] ? ret[3] : 'px';
+            if (value !== undefined) {
+
+                // Check for 'cssHook'
+
+                if (cssHook[prop] && cssHook[prop].set) {
+                    value = cssHook[prop].set(elem, value, extra);
+                }
+
+                // Pre-camelize 
+                // E.g. Firefox don't understand border-color
+
+                if ((oldProp = cssCore.cssCamelized[prop])) {
+                    prop = oldProp
+                } else {
+                    prop = oldProp = hAzzle.camelize(prop);
+                }
+
+                // Assign the appropriate vendor prefix before perform an official style update.
+
+                prop = hAzzle.prefixCheck(prop)[0];
+
+                type = typeof value;
+
+                // Convert relative number strings
+
+                if (type === 'string' && (ret = cssCore.RegEx.sNumbs.exec(value))) {
+                    value = hAzzle.units(hAzzle.css(elem, prop, ''), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    type = 'number';
+                }
+
+                // Make sure that null and NaN values aren't set.
+
+                if (value === null || value !== value) {
+                    return;
+                }
+
+                // If a number was passed in, add 'px' to the number (except for certain CSS properties)
+
+                if (type === 'number' && !hAzzle.unitless[prop]) {
+                    value += ret && ret[3] ? ret[3] : 'px';
+                }
+
+                if (cssCore.has['bug-clearCloneStyle'] &&
+                    value === '' && prop.indexOf('background') === 0) {
+                    style[cssCore.cssCamelized[prop]] = 'inherit';
+                }
+
+                oldValue = elem.style[name];
+                style[name] = value;
+
+                // Revert to the old value if the browser didn't accept the new rule to
+                // not break the cascade.
+
+                if (value && !elem.style[name]) {
+                    style[name] = oldValue;
+                }
+
+                style[prop] = value;
+
+            } else {
+
+                // If a hook was provided get the non-computed value from there
+
+                if (cssHook[prop]) {
+                    return cssHook[prop].get(elem, prop);
+                }
+
+                // Otherwise just get the value from the style object
+                return style[prop];
             }
-
-            if (cssCore.has['bug-clearCloneStyle'] &&
-                value === '' && prop.indexOf('background') === 0) {
-                style[cssCore.cssCamelized[prop]] = 'inherit';
-            }
-
-            oldValue = elem.style[name];
-            style[name] = value;
-
-            // Revert to the old value if the browser didn't accept the new rule to
-            // not break the cascade.
-
-            if (value && !elem.style[name]) {
-                style[name] = oldValue;
-            }
-
-            style[prop] = value;
-
-        } else {
-
-            // If a hook was provided get the non-computed value from there
-
-            if (cssHook[prop]) {
-                return cssHook[prop].get(elem, prop);
-            }
-
-            // Otherwise just get the value from the style object
-            return style[prop];
         }
     };
 
