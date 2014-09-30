@@ -6,6 +6,7 @@ var s20 = /%20/g,
     sIst = /^(?:input|select|textarea|keygen)/i,
     sRadio = /radio/i,
     rbracket = /\[\]$/,
+    rCRLF = /\r?\n/g,
     buildParams = function(prefix, obj, trad, add) {
 
         var name, i, v;
@@ -110,16 +111,20 @@ var s20 = /%20/g,
     serializeHash = function() {
         var hash = {};
         eachFormElement.apply(function(name, value) {
+
+            value = value.replace( rCRLF, '\r\n');
+            
             if (name in hash) {
                 hash[name] && !hAzzle.isArray(hash[name]) && (hash[name] = [hash[name]]);
                 hash[name].push(value);
-            } else hash[name] = value;
+            } else {
+                hash[name] = value
+            }
         }, arguments);
         return hash;
     };
 
 hAzzle.extend({
-    // [ { name: 'name', value: 'value' }, ... ] style serialization
     serializeArray: function() {
         var arr = [];
         eachFormElement.apply(function(name, value) {
