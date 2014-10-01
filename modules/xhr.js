@@ -117,9 +117,9 @@ var httpsRe = /^http/,
             }
             script.onload = script.onreadystatechange = null;
 
-            if(script.onclick) {
+            if (script.onclick) {
                 script.onclick();
-            } 
+            }
             // Call the user callback with the last value stored and clean up values and scripts.
             fn(lastValue);
             lastValue = undefined;
@@ -248,96 +248,69 @@ var httpsRe = /^http/,
 XHR.prototype.constructor = XHR;
 XHR.prototype.init = function (options, fn) {
 
-        this.options = options;
-        this.fn = fn;
-        this.timeout = null;
-        this.fulfilled = false;
-        this.successHandler = function () {};
-        this.fulfillmentHandlers = [];
-        this.errorHandlers = [];
-        this.completeHandlers = [];
-        this.erred = false;
-        this.responseArgs = {};
+    this.options = options;
+    this.fn = fn;
+    this.timeout = null;
+    this.fulfilled = false;
+    this.successHandler = function () {};
+    this.fulfillmentHandlers = [];
+    this.errorHandlers = [];
+    this.completeHandlers = [];
+    this.erred = false;
+    this.responseArgs = {};
 
-        var self = this;
-
-        fn = fn || function () {};
-
-        if (options.timeout) {
-            this.timeout = setTimeout(function () {
-                self.abort();
-            }, options.timeout);
-        }
-
-        if (options.success) {
-            this.successHandler = function () {
-                options.success.apply(options, arguments);
-            };
-        }
-
-        if (options.error) {
-            this.errorHandlers.push(function () {
-                options.error.apply(options, arguments);
-            });
-        }
-
-        if (options.complete) {
-            this.completeHandlers.push(function () {
-                options.complete.apply(options, arguments);
-            });
-        }
-
-        function complete(response) {
+    var self = this,
+        complete = function (response) {
             options.timeout && clearTimeout(self.timeout);
             self.timeout = null;
             while (self.completeHandlers.length > 0) {
                 self.completeHandlers.shift()(response);
             }
-        }
+        },
 
-        function success(response) {
+        success = function (xhr) {
 
-            var type = options.type || setType(response.getResponseHeader('Content-Type')),
+            var type = options.type || setType(xhr.getResponseHeader('Content-Type')),
                 resp, filteredResponse, r;
 
-            response = (type !== 'jsonp') ? self.request : response;
+            xhr = (type !== 'jsonp') ? self.request : xhr;
 
             // responseText is the old-school way of retrieving response (supported by IE8 & 9)
             // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
 
-            resp = ('response' in response) ? response.response : response.responseText;
+            resp = ('response' in xhr) ? xhr.response : xhr.responseText;
 
             // Use global data filter on response text
 
             filteredResponse = globalSetupOptions.dataFilter(resp, type);
             r = filteredResponse;
 
-            response.responseText = r;
+            xhr.responseText = r;
 
             //jsonxml.js module required
 
             if (r || r === '') {
                 if (type === 'json') {
-                    response = hAzzle.parseJSON(r);
+                    xhr = hAzzle.parseJSON(r);
                 } else if (type === 'html') {
-                    response = r;
+                    xhr = r;
                 } else if (type === 'xml') {
-                    response = hAzzle.parseXML(response.responseXML);
+                    xhr = hAzzle.parseXML(xhr.responseXML);
                 }
             }
 
-            self.responseArgs.resp = response;
+            self.responseArgs.resp = xhr;
             self.fulfilled = true;
-            fn(response);
-            self.successHandler(response);
+            fn(xhr);
+            self.successHandler(xhr);
             while (self.fulfillmentHandlers.length > 0) {
-                response = self.fulfillmentHandlers.shift()(response);
+                xhr = self.fulfillmentHandlers.shift()(xhr);
             }
 
-            complete(response);
-        }
+            complete(xhr);
+        },
 
-        function error(resp, msg, t) {
+        error = function (resp, msg, t) {
             resp = self.request;
             self.responseArgs.resp = resp;
             self.responseArgs.msg = msg;
@@ -347,10 +320,36 @@ XHR.prototype.init = function (options, fn) {
                 self.errorHandlers.shift()(resp, msg, t);
             }
             complete(resp);
-        }
+        };
 
-        this.request = getRequest.call(this, success, error);
-   
+
+    fn = fn || function () {};
+
+    if (options.timeout) {
+        this.timeout = setTimeout(function () {
+            self.abort();
+        }, options.timeout);
+    }
+
+    if (options.success) {
+        this.successHandler = function () {
+            options.success.apply(options, arguments);
+        };
+    }
+
+    if (options.error) {
+        this.errorHandlers.push(function () {
+            options.error.apply(options, arguments);
+        });
+    }
+
+    if (options.complete) {
+        this.completeHandlers.push(function () {
+            options.complete.apply(options, arguments);
+        });
+    }
+
+    this.request = getRequest.call(this, success, error);
 };
 
 XHR.prototype.abort = function () {
@@ -406,7 +405,7 @@ hAzzle.extend({
 
     ajaxSetup: function (options) {
         options = options || {};
-           var k;
+        var k;
         for (k in options) {
             globalSetupOptions[k] = options[k];
         }
