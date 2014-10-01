@@ -229,158 +229,156 @@ var httpsRe = /^http/,
         return new XHR.prototype.init(options, fn);
     };
 
-XHR.prototype = {
-    constructor: XHR,
-    init: function (options, fn) {
+XHR.prototype.constructor = XHR;
+XHR.prototype.init = function (options, fn) {
 
+    this.options = options;
+    this.fn = fn;
+    this.url = typeof options == 'string' ? options : options.url;
+    this.timeout = null;
+    this.fulfilled = false;
+    this.successHandler = function () {};
+    this.fulfillmentHandlers = [];
+    this.errorHandlers = [];
+    this.completeHandlers = [];
+    this.erred = false;
+    this.responseArgs = {};
 
-        this.options = options;
-        this.fn = fn;
-        this.url = typeof options == 'string' ? options : options.url;
-        this.timeout = null;
-        this._fulfilled = false;
-        this.successHandler = function () {};
-        this.fulfillmentHandlers = [];
-        this.errorHandlers = [];
-        this.completeHandlers = [];
-        this.erred = false;
-        this.responseArgs = {};
+    var self = this;
 
-        var self = this;
+    fn = fn || function () {};
 
-        fn = fn || function () {};
-
-        if (options.timeout) {
-            this.timeout = setTimeout(function () {
-                self.abort();
-            }, options.timeout);
-        }
-
-        if (options.success) {
-            this.successHandler = function () {
-                options.success.apply(options, arguments);
-            };
-        }
-
-        if (options.error) {
-            this.errorHandlers.push(function () {
-                options.error.apply(options, arguments);
-            });
-        }
-
-        if (options.complete) {
-            this.completeHandlers.push(function () {
-                options.complete.apply(options, arguments);
-            });
-        }
-
-        function complete(resp) {
-            options.timeout && clearTimeout(self.timeout);
-            self.timeout = null;
-            while (self.completeHandlers.length > 0) {
-                self.completeHandlers.shift()(resp);
-            }
-        }
-
-        function success(resp) {
-
-            var type = options.type || setType(resp.getResponseHeader('Content-Type'));
-            resp = (type !== 'jsonp') ? self.request : resp;
-
-
-            // responseText is the old-school way of retrieving response (supported by IE8 & 9)
-            // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
-            var response = ('response' in resp) ? resp.response : resp.responseText;
-
-            // use global data filter on response text
-
-            var filteredResponse = globalSetupOptions.dataFilter(response, type),
-                r = filteredResponse;
-
-            resp.responseText = r;
-            //jsonxml.js module required
-            if (r || r === '') {
-                switch (type) {
-                    case 'json':
-                        resp = hAzzle.parseJSON(r);
-                        break;
-                    case 'html':
-                        resp = r;
-                        break;
-                    case 'xml':
-                        resp = resp.responseXML && resp.responseXML.parseError && resp.responseXML.parseError.errorCode && resp.responseXML.parseError.reason ? null : resp.responseXML;
-                        break;
-                }
-            }
-
-            self.responseArgs.resp = resp;
-            self._fulfilled = true;
-            fn(resp);
-            self.successHandler(resp);
-            while (self.fulfillmentHandlers.length > 0) {
-                resp = self.fulfillmentHandlers.shift()(resp);
-            }
-
-            complete(resp);
-        }
-
-        function error(resp, msg, t) {
-            resp = self.request;
-            self.responseArgs.resp = resp;
-            self.responseArgs.msg = msg;
-            self.responseArgs.t = t;
-            self.erred = true;
-            while (self.errorHandlers.length > 0) {
-                self.errorHandlers.shift()(resp, msg, t);
-            }
-            complete(resp);
-        }
-
-        this.request = getRequest.call(this, success, error);
-
-
-    },
-    abort: function () {
-        this.aborted = true;
-        this.request.abort();
-    },
-    retry: function () {
-        this.init(this.options, this.fn);
-    },
-    then: function (success, fail) {
-        success = success || function () {};
-        fail = fail || function () {};
-        if (this._fulfilled) {
-            this.responseArgs.resp = success(this.responseArgs.resp);
-        } else if (this.erred) {
-            fail(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
-        } else {
-            this.fulfillmentHandlers.push(success);
-            this.errorHandlers.push(fail);
-        }
-        return this;
-    },
-
-    always: function (fn) {
-        if (this._fulfilled || this.erred) {
-            fn(this.responseArgs.resp);
-        } else {
-            this.completeHandlers.push(fn);
-        }
-        return this;
-    },
-
-    fail: function (fn) {
-        if (this.erred) {
-            fn(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
-        } else {
-            this.errorHandlers.push(fn);
-        }
-        return this;
-    },
-    catch: function (fn) {
-        return this.fail(fn);
+    if (options.timeout) {
+        this.timeout = setTimeout(function () {
+            self.abort();
+        }, options.timeout);
     }
+
+    if (options.success) {
+        this.successHandler = function () {
+            options.success.apply(options, arguments);
+
+        };
+    }
+
+    if (options.error) {
+        this.errorHandlers.push(function () {
+            options.error.apply(options, arguments);
+        });
+    }
+
+    if (options.complete) {
+        this.completeHandlers.push(function () {
+            options.complete.apply(options, arguments);
+        });
+    }
+
+    function complete(resp) {
+        options.timeout && clearTimeout(self.timeout);
+        self.timeout = null;
+        while (self.completeHandlers.length > 0) {
+            self.completeHandlers.shift()(resp);
+        }
+    }
+
+    function success(resp) {
+
+        var type = options.type || setType(resp.getResponseHeader('Content-Type'));
+        resp = (type !== 'jsonp') ? self.request : resp;
+
+
+        // responseText is the old-school way of retrieving response (supported by IE8 & 9)
+        // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
+        var response = ('response' in resp) ? resp.response : resp.responseText;
+
+        // use global data filter on response text
+
+        var filteredResponse = globalSetupOptions.dataFilter(response, type),
+            r = filteredResponse;
+
+        resp.responseText = r;
+        //jsonxml.js module required
+        if (r || r === '') {
+            switch (type) {
+                case 'json':
+                    resp = hAzzle.parseJSON(r);
+                    break;
+                case 'html':
+                    resp = r;
+                    break;
+                case 'xml':
+                    resp = resp.responseXML && resp.responseXML.parseError && resp.responseXML.parseError.errorCode && resp.responseXML.parseError.reason ? null : resp.responseXML;
+                    break;
+            }
+        }
+
+        self.responseArgs.resp = resp;
+        self.fulfilled = true;
+        fn(resp);
+        self.successHandler(resp);
+        while (self.fulfillmentHandlers.length > 0) {
+            resp = self.fulfillmentHandlers.shift()(resp);
+        }
+
+        complete(resp);
+    }
+
+    function error(resp, msg, t) {
+        resp = self.request;
+        self.responseArgs.resp = resp;
+        self.responseArgs.msg = msg;
+        self.responseArgs.t = t;
+        self.erred = true;
+        while (self.errorHandlers.length > 0) {
+            self.errorHandlers.shift()(resp, msg, t);
+        }
+        complete(resp);
+    }
+
+    this.request = getRequest.call(this, success, error);
+
+
+};
+
+XHR.prototype.abort = function () {
+    this.aborted = true;
+    this.request.abort();
+};
+XHR.prototype.retry = function () {
+    this.init(this.options, this.fn);
+};
+XHR.prototype.then = function (success, fail) {
+    success = success || function () {};
+    fail = fail || function () {};
+    if (this.fulfilled) {
+        this.responseArgs.resp = success(this.responseArgs.resp);
+    } else if (this.erred) {
+        fail(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
+    } else {
+        this.fulfillmentHandlers.push(success);
+        this.errorHandlers.push(fail);
+    }
+    return this;
+};
+XHR.prototype.always = function (fn) {
+    if (this.fulfilled || this.erred) {
+        fn(this.responseArgs.resp);
+    } else {
+        this.completeHandlers.push(fn);
+    }
+    return this;
+};
+
+XHR.prototype.fail = function (fn) {
+    if (this.erred) {
+        fn(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
+    } else {
+        this.errorHandlers.push(fn);
+    }
+    return this;
+};
+XHR.prototype.catch = function (fn) {
+    return this.fail(fn);
 };
 
 XHR.prototype.init.prototype = XHR.prototype;
