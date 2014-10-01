@@ -41,7 +41,8 @@ hAzzle.shallowCopy = function() {
 
                         // Recurse if we're merging plain objects or arrays
 
-                        if (deep && copy && (isPlainObject(copy) || (copyIsArray = hAzzle.isArray(copy)))) {
+                        if (deep && copy && (hAzzle.isPlainObject(copy) || 
+                            (copyIsArray = hAzzle.isArray(copy)))) {
 
                             if (copyIsArray) {
 

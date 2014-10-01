@@ -195,11 +195,14 @@ hAzzle.each({
                     el.insertAdjacentHTML(iah, html.replace(mRxhtmlTag, '<$1></$2>'));
                 } else {
                     hAzzle.each(stabilize(html, i), function(i) {
+
+                        try {
                         if (name === 'append') {
                             el.append(i);
                         } else {
                             el.prepend(i, el.firstChild);
                         }
+                        } catch(e) {}
                     });
                 }
             }
