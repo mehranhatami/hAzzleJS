@@ -11,7 +11,7 @@ var httpsRe = /^http/,
     ajaxLocation = location.href,
     ajaxLocParts = rurl.exec(ajaxLocation.toLowerCase()) || [],
 
-accepts = {
+    accepts = {
         '*': 'text/javascript, text/html, application/xml, text/xml, */*',
         'xml': 'application/xml, text/xml',
         'html': 'text/html',
@@ -116,7 +116,10 @@ accepts = {
                 return false;
             }
             script.onload = script.onreadystatechange = null;
-            script.onclick && script.onclick();
+
+            if(script.onclick) {
+                script.onclick();
+            } 
             // Call the user callback with the last value stored and clean up values and scripts.
             fn(lastValue);
             lastValue = undefined;
@@ -245,117 +248,109 @@ accepts = {
 XHR.prototype.constructor = XHR;
 XHR.prototype.init = function (options, fn) {
 
-    this.options = options;
-    this.fn = fn;
-    this.url = typeof options == 'string' ? options : options.url;
-    this.timeout = null;
-    this.fulfilled = false;
-    this.successHandler = function () {};
-    this.fulfillmentHandlers = [];
-    this.errorHandlers = [];
-    this.completeHandlers = [];
-    this.erred = false;
-    this.responseArgs = {};
+        this.options = options;
+        this.fn = fn;
+        this.timeout = null;
+        this.fulfilled = false;
+        this.successHandler = function () {};
+        this.fulfillmentHandlers = [];
+        this.errorHandlers = [];
+        this.completeHandlers = [];
+        this.erred = false;
+        this.responseArgs = {};
 
-    var self = this;
+        var self = this;
 
-    fn = fn || function () {};
+        fn = fn || function () {};
 
-    if (options.timeout) {
-        this.timeout = setTimeout(function () {
-            self.abort();
-        }, options.timeout);
-    }
-
-    if (options.success) {
-        this.successHandler = function () {
-            options.success.apply(options, arguments);
-
-        };
-    }
-
-    if (options.error) {
-        this.errorHandlers.push(function () {
-            options.error.apply(options, arguments);
-        });
-    }
-
-    if (options.complete) {
-        this.completeHandlers.push(function () {
-            options.complete.apply(options, arguments);
-        });
-    }
-
-    function complete(resp) {
-        options.timeout && clearTimeout(self.timeout);
-        self.timeout = null;
-        while (self.completeHandlers.length > 0) {
-            self.completeHandlers.shift()(resp);
+        if (options.timeout) {
+            this.timeout = setTimeout(function () {
+                self.abort();
+            }, options.timeout);
         }
-    }
 
-    function success(jqXHR) {
+        if (options.success) {
+            this.successHandler = function () {
+                options.success.apply(options, arguments);
+            };
+        }
 
-        var type = options.type ||
+        if (options.error) {
+            this.errorHandlers.push(function () {
+                options.error.apply(options, arguments);
+            });
+        }
 
+        if (options.complete) {
+            this.completeHandlers.push(function () {
+                options.complete.apply(options, arguments);
+            });
+        }
 
-            setType(jqXHR.getResponseHeader('Content-Type'));
-
-
-        jqXHR = (type !== 'jsonp') ? self.request : jqXHR;
-
-
-        // responseText is the old-school way of retrieving response (supported by IE8 & 9)
-        // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
-        var response = ('response' in jqXHR) ? jqXHR.response : jqXHR.responseText;
-
-        // use global data filter on response text
-
-        var filteredResponse = globalSetupOptions.dataFilter(response, type),
-            r = filteredResponse;
-
-        jqXHR.responseText = r;
-        //jsonxml.js module required
-        if (r || r === '') {
-            switch (type) {
-                case 'json':
-                    jqXHR = hAzzle.parseJSON(r);
-                    break;
-                case 'html':
-                    jqXHR = r;
-                    break;
-                case 'xml':
-                    jqXHR = jqXHR.responseXML && jqXHR.responseXML.parseError && jqXHR.responseXML.parseError.errorCode && jqXHR.responseXML.parseError.reason ? null : jqXHR.responseXML;
-                    break;
+        function complete(response) {
+            options.timeout && clearTimeout(self.timeout);
+            self.timeout = null;
+            while (self.completeHandlers.length > 0) {
+                self.completeHandlers.shift()(response);
             }
         }
 
-        self.responseArgs.jqXHR = jqXHR;
-        self.fulfilled = true;
-        fn(jqXHR);
-        self.successHandler(jqXHR);
-        while (self.fulfillmentHandlers.length > 0) {
-            jqXHR = self.fulfillmentHandlers.shift()(jqXHR);
+        function success(response) {
+
+            var type = options.type || setType(response.getResponseHeader('Content-Type')),
+                resp, filteredResponse, r;
+
+            response = (type !== 'jsonp') ? self.request : response;
+
+            // responseText is the old-school way of retrieving response (supported by IE8 & 9)
+            // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
+
+            resp = ('response' in response) ? response.response : response.responseText;
+
+            // Use global data filter on response text
+
+            filteredResponse = globalSetupOptions.dataFilter(resp, type);
+            r = filteredResponse;
+
+            response.responseText = r;
+
+            //jsonxml.js module required
+
+            if (r || r === '') {
+                if (type === 'json') {
+                    response = hAzzle.parseJSON(r);
+                } else if (type === 'html') {
+                    response = r;
+                } else if (type === 'xml') {
+                    response = hAzzle.parseXML(response.responseXML);
+                }
+            }
+
+            self.responseArgs.resp = response;
+            self.fulfilled = true;
+            fn(response);
+            self.successHandler(response);
+            while (self.fulfillmentHandlers.length > 0) {
+                response = self.fulfillmentHandlers.shift()(response);
+            }
+
+            complete(response);
         }
 
-        complete(jqXHR);
-    }
-
-    function error(resp, msg, t) {
-        resp = self.request;
-        self.responseArgs.resp = resp;
-        self.responseArgs.msg = msg;
-        self.responseArgs.t = t;
-        self.erred = true;
-        while (self.errorHandlers.length > 0) {
-            self.errorHandlers.shift()(resp, msg, t);
+        function error(resp, msg, t) {
+            resp = self.request;
+            self.responseArgs.resp = resp;
+            self.responseArgs.msg = msg;
+            self.responseArgs.t = t;
+            self.erred = true;
+            while (self.errorHandlers.length > 0) {
+                self.errorHandlers.shift()(resp, msg, t);
+            }
+            complete(resp);
         }
-        complete(resp);
-    }
 
-    this.request = getRequest.call(this, success, error);
-
-
+        this.request = getRequest.call(this, success, error);
+   
 };
 
 XHR.prototype.abort = function () {
@@ -403,13 +398,6 @@ XHR.prototype.init.prototype = XHR.prototype;
 
 hAzzle.extend({
 
-    ajaxSettings: {
-
-        url: ajaxLocation,
-        type: 'GET',
-        contentType: "application/x-www-form-urlencoded; charset=UTF-8"
-    },
-
     xhr: XHR,
 
     getcallbackPrefix: function () {
@@ -417,12 +405,10 @@ hAzzle.extend({
     },
 
     ajaxSetup: function (options) {
-
         options = options || {};
-
-        for (var k in options) {
+           var k;
+        for (k in options) {
             globalSetupOptions[k] = options[k];
         }
     }
-
 }, hAzzle);
