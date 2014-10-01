@@ -6,16 +6,15 @@ var httpsRe = /^http/,
     uniqid = 0,
     lastValue,
     callbackPrefix = hAzzle.expando + hAzzle.getID(true, 'xhr'),
-    
+
     accepts = {
-            '*': 'text/javascript, text/html, application/xml, text/xml, */*',
-            'xml': 'application/xml, text/xml',
-            'html': 'text/html',
-            'text': 'text/plain',
-            'json': 'application/json, text/javascript',
-		},
-    
-    
+        '*': 'text/javascript, text/html, application/xml, text/xml, */*',
+        'xml': 'application/xml, text/xml',
+        'html': 'text/html',
+        'text': 'text/plain',
+        'json': 'application/json, text/javascript',
+    },
+
     defaultHeaders = {
         'contentType': 'application/x-www-form-urlencoded; charset=UTF-8',
         'requestedWith': 'XMLHttpRequest'
@@ -53,56 +52,22 @@ var httpsRe = /^http/,
 
     handleReadyState = function (r, success, error) {
         return function () {
-            // use aborted to mitigate against IE err c00c023f
-            // (can't read props on aborted request objects)
+            var xhr = r.request;
             if (r.aborted) {
-                return error(r.request);
+                return error(xhr);
             }
-            if (r.request && r.request.readyState == 4) {
-                r.request.onreadystatechange = hAzzle.noop;
-                if (succeed(r.request)) {
-                    success(r.request);
+            if (xhr && xhr.readyState == 4) {
+                xhr.onreadystatechange = hAzzle.noop;
+                if (succeed(xhr)) {
+                    success(xhr);
                 } else {
-                    error(r.request);
+                    error(xhr);
                 }
             }
         };
     },
 
-    setHeaders = function (http, options) {
-
-        var headers = options.headers || {},
-            h;
-
-        headers.Accept = headers.Accept || accepts[options.type] || accepts['*'];
-
-        var isAFormData = hAzzle.features.formData && (options.data instanceof FormData);
-
-        if (!options.crossOrigin && !headers.requestedWith) {
-            headers.requestedWith = defaultHeaders.requestedWith;
-        }
-
-        if (!headers[contentType] && !isAFormData) {
-            headers[contentType] = options.contentType ||
-                defaultHeaders.contentType;
-        }
-
-        for (h in headers) {
-            headers.hasOwnProperty(h) && 'setRequestHeader' in http && http.setRequestHeader(h, headers[h]);
-        }
-    },
-
-    setCredentials = function (http, options) {
-        if (typeof options.withCredentials !== 'undefined' && typeof http.withCredentials !== 'undefined') {
-            http.withCredentials = !!options.withCredentials;
-        }
-    },
-
-    generalCallback = function (data) {
-        lastValue = data;
-    },
-
-    urlappend = function (url, s) {
+    createURL = function (url, s) {
         return (url + '').replace(rhash, '') + (/\?/.test(url) ? '&' : '?') + s;
         ////			.replace( /^\/\//, ajaxLocParts[ 1 ] + "//" );
     },
@@ -123,10 +88,12 @@ var httpsRe = /^http/,
                 cbval = match[3]; // provided callback func name
             }
         } else {
-            url = urlappend(url, cbkey + '=' + cbval); // no callback details, add 'em
+            url = createURL(url, cbkey + '=' + cbval); // no callback details, add 'em
         }
 
-        window.cbval = generalCallback;
+        window.cbval = function (data) {
+            lastValue = data;
+        };
 
         script.type = 'text/javascript';
         script.src = url;
@@ -166,15 +133,19 @@ var httpsRe = /^http/,
     getRequest = function (fn, err) {
 
         var options = this.options,
-            method = (options.method || 'GET').toUpperCase(),
+            headers = options.headers || {},
+            isAFormData = hAzzle.features.formData && (options.data instanceof FormData),
+            method = (options.method || /*DEFAULT*/ 'GET').toUpperCase(),
+
             url = typeof options === 'string' ? options : options.url,
-            data = (options.processData !== false && options.data && typeof options.data !== 'string') ? hAzzle.toQueryString(options.data) : (options.data || null),
+
+            data = (options.processData !== false && options.data && typeof options.data !== 'string') ?
+            hAzzle.toQueryString(options.data) :
+            (options.data || null),
             http, sendWait = false;
 
-        // if we're working on a GET request and we have data then we should append
-        // query string to end of URL and not post data
         if ((options.type == 'jsonp' || method == 'GET') && data) {
-            url = urlappend(url, data);
+            url = createURL(url, data);
             data = null;
         }
 
@@ -182,13 +153,35 @@ var httpsRe = /^http/,
             return handleJsonp(options, fn, err, url);
         }
 
-        // get the xhr from the factory if passed
-        // if the factory returns null, fall-back to ours
-        http = (options.xhr && options.xhr(options)) || createXhr(options);
+        http = createXhr(options);
 
-        http.open(method, url, options.async === false ? false : true);
-        setHeaders(http, options);
-        setCredentials(http, options);
+        http.open(method, url, true);
+
+        // Set headers
+
+        headers.Accept = headers.Accept || accepts[options.type] || accepts['*'];
+
+        if (!options.crossOrigin && !headers.requestedWith) {
+            headers.requestedWith = defaultHeaders.requestedWith;
+        }
+
+        if (!headers[contentType] && !isAFormData) {
+            headers[contentType] = options.contentType ||
+                defaultHeaders.contentType;
+        }
+
+        hAzzle.each(headers, function (value, key) {
+            if (typeof value !== 'undefined') {
+                http.setRequestHeader(key, value);
+            }
+        });
+
+        // Credentials
+
+        if (typeof options.withCredentials !== 'undefined' &&
+            typeof http.withCredentials !== 'undefined') {
+            http.withCredentials = !!options.withCredentials;
+        }
 
         if (window.XDomainRequest && http instanceof window.XDomainRequest) {
             http.onload = fn;
