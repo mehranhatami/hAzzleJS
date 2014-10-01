@@ -1,7 +1,5 @@
 // xhr.js
-var win = window,
-    doc = window.document,
-    httpsRe = /^http/,
+var httpsRe = /^http/,
     rhash = /#.*$/,
     contentType = 'Content-Type',
     head = document.head,
@@ -9,9 +7,8 @@ var win = window,
     callbackPrefix = 'xhr_' + hAzzle.now(),
     lastValue,
     xmlHttpRequest = 'XMLHttpRequest',
-    xDomainRequest = 'XDomainRequest',
     isFormDataSupported = typeof FormData === "function" || typeof FormData === "object",
-    noop = function() {},
+    noop = function () {},
 
     defaultHeaders = {
         'contentType': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -26,7 +23,7 @@ var win = window,
         }
     },
 
-    createXhr = function(options) {
+    createXhr = function (options) {
         if (options.crossOrigin === true) {
             var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : null;
             if (xhr && 'withCredentials' in xhr) {
@@ -41,12 +38,12 @@ var win = window,
         }
     },
     globalSetupOptions = {
-        dataFilter: function(data) {
+        dataFilter: function (data) {
             return data;
         }
     },
 
-    succeed = function(request) {
+    succeed = function (request) {
         if (httpsRe.test(window.location.protocol)) {
             var status = request.status;
             // normalize IE bug (http://bugs.jquery.com/ticket/1450)     
@@ -56,9 +53,8 @@ var win = window,
         }
     },
 
-    handleReadyState = function(r, success, error) {
-        alert(r)
-        return function() {
+    handleReadyState = function (r, success, error) {
+        return function () {
             // use aborted to mitigate against IE err c00c023f
             // (can't read props on aborted request objects)
             if (r.aborted) {
@@ -75,7 +71,7 @@ var win = window,
         };
     },
 
-    setHeaders = function(http, options) {
+    setHeaders = function (http, options) {
 
         var headers = options.headers || {},
             h;
@@ -100,28 +96,28 @@ var win = window,
         }
     },
 
-    setCredentials = function(http, options) {
+    setCredentials = function (http, options) {
         if (typeof options.withCredentials !== 'undefined' && typeof http.withCredentials !== 'undefined') {
             http.withCredentials = !!options.withCredentials;
         }
     },
 
-    generalCallback = function(data) {
+    generalCallback = function (data) {
         lastValue = data;
     },
 
-    urlappend = function(url, s) {
+    urlappend = function (url, s) {
         return (url + '').replace(rhash, '') + (/\?/.test(url) ? '&' : '?') + s;
         ////			.replace( /^\/\//, ajaxLocParts[ 1 ] + "//" );
     },
 
-    handleJsonp = function(o, fn, err, url) {
+    handleJsonp = function (options, fn, err, url) {
         var reqId = uniqid++,
-            cbkey = o.jsonpCallback || 'callback',
-            cbval = o.jsonpCallbackName || hAzzle.getcallbackPrefix(reqId),
+            cbkey = options.jsonpCallback || 'callback',
+            cbval = options.jsonpCallbackName || hAzzle.getcallbackPrefix(reqId),
             cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
             match = url.match(cbreg),
-            script = doc.createElement('script'),
+            script = window.document.createElement('script'),
             loaded = 0;
 
         if (match) {
@@ -134,7 +130,7 @@ var win = window,
             url = urlappend(url, cbkey + '=' + cbval); // no callback details, add 'em
         }
 
-        win[cbval] = generalCallback;
+        window.cbval = generalCallback;
 
         script.type = 'text/javascript';
         script.src = url;
@@ -143,7 +139,7 @@ var win = window,
             script.htmlFor = script.id = '[__hAzzle__]' + reqId;
         }
 
-        script.onload = script.onreadystatechange = function() {
+        script.onload = script.onreadystatechange = function () {
             if ((script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded') || loaded) {
                 return false;
             }
@@ -161,7 +157,7 @@ var win = window,
 
         // Enable JSONP timeout
         return {
-            abort: function() {
+            abort: function () {
                 script.onload = script.onreadystatechange = null;
                 err({}, 'Request is aborted: timeout', {});
                 lastValue = undefined;
@@ -171,47 +167,48 @@ var win = window,
         };
     },
 
-    getRequest = function(fn, err) {
-        var o = this.o,
-            method = (o.method || 'GET').toUpperCase(),
-            url = typeof o === 'string' ? o : o.url,
-            data = (o.processData !== false && o.data && typeof o.data !== 'string') ? hAzzle.toQueryString(o.data) : (o.data || null),
+    getRequest = function (fn, err) {
+
+        var options = this.options,
+            method = (options.method || 'GET').toUpperCase(),
+            url = typeof options === 'string' ? options : options.url,
+            data = (options.processData !== false && options.data && typeof options.data !== 'string') ? hAzzle.toQueryString(options.data) : (options.data || null),
             http, sendWait = false;
 
         // if we're working on a GET request and we have data then we should append
         // query string to end of URL and not post data
-        if ((o.type == 'jsonp' || method == 'GET') && data) {
+        if ((options.type == 'jsonp' || method == 'GET') && data) {
             url = urlappend(url, data);
             data = null;
         }
 
-        if (o.type == 'jsonp') {
-            return handleJsonp(o, fn, err, url);
+        if (options.type == 'jsonp') {
+            return handleJsonp(options, fn, err, url);
         }
 
         // get the xhr from the factory if passed
         // if the factory returns null, fall-back to ours
-        http = (o.xhr && o.xhr(o)) || createXhr(o);
+        http = (options.xhr && options.xhr(options)) || createXhr(options);
 
-        http.open(method, url, o.async === false ? false : true);
-        setHeaders(http, o);
-        setCredentials(http, o);
+        http.open(method, url, options.async === false ? false : true);
+        setHeaders(http, options);
+        setCredentials(http, options);
 
         if (window.XDomainRequest && http instanceof window.XDomainRequest) {
             http.onload = fn;
             http.onerror = err;
-            http.onprogress = function() {};
+            http.onprogress = function () {};
             sendWait = true;
         } else {
             http.onreadystatechange = handleReadyState(this, fn, err);
         }
 
-        if (o.before) {
-            o.before(http);
+        if (options.before) {
+            options.before(http);
         }
 
         if (sendWait) {
-            setTimeout(function() {
+            setTimeout(function () {
                 http.send(data);
             }, 200);
         } else {
@@ -220,7 +217,7 @@ var win = window,
         return http;
     },
 
-    setType = function(header) {
+    setType = function (header) {
 
         // json, javascript, text/plain, text/html, xml
         if (header.match('json')) {
@@ -239,22 +236,21 @@ var win = window,
 
     // Prototype
 
-    XHR = function(o, fn) {
-        return new XHR.prototype.init(o, fn);
-    }
-
-
+    XHR = function (options, fn) {
+        return new XHR.prototype.init(options, fn);
+    };
 
 XHR.prototype = {
     constructor: XHR,
-    init: function(o, fn) {
+    init: function (options, fn) {
 
-        this.o = o;
+
+        this.options = options;
         this.fn = fn;
-        this.url = typeof o == 'string' ? o : o.url;
+        this.url = typeof options == 'string' ? options : options.url;
         this.timeout = null;
         this._fulfilled = false;
-        this.successHandler = function() {};
+        this.successHandler = function () {};
         this.fulfillmentHandlers = [];
         this.errorHandlers = [];
         this.completeHandlers = [];
@@ -263,34 +259,34 @@ XHR.prototype = {
 
         var self = this;
 
-        fn = fn || function() {};
+        fn = fn || function () {};
 
-        if (o.timeout) {
-            this.timeout = setTimeout(function() {
+        if (options.timeout) {
+            this.timeout = setTimeout(function () {
                 self.abort();
-            }, o.timeout);
+            }, options.timeout);
         }
 
-        if (o.success) {
-            this.successHandler = function() {
-                o.success.apply(o, arguments);
+        if (options.success) {
+            this.successHandler = function () {
+                options.success.apply(options, arguments);
             };
         }
 
-        if (o.error) {
-            this.errorHandlers.push(function() {
-                o.error.apply(o, arguments);
+        if (options.error) {
+            this.errorHandlers.push(function () {
+                options.error.apply(options, arguments);
             });
         }
 
-        if (o.complete) {
-            this.completeHandlers.push(function() {
-                o.complete.apply(o, arguments);
+        if (options.complete) {
+            this.completeHandlers.push(function () {
+                options.complete.apply(options, arguments);
             });
         }
 
         function complete(resp) {
-            o.timeout && clearTimeout(self.timeout);
+            options.timeout && clearTimeout(self.timeout);
             self.timeout = null;
             while (self.completeHandlers.length > 0) {
                 self.completeHandlers.shift()(resp);
@@ -299,7 +295,7 @@ XHR.prototype = {
 
         function success(resp) {
 
-            var type = o.type || setType(resp.getResponseHeader('Content-Type'));
+            var type = options.type || setType(resp.getResponseHeader('Content-Type'));
             resp = (type !== 'jsonp') ? self.request : resp;
 
 
@@ -313,11 +309,11 @@ XHR.prototype = {
                 r = filteredResponse;
 
             resp.responseText = r;
-
+            //jsonxml.js module required
             if (r || r === '') {
                 switch (type) {
                     case 'json':
-                        resp = win.JSON.parse(r);
+                        resp = hAzzle.parseJSON(r);
                         break;
                     case 'html':
                         resp = r;
@@ -355,16 +351,16 @@ XHR.prototype = {
 
 
     },
-    abort: function() {
+    abort: function () {
         this.aborted = true;
         this.request.abort();
     },
-    retry: function() {
-        this.init(this.o, this.fn);
+    retry: function () {
+        this.init(this.options, this.fn);
     },
-    then: function(success, fail) {
-        success = success || function() {};
-        fail = fail || function() {};
+    then: function (success, fail) {
+        success = success || function () {};
+        fail = fail || function () {};
         if (this._fulfilled) {
             this.responseArgs.resp = success(this.responseArgs.resp);
         } else if (this.erred) {
@@ -376,7 +372,7 @@ XHR.prototype = {
         return this;
     },
 
-    always: function(fn) {
+    always: function (fn) {
         if (this._fulfilled || this.erred) {
             fn(this.responseArgs.resp);
         } else {
@@ -385,7 +381,7 @@ XHR.prototype = {
         return this;
     },
 
-    fail: function(fn) {
+    fail: function (fn) {
         if (this.erred) {
             fn(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
         } else {
@@ -393,7 +389,7 @@ XHR.prototype = {
         }
         return this;
     },
-    catch: function(fn) {
+    catch: function (fn) {
         return this.fail(fn);
     }
 };
@@ -411,13 +407,13 @@ hAzzle.extend({
 
     xhr: XHR,
 
-    getcallbackPrefix: function() {
+    getcallbackPrefix: function () {
         return callbackPrefix;
     },
 
-    ajaxSetup: function(options) {
+    ajaxSetup: function (options) {
 
-        options = options || {}
+        options = options || {};
 
         for (var k in options) {
             globalSetupOptions[k] = options[k];
