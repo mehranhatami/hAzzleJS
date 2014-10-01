@@ -38,8 +38,8 @@ var httpsRe = /^http/,
             hAzzle.error('This browser does not support XMLHttpRequest.');
         }
     },
-    globalSetupOptions = {
-        dataFilter: function (data) {
+    xhrSetup = {
+        filter: function (data) {
 
             return data;
         }
@@ -47,18 +47,18 @@ var httpsRe = /^http/,
 
     succeed = function (request) {
         if (httpsRe.test(window.location.protocol)) {
-            var status = request.status;
+            var state = request.status;
             // normalize IE bug (http://bugs.jquery.com/ticket/1450)     
-            return status === 1223 ? 204 : status;
+            return state === 1223 ? 204 : state;
         } else {
             return !!request.response;
         }
     },
 
-    handleReadyState = function (r, success, error) {
+    handleReadyState = function (obj, success, error) {
         return function () {
-            var xhr = r.request;
-            if (r.aborted) {
+            var xhr = obj.request;
+            if (obj.aborted) {
                 return error(xhr);
             }
             if (xhr && xhr.readyState === 4) {
@@ -81,9 +81,9 @@ var httpsRe = /^http/,
         // we can't take ideas from jQuery on this, because jQuery does crazy shit with script elements, e.g.:
         // - fetches local scripts via XHR and evals them
         // - adds and immediately removes script elements from the document
-        var reqId = uniqid++,
+        var jsonPID = hAzzle.getID(true, 'jsp_'),
             cbkey = options.jsonpCallback || 'callback',
-            cbval = options.jsonpCallbackName || hAzzle.getcallbackPrefix(reqId),
+            cbval = options.jsonpCallbackName || hAzzle.getcallbackPrefix(jsonPID),
             cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
             match = url.match(cbreg),
             script = window.document.createElement('script'),
@@ -106,9 +106,10 @@ var httpsRe = /^http/,
         script.type = 'text/javascript';
         script.src = url;
         script.async = true;
+        
         if (typeof script.onreadystatechange !== 'undefined' && !hAzzle.ie === 10) {
             script.event = 'onclick';
-            script.htmlFor = script.id = '[__hAzzle__]' + reqId;
+            script.htmlFor = script.id = '[[___hAzzle___]]' + jsonPID;
         }
 
         script.onload = script.onreadystatechange = function () {
@@ -159,7 +160,6 @@ var httpsRe = /^http/,
             (options.data || null),
             http, sendWait = false;
 
-
         if ((options.type == 'jsonp' || method == 'GET') && data) {
             url = createURL(url, data);
             data = null;
@@ -170,7 +170,6 @@ var httpsRe = /^http/,
         }
 
         http = createXhr(options);
-
         http.open(method, url, true);
 
         // Set headers
@@ -251,12 +250,12 @@ XHR.prototype.init = function (options, fn) {
     this.options = options;
     this.fn = fn;
     this.timeout = null;
-    this.fulfilled = false;
+    this.fullfilled = false;
     this.successHandler = function () {};
-    this.fulfillmentHandlers = [];
+    this.fullfillmentHandlers = [];
     this.errorHandlers = [];
     this.completeHandlers = [];
-    this.erred = false;
+    this.errorMsg = false;
     this.responseArgs = {};
 
     var self = this,
@@ -282,7 +281,7 @@ XHR.prototype.init = function (options, fn) {
 
             // Use global data filter on response text
 
-            filteredResponse = globalSetupOptions.dataFilter(resp, type);
+            filteredResponse = xhrSetup.filter(resp, type);
             r = filteredResponse;
 
             xhr.responseText = r;
@@ -300,11 +299,11 @@ XHR.prototype.init = function (options, fn) {
             }
 
             self.responseArgs.resp = xhr;
-            self.fulfilled = true;
+            self.fullfilled = true;
             fn(xhr);
             self.successHandler(xhr);
-            while (self.fulfillmentHandlers.length > 0) {
-                xhr = self.fulfillmentHandlers.shift()(xhr);
+            while (self.fullfillmentHandlers.length > 0) {
+                xhr = self.fullfillmentHandlers.shift()(xhr);
             }
 
             complete(xhr);
@@ -315,7 +314,7 @@ XHR.prototype.init = function (options, fn) {
             self.responseArgs.resp = resp;
             self.responseArgs.msg = msg;
             self.responseArgs.t = t;
-            self.erred = true;
+            self.errorMsg = true;
             while (self.errorHandlers.length > 0) {
                 self.errorHandlers.shift()(resp, msg, t);
             }
@@ -360,20 +359,20 @@ XHR.prototype.retry = function () {
     this.init(this.options, this.fn);
 };
 XHR.prototype.then = function (success, fail) {
-    success = success || function () {};
-    fail = fail || function () {};
-    if (this.fulfilled) {
+    success = success || hAzzle.noop;
+    fail = fail || hAzzle.noop;
+    if (this.fullfilled) {
         this.responseArgs.resp = success(this.responseArgs.resp);
-    } else if (this.erred) {
+    } else if (this.errorMsg) {
         fail(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
     } else {
-        this.fulfillmentHandlers.push(success);
+        this.fullfillmentHandlers.push(success);
         this.errorHandlers.push(fail);
     }
     return this;
 };
 XHR.prototype.always = function (fn) {
-    if (this.fulfilled || this.erred) {
+    if (this.fullfilled || this.errorMsg) {
         fn(this.responseArgs.resp);
     } else {
         this.completeHandlers.push(fn);
@@ -382,7 +381,7 @@ XHR.prototype.always = function (fn) {
 };
 
 XHR.prototype.fail = function (fn) {
-    if (this.erred) {
+    if (this.errorMsg) {
         fn(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
     } else {
         this.errorHandlers.push(fn);
@@ -407,7 +406,7 @@ hAzzle.extend({
         options = options || {};
         var k;
         for (k in options) {
-            globalSetupOptions[k] = options[k];
+            xhrSetup[k] = options[k];
         }
     }
 }, hAzzle);
