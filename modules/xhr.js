@@ -4,23 +4,21 @@ var httpsRe = /^http/,
     contentType = 'Content-Type',
     head = document.head,
     uniqid = 0,
-    callbackPrefix = 'xhr_' + hAzzle.now(),
     lastValue,
-    xmlHttpRequest = 'XMLHttpRequest',
-    isFormDataSupported = typeof FormData === "function" || typeof FormData === "object",
-    noop = function () {},
-
-    defaultHeaders = {
-        'contentType': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'requestedWith': xmlHttpRequest,
-        'accept': {
+    callbackPrefix = hAzzle.expando + hAzzle.getID(true, 'xhr'),
+    
+    accepts = {
             '*': 'text/javascript, text/html, application/xml, text/xml, */*',
             'xml': 'application/xml, text/xml',
             'html': 'text/html',
             'text': 'text/plain',
             'json': 'application/json, text/javascript',
-            'js': 'application/javascript, text/javascript'
-        }
+		},
+    
+    
+    defaultHeaders = {
+        'contentType': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'requestedWith': 'XMLHttpRequest'
     },
 
     createXhr = function (options) {
@@ -61,7 +59,7 @@ var httpsRe = /^http/,
                 return error(r.request);
             }
             if (r.request && r.request.readyState == 4) {
-                r.request.onreadystatechange = noop;
+                r.request.onreadystatechange = hAzzle.noop;
                 if (succeed(r.request)) {
                     success(r.request);
                 } else {
@@ -76,11 +74,9 @@ var httpsRe = /^http/,
         var headers = options.headers || {},
             h;
 
-        headers.Accept = headers.Accept ||
-            defaultHeaders.accept[options.type] ||
-            defaultHeaders.accept['*'];
+        headers.Accept = headers.Accept || accepts[options.type] || accepts['*'];
 
-        var isAFormData = isFormDataSupported && (options.data instanceof FormData);
+        var isAFormData = hAzzle.features.formData && (options.data instanceof FormData);
 
         if (!options.crossOrigin && !headers.requestedWith) {
             headers.requestedWith = defaultHeaders.requestedWith;

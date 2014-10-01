@@ -73,3 +73,7 @@ hAzzle.features['bug-GEBI'] = hAzzle.assert(function(div) {
     div.innerHTML = '<textarea>x</textarea>';
     hAzzle.features.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 })();
+
+hAzzle.features.formData = (function() {
+return typeof FormData === 'function' || typeof FormData === 'object';
+    }());
