@@ -1,13 +1,17 @@
 // xhr.js
 var httpsRe = /^http/,
     rhash = /#.*$/,
+    rprotocol = /^\/\//,
+    rurl = /^([\w.+-]+:)(?:\/\/(?:[^\/?#]*@|)([^\/?#:]*)(?::(\d+)|)|)/,
     contentType = 'Content-Type',
     head = document.head,
     uniqid = 0,
     lastValue,
     callbackPrefix = hAzzle.expando + hAzzle.getID(true, 'xhr'),
+    ajaxLocation = location.href,
+    ajaxLocParts = rurl.exec(ajaxLocation.toLowerCase()) || [],
 
-    accepts = {
+accepts = {
         '*': 'text/javascript, text/html, application/xml, text/xml, */*',
         'xml': 'application/xml, text/xml',
         'html': 'text/html',
@@ -36,6 +40,7 @@ var httpsRe = /^http/,
     },
     globalSetupOptions = {
         dataFilter: function (data) {
+
             return data;
         }
     },
@@ -56,7 +61,7 @@ var httpsRe = /^http/,
             if (r.aborted) {
                 return error(xhr);
             }
-            if (xhr && xhr.readyState == 4) {
+            if (xhr && xhr.readyState === 4) {
                 xhr.onreadystatechange = hAzzle.noop;
                 if (succeed(xhr)) {
                     success(xhr);
@@ -66,13 +71,16 @@ var httpsRe = /^http/,
             }
         };
     },
-
-    createURL = function (url, s) {
-        return (url + '').replace(rhash, '') + (/\?/.test(url) ? '&' : '?') + s;
-        ////			.replace( /^\/\//, ajaxLocParts[ 1 ] + "//" );
+    createURL = function (url, str) {
+        return url + (/\?/.test(url) ? '&' : '?') + str;
     },
 
-    handleJsonp = function (options, fn, err, url) {
+    // JsonP request
+
+    jsonpReq = function (options, fn, err, url) {
+        // we can't take ideas from jQuery on this, because jQuery does crazy shit with script elements, e.g.:
+        // - fetches local scripts via XHR and evals them
+        // - adds and immediately removes script elements from the document
         var reqId = uniqid++,
             cbkey = options.jsonpCallback || 'callback',
             cbval = options.jsonpCallbackName || hAzzle.getcallbackPrefix(reqId),
@@ -99,6 +107,7 @@ var httpsRe = /^http/,
         script.src = url;
         script.async = true;
         if (typeof script.onreadystatechange !== 'undefined' && !hAzzle.ie === 10) {
+            script.event = 'onclick';
             script.htmlFor = script.id = '[__hAzzle__]' + reqId;
         }
 
@@ -122,7 +131,7 @@ var httpsRe = /^http/,
         return {
             abort: function () {
                 script.onload = script.onreadystatechange = null;
-                err({}, 'Request is aborted: timeout', {});
+                err({}, 'XHR is aborted: timeout', {});
                 lastValue = undefined;
                 head.removeChild(script);
                 loaded = 1;
@@ -137,12 +146,16 @@ var httpsRe = /^http/,
             isAFormData = hAzzle.features.formData && (options.data instanceof FormData),
             method = (options.method || /*DEFAULT*/ 'GET').toUpperCase(),
 
-            url = typeof options === 'string' ? options : options.url,
+            // Create URL string, and remove hash character, and add protocol if not provided
 
+            url = (((typeof options === 'string' ? options : options.url) || ajaxLocation) + '')
+            .replace(rhash, '')
+            .replace(rprotocol, ajaxLocParts[1] + '//'),
             data = (options.processData !== false && options.data && typeof options.data !== 'string') ?
             hAzzle.toQueryString(options.data) :
             (options.data || null),
             http, sendWait = false;
+
 
         if ((options.type == 'jsonp' || method == 'GET') && data) {
             url = createURL(url, data);
@@ -150,7 +163,7 @@ var httpsRe = /^http/,
         }
 
         if (options.type == 'jsonp') {
-            return handleJsonp(options, fn, err, url);
+            return jsonpReq(options, fn, err, url);
         }
 
         http = createXhr(options);
@@ -281,46 +294,51 @@ XHR.prototype.init = function (options, fn) {
         }
     }
 
-    function success(resp) {
+    function success(jqXHR) {
 
-        var type = options.type || setType(resp.getResponseHeader('Content-Type'));
-        resp = (type !== 'jsonp') ? self.request : resp;
+        var type = options.type ||
+
+
+            setType(jqXHR.getResponseHeader('Content-Type'));
+
+
+        jqXHR = (type !== 'jsonp') ? self.request : jqXHR;
 
 
         // responseText is the old-school way of retrieving response (supported by IE8 & 9)
         // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
-        var response = ('response' in resp) ? resp.response : resp.responseText;
+        var response = ('response' in jqXHR) ? jqXHR.response : jqXHR.responseText;
 
         // use global data filter on response text
 
         var filteredResponse = globalSetupOptions.dataFilter(response, type),
             r = filteredResponse;
 
-        resp.responseText = r;
+        jqXHR.responseText = r;
         //jsonxml.js module required
         if (r || r === '') {
             switch (type) {
                 case 'json':
-                    resp = hAzzle.parseJSON(r);
+                    jqXHR = hAzzle.parseJSON(r);
                     break;
                 case 'html':
-                    resp = r;
+                    jqXHR = r;
                     break;
                 case 'xml':
-                    resp = resp.responseXML && resp.responseXML.parseError && resp.responseXML.parseError.errorCode && resp.responseXML.parseError.reason ? null : resp.responseXML;
+                    jqXHR = jqXHR.responseXML && jqXHR.responseXML.parseError && jqXHR.responseXML.parseError.errorCode && jqXHR.responseXML.parseError.reason ? null : jqXHR.responseXML;
                     break;
             }
         }
 
-        self.responseArgs.resp = resp;
+        self.responseArgs.jqXHR = jqXHR;
         self.fulfilled = true;
-        fn(resp);
-        self.successHandler(resp);
+        fn(jqXHR);
+        self.successHandler(jqXHR);
         while (self.fulfillmentHandlers.length > 0) {
-            resp = self.fulfillmentHandlers.shift()(resp);
+            jqXHR = self.fulfillmentHandlers.shift()(jqXHR);
         }
 
-        complete(resp);
+        complete(jqXHR);
     }
 
     function error(resp, msg, t) {
@@ -387,7 +405,7 @@ hAzzle.extend({
 
     ajaxSettings: {
 
-        url: '',
+        url: ajaxLocation,
         type: 'GET',
         contentType: "application/x-www-form-urlencoded; charset=UTF-8"
     },
