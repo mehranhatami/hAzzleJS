@@ -1,3 +1,0 @@
-require(["hazzle"], function(hazzle) {
-    
-});

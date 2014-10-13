@@ -2,128 +2,68 @@
 //
 // For all available config options and default values, see:
 // https://github.com/karma-runner/karma/blob/stable/lib/config.js#L54
-module.exports = function(config) {
-    'use strict';
 
-    var path = 'modules/',
-        modules, files,
-        hAzzleFiles = [],
-        testFiles = [],
-        i = 0,
-        l;
+module.exports = function (config) {
+  'use strict';
 
-    var modules = [
-        'hazzle.js',
-        'strings.js',        
-        'shallowcopy.js',        
-        'core.js',
-        'features.js',
-        'sort.js',
-        'cache.js',
-        'doml4.js',
-        'types.js',
-        'has.js',        
-        'ready.js',
-        'text.js',
-        'setter.js',
-        'scroll.js',
-        'detection.js',
-        'storage.js',
-        'jiesa.js',
-        'transformers.js',
-        'special.js',
-        'cl3.js',
-        'cl4.js',
-		'clone.js',
-        'matchesselector.js',
-        'create.js',
-        'shims/classlist.js',
-        'classes.js',
-        'manipulation.js',
-        'attributes.js',
-        'removeable.js',
-        'units.js',
-        'curcss.js',
-        'csscore.js',
-        'styles.js',
-        'csshooks.js',
-        'dimensions.js',
-        'offset.js',
-        'events.js',
-        'trigger.js',
-        'shorthand.js',
-        'eventHooks.js',
-        'ajax.js',
-        'raf.js',
-        'traversing.js',
-        'jsonxml.js',
-    ];
-
-    for (l = modules.length; i < l; i++) {
-        hAzzleFiles.push(path + modules[i]);
-        testFiles.push('test/' + path + modules[i]);
-    };
-
-    files = ['components/chai/chai.js']
-        .concat(hAzzleFiles)
-        .concat(testFiles);
-
-    config.set({
-        // base path, that will be used to resolve files and exclude
-        basePath: '',
-
-        frameworks: [
-            'mocha'
-        ],
-
-        // list of files / patterns to load in the browser
-        files: files,
-
-        // use dots reporter, as travis terminal does not support escaping sequences
-        // possible values: 'dots', 'progress', 'junit', 'teamcity'
-        // CLI --reporters progress
-        //reporters: ['dots'],
-        reporters: ['progress', 'coverage'],
-
-        preprocessors: {
-            'modules/*js': 'coverage'
-        },
-        coverageReporter: {
-            type: 'lcov',
-            dir: 'coverage/'
-        },
-
-        // enable / disable watching file and executing tests whenever any file changes
-        // CLI --auto-watch --no-auto-watch
-        autoWatch: true,
-
-        // start these browsers
-        // CLI --browsers Chrome,Firefox,Safari
-        browsers: [
-            //'Firefox',
-            //'Chrome',
-            'PhantomJS'
-        ],
-
-        // if browser does not capture in given timeout [ms], kill it
-        // CLI --capture-timeout 5000
-        captureTimeout: 20000,
-
-        // auto run tests on start (when browsers are captured) and exit
-        // CLI --single-run --no-single-run
-        singleRun: false,
-
-        plugins: [
-            'karma-mocha',
-            'karma-requirejs',
-            'karma-phantomjs-launcher',
-            'karma-chrome-launcher',
-            'karma-firefox-launcher',
-            'karma-ie-launcher',
-            'karma-safari-launcher',
-            'karma-opera-launcher',
-
-            'karma-coverage'
-        ]
+  var hAzzleModules = [
+      //hAzzle modules
+      'modules/hazzle.js',
+      'modules/util/types.js',
+      'modules/util/util.js'
+    ],
+    hAzzleModulesTests = hAzzleModules.map(function (module) {
+      return 'test/' + module;
     });
+
+  var files = ['bower_components/chai/chai.js']
+    .concat(hAzzleModules)
+    .concat(hAzzleModulesTests);
+
+  config.set({
+    // base path, that will be used to resolve files and exclude
+    basePath: '',
+
+    frameworks: [
+      'mocha'
+    ],
+
+    // list of files / patterns to load in the browser
+    files: files,
+
+    // use dots reporter, as travis terminal does not support escaping sequences
+    // possible values: 'dots', 'progress', 'junit', 'teamcity'
+    // CLI --reporters progress
+    reporters: ['dots'],
+
+    // enable / disable watching file and executing tests whenever any file changes
+    // CLI --auto-watch --no-auto-watch
+    autoWatch: true,
+
+    // start these browsers
+    // CLI --browsers Chrome,Firefox,Safari
+    browsers: [
+      'Chrome',
+      'Firefox',
+      'PhantomJS'
+    ],
+
+    // if browser does not capture in given timeout [ms], kill it
+    // CLI --capture-timeout 5000
+    captureTimeout: 20000,
+
+    // auto run tests on start (when browsers are captured) and exit
+    // CLI --single-run --no-single-run
+    singleRun: false,
+
+    plugins: [
+      'karma-mocha',
+      'karma-requirejs',
+      'karma-chrome-launcher',
+      'karma-firefox-launcher',
+      'karma-ie-launcher',
+      'karma-safari-launcher',
+      'karma-phantomjs-launcher'
+    ]
+  });
 };

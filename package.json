@@ -1,38 +1,34 @@
 {
-    "name": "hazzle",
-    "description": "hAzzle aims to be the fastest JavaScript library, but still be a lightweight alternative. It has built in support for DOM manipulation and events with support for all modern browsers, including IE9+.",
-    "version": "0.9.7b-RC2",
-    "dependencies": {
-        "grunt": "0.4.2",
-        "grunt-complexity": "^0.1.x",
-        "complexity-report": "0.6.x"
-    },
-    "devDependencies": {
-        "grunt": "0.4.2",
-        "grunt-cli": "0.1.13",
-        "grunt-complexity": "^0.1.x",
-        "grunt-contrib-concat": "~v0.4.0",
-        "grunt-contrib-jshint": "0.8.0",
-        "grunt-contrib-uglify": "0.3.2",
-        "grunt-contrib-watch": "0.5.3",
-        "grunt-karma-coveralls": "^2.5.1",
-        "karma": "~0.12.8",
-        "karma-chrome-launcher": "~0.1.2",
-        "karma-coverage": "~0.1",
-        "karma-firefox-launcher": "~0.1.2",
-        "karma-ie-launcher": "~0.1.2",
-        "karma-mocha": "~0.1.4",
-        "karma-opera-launcher": "~0.1.0",
-        "karma-phantomjs-launcher": "~0.1.4",
-        "karma-requirejs": "~0.2.1",
-        "karma-safari-launcher": "~0.1.1",
-        "requirejs": "~2.1.10"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/hazzlejs/hAzzleJS"
-    },
-    "scripts": {
-        "test": "./node_modules/.bin/karma start --single-run"
-    }
+  "name": "hAzzle-alpha",
+  "version": "0.0.1",
+  "description": "hAzzle - alpha",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hazzlejs/alpha.git"
+  },
+  "author": "Mehran Hatami",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hazzlejs/alpha/issues"
+  },
+  "homepage": "http://hazzlejs.com/",
+  "devDependencies": {
+    "karma": "~0.12.8",
+    "karma-chrome-launcher": "~0.1.0",
+    "karma-cli": "0.0.4",
+    "karma-firefox-launcher": "~0.1.0",
+    "karma-ie-launcher": "~0.1.1",
+    "karma-mocha": "~0.1.0",
+    "karma-phantomjs-launcher": "^0.1.4",
+    "karma-requirejs": "^0.2.2",
+    "karma-safari-launcher": "~0.1.1",
+    "requirejs": "^2.1.15"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/karma start --browsers PhantomJS --single-run"
+  }
 }
