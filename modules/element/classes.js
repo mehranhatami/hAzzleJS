@@ -135,7 +135,10 @@ hAzzle.define('Classes', function() {
                 }, fn);
             });
         },
-
+        setClass = function(element, /* classe(s) to be added*/ add, /* classe(s) to be removed*/ remove, fn) {
+            addClass(elem, add, fn);
+            removeClass(elem, remove, fn);
+        },
 
         // NOTE! Use use non-native classList solution for 'toggleClass'
         // because of bugs in IE and some other browsers ( IE10, iOS, Nokia phones e.g.) 
@@ -216,6 +219,7 @@ hAzzle.define('Classes', function() {
     return {
         addClass: addClass,
         removeClass: removeClass,
+        setClass:setClass,
         hasClass: hasClass,
         toggleClass: toggleClass
     };

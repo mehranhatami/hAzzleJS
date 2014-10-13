@@ -11,8 +11,8 @@ hAzzle.define('Matches', function() {
 
     var _util = hAzzle.require('Util'),
         _collection = hAzzle.require('Collection')
-    _jiesa = hAzzle.require('Jiesa')
-    dummyDiv = document.createElement('div'),
+    _jiesa = hAzzle.require('Jiesa'),
+        matchesSelector,
 
         rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
 
@@ -71,15 +71,9 @@ hAzzle.define('Matches', function() {
                 }
                 return element.matches(selector)
             } catch (e) {
-                // Fall back to performing a selector:
-                if (!element.parentNode) {
-                    dummyDiv.appendChild(element);
-                }
+
                 match = _jiesa.find(element.parentNode, selector).indexOf(element) >= 0;
 
-                if (element.parentNode === dummyDiv) {
-                    dummyDiv.removeChild(element);
-                }
                 return match;
             }
         }

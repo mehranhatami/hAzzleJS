@@ -2,7 +2,6 @@ hAzzle.define('Style', function() {
 
     var _util = hAzzle.require('Util'),
         _types = hAzzle.require('Types'),
-        _units = hAzzle.require('Units'),
         _strings = hAzzle.require('Strings'),
         _curcss = hAzzle.require('curCSS'),
 
@@ -16,7 +15,8 @@ hAzzle.define('Style', function() {
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
 
-        sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+        pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source,
+        rrelNum = new RegExp('^([+-])=(' + pnum + ')', 'i'),
 
         prefixElement = document.createElement('div'),
 
@@ -52,9 +52,9 @@ hAzzle.define('Style', function() {
                         });
                     }
 
-                    // Check if the browser supports this property as prefixed
+                    /* Check if the browser supports this property as prefixed. */
                     if (typeof prefixElement.style[propertyPrefixed] === 'string') {
-                        // Cache the match
+                        /* Cache the match. */
                         prefixMatches[prop] = propertyPrefixed;
 
                         return [propertyPrefixed, true];
@@ -118,16 +118,14 @@ hAzzle.define('Style', function() {
                     hook = cssHooks.set[name];
 
                     // Convert '+=' or '-=' to relative numbers
-                    if (type === 'string' && (ret = sNumbs.exec(value))) {
-
-                        value = _units.units(_curcss.curCSS(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                    if (type === 'string' && (ret = rrelNum.exec(value))) {
+                        value = (ret[1] + 1) * ret[2] + parseFloat(getCSS(elem, name));
                         type = 'number';
                     }
 
                     // If a number was passed in, add 'px' (except for certain CSS properties)
-
                     if (type === 'number' && !unitless[name]) {
-                        value += ret && ret[3] ? ret[3] : 'px';
+                        value += 'px';
                     }
 
                     if (hook) {
@@ -146,6 +144,7 @@ hAzzle.define('Style', function() {
                     return style[name];
                 }
             }
+
         };
 
     this.css = function(name, value) {

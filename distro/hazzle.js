@@ -138,6 +138,7 @@
             return this;
         };
 
+
     // Define constructor
     hAzzle.prototype = {
         constructor: hAzzle
@@ -209,7 +210,7 @@ hAzzle.define('Jsonxml', function() {
 hAzzle.define('Support', function() {
 
     // Feature detection of elements
-    var cls, MultipleArgs,
+    var cls, MultipleArgs, sortDetached,
         assert = function(fn) {
 
             var el = document.createElement('fieldset');
@@ -272,7 +273,14 @@ hAzzle.define('Support', function() {
         MultipleArgs = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
     });
 
+    sortDetached = assert(function(div) {
+        // Should return 1, but returns 4 (following)
+        return div.compareDocumentPosition(document.createElement('div')) & 1;
+    });
+
+
     return {
+        assert: assert,
         checkOn: checkOn,
         optSelected: optSelected,
         radioValue: radioValue,
@@ -281,7 +289,6 @@ hAzzle.define('Support', function() {
         multipleArgs: MultipleArgs
     };
 });
-
 
 // detection.js
 hAzzle.define('Detection', function() {
@@ -1483,8 +1490,8 @@ hAzzle.define('Matches', function() {
 
     var _util = hAzzle.require('Util'),
         _collection = hAzzle.require('Collection')
-    _jiesa = hAzzle.require('Jiesa')
-    dummyDiv = document.createElement('div'),
+    _jiesa = hAzzle.require('Jiesa'),
+        matchesSelector,
 
         rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
 
@@ -1543,15 +1550,9 @@ hAzzle.define('Matches', function() {
                 }
                 return element.matches(selector)
             } catch (e) {
-                // Fall back to performing a selector:
-                if (!element.parentNode) {
-                    dummyDiv.appendChild(element);
-                }
+
                 match = _jiesa.find(element.parentNode, selector).indexOf(element) >= 0;
 
-                if (element.parentNode === dummyDiv) {
-                    dummyDiv.removeChild(element);
-                }
                 return match;
             }
         }
@@ -2388,13 +2389,15 @@ hAzzle.define('Storage', function() {
     };
 });
 
-hAzzle.define('Style', function() {
+// curcss.js
+hAzzle.define('curCSS', function() {
 
-    var _util = hAzzle.require('Util'),
-        _types = hAzzle.require('Types'),
-        _strings = hAzzle.require('Strings'),
-        _detection = hAzzle.require('Detection'),
+    var _detection = hAzzle.require('Detection'),
         _storage = hAzzle.require('Storage'),
+
+        sLnline = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
+        sListitem = /^(li)$/i,
+        sTablerow = /^(tr)$/i,
 
         computedStyle = !!document.defaultView.getComputedStyle,
 
@@ -2403,7 +2406,7 @@ hAzzle.define('Style', function() {
             if (elem.nodeType === 1) {
                 var dv = elem.ownerDocument.defaultView;
                 s = dv.getComputedStyle(elem, null);
-                if (!s && node.style) {
+                if (!s && elem.style) {
                     elem.style.display = '';
                     s = dv.getComputedStyle(elem, null);
                 }
@@ -2431,20 +2434,19 @@ hAzzle.define('Style', function() {
             if (elem) {
                 if (_storage.privateData.get(elem, 'computed') === undefined) {
                     _storage.privateData.access(elem, 'computed', {
-                        computedStyle: null
+                        computedStyle: null,
                     });
                 }
                 return _storage.privateData.get(elem, 'computed');
             }
         },
-
         getStyles = function(elem) {
             var computed;
             if (computedCSS(elem).computedStyle === null) {
-                console.log("caching")
+                console.log('caching');
                 computed = computedCSS(elem).computedStyle = computedValues(elem);
             } else {
-                console.log("cached")
+                console.log('cached');
                 computed = computedCSS(elem).computedStyle;
             }
 
@@ -2453,10 +2455,10 @@ hAzzle.define('Style', function() {
 
         curHeight = function(elem, toggleDisplay) {
             var contentBoxHeight = elem.offsetHeight -
-                (parseFloat(getCSS(elem, 'borderTopWidth')) || 0) -
-                (parseFloat(getCSS(elem, 'borderBottomWidth')) || 0) -
-                (parseFloat(getCSS(elem, 'paddingTop')) || 0) -
-                (parseFloat(getCSS(elem, 'paddingBottom')) || 0);
+                (parseFloat(curCSS(elem, 'borderTopWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'borderBottomWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingTop')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingBottom')) || 0);
 
             revertDisplay(elem, toggleDisplay);
 
@@ -2464,10 +2466,10 @@ hAzzle.define('Style', function() {
         },
         curWidth = function(elem, toggleDisplay) {
             var contentBoxWidth = elem.offsetWidth -
-                (parseFloat(getCSS(elem, 'borderLeftWidth')) || 0) -
-                (parseFloat(getCSS(elem, 'borderRightWidth')) || 0) -
-                (parseFloat(getCSS(elem, 'paddingLeft')) || 0) -
-                (parseFloat(getCSS(elem, 'paddingRight')) || 0);
+                (parseFloat(curCSS(elem, 'borderLeftWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'borderRightWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingLeft')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingRight')) || 0);
 
             revertDisplay(elem, toggleDisplay);
 
@@ -2476,26 +2478,44 @@ hAzzle.define('Style', function() {
 
         revertDisplay = function(elem, toggleDisplay) {
             if (toggleDisplay) {
-                setCSS(elem, 'display', 'none');
+                elem.style.display = 'none';
             }
+        },
+
+        getDisplayType = function(elem) {
+            var tagName = elem.tagName.toLowerCase();
+            if (sLnline.test(tagName)) {
+                return 'inline';
+            }
+            if (sListitem.test(tagName)) {
+                return 'list-item';
+            }
+            if (sTablerow.test(tagName)) {
+                return 'table-row';
+            }
+            return 'block';
         },
 
         // Prop to jQuery for the name!
 
         curCSS = function(elem, prop, force) {
 
+            if (typeof elem === 'object' && elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
             var computedValue = 0,
                 toggleDisplay = false;
 
             if ((prop === 'height' || prop === 'width') && curCSS(elem, 'display') === 0) {
                 toggleDisplay = true;
-                setCSS(elem, 'display', hAzzle.getDisplayType(elem));
+                elem.style.display = hAzzle.getDisplayType(elem);
             }
 
             if (!force) {
 
                 if (prop === 'height' &&
-                    getCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
                     return curHeight(elem, toggleDisplay);
                 } else if (prop === 'width' &&
                     curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
@@ -2532,13 +2552,193 @@ hAzzle.define('Style', function() {
                 }
             }
             return computedValue;
+        };
+
+    return {
+        computedCSS: computedCSS,
+        getStyles: getStyles,
+        curCSS: curCSS,
+        getDisplayType: getDisplayType
+    };
+});
+
+// units.js
+hAzzle.define('Units', function() {
+    var _curcss = hAzzle.require('curCSS'),
+        _support = hAzzle.require('Support'),
+
+        leftRightMargPad = /^(left$|right$|margin|padding)/,
+        relAbsFixed = /^(relative|absolute|fixed)$/,
+        topBottom = /^(top|bottom)$/,
+
+        // Converts one unit to another
+
+        units = function(px, unit, elem, prop) {
+
+            if (unit === '' ||
+                unit === 'px') {
+
+                return px; // Don't waste time if there is no conversion to do.
+            }
+
+            if (unit === '%') {
+
+                if (leftRightMargPad.test(prop)) {
+
+                    prop = 'width';
+
+                } else if (topBottom.test(prop)) {
+
+                    prop = 'height';
+                }
+
+                elem = relAbsFixed.test(_curcss.curCSS(elem, 'position')) ?
+                    elem.offsetParent : elem.parentNode;
+
+                if (elem) {
+
+                    prop = parseFloat(_curcss.curCSS(elem, prop));
+
+                    if (prop !== 0) {
+
+                        return px / prop * 100;
+                    }
+                }
+                return 0;
+            }
+
+            if (unit === 'em') {
+
+                return px / parseFloat(_curcss.curCSS(elem, 'fontSize'));
+            }
+
+            // The first time we calculate how many pixels there is in 1 meter
+            // for calculate what is 1 inch/cm/mm/etc.
+
+            if (units.unity === undefined) {
+
+                var u = units.unity = {};
+
+                _support.assert(function(div) {
+
+                    div.style.width = '100cm';
+                    document.body.appendChild(div);
+                    u.mm = div.offsetWidth / 1000;
+                });
+
+                u.cm = u.mm * 10;
+                u.in = u.cm * 2.54;
+                u.pt = u.in * 1 / 72;
+                u.pc = u.pt * 12;
+            }
+
+            // If the unity specified is not recognized we return the value.
+
+            unit = units.unity[unit];
+
+            return unit ? px / unit : px;
+        };
+
+    return {
+        units: units
+    };
+});
+
+hAzzle.define('Style', function() {
+
+    var _util = hAzzle.require('Util'),
+        _types = hAzzle.require('Types'),
+        _units = hAzzle.require('Units'),
+        _strings = hAzzle.require('Strings'),
+        _curcss = hAzzle.require('curCSS'),
+
+        unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
+            'column-count flex-shrink flex-height order orphans widows rotate3d flipped ' +
+            'transform ms-flex-order transform-origin perspective transform-style ' +
+            'ms-flex-negative ms-flex-positive transform-origin perspective ' +
+            'perspective-origin backface-visibility scale scale-x scale-y scale-z ' +
+            'scale3d reflect-x-y reflect-z reflect-y reflect ' +
+            'background-color border-bottom-color border-left-color border-right-color border-top-color ' +
+            'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
+            'alpha z-index font-weight opacity red green blue').split(' '),
+
+        sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+
+        prefixElement = document.createElement('div'),
+
+        prefixMatches = {},
+
+        cssProps = {
+            'float': 'cssFloat'
+        },
+
+        unitless = {},
+
+        cssHooks = {
+            get: {},
+            set: {}
+        },
+
+        prefixCheck = function(prop) {
+            // If this property has already been checked, return the cached value
+            if (prefixMatches[prop]) {
+                return [prefixMatches[prop], true];
+            } else {
+                var vendors = ['', 'Webkit', 'Moz', 'ms', 'O'];
+
+                for (var i = 0, vendorsLength = vendors.length; i < vendorsLength; i++) {
+                    var propertyPrefixed;
+
+                    if (i === 0) {
+                        propertyPrefixed = prop;
+                    } else {
+                        // Capitalize the first letter of the property to conform to JavaScript vendor prefix notation (e.g. webkitFilter).
+                        propertyPrefixed = vendors[i] + prop.replace(/^\w/, function(match) {
+                            return match.toUpperCase();
+                        });
+                    }
+
+                    // Check if the browser supports this property as prefixed
+                    if (typeof prefixElement.style[propertyPrefixed] === 'string') {
+                        // Cache the match
+                        prefixMatches[prop] = propertyPrefixed;
+
+                        return [propertyPrefixed, true];
+                    }
+                }
+
+                // If the browser doesn't support this property in any form, include a false flag so that the caller can decide how to proceed.
+                return [prop, false];
+            }
         },
 
         // getCSS
 
         getCSS = function(elem, name) {
 
-            return curCSS(elem, name);
+            var val, hooks, computed, style,
+                origName = _strings.camelize(name);
+
+            if (elem) {
+
+                style = elem.style;
+
+                name = prefixCheck(name)[0];
+
+                // Try prefixed name followed by the unprefixed name
+                hooks = cssHooks.get[name] || cssHooks.get[origName];
+
+                // If a hook was provided get the computed value from there
+                val = hooks ? hooks(elem, true) : val;
+
+                if (!computed && val === undefined) {
+                    style = _curcss.getStyles(elem);
+                    val = hooks ? hooks(elem, true) : style[name];
+                    computed = true;
+                }
+
+                return val;
+            }
         },
 
         // setCSS        
@@ -2548,20 +2748,50 @@ hAzzle.define('Style', function() {
             var ret, style, hook, type;
 
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
+
                 type = typeof value;
+
+                name = _strings.camelize(name);
+
+                // Auto-prefixing
+
+                name = prefixCheck(name)[0];
 
                 style = elem.style;
 
                 if (value !== undefined) {
-                    alert("")
-                    elem.style[name] = value;
 
+                    hook = cssHooks.set[name];
 
+                    // Convert '+=' or '-=' to relative numbers
+                    if (type === 'string' && (ret = sNumbs.exec(value))) {
 
+                        value = _units.units(_curcss.curCSS(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                        type = 'number';
+                    }
+
+                    // If a number was passed in, add 'px' (except for certain CSS properties)
+
+                    if (type === 'number' && !unitless[name]) {
+                        value += ret && ret[3] ? ret[3] : 'px';
+                    }
+
+                    if (hook) {
+                        hook(elem, name, value);
+                    } else {
+                        elem.style[name] = value;
+                    }
+
+                } else {
+                    hook = cssHooks.get[name];
+
+                    if (cssHooks.get[name] && (ret = cssHooks.get[name](elem, false))) {
+                        return ret;
+                    }
+
+                    return style[name];
                 }
-                return style[name];
             }
-
         };
 
     this.css = function(name, value) {
@@ -2591,7 +2821,8 @@ hAzzle.define('Style', function() {
             // Object
 
             return this.each(function(elem) {
-                for (value in name) {
+                var val;
+                for (val in name) {
                     setCSS(elem, value, name[value]);
                 }
             });
@@ -2603,11 +2834,60 @@ hAzzle.define('Style', function() {
         });
     };
 
+    // Populate the unitless properties list
+
+    _util.each(unitlessProps, function(prop) {
+        unitless[_strings.camelize(prop)] = true;
+    });
+
     return {
-        curCSS: curCSS,
+        cssProps: cssProps,
+        unitless: unitless,
         getCSS: getCSS,
         setCSS: setCSS
     };
+});
+
+// csshooks.js
+hAzzle.define('cssHooks', function() {
+
+    var _util = hAzzle.require('Util'),
+        _detection = hAzzle.require('Detection'),
+        _style = hAzzle.require('Style'),
+        _ccs = hAzzle.require('curCSS');
+
+    // Fixes Chrome bug / issue
+
+    if (_detection.isChrome) {
+        _style.cssHooks.textDecoration = {
+            get: function(elem, computed) {
+                if (computed) {
+
+                    //Chrome 31-36 return text-decoration-line and text-decoration-color
+                    //which are not expected yet.
+                    //see https://code.google.com/p/chromium/issues/detail?id=342126
+                    var ret = _ccs.curCSS(elem, 'text-decoration');
+                    //We cannot assume the first word as 'text-decoration-style'
+                    if (/\b(inherit|(?:und|ov)erline|blink|line\-through|none)\b/.test(ret)) {
+                        return RegExp.$1;
+                    }
+                }
+            }
+        };
+    }
+
+    // Getter    
+    _util.extend(_style.cssHooks.get, {
+        'opacity': function(elem, computed) {
+            if (computed) {
+                // We should always get a number back from opacity
+                var ret = _ccs.curCSS(elem, 'opacity');
+                return ret === '' ? '1' : ret;
+            }
+        }
+    });
+
+    return {};
 });
 
 
@@ -4233,7 +4513,7 @@ hAzzle.define('Classes', function() {
     return {
         addClass: addClass,
         removeClass: removeClass,
-        setClass:setClass,
+        setClass: setClass,
         hasClass: hasClass,
         toggleClass: toggleClass
     };

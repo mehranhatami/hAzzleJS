@@ -1,88 +1,48 @@
-hAzzleJS v. 0.9.9d RC3
-======
+hAzzle - alpha
+==============
 
-[![Build Status](https://travis-ci.org/hazzlejs/hAzzleJS.svg?branch=master)](https://travis-ci.org/hazzlejs/hAzzleJS) [![Code Climate](https://codeclimate.com/github/hazzlejs/hAzzleJS.png)](https://codeclimate.com/github/hazzlejs/hAzzleJS) [![Coverage Status](https://coveralls.io/repos/mehranhatami/hAzzleJS/badge.png?branch=master)](https://coveralls.io/r/mehranhatami/hAzzleJS?branch=master)
+[![Build Status](https://travis-ci.org/hazzlejs/alpha.svg?branch=master)](https://travis-ci.org/hazzlejs/alpha)
 
-**hAzzle** aims to be the fastest JavaScript library, but still be a lightweight alternative. It has build in support for DOM manipulation and events with support for **all modern browsers**, including IE9+, and features - such as HTML 5, and new Traversal API. In its selector engine it supports both CSS Level 3 selectors and CSS Level 4 selectors. 
+Experimental - not for commercial use!
 
-Browser compatiblity
---------------------
+hAzzle - alpha are a test project where the main goal are to use pure, native Javascript, to gain better performance.
 
-<table>
-<thead>
-<tr>
-<th id="browser" style="text-align:left;"> Browser </th>
-<th id="version" style="text-align:left;"> Version </th>
-</tr>
-</thead>
+It's modular, and super fast, and contains some of the functions known from jQuery such as next(),prev(), siblings(), and also functions known from other libs such as Loadash and underscore.
 
-<tbody>
-<tr>
-<td style="text-align:left;"> Chrome  </td>
-<td style="text-align:left;">6+       </td>
-</tr>
+It's goal is to follow ES5 and ES6 standards. 
 
-<tr>
-<td style="text-align:left;"> Safari  </td>
-<td style="text-align:left;">5+       </td>
-</tr>
+It's also possible now to use similar functions that you may know from Loadash and underscore.js to deal with arrays. The 'collected' selectors are now an internal array.
 
-<tr>
-<td style="text-align:left;"> Firefox </td>
-<td style="text-align:left;">9+       </td>
-</tr>
+Feedback wanted!!
 
-<tr>
-<td style="text-align:left;"> IE      </td>
-<td style="text-align:left;">9+       </td>
-</tr>
+Correct module order:
 
-<tr>
-<td style="text-align:left;"> Opera   </td>
-<td style="text-align:left;">13.5+    </td>
-</tr>
-
-</tbody>
-</table>
-
-<table>
-<thead>
-<tr>
-<th id="browser" style="text-align:left;"> Browser           </th>
-<th id="version" style="text-align:left;"> Version      </th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td style="text-align:left;"> iOS               </td>
-<td style="text-align:left;"> 6.0.1 </td>
-</tr>
-
-<tr>
-<td style="text-align:left;"> Android           </td>
-<td style="text-align:left;"> 4.2+         </td>
-</tr>
-
-<tr>
-<td style="text-align:left;"> Blackberry        </td>
-<td style="text-align:left;"> 9.0+          </td>
-</tr>
-
-<tr>
-<td style="text-align:left;"> Opera Mobile      </td>
-<td style="text-align:left;"> 13.1+ (13.1) </td>
-</tr>
-
-<tr>
-<td style="text-align:left;"> Chrome (Android)  </td>
-<td style="text-align:left;"> 16+ (16)     </td>
-</tr>
-
-<tr>
-<td style="text-align:left;"> Firefox (Android) </td>
-<td style="text-align:left;"> 16+ (18)     </td>
-</tr>
-
-</tbody>
-</table>
+* hAzzle.js
+* jsonxml.js
+* support.js
+* detection.js
+* types.js
+* util.js
+* ready.js
+* text.js
+* core.js
+* collection.js
+* matches.js
+* id.js
+* jiesa.js
+* create.js
+* manipulation.js
+* dom.js
+* strings.js
+* storage.js
+* style.js
+* setters.js
+* attrhooks.js
+* prophooks.js
+* boolhooks.js
+* valhooks.js
+* events.js
+* traversing.js
+* classes.js
+* visibility.js
+* doml4.js
