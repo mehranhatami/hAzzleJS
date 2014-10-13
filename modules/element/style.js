@@ -1,3 +1,4 @@
+// style.js
 hAzzle.define('Style', function() {
 
     var _util = hAzzle.require('Util'),
@@ -99,7 +100,7 @@ hAzzle.define('Style', function() {
 
         setCSS = function(elem, name, value) {
 
-            var ret, style, hook, type;
+            var ret, style, hook, type, action;
 
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
 
@@ -108,7 +109,7 @@ hAzzle.define('Style', function() {
                 name = _strings.camelize(name);
 
                 // Auto-prefixing
-
+alert(name)
                 name = prefixCheck(name)[0];
 
                 style = elem.style;
@@ -130,10 +131,14 @@ hAzzle.define('Style', function() {
                         value += ret && ret[3] ? ret[3] : 'px';
                     }
 
+                    // If null and NaN values, remove / don't set current style
+                    
+                    action = (value === null || value === '') ? 'remove' : 'set';
+                  
                     if (hook) {
                         hook(elem, name, value);
                     } else {
-                        elem.style[name] = value;
+                        elem.style[action + 'Property'](name, '' + value)
                     }
 
                 } else {
@@ -195,6 +200,7 @@ hAzzle.define('Style', function() {
     });
 
     return {
+        cssHooks:cssHooks,
         cssProps: cssProps,
         unitless: unitless,
         getCSS: getCSS,

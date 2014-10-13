@@ -10,8 +10,8 @@ hAzzle.define('Matches', function() {
      */
 
     var _util = hAzzle.require('Util'),
-        _collection = hAzzle.require('Collection')
-    _jiesa = hAzzle.require('Jiesa'),
+        _collection = hAzzle.require('Collection'),
+        _jiesa = hAzzle.require('Jiesa'),
         matchesSelector,
 
         rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,

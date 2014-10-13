@@ -139,6 +139,8 @@
         };
 
 
+
+
     // Define constructor
     hAzzle.prototype = {
         constructor: hAzzle
@@ -863,7 +865,9 @@ hAzzle.define('Util', function() {
         },
 
         unique = function(array, isSorted, fn, ctx) {
-            if (array == null) return [];
+            if (array == null) {
+                return [];
+            }
             if (_types.isBoolean(isSorted)) {
                 ctx = fn;
                 fn = isSorted;
@@ -882,7 +886,7 @@ hAzzle.define('Util', function() {
                 var value = array[i];
                 if (isSorted) {
                     if (!i || seen !== value) {
-                    result.push(value);
+                        result.push(value);
                     }
                     seen = value;
                 } else if (fn) {
@@ -953,6 +957,7 @@ hAzzle.define('Util', function() {
                 results[index] = fn(obj[currentKey], currentKey, obj);
             }
             return results;
+
         },
 
         pluck = function(array, prop) {
@@ -1488,7 +1493,7 @@ hAzzle.define('Matches', function() {
      */
 
     var _util = hAzzle.require('Util'),
-        _collection = hAzzle.require('Collection')
+        _collection = hAzzle.require('Collection'),
     _jiesa = hAzzle.require('Jiesa'),
         matchesSelector,
 
@@ -2639,6 +2644,9 @@ hAzzle.define('Units', function() {
     };
 });
 
+
+
+// style.js
 hAzzle.define('Style', function() {
 
     var _util = hAzzle.require('Util'),
@@ -2740,7 +2748,7 @@ hAzzle.define('Style', function() {
 
         setCSS = function(elem, name, value) {
 
-            var ret, style, hook, type;
+            var ret, style, hook, type, action;
 
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
 
@@ -2771,10 +2779,15 @@ hAzzle.define('Style', function() {
                         value += ret && ret[3] ? ret[3] : 'px';
                     }
 
+                    // If null and NaN values, remove / don't set current style
+                    
+                    action = (value === null || value === '') ? 'remove' : 'set';
+
                     if (hook) {
                         hook(elem, name, value);
                     } else {
-                        elem.style[name] = value;
+                        
+                        elem.style[action + 'Property'](name, '' + value)
                     }
 
                 } else {
@@ -2816,10 +2829,9 @@ hAzzle.define('Style', function() {
             // Object
 
             return this.each(function(elem) {
-                var val;
-                for (val in name) {
-                    setCSS(elem, value, name[value]);
-                }
+                _util.each(name, function(value, prop) {
+                    setCSS(elem, prop, value);
+                    });
             });
         }
 
@@ -2836,6 +2848,7 @@ hAzzle.define('Style', function() {
     });
 
     return {
+        cssHooks:cssHooks,
         cssProps: cssProps,
         unitless: unitless,
         getCSS: getCSS,
@@ -3491,6 +3504,7 @@ hAzzle.define('Setters', function() {
             return;
         }
 
+
         if (!arguments.length) {
             if (elem) {
                 hooks = valHooks.get[elem.type] ||
@@ -3498,6 +3512,7 @@ hAzzle.define('Setters', function() {
 
                 if (hooks && (ret = hooks.get(elem, 'value')) !== undefined) {
                     return ret;
+
                 }
 
                 ret = elem.value;
@@ -3838,282 +3853,15 @@ hAzzle.define('valHooks', function() {
     });
 });
 
-hAzzle.define('Events', function() {
+hAzzle.define('Events', function () {
 
-    var util = hAzzle.require('Util'),
-        query = hAzzle.require('Jiesa'),
-        _matches = hAzzle.require('Matches'),
-        _id = hAzzle.require('Id'),
-        _slice = Array.prototype.slice;
-
-    // General-purpose event emitter
-    // -----------------------------
-
-    function EventEmitter() {
-        this.events = {};
-        this.context = null;
-    }
-
-    // Adds a handler to the events list
-    EventEmitter.prototype.addListener = function(event, handler) {
-        var handlers = this.events[event] || (this.events[event] = []);
-        handlers.push(handler);
-        return this;
-    };
-
-    // Add a handler that can only get called once
-    EventEmitter.prototype.once = function(event, handler) {
-        var self = this;
-
-        function suicide() {
-            handler.apply(this, arguments);
-            self.removeListener(event, suicide);
-        }
-        return this.addListener(event, suicide);
-    };
-
-    // Removes a handler from the events list
-    EventEmitter.prototype.removeListener = function(event, handler) {
-        var self = this,
-            handlers = this.events[event];
-
-        if (event === '*') {
-            if (!handler) {
-                this.events = {};
-            } else {
-                util.each(this.events, function(handlers, event) {
-                    self.removeListener(event, handler);
-                });
-            }
-        } else if (handler && handlers) {
-            handlers.splice(handlers.indexOf(handler), 1);
-            if (handlers.length === 0) {
-                delete this.events[event];
-            }
-        } else {
-            delete this.events[event];
-        }
-        return this;
-    };
-
-    // Calls all handlers that match the event type
-    EventEmitter.prototype.emit = function(event, a1, a2, a3) {
-        var handlers = this.events[event],
-            context = this.context || this;
-
-        if (handlers) {
-            // Preserve array state during the loop, otherwise manipulating events
-            // inside a callback will cause offset errors.
-
-            handlers = handlers.slice(0);
-
-            var ln = handlers.length,
-                i = -1;
-            // Optimize for most common cases
-            switch (arguments.length) {
-                case 2:
-                    while (++i < ln) handlers[i].call(context, a1);
-                    break;
-                case 1:
-                    while (++i < ln) handlers[i].call(context);
-                    break;
-                case 3:
-                    while (++i < ln) handlers[i].call(context, a1, a2);
-                    break;
-                case 4:
-                    while (++i < ln) handlers[i].call(context, a1, a2, a3);
-                    break;
-                default:
-                    var args = _slice.call(arguments, 1);
-                    while (++i < ln) handlers[i].apply(context, args);
-            }
-        }
-
-        return this;
-    };
-
-    EventEmitter.prototype.proxy = function(event) {
-        return util.applyLeft(this, this.emit, [event]);
-    };
-
-    // Utility methods
-    // -----------------------------
-
-    var emitters = {};
-
-    function getEmitter(element) {
-        var id = _id.getUid(element);
-        return emitters[id] || (emitters[id] = new DOMEventEmitter(element));
-    }
-
-    function getType(event) {
-        var index = event.indexOf(' ');
-        return index > 0 ? event.substr(0, index) : event;
-    }
-
-    function getSelector(event) {
-        var index = event.indexOf(' ');
-        return index > 0 ? event.substr(index) : '';
-    }
-
-    function createEvent(type, properties) {
-        if (typeof type != 'string') {
-            type = type.type;
-        }
-        var isMouse = ['click', 'mousedown', 'mouseup', 'mousemove'].indexOf(type) != -1,
-            event = document.createEvent(isMouse ? 'MouseEvent' : 'Event');
-        if (properties) {
-            util.extend(event, properties);
-        }
-        event.initEvent(type, true, true);
-        return event;
-    }
-
-    // DOM event emitter
-    // -----------------------------
-
-    /*
-        Creates one event emitter per element, proxies DOM events to it. This way
-        we can keep track of the functions so that they can be removed from the
-        elements by reference when you call .removeListener() by event name.   
-    */
-
-    function DOMEventEmitter(element) {
-        EventEmitter.call(this);
-        this.element = element;
-        this.proxied = {};
-    }
-
-    util.inherits(DOMEventEmitter, EventEmitter);
-
-    DOMEventEmitter.prototype._proxy = function(event) {
-        return function(DOMEvent) {
-            var selector = getSelector(event),
-                context = this.element;
-            // delegate behavior
-            if (selector) {
-                context = DOMEvent.target;
-                while (context && !_matches.matches(context, selector)) {
-                    context = context !== this.element && context.parentNode;
-                }
-                if (!context || context == this.element) {
-                    return;
-                }
-            }
-            this.context = context;
-            this.emit(event, DOMEvent, this.element);
-        }.bind(this);
-    };
-
-    DOMEventEmitter.prototype.proxy = function(event) {
-        return this.proxied[event] || (this.proxied[event] = this._proxy(event));
-    };
-
-    DOMEventEmitter.prototype.addListener = function(event, handler) {
-        EventEmitter.prototype.addListener.call(this, event, handler);
-        if (!this.proxied[event]) {
-            this.element.addEventListener(getType(event), this.proxy(event), false);
-        }
-        return this;
-    };
-
-    DOMEventEmitter.prototype.removeListener = function(event, handler) {
-        if (event.indexOf('*') >= 0) {
-            var self = this,
-                re = new RegExp('^' + event.replace('*', '\\b'));
-            // *      : remove all events
-            // type * : remove delegate events
-            // type*  : remove delegate and undelegate
-            util.each(this.events, function(handlers, event) {
-                if (re.test(event)) {
-                    self.removeListener(event, handler);
-                }
-            });
-        } else {
-            var proxy = this.proxied[event];
-            EventEmitter.prototype.removeListener.call(this, event, handler);
-            if (!this.events[event] && proxy) {
-                this.element.removeEventListener(getType(event), proxy, false);
-                delete this.proxied[event];
-            }
-        }
-        return this;
-    };
-
-    function acceptMultipleEvents(method) {
-        var _method = DOMEventEmitter.prototype[method];
-        DOMEventEmitter.prototype[method] = function(event, handler) {
-            var self = this;
-            if (typeof event !== 'string') {
-                util.each(event, function(handler, event) {
-                    _method.call(self, event, handler);
-                });
-            } else {
-                _method.call(self, event, handler);
-            }
-            return self;
-        };
-    }
-
-    ['addListener', 'once', 'removeListener'].forEach(acceptMultipleEvents);
-
-    DOMEventEmitter.prototype.destroy = function() {
-        return this.removeListener('*');
-    };
-
-    DOMEventEmitter.prototype.trigger = function(event, data) {
-        if (!(event instanceof window.Event)) {
-            event = createEvent(event);
-        }
-        event.data = data;
-        this.element.dispatchEvent(event);
-        return this;
-    };
-
-    // Exported methods
-    // -----------------------------
-
-    var exports = {};
-
-    function emitterProxy(method, element, event, handler) {
-        getEmitter(element)[method](event, handler);
-    };
+this.on = function(evt, fn) {
+    this.elements[0].addEventListener(evt, fn, false);
+}
 
 
-    ['addListener', 'removeListener', 'once', 'trigger'].forEach(function(method) {
-        // Create a function proxy for the method
-        var fn = util.curry(emitterProxy, method);
-
-        exports[method] = fn;
-        this[method] = this.iterate(fn);
-    }.bind(this));
-
-    // Aliases
-    // -----------------------------
-
-
-    [EventEmitter.prototype, DOMEventEmitter.prototype, this].forEach(function(obj) {
-        obj.on = obj.addListener;
-    });
-
-    // Global event bus / pub-sub
-    // -----------------------------
-
-    var EE = new EventEmitter;
-
-    hAzzle.subscribe = EE.addListener.bind(EE);
-    hAzzle.unsubscribe = EE.removeListener.bind(EE);
-    hAzzle.publish = EE.emit.bind(EE);
 
     return {
-        EventEmitter: EventEmitter,
-        DOMEventEmitter: DOMEventEmitter,
-        getEmitter: getEmitter,
-        createEvent: createEvent,
-        on: exports.addListener,
-        once: exports.once,
-        off: exports.removeListener,
-        trigger: exports.trigger
     };
 });
 
@@ -4317,6 +4065,7 @@ hAzzle.define('Classes', function() {
                 // use native classList property if possible
 
                 if (_support.classList) {
+
 
                     // Flag native
 
