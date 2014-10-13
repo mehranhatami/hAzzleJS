@@ -278,7 +278,9 @@ hAzzle.define('Util', function() {
         },
 
         unique = function(array, isSorted, fn, ctx) {
-            if (array == null) return [];
+            if (array == null) {
+                return [];
+            }
             if (_types.isBoolean(isSorted)) {
                 ctx = fn;
                 fn = isSorted;
@@ -297,7 +299,7 @@ hAzzle.define('Util', function() {
                 var value = array[i];
                 if (isSorted) {
                     if (!i || seen !== value) {
-                    result.push(value);
+                        result.push(value);
                     }
                     seen = value;
                 } else if (fn) {
