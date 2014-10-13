@@ -77,7 +77,7 @@ hAzzle.define('Util', function() {
         // of the passed-in callback, to be repeatedly applied in other functions.
 
         createCallback = function(func, ctx, argCount) {
-            if (typeof func == 'function') {
+            if (typeof func === 'function') {
                 if (ctx === undefined) {
                     return func;
                 }
@@ -296,7 +296,9 @@ hAzzle.define('Util', function() {
             for (; i < length; i++) {
                 var value = array[i];
                 if (isSorted) {
-                    if (!i || seen !== value) result.push(value);
+                    if (!i || seen !== value) {
+                    result.push(value);
+                    }
                     seen = value;
                 } else if (fn) {
                     var computed = fn(value, i, array);
@@ -321,7 +323,7 @@ hAzzle.define('Util', function() {
                 length = array.length;
 
             if (isSorted) {
-                if (typeof isSorted == 'number') {
+                if (typeof isSorted === 'number') {
                     i = isSorted < 0 ? Math.max(0, length + isSorted) : isSorted;
                 } else {
                     i = sortedIndex(array, item);

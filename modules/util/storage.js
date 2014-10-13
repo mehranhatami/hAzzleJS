@@ -208,7 +208,7 @@ hAzzle.define('Storage', function() {
                 _userData.set(elem, key);
             });
         }
-        var data, camelKey = _strings.camelize(key);
+        var camelKey = _strings.camelize(key);
 
         if (elem && value === undefined) {
 

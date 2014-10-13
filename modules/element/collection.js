@@ -25,8 +25,9 @@ hAzzle.define('Collection', function() {
         },
         removeValue = function(array, value) {
             var index = indexOf(array, value);
-            if (index >= 0)
+            if (index >= 0) {
                 array.splice(index, 1);
+            }
             return value;
         },
         //  Reduces a collection
@@ -96,8 +97,9 @@ hAzzle.define('Collection', function() {
                 return obj.length;
             } else if (_types.isObject(obj)) {
                 for (key in obj)
-                    if (!ownPropsOnly || _util.has(key))
+                    if (!ownPropsOnly || _util.has(key)) {
                         count++;
+                    }
             }
 
             return count;

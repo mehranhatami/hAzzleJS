@@ -72,7 +72,7 @@ hAzzle.define('Manipulation', function() {
                     ctx = context || defaultContext,
                     fragment = ctx.createDocumentFragment();
 
-                if (typeof node == 'string' && node !== '') {
+                if (typeof node === 'string' && node !== '') {
 
                     /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
                        create it if match 
@@ -149,7 +149,7 @@ hAzzle.define('Manipulation', function() {
 
             var i, l, ret;
 
-            if (typeof node == 'string') {
+            if (typeof node === 'string') {
                 return create(node);
             }
 
@@ -289,7 +289,7 @@ hAzzle.define('Manipulation', function() {
         var self = this.elements,
             elems, nodes;
 
-        if (typeof content == 'string' &&
+        if (typeof content === 'string' &&
             content[0] === '<' &&
             content[content.length - 1] === '>' &&
             content.length >= 3) {
@@ -304,7 +304,9 @@ hAzzle.define('Manipulation', function() {
         _util.each(normalize(nodes), function(elem, index) {
             _util.each(self, function(el) {
                 elems = index > 0 ? el.cloneNode(true) : el;
-                elem && fn(elem, elems);
+                if (elem) {
+                    fn(elem, elems);
+                }
             }, null, rev);
 
         }, this, rev);

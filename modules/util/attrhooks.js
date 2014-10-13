@@ -31,4 +31,5 @@ hAzzle.define('attrHooks', function () {
             return elem === document.documentElement ? window.document.title : elem.title;
         }
     });
+    return {};
 });

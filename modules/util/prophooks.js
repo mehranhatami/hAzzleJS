@@ -26,4 +26,5 @@ hAzzle.define('propHooks', function () {
             return null;
         };
     }
+      return {};
 });

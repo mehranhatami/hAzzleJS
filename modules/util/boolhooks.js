@@ -1,7 +1,7 @@
 // boolhooks.js
 hAzzle.define('boolHooks', function () {
 
-    var _setters = hAzzle.require('Setters');
+        var _setters = hAzzle.require('Setters');
 
     // Setter    
 
@@ -13,5 +13,7 @@ hAzzle.define('boolHooks', function () {
             elem.setAttribute(name, name);
         }
         return name;
-    }
+    };
+    
+    return {};
 });

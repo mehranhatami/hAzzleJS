@@ -662,7 +662,7 @@ hAzzle.define('Util', function() {
         // of the passed-in callback, to be repeatedly applied in other functions.
 
         createCallback = function(func, ctx, argCount) {
-            if (typeof func == 'function') {
+            if (typeof func === 'function') {
                 if (ctx === undefined) {
                     return func;
                 }
@@ -881,7 +881,9 @@ hAzzle.define('Util', function() {
             for (; i < length; i++) {
                 var value = array[i];
                 if (isSorted) {
-                    if (!i || seen !== value) result.push(value);
+                    if (!i || seen !== value) {
+                    result.push(value);
+                    }
                     seen = value;
                 } else if (fn) {
                     var computed = fn(value, i, array);
@@ -906,7 +908,7 @@ hAzzle.define('Util', function() {
                 length = array.length;
 
             if (isSorted) {
-                if (typeof isSorted == 'number') {
+                if (typeof isSorted === 'number') {
                     i = isSorted < 0 ? Math.max(0, length + isSorted) : isSorted;
                 } else {
                     i = sortedIndex(array, item);
@@ -1589,8 +1591,9 @@ hAzzle.define('Collection', function() {
         },
         removeValue = function(array, value) {
             var index = indexOf(array, value);
-            if (index >= 0)
+            if (index >= 0) {
                 array.splice(index, 1);
+            }
             return value;
         },
         //  Reduces a collection
@@ -1660,8 +1663,9 @@ hAzzle.define('Collection', function() {
                 return obj.length;
             } else if (_types.isObject(obj)) {
                 for (key in obj)
-                    if (!ownPropsOnly || _util.has(key))
+                    if (!ownPropsOnly || _util.has(key)) {
                         count++;
+                    }
             }
 
             return count;
@@ -1729,6 +1733,7 @@ hAzzle.define('Collection', function() {
         inArray: inArray
     };
 });
+
 // jiesa.js
 hAzzle.define('Jiesa', function() {
 
@@ -2077,7 +2082,6 @@ hAzzle.define('Storage', function() {
     var _util = hAzzle.require('Util'),
         _strings = hAzzle.require('Strings'),
         _types = hAzzle.require('Types'),
-
         _core = hAzzle.require('Core'),
         _shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
         _scharRegEx = /([A-Z])/g,
@@ -2116,8 +2120,7 @@ hAzzle.define('Storage', function() {
             return owner[this.expando];
         },
         cache: function(owner, initial) {
-            // We can accept data for non-element nodes in modern browsers,
-            // but we should not, see #8335.
+
             // Always return an empty object.
             if (!Storage.accepts(owner)) {
                 return {};
@@ -2283,7 +2286,7 @@ hAzzle.define('Storage', function() {
                 _userData.set(elem, key);
             });
         }
-        var data, camelKey = _strings.camelize(key);
+        var camelKey = _strings.camelize(key);
 
         if (elem && value === undefined) {
 
@@ -2388,6 +2391,7 @@ hAzzle.define('Storage', function() {
         removeData: _userData.release
     };
 });
+
 
 // curcss.js
 hAzzle.define('curCSS', function() {
@@ -2965,7 +2969,7 @@ hAzzle.define('Manipulation', function() {
                     ctx = context || defaultContext,
                     fragment = ctx.createDocumentFragment();
 
-                if (typeof node == 'string' && node !== '') {
+                if (typeof node === 'string' && node !== '') {
 
                     /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
                        create it if match 
@@ -3042,7 +3046,7 @@ hAzzle.define('Manipulation', function() {
 
             var i, l, ret;
 
-            if (typeof node == 'string') {
+            if (typeof node === 'string') {
                 return create(node);
             }
 
@@ -3182,7 +3186,7 @@ hAzzle.define('Manipulation', function() {
         var self = this.elements,
             elems, nodes;
 
-        if (typeof content == 'string' &&
+        if (typeof content === 'string' &&
             content[0] === '<' &&
             content[content.length - 1] === '>' &&
             content.length >= 3) {
@@ -3197,7 +3201,9 @@ hAzzle.define('Manipulation', function() {
         _util.each(normalize(nodes), function(elem, index) {
             _util.each(self, function(el) {
                 elems = index > 0 ? el.cloneNode(true) : el;
-                elem && fn(elem, elems);
+                if (elem) {
+                    fn(elem, elems);
+                }
             }, null, rev);
 
         }, this, rev);
@@ -3306,8 +3312,6 @@ hAzzle.define('Manipulation', function() {
     };
 });
 
-
-
 // setters.js
 hAzzle.define('Setters', function() {
 
@@ -3374,7 +3378,7 @@ hAzzle.define('Setters', function() {
 
             var name, propName, i = 0,
 
-                keys = typeof value == 'string' ?
+                keys = typeof value === 'string' ?
 
                 // String
 
@@ -3660,8 +3664,6 @@ hAzzle.define('Setters', function() {
         SVGAttribute: SVGAttribute
     };
 });
-
-
 // attrhooks.js
 hAzzle.define('attrHooks', function() {
 
@@ -3695,6 +3697,7 @@ hAzzle.define('attrHooks', function() {
             return elem === document.documentElement ? window.document.title : elem.title;
         }
     });
+   return {};
 });
 
 
@@ -3726,16 +3729,17 @@ hAzzle.define('propHooks', function() {
             return null;
         };
     }
+      return {};
 });
 
 // boolhooks.js
-hAzzle.define('boolHooks', function() {
+hAzzle.define('boolHooks', function () {
 
-    var _setters = hAzzle.require('Setters');
+        var _setters = hAzzle.require('Setters');
 
     // Setter    
 
-    _setters.boolHooks.set = function(elem, value, name) {
+    _setters.boolHooks.set = function (elem, value, name) {
         if (value === false) {
             // Remove boolean attributes when set to false
             removeAttr(elem, name);
@@ -3743,7 +3747,9 @@ hAzzle.define('boolHooks', function() {
             elem.setAttribute(name, name);
         }
         return name;
-    }
+    };
+    
+    return {};
 });
 
 // valhooks.js
@@ -3840,6 +3846,8 @@ hAzzle.define('valHooks', function() {
             }
         };
     });
+    
+    return {};
 });
 
 
