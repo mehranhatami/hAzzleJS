@@ -26,11 +26,11 @@ hAzzle.define('Types', function() {
     }
 
     var isString = function(value) {
-            return typeof value == 'string';
+            return typeof value === 'string';
         },
 
         isArrayLike = function(value) {
-            return (value && typeof value == 'object' && typeof value.length == 'number' &&
+            return (value && typeof value === 'object' && typeof value.length === 'number' &&
                 arrayLikeClasses[_toString.call(value)]) || false;
         },
         isNumber = function(value) {
@@ -57,7 +57,7 @@ hAzzle.define('Types', function() {
                 value === '';
         },
         isElement = function(value) {
-            return (value && typeof value == 'object' && value.nodeType === 1 &&
+            return (value && typeof value === 'object' && value.nodeType === 1 &&
                 _toString.call(value).indexOf('Element') > -1) || false;
         },
 
@@ -98,11 +98,11 @@ hAzzle.define('Types', function() {
             // avoid a V8 bug in Chrome 19-20
             // https://code.google.com/p/v8/issues/detail?id=2291
             var type = typeof value;
-            return type == 'function' || (value && type == 'object') || false;
+            return type === 'function' || (value && type === 'object') || false;
         },
 
         isNode = function(elem) {
-            return !!elem && typeof elem == 'object' && 'nodeType' in elem;
+            return !!elem && typeof elem === 'object' && 'nodeType' in elem;
         };
 
     return {

@@ -6,7 +6,6 @@ hAzzle.define('Jiesa', function() {
         _collection = hAzzle.require('Collection'),
         _support = hAzzle.require('Support'),
 
-        doc = window.document,
         reSpace = /[\n\t\r]/g,
         idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
         tagNameAndOrIdAndOrClassExp = /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/;

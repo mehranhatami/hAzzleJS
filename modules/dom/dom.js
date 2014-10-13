@@ -18,32 +18,28 @@ hAzzle.define('Dom', function() {
 
         if (typeof selector === 'string') {
 
-            var elements;
-
-        } else {
-
             if (this.length === 1) {
 
-                var elem = this.elements[0],
-                    quickMatch = rquick.exec(selector)
+                var elements, elem = this.elements[0],
+                    quickMatch = rquick.exec(selector);
 
                 if (quickMatch) {
-                    
+
                     if (quickMatch[1]) {
                         // speed-up: 'TAG'
                         elem = _create(elem.getElementsByTagName(selector));
-                        
+
                     } else {
                         // speed-up: '.CLASS'
-                        elem = _create(node.getElementsByClassName(quickMatch[2]));
+                        elem = _create(elem.getElementsByClassName(quickMatch[2]));
                     }
                 }
 
                 return _create(_collection.slice(_jiesa.find(selector, this.elements[0])));
-                
+
             } else {
-                elements = _collection.reduce(this.elements, function(elements, element) {
-                    return _create(_core.uniqueSort(elements.concat(_collection.slice(_jiesa.find(selector, element)))));
+                elements = _collection.reduce(this.elements, function(els, element) {
+                    return _create(_core.uniqueSort(els.concat(_collection.slice(_jiesa.find(selector, element)))));
                 }, []);
             }
         }

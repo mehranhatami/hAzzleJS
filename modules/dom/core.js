@@ -4,7 +4,6 @@ hAzzle.define('Core', function() {
     var winDoc = window.document,
         _support = hAzzle.require('Support'),
         cache = {},
-        _toString = Object.prototype.toString,
         _indexOf = Array.prototype.indexOf,
         expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
         hasDuplicate,
@@ -83,7 +82,7 @@ hAzzle.define('Core', function() {
 
                 var doc = document ? document.ownerDocument || document : winDoc;
 
-                if (nodeType == 9); // document
+                if (nodeType === 9); // document
                 else if (nodeType) {
                     doc = document.ownerDocument; // node
                 } else if (document.navigator) {
@@ -130,7 +129,6 @@ hAzzle.define('Core', function() {
                 features.brokenGEBTN = features.idGetsName = features.brokenCheckedQSA = features.isHTMLDocument = false;
 
                 var starSelectsClosed, starSelectsComments,
-                    brokenFormAttributeGetter,
                     selected, id = 'hAzzle_uniqueid',
                     testNode = document.createElement('div'),
                     testRoot = document.body || document.head || root;
@@ -156,7 +154,7 @@ hAzzle.define('Core', function() {
                     try {
                         testNode.innerHTML = 'foo</foo>';
                         selected = testNode.getElementsByTagName('*');
-                        starSelectsClosed = (selected && !!selected.length && selected[0].nodeName.charAt(0) == '/');
+                        starSelectsClosed = (selected && !!selected.length && selected[0].nodeName.charAt(0) === '/');
                     } catch (e) {}
 
                     features.brokenGEBTN = starSelectsComments || starSelectsClosed;

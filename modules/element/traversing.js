@@ -44,7 +44,7 @@ hAzzle.define('Traversing', function() {
             this.elements,
             _util.isElement(selector) ? function(el) {
                 return _core.contains(selector, el);
-            } : typeof selector == 'string' && selector.length ? function(el) {
+            } : typeof selector === 'string' && selector.length ? function(el) {
                 return _jiesa.find(selector, el).length;
             } : function() {
                 return false;
@@ -138,8 +138,7 @@ hAzzle.define('Traversing', function() {
         var cur,
             i = 0,
             l = this.length,
-            matched = [],
-            pos = 0;
+            matched = [];
 
         for (; i < l; i++) {
             for (cur = this.elements[i]; cur && cur !== ctx; cur = cur.parentNode) {

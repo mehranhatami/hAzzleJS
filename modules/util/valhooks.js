@@ -52,7 +52,6 @@ hAzzle.define('valHooks', function() {
                 index = elem.selectedIndex,
                 one = elem.type === 'select-one' || index < 0,
                 values = one ? null : [],
-                value,
                 max = one ? index + 1 : options.length,
                 i = index < 0 ? max : one ? index : 0;
 

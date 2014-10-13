@@ -362,11 +362,11 @@ hAzzle.define('Types', function() {
     }
 
     var isString = function(value) {
-            return typeof value == 'string';
+            return typeof value === 'string';
         },
 
         isArrayLike = function(value) {
-            return (value && typeof value == 'object' && typeof value.length == 'number' &&
+            return (value && typeof value === 'object' && typeof value.length === 'number' &&
                 arrayLikeClasses[_toString.call(value)]) || false;
         },
         isNumber = function(value) {
@@ -393,7 +393,7 @@ hAzzle.define('Types', function() {
                 value === '';
         },
         isElement = function(value) {
-            return (value && typeof value == 'object' && value.nodeType === 1 &&
+            return (value && typeof value === 'object' && value.nodeType === 1 &&
                 _toString.call(value).indexOf('Element') > -1) || false;
         },
 
@@ -434,11 +434,11 @@ hAzzle.define('Types', function() {
             // avoid a V8 bug in Chrome 19-20
             // https://code.google.com/p/v8/issues/detail?id=2291
             var type = typeof value;
-            return type == 'function' || (value && type == 'object') || false;
+            return type === 'function' || (value && type === 'object') || false;
         },
 
         isNode = function(elem) {
-            return !!elem && typeof elem == 'object' && 'nodeType' in elem;
+            return !!elem && typeof elem === 'object' && 'nodeType' in elem;
         };
 
     return {
@@ -1111,7 +1111,6 @@ hAzzle.define('Core', function() {
     var winDoc = window.document,
         _support = hAzzle.require('Support'),
         cache = {},
-        _toString = Object.prototype.toString,
         _indexOf = Array.prototype.indexOf,
         expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
         hasDuplicate,
@@ -1190,7 +1189,7 @@ hAzzle.define('Core', function() {
 
                 var doc = document ? document.ownerDocument || document : winDoc;
 
-                if (nodeType == 9); // document
+                if (nodeType === 9); // document
                 else if (nodeType) {
                     doc = document.ownerDocument; // node
                 } else if (document.navigator) {
@@ -1237,7 +1236,6 @@ hAzzle.define('Core', function() {
                 features.brokenGEBTN = features.idGetsName = features.brokenCheckedQSA = features.isHTMLDocument = false;
 
                 var starSelectsClosed, starSelectsComments,
-                    brokenFormAttributeGetter,
                     selected, id = 'hAzzle_uniqueid',
                     testNode = document.createElement('div'),
                     testRoot = document.body || document.head || root;
@@ -1263,7 +1261,7 @@ hAzzle.define('Core', function() {
                     try {
                         testNode.innerHTML = 'foo</foo>';
                         selected = testNode.getElementsByTagName('*');
-                        starSelectsClosed = (selected && !!selected.length && selected[0].nodeName.charAt(0) == '/');
+                        starSelectsClosed = (selected && !!selected.length && selected[0].nodeName.charAt(0) === '/');
                     } catch (e) {}
 
                     features.brokenGEBTN = starSelectsComments || starSelectsClosed;
@@ -1417,7 +1415,6 @@ hAzzle.define('Core', function() {
 
                     return i ?
                         // Do a sibling check if the nodes have a common ancestor
-
 
                         siblingCheck(ap[i], bp[i]) :
 
@@ -1742,7 +1739,6 @@ hAzzle.define('Jiesa', function() {
         _collection = hAzzle.require('Collection'),
         _support = hAzzle.require('Support'),
 
-        doc = window.document,
         reSpace = /[\n\t\r]/g,
         idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
         tagNameAndOrIdAndOrClassExp = /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/;
@@ -1847,7 +1843,6 @@ hAzzle.define('Jiesa', function() {
             } else {
                 return _collection.slice(document.querySelectorAll(sel));
             }
-
         }
     }
 
@@ -1878,14 +1873,10 @@ hAzzle.define('Dom', function() {
 
         if (typeof selector === 'string') {
 
-            var elements;
-
-        } else {
-
             if (this.length === 1) {
 
-                var elem = this.elements[0],
-                    quickMatch = rquick.exec(selector)
+                var elements, elem = this.elements[0],
+                    quickMatch = rquick.exec(selector);
 
                 if (quickMatch) {
 
@@ -1895,15 +1886,15 @@ hAzzle.define('Dom', function() {
 
                     } else {
                         // speed-up: '.CLASS'
-                        elem = _create(node.getElementsByClassName(quickMatch[2]));
+                        elem = _create(elem.getElementsByClassName(quickMatch[2]));
                     }
                 }
 
                 return _create(_collection.slice(_jiesa.find(selector, this.elements[0])));
 
             } else {
-                elements = _collection.reduce(this.elements, function(elements, element) {
-                    return _create(_core.uniqueSort(elements.concat(_collection.slice(_jiesa.find(selector, element)))));
+                elements = _collection.reduce(this.elements, function(els, element) {
+                    return _create(_core.uniqueSort(els.concat(_collection.slice(_jiesa.find(selector, element)))));
                 }, []);
             }
         }
@@ -3806,7 +3797,6 @@ hAzzle.define('valHooks', function() {
                 index = elem.selectedIndex,
                 one = elem.type === 'select-one' || index < 0,
                 values = one ? null : [],
-                value,
                 max = one ? index + 1 : options.length,
                 i = index < 0 ? max : one ? index : 0;
 
@@ -3846,10 +3836,7 @@ hAzzle.define('valHooks', function() {
             }
         };
     });
-    
-    return {};
 });
-
 
 hAzzle.define('Events', function() {
 
@@ -4176,7 +4163,7 @@ hAzzle.define('Traversing', function() {
             this.elements,
             _util.isElement(selector) ? function(el) {
                 return _core.contains(selector, el);
-            } : typeof selector == 'string' && selector.length ? function(el) {
+            } : typeof selector === 'string' && selector.length ? function(el) {
                 return _jiesa.find(selector, el).length;
             } : function() {
                 return false;
@@ -4270,15 +4257,14 @@ hAzzle.define('Traversing', function() {
         var cur,
             i = 0,
             l = this.length,
-            matched = [],
-            pos = 0;
+            matched = [];
 
         for (; i < l; i++) {
             for (cur = this.elements[i]; cur && cur !== ctx; cur = cur.parentNode) {
                 // Always skip document fragments
-                if (cur.nodeType < 11 &&
-                    cur.nodeType === 1 &&
-                    _matches.matches(cur, selector)) {
+                if (cur.nodeType < 11 && 
+                        cur.nodeType === 1 &&
+                        _matches.matches(cur, selector)) {
 
                     matched.push(cur);
                     break;
@@ -4300,6 +4286,7 @@ hAzzle.define('Traversing', function() {
 
     return {};
 });
+
 // classes.js
 hAzzle.define('Classes', function() {
 
