@@ -10,7 +10,9 @@ hAzzle.define('Classes', function() {
         reSpace = /[\n\t\r]/g,
 
         addRemove = function(elem, classes, nativeMethodName, fn, done) {
-            if (elem) {
+
+            if (!_types.isEmptyObject(elem)) {
+
                 var length, i,
                     based = false;
 
@@ -43,7 +45,7 @@ hAzzle.define('Classes', function() {
                 // Some browsers (e.g. IE) don't support multiple  arguments
 
                 if (based && _support.multipleArgs) {
-                    elem.classList[nativeMethodName].apply(elem.classList, classes);
+                    elem && elem.classList[nativeMethodName].apply(elem.classList, classes);
                 } else {
 
                     length = classes.length;
@@ -219,7 +221,7 @@ hAzzle.define('Classes', function() {
     return {
         addClass: addClass,
         removeClass: removeClass,
-        setClass:setClass,
+        setClass: setClass,
         hasClass: hasClass,
         toggleClass: toggleClass
     };

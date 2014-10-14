@@ -141,6 +141,7 @@
 
 
 
+
     // Define constructor
     hAzzle.prototype = {
         constructor: hAzzle
@@ -1494,7 +1495,7 @@ hAzzle.define('Matches', function() {
 
     var _util = hAzzle.require('Util'),
         _collection = hAzzle.require('Collection'),
-    _jiesa = hAzzle.require('Jiesa'),
+        _jiesa = hAzzle.require('Jiesa'),
         matchesSelector,
 
         rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
@@ -2388,11 +2389,13 @@ hAzzle.define('Storage', function() {
     };
 });
 
-
 // curcss.js
 hAzzle.define('curCSS', function() {
 
     var _detection = hAzzle.require('Detection'),
+        _core = hAzzle.require('Core'),
+        _types = hAzzle.require('Types'),
+        _util = hAzzle.require('Util'),
         _storage = hAzzle.require('Storage'),
 
         sLnline = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
@@ -2402,6 +2405,7 @@ hAzzle.define('curCSS', function() {
         computedStyle = !!document.defaultView.getComputedStyle,
 
         computedValues = _detection.isWebkit ? function(elem) {
+
             var s;
             if (elem.nodeType === 1) {
                 var dv = elem.ownerDocument.defaultView;
@@ -2443,10 +2447,8 @@ hAzzle.define('curCSS', function() {
         getStyles = function(elem) {
             var computed;
             if (computedCSS(elem).computedStyle === null) {
-                console.log('caching');
                 computed = computedCSS(elem).computedStyle = computedValues(elem);
             } else {
-                console.log('cached');
                 computed = computedCSS(elem).computedStyle;
             }
 
@@ -2496,65 +2498,218 @@ hAzzle.define('curCSS', function() {
             return 'block';
         },
 
-        // Prop to jQuery for the name!
+        getOffset = function(elem, options) {
 
-        curCSS = function(elem, prop, force) {
+            var els = elem.length ? elem : [elem];
 
-            if (typeof elem === 'object' && elem instanceof hAzzle) {
-                elem = elem.elements[0];
+            if (options && !_types.isEmptyObject(options)) {
+                _util.each(els, function(elem, i) {
+                    setOffset(elem, options, i);
+                });
             }
 
-            var computedValue = 0,
-                toggleDisplay = false;
+            elem = els[0];
 
-            if ((prop === 'height' || prop === 'width') && curCSS(elem, 'display') === 0) {
-                toggleDisplay = true;
-                elem.style.display = hAzzle.getDisplayType(elem);
+            var docElem, win,
+                clientTop,
+                clientLeft,
+                scrollTop,
+                scrollLeft,
+
+                box = {
+                    top: 0,
+                    left: 0,
+                    height: 0,
+                    width: 0,
+                    right: 0,
+                    bottom: 0
+                },
+                doc = elem && elem.ownerDocument,
+                body = doc.body;
+
+            if (!doc) {
+                return;
             }
 
-            if (!force) {
+            docElem = doc.documentElement;
 
-                if (prop === 'height' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                    return curHeight(elem, toggleDisplay);
-                } else if (prop === 'width' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                    return curWidth(elem, toggleDisplay);
-                }
+            if (!elem ||
+                // Make sure it's not a disconnected DOM node 
+                !_core.contains(docElem, elem)) {
+                return box;
             }
 
-            var computedStyle = getStyles(elem);
-
-            if ((_detection.ie ||
-                    _detection.isFirefox) && prop === 'borderColor') {
-                prop = 'borderTopColor';
+            if (!doc) {
+                return;
             }
 
-            // Support: IE9
-            // getPropertyValue is only needed for .css('filter')
+            win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
+            box = elem.getBoundingClientRect();
+            clientTop = docElem.clientTop || body.clientTop || 0;
+            clientLeft = docElem.clientLeft || body.clientLeft || 0;
+            scrollTop = (win.pageYOffset || body.scrollTop);
+            scrollLeft = (win.pageXOffset || body.scrollLeft) - (doc.clientLeft || 0);
 
-            if (_detection === 9 && prop === 'filter') {
-                computedValue = computedStyle.getPropertyValue(prop);
+            return {
+                top: box.top + scrollTop - clientTop,
+                left: box.left + scrollLeft - clientLeft,
+                right: box.right + scrollLeft - clientLeft,
+                bottom: box.bottom + scrollTop - clientTop,
+                height: box.right - box.left,
+                width: box.bottom - box.top
+            };
+        },
+
+        setOffset = function(elem, ops, i) {
+            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+                position = curCSS(elem, 'position'),
+                curElem = hAzzle(elem),
+                props = {};
+
+            // Set position first, in-case top/left are set even on static elem
+            if (position === 'static') {
+                elem.style.position = 'relative';
+            }
+
+            curOffset = curElem.offset();
+            curCSSTop = curCSS(elem, 'top');
+            curCSSLeft = curCSS(elem, 'left');
+            calculatePosition = (position === 'absolute' || position === 'fixed') &&
+                (curCSSTop + curCSSLeft).indexOf('auto') > -1;
+
+            // Need to be able to calculate position if either
+            // top or left is auto and position is either absolute or fixed
+            if (calculatePosition) {
+                curPosition = curElem.position();
+                curTop = curPosition.top;
+                curLeft = curPosition.left;
+
             } else {
-                computedValue = computedStyle[prop];
+                curTop = parseFloat(curCSSTop) || 0;
+                curLeft = parseFloat(curCSSLeft) || 0;
             }
 
-            if (computedValue === '' || computedValue === null) {
-                computedValue = elem.style[prop];
+            if (typeof ops === 'function') {
+                ops = ops.call(elem, i, curOffset);
             }
 
-            if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
-
-                var position = curCSS(elem, 'position');
-
-                if (position === 'fixed' || (position === 'absolute' && (prop === 'left' || prop === 'top'))) {
-                    computedValue = hAzzle(elem).position()[prop] + 'px';
-                }
+            if (ops.top !== null) {
+                props.top = (ops.top - curOffset.top) + curTop;
             }
-            return computedValue;
+            if (ops.left !== null) {
+                props.left = (ops.left - curOffset.left) + curLeft;
+            }
+
+            if ('using' in ops) {
+                ops.using.call(elem, props);
+
+            } else {
+                curElem.css(props);
+            }
+        },
+
+        getPosition = function(elem) {
+
+            var offsetParent = function() {
+                    var offsetParent = this.offsetParent || document;
+
+                    while (offsetParent && (offsetParent.nodeType.toLowerCase !== 'html' && offsetParent.style.position === 'static')) {
+                        offsetParent = offsetParent.offsetParent;
+                    }
+
+                    return offsetParent || document;
+                },
+                oP = offsetParent.apply(elem),
+                parentOffset,
+                _offset = getOffset(elem);
+
+            // Get correct offsets
+
+            if (!_util.nodeName(oP, 'html')) {
+                parentOffset = getOffset(oP);
+            }
+
+            // Add offsetParent borders
+
+            parentOffset.top += parseFloat(curCSS(oP, 'borderTopWidth'));
+            parentOffset.left += parseFloat(curCSS(oP, 'borderLeftWidth'));
+
+            // Subtract parent offsets and element margins
+
+            return {
+                top: _offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop')),
+                left: _offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft'))
+            };
         };
 
+    this.offset = function(options) {
+        return getOffset(this.elements, options);
+    };
+    this.position = function() {
+        return getPosition(this.elements[0]);
+    };
+
+    // Prop to jQuery for the name!
+
+    var curCSS = function(elem, prop, force) {
+
+        if (typeof elem === 'object' && elem instanceof hAzzle) {
+            elem = elem.elements[0];
+        }
+
+        var computedValue = 0,
+            toggleDisplay = false;
+
+        if ((prop === 'height' || prop === 'width') && curCSS(elem, 'display') === 0) {
+            toggleDisplay = true;
+            elem.style.display = hAzzle.getDisplayType(elem);
+        }
+
+        if (!force) {
+
+            if (prop === 'height' &&
+                curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                return curHeight(elem, toggleDisplay);
+            } else if (prop === 'width' &&
+                curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                return curWidth(elem, toggleDisplay);
+            }
+        }
+
+        var computedStyle = getStyles(elem);
+
+        if ((_detection.ie ||
+                _detection.isFirefox) && prop === 'borderColor') {
+            prop = 'borderTopColor';
+        }
+
+        // Support: IE9
+        // getPropertyValue is only needed for .css('filter')
+
+        if (_detection === 9 && prop === 'filter') {
+            computedValue = computedStyle.getPropertyValue(prop);
+        } else {
+            computedValue = computedStyle[prop];
+        }
+
+        if (computedValue === '' || computedValue === null) {
+            computedValue = elem.style[prop];
+        }
+
+        if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
+
+            var position = curCSS(elem, 'position');
+
+            if (position === 'fixed' || (position === 'absolute' && (prop === 'left' || prop === 'top'))) {
+                computedValue = hAzzle(elem).position()[prop] + 'px';
+            }
+        }
+        return computedValue;
+    };
+
     return {
+        position: getPosition,
+        offset: getOffset,
         computedCSS: computedCSS,
         getStyles: getStyles,
         curCSS: curCSS,
@@ -2644,8 +2799,6 @@ hAzzle.define('Units', function() {
     };
 });
 
-
-
 // style.js
 hAzzle.define('Style', function() {
 
@@ -2665,6 +2818,16 @@ hAzzle.define('Style', function() {
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
 
+        sizeParams = {
+            'Width': ['Left', 'Right'],
+            'Height': ['Top', 'Bottom']
+
+        },
+
+        cssShow = {
+            visibility: 'hidden',
+            display: 'block'
+        },
         sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
         prefixElement = document.createElement('div'),
@@ -2715,60 +2878,101 @@ hAzzle.define('Style', function() {
             }
         },
 
+        getSize = function(elem, type, extra) {
+
+            var val = elem['offset' + type];
+            type = sizeParams[type];
+
+
+            if (extra === 'outer') {
+                return val;
+            }
+
+            // inner = outer - border
+            val -= parseFloat(_curcss.curCSS(elem, 'border' + type[0] + 'Width')) +
+                parseFloat(_curcss.curCSS(elem, 'border' + type[1] + 'Width'));
+
+            if (extra === 'inner') {
+                return val;
+            }
+            // normal = inner - padding
+            val -= parseFloat(_curcss.curCSS(elem, 'padding' + type[0])) +
+                parseFloat(_curcss.curCSS(elem, 'padding' + type[1]));
+
+            return val + 'px';
+        },
+        swap = function(elem, fn) {
+            var obj = {},
+                name, val;
+
+            if (elem.offsetWidth) {
+                val = fn();
+            } else {
+                for (name in cssShow) {
+                    obj[name] = elem.style[name];
+                    elem.style[name] = cssShow[name];
+                }
+
+                val = fn();
+                for (name in obj) {
+                    elem.style[name] = obj[name];
+                }
+            }
+
+            return val;
+        },
+
         // getCSS
 
         getCSS = function(elem, name) {
 
             var val, hooks, computed, style,
-                origName = _strings.camelize(name);
+                origName = _strings.camelize(name),
+                p = prefixCheck(origName);
 
-            if (elem) {
 
-                style = elem.style;
+            // Make sure that we're working with the right name
 
-                name = prefixCheck(name)[0];
+            name = cssProps[origName] ||
+                (p[1] ? cssProps[origName] = p[0] : name);
 
-                // Try prefixed name followed by the unprefixed name
-                hooks = cssHooks.get[name] || cssHooks.get[origName];
+            style = elem.style;
 
-                // If a hook was provided get the computed value from there
-                val = hooks ? hooks(elem, true) : val;
+            // Try prefixed name followed by the unprefixed name
+            hooks = cssHooks.get[name] || cssHooks.get[origName];
 
-                if (!computed && val === undefined) {
-                    style = _curcss.getStyles(elem);
-                    val = hooks ? hooks(elem, true) : style[name];
-                    computed = true;
-                }
+            // If a hook was provided get the computed value from there
+            val = hooks ? hooks(elem, true) : val;
 
-                return val;
+            if (!computed && val === undefined) {
+                style = _curcss.getStyles(elem);
+                val = hooks ? hooks(elem, true) : style[name];
+                computed = true;
             }
+
+            return val;
         },
 
         // setCSS        
 
         setCSS = function(elem, name, value) {
 
-            var ret, style, hook, type, action;
-
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
 
-                type = typeof value;
+                var ret, style, hook, type, action, origName = _strings.camelize(name);
 
-                name = _strings.camelize(name);
-
-                // Auto-prefixing
-
-                name = prefixCheck(name)[0];
+                name = cssProps[origName] || (cssProps[origName] = prefixCheck(name)[0]);
 
                 style = elem.style;
 
                 if (value !== undefined) {
 
+                    type = typeof value;
+
                     hook = cssHooks.set[name];
 
                     // Convert '+=' or '-=' to relative numbers
                     if (type === 'string' && (ret = sNumbs.exec(value))) {
-
                         value = _units.units(_curcss.curCSS(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                         type = 'number';
                     }
@@ -2780,14 +2984,20 @@ hAzzle.define('Style', function() {
                     }
 
                     // If null and NaN values, remove / don't set current style
-                    
-                    action = (value === null || value === '') ? 'remove' : 'set';
+
+                    if (value === null || value === '') {
+                        action = 'remove';
+                    } else {
+                        action = 'set';
+                    }
+
+                    // Set values through cssHooks if defined
 
                     if (hook) {
                         hook(elem, name, value);
                     } else {
-                        
-                        elem.style[action + 'Property'](name, '' + value)
+                        // CSSStyleDeclaration 
+                        style[action + 'Property'](name, '' + value);
                     }
 
                 } else {
@@ -2831,7 +3041,7 @@ hAzzle.define('Style', function() {
             return this.each(function(elem) {
                 _util.each(name, function(value, prop) {
                     setCSS(elem, prop, value);
-                    });
+                });
             });
         }
 
@@ -2848,9 +3058,11 @@ hAzzle.define('Style', function() {
     });
 
     return {
-        cssHooks:cssHooks,
+        cssHooks: cssHooks,
         cssProps: cssProps,
         unitless: unitless,
+        getSize: getSize,
+        swap: swap,
         getCSS: getCSS,
         setCSS: setCSS
     };
@@ -2862,6 +3074,7 @@ hAzzle.define('cssHooks', function() {
     var _util = hAzzle.require('Util'),
         _detection = hAzzle.require('Detection'),
         _style = hAzzle.require('Style'),
+        _types = hAzzle.require('Types'),
         _ccs = hAzzle.require('curCSS');
 
     // Fixes Chrome bug / issue
@@ -2884,6 +3097,34 @@ hAzzle.define('cssHooks', function() {
         };
     }
 
+    if (_detection.opera) {
+        _style.cssHooks.get.textShadow = function(elem) {
+            var val = _ccs.curCSS(elem, 'textShadow');
+            if (val && val !== 'none') {
+                return val.replace(/(.+)(rgb.+)/, '$2' + ' $1');
+            }
+        };
+    }
+
+    _util.each({
+
+        padding: 'paddingTop paddingRight paddingBottom paddingLeft',
+        margin: 'marginTop marginRight marginBottom marginLeft',
+        borderWidth: 'borderTopWidth borderRightWidth borderBottomWidth borderLeftWidth',
+        borderColor: 'borderTopColor borderRightColor borderBottomColor borderLeftColor',
+        borderRadius: 'borderTopLeftRadius borderTopRightRadius borderBottomRightRadius borderBottomLeftRadius'
+
+    }, function(vals, name) {
+        vals = vals.split(' ');
+        _style.cssHooks.get[name] = function(elem) {
+            return _ccs.curCSS(elem, vals[0]) + ' ' +
+                _ccs.curCSS(elem, vals[1]) + ' ' +
+                _ccs.curCSS(elem, vals[2]) + ' ' +
+                _ccs.curCSS(elem, vals[3]);
+
+        };
+    });
+
     // Getter    
     _util.extend(_style.cssHooks.get, {
         'opacity': function(elem, computed) {
@@ -2892,12 +3133,136 @@ hAzzle.define('cssHooks', function() {
                 var ret = _ccs.curCSS(elem, 'opacity');
                 return ret === '' ? '1' : ret;
             }
-        }
+        },
+        'zIndex': function(elem) {
+            var val = _ccs.curCSS(elem, 'zIndex');
+            return val === 'auto' ? 0 : val;
+        },
+        'height': function(elem) {
+
+            var docElem;
+
+            if (!elem) {
+                return;
+            }
+
+            if (_types.isWindow(elem)) {
+                return elem.document.documentElement.clientHeight;
+            }
+
+            if (elem.nodeType === 9) {
+                docElem = elem.documentElement;
+                return Math.max(docElem.scrollHeight, docElem.clientHeight);
+            }
+
+            return _style.swap(elem, function() {
+                return _ccs.curCSS(elem, 'height');
+            });
+        },
+        'width': function(elem) {
+
+            var docElem;
+
+            if (!elem) {
+                return;
+            }
+
+            if (_types.isWindow(elem)) {
+                return elem.document.documentElement.clientWidth;
+            }
+
+            if (elem.nodeType === 9) {
+                docElem = elem.documentElement;
+                return Math.max(docElem.scrollWidth, docElem.clientWidth);
+            }
+
+            return _style.swap(elem, function() {
+                return _ccs.curCSS(elem, 'Width');
+            });
+        },
     });
 
     return {};
 });
+// dimensions.js
+hAzzle.define('Dimensions', function() {
 
+    var _style = hAzzle.require('Style'),
+        _types = hAzzle.require('Types'),
+
+        innerOuter = function(elem, method, value) {
+
+            var docElem;
+            if (elem) {
+
+                if (_types.isWindow(elem)) {
+                    return elem.document.documentElement.client[method];
+                }
+
+                if (elem.nodeType === 9) {
+                    docElem = elem.documentElement;
+                    return Math.max(docElem.scroll[method], docElem.client[method]);
+                }
+
+                return _style.swap(elem, function() {
+                    return _style.getSize(elem, method, value);
+                });
+            }
+        },
+
+        scrollLeftTop = function(elem, fn) {
+            var win = getWindow(elem);
+            return fn(elem, win);
+        },
+
+        getWindow = function(elem) {
+            return _types.isWindow(elem) ? elem : elem.nodeType === 9 && elem.defaultView;
+        },
+        // scrollLeft
+        scrollLeft = function(elem, val) {
+            return scrollLeftTop(elem, function(elem, win) {
+                if (val === undefined) {
+                    return win ? win.pageXOffset : elem.scrollLeft;
+                }
+                return win ? win.scrollTo(val) : elem.scrollLeft = val;
+            });
+        },
+        // scrollTop
+        scrollTop = function(elem, val) {
+            return scrollLeftTop(elem, function(elem, win) {
+                if (val === undefined) {
+                    return win ? win.pageYOffset : elem.scrollTop;
+                }
+                return win ? win.scrollTo(val) : elem.scrollTop = val;
+            });
+        };
+
+    this.scrollLeft = function(val) {
+        return scrollLeft(this.elements[0], val);
+    };
+    this.scrollTop = function(val) {
+        return scrollTop(this.elements[0], val);
+    };
+
+    this.innerHeight = function() {
+        return innerOuter(this.elements[0], 'Height', 'outer');
+    };
+    this.innerWidth = function() {
+        return innerOuter(this.elements[0], 'Width', 'outer');
+    };
+    this.outerHeight = function() {
+        return innerOuter(this.elements[0], 'Height', 'inner');
+    };
+    this.outerWidth = function() {
+        return innerOuter(this.elements[0], 'Width', 'inner');
+    };
+
+    return {
+        getWindow: getWindow,
+        scrollLeft: scrollLeft,
+        scrollTop: scrollTop
+    };
+});
 
 // manipulation.js
 hAzzle.define('Manipulation', function() {
@@ -3703,7 +4068,7 @@ hAzzle.define('attrHooks', function() {
             return elem === document.documentElement ? window.document.title : elem.title;
         }
     });
-   return {};
+    return {};
 });
 
 
@@ -3735,17 +4100,17 @@ hAzzle.define('propHooks', function() {
             return null;
         };
     }
-      return {};
+    return {};
 });
 
 // boolhooks.js
-hAzzle.define('boolHooks', function () {
+hAzzle.define('boolHooks', function() {
 
-        var _setters = hAzzle.require('Setters');
+    var _setters = hAzzle.require('Setters');
 
     // Setter    
 
-    _setters.boolHooks.set = function (elem, value, name) {
+    _setters.boolHooks.set = function(elem, value, name) {
         if (value === false) {
             // Remove boolean attributes when set to false
             removeAttr(elem, name);
@@ -3754,7 +4119,7 @@ hAzzle.define('boolHooks', function () {
         }
         return name;
     };
-    
+
     return {};
 });
 
@@ -3853,16 +4218,15 @@ hAzzle.define('valHooks', function() {
     });
 });
 
-hAzzle.define('Events', function () {
+hAzzle.define('Events', function() {
 
-this.on = function(evt, fn) {
-    this.elements[0].addEventListener(evt, fn, false);
-}
+    this.on = function(evt, fn) {
+        this.elements[0].addEventListener(evt, fn, false);
+    }
 
 
 
-    return {
-    };
+    return {};
 });
 
 // traversing.js
@@ -3941,6 +4305,7 @@ hAzzle.define('Traversing', function() {
 
     this.last = function(index) {
         return index ? this.slice(this.length - index) : this.eq(-1);
+
     };
 
     // Returns all sibling elements for nodes
@@ -4010,9 +4375,9 @@ hAzzle.define('Traversing', function() {
         for (; i < l; i++) {
             for (cur = this.elements[i]; cur && cur !== ctx; cur = cur.parentNode) {
                 // Always skip document fragments
-                if (cur.nodeType < 11 && 
-                        cur.nodeType === 1 &&
-                        _matches.matches(cur, selector)) {
+                if (cur.nodeType < 11 &&
+                    cur.nodeType === 1 &&
+                    _matches.matches(cur, selector)) {
 
                     matched.push(cur);
                     break;
@@ -4047,7 +4412,9 @@ hAzzle.define('Classes', function() {
         reSpace = /[\n\t\r]/g,
 
         addRemove = function(elem, classes, nativeMethodName, fn, done) {
-            if (elem) {
+
+            if (!_types.isEmptyObject(elem)) {
+
                 var length, i,
                     based = false;
 
@@ -4066,7 +4433,6 @@ hAzzle.define('Classes', function() {
 
                 if (_support.classList) {
 
-
                     // Flag native
 
                     based = true;
@@ -4081,7 +4447,7 @@ hAzzle.define('Classes', function() {
                 // Some browsers (e.g. IE) don't support multiple  arguments
 
                 if (based && _support.multipleArgs) {
-                    elem.classList[nativeMethodName].apply(elem.classList, classes);
+                    elem && elem.classList[nativeMethodName].apply(elem.classList, classes);
                 } else {
 
                     length = classes.length;

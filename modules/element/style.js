@@ -17,6 +17,16 @@ hAzzle.define('Style', function() {
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
 
+        sizeParams = {
+            'Width': ['Left', 'Right'],
+            'Height': ['Top', 'Bottom']
+
+        },
+
+        cssShow = {
+            visibility: 'hidden',
+            display: 'block'
+        },
         sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
         prefixElement = document.createElement('div'),
@@ -67,60 +77,101 @@ hAzzle.define('Style', function() {
             }
         },
 
+        getSize = function(elem, type, extra) {
+
+            var val = elem['offset' + type];
+            type = sizeParams[type];
+
+
+            if (extra === 'outer') {
+                return val;
+            }
+
+            // inner = outer - border
+            val -= parseFloat(_curcss.curCSS(elem, 'border' + type[0] + 'Width')) +
+                parseFloat(_curcss.curCSS(elem, 'border' + type[1] + 'Width'));
+
+            if (extra === 'inner') {
+                return val;
+            }
+            // normal = inner - padding
+            val -= parseFloat(_curcss.curCSS(elem, 'padding' + type[0])) +
+                parseFloat(_curcss.curCSS(elem, 'padding' + type[1]));
+
+            return val + 'px';
+        },
+        swap = function(elem, fn) {
+            var obj = {},
+                name, val;
+
+            if (elem.offsetWidth) {
+                val = fn();
+            } else {
+                for (name in cssShow) {
+                    obj[name] = elem.style[name];
+                    elem.style[name] = cssShow[name];
+                }
+
+                val = fn();
+                for (name in obj) {
+                    elem.style[name] = obj[name];
+                }
+            }
+
+            return val;
+        },
+
         // getCSS
 
         getCSS = function(elem, name) {
 
             var val, hooks, computed, style,
-                origName = _strings.camelize(name);
+                origName = _strings.camelize(name),
+                p = prefixCheck(origName);
 
-            if (elem) {
 
-                style = elem.style;
+            // Make sure that we're working with the right name
 
-                name = prefixCheck(name)[0];
+            name = cssProps[origName] ||
+                (p[1] ? cssProps[origName] = p[0] : name);
 
-                // Try prefixed name followed by the unprefixed name
-                hooks = cssHooks.get[name] || cssHooks.get[origName];
+            style = elem.style;
 
-                // If a hook was provided get the computed value from there
-                val = hooks ? hooks(elem, true) : val;
+            // Try prefixed name followed by the unprefixed name
+            hooks = cssHooks.get[name] || cssHooks.get[origName];
 
-                if (!computed && val === undefined) {
-                    style = _curcss.getStyles(elem);
-                    val = hooks ? hooks(elem, true) : style[name];
-                    computed = true;
-                }
+            // If a hook was provided get the computed value from there
+            val = hooks ? hooks(elem, true) : val;
 
-                return val;
+            if (!computed && val === undefined) {
+                style = _curcss.getStyles(elem);
+                val = hooks ? hooks(elem, true) : style[name];
+                computed = true;
             }
+
+            return val;
         },
 
         // setCSS        
 
         setCSS = function(elem, name, value) {
 
-            var ret, style, hook, type, action;
-
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
 
-                type = typeof value;
+                var ret, style, hook, type, action, origName = _strings.camelize(name);
 
-                name = _strings.camelize(name);
-
-                // Auto-prefixing
-alert(name)
-                name = prefixCheck(name)[0];
+                name = cssProps[origName] || (cssProps[origName] = prefixCheck(name)[0]);
 
                 style = elem.style;
 
                 if (value !== undefined) {
 
+                    type = typeof value;
+
                     hook = cssHooks.set[name];
 
                     // Convert '+=' or '-=' to relative numbers
                     if (type === 'string' && (ret = sNumbs.exec(value))) {
-
                         value = _units.units(_curcss.curCSS(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                         type = 'number';
                     }
@@ -132,13 +183,20 @@ alert(name)
                     }
 
                     // If null and NaN values, remove / don't set current style
-                    
-                    action = (value === null || value === '') ? 'remove' : 'set';
-                  
+
+                    if (value === null || value === '') {
+                        action = 'remove';
+                    } else {
+                        action = 'set';
+                    }
+
+                    // Set values through cssHooks if defined
+
                     if (hook) {
                         hook(elem, name, value);
                     } else {
-                        elem.style[action + 'Property'](name, '' + value)
+                        // CSSStyleDeclaration 
+                        style[action + 'Property'](name, '' + value);
                     }
 
                 } else {
@@ -180,10 +238,9 @@ alert(name)
             // Object
 
             return this.each(function(elem) {
-                var val;
-                for (val in name) {
-                    setCSS(elem, value, name[value]);
-                }
+                _util.each(name, function(value, prop) {
+                    setCSS(elem, prop, value);
+                });
             });
         }
 
@@ -200,9 +257,11 @@ alert(name)
     });
 
     return {
-        cssHooks:cssHooks,
+        cssHooks: cssHooks,
         cssProps: cssProps,
         unitless: unitless,
+        getSize: getSize,
+        swap: swap,
         getCSS: getCSS,
         setCSS: setCSS
     };
