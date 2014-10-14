@@ -16,6 +16,8 @@
         // Minimalist module system
 
         modules = {},
+        
+        _toString = _objectProto.toString,
 
         // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
 
@@ -107,7 +109,7 @@
             } else if (sel instanceof Array) {
                 this.elements = _util.unique(_util.filter(sel, validTypes));
                 // nodeList
-            } else if (_util.isNodeList(sel)) {
+            } else if (['nodelist', 'htmlcollection', 'htmlformcontrolscollection'].indexOf(_toString.call(sel)) >= 0) {
                 this.elements = _util.filter(_util.makeArray(sel), validTypes);
                 // nodeType
             } else if (sel.nodeType) {

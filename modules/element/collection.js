@@ -154,10 +154,6 @@ hAzzle.define('Collection', function() {
         return new hAzzle(_concat.apply(this.elements, args));
     };
 
-    this.pluck = function(prop) {
-        return _util.pluck(this.elements, prop);
-    };
-
     return {
         makeArray: makeArray,
         removeValue: removeValue,

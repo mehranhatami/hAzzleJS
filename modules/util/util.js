@@ -12,7 +12,6 @@ hAzzle.define('Util', function() {
         _hasOwn = _objectProto.hasOwnProperty,
         _slice = _arrayProto.slice,
         _keys = Object.keys,
-        _toString = _objectProto.toString,
 
         // Short cut for `hasOwnProperty`.
 
@@ -24,7 +23,7 @@ hAzzle.define('Util', function() {
 
         each = function(obj, fn, ctx, rev) {
 
-            if (obj == null) {
+            if (!obj) {
                 return obj;
             }
 
@@ -82,7 +81,7 @@ hAzzle.define('Util', function() {
                     return func;
                 }
 
-                var dir = argCount == null ? 3 : argCount;
+                var dir = !argCount ? 3 : argCount;
 
                 switch (dir) {
 
@@ -107,14 +106,14 @@ hAzzle.define('Util', function() {
                     return func.apply(ctx, arguments);
                 };
             }
-            if (func == null) {
+            if (!func) {
                 return identity;
             }
         },
 
         some = function(obj, fn, ctx) {
 
-            if (obj == null) {
+            if (!obj) {
                 return false;
             }
             fn = iterate(fn, ctx);
@@ -144,20 +143,6 @@ hAzzle.define('Util', function() {
             return first;
         },
 
-        // Set / delete hashKeys on objects
-
-        setHash = function(obj, hash) {
-            if (hash) {
-                obj.hashKey = hash;
-            } else {
-                delete obj.hashKey;
-            }
-        },
-
-        removeHash = function(obj, hash) {
-            delete obj.hashKey;
-        },
-
         // Extends the destination object `obj` by copying all of the 
         // properties from the `src` object(s)
         // The 'hashKey' will automatically be copied over to the
@@ -169,7 +154,6 @@ hAzzle.define('Util', function() {
             }
 
             var source, prop, i = 1,
-                hash = obj.hashKey,
                 length = arguments.length;
 
             for (; i < length; i++) {
@@ -180,7 +164,6 @@ hAzzle.define('Util', function() {
                     }
                 }
             }
-            setHash(obj, hash);
             return obj;
         },
         makeArray = function(nodeList) {
@@ -198,28 +181,12 @@ hAzzle.define('Util', function() {
             return array;
         },
 
-        inherits = function(child, parent) {
-            extend(child, parent);
-
-            function Ctor() {
-                this.constructor = child;
-            }
-            Ctor.prototype = parent.prototype;
-            child.prototype = new Ctor();
-            child.__super__ = parent.prototype;
-            return child;
-        },
-
         isElement = function(element) {
             return element && (element.nodeType === 1 || element.nodeType === 9);
         },
 
-        isNodeList = function(obj) {
-            return obj && is(['nodelist', 'htmlcollection', 'htmlformcontrolscollection'], obj);
-        },
-
         iterate = function(value, ctx, argCount) {
-            if (value == null) {
+            if (!value) {
                 return identity;
             }
             if (_types.isFunction(value)) {
@@ -242,7 +209,8 @@ hAzzle.define('Util', function() {
             var pairs = pairs(attrs),
                 length = pairs.length;
             return function(obj) {
-                if (obj == null) {
+
+                if (!obj) {
                     return !length;
                 }
                 obj = new Object(obj);
@@ -332,10 +300,11 @@ hAzzle.define('Util', function() {
                     return array[i] === item ? i : -1;
                 }
             }
-            for (; i < length; i++)
+            for (; i < length; i++) {
                 if (array[i] === item) {
                     return i;
                 }
+            }
             return -1;
         },
 
@@ -357,65 +326,21 @@ hAzzle.define('Util', function() {
 
         // Return the results of applying the callback to each element.
         map = function(obj, fn, ctx) {
-            if (obj == null) {
-                return [];
-            }
-            fn = iterate(fn, ctx);
-            var keys = obj.length !== +obj.length && _keys(obj),
-                length = (keys || obj).length,
-                results = Array(length),
-                currentKey, index = 0;
-            for (; index < length; index++) {
-                currentKey = keys ? keys[index] : index;
-                results[index] = fn(obj[currentKey], currentKey, obj);
-            }
-            return results;
-        },
+            if (obj) {
 
-        pluck = function(array, prop) {
-            return map(array, function(item) {
-                return item[prop];
-            });
-        },
 
-        _apply = function(ctx, fn, applyArgs, cutoff, fromLeft) {
-
-            if (typeof fn === 'string') {
-                fn = ctx[fn];
-            }
-            return function() {
-                var args = _slice.call(arguments, 0, cutoff || Infinity);
-
-                if (applyArgs) {
-                    args = fromLeft ? applyArgs.concat(args) : args.concat(applyArgs);
+                fn = iterate(fn, ctx);
+                var keys = obj.length !== +obj.length && _keys(obj),
+                    length = (keys || obj).length,
+                    results = Array(length),
+                    currentKey, index = 0;
+                for (; index < length; index++) {
+                    currentKey = keys ? keys[index] : index;
+                    results[index] = fn(obj[currentKey], currentKey, obj);
                 }
-                if (typeof ctx === 'number') {
-                    ctx = args[ctx];
-                }
-
-                return fn.apply(ctx || this, args);
-            };
-        },
-
-        applyRight = function(ctx, fn, applyArgs, cutoff) {
-            return _apply(ctx, fn, applyArgs, cutoff);
-        },
-
-        applyLeft = function(ctx, fn, applyArgs, cutoff) {
-            return _apply(ctx, fn, applyArgs, cutoff, true);
-        },
-
-        curry = function(fn) {
-            return applyLeft(this, fn, _slice.call(arguments, 1));
-        },
-
-        type = function(obj) {
-            var ref = _toString.call(obj).match(/\s(\w+)\]$/);
-            return ref && ref[1].toLowerCase();
-        },
-
-        is = function(kind, obj) {
-            return kind.indexOf(type(obj)) >= 0;
+                return results;
+            }
+            return [];
         },
 
         // Determines whether an object can have data
@@ -494,17 +419,9 @@ hAzzle.define('Util', function() {
         merge: merge,
         acceptData: acceptData,
         createCallback: createCallback,
-        inherits: inherits,
         isElement: isElement,
-        isNodeList: isNodeList,
         nodeName: nodeName,
         unique: unique,
-        pluck: pluck,
-        applyRight: applyRight,
-        applyLeft: applyLeft,
-        curry: curry,
-        type: type,
-        is: is,
         sortedIndex: sortedIndex,
         indexOf: indexOf,
         property: property,
@@ -517,7 +434,5 @@ hAzzle.define('Util', function() {
         bind: bind,
         has: has,
         int: int,
-        setHash: setHash,
-        removeHash: removeHash
     };
 });

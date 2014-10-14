@@ -102,14 +102,16 @@ hAzzle.define('Traversing', function() {
     // Returns immediate parent elements
     // Optionally takes a query to filter the parent elements.
 
-    this.ancestor = function(selector) {
-        return _dom._create(this.pluck('parentElement'), selector);
+    this.parent = function(selector) {
+        return _dom._create(_util.map(this.elements, function(t) {
+            return t.parentElement
+        }), selector);
     };
 
     // Returns all parent elements for nodes
     // Optionally takes a query to filter the child elements.
 
-    this.ancestors = function(selector) {
+    this.parents = function(selector) {
         var ancestors = [],
             elements = this.elements,
             fn = function(elem) {
@@ -143,9 +145,9 @@ hAzzle.define('Traversing', function() {
         for (; i < l; i++) {
             for (cur = this.elements[i]; cur && cur !== ctx; cur = cur.parentNode) {
                 // Always skip document fragments
-                if (cur.nodeType < 11 && 
-                        cur.nodeType === 1 &&
-                        _matches.matches(cur, selector)) {
+                if (cur.nodeType < 11 &&
+                    cur.nodeType === 1 &&
+                    _matches.matches(cur, selector)) {
 
                     matched.push(cur);
                     break;

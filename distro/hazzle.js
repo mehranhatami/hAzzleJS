@@ -16,6 +16,8 @@
         // Minimalist module system
 
         modules = {},
+        
+        _toString = _objectProto.toString,
 
         // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
 
@@ -107,7 +109,7 @@
             } else if (sel instanceof Array) {
                 this.elements = _util.unique(_util.filter(sel, validTypes));
                 // nodeList
-            } else if (_util.isNodeList(sel)) {
+            } else if (['nodelist', 'htmlcollection', 'htmlformcontrolscollection'].indexOf(_toString.call(sel)) >= 0) {
                 this.elements = _util.filter(_util.makeArray(sel), validTypes);
                 // nodeType
             } else if (sel.nodeType) {
@@ -137,10 +139,6 @@
             }
             return this;
         };
-
-
-
-
 
     // Define constructor
     hAzzle.prototype = {
@@ -600,7 +598,6 @@ hAzzle.define('Util', function() {
         _hasOwn = _objectProto.hasOwnProperty,
         _slice = _arrayProto.slice,
         _keys = Object.keys,
-        _toString = _objectProto.toString,
 
         // Short cut for `hasOwnProperty`.
 
@@ -612,7 +609,7 @@ hAzzle.define('Util', function() {
 
         each = function(obj, fn, ctx, rev) {
 
-            if (obj == null) {
+            if (!obj) {
                 return obj;
             }
 
@@ -670,7 +667,7 @@ hAzzle.define('Util', function() {
                     return func;
                 }
 
-                var dir = argCount == null ? 3 : argCount;
+                var dir = !argCount ? 3 : argCount;
 
                 switch (dir) {
 
@@ -695,14 +692,14 @@ hAzzle.define('Util', function() {
                     return func.apply(ctx, arguments);
                 };
             }
-            if (func == null) {
+            if (!func) {
                 return identity;
             }
         },
 
         some = function(obj, fn, ctx) {
 
-            if (obj == null) {
+            if (!obj) {
                 return false;
             }
             fn = iterate(fn, ctx);
@@ -732,20 +729,6 @@ hAzzle.define('Util', function() {
             return first;
         },
 
-        // Set / delete hashKeys on objects
-
-        setHash = function(obj, hash) {
-            if (hash) {
-                obj.hashKey = hash;
-            } else {
-                delete obj.hashKey;
-            }
-        },
-
-        removeHash = function(obj, hash) {
-            delete obj.hashKey;
-        },
-
         // Extends the destination object `obj` by copying all of the 
         // properties from the `src` object(s)
         // The 'hashKey' will automatically be copied over to the
@@ -757,7 +740,6 @@ hAzzle.define('Util', function() {
             }
 
             var source, prop, i = 1,
-                hash = obj.hashKey,
                 length = arguments.length;
 
             for (; i < length; i++) {
@@ -768,7 +750,6 @@ hAzzle.define('Util', function() {
                     }
                 }
             }
-            setHash(obj, hash);
             return obj;
         },
         makeArray = function(nodeList) {
@@ -786,28 +767,12 @@ hAzzle.define('Util', function() {
             return array;
         },
 
-        inherits = function(child, parent) {
-            extend(child, parent);
-
-            function Ctor() {
-                this.constructor = child;
-            }
-            Ctor.prototype = parent.prototype;
-            child.prototype = new Ctor();
-            child.__super__ = parent.prototype;
-            return child;
-        },
-
         isElement = function(element) {
             return element && (element.nodeType === 1 || element.nodeType === 9);
         },
 
-        isNodeList = function(obj) {
-            return obj && is(['nodelist', 'htmlcollection', 'htmlformcontrolscollection'], obj);
-        },
-
         iterate = function(value, ctx, argCount) {
-            if (value == null) {
+            if (!value) {
                 return identity;
             }
             if (_types.isFunction(value)) {
@@ -830,7 +795,8 @@ hAzzle.define('Util', function() {
             var pairs = pairs(attrs),
                 length = pairs.length;
             return function(obj) {
-                if (obj == null) {
+
+                if (!obj) {
                     return !length;
                 }
                 obj = new Object(obj);
@@ -920,10 +886,11 @@ hAzzle.define('Util', function() {
                     return array[i] === item ? i : -1;
                 }
             }
-            for (; i < length; i++)
+            for (; i < length; i++) {
                 if (array[i] === item) {
                     return i;
                 }
+            }
             return -1;
         },
 
@@ -945,66 +912,21 @@ hAzzle.define('Util', function() {
 
         // Return the results of applying the callback to each element.
         map = function(obj, fn, ctx) {
-            if (obj == null) {
-                return [];
-            }
-            fn = iterate(fn, ctx);
-            var keys = obj.length !== +obj.length && _keys(obj),
-                length = (keys || obj).length,
-                results = Array(length),
-                currentKey, index = 0;
-            for (; index < length; index++) {
-                currentKey = keys ? keys[index] : index;
-                results[index] = fn(obj[currentKey], currentKey, obj);
-            }
-            return results;
+            if (obj) {
 
-        },
 
-        pluck = function(array, prop) {
-            return map(array, function(item) {
-                return item[prop];
-            });
-        },
-
-        _apply = function(ctx, fn, applyArgs, cutoff, fromLeft) {
-
-            if (typeof fn === 'string') {
-                fn = ctx[fn];
-            }
-            return function() {
-                var args = _slice.call(arguments, 0, cutoff || Infinity);
-
-                if (applyArgs) {
-                    args = fromLeft ? applyArgs.concat(args) : args.concat(applyArgs);
+                fn = iterate(fn, ctx);
+                var keys = obj.length !== +obj.length && _keys(obj),
+                    length = (keys || obj).length,
+                    results = Array(length),
+                    currentKey, index = 0;
+                for (; index < length; index++) {
+                    currentKey = keys ? keys[index] : index;
+                    results[index] = fn(obj[currentKey], currentKey, obj);
                 }
-                if (typeof ctx === 'number') {
-                    ctx = args[ctx];
-                }
-
-                return fn.apply(ctx || this, args);
-            };
-        },
-
-        applyRight = function(ctx, fn, applyArgs, cutoff) {
-            return _apply(ctx, fn, applyArgs, cutoff);
-        },
-
-        applyLeft = function(ctx, fn, applyArgs, cutoff) {
-            return _apply(ctx, fn, applyArgs, cutoff, true);
-        },
-
-        curry = function(fn) {
-            return applyLeft(this, fn, _slice.call(arguments, 1));
-        },
-
-        type = function(obj) {
-            var ref = _toString.call(obj).match(/\s(\w+)\]$/);
-            return ref && ref[1].toLowerCase();
-        },
-
-        is = function(kind, obj) {
-            return kind.indexOf(type(obj)) >= 0;
+                return results;
+            }
+            return [];
         },
 
         // Determines whether an object can have data
@@ -1083,17 +1005,9 @@ hAzzle.define('Util', function() {
         merge: merge,
         acceptData: acceptData,
         createCallback: createCallback,
-        inherits: inherits,
         isElement: isElement,
-        isNodeList: isNodeList,
         nodeName: nodeName,
         unique: unique,
-        pluck: pluck,
-        applyRight: applyRight,
-        applyLeft: applyLeft,
-        curry: curry,
-        type: type,
-        is: is,
         sortedIndex: sortedIndex,
         indexOf: indexOf,
         property: property,
@@ -1106,8 +1020,6 @@ hAzzle.define('Util', function() {
         bind: bind,
         has: has,
         int: int,
-        setHash: setHash,
-        removeHash: removeHash
     };
 });
 
@@ -1567,174 +1479,176 @@ hAzzle.define('Matches', function() {
     };
 });
 
-// collection.js
-hAzzle.define('Collection', function() {
+// traversing.js
+hAzzle.define('Traversing', function() {
 
-    var _util = hAzzle.require('Util'),
-        _types = hAzzle.require('Types'),
-        _arrayProto = Array.prototype,
-        _keys = Object.keys,
-        _concat = _arrayProto.concat,
-        _push = _arrayProto.push,
-        inArray = function(elem, arr, i) {
-            return arr == null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
-        },
-        makeArray = function(arr, results) {
-            var ret = results || [];
+    var _jiesa = hAzzle.require('Jiesa'),
+        _dom = hAzzle.require('Dom'),
+        _matches = hAzzle.require('Matches'),
+        _collection = hAzzle.require('Collection'),
+        _core = hAzzle.require('Core'),
+        _util = hAzzle.require('Util');
 
-            if (arr != null) {
-                if (_types.isArrayLike(Object(arr))) {
-                    _util.merge(ret, _util.isString(arr) ? [arr] : arr);
-                } else {
-                    _push.call(ret, arr);
+    this.contains = function(selector) {
+        var matches;
+        return _dom._create(_collection.reduce(this.elements, function(elements, element) {
+            matches = _jiesa.find(element, selector);
+            return elements.concat(matches.length ? element : null);
+        }, []));
+    };
+
+    this.is = function(selector) {
+        return this.length > 0 && this.filter(selector).length > 0;
+    };
+
+    this.not = function(selector) {
+        return this.filter(selector, true);
+    };
+
+    // Determine the position of an element within the set
+    this.index = function(selector) {
+        return selector == null ?
+            this.parent().children().indexOf(this.elements[0]) :
+            this.elements.indexOf(new hAzzle(selector).elements[0]);
+    };
+
+    this.add = function(selector, ctx) {
+        var elements = selector;
+        if (typeof selector === 'string') {
+            elements = new hAzzle(selector, ctx).elements;
+        }
+        return this.concat(elements);
+    };
+
+    this.has = function(selector) {
+        return _dom._create(_util.filter(
+            this.elements,
+            _util.isElement(selector) ? function(el) {
+                return _core.contains(selector, el);
+            } : typeof selector === 'string' && selector.length ? function(el) {
+                return _jiesa.find(selector, el).length;
+            } : function() {
+                return false;
+            }
+        ));
+    };
+
+    // Returns `element`'s first following sibling
+
+    this.next = function(selector) {
+        return this.map(function(elem) {
+            return elem.nextElementSibling;
+        }).filter(selector || '*');
+    };
+
+    // Returns `element`'s first previous sibling
+
+    this.prev = function(selector) {
+        return this.map(function(elem) {
+            return elem.previousElementSibling;
+        }).filter(selector || '*');
+    };
+
+    this.first = function(index) {
+        return index ? this.slice(0, index) : this.eq(0);
+    };
+
+    this.last = function(index) {
+        return index ? this.slice(this.length - index) : this.eq(-1);
+    };
+
+    // Returns all sibling elements for nodes
+    // Optionally takes a query to filter the sibling elements.
+
+    this.siblings = function(selector) {
+
+        var ret = [],
+            i, nodes;
+
+        this.each(function(element) {
+
+            nodes = element.parentElement.children;
+
+            i = nodes.length;
+
+            while (i--) {
+                if (nodes[i] !== element) {
+                    ret.push(nodes[i]);
                 }
             }
-
-            return ret;
-        },
-        removeValue = function(array, value) {
-            var index = indexOf(array, value);
-            if (index >= 0) {
-                array.splice(index, 1);
-            }
-            return value;
-        },
-        //  Reduces a collection
-        reduce = function(collection, fn, accumulator, args) {
-
-            if (collection == null) {
-                collection = [];
-            }
-
-            fn = _util.createCallback(fn, args, 4);
-
-            var keys = collection.length !== +collection.length && _keys(collection),
-                length = (keys || collection).length,
-                index = 0,
-                currentKey;
-
-            if (arguments.length < 3) {
-
-                if (!length) {
-                    hAzzle.err(true, 7, ' no collection length exist in collection.reduce()');
-                }
-
-                accumulator = collection[keys ? keys[index++] : index++];
-            }
-            for (; index < length; index++) {
-                currentKey = keys ? keys[index] : index;
-                accumulator = fn(accumulator, collection[currentKey], currentKey, collection);
-            }
-            return accumulator;
-        },
-
-        slice = function(array, start, end) {
-
-            var e = end,
-                length = array.length,
-                result = [];
-
-            start = fixedIndex(length, Math.max(-array.length, start), 0);
-
-            e = fixedIndex(end < 0 ? length : length + 1, end, length);
-
-            end = e === null || e > length ? end < 0 ? 0 : length : e;
-
-            while (start !== null && start < end) {
-                result.push(array[start++]);
-            }
-            return result;
-        },
-
-        // Given an index & length, return a 'fixed' index, fixes non-numbers & negative indexes
-
-        fixedIndex = function(length, index, def) {
-            if (index < 0) {
-                index = length + index;
-            } else if (index < 0 || index >= length) {
-                return null;
-            }
-            return !index && index !== 0 ? def : index;
-        },
-        // Determines the number of elements in an array, the number of properties an object has, or
-        // the length of a string.
-        size = function(obj, ownPropsOnly) {
-            var count = 0,
-                key;
-
-            if (_types.isArray(obj) || _types.isString(obj)) {
-                return obj.length;
-            } else if (_types.isObject(obj)) {
-                for (key in obj)
-                    if (!ownPropsOnly || _util.has(key)) {
-                        count++;
-                    }
-            }
-
-            return count;
-        };
-
-    // Core function, so this one has to be fast!!!!!!
-    this.get = function(index) {
-        return index == null ? slice(this.elements) :
-            this.elements[fixedIndex(this.length, index, 0)];
-    };
-
-    this.eq = function(index) {
-        // We have to explicitly null the selection since .get()
-        // returns the whole collection when called without arguments.
-        return hAzzle(index == null ? '' : this.get(index));
-    };
-
-    this.reduce = function(fn, accumulator, args) {
-        return reduce(this.elements, fn, accumulator, args);
-    };
-
-    this.indexOf = function(elem, arr, i) {
-        return arr == null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
-    };
-
-    this.map = function(fn, args) {
-        return new hAzzle(_util.map(this.elements, fn, args));
-    };
-
-    this.each = function(fn, args, rev) {
-        _util.each(this.elements, fn, args, rev);
-        return this;
-    };
-
-    this.iterate = function(fn, args) {
-        return function(a, b, c, d) {
-            return this.each(function(element) {
-                fn.call(args, element, a, b, c, d);
-            });
-        };
-    };
-
-    this.slice = function(start, end) {
-        return new hAzzle(slice(this.elements, start, end));
-    };
-
-    // Concatenate two elements lists
-    this.concat = function() {
-        var args = _util.map(slice(arguments), function(arr) {
-            return arr instanceof hAzzle ? arr.elements : arr;
         });
-        return new hAzzle(_concat.apply(this.elements, args));
+        return _dom._create(ret, selector);
     };
 
-    this.pluck = function(prop) {
-        return _util.pluck(this.elements, prop);
+    // Returns immediate parent elements
+    // Optionally takes a query to filter the parent elements.
+
+    this.parent = function(selector) {
+        return _dom._create(_util.map(this.elements, function(t) {
+            return t.parentElement
+        }), selector);
     };
 
-    return {
-        makeArray: makeArray,
-        removeValue: removeValue,
-        slice: slice,
-        reduce: reduce,
-        size: size,
-        inArray: inArray
+    // Returns all parent elements for nodes
+    // Optionally takes a query to filter the child elements.
+
+    this.parents = function(selector) {
+        var ancestors = [],
+            elements = this.elements,
+            fn = function(elem) {
+                if (elem && (elem = elem.parentElement) && elem !== document && _util.indexOf(ancestors, elem) < 0) {
+                    ancestors.push(elem);
+                    return elem;
+                }
+            };
+
+        while (elements.length > 0 && elements[0] !== undefined) {
+            elements = _util.map(elements, fn);
+        }
+
+        if (this.length > 1) {
+            // Remove duplicates
+            _core.uniqueSort(ancestors);
+            // Reverse order for parents
+            ancestors.reverse();
+        }
+        return _dom._create(ancestors, selector);
     };
+
+    // Returns closest parent that matches query
+
+    this.closest = function(selector, ctx) {
+        var cur,
+            i = 0,
+            l = this.length,
+            matched = [];
+
+        for (; i < l; i++) {
+            for (cur = this.elements[i]; cur && cur !== ctx; cur = cur.parentNode) {
+                // Always skip document fragments
+                if (cur.nodeType < 11 &&
+                    cur.nodeType === 1 &&
+                    _matches.matches(cur, selector)) {
+
+                    matched.push(cur);
+                    break;
+                }
+            }
+        }
+
+        return hAzzle(matched.length > 1 ? _core.uniqueSort(matched) : matched);
+    };
+
+    // Returns all immediate child elements for nodes
+
+    this.children = function(selector) {
+        return _dom._create(_collection.reduce(this.elements, function(els, elem) {
+            var children = _collection.slice(elem.children);
+            return els.concat(children);
+        }, []), selector);
+    };
+
+    return {};
 });
 
 // jiesa.js
@@ -4305,7 +4219,6 @@ hAzzle.define('Traversing', function() {
 
     this.last = function(index) {
         return index ? this.slice(this.length - index) : this.eq(-1);
-
     };
 
     // Returns all sibling elements for nodes
@@ -4334,14 +4247,16 @@ hAzzle.define('Traversing', function() {
     // Returns immediate parent elements
     // Optionally takes a query to filter the parent elements.
 
-    this.ancestor = function(selector) {
-        return _dom._create(this.pluck('parentElement'), selector);
+    this.parent = function(selector) {
+        return _dom._create(_util.map(this.elements, function(t) {
+            return t.parentElement
+        }), selector);
     };
 
     // Returns all parent elements for nodes
     // Optionally takes a query to filter the child elements.
 
-    this.ancestors = function(selector) {
+    this.parents = function(selector) {
         var ancestors = [],
             elements = this.elements,
             fn = function(elem) {
@@ -4399,7 +4314,6 @@ hAzzle.define('Traversing', function() {
 
     return {};
 });
-
 // classes.js
 hAzzle.define('Classes', function() {
 
