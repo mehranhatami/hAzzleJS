@@ -3,7 +3,7 @@ hAzzle.define('valHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _strings = hAzzle.require('Strings'),
-        _getText = hAzzle.require('getText'),
+        _getText = hAzzle.require('Text'),
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
         _setters = hAzzle.require('Setters');
@@ -80,7 +80,6 @@ hAzzle.define('valHooks', function() {
             return values;
         }
     });
-
 
     // Radios and checkboxes setter
 

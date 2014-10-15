@@ -64,7 +64,7 @@ hAzzle.define('Setters', function() {
 
             var name, propName, i = 0,
 
-                keys = typeof value == 'string' ?
+                keys = typeof value === 'string' ?
 
                 // String
 
@@ -95,85 +95,90 @@ hAzzle.define('Setters', function() {
             }
         },
 
+        // get/set attribute
+
         Attr = function(elem, name, value) {
-            var hooks, ret, nType = elem.nodeType,
-                notxml;
 
-            // don't get/set attributes on text, comment and attribute nodes
-            if (elem && (nType !== 3 || nType !== 8 || nType !== 2)) {
+            var nodeType = elem ? elem.nodeType : undefined,
+                hooks, ret, notxml;
 
-
-                // Fallback to prop when attributes are not supported
-                if (typeof elem.getAttribute === 'undefined') {
-                    return Prop(elem, name, value);
-                }
-
-                notxml = nType !== 1 || !_core.isXML(elem);
-
-                if (notxml) {
-
-                    name = name.toLowerCase();
-                    hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
-                        getBooleanAttrName(elem, name) ?
-                        boolHooks[value === 'undefined' ?
-                            'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
-                }
-
-                // Get attribute
-
-                if (value === undefined) {
-
-                    if (hooks && (ret = hooks.get(elem, name))) {
-                        if (ret !== null) {
-                            return ret;
-                        }
-                    }
-
-                    ret = elem.getAttribute(name, 2);
-                    // Non-existent attributes return null, we normalize to undefined
-                    return ret == null ?
-                        undefined :
-                        ret;
-                }
-
-                // Set attribute            
-
-                if (value === null) {
-                    removeAttr(elem, name);
-                } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
-                    return ret;
-                } else {
-                    elem.setAttribute(name, value + '');
-                }
+            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
+                return '';
             }
+            // don't get/set attributes on text, comment and attribute nodes
+
+
+            // Fallback to prop when attributes are not supported
+            if (typeof elem.getAttribute === 'undefined') {
+                return Prop(elem, name, value);
+            }
+
+            notxml = nodeType !== 1 || !_core.isXML(elem);
+
+            if (notxml) {
+
+                name = name.toLowerCase();
+                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
+                    getBooleanAttrName(elem, name) ?
+                    boolHooks[value === 'undefined' ?
+                        'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
+            }
+
+            // getAttribute
+
+            if (value === undefined) {
+
+                if (hooks && (ret = hooks.get(elem, name))) {
+                    if (ret !== null) {
+                        return ret;
+                    }
+                }
+
+                ret = elem.getAttribute(name, 2);
+                // Non-existent attributes return null, we normalize to undefined
+                return ret == null ?
+                    undefined :
+                    ret;
+            }
+
+            // setAttribute          
+
+            if (value === null) {
+                removeAttr(elem, name);
+            } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
+                return ret;
+            } else {
+                elem.setAttribute(name, value + '');
+            }
+
         },
 
         Prop = function(elem, name, value) {
 
-            var ret, hook, nType = elem.nodeType;
+            var nodeType = elem ? elem.nodeType : undefined,
+                hook, ret;
 
-            if (elem && (nType !== 2 || nType !== 3 || nType !== 8)) {
+            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
+                return '';
+            }
+            if (nodeType !== 1 || _core.isHTML) {
 
-                if (nType !== 1 || _core.isHTML) {
+                // Fix name and attach hooks
+                name = propMap[name] || name;
+                hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
+            }
 
-                    // Fix name and attach hooks
-                    name = propMap[name] || name;
-                    hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
-                }
+            if (typeof value !== 'undefined') {
 
-                if (typeof value !== 'undefined') {
+                return hook && (ret = hook.set(elem, value, name)) !== undefined ?
+                    ret :
+                    (elem[name] = value);
 
-                    return hook && (ret = hook.set(elem, value, name)) !== undefined ?
-                        ret :
-                        (elem[name] = value);
+            } else {
 
-                } else {
-
-                    return hook && (ret = hook(elem, name)) !== null ?
-                        ret :
-                        elem[name];
-                }
-
+                return hook && (ret = hook(elem, name)) !== null ?
+                    ret :
+                    elem[name];
             }
         };
 
@@ -191,8 +196,8 @@ hAzzle.define('Setters', function() {
                 hooks = valHooks.get[elem.type] ||
                     valHooks.get[elem.nodeName.toLowerCase()];
 
-                if (hooks && (ret = hooks.get(elem, 'value')) !== undefined) {
-                    return ret;
+                if (hooks) {
+                    return hooks(elem, 'value');
                 }
 
                 ret = elem.value;
@@ -285,6 +290,12 @@ hAzzle.define('Setters', function() {
         });
     };
 
+	this.removeProp = function( name ) {
+		return this.each(function() {
+			delete this[ propMap[ name ] || name ];
+		});
+	};
+    
     this.removeAttr = function(value) {
         return this.each(function(elem) {
             removeAttr(elem, value);

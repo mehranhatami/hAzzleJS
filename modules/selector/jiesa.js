@@ -113,9 +113,94 @@ hAzzle.define('Jiesa', function() {
         }
     }
 
-    this.jiesa = Jiesa;
+    // Find is not the same as 'Jiesa', but a optimized version for 
+    // better performance
+
+    this.find = function(selector, context, /*internal*/ internal) {
+
+        // Only for use by hAzzle.js module
+
+        if (internal) {
+            return Jiesa(selector, context)
+        }
+
+        if (typeof selector === 'string') {
+
+            // Single look-up should always be faster then multiple look-ups
+
+            if (this.length === 1) {
+                return new hAzzle(Jiesa(selector, this.elements[0]));
+            } else {
+                elements = _collection.reduce(this.elements, function(els, element) {
+                    return new hAzzle(els.concat(_collection.slice(Jiesa(selector, element))));
+                }, []);
+            }
+        }
+
+        var i,
+            len = this.length,
+            self = this.elements;
+
+        return new hAzzle(_util.filter(hAzzle(selector).elements, function(node) {
+            for (i = 0; i < len; i++) {
+                if (_core.contains(self[i], node)) {
+                    return true;
+                }
+            }
+        }));
+    };
+
+    // Filter element collection
+
+    this.filter = function(selector, not) {
+        if (selector === undefined) {
+            return this;
+        }
+        if (typeof selector === 'function') {
+            var els = [];
+            this.each(function(el, index) {
+                if (selector.call(el, index)) {
+                    els.push(el);
+                }
+            });
+
+            return new hAzzle(els);
+        } else {
+            return this.filter(function() {
+                return matches(this, selector) != (not || false);
+            });
+        }
+    };
+
+    function matches(element, selector) {
+        var match;
+
+        if (!element || !_util.isElement(element) || !selector) {
+            return false;
+        }
+
+        if (selector.nodeType) {
+            return element === selector;
+        }
+
+        // If instance of hAzzle
+
+        if (selector instanceof hAzzle) {
+            return _util.some(selector.elements, function(selector) {
+                return matches(element, selector);
+            });
+        }
+
+        if (element === document) {
+            return false;
+        }
+
+        return element.matches(selector)
+
+    }
 
     return {
+        matches: matches,
         find: Jiesa
     };
 });

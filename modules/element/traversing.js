@@ -2,79 +2,9 @@
 hAzzle.define('Traversing', function() {
 
     var _jiesa = hAzzle.require('Jiesa'),
-        _dom = hAzzle.require('Dom'),
-        _matches = hAzzle.require('Matches'),
         _collection = hAzzle.require('Collection'),
         _core = hAzzle.require('Core'),
         _util = hAzzle.require('Util');
-
-    this.contains = function(selector) {
-        var matches;
-        return _dom._create(_collection.reduce(this.elements, function(elements, element) {
-            matches = _jiesa.find(element, selector);
-            return elements.concat(matches.length ? element : null);
-        }, []));
-    };
-
-    this.is = function(selector) {
-        return this.length > 0 && this.filter(selector).length > 0;
-    };
-
-    this.not = function(selector) {
-        return this.filter(selector, true);
-    };
-
-    // Determine the position of an element within the set
-    this.index = function(selector) {
-        return selector == null ?
-            this.parent().children().indexOf(this.elements[0]) :
-            this.elements.indexOf(new hAzzle(selector).elements[0]);
-    };
-
-    this.add = function(selector, ctx) {
-        var elements = selector;
-        if (typeof selector === 'string') {
-            elements = new hAzzle(selector, ctx).elements;
-        }
-        return this.concat(elements);
-    };
-
-    this.has = function(selector) {
-        return _dom._create(_util.filter(
-            this.elements,
-            _util.isElement(selector) ? function(el) {
-                return _core.contains(selector, el);
-            } : typeof selector === 'string' && selector.length ? function(el) {
-                return _jiesa.find(selector, el).length;
-            } : function() {
-                return false;
-            }
-        ));
-    };
-
-    // Returns `element`'s first following sibling
-
-    this.next = function(selector) {
-        return this.map(function(elem) {
-            return elem.nextElementSibling;
-        }).filter(selector || '*');
-    };
-
-    // Returns `element`'s first previous sibling
-
-    this.prev = function(selector) {
-        return this.map(function(elem) {
-            return elem.previousElementSibling;
-        }).filter(selector || '*');
-    };
-
-    this.first = function(index) {
-        return index ? this.slice(0, index) : this.eq(0);
-    };
-
-    this.last = function(index) {
-        return index ? this.slice(this.length - index) : this.eq(-1);
-    };
 
     // Returns all sibling elements for nodes
     // Optionally takes a query to filter the sibling elements.
@@ -96,16 +26,23 @@ hAzzle.define('Traversing', function() {
                 }
             }
         });
-        return _dom._create(ret, selector);
+        return selector === undefined ? hAzzle(ret) : hAzzle(ret).filter(selector);
     };
 
-    // Returns immediate parent elements
-    // Optionally takes a query to filter the parent elements.
+    // Get immediate parents of each element in the collection.
+    // If CSS selector is given, filter results to include only ones matching the selector.
 
-    this.parent = function(selector) {
-        return _dom._create(_util.map(this.elements, function(t) {
-            return t.parentElement
-        }), selector);
+    this.parent = function(sel) {
+        var matched = this.map(function(elem) {
+            var parent = elem.parentElement;
+            return parent && parent.nodeType !== 11 ? parent : null;
+        }).filter(sel);
+
+        if (this.length > 1) {
+            // Remove duplicates
+            _core.uniqueSort(matched.elements);
+        }
+        return matched;
     };
 
     // Returns all parent elements for nodes
@@ -113,16 +50,14 @@ hAzzle.define('Traversing', function() {
 
     this.parents = function(selector) {
         var ancestors = [],
-            elements = this.elements,
-            fn = function(elem) {
-                if (elem && (elem = elem.parentElement) && elem !== document && _util.indexOf(ancestors, elem) < 0) {
+            elements = this.elements;
+        while (elements.length > 0 && elements[0] !== undefined) {
+            elements = _util.map(elements, function(elem) {
+                if (elem && (elem = elem.parentElement) && elem.nodeType !== 9) {
                     ancestors.push(elem);
                     return elem;
                 }
-            };
-
-        while (elements.length > 0 && elements[0] !== undefined) {
-            elements = _util.map(elements, fn);
+            });
         }
 
         if (this.length > 1) {
@@ -131,10 +66,11 @@ hAzzle.define('Traversing', function() {
             // Reverse order for parents
             ancestors.reverse();
         }
-        return _dom._create(ancestors, selector);
+        return selector === undefined ? hAzzle(ancestors) : hAzzle(ancestors).filter(selector);
     };
 
-    // Returns closest parent that matches query
+    // Get the first element that matches the selector, beginning at 
+    // the current element and progressing up through the DOM tree.
 
     this.closest = function(selector, ctx) {
         var cur,
@@ -147,7 +83,7 @@ hAzzle.define('Traversing', function() {
                 // Always skip document fragments
                 if (cur.nodeType < 11 &&
                     cur.nodeType === 1 &&
-                    _matches.matches(cur, selector)) {
+                    _jiesa.matches(cur, selector)) {
 
                     matched.push(cur);
                     break;
@@ -158,14 +94,45 @@ hAzzle.define('Traversing', function() {
         return hAzzle(matched.length > 1 ? _core.uniqueSort(matched) : matched);
     };
 
-    // Returns all immediate child elements for nodes
+    // Get immediate children of each element in the current collection.
+    // If selector is given, filter the results to only include ones matching the CSS selector.
 
     this.children = function(selector) {
-        return _dom._create(_collection.reduce(this.elements, function(els, elem) {
-            var children = _collection.slice(elem.children);
-            return els.concat(children);
-        }, []), selector);
+        var children = [];
+        this.each(function(elem) {
+            _util.each(_collection.slice(elem.children), function(value) {
+                children.push(value);
+            });
+        });
+        return selector === undefined ? hAzzle(children) : hAzzle(children).filter(selector);
     };
+
+    // Return elements that is a descendant of another.
+
+    this.contains = function(selector) {
+        var matches;
+        return new hAzzle(_collection.reduce(this.elements, function(elements, element) {
+            matches = _jiesa.find(element, selector);
+            return elements.concat(matches.length ? element : null);
+        }, []));
+    };
+
+    // Reduce the set of matched elements to those that have a descendant that matches the 
+    //selector or DOM element.
+
+    this.has = function(sel) {
+        return hAzzle(_util.filter(
+            this.elements,
+            _util.isElement(sel) ? function(el) {
+                return _core.contains(sel, el);
+            } : typeof sel === 'string' && sel.length ? function(el) {
+                return _jiesa.find(sel, el).length;
+            } : function() {
+                return false;
+            }
+        ));
+    };
+
 
     return {};
 });

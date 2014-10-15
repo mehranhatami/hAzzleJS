@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0a-alpha
+ * Version: 1.0.0b-alpha
  * Released under the MIT License.
  *
- * Date: 2014-10-14
+ * Date: 2014-10-16
  */
 (function() {
 
@@ -16,8 +16,6 @@
         // Minimalist module system
 
         modules = {},
-        
-        _toString = _objectProto.toString,
 
         // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
 
@@ -76,7 +74,7 @@
             if (!sel) {
                 return;
             }
-
+            // Allow instantiation without the 'new' keyword
             if (!(this instanceof hAzzle)) {
                 return new hAzzle(sel, ctx);
             }
@@ -103,13 +101,17 @@
                 }
 
                 if (this.elements === null || this.elements === undefined) {
-                    this.elements = this.jiesa(sel, ctx);
+
+                    // The 'find' method need to have a boolean value set to 'true', to 
+                    // work as expected. Else it will behave like the global .find method
+
+                    this.elements = this.find(sel, ctx, true);
                 }
                 // array   
             } else if (sel instanceof Array) {
                 this.elements = _util.unique(_util.filter(sel, validTypes));
                 // nodeList
-            } else if (['nodelist', 'htmlcollection', 'htmlformcontrolscollection'].indexOf(_toString.call(sel)) >= 0) {
+            } else if (this.isNodeList(sel)) {
                 this.elements = _util.filter(_util.makeArray(sel), validTypes);
                 // nodeType
             } else if (sel.nodeType) {
@@ -130,6 +132,8 @@
             // If undefined, set length to 0, and
             // elements to an empty array [] to avoid hAzzle
             // throwing errors
+
+
 
             if (this.elements === undefined) {
                 this.length = 0;
@@ -423,14 +427,14 @@ hAzzle.define('Types', function() {
         },
 
         // Returns a function that returns `true` if `arg` is of the correct `type`, otherwise `false`.
-        createIsType = function(type) {
+        // e.g isType('Function')( fn )
+
+        isType = function(type) {
             return type ? function(arg) {
                 return _toString.call(arg) === '[object ' + type + ']';
             } : function() {};
         },
 
-        // ## isObject
-        // Returns `true` if argument is an object, otherwise `false`.
         isObject = function(value) {
             // avoid a V8 bug in Chrome 19-20
             // https://code.google.com/p/v8/issues/detail?id=2291
@@ -440,16 +444,32 @@ hAzzle.define('Types', function() {
 
         isNode = function(elem) {
             return !!elem && typeof elem === 'object' && 'nodeType' in elem;
+        },
+        isNodeList = function(nodes) {
+            var result = Object.prototype.toString.call(nodes);
+            // Modern browser such as IE9 / firefox / chrome etc.
+            if (result === '[object HTMLCollection]' || result === '[object NodeList]') {
+                return true;
+            }
+            // Detect length and item 
+            if (!('length' in nodes) || !('item' in nodes)) {
+                return false;
+            }
+            // use the trick NodeList(index), all browsers support
+            try {
+                if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) return true;
+            } catch (e) {
+                return false;
+            }
+            return false;
         };
 
+    this.isNodeList = isNodeList;
+
     return {
-        isFile: createIsType('File'),
-        isBlob: createIsType('Blob'),
-        isRegExp: createIsType('RegExp'),
-        isArguments: createIsType('Arguments'),
-        isFunction: createIsType('Function'),
-        isDate: createIsType('Date'),
-        type: createIsType,
+
+        isType: isType,
+        isFunction: isType('Function'),
         isArray: isArray,
         isEmpty: isEmpty,
         isWindow: isWindow,
@@ -465,6 +485,7 @@ hAzzle.define('Types', function() {
         isNaN: isNaN,
         isDefined: isDefined,
         isUndefined: isUndefined,
+        isNodeList: isNodeList
     };
 });
 
@@ -606,10 +627,11 @@ hAzzle.define('Util', function() {
         },
 
         // Optimized each function
+        // Replacement for forEach - ECMAScript 5 15.4.4.18 
 
         each = function(obj, fn, ctx, rev) {
 
-            if (!obj) {
+            if (obj === undefined) {
                 return obj;
             }
 
@@ -622,34 +644,18 @@ hAzzle.define('Util', function() {
             var i, length = obj.length;
 
             if (length === +length) {
-                // Quick each optimizing for no arguments
-                if (!ctx) {
-
-                    i = -1;
-                    while (++i < length) {
-                        // Reverse feature 
-                        i = rev ? obj.length - i - 1 : i;
-                        if (fn(obj[i], i, obj) === false) {
-                            break;
-                        }
-                    }
-                } else {
-
-                    for (i = 0; i < length; i++) {
-                        // Reverse feature 
-                        i = rev ? obj.length - i - 1 : i;
-                        if (fn(obj[i], i, obj) === false) {
-                            break;
-                        }
+                for (i = 0; i < length; i++) {
+                    // Reverse  
+                    i = rev ? obj.length - i - 1 : i;
+                    if (fn(obj[i], i, obj) === false) {
+                        break;
                     }
                 }
             } else {
                 if (obj) {
-                    var keys = _keys(obj);
-
-                    for (i = 0, length = keys.length; i < length; i++) {
-
-                        if (fn(obj[keys[i]], keys[i], obj) === false) {
+                    var key;
+                    for (key in obj) {
+                        if (fn(obj[key], key, obj) === false) {
                             break;
                         }
                     }
@@ -669,34 +675,27 @@ hAzzle.define('Util', function() {
 
                 var dir = !argCount ? 3 : argCount;
 
-                switch (dir) {
+                return dir === 1 ? function(value) {
+                        return func.call(ctx, value);
+                    } : dir === 2 ?
+                    function(value, other) {
+                        return func.call(ctx, value, other);
+                    } : dir === 3 ?
+                    function(value, index, collection) {
+                        return func.call(ctx, value, index, collection);
+                    } : dir === 4 ?
+                    function(accumulator, value, index, collection) {
+                        return func.call(ctx, accumulator, value, index, collection);
+                    } : function() {
+                        return func.apply(ctx, arguments);
+                    };
 
-                    case 1:
-                        return function(value) {
-                            return func.call(ctx, value);
-                        };
-                    case 2:
-                        return function(value, other) {
-                            return func.call(ctx, value, other);
-                        };
-                    case 3:
-                        return function(value, index, collection) {
-                            return func.call(ctx, value, index, collection);
-                        };
-                    case 4:
-                        return function(accumulator, value, index, collection) {
-                            return func.call(ctx, accumulator, value, index, collection);
-                        };
-                }
-                return function() {
-                    return func.apply(ctx, arguments);
-                };
             }
             if (!func) {
                 return identity;
             }
         },
-
+        // Faster alternative then Some - ECMAScript 5 15.4.4.17
         some = function(obj, fn, ctx) {
 
             if (!obj) {
@@ -731,11 +730,10 @@ hAzzle.define('Util', function() {
 
         // Extends the destination object `obj` by copying all of the 
         // properties from the `src` object(s)
-        // The 'hashKey' will automatically be copied over to the
-        // destination object `obj` if it exist on the 'src' object(s)
 
         extend = function(obj) {
             if (!_types.isObject(obj)) {
+
                 return obj;
             }
 
@@ -792,8 +790,9 @@ hAzzle.define('Util', function() {
         // Returns a predicate for checking whether an object has a given set of `key:value` pairs.
         matches = function(attrs) {
 
-            var pairs = pairs(attrs),
-                length = pairs.length;
+            var prs = pairs(attrs),
+                length = prs.length;
+
             return function(obj) {
 
                 if (!obj) {
@@ -803,7 +802,7 @@ hAzzle.define('Util', function() {
                 var i = 0,
                     pair, key;
                 for (; i < length; i++) {
-                    pair = pairs[i];
+                    pair = prs[i];
                     key = pair[0];
                     if (pair[1] !== obj[key] || !(key in obj)) {
                         return false;
@@ -815,9 +814,9 @@ hAzzle.define('Util', function() {
 
         // Convert an object into a list of `[key, value]` pairs.
         pairs = function(obj) {
-            var keys = _keys(obj).
-            length = keys.length.
-            pairs = Array(length),
+            var keys = _keys(obj),
+                length = keys.length,
+                pairs = Array(length),
                 i = 0;
             for (; i < length; i++) {
                 pairs[i] = [keys[i], obj[keys[i]]];
@@ -831,8 +830,8 @@ hAzzle.define('Util', function() {
             };
         },
 
-        unique = function(array, isSorted, fn, ctx) {
-            if (array == null) {
+        unique = function(arr, isSorted, fn, ctx) {
+            if (!arr) {
                 return [];
             }
             if (_types.isBoolean(isSorted)) {
@@ -847,17 +846,17 @@ hAzzle.define('Util', function() {
             var result = [],
                 seen = [],
                 i = 0,
-                length = array.length;
+                length = arr.length;
 
             for (; i < length; i++) {
-                var value = array[i];
+                var value = arr[i];
                 if (isSorted) {
                     if (!i || seen !== value) {
                         result.push(value);
                     }
                     seen = value;
                 } else if (fn) {
-                    var computed = fn(value, i, array);
+                    var computed = fn(value, i, arr);
                     if (indexOf(seen, computed) < 0) {
                         seen.push(computed);
                         result.push(value);
@@ -869,39 +868,47 @@ hAzzle.define('Util', function() {
             return result;
         },
 
-        indexOf = function(array, item, isSorted) {
+        // Replacement for indexOf - ECMAScript 5 15.4.4.14
 
-            if (array == null) {
+        indexOf = function(arr, item, isSorted) {
+
+            if (arr == null) {
                 return -1;
             }
 
             var i = 0,
-                length = array.length;
+                length = arr.length;
 
             if (isSorted) {
                 if (typeof isSorted === 'number') {
-                    i = isSorted < 0 ? Math.max(0, length + isSorted) : isSorted;
+
+                    if (isSorted < 0) {
+                        i = Math.max(0, length + isSorted);
+                    } else {
+                        i = isSorted;
+                    }
+
                 } else {
-                    i = sortedIndex(array, item);
-                    return array[i] === item ? i : -1;
+                    i = sortedIndex(arr, item);
+                    return arr[i] === item ? i : -1;
                 }
             }
             for (; i < length; i++) {
-                if (array[i] === item) {
+                if (arr[i] === item) {
                     return i;
                 }
             }
             return -1;
         },
 
-        sortedIndex = function(array, obj, fn, ctx) {
+        sortedIndex = function(arr, obj, fn, ctx) {
             fn = iterate(fn, ctx, 1);
             var value = fn(obj),
                 low = 0,
-                high = array.length;
+                high = arr.length;
             while (low < high) {
                 var mid = low + high >>> 1;
-                if (fn(array[mid]) < value) {
+                if (fn(arr[mid]) < value) {
                     low = mid + 1;
                 } else {
                     high = mid;
@@ -911,10 +918,10 @@ hAzzle.define('Util', function() {
         },
 
         // Return the results of applying the callback to each element.
+        // ECMAScript 5 15.4.4.19
+
         map = function(obj, fn, ctx) {
             if (obj) {
-
-
                 fn = iterate(fn, ctx);
                 var keys = obj.length !== +obj.length && _keys(obj),
                     length = (keys || obj).length,
@@ -932,13 +939,6 @@ hAzzle.define('Util', function() {
         // Determines whether an object can have data
 
         acceptData = function(owner) {
-            // Accepts only:
-            //  - Node
-            //    - Node.ELEMENT_NODE
-            //    - Node.DOCUMENT_NODE
-            //  - Object
-            //    - Any
-            /* jshint -W018 */
             return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
         },
 
@@ -949,22 +949,24 @@ hAzzle.define('Util', function() {
         },
 
         // Native solution for filtering arrays. 
+        // Replacement for filter - ECMAScript 5 15.4.4.20  
 
-        filter = function(obj, fn, ctx) {
+        filter = function(arr, fn, ctx) {
             var results = [];
-            if (obj == null) {
+            if (!arr) {
                 return results;
             }
             fn = iterate(fn, ctx);
-            each(obj, function(value, index, list) {
-                if (fn(value, index, list)) {
-                    results.push(value);
+            each(arr, function(val, index, list) {
+                if (fn(val, index, list)) {
+                    results.push(val);
                 }
             });
             return results;
         },
 
         // Bind a function to a ctx, optionally partially applying any
+        // Replacement for bind() - ECMAScript 5 15.3.4.5
 
         bind = function(fn, ctx) {
 
@@ -1019,7 +1021,7 @@ hAzzle.define('Util', function() {
         now: Date.now,
         bind: bind,
         has: has,
-        int: int,
+        int: int
     };
 });
 
@@ -1027,10 +1029,11 @@ hAzzle.define('Util', function() {
 hAzzle.define('Core', function() {
 
     var winDoc = window.document,
+        docElem = winDoc.documentElement,
         _support = hAzzle.require('Support'),
-        cache = {},
         _indexOf = Array.prototype.indexOf,
-        expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
+        Core = {},
+        CoreCache = {},
         hasDuplicate,
         sortInput,
         sortOrder = function(a, b) {
@@ -1039,7 +1042,6 @@ hAzzle.define('Core', function() {
             }
             return 0;
         },
-
         siblingCheck = function(a, b) {
             var cur = b && a,
                 diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
@@ -1061,299 +1063,228 @@ hAzzle.define('Core', function() {
             }
 
             return a ? 1 : -1;
-        },
-
-        // Create a unique object that hold all info, so we can cache it,
-        // and gain better performance
-
-        Core = {
-            // A global XML counter for each document
-            duidX: 1,
-            duidK: 'hAzzle-uniqueid',
-
-            isNativeCode: function(fn) {
-                return (/\{\s*\[native code\]\s*\}/).test('' + fn);
-            },
-
-            isXML: function(elem) {
-                var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-                return documentElement ? documentElement.nodeName !== "HTML" : false;
-            },
-            getUIDXML: function(node) {
-                var uid = node.getAttribute(this.duidK);
-                if (!uid) {
-                    uid = this.duidX++;
-                    node.setAttribute(this.duidK, uid);
-                }
-                return uid;
-            },
-
-            getUIDHTML: function(node) {
-                return node.uniqueNumber || (node.uniqueNumber = this.duidX++);
-            },
-
-            // sort based on the setDocument documentSorter method.
-
-            sort: function(results) {
-                if (!this.documentSorter) return results;
-                results.sort(this.documentSorter);
-                return results;
-            },
-
-            setDocument: function(document) {
-
-                // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
-                var nodeType = document.nodeType;
-
-                var doc = document ? document.ownerDocument || document : winDoc;
-
-                if (nodeType === 9); // document
-                else if (nodeType) {
-                    doc = document.ownerDocument; // node
-                } else if (document.navigator) {
-                    doc = document.document; // window
-                } else {
-                    return;
-                }
-
-                // check if it's the old document
-
-                if (this.document === doc) {
-                    return;
-                }
-                // Override default window.document, and set our document
-
-                document = doc;
-                this.document = doc;
-
-                // check if we have done feature detection on this document before
-
-                var root = document.documentElement,
-                    rootUid = this.getUIDXML(root),
-                    features = cache[rootUid],
-                    feature;
-
-                if (features) {
-                    for (feature in features) {
-                        this[feature] = features[feature];
-                    }
-                    return;
-                }
-
-                features = cache[rootUid] = {};
-
-                features.root = root;
-                features.isXMLDocument = this.isXML(document);
-
-                features.detectDuplicates = !!hasDuplicate;
-
-                // Sort stability
-
-                features.sortStable = expando.split('').sort(sortOrder).join('') === expando;
-
-                features.brokenGEBTN = features.idGetsName = features.brokenCheckedQSA = features.isHTMLDocument = false;
-
-                var starSelectsClosed, starSelectsComments,
-                    selected, id = 'hAzzle_uniqueid',
-                    testNode = document.createElement('div'),
-                    testRoot = document.body || document.head || root;
-
-                testRoot.appendChild(testNode);
-
-                // On non-HTML documents innerHTML and getElementById doesnt work properly
-
-                try {
-                    testNode.innerHTML = '<a id="' + id + '"></a>';
-                    features.isHTMLDocument = !!document.getElementById(id);
-                } catch (e) {}
-
-                if (features.isHTMLDocument) {
-
-                    testNode.style.display = 'none';
-
-                    // Check if getElementsByTagName('*') returns only elements
-                    testNode.appendChild(document.createComment(''));
-                    starSelectsComments = !testNode.getElementsByTagName('*').length;
-
-                    // IE returns closed nodes (EG:'</foo>') for getElementsByTagName('*') for some documents
-                    try {
-                        testNode.innerHTML = 'foo</foo>';
-                        selected = testNode.getElementsByTagName('*');
-                        starSelectsClosed = (selected && !!selected.length && selected[0].nodeName.charAt(0) === '/');
-                    } catch (e) {}
-
-                    features.brokenGEBTN = starSelectsComments || starSelectsClosed;
-
-                    // Support: IE<10
-                    // Check if getElementById returns elements by name
-                    // The broken getElementById methods don't pick up programatically-set names,
-                    // so use a roundabout getElementsByName test
-
-                    try {
-
-                        testNode.innerHTML = '<a name="' + id + '"></a><b id="' + id + '"></b>';
-                        features.idGetsName = document.getElementById(id) === testNode.firstChild;
-                    } catch (e) {}
-
-
-                    if (testNode.querySelectorAll) {
-
-                        // Webkit/Opera - :checked should return selected option elements
-                        // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-                        try {
-                            testNode.innerHTML = '<select><option selected="selected">a</option></select>';
-                            features.brokenCheckedQSA = !testNode.querySelectorAll(':checked').length;
-                        } catch (e) {}
-                    }
-                }
-
-                try {
-                    root.hAzzle_expando = 1;
-                    delete root.hAzzle_expando;
-                    features.getUID = this.getUIDHTML;
-                } catch (e) {
-                    features.getUID = this.getUIDXML;
-                }
-
-                // Avoid memory leaks 
-
-                testRoot.removeChild(testNode);
-                testNode = selected = testRoot = null;
-
-                // Element contains another
-                // Purposefully does not implement inclusive descendent
-                // As in, an element does not contain itself
-
-                features.contains = Core.isNativeCode(root.compareDocumentPosition) ? function(a, b) {
-                        var adown = a.nodeType === 9 ? a.documentElement : a,
-                            bup = b && b.parentNode;
-                        return a === bup || !!(bup && bup.nodeType === 1 && (
-                            adown.contains ?
-                            adown.contains(bup) :
-                            a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-                        ));
-                    } :
-                    function(a, b) {
-                        if (b) {
-                            while ((b = b.parentNode)) {
-                                if (b === a) {
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    };
-
-                // Document order sorting
-                // Credits to Sizzle (http://sizzlejs.com/)
-
-                features.documentSorter = (root.compareDocumentPosition) ? function(a, b) {
-
-                    // Flag for duplicate removal
-                    if (a === b) {
-                        hasDuplicate = true;
-                        return 0;
-                    }
-
-                    // Sort on method existence if only one input has compareDocumentPosition
-                    var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-                    if (compare) {
-                        return compare;
-                    }
-
-                    // Calculate position if both inputs belong to the same document
-                    compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                        a.compareDocumentPosition(b) :
-
-                        // Otherwise we know they are disconnected
-                        1;
-
-                    // Disconnected nodes
-                    if (compare & 1 || (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
-
-                        // Choose the first element that is related to our preferred document
-                        if (a === doc || a.ownerDocument === winDoc && features.contains(winDoc, a)) {
-                            return -1;
-                        }
-                        if (b === doc || b.ownerDocument === winDoc && features.contains(winDoc, b)) {
-                            return 1;
-                        }
-
-                        // Maintain original order
-                        return sortInput ?
-                            (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
-                            0;
-                    }
-
-                    return compare & 4 ? -1 : 1;
-                } : function(a, b) {
-                    // Exit early if the nodes are identical
-                    if (a === b) {
-                        hasDuplicate = true;
-                        return 0;
-                    }
-
-                    var cur,
-                        i = 0,
-                        aup = a.parentNode,
-                        bup = b.parentNode,
-                        ap = [a],
-                        bp = [b];
-
-                    // Parentless nodes are either documents or disconnected
-                    if (!aup || !bup) {
-                        return a === doc ? -1 :
-                            b === doc ? 1 :
-                            aup ? -1 :
-                            bup ? 1 :
-                            sortInput ?
-                            (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
-                            0;
-
-                        // If the nodes are siblings, we can do a quick check
-                    } else if (aup === bup) {
-                        return siblingCheck(a, b);
-                    }
-
-
-                    // Otherwise we need full lists of their ancestors for comparison
-                    cur = a;
-                    while ((cur = cur.parentNode)) {
-                        ap.unshift(cur);
-                    }
-                    cur = b;
-                    while ((cur = cur.parentNode)) {
-                        bp.unshift(cur);
-                    }
-
-                    // Walk down the tree looking for a discrepancy
-                    while (ap[i] === bp[i]) {
-                        i++;
-                    }
-
-                    return i ?
-                        // Do a sibling check if the nodes have a common ancestor
-
-                        siblingCheck(ap[i], bp[i]) :
-
-                        // Otherwise nodes in our document sort first
-                        ap[i] === winDoc ? -1 :
-                        bp[i] === winDoc ? 1 :
-                        0;
-                };
-
-                root = null;
-
-                for (feature in features) {
-                    this[feature] = features[feature];
-                }
-            }
         };
 
-    // Set correct document
-    Core.setDocument(document);
+    Core.uidX = 1;
+    Core.uidK = 'hAzzle_id';
+    Core.expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
 
-    var uniqueSort = function(results) {
+        // Check if this is XML doc or not
+
+        Core.isXML = function(elem) {
+            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
+            return documentElement ? documentElement.nodeName !== 'HTML' : false;
+        };
+
+    // Get unique XML document ID
+
+    Core.xmlID = function(elem) {
+        var uid = elem.getAttribute(this.uidK);
+
+        if (!uid) {
+            uid = this.uidX++;
+            elem.setAttribute(this.uidK, uid);
+        }
+        return uid;
+    };
+
+    // Get unique HTML document ID
+
+    Core.htmlID = function(elem) {
+        return elem.uniqueNumber ||
+            (elem.uniqueNumber = this.uidX++);
+    };
+
+    Core.native = /^[^{]+\{\s*\[native \w/.test(docElem.compareDocumentPosition);
+    // Set document
+
+    Core.setDocument = function(document) {
+
+        // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
+        var nodeType = document.nodeType;
+
+        var doc = document ? document.ownerDocument || document : winDoc;
+
+        if (nodeType === 9) { // document
+
+        } else if (nodeType) {
+            doc = document.ownerDocument; // node
+        } else if (document.navigator) {
+            doc = document.document; // window
+        } else {
+            return;
+        }
+
+        // Check if it's the old document
+
+        if (this.document === doc) {
+            return;
+        }
+        // Override default window.document, and set our document
+
+        document = doc;
+        this.document = doc;
+
+
+        var root = document.documentElement,
+            rootID = this.xmlID(root),
+            features = CoreCache[rootID],
+            feature;
+
+        // Don't run feature detection twice
+
+        if (features) {
+            for (feature in features) {
+                this[feature] = features[feature];
+            }
+            return;
+        }
+
+        features = CoreCache[rootID] = {};
+        features.root = root;
+        features.isXMLDocument = this.isXML(document);
+        features.detectDuplicates = !!hasDuplicate;
+        features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
+
+        // Contains
+
+        features.contains = Core.native || Core.native.test(docElem.contains) ?
+            function(a, b) {
+                var adown = a.nodeType === 9 ? a.documentElement : a,
+                    bup = b && b.parentNode;
+                return a === bup || !!(bup && bup.nodeType === 1 && (
+                    adown.contains ?
+                    adown.contains(bup) :
+                    a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+                ));
+            } :
+            function(a, b) {
+                if (b) {
+                    while ((b = b.parentNode)) {
+                        if (b === a) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+
+        // Document order sorting
+        Core.sortOrder = Core.native ?
+            function(a, b) {
+
+                // Flag for duplicate removal
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                // Sort on method existence if only one input has compareDocumentPosition
+                var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+                if (compare) {
+                    return compare;
+                }
+
+                // Calculate position if both inputs belong to the same document
+                compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
+                    a.compareDocumentPosition(b) :
+
+                    // Otherwise we know they are disconnected
+                    1;
+
+                // Disconnected nodes
+                if (compare & 1 ||
+                    (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
+
+                    // Choose the first element that is related to our preferred document
+                    if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
+                        return -1;
+                    }
+                    if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
+                        return 1;
+                    }
+
+                    // Maintain original order
+                    return sortInput ?
+                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                        0;
+                }
+
+                return compare & 4 ? -1 : 1;
+            } :
+            function(a, b) {
+                // Exit early if the nodes are identical
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                var cur,
+                    i = 0,
+                    aup = a.parentNode,
+                    bup = b.parentNode,
+                    ap = [a],
+                    bp = [b];
+
+                // Parentless nodes are either documents or disconnected
+                if (!aup || !bup) {
+                    return a === doc ? -1 :
+                        b === doc ? 1 :
+                        aup ? -1 :
+                        bup ? 1 :
+                        sortInput ?
+                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                        0;
+
+                    // If the nodes are siblings, we can do a quick check
+                } else if (aup === bup) {
+                    return siblingCheck(a, b);
+                }
+
+                // Otherwise we need full lists of their ancestors for comparison
+                cur = a;
+                while ((cur = cur.parentNode)) {
+                    ap.unshift(cur);
+                }
+                cur = b;
+                while ((cur = cur.parentNode)) {
+                    bp.unshift(cur);
+                }
+
+                // Walk down the tree looking for a discrepancy
+                while (ap[i] === bp[i]) {
+                    i++;
+                }
+
+                return i ?
+                    // Do a sibling check if the nodes have a common ancestor
+                    siblingCheck(ap[i], bp[i]) :
+
+                    // Otherwise nodes in our document sort first
+                    ap[i] === winDoc ? -1 :
+                    bp[i] === winDoc ? 1 :
+                    0;
+            };
+
+        root = null;
+
+        for (feature in features) {
+            this[feature] = features[feature];
+        }
+    };
+
+    // Set correct sortOrder
+
+    sortOrder = Core.sortOrder;
+
+    // Set document
+
+    Core.setDocument(winDoc);
+
+    function uniqueSort(results) {
+        if (results === undefined) {
+            return;
+        }
         var elem,
             duplicates = [],
             j = 0,
@@ -1380,173 +1311,169 @@ hAzzle.define('Core', function() {
         sortInput = null;
 
         return results;
-    };
+    }
 
     return {
-        Core: Core,
-        root: Core.document,
-        uniqueSort: uniqueSort,
-        getAttribute: Core.getAttribute,
-        contains: Core.contains,
+        root: Core.root,
         isXML: Core.isXML,
-        isHTML: !Core.isXML(document),
-        expando: expando
+        isHTML: !Core.isXML(winDoc),
+        expando: Core.expando,
+        uniqueSort: uniqueSort,
+        contains: Core.contains,
     };
 });
 
-// matches.js
-hAzzle.define('Matches', function() {
-
-    /**
-     * IMPORTANT!! This module are not finished at all. Still a lot to do:
-     *
-     * - check if matchesSelector are buggy and fallback to Jiesa if it is
-     * - check for matchesSelector support
-     * - and a lot more...
-     */
+// collection.js
+hAzzle.define('Collection', function() {
 
     var _util = hAzzle.require('Util'),
-        _collection = hAzzle.require('Collection'),
-        _jiesa = hAzzle.require('Jiesa'),
-        matchesSelector,
+        _types = hAzzle.require('Types'),
+        _arrayProto = Array.prototype,
+        _keys = Object.keys,
+        _concat = _arrayProto.concat,
+        _push = _arrayProto.push,
+        inArray = function(elem, arr, i) {
+            return arr === undefined ? -1 : _arrayProto.indexOf.call(arr, elem, i);
+        },
+        makeArray = function(arr, results) {
+            var ret = results || [];
 
-        rquickIs = /^(\w*)(?:#([\w\-]+))?(?:\[([\w\-\=]+)\])?(?:\.([\w\-]+))?$/,
-
-        matches = function(element, selector) {
-            var match;
-
-            if (!element || !_util.isElement(element) || !selector) {
-                return false;
-            }
-
-            if (selector.nodeType) {
-                return element === selector;
-            }
-
-            // If instance of hAzzle
-
-            if (selector instanceof hAzzle) {
-                return _util.some(selector.elements, function(selector) {
-                    return matches(element, selector);
-                });
-            }
-
-            if (element === document) {
-                return false;
-            }
-
-            var quick = rquickIs.exec(selector);
-
-            if (quick) {
-                //   0  1    2   3          4
-                // [ _, tag, id, attribute, class ]
-                if (quick[1]) {
-                    quick[1] = quick[1].toLowerCase();
-                }
-                if (quick[3]) {
-                    quick[3] = quick[3].split('=');
-                }
-                if (quick[4]) {
-                    quick[4] = ' ' + quick[4] + ' ';
+            if (arr !== undefined) {
+                if (_types.isArrayLike(Object(arr))) {
+                    _util.merge(ret, _types.isString(arr) ? [arr] : arr);
+                } else {
+                    _push.call(ret, arr);
                 }
             }
 
-            if (quick) {
-                return (
-                    (!quick[1] || element.nodeName.toLowerCase() === quick[1]) &&
-                    (!quick[2] || element.id === quick[2]) &&
-                    (!quick[3] || (quick[3][1] ? element.getAttribute(quick[3][0]) === quick[3][1] : element.hasAttribute(quick[3][0]))) &&
-                    (!quick[4] || (' ' + element.className + ' ').indexOf(quick[4]) >= 0)
-                );
+            return ret;
+        },
+
+        //  Reduces a collection
+        // Replacement for reduce -  ECMAScript 5 15.4.4.21     
+        reduce = function(collection, fn, accumulator, args) {
+
+            if (!collection) {
+                collection = [];
             }
 
-            try {
+            fn = _util.createCallback(fn, args, 4);
 
-                if (typeof selector !== 'string') {
-                    return selector;
+            var keys = collection.length !== +collection.length && _keys(collection),
+                length = (keys || collection).length,
+                index = 0,
+                currentKey;
+
+            if (arguments.length < 3) {
+
+                if (!length) {
+                    hAzzle.err(true, 7, ' no collection length exist in collection.reduce()');
                 }
-                return element.matches(selector)
-            } catch (e) {
 
-                match = _jiesa.find(element.parentNode, selector).indexOf(element) >= 0;
-
-                return match;
+                accumulator = collection[keys ? keys[index++] : index++];
             }
-        }
+            for (; index < length; index++) {
+                currentKey = keys ? keys[index] : index;
+                accumulator = fn(accumulator, collection[currentKey], currentKey, collection);
+            }
+            return accumulator;
+        },
 
-    return {
-        matches: matches
-    };
-});
+        slice = function(array, start, end) {
+            if (typeof start === 'undefined') {
+                start = 0;
+            }
+            if (typeof end === 'undefined') {
+                end = array ? array.length : 0;
+            }
+            var index = -1,
+                length = end - start || 0,
+                result = Array(length < 0 ? 0 : length);
 
-// traversing.js
-hAzzle.define('Traversing', function() {
+            while (++index < length) {
+                result[index] = array[start + index];
+            }
+            return result;
+        };
 
-    var _jiesa = hAzzle.require('Jiesa'),
-        _dom = hAzzle.require('Dom'),
-        _matches = hAzzle.require('Matches'),
-        _collection = hAzzle.require('Collection'),
-        _core = hAzzle.require('Core'),
-        _util = hAzzle.require('Util');
-
-    this.contains = function(selector) {
-        var matches;
-        return _dom._create(_collection.reduce(this.elements, function(elements, element) {
-            matches = _jiesa.find(element, selector);
-            return elements.concat(matches.length ? element : null);
-        }, []));
+    // Retrieve the DOM elements matched by the hAzzle object.
+    this.get = function(index) {
+        return index === undefined ? slice(this.elements) : this.elements[index >= 0 ? index : index + this.length];
     };
 
-    this.is = function(selector) {
-        return this.length > 0 && this.filter(selector).length > 0;
+    // Get the element at position specified by index from the current collection.
+    this.eq = function(index) {
+        return index === -1 ? hAzzle(slice(this.elements, this.length - 1)) : hAzzle(slice(this.elements, index, index + 1));
     };
 
-    this.not = function(selector) {
-        return this.filter(selector, true);
+    this.reduce = function(fn, accumulator, args) {
+        return reduce(this.elements, fn, accumulator, args);
+    };
+
+    this.indexOf = function(elem, arr, i) {
+        return arr == null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
+    };
+
+    this.map = function(fn, args) {
+        return new hAzzle(_util.map(this.elements, fn, args));
+    };
+
+    this.each = function(fn, args, rev) {
+        _util.each(this.elements, fn, args, rev);
+        return this;
+    };
+
+    this.slice = function(start, end) {
+        return new hAzzle(slice(this.elements, start, end));
+    };
+
+    // Concatenate two elements lists
+    this.concat = function() {
+        var args = _util.map(slice(arguments), function(arr) {
+            return arr instanceof hAzzle ? arr.elements : arr;
+        });
+        return new hAzzle(_concat.apply(this.elements, args));
+    };
+
+
+    this.is = function(sel) {
+        return this.length > 0 && this.filter(sel).length > 0;
+    };
+
+    // Get elements in list but not with this selector
+
+    this.not = function(sel) {
+        return this.filter(sel, true);
     };
 
     // Determine the position of an element within the set
-    this.index = function(selector) {
-        return selector == null ?
+    this.index = function(sel) {
+        return sel === undefined ?
             this.parent().children().indexOf(this.elements[0]) :
-            this.elements.indexOf(new hAzzle(selector).elements[0]);
+            this.elements.indexOf(new hAzzle(sel).elements[0]);
     };
 
-    this.add = function(selector, ctx) {
-        var elements = selector;
-        if (typeof selector === 'string') {
-            elements = new hAzzle(selector, ctx).elements;
+    this.add = function(sel, ctx) {
+        var elements = sel;
+        if (typeof sel === 'string') {
+            elements = new hAzzle(sel, ctx).elements;
         }
         return this.concat(elements);
     };
-
-    this.has = function(selector) {
-        return _dom._create(_util.filter(
-            this.elements,
-            _util.isElement(selector) ? function(el) {
-                return _core.contains(selector, el);
-            } : typeof selector === 'string' && selector.length ? function(el) {
-                return _jiesa.find(selector, el).length;
-            } : function() {
-                return false;
-            }
-        ));
-    };
-
     // Returns `element`'s first following sibling
 
-    this.next = function(selector) {
+    this.next = function(sel) {
         return this.map(function(elem) {
             return elem.nextElementSibling;
-        }).filter(selector || '*');
+        }).filter(sel);
     };
 
     // Returns `element`'s first previous sibling
 
-    this.prev = function(selector) {
+    this.prev = function(sel) {
         return this.map(function(elem) {
             return elem.previousElementSibling;
-        }).filter(selector || '*');
+        }).filter(sel);
     };
 
     this.first = function(index) {
@@ -1557,98 +1484,36 @@ hAzzle.define('Traversing', function() {
         return index ? this.slice(this.length - index) : this.eq(-1);
     };
 
-    // Returns all sibling elements for nodes
-    // Optionally takes a query to filter the sibling elements.
-
-    this.siblings = function(selector) {
-
-        var ret = [],
-            i, nodes;
-
-        this.each(function(element) {
-
-            nodes = element.parentElement.children;
-
-            i = nodes.length;
-
-            while (i--) {
-                if (nodes[i] !== element) {
-                    ret.push(nodes[i]);
-                }
-            }
-        });
-        return _dom._create(ret, selector);
+    this.parentElement = function() {
+        return this.parent().children();
     };
 
-    // Returns immediate parent elements
-    // Optionally takes a query to filter the parent elements.
-
-    this.parent = function(selector) {
-        return _dom._create(_util.map(this.elements, function(t) {
-            return t.parentElement
-        }), selector);
+    this.firstElementChild = function() {
+        return this.children().first();
     };
 
-    // Returns all parent elements for nodes
-    // Optionally takes a query to filter the child elements.
-
-    this.parents = function(selector) {
-        var ancestors = [],
-            elements = this.elements,
-            fn = function(elem) {
-                if (elem && (elem = elem.parentElement) && elem !== document && _util.indexOf(ancestors, elem) < 0) {
-                    ancestors.push(elem);
-                    return elem;
-                }
-            };
-
-        while (elements.length > 0 && elements[0] !== undefined) {
-            elements = _util.map(elements, fn);
-        }
-
-        if (this.length > 1) {
-            // Remove duplicates
-            _core.uniqueSort(ancestors);
-            // Reverse order for parents
-            ancestors.reverse();
-        }
-        return _dom._create(ancestors, selector);
+    this.lastElementChild = function() {
+        return this.children().last();
     };
 
-    // Returns closest parent that matches query
-
-    this.closest = function(selector, ctx) {
-        var cur,
-            i = 0,
-            l = this.length,
-            matched = [];
-
-        for (; i < l; i++) {
-            for (cur = this.elements[i]; cur && cur !== ctx; cur = cur.parentNode) {
-                // Always skip document fragments
-                if (cur.nodeType < 11 &&
-                    cur.nodeType === 1 &&
-                    _matches.matches(cur, selector)) {
-
-                    matched.push(cur);
-                    break;
-                }
-            }
-        }
-
-        return hAzzle(matched.length > 1 ? _core.uniqueSort(matched) : matched);
+    this.previousElementSibling = function() {
+        return this.prev().last();
     };
 
-    // Returns all immediate child elements for nodes
-
-    this.children = function(selector) {
-        return _dom._create(_collection.reduce(this.elements, function(els, elem) {
-            var children = _collection.slice(elem.children);
-            return els.concat(children);
-        }, []), selector);
+    this.nextElementSibling = function() {
+        return this.next().first();
     };
 
-    return {};
+    this.childElementCount = function() {
+        return this.children().length;
+    };
+
+    return {
+        makeArray: makeArray,
+        slice: slice,
+        reduce: reduce,
+        inArray: inArray
+    };
 });
 
 // jiesa.js
@@ -1766,63 +1631,35 @@ hAzzle.define('Jiesa', function() {
         }
     }
 
-    this.jiesa = Jiesa;
+    // Find is not the same as 'Jiesa', but a optimized version for 
+    // better performance
 
-    return {
-        find: Jiesa
-    };
-});
+    this.find = function(selector, context, /*internal*/ internal) {
 
-// dom.js
-hAzzle.define('Dom', function() {
+        // Only for use by hAzzle.js module
 
-    var _util = hAzzle.require('Util'),
-        _core = hAzzle.require('Core'),
-        _collection = hAzzle.require('Collection'),
-        _matches = hAzzle.require('Matches'),
-        _jiesa = hAzzle.require('Jiesa'),
-
-        rquick = /^(?:(\w+)|\.([\w\-]+))$/,
-
-        // Creates a new hAzzle instance applying a filter if necessary
-        _create = function(elements, selector) {
-            return selector == null ? new hAzzle(elements) : new hAzzle(elements).filter(selector);
-        };
-
-    this.find = function(selector) {
+        if (internal) {
+            return Jiesa(selector, context)
+        }
 
         if (typeof selector === 'string') {
 
+            // Single look-up should always be faster then multiple look-ups
+
             if (this.length === 1) {
-
-                var elements, elem = this.elements[0],
-                    quickMatch = rquick.exec(selector);
-
-                if (quickMatch) {
-
-                    if (quickMatch[1]) {
-                        // speed-up: 'TAG'
-                        elem = _create(elem.getElementsByTagName(selector));
-
-                    } else {
-                        // speed-up: '.CLASS'
-                        elem = _create(elem.getElementsByClassName(quickMatch[2]));
-                    }
-                }
-
-                return _create(_collection.slice(_jiesa.find(selector, this.elements[0])));
-
+                return new hAzzle(Jiesa(selector, this.elements[0]));
             } else {
                 elements = _collection.reduce(this.elements, function(els, element) {
-                    return _create(_core.uniqueSort(els.concat(_collection.slice(_jiesa.find(selector, element)))));
+                    return new hAzzle(els.concat(_collection.slice(Jiesa(selector, element))));
                 }, []);
             }
         }
+
         var i,
             len = this.length,
             self = this.elements;
 
-        return _create(_util.filter(hAzzle(selector).elements, function(node) {
+        return new hAzzle(_util.filter(hAzzle(selector).elements, function(node) {
             for (i = 0; i < len; i++) {
                 if (_core.contains(self[i], node)) {
                     return true;
@@ -1831,32 +1668,60 @@ hAzzle.define('Dom', function() {
         }));
     };
 
-    // Implement the identical functionality for filter and not
+    // Filter element collection
+
     this.filter = function(selector, not) {
-        var elems = this.elements;
-
+        if (selector === undefined) {
+            return this;
+        }
         if (typeof selector === 'function') {
-            var fn = selector;
-            return _create(_util.filter(elems, function(elem, index) {
-                return fn.call(elem, elem, index) != (not || false);
-            }));
+            var els = [];
+            this.each(function(el, index) {
+                if (selector.call(el, index)) {
+                    els.push(el);
+                }
+            });
+
+            return new hAzzle(els);
+        } else {
+            return this.filter(function() {
+                return matches(this, selector) != (not || false);
+            });
         }
-        if (selector && selector[0] === '!') {
-            selector = selector.slice(1);
-            not = true;
+    };
+
+    function matches(element, selector) {
+        var match;
+
+        if (!element || !_util.isElement(element) || !selector) {
+            return false;
         }
 
-        return _create(_util.filter(elems, function(elem) {
-            return _matches.matches(elem, selector) != (not || false);
-        }));
-    };
+        if (selector.nodeType) {
+            return element === selector;
+        }
+
+        // If instance of hAzzle
+
+        if (selector instanceof hAzzle) {
+            return _util.some(selector.elements, function(selector) {
+                return matches(element, selector);
+            });
+        }
+
+        if (element === document) {
+            return false;
+        }
+
+        return element.matches(selector)
+
+    }
 
     return {
-        _create: _create
-
+        matches: matches,
+        find: Jiesa
     };
 });
-
 // strings.js
 hAzzle.define('Strings', function() {
     var
@@ -1864,8 +1729,8 @@ hAzzle.define('Strings', function() {
 
         nTrim = String.prototype.trim,
 
-        // Support: Android<4.1
-
+       // Support: Android<4.1
+       
         nNTrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
 
         // Hyphenate RegExp
@@ -1959,9 +1824,9 @@ hAzzle.define('Strings', function() {
         // Remove leading and trailing whitespaces of the specified string.
 
         trim = function(str) {
-            return str == null ? '' : nTrim ? (typeof str === 'string' ? str.nTrim() : str) :
-                // Any idiots still using Android 4.1 ?
-                (str + '').replace(nNTrim, '');
+            return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
+            // Any idiots still using Android 4.1 ?
+                (str + '' ).replace(nNTrim, '');
         };
 
     // Credit: AngularJS    
@@ -3035,11 +2900,10 @@ hAzzle.define('cssHooks', function() {
                 _ccs.curCSS(elem, vals[1]) + ' ' +
                 _ccs.curCSS(elem, vals[2]) + ' ' +
                 _ccs.curCSS(elem, vals[3]);
-
         };
     });
-
-    // Getter    
+    
+       // Getter    
     _util.extend(_style.cssHooks.get, {
         'opacity': function(elem, computed) {
             if (computed) {
@@ -3048,56 +2912,57 @@ hAzzle.define('cssHooks', function() {
                 return ret === '' ? '1' : ret;
             }
         },
-        'zIndex': function(elem) {
-            var val = _ccs.curCSS(elem, 'zIndex');
-            return val === 'auto' ? 0 : val;
-        },
-        'height': function(elem) {
+        'zIndex': function( elem ){
+        var val = _ccs.curCSS( elem, 'zIndex' );
+        return val === 'auto' ? 0 : val;
+    },
+    'height': function(elem) {
 
-            var docElem;
-
-            if (!elem) {
+       var docElem;
+            
+            if( !elem ){
                 return;
             }
-
-            if (_types.isWindow(elem)) {
+            
+            if( _types.isWindow(elem) ){
                 return elem.document.documentElement.clientHeight;
             }
-
-            if (elem.nodeType === 9) {
+    
+            if( elem.nodeType === 9 ){      
                 docElem = elem.documentElement;
-                return Math.max(docElem.scrollHeight, docElem.clientHeight);
+                return Math.max( docElem.scrollHeight, docElem.clientHeight ) ;
             }
-
-            return _style.swap(elem, function() {
-                return _ccs.curCSS(elem, 'height');
+            
+            return _style.swap( elem, function(){
+                return _ccs.curCSS( elem, 'height' );
             });
-        },
-        'width': function(elem) {
+     },
+    'width': function(elem) {
 
-            var docElem;
-
-            if (!elem) {
+       var docElem;
+            
+            if( !elem ){
                 return;
             }
-
-            if (_types.isWindow(elem)) {
+            
+            if( _types.isWindow(elem) ){
                 return elem.document.documentElement.clientWidth;
             }
-
-            if (elem.nodeType === 9) {
+    
+            if( elem.nodeType === 9 ){      
                 docElem = elem.documentElement;
-                return Math.max(docElem.scrollWidth, docElem.clientWidth);
+                return Math.max( docElem.scrollWidth, docElem.clientWidth ) ;
             }
-
-            return _style.swap(elem, function() {
-                return _ccs.curCSS(elem, 'Width');
+            
+            return _style.swap( elem, function(){
+                return _ccs.curCSS( elem, 'Width' );
             });
-        },
+     },
     });
 
     return {};
 });
+
 // dimensions.js
 hAzzle.define('Dimensions', function() {
 
@@ -3692,85 +3557,90 @@ hAzzle.define('Setters', function() {
             }
         },
 
+        // get/set attribute
+
         Attr = function(elem, name, value) {
-            var hooks, ret, nType = elem.nodeType,
-                notxml;
 
-            // don't get/set attributes on text, comment and attribute nodes
-            if (elem && (nType !== 3 || nType !== 8 || nType !== 2)) {
+            var nodeType = elem ? elem.nodeType : undefined,
+                hooks, ret, notxml;
 
-
-                // Fallback to prop when attributes are not supported
-                if (typeof elem.getAttribute === 'undefined') {
-                    return Prop(elem, name, value);
-                }
-
-                notxml = nType !== 1 || !_core.isXML(elem);
-
-                if (notxml) {
-
-                    name = name.toLowerCase();
-                    hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
-                        getBooleanAttrName(elem, name) ?
-                        boolHooks[value === 'undefined' ?
-                            'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
-                }
-
-                // Get attribute
-
-                if (value === undefined) {
-
-                    if (hooks && (ret = hooks.get(elem, name))) {
-                        if (ret !== null) {
-                            return ret;
-                        }
-                    }
-
-                    ret = elem.getAttribute(name, 2);
-                    // Non-existent attributes return null, we normalize to undefined
-                    return ret == null ?
-                        undefined :
-                        ret;
-                }
-
-                // Set attribute            
-
-                if (value === null) {
-                    removeAttr(elem, name);
-                } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
-                    return ret;
-                } else {
-                    elem.setAttribute(name, value + '');
-                }
+            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
+                return '';
             }
+            // don't get/set attributes on text, comment and attribute nodes
+
+
+            // Fallback to prop when attributes are not supported
+            if (typeof elem.getAttribute === 'undefined') {
+                return Prop(elem, name, value);
+            }
+
+            notxml = nodeType !== 1 || !_core.isXML(elem);
+
+            if (notxml) {
+
+                name = name.toLowerCase();
+                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
+                    getBooleanAttrName(elem, name) ?
+                    boolHooks[value === 'undefined' ?
+                        'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
+            }
+
+            // getAttribute
+
+            if (value === undefined) {
+
+                if (hooks && (ret = hooks.get(elem, name))) {
+                    if (ret !== null) {
+                        return ret;
+                    }
+                }
+
+                ret = elem.getAttribute(name, 2);
+                // Non-existent attributes return null, we normalize to undefined
+                return ret == null ?
+                    undefined :
+                    ret;
+            }
+
+            // setAttribute          
+
+            if (value === null) {
+                removeAttr(elem, name);
+            } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
+                return ret;
+            } else {
+                elem.setAttribute(name, value + '');
+            }
+
         },
 
         Prop = function(elem, name, value) {
 
-            var ret, hook, nType = elem.nodeType;
+            var nodeType = elem ? elem.nodeType : undefined,
+                hook, ret;
 
-            if (elem && (nType !== 2 || nType !== 3 || nType !== 8)) {
+            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
+                return '';
+            }
+            if (nodeType !== 1 || _core.isHTML) {
 
-                if (nType !== 1 || _core.isHTML) {
+                // Fix name and attach hooks
+                name = propMap[name] || name;
+                hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
+            }
 
-                    // Fix name and attach hooks
-                    name = propMap[name] || name;
-                    hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
-                }
+            if (typeof value !== 'undefined') {
 
-                if (typeof value !== 'undefined') {
+                return hook && (ret = hook.set(elem, value, name)) !== undefined ?
+                    ret :
+                    (elem[name] = value);
 
-                    return hook && (ret = hook.set(elem, value, name)) !== undefined ?
-                        ret :
-                        (elem[name] = value);
+            } else {
 
-                } else {
-
-                    return hook && (ret = hook(elem, name)) !== null ?
-                        ret :
-                        elem[name];
-                }
-
+                return hook && (ret = hook(elem, name)) !== null ?
+                    ret :
+                    elem[name];
             }
         };
 
@@ -3783,15 +3653,13 @@ hAzzle.define('Setters', function() {
             return;
         }
 
-
         if (!arguments.length) {
             if (elem) {
                 hooks = valHooks.get[elem.type] ||
                     valHooks.get[elem.nodeName.toLowerCase()];
 
-                if (hooks && (ret = hooks.get(elem, 'value')) !== undefined) {
-                    return ret;
-
+                if (hooks) {
+                    return hooks(elem, 'value');
                 }
 
                 ret = elem.value;
@@ -3884,6 +3752,12 @@ hAzzle.define('Setters', function() {
         });
     };
 
+	this.removeProp = function( name ) {
+		return this.each(function() {
+			delete this[ propMap[ name ] || name ];
+		});
+	};
+    
     this.removeAttr = function(value) {
         return this.each(function(elem) {
             removeAttr(elem, value);
@@ -4042,7 +3916,7 @@ hAzzle.define('valHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _strings = hAzzle.require('Strings'),
-        _getText = hAzzle.require('getText'),
+        _getText = hAzzle.require('Text'),
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
         _setters = hAzzle.require('Setters');
@@ -4120,7 +3994,6 @@ hAzzle.define('valHooks', function() {
         }
     });
 
-
     // Radios and checkboxes setter
 
     _util.each(['radio', 'checkbox'], function(val) {
@@ -4147,79 +4020,9 @@ hAzzle.define('Events', function() {
 hAzzle.define('Traversing', function() {
 
     var _jiesa = hAzzle.require('Jiesa'),
-        _dom = hAzzle.require('Dom'),
-        _matches = hAzzle.require('Matches'),
         _collection = hAzzle.require('Collection'),
         _core = hAzzle.require('Core'),
         _util = hAzzle.require('Util');
-
-    this.contains = function(selector) {
-        var matches;
-        return _dom._create(_collection.reduce(this.elements, function(elements, element) {
-            matches = _jiesa.find(element, selector);
-            return elements.concat(matches.length ? element : null);
-        }, []));
-    };
-
-    this.is = function(selector) {
-        return this.length > 0 && this.filter(selector).length > 0;
-    };
-
-    this.not = function(selector) {
-        return this.filter(selector, true);
-    };
-
-    // Determine the position of an element within the set
-    this.index = function(selector) {
-        return selector == null ?
-            this.parent().children().indexOf(this.elements[0]) :
-            this.elements.indexOf(new hAzzle(selector).elements[0]);
-    };
-
-    this.add = function(selector, ctx) {
-        var elements = selector;
-        if (typeof selector === 'string') {
-            elements = new hAzzle(selector, ctx).elements;
-        }
-        return this.concat(elements);
-    };
-
-    this.has = function(selector) {
-        return _dom._create(_util.filter(
-            this.elements,
-            _util.isElement(selector) ? function(el) {
-                return _core.contains(selector, el);
-            } : typeof selector === 'string' && selector.length ? function(el) {
-                return _jiesa.find(selector, el).length;
-            } : function() {
-                return false;
-            }
-        ));
-    };
-
-    // Returns `element`'s first following sibling
-
-    this.next = function(selector) {
-        return this.map(function(elem) {
-            return elem.nextElementSibling;
-        }).filter(selector || '*');
-    };
-
-    // Returns `element`'s first previous sibling
-
-    this.prev = function(selector) {
-        return this.map(function(elem) {
-            return elem.previousElementSibling;
-        }).filter(selector || '*');
-    };
-
-    this.first = function(index) {
-        return index ? this.slice(0, index) : this.eq(0);
-    };
-
-    this.last = function(index) {
-        return index ? this.slice(this.length - index) : this.eq(-1);
-    };
 
     // Returns all sibling elements for nodes
     // Optionally takes a query to filter the sibling elements.
@@ -4241,16 +4044,23 @@ hAzzle.define('Traversing', function() {
                 }
             }
         });
-        return _dom._create(ret, selector);
+        return selector === undefined ? hAzzle(ret) : hAzzle(ret).filter(selector);
     };
 
-    // Returns immediate parent elements
-    // Optionally takes a query to filter the parent elements.
+    // Get immediate parents of each element in the collection.
+    // If CSS selector is given, filter results to include only ones matching the selector.
 
-    this.parent = function(selector) {
-        return _dom._create(_util.map(this.elements, function(t) {
-            return t.parentElement
-        }), selector);
+    this.parent = function(sel) {
+        var matched = this.map(function(elem) {
+            var parent = elem.parentElement;
+            return parent && parent.nodeType !== 11 ? parent : null;
+        }).filter(sel);
+
+        if (this.length > 1) {
+            // Remove duplicates
+            _core.uniqueSort(matched.elements);
+        }
+        return matched;
     };
 
     // Returns all parent elements for nodes
@@ -4258,16 +4068,14 @@ hAzzle.define('Traversing', function() {
 
     this.parents = function(selector) {
         var ancestors = [],
-            elements = this.elements,
-            fn = function(elem) {
-                if (elem && (elem = elem.parentElement) && elem !== document && _util.indexOf(ancestors, elem) < 0) {
+            elements = this.elements;
+        while (elements.length > 0 && elements[0] !== undefined) {
+            elements = _util.map(elements, function(elem) {
+                if (elem && (elem = elem.parentElement) && elem.nodeType !== 9) {
                     ancestors.push(elem);
                     return elem;
                 }
-            };
-
-        while (elements.length > 0 && elements[0] !== undefined) {
-            elements = _util.map(elements, fn);
+            });
         }
 
         if (this.length > 1) {
@@ -4276,10 +4084,11 @@ hAzzle.define('Traversing', function() {
             // Reverse order for parents
             ancestors.reverse();
         }
-        return _dom._create(ancestors, selector);
+        return selector === undefined ? hAzzle(ancestors) : hAzzle(ancestors).filter(selector);
     };
 
-    // Returns closest parent that matches query
+    // Get the first element that matches the selector, beginning at 
+    // the current element and progressing up through the DOM tree.
 
     this.closest = function(selector, ctx) {
         var cur,
@@ -4292,7 +4101,7 @@ hAzzle.define('Traversing', function() {
                 // Always skip document fragments
                 if (cur.nodeType < 11 &&
                     cur.nodeType === 1 &&
-                    _matches.matches(cur, selector)) {
+                    _jiesa.matches(cur, selector)) {
 
                     matched.push(cur);
                     break;
@@ -4303,17 +4112,49 @@ hAzzle.define('Traversing', function() {
         return hAzzle(matched.length > 1 ? _core.uniqueSort(matched) : matched);
     };
 
-    // Returns all immediate child elements for nodes
+    // Get immediate children of each element in the current collection.
+    // If selector is given, filter the results to only include ones matching the CSS selector.
 
     this.children = function(selector) {
-        return _dom._create(_collection.reduce(this.elements, function(els, elem) {
-            var children = _collection.slice(elem.children);
-            return els.concat(children);
-        }, []), selector);
+        var children = [];
+        this.each(function(elem) {
+            _util.each(_collection.slice(elem.children), function(value) {
+                children.push(value);
+            });
+        });
+        return selector === undefined ? hAzzle(children) : hAzzle(children).filter(selector);
     };
+
+    // Return elements that is a descendant of another.
+
+    this.contains = function(selector) {
+        var matches;
+        return new hAzzle(_collection.reduce(this.elements, function(elements, element) {
+            matches = _jiesa.find(element, selector);
+            return elements.concat(matches.length ? element : null);
+        }, []));
+    };
+
+    // Reduce the set of matched elements to those that have a descendant that matches the 
+    //selector or DOM element.
+
+    this.has = function(sel) {
+        return hAzzle(_util.filter(
+            this.elements,
+            _util.isElement(sel) ? function(el) {
+                return _core.contains(sel, el);
+            } : typeof sel === 'string' && sel.length ? function(el) {
+                return _jiesa.find(sel, el).length;
+            } : function() {
+                return false;
+            }
+        ));
+    };
+
 
     return {};
 });
+
 // classes.js
 hAzzle.define('Classes', function() {
 
@@ -4453,7 +4294,7 @@ hAzzle.define('Classes', function() {
                 }, fn);
             });
         },
-        setClass = function(element, /* classe(s) to be added*/ add, /* classe(s) to be removed*/ remove, fn) {
+        setClass = function(elem, /* classe(s) to be added*/ add, /* classe(s) to be removed*/ remove, fn) {
             addClass(elem, add, fn);
             removeClass(elem, remove, fn);
         },
@@ -4522,7 +4363,18 @@ hAzzle.define('Classes', function() {
                 hAzzle(elem).addClass(classes.call(elem, index, elem.className));
             }) : addClass(this.elements, classes, fn);
     };
+    
+    // Replace a given class with another
+    
+    this.replaceClass = function(firstClass, secondClass) {
+        if (this.hasClass(firstClass)) {
+            this.removeClass(firstClass).addClass(secondClass);
+        } else if (this.hasClass(secondClass)) {
+            this.removeClass(secondClass).addClass(firstClass);
+        }
 
+        return this;
+    };
     // Removes CSS class `className` from `element`.
 
     this.removeClass = function(classes) {
@@ -4546,7 +4398,7 @@ hAzzle.define('Classes', function() {
 // visibility.js
 hAzzle.define('Visibility', function() {
 
-    var _style = hAzzle.require('Style'),
+    var _ccs = hAzzle.require('curCSS'),
         _core = hAzzle.require('Core'),
         _storage = hAzzle.require('Storage'),
         iframe, doc,
@@ -4556,7 +4408,7 @@ hAzzle.define('Visibility', function() {
         },
 
         isHidden = function(elem) {
-            return _style.curCSS(elem, 'display') === 'none' || !_core.contains(elem.ownerDocument, elem);
+            return _ccs.curCSS(elem, 'display') === 'none' || !_core.contains(elem.ownerDocument, elem);
         },
 
         showHide = function(elements, show) {
@@ -4566,9 +4418,9 @@ hAzzle.define('Visibility', function() {
                 length = elements.length;
 
             for (; index < length; index++) {
-
+              
                 elem = elements[index];
-
+              
                 if (!elem.style) {
                     continue;
                 }
@@ -4587,7 +4439,7 @@ hAzzle.define('Visibility', function() {
                 } else {
                     hidden = isHidden(elem);
                     if (display && display !== 'none' || !hidden) {
-                        _storage.privateData.set(elem, 'cssDisplay', hidden ? display : _style.curCSS(elem, 'display'));
+                        _storage.privateData.set(elem, 'cssDisplay', hidden ? display : _ccs.curCSS(elem, 'display'));
                     }
                 }
             }
@@ -4641,7 +4493,7 @@ hAzzle.define('Visibility', function() {
 
                     doc.body.appendChild(elem);
 
-                    display = _style.curCSS(elem, 'display');
+                    display = _ccs.curCSS(elem, 'display');
                     body.removeChild(iframe);
                 }
 
@@ -4667,7 +4519,6 @@ hAzzle.define('Visibility', function() {
         return showHide(this.elements);
     };
 
-
     this.toggle = function(state, /*optional*/ fn) {
 
         if (!fn && typeof state === 'function') {
@@ -4686,7 +4537,7 @@ hAzzle.define('Visibility', function() {
 
             if (fn) {
                 fn.call(elem, elem);
-                // Set to false so it  get fired only once
+                    // Set to false so it  get fired only once
                 fn = false;
             }
         });
@@ -4695,7 +4546,7 @@ hAzzle.define('Visibility', function() {
     return {
         show: show,
         hide: hide,
-        isHidden: isHidden
+        isHidden:isHidden
     };
 });
 

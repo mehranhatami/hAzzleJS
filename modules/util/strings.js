@@ -100,7 +100,7 @@ hAzzle.define('Strings', function() {
         // Remove leading and trailing whitespaces of the specified string.
 
         trim = function(str) {
-            return str == null ? '' : nTrim ? (typeof str === 'string' ? str.nTrim() : str) :
+            return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
             // Any idiots still using Android 4.1 ?
                 (str + '' ).replace(nNTrim, '');
         };

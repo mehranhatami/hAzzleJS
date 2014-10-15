@@ -137,7 +137,7 @@ hAzzle.define('Classes', function() {
                 }, fn);
             });
         },
-        setClass = function(element, /* classe(s) to be added*/ add, /* classe(s) to be removed*/ remove, fn) {
+        setClass = function(elem, /* classe(s) to be added*/ add, /* classe(s) to be removed*/ remove, fn) {
             addClass(elem, add, fn);
             removeClass(elem, remove, fn);
         },
@@ -206,7 +206,18 @@ hAzzle.define('Classes', function() {
                 hAzzle(elem).addClass(classes.call(elem, index, elem.className));
             }) : addClass(this.elements, classes, fn);
     };
+    
+    // Replace a given class with another
+    
+    this.replaceClass = function(firstClass, secondClass) {
+        if (this.hasClass(firstClass)) {
+            this.removeClass(firstClass).addClass(secondClass);
+        } else if (this.hasClass(secondClass)) {
+            this.removeClass(secondClass).addClass(firstClass);
+        }
 
+        return this;
+    };
     // Removes CSS class `className` from `element`.
 
     this.removeClass = function(classes) {

@@ -8,14 +8,14 @@ hAzzle.define('Collection', function() {
         _concat = _arrayProto.concat,
         _push = _arrayProto.push,
         inArray = function(elem, arr, i) {
-            return arr == null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
+            return arr === undefined ? -1 : _arrayProto.indexOf.call(arr, elem, i);
         },
         makeArray = function(arr, results) {
             var ret = results || [];
 
-            if (arr != null) {
+            if (arr !== undefined) {
                 if (_types.isArrayLike(Object(arr))) {
-                    _util.merge(ret, _util.isString(arr) ? [arr] : arr);
+                    _util.merge(ret, _types.isString(arr) ? [arr] : arr);
                 } else {
                     _push.call(ret, arr);
                 }
@@ -23,17 +23,12 @@ hAzzle.define('Collection', function() {
 
             return ret;
         },
-        removeValue = function(array, value) {
-            var index = indexOf(array, value);
-            if (index >= 0) {
-                array.splice(index, 1);
-            }
-            return value;
-        },
+
         //  Reduces a collection
+        // Replacement for reduce -  ECMAScript 5 15.4.4.21     
         reduce = function(collection, fn, accumulator, args) {
 
-            if (collection == null) {
+            if (!collection) {
                 collection = [];
             }
 
@@ -60,61 +55,30 @@ hAzzle.define('Collection', function() {
         },
 
         slice = function(array, start, end) {
+            if (typeof start === 'undefined') {
+                start = 0;
+            }
+            if (typeof end === 'undefined') {
+                end = array ? array.length : 0;
+            }
+            var index = -1,
+                length = end - start || 0,
+                result = Array(length < 0 ? 0 : length);
 
-            var e = end,
-                length = array.length,
-                result = [];
-
-            start = fixedIndex(length, Math.max(-array.length, start), 0);
-
-            e = fixedIndex(end < 0 ? length : length + 1, end, length);
-
-            end = e === null || e > length ? end < 0 ? 0 : length : e;
-
-            while (start !== null && start < end) {
-                result.push(array[start++]);
+            while (++index < length) {
+                result[index] = array[start + index];
             }
             return result;
-        },
-
-        // Given an index & length, return a 'fixed' index, fixes non-numbers & negative indexes
-
-        fixedIndex = function(length, index, def) {
-            if (index < 0) {
-                index = length + index;
-            } else if (index < 0 || index >= length) {
-                return null;
-            }
-            return !index && index !== 0 ? def : index;
-        },
-        // Determines the number of elements in an array, the number of properties an object has, or
-        // the length of a string.
-        size = function(obj, ownPropsOnly) {
-            var count = 0,
-                key;
-
-            if (_types.isArray(obj) || _types.isString(obj)) {
-                return obj.length;
-            } else if (_types.isObject(obj)) {
-                for (key in obj)
-                    if (!ownPropsOnly || _util.has(key)) {
-                        count++;
-                    }
-            }
-
-            return count;
         };
 
-    // Core function, so this one has to be fast!!!!!!
+    // Retrieve the DOM elements matched by the hAzzle object.
     this.get = function(index) {
-        return index == null ? slice(this.elements) :
-            this.elements[fixedIndex(this.length, index, 0)];
+        return index === undefined ? slice(this.elements) : this.elements[index >= 0 ? index : index + this.length];
     };
 
+    // Get the element at position specified by index from the current collection.
     this.eq = function(index) {
-        // We have to explicitly null the selection since .get()
-        // returns the whole collection when called without arguments.
-        return hAzzle(index == null ? '' : this.get(index));
+        return index === -1 ? hAzzle(slice(this.elements, this.length - 1)) : hAzzle(slice(this.elements, index, index + 1));
     };
 
     this.reduce = function(fn, accumulator, args) {
@@ -134,14 +98,6 @@ hAzzle.define('Collection', function() {
         return this;
     };
 
-    this.iterate = function(fn, args) {
-        return function(a, b, c, d) {
-            return this.each(function(element) {
-                fn.call(args, element, a, b, c, d);
-            });
-        };
-    };
-
     this.slice = function(start, end) {
         return new hAzzle(slice(this.elements, start, end));
     };
@@ -154,12 +110,83 @@ hAzzle.define('Collection', function() {
         return new hAzzle(_concat.apply(this.elements, args));
     };
 
+
+    this.is = function(sel) {
+        return this.length > 0 && this.filter(sel).length > 0;
+    };
+
+    // Get elements in list but not with this selector
+
+    this.not = function(sel) {
+        return this.filter(sel, true);
+    };
+
+    // Determine the position of an element within the set
+    this.index = function(sel) {
+        return sel === undefined ?
+            this.parent().children().indexOf(this.elements[0]) :
+            this.elements.indexOf(new hAzzle(sel).elements[0]);
+    };
+
+    this.add = function(sel, ctx) {
+        var elements = sel;
+        if (typeof sel === 'string') {
+            elements = new hAzzle(sel, ctx).elements;
+        }
+        return this.concat(elements);
+    };
+    // Returns `element`'s first following sibling
+
+    this.next = function(sel) {
+        return this.map(function(elem) {
+            return elem.nextElementSibling;
+        }).filter(sel);
+    };
+
+    // Returns `element`'s first previous sibling
+
+    this.prev = function(sel) {
+        return this.map(function(elem) {
+            return elem.previousElementSibling;
+        }).filter(sel);
+    };
+
+    this.first = function(index) {
+        return index ? this.slice(0, index) : this.eq(0);
+    };
+
+    this.last = function(index) {
+        return index ? this.slice(this.length - index) : this.eq(-1);
+    };
+
+    this.parentElement = function() {
+        return this.parent().children();
+    };
+
+    this.firstElementChild = function() {
+        return this.children().first();
+    };
+
+    this.lastElementChild = function() {
+        return this.children().last();
+    };
+
+    this.previousElementSibling = function() {
+        return this.prev().last();
+    };
+
+    this.nextElementSibling = function() {
+        return this.next().first();
+    };
+
+    this.childElementCount = function() {
+        return this.children().length;
+    };
+
     return {
         makeArray: makeArray,
-        removeValue: removeValue,
         slice: slice,
         reduce: reduce,
-        size: size,
         inArray: inArray
     };
 });

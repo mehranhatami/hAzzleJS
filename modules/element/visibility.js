@@ -1,7 +1,7 @@
 // visibility.js
 hAzzle.define('Visibility', function() {
 
-    var _style = hAzzle.require('Style'),
+    var _ccs = hAzzle.require('curCSS'),
         _core = hAzzle.require('Core'),
         _storage = hAzzle.require('Storage'),
         iframe, doc,
@@ -11,7 +11,7 @@ hAzzle.define('Visibility', function() {
         },
 
         isHidden = function(elem) {
-            return _style.curCSS(elem, 'display') === 'none' || !_core.contains(elem.ownerDocument, elem);
+            return _ccs.curCSS(elem, 'display') === 'none' || !_core.contains(elem.ownerDocument, elem);
         },
 
         showHide = function(elements, show) {
@@ -42,7 +42,7 @@ hAzzle.define('Visibility', function() {
                 } else {
                     hidden = isHidden(elem);
                     if (display && display !== 'none' || !hidden) {
-                        _storage.privateData.set(elem, 'cssDisplay', hidden ? display : _style.curCSS(elem, 'display'));
+                        _storage.privateData.set(elem, 'cssDisplay', hidden ? display : _ccs.curCSS(elem, 'display'));
                     }
                 }
             }
@@ -96,7 +96,7 @@ hAzzle.define('Visibility', function() {
 
                     doc.body.appendChild(elem);
 
-                    display = _style.curCSS(elem, 'display');
+                    display = _ccs.curCSS(elem, 'display');
                     body.removeChild(iframe);
                 }
 

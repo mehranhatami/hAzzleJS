@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0a-alpha
+ * Version: 1.0.0b-alpha
  * Released under the MIT License.
  *
- * Date: 2014-10-14
+ * Date: 2014-10-16
  */
 (function() {
 
@@ -16,8 +16,6 @@
         // Minimalist module system
 
         modules = {},
-        
-        _toString = _objectProto.toString,
 
         // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
 
@@ -76,7 +74,7 @@
             if (!sel) {
                 return;
             }
-
+            // Allow instantiation without the 'new' keyword
             if (!(this instanceof hAzzle)) {
                 return new hAzzle(sel, ctx);
             }
@@ -103,13 +101,17 @@
                 }
 
                 if (this.elements === null || this.elements === undefined) {
-                    this.elements = this.jiesa(sel, ctx);
+
+                    // The 'find' method need to have a boolean value set to 'true', to 
+                    // work as expected. Else it will behave like the global .find method
+
+                    this.elements = this.find(sel, ctx, true);
                 }
                 // array   
             } else if (sel instanceof Array) {
                 this.elements = _util.unique(_util.filter(sel, validTypes));
                 // nodeList
-            } else if (['nodelist', 'htmlcollection', 'htmlformcontrolscollection'].indexOf(_toString.call(sel)) >= 0) {
+            } else if (this.isNodeList(sel)) {
                 this.elements = _util.filter(_util.makeArray(sel), validTypes);
                 // nodeType
             } else if (sel.nodeType) {
@@ -130,6 +132,7 @@
             // If undefined, set length to 0, and
             // elements to an empty array [] to avoid hAzzle
             // throwing errors
+
 
             if (this.elements === undefined) {
                 this.length = 0;

@@ -20,10 +20,11 @@ hAzzle.define('Util', function() {
         },
 
         // Optimized each function
+        // Replacement for forEach - ECMAScript 5 15.4.4.18 
 
         each = function(obj, fn, ctx, rev) {
 
-            if (!obj) {
+            if (obj === undefined) {
                 return obj;
             }
 
@@ -36,34 +37,18 @@ hAzzle.define('Util', function() {
             var i, length = obj.length;
 
             if (length === +length) {
-                // Quick each optimizing for no arguments
-                if (!ctx) {
-
-                    i = -1;
-                    while (++i < length) {
-                        // Reverse feature 
-                        i = rev ? obj.length - i - 1 : i;
-                        if (fn(obj[i], i, obj) === false) {
-                            break;
-                        }
-                    }
-                } else {
-
-                    for (i = 0; i < length; i++) {
-                        // Reverse feature 
-                        i = rev ? obj.length - i - 1 : i;
-                        if (fn(obj[i], i, obj) === false) {
-                            break;
-                        }
+                for (i = 0; i < length; i++) {
+                    // Reverse  
+                    i = rev ? obj.length - i - 1 : i;
+                    if (fn(obj[i], i, obj) === false) {
+                        break;
                     }
                 }
             } else {
                 if (obj) {
-                    var keys = _keys(obj);
-
-                    for (i = 0, length = keys.length; i < length; i++) {
-
-                        if (fn(obj[keys[i]], keys[i], obj) === false) {
+                    var key;
+                    for (key in obj) {
+                        if (fn(obj[key], key, obj) === false) {
                             break;
                         }
                     }
@@ -83,34 +68,27 @@ hAzzle.define('Util', function() {
 
                 var dir = !argCount ? 3 : argCount;
 
-                switch (dir) {
+                return dir === 1 ? function(value) {
+                        return func.call(ctx, value);
+                    } : dir === 2 ?
+                    function(value, other) {
+                        return func.call(ctx, value, other);
+                    } : dir === 3 ?
+                    function(value, index, collection) {
+                        return func.call(ctx, value, index, collection);
+                    } : dir === 4 ?
+                    function(accumulator, value, index, collection) {
+                        return func.call(ctx, accumulator, value, index, collection);
+                    } : function() {
+                        return func.apply(ctx, arguments);
+                    };
 
-                    case 1:
-                        return function(value) {
-                            return func.call(ctx, value);
-                        };
-                    case 2:
-                        return function(value, other) {
-                            return func.call(ctx, value, other);
-                        };
-                    case 3:
-                        return function(value, index, collection) {
-                            return func.call(ctx, value, index, collection);
-                        };
-                    case 4:
-                        return function(accumulator, value, index, collection) {
-                            return func.call(ctx, accumulator, value, index, collection);
-                        };
-                }
-                return function() {
-                    return func.apply(ctx, arguments);
-                };
             }
             if (!func) {
                 return identity;
             }
         },
-
+        // Faster alternative then Some - ECMAScript 5 15.4.4.17
         some = function(obj, fn, ctx) {
 
             if (!obj) {
@@ -145,11 +123,10 @@ hAzzle.define('Util', function() {
 
         // Extends the destination object `obj` by copying all of the 
         // properties from the `src` object(s)
-        // The 'hashKey' will automatically be copied over to the
-        // destination object `obj` if it exist on the 'src' object(s)
 
         extend = function(obj) {
             if (!_types.isObject(obj)) {
+
                 return obj;
             }
 
@@ -206,8 +183,9 @@ hAzzle.define('Util', function() {
         // Returns a predicate for checking whether an object has a given set of `key:value` pairs.
         matches = function(attrs) {
 
-            var pairs = pairs(attrs),
-                length = pairs.length;
+            var prs = pairs(attrs),
+                length = prs.length;
+
             return function(obj) {
 
                 if (!obj) {
@@ -217,7 +195,7 @@ hAzzle.define('Util', function() {
                 var i = 0,
                     pair, key;
                 for (; i < length; i++) {
-                    pair = pairs[i];
+                    pair = prs[i];
                     key = pair[0];
                     if (pair[1] !== obj[key] || !(key in obj)) {
                         return false;
@@ -229,9 +207,9 @@ hAzzle.define('Util', function() {
 
         // Convert an object into a list of `[key, value]` pairs.
         pairs = function(obj) {
-            var keys = _keys(obj).
-            length = keys.length.
-            pairs = Array(length),
+            var keys = _keys(obj),
+                length = keys.length,
+                pairs = Array(length),
                 i = 0;
             for (; i < length; i++) {
                 pairs[i] = [keys[i], obj[keys[i]]];
@@ -245,8 +223,8 @@ hAzzle.define('Util', function() {
             };
         },
 
-        unique = function(array, isSorted, fn, ctx) {
-            if (array == null) {
+        unique = function(arr, isSorted, fn, ctx) {
+            if (!arr) {
                 return [];
             }
             if (_types.isBoolean(isSorted)) {
@@ -261,17 +239,17 @@ hAzzle.define('Util', function() {
             var result = [],
                 seen = [],
                 i = 0,
-                length = array.length;
+                length = arr.length;
 
             for (; i < length; i++) {
-                var value = array[i];
+                var value = arr[i];
                 if (isSorted) {
                     if (!i || seen !== value) {
                         result.push(value);
                     }
                     seen = value;
                 } else if (fn) {
-                    var computed = fn(value, i, array);
+                    var computed = fn(value, i, arr);
                     if (indexOf(seen, computed) < 0) {
                         seen.push(computed);
                         result.push(value);
@@ -283,39 +261,47 @@ hAzzle.define('Util', function() {
             return result;
         },
 
-        indexOf = function(array, item, isSorted) {
+        // Replacement for indexOf - ECMAScript 5 15.4.4.14
 
-            if (array == null) {
+        indexOf = function(arr, item, isSorted) {
+
+            if (arr == null) {
                 return -1;
             }
 
             var i = 0,
-                length = array.length;
+                length = arr.length;
 
             if (isSorted) {
                 if (typeof isSorted === 'number') {
-                    i = isSorted < 0 ? Math.max(0, length + isSorted) : isSorted;
+
+                    if (isSorted < 0) {
+                        i = Math.max(0, length + isSorted);
+                    } else {
+                        i = isSorted;
+                    }
+
                 } else {
-                    i = sortedIndex(array, item);
-                    return array[i] === item ? i : -1;
+                    i = sortedIndex(arr, item);
+                    return arr[i] === item ? i : -1;
                 }
             }
             for (; i < length; i++) {
-                if (array[i] === item) {
+                if (arr[i] === item) {
                     return i;
                 }
             }
             return -1;
         },
 
-        sortedIndex = function(array, obj, fn, ctx) {
+        sortedIndex = function(arr, obj, fn, ctx) {
             fn = iterate(fn, ctx, 1);
             var value = fn(obj),
                 low = 0,
-                high = array.length;
+                high = arr.length;
             while (low < high) {
                 var mid = low + high >>> 1;
-                if (fn(array[mid]) < value) {
+                if (fn(arr[mid]) < value) {
                     low = mid + 1;
                 } else {
                     high = mid;
@@ -325,10 +311,10 @@ hAzzle.define('Util', function() {
         },
 
         // Return the results of applying the callback to each element.
+        // ECMAScript 5 15.4.4.19
+
         map = function(obj, fn, ctx) {
             if (obj) {
-
-
                 fn = iterate(fn, ctx);
                 var keys = obj.length !== +obj.length && _keys(obj),
                     length = (keys || obj).length,
@@ -346,13 +332,6 @@ hAzzle.define('Util', function() {
         // Determines whether an object can have data
 
         acceptData = function(owner) {
-            // Accepts only:
-            //  - Node
-            //    - Node.ELEMENT_NODE
-            //    - Node.DOCUMENT_NODE
-            //  - Object
-            //    - Any
-            /* jshint -W018 */
             return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
         },
 
@@ -363,22 +342,24 @@ hAzzle.define('Util', function() {
         },
 
         // Native solution for filtering arrays. 
+        // Replacement for filter - ECMAScript 5 15.4.4.20  
 
-        filter = function(obj, fn, ctx) {
+        filter = function(arr, fn, ctx) {
             var results = [];
-            if (obj == null) {
+            if (!arr) {
                 return results;
             }
             fn = iterate(fn, ctx);
-            each(obj, function(value, index, list) {
-                if (fn(value, index, list)) {
-                    results.push(value);
+            each(arr, function(val, index, list) {
+                if (fn(val, index, list)) {
+                    results.push(val);
                 }
             });
             return results;
         },
 
         // Bind a function to a ctx, optionally partially applying any
+        // Replacement for bind() - ECMAScript 5 15.3.4.5
 
         bind = function(fn, ctx) {
 
@@ -433,6 +414,6 @@ hAzzle.define('Util', function() {
         now: Date.now,
         bind: bind,
         has: has,
-        int: int,
+        int: int
     };
 });

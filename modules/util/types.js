@@ -86,14 +86,14 @@ hAzzle.define('Types', function() {
         },
 
         // Returns a function that returns `true` if `arg` is of the correct `type`, otherwise `false`.
-        createIsType = function(type) {
+        // e.g isType('Function')( fn )
+
+        isType = function(type) {
             return type ? function(arg) {
                 return _toString.call(arg) === '[object ' + type + ']';
             } : function() {};
         },
 
-        // ## isObject
-        // Returns `true` if argument is an object, otherwise `false`.
         isObject = function(value) {
             // avoid a V8 bug in Chrome 19-20
             // https://code.google.com/p/v8/issues/detail?id=2291
@@ -103,16 +103,32 @@ hAzzle.define('Types', function() {
 
         isNode = function(elem) {
             return !!elem && typeof elem === 'object' && 'nodeType' in elem;
+        },
+        isNodeList = function(nodes) {
+            var result = Object.prototype.toString.call(nodes);
+            // Modern browser such as IE9 / firefox / chrome etc.
+            if (result === '[object HTMLCollection]' || result === '[object NodeList]') {
+                return true;
+            }
+            // Detect length and item 
+            if (!('length' in nodes) || !('item' in nodes)) {
+                return false;
+            }
+            // use the trick NodeList(index), all browsers support
+            try {
+                if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) return true;
+            } catch (e) {
+                return false;
+            }
+            return false;
         };
 
+    this.isNodeList = isNodeList;
+
     return {
-        isFile: createIsType('File'),
-        isBlob: createIsType('Blob'),
-        isRegExp: createIsType('RegExp'),
-        isArguments: createIsType('Arguments'),
-        isFunction: createIsType('Function'),
-        isDate: createIsType('Date'),
-        type: createIsType,
+
+        isType: isType,
+        isFunction: isType('Function'),
         isArray: isArray,
         isEmpty: isEmpty,
         isWindow: isWindow,
@@ -128,5 +144,6 @@ hAzzle.define('Types', function() {
         isNaN: isNaN,
         isDefined: isDefined,
         isUndefined: isUndefined,
+        isNodeList: isNodeList
     };
 });
