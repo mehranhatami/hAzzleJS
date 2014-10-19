@@ -232,7 +232,7 @@ hAzzle.define('Util', function() {
                 fn = isSorted;
                 isSorted = false;
             }
-            if (fn != null) {
+            if (fn !== undefined) {
                 fn = iterate(fn, ctx);
             }
 
@@ -391,6 +391,22 @@ hAzzle.define('Util', function() {
         },
         int = function(str) {
             return parseInt(str, 10);
+        },
+        // shallowCopy
+        shallowCopy = function(target, source, deep) {
+            for (key in source)
+
+                if (deep && (_types.isPlainObject(source[key]) || _types.isArray(source[key]))) {
+                if (_types.isPlainObject(source[key]) && !_types.isPlainObject(target[key])) {
+                    target[key] = {};
+                }
+                if (_types.isArray(source[key]) && !_types.isArray(target[key])) {
+                    target[key] = [];
+                }
+                shallowCopy(target[key], source[key], deep);
+            } else if (source[key] !== undefined) {
+                target[key] = source[key];
+            }
         };
 
     return {
@@ -414,6 +430,7 @@ hAzzle.define('Util', function() {
         now: Date.now,
         bind: bind,
         has: has,
-        int: int
+        int: int,
+        shallowCopy: shallowCopy
     };
 });

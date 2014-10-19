@@ -64,15 +64,7 @@ hAzzle.define('Setters', function() {
 
             var name, propName, i = 0,
 
-                keys = typeof value === 'string' ?
-
-                // String
-
-                value.match(whiteSpace) :
-
-                // Merge arrays
-
-                _concat(value),
+                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
 
                 l = keys.length;
 
@@ -94,6 +86,20 @@ hAzzle.define('Setters', function() {
                 }
             }
         },
+        
+        // Toggle attributes        
+        
+        toggleAttr = function(elem, attr, force) {
+        
+        typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
+        
+        var opposite = !force;
+        
+        force ? Attr(elem, attr, '') : removeAttr(elem, attr);
+        
+        return elem[attr] === opposite ? elem[attr] = force : force;
+       
+       },
 
         // get/set attribute
 

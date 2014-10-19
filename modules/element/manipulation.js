@@ -5,7 +5,8 @@ hAzzle.define('Manipulation', function() {
         _support = hAzzle.require('Support'),
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
-        _getText = hAzzle.require('Text'),
+        _text = hAzzle.require('Text'),
+        _detection = hAzzle.require('Detection'),
         scriptStyle = /<(?:script|style|link)/i,
         tagName = /<([\w:]+)/,
         htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
@@ -38,6 +39,13 @@ hAzzle.define('Manipulation', function() {
             base: noscope
         },
 
+        iAText = {
+            prepend: 'beforeBegin',
+            append: 'afterBegin',
+            after: 'beforeEnd',
+            before: 'afterEnd'
+
+        },
         createHTML = function(html, context) {
             return new hAzzle(create(html, context));
         },
@@ -172,7 +180,7 @@ hAzzle.define('Manipulation', function() {
         },
         createGlobal = function(elem, content, method) {
             if (typeof content === 'string' &&
-                _core.isXML(elem) &&
+                _core.isHTML &&
                 elem.parentNode && elem.parentNode.nodeType === 1) {
                 elem.insertAdjacentHTML(method, content.replace(htmlTag, '<$1></$2>'));
             } else {
@@ -194,7 +202,7 @@ hAzzle.define('Manipulation', function() {
     this.iAHMethod = function(method, html, fn) {
         return this.each(function(elem, index) {
             if (typeof html === 'string' &&
-                _core.isXML(elem) &&
+                _core.isHTML &&
                 elem.parentNode && elem.parentNode.nodeType === 1) {
                 elem.insertAdjacentHTML(method, html.replace(htmlTag, '<$1></$2>'));
             } else {
@@ -319,14 +327,20 @@ hAzzle.define('Manipulation', function() {
 
     // Text
 
-    this.text = function(value) {
+    this.text = function(value, method) { 
         return value === undefined ?
-            _getText.getText(this.elements) :
+            _text.getText(this.elements) :
             this.empty().each(function(elem) {
-                if (elem.nodeType === 1 ||
-                    elem.nodeType === 11 ||
-                    elem.nodeType === 9) {
-                    elem.textContent = value;
+                if (method && typeof method === 'string' && typeof value === 'string' &&
+                    // Firefox doesen't support insertAdjacentText
+                    !_detection.isFirefox) {
+                    elem.insertAdjacentText(iAText[method] || 'beforeBegin', value);
+                } else {
+                    if (elem.nodeType === 1 ||
+                        elem.nodeType === 11 ||
+                        elem.nodeType === 9) {
+                        elem.textContent = value;
+                    }
                 }
             });
     };
@@ -335,12 +349,12 @@ hAzzle.define('Manipulation', function() {
 
     this.html = function(value) {
 
-        var elem = this.elements[0],
+        var els = this.elements,
             i = 0,
             l = this.length;
 
-        if (value === undefined && elem.nodeType === 1) {
-            return elem.innerHTML;
+        if (value === undefined && els[0].nodeType === 1) {
+            return els[0].innerHTML;
         }
         // See if we can take a shortcut and just use innerHTML
 
@@ -353,7 +367,7 @@ hAzzle.define('Manipulation', function() {
 
                 for (; i < l; i++) {
 
-                    elem = this.elements[i] || {};
+                    elem = els[i] || {};
 
                     // Remove element nodes and prevent memory leaks
                     if (elem.nodeType === 1) {

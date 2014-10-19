@@ -121,7 +121,9 @@ hAzzle.define('Visibility', function() {
     this.hide = function() {
         return showHide(this.elements);
     };
-
+    
+    // Toggle show/hide.
+    
     this.toggle = function(state, /*optional*/ fn) {
 
         if (!fn && typeof state === 'function') {

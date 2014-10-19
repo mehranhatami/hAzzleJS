@@ -4,7 +4,7 @@
  * Version: 1.0.0b-alpha
  * Released under the MIT License.
  *
- * Date: 2014-10-16
+ * Date: 2014-10-19
  */
 (function() {
 
@@ -61,7 +61,7 @@
         },
 
         validTypes = function(elem) {
-            return elem && (elem.nodeType === 1 || elem.nodeType === 9);
+            return elem && (elem.ELEMENT_NODE || elem.DOCUMENT_NODE);
         },
 
         // Define a local copy of hAzzle
@@ -71,6 +71,7 @@
 
         hAzzle = function(sel, ctx) {
 
+            // hAzzle(), hAzzle(null), hAzzle(undefined), hAzzle(false)
             if (!sel) {
                 return;
             }
@@ -87,6 +88,8 @@
 
             var m, _util = hAzzle.require('Util'),
                 _ready = hAzzle.require('Ready');
+
+            // If a function is given, call it when the DOM is ready
 
             if (typeof sel === 'function') {
                 _ready.ready(sel);
@@ -107,15 +110,15 @@
 
                     this.elements = this.find(sel, ctx, true);
                 }
-                // array   
+                // hAzzle([dom]) 
             } else if (sel instanceof Array) {
                 this.elements = _util.unique(_util.filter(sel, validTypes));
-                // nodeList
+                // hAzzle(dom)
             } else if (this.isNodeList(sel)) {
                 this.elements = _util.filter(_util.makeArray(sel), validTypes);
-                // nodeType
+                // hAzzle(dom)
             } else if (sel.nodeType) {
-                // document fragment
+                // If it's a html fragment, create nodes from it
                 if (sel.nodeType === 11) {
                     // This children? Are they an array or not?
                     this.elements = sel.children;
@@ -129,10 +132,10 @@
                 this.elements = [];
             }
 
-            // If undefined, set length to 0, and
+            // Create a new hAzzle collection from the nodes found
+            // NOTE!! If undefined, set length to 0, and
             // elements to an empty array [] to avoid hAzzle
             // throwing errors
-
 
             if (this.elements === undefined) {
                 this.length = 0;

@@ -17,16 +17,6 @@ hAzzle.define('Style', function() {
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
 
-        sizeParams = {
-            'Width': ['Left', 'Right'],
-            'Height': ['Top', 'Bottom']
-
-        },
-
-        cssShow = {
-            visibility: 'hidden',
-            display: 'block'
-        },
         sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
         prefixElement = document.createElement('div'),
@@ -77,50 +67,6 @@ hAzzle.define('Style', function() {
             }
         },
 
-        getSize = function(elem, type, extra) {
-
-            var val = elem['offset' + type];
-            type = sizeParams[type];
-
-
-            if (extra === 'outer') {
-                return val;
-            }
-
-            // inner = outer - border
-            val -= parseFloat(_curcss.curCSS(elem, 'border' + type[0] + 'Width')) +
-                parseFloat(_curcss.curCSS(elem, 'border' + type[1] + 'Width'));
-
-            if (extra === 'inner') {
-                return val;
-            }
-            // normal = inner - padding
-            val -= parseFloat(_curcss.curCSS(elem, 'padding' + type[0])) +
-                parseFloat(_curcss.curCSS(elem, 'padding' + type[1]));
-
-            return val + 'px';
-        },
-        swap = function(elem, fn) {
-            var obj = {},
-                name, val;
-
-            if (elem.offsetWidth) {
-                val = fn();
-            } else {
-                for (name in cssShow) {
-                    obj[name] = elem.style[name];
-                    elem.style[name] = cssShow[name];
-                }
-
-                val = fn();
-                for (name in obj) {
-                    elem.style[name] = obj[name];
-                }
-            }
-
-            return val;
-        },
-
         // getCSS
 
         getCSS = function(elem, name) {
@@ -163,14 +109,18 @@ hAzzle.define('Style', function() {
                 name = cssProps[origName] || (cssProps[origName] = prefixCheck(name)[0]);
 
                 style = elem.style;
-
+                if (!style) {
+                    return;
+                }
                 if (value !== undefined) {
 
                     type = typeof value;
 
                     hook = cssHooks.set[name];
 
-                    // Convert '+=' or '-=' to relative numbers
+                    // Convert '+=' or '-=' to relative numbers, and
+                    // and convert all unit types to PX (e.g. 10em will become 160px)
+                     
                     if (type === 'string' && (ret = sNumbs.exec(value))) {
                         value = _units.units(_curcss.curCSS(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                         type = 'number';
@@ -260,8 +210,6 @@ hAzzle.define('Style', function() {
         cssHooks: cssHooks,
         cssProps: cssProps,
         unitless: unitless,
-        getSize: getSize,
-        swap: swap,
         getCSS: getCSS,
         setCSS: setCSS
     };

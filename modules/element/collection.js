@@ -7,8 +7,8 @@ hAzzle.define('Collection', function() {
         _keys = Object.keys,
         _concat = _arrayProto.concat,
         _push = _arrayProto.push,
-        inArray = function(elem, arr, i) {
-            return arr === undefined ? -1 : _arrayProto.indexOf.call(arr, elem, i);
+        inArray = function(elem, array, i) {
+            return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
         },
         makeArray = function(arr, results) {
             var ret = results || [];
@@ -71,6 +71,8 @@ hAzzle.define('Collection', function() {
             return result;
         };
 
+    /* ------------- INTERNAL ARRAY METHODS ------------------------------- */
+
     // Retrieve the DOM elements matched by the hAzzle object.
     this.get = function(index) {
         return index === undefined ? slice(this.elements) : this.elements[index >= 0 ? index : index + this.length];
@@ -110,7 +112,6 @@ hAzzle.define('Collection', function() {
         return new hAzzle(_concat.apply(this.elements, args));
     };
 
-
     this.is = function(sel) {
         return this.length > 0 && this.filter(sel).length > 0;
     };
@@ -122,6 +123,7 @@ hAzzle.define('Collection', function() {
     };
 
     // Determine the position of an element within the set
+
     this.index = function(sel) {
         return sel === undefined ?
             this.parent().children().indexOf(this.elements[0]) :
@@ -134,21 +136,6 @@ hAzzle.define('Collection', function() {
             elements = new hAzzle(sel, ctx).elements;
         }
         return this.concat(elements);
-    };
-    // Returns `element`'s first following sibling
-
-    this.next = function(sel) {
-        return this.map(function(elem) {
-            return elem.nextElementSibling;
-        }).filter(sel);
-    };
-
-    // Returns `element`'s first previous sibling
-
-    this.prev = function(sel) {
-        return this.map(function(elem) {
-            return elem.previousElementSibling;
-        }).filter(sel);
     };
 
     this.first = function(index) {
@@ -182,6 +169,24 @@ hAzzle.define('Collection', function() {
     this.childElementCount = function() {
         return this.children().length;
     };
+
+    this.size = function() {
+        return this.length;
+    };
+
+    // First() and prev()
+    _util.each({
+        next: 'nextElementSibling',
+        prev: 'previousElementSibling'
+    }, function(value, prop) {
+        this[prop] = function(sel) {
+                return this.map(function(elem) {
+                    return elem[value];
+                }).filter(sel);
+            };
+            // Note! The native 'bind' method do not give the best performance, but
+            // this happen only on pageload. Anyone who wan't to fix this?
+    }.bind(this));
 
     return {
         makeArray: makeArray,

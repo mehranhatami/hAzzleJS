@@ -5,8 +5,8 @@ hAzzle.define('Strings', function() {
 
         nTrim = String.prototype.trim,
 
-       // Support: Android<4.1
-       
+        // Support: Android<4.1
+
         nNTrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
 
         // Hyphenate RegExp
@@ -80,14 +80,15 @@ hAzzle.define('Strings', function() {
             return str ? str.replace(sCapitalize, fcapitalize) : str;
         },
 
-        // Convert camelCase to hyphenate
+        // Convert a string from camel case to "CSS case", where word boundaries are
+        // described by hyphens ("-") and all characters are lower-case.
         // e.g. boxSizing -> box-sizing
 
         hyphenate = function(str) {
             return str ? str.replace(sHyphenate, fhyphenate) : str;
         },
 
-        // Convert dashed to camelCase
+        // Convert a string to camel case notation.
         // Support: IE9-11+
         camelize = function(str) {
             if (str) {
@@ -101,8 +102,8 @@ hAzzle.define('Strings', function() {
 
         trim = function(str) {
             return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
-            // Any idiots still using Android 4.1 ?
-                (str + '' ).replace(nNTrim, '');
+                // Any idiots still using Android 4.1 ?
+                (str + '').replace(nNTrim, '');
         };
 
     // Credit: AngularJS    

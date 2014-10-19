@@ -65,12 +65,20 @@ hAzzle.define('Support', function () {
         MultipleArgs = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
     });
 
+    sortDetached = assert(function(div) {
+        // Should return 1, but returns 4 (following)
+        return div.compareDocumentPosition(document.createElement('div')) & 1;
+    });
+    
     return {
+        assert:assert,
         checkOn: checkOn,
         optSelected: optSelected,
         radioValue: radioValue,
         imcHTML: imcHTML,
         classList: cls,
-        multipleArgs: MultipleArgs
+        multipleArgs: MultipleArgs,
+        sortDetached:sortDetached,
+        cS: !!document.defaultView.getComputedStyle
     };
 });

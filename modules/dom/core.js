@@ -3,8 +3,10 @@ hAzzle.define('Core', function() {
 
     var winDoc = window.document,
         docElem = winDoc.documentElement,
-         _support = hAzzle.require('Support'),
+        _support = hAzzle.require('Support'),
         _indexOf = Array.prototype.indexOf,
+        rnative = /^[^{]+\{\s*\[native \w/,
+        matches,
         Core = {},
         CoreCache = {},
         hasDuplicate,
@@ -68,7 +70,7 @@ hAzzle.define('Core', function() {
             (elem.uniqueNumber = this.uidX++);
     };
 
-    Core.native = /^[^{]+\{\s*\[native \w/.test(docElem.compareDocumentPosition);
+    Core.native = rnative.test(docElem.compareDocumentPosition);
     // Set document
 
     Core.setDocument = function(document) {
@@ -98,7 +100,6 @@ hAzzle.define('Core', function() {
         document = doc;
         this.document = doc;
 
-
         var root = document.documentElement,
             rootID = this.xmlID(root),
             features = CoreCache[rootID],
@@ -118,6 +119,68 @@ hAzzle.define('Core', function() {
         features.isXMLDocument = this.isXML(document);
         features.detectDuplicates = !!hasDuplicate;
         features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
+
+        // on non-HTML documents innerHTML and getElementsById doesnt work properly
+        _support.assert(function(div) {
+            div.innerHTML = '<a id="hAzzle_id"></a>';
+            features.isHTMLDocument = !!document.getElementById('hAzzle_id');
+        });
+
+        // iF HTML doc
+
+        if (!Core.isXML(root)) {
+
+            // Check if getElementsByTagName("*") returns only elements
+            features.getElementsByTagName = _support.assert(function(div) {
+                div.appendChild(doc.createComment(''));
+                return !div.getElementsByTagName('*').length;
+            }); // IE returns elements with the name instead of just id for getElementsById for some documents
+            features.getById = _support.assert(function(div) {
+                div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
+                return document.getElementById('hAzzle_id') === div.firstChild;
+            });
+
+            var rbuggyMatches = [],
+                rbuggyQSA = [];
+
+            if ((_support.qsa = rnative.test(doc.querySelectorAll))) {
+                // Build QSA regex
+                // Regex strategy adopted from Diego Perini
+                _support.assert(function(div) {
+                    div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
+
+                    // Webkit/Opera - :checked should return selected option elements
+                    // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+                    if (!div.querySelectorAll(":checked").length) {
+                        rbuggyQSA.push(":checked");
+                    }
+                });
+
+                _support.assert(function(div) {
+                    // Support: Windows 8 Native Apps
+                    // The type and name attributes are restricted during .innerHTML assignment
+                    var input = doc.createElement("input");
+                    input.setAttribute("type", "hidden");
+                    div.appendChild(input).setAttribute("name", "D");
+                });
+            }
+
+            if ((features.matchesSelector = rnative.test((matches = docElem.matches ||
+                    docElem.webkitMatchesSelector ||
+                    docElem.mozMatchesSelector ||
+                    docElem.oMatchesSelector ||
+                    docElem.msMatchesSelector)))) {
+
+                _support.assert(function(div) {
+                    // Check to see if it's possible to do matchesSelector
+                    // on a disconnected node (IE 9)
+                    features.disconnectedMatch = matches.call(div, "div");
+                });
+            }
+
+            rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|"));
+            rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join("|"));
+        }
 
         // Contains
 
@@ -160,10 +223,7 @@ hAzzle.define('Core', function() {
 
                 // Calculate position if both inputs belong to the same document
                 compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                    a.compareDocumentPosition(b) :
-
-                    // Otherwise we know they are disconnected
-                    1;
+                    a.compareDocumentPosition(b) : 1;
 
                 // Disconnected nodes
                 if (compare & 1 ||
@@ -238,12 +298,12 @@ hAzzle.define('Core', function() {
                     bp[i] === winDoc ? 1 :
                     0;
             };
-            
-             root = null;
 
-                for (feature in features) {
-                    this[feature] = features[feature];
-                }
+        root = null;
+
+        for (feature in features) {
+            this[feature] = features[feature];
+        }
     };
 
     // Set correct sortOrder
@@ -253,8 +313,9 @@ hAzzle.define('Core', function() {
     // Set document
 
     Core.setDocument(winDoc);
-    
+
     function uniqueSort(results) {
+
         var elem,
             duplicates = [],
             j = 0,
@@ -276,8 +337,6 @@ hAzzle.define('Core', function() {
             }
         }
 
-        // Clear input after sorting to release objects
-        // See https://github.com/jquery/sizzle/pull/225
         sortInput = null;
 
         return results;

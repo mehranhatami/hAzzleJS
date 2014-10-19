@@ -1,13 +1,17 @@
 (function () {
   var expect = chai.expect,
     _types = hAzzle.require('Types'),
+    
+    // Mehran! Commented out deprecated functions
+    // Use isType('File'), isType('Date') e.g instead
+    
     typeChecks = {
-      'File': null,
-      'Blob': null,
-      'RegExp': null,
-      'Arguments': null,
-      'Function': null,
-      'Date': null,
+     // 'File': null,
+     // 'Blob': null,
+     // 'RegExp': null,
+     // 'Arguments': null,
+       'Function': null,
+     // 'Date': null,
       'Array': null,
       'Empty': null,
       'Window': null,
@@ -37,7 +41,7 @@
       len = keys.length;
 
     it('Types -> type(...)', function () {
-      expect(_types.type).to.be.a('function');
+      expect(_types.isType).to.be.a('function');
     });
 
     for (; i < len; i += 1) {

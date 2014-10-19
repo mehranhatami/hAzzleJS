@@ -62,7 +62,9 @@ hAzzle.define('Classes', function() {
                 }
             }
         },
-
+        
+        // Check if the first element in the collection has classes
+        
         hasClass = function(elem, classes) {
 
             elem = elem.length ? elem : [elem];
@@ -89,7 +91,7 @@ hAzzle.define('Classes', function() {
             return false;
         },
 
-        // addClass - can take single elem or array of elements
+        // Add classes to element collection
 
         addClass = function(elem, classes, /*optional*/ fn) {
 
@@ -113,7 +115,7 @@ hAzzle.define('Classes', function() {
             });
         },
 
-        // removeClass - can take single elem or array of elements
+        // Remove classes from element collection
 
         removeClass = function(elem, classes, /*optional*/ fn) {
 

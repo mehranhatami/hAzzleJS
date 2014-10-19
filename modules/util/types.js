@@ -57,7 +57,7 @@ hAzzle.define('Types', function() {
                 value === '';
         },
         isElement = function(value) {
-            return (value && typeof value === 'object' && value.nodeType === 1 &&
+            return (value && typeof value === 'object' && value.ELEMENT_NODE &&
                 _toString.call(value).indexOf('Element') > -1) || false;
         },
 
@@ -101,6 +101,10 @@ hAzzle.define('Types', function() {
             return type === 'function' || (value && type === 'object') || false;
         },
 
+        isPlainObject = function(obj) {
+            return isType(obj) !== "object" && !isWindow(obj) && Object.getPrototypeOf(obj) == Object.prototype;
+        },
+
         isNode = function(elem) {
             return !!elem && typeof elem === 'object' && 'nodeType' in elem;
         },
@@ -133,6 +137,7 @@ hAzzle.define('Types', function() {
         isEmpty: isEmpty,
         isWindow: isWindow,
         isObject: isObject,
+        isPlainObject: isPlainObject,
         isEmptyObject: isEmptyObject,
         isNode: isNode,
         isElement: isElement,

@@ -5,30 +5,34 @@ hAzzle.define('curCSS', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _util = hAzzle.require('Util'),
+        _support = hAzzle.require('Support'),
         _storage = hAzzle.require('Storage'),
 
-        sLnline = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
-        sListitem = /^(li)$/i,
-        sTablerow = /^(tr)$/i,
+        inlineRegEx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
+        listItemRegEx = /^(li)$/i,
+        tablerowRegEx = /^(tr)$/i,
+        
+        docElem = window.document.documentElement,
 
         computedStyle = !!document.defaultView.getComputedStyle,
 
-        computedValues = _detection.isWebkit ? function(elem) {
-
-            var s;
+        computedValues = _support.computedStyle && _detection.isWebkit ? function(elem) {
+            // Looks stupid, but gives better performance in Webkit browsers
+            var str;
             if (elem.nodeType === 1) {
                 var dv = elem.ownerDocument.defaultView;
-                s = dv.getComputedStyle(elem, null);
-                if (!s && elem.style) {
+                str = dv.getComputedStyle(elem, null);
+                if (!str && elem.style) {
                     elem.style.display = '';
-                    s = dv.getComputedStyle(elem, null);
+                    str = dv.getComputedStyle(elem, null);
                 }
             }
-            return s || {};
+            return str || {};
         } :
 
         function(elem) {
             var view = false;
+
             if (elem && elem !== window) {
 
                 if (elem.ownerDocument !== undefined) {
@@ -37,9 +41,9 @@ hAzzle.define('curCSS', function() {
                 // Support: IE<=11+, Firefox<=30+
                 // IE throws on elements created in popups
                 // FF meanwhile throws on frame elements through 'defaultView.getComputedStyle'
-                return view && computedStyle ?
+                return _support.cS ? (view && computedStyle ?
                     (view.opener ? view.getComputedStyle(elem, null) :
-                        window.getComputedStyle(elem, null)) : elem.style;
+                        window.getComputedStyle(elem, null)) : elem.style) : elem.style;
             }
             return null;
         },
@@ -95,230 +99,233 @@ hAzzle.define('curCSS', function() {
 
         getDisplayType = function(elem) {
             var tagName = elem.tagName.toLowerCase();
-            if (sLnline.test(tagName)) {
+            if (inlineRegEx.test(tagName)) {
                 return 'inline';
             }
-            if (sListitem.test(tagName)) {
+            if (listItemRegEx.test(tagName)) {
                 return 'list-item';
             }
-            if (sTablerow.test(tagName)) {
+            if (tablerowRegEx.test(tagName)) {
                 return 'table-row';
             }
             return 'block';
         },
 
-        getOffset = function(elem, options) {
+        // Prop to jQuery for the name!
 
-            var els = elem.length ? elem : [elem];
+        curCSS = function(elem, prop, force) {
 
-            if (options && !_types.isEmptyObject(options)) {
-                _util.each(els, function(elem, i) {
+            if (typeof elem === 'object' && elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+            var computedValue = 0,
+                toggleDisplay = false;
+
+            if ((prop === 'height' || prop === 'width') && curCSS(elem, 'display') === 0) {
+                toggleDisplay = true;
+                elem.style.display = hAzzle.getDisplayType(elem);
+            }
+
+            if (!force) {
+
+                if (prop === 'height' &&
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                    return curHeight(elem, toggleDisplay);
+                } else if (prop === 'width' &&
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                    return curWidth(elem, toggleDisplay);
+                }
+            }
+
+            var computedStyle = getStyles(elem);
+
+            if (computedStyle) {
+
+                // IE and Firefox do not return a value for the generic borderColor -- they only return 
+                // individual values for each border side's color.
+
+                if ((_detection.ie ||
+                        _detection.isFirefox) && prop === 'borderColor') {
+                    prop = 'borderTopColor';
+                }
+
+                // IE9 has a bug in which the 'filter' property must be accessed from 
+                // computedStyle using the getPropertyValue method instead of a direct property lookup. 
+
+                if (_detection === 9 && prop === 'filter') {
+                    computedValue = computedStyle.getPropertyValue(prop);
+                } else {
+                    computedValue = computedStyle[prop];
+                }
+
+                // Fall back to the property's style value (if defined) when computedValue returns nothing
+
+                if (computedValue === '' || computedValue === null) {
+                    computedValue = elem.style[prop];
+                }
+
+                if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
+
+                    var position = curCSS(elem, 'position');
+
+                    if (position === 'fixed' || (position === 'absolute' && (prop === 'left' || prop === 'top'))) {
+                        computedValue = hAzzle(elem).position()[prop] + 'px';
+                    }
+                }
+                return computedValue;
+            }
+        },
+        
+       
+	setOffset = function( elem, options, i ) {
+		var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+			position = curCSS( elem, "position" ),
+			curElem = hAzzle( elem ),
+			props = {};
+
+		// Set position first, in-case top/left are set even on static elem
+		if ( position === "static" ) {
+			elem.style.position = "relative";
+		}
+
+		curOffset = curElem.offset();
+		curCSSTop = curCSS( elem, "top" );
+		curCSSLeft = curCSS( elem, "left" );
+		calculatePosition = ( position === "absolute" || position === "fixed" ) &&
+			( curCSSTop + curCSSLeft ).indexOf("auto") > -1;
+
+		// Need to be able to calculate position if either
+		// top or left is auto and position is either absolute or fixed
+		if ( calculatePosition ) {
+			curPosition = curElem.position();
+			curTop = curPosition.top;
+			curLeft = curPosition.left;
+
+		} else {
+			curTop = parseFloat( curCSSTop ) || 0;
+			curLeft = parseFloat( curCSSLeft ) || 0;
+		}
+
+		if ( _types.isType('function')( options ) ) {
+			options = options.call( elem, i, curOffset );
+		}
+
+		if ( options.top != null ) {
+			props.top = ( options.top - curOffset.top ) + curTop;
+		}
+		if ( options.left != null ) {
+			props.left = ( options.left - curOffset.left ) + curLeft;
+		}
+
+		if ( "using" in options ) {
+			options.using.call( elem, props );
+
+		} else {
+			curElem.css( props );
+		}
+};
+
+    this.offset = function(options) {
+        if (arguments.length) {
+            return options === undefined ?
+                this.elements :
+                this.each(function(elem, i) {
                     setOffset(elem, options, i);
                 });
-            }
+        }
 
-            elem = els[0];
+        var docElem, win,
+            elem = this.elements[0],
+            box = {
+                top: 0,
+                left: 0
+            },
+            doc = elem && elem.ownerDocument;
 
-            var docElem, win,
-                clientTop,
-                clientLeft,
-                scrollTop,
-                scrollLeft,
+        if (!doc) {
+            return;
+        }
 
-                box = {
-                    top: 0,
-                    left: 0,
-                    height: 0,
-                    width: 0,
-                    right: 0,
-                    bottom: 0
-                },
-                doc = elem && elem.ownerDocument,
-                body = doc.body;
+        docElem = doc.documentElement;
 
-            if (!doc) {
-                return;
-            }
+        // Make sure it's not a disconnected DOM node
+        if (!_core.contains(docElem, elem)) {
+            return box;
+        }
 
-            docElem = doc.documentElement;
-
-            if (!elem ||
-                // Make sure it's not a disconnected DOM node 
-                !_core.contains(docElem, elem)) {
-                return box;
-            }
-
-            if (!doc) {
-                return;
-            }
-
-            win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
+        // Support: BlackBerry 5, iOS 3 (original iPhone)
+        // If we don't have gBCR, just use 0,0 rather than error
+        if (elem.getBoundingClientRect) {
             box = elem.getBoundingClientRect();
-            clientTop = docElem.clientTop || body.clientTop || 0;
-            clientLeft = docElem.clientLeft || body.clientLeft || 0;
-            scrollTop = (win.pageYOffset || body.scrollTop);
-            scrollLeft = (win.pageXOffset || body.scrollLeft) - (doc.clientLeft || 0);
+        }
+        win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
 
-            return {
-                top: box.top + scrollTop - clientTop,
-                left: box.left + scrollLeft - clientLeft,
-                right: box.right + scrollLeft - clientLeft,
-                bottom: box.bottom + scrollTop - clientTop,
-                height: box.right - box.left,
-                width: box.bottom - box.top
-            };
-        },
+        return {
+            top: box.top + win.pageYOffset - docElem.clientTop,
+            left: box.left + win.pageXOffset - docElem.clientLeft
+        };
+    };
 
-        setOffset = function(elem, ops, i) {
-            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-                position = curCSS(elem, 'position'),
-                curElem = hAzzle(elem),
-                props = {};
-
-            // Set position first, in-case top/left are set even on static elem
-            if (position === 'static') {
-                elem.style.position = 'relative';
+    this.position = function() {
+            if (!this.elements[0]) {
+                return;
             }
 
-            curOffset = curElem.offset();
-            curCSSTop = curCSS(elem, 'top');
-            curCSSLeft = curCSS(elem, 'left');
-            calculatePosition = (position === 'absolute' || position === 'fixed') &&
-                (curCSSTop + curCSSLeft).indexOf('auto') > -1;
+            var offsetParent, offset,
+                elem = this.elements[0],
+                parentOffset = {
+                    top: 0,
+                    left: 0
+                };
 
-            // Need to be able to calculate position if either
-            // top or left is auto and position is either absolute or fixed
-            if (calculatePosition) {
-                curPosition = curElem.position();
-                curTop = curPosition.top;
-                curLeft = curPosition.left;
+            // Fixed elements are offset from window (parentOffset = {top:0, left: 0},
+            // because it is its only offset parent
+            if (curCSS(elem, 'position') === 'fixed') {
+                // Assume getBoundingClientRect is there when computed position is fixed
+                offset = elem.getBoundingClientRect();
 
             } else {
-                curTop = parseFloat(curCSSTop) || 0;
-                curLeft = parseFloat(curCSSLeft) || 0;
+                // Get *real* offsetParent
+                offsetParent = this.offsetParent();
+
+                // Get correct offsets
+                offset = this.offset();
+
+                if (!_util.nodeName(offsetParent.elements[0], 'html')) {
+
+                    parentOffset = offsetParent.offset();
+                }
+
+                // Add offsetParent borders
+
+                parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
+                parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
             }
+            // Subtract offsetParent scroll positions
 
-            if (typeof ops === 'function') {
-                ops = ops.call(elem, i, curOffset);
-            }
-
-            if (ops.top !== null) {
-                props.top = (ops.top - curOffset.top) + curTop;
-            }
-            if (ops.left !== null) {
-                props.left = (ops.left - curOffset.left) + curLeft;
-            }
-
-            if ('using' in ops) {
-                ops.using.call(elem, props);
-
-            } else {
-                curElem.css(props);
-            }
-        },
-
-        getPosition = function(elem) {
-
-            var offsetParent = function() {
-                    var offsetParent = this.offsetParent || document;
-
-                    while (offsetParent && (offsetParent.nodeType.toLowerCase !== 'html' && offsetParent.style.position === 'static')) {
-                        offsetParent = offsetParent.offsetParent;
-                    }
-
-                    return offsetParent || document;
-                },
-                oP = offsetParent.apply(elem),
-                parentOffset,
-                _offset = getOffset(elem);
-
-            // Get correct offsets
-
-            if (!_util.nodeName(oP, 'html')) {
-                parentOffset = getOffset(oP);
-            }
-
-            // Add offsetParent borders
-
-            parentOffset.top += parseFloat(curCSS(oP, 'borderTopWidth'));
-            parentOffset.left += parseFloat(curCSS(oP, 'borderLeftWidth'));
-
+            parentOffset.top -= offsetParent.scrollTop();
+            parentOffset.left -= offsetParent.scrollLeft();
             // Subtract parent offsets and element margins
-
             return {
-                top: _offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop')),
-                left: _offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft'))
+                top: offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop', true)),
+                left: offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft', true))
             };
         };
 
-    this.offset = function(options) {
-        return getOffset(this.elements, options);
-    };
-    this.position = function() {
-        return getPosition(this.elements[0]);
-    };
+        this.offsetParent = function() {
+            return this.map(function() {
+                var offsetParent = this.offsetParent || docElem;
 
-    // Prop to jQuery for the name!
+                while (offsetParent && (!_util.nodeName(offsetParent, 'html') &&
+                        curCSS(offsetParent, 'position') === 'static')) {
+                    offsetParent = offsetParent.offsetParent;
+                }
 
-    var curCSS = function(elem, prop, force) {
-
-        if (typeof elem === 'object' && elem instanceof hAzzle) {
-            elem = elem.elements[0];
-        }
-
-        var computedValue = 0,
-            toggleDisplay = false;
-
-        if ((prop === 'height' || prop === 'width') && curCSS(elem, 'display') === 0) {
-            toggleDisplay = true;
-            elem.style.display = hAzzle.getDisplayType(elem);
-        }
-
-        if (!force) {
-
-            if (prop === 'height' &&
-                curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                return curHeight(elem, toggleDisplay);
-            } else if (prop === 'width' &&
-                curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                return curWidth(elem, toggleDisplay);
-            }
-        }
-
-        var computedStyle = getStyles(elem);
-
-        if ((_detection.ie ||
-                _detection.isFirefox) && prop === 'borderColor') {
-            prop = 'borderTopColor';
-        }
-
-        // Support: IE9
-        // getPropertyValue is only needed for .css('filter')
-
-        if (_detection === 9 && prop === 'filter') {
-            computedValue = computedStyle.getPropertyValue(prop);
-        } else {
-            computedValue = computedStyle[prop];
-        }
-
-        if (computedValue === '' || computedValue === null) {
-            computedValue = elem.style[prop];
-        }
-
-        if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
-
-            var position = curCSS(elem, 'position');
-
-            if (position === 'fixed' || (position === 'absolute' && (prop === 'left' || prop === 'top'))) {
-                computedValue = hAzzle(elem).position()[prop] + 'px';
-            }
-        }
-        return computedValue;
-    };
+                return offsetParent || docElem;
+            });
+        };
 
     return {
-        position: getPosition,
-        offset: getOffset,
         computedCSS: computedCSS,
         getStyles: getStyles,
         curCSS: curCSS,
