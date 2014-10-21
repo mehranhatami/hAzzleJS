@@ -28,7 +28,7 @@ hAzzle.define('Visibility', function() {
                     continue;
                 }
 
-                values[index] = _storage.privateData.access(elem, 'cssDisplay');
+                values[index] = _storage.private.access(elem, 'cssDisplay');
                 display = elem.style.display;
                 if (show) {
                     if (!values[index] && display === 'none') {
@@ -37,12 +37,12 @@ hAzzle.define('Visibility', function() {
 
                     if (elem.style.display === '' && isHidden(elem)) {
 
-                        values[index] = _storage.privateData.access(elem, 'cssDisplay', getDisplay(elem.nodeName));
+                        values[index] = _storage.private.access(elem, 'cssDisplay', getDisplay(elem.nodeName));
                     }
                 } else {
                     hidden = isHidden(elem);
                     if (display && display !== 'none' || !hidden) {
-                        _storage.privateData.set(elem, 'cssDisplay', hidden ? display : _ccs.curCSS(elem, 'display'));
+                        _storage.private.set(elem, 'cssDisplay', hidden ? display : _ccs.curCSS(elem, 'display'));
                     }
                 }
             }

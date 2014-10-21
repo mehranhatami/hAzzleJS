@@ -81,21 +81,29 @@ hAzzle.define('Strings', function() {
         },
 
         // Convert a string from camel case to "CSS case", where word boundaries are
-        // described by hyphens ("-") and all characters are lower-case.
+        // described by hyphens ('-') and all characters are lower-case.
         // e.g. boxSizing -> box-sizing
 
         hyphenate = function(str) {
-            return str ? str.replace(sHyphenate, fhyphenate) : str;
+            if (typeof str == 'string') {
+                return str ? str.replace(sHyphenate, fhyphenate) : str;
+            } else {
+                str = typeof str == 'number' ? '' + str : '';
+            }
+            return str ? ('data-' + str.toLowerCase()) : str;
         },
 
         // Convert a string to camel case notation.
         // Support: IE9-11+
         camelize = function(str) {
-            if (str) {
+            if (str && typeof str === 'string') {
+
                 return camelCache[str] ? camelCache[str] :
-                    camelCache[str] = str.replace(msPrefix, "ms-").replace(dashAlpha, fcamelize);
+                    // Remove data- prefix and convert remaining dashed string to camelCase
+                    camelCache[str] = str.replace(msPrefix, "ms-").replace(dashAlpha, fcamelize); // -a to A
             }
-            return str;
+            // Deal with 'number' and 'boolean'
+            return typeof str == 'number' || typeof str == 'boolean' ? '' + str : str;
         },
 
         // Remove leading and trailing whitespaces of the specified string.
@@ -104,6 +112,14 @@ hAzzle.define('Strings', function() {
             return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
                 // Any idiots still using Android 4.1 ?
                 (str + '').replace(nNTrim, '');
+        },
+
+        // Convert a stringified primitive into its correct type.
+        parse = function(str) {
+            var n; // undefined, or becomes number
+            return typeof str !== 'string' ||
+                !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
+                (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
         };
 
     // Credit: AngularJS    
@@ -126,5 +142,6 @@ hAzzle.define('Strings', function() {
         uppcase: uppercase,
         manualLowercase: manualLowercase,
         manualUppercase: manualUppercase,
+        parse: parse
     };
 });

@@ -1,9 +1,32 @@
 // dimensions.js
 hAzzle.define('Dimensions', function() {
 
-    var _style = hAzzle.require('Style'),
+    var win = window,
+        doc = window.document,
+        docElem = doc.documentElement,
+        _matchMedia = win.matchMedia || win.msMatchMedia,
+        mq = _matchMedia ? function(q) {
+            return !!_matchMedia.call(win, q).matches;
+        } : function() {
+            return false;
+        },
+
+        viewportW = function() {
+            var a = docElem.clientWidth,
+                b = win.innerWidth;
+            return a < b ? b : a;
+        },
+        viewportH = function() {
+            var a = docElem.clientHeight,
+                b = win.innerHeight;
+            return a < b ? b : a;
+        },
+
+        // Include the modules    
+        _style = hAzzle.require('Style'),
         _types = hAzzle.require('Types'),
         _curcss = hAzzle.require('curCSS'),
+
         cssShow = {
             visibility: 'hidden',
             display: 'block'
@@ -58,7 +81,7 @@ hAzzle.define('Dimensions', function() {
             return val + 'px';
         },
 
-        innerOuter = function(elem, method, value, extra) {
+        innerOuter = function(elem, method, value) {
 
             var docElem;
 
@@ -74,7 +97,7 @@ hAzzle.define('Dimensions', function() {
                 }
 
                 return swap(elem, function() {
-                    return getSize(elem, method, value, extra);
+                    return getSize(elem, method, value);
                 });
             }
         },
@@ -104,8 +127,92 @@ hAzzle.define('Dimensions', function() {
                 }
                 return win ? win.scrollTo(val) : elem.scrollTop = val;
             });
-        };
+        },
+        // Test if a media query is active   
+        mediaQuery = function() {
+            if (!mq) {
+                hAzzle.err(true, 15, 'matchMedia are not supported by this browser!');
+                return false;
+            }
+            return true;
+        },
 
+        matchMedia = _matchMedia ? function() {
+            // matchMedia must be binded to window
+            return _matchMedia.apply(win, arguments);
+        } : function() {
+            return {};
+        },
+        // Test if any part of an element (or the first element in a matched set) is in the 
+        // current viewport
+        viewport = function() {
+            return {
+                'width': viewportW(),
+                'height': viewportH()
+            };
+        },
+        calibrate = function(coords, cushion) {
+            var opt = {};
+            cushion = +cushion || 0;
+            opt.width = (opt.right = coords.right + cushion) - (opt.left = coords.left - cushion);
+            opt.height = (opt.bottom = coords.bottom + cushion) - (opt.top = coords.top - cushion);
+            return opt;
+        },
+
+        // Get an a object containing the properties top, bottom, left, right, width, and height 
+        // with respect to the top-left corner of the current viewport, and with an 
+        // optional cushion amount
+
+        rectangle = function(elem, cushion) {
+            if (elem) {
+
+                if (elem instanceof hAzzle) {
+                    elem = elem.elements[0];
+                } else {
+
+                    elem = elem.nodeType ? elem : elem[0];
+                }
+                if (!elem || elem.nodeType !== 1) {
+                    return false;
+                }
+                return calibrate(elem.getBoundingClientRect(), cushion);
+            }
+        },
+
+        // Get the aspect ratio of the viewport or of an object with width/height properties
+
+        aspect = function(opt) {
+            opt = null == opt ? viewport() : opt.nodeType === 1 ? rectangle(opt) : opt;
+            var h = opt.height,
+                w = opt.width;
+            h = typeof h == 'function' ? h.call(opt) : h;
+            w = typeof w == 'function' ? w.call(opt) : w;
+            return w / h;
+        },
+        // Test if an element is in the same x-axis section as the viewport.
+        inX = function(elem, cushion) {
+            var r = rectangle(elem, cushion);
+            return !!r && r.right >= 0 && r.left <= viewportW();
+        },
+        // Test if an element is in the same y-axis section as the viewport.    
+
+        inY = function(elem, cushion) {
+            var r = rectangle(elem, cushion);
+            return !!r && r.bottom >= 0 && r.top <= viewportH();
+        },
+        // Test if an element is in the viewport.
+        inViewport = function(elem, cushion) {
+            var r = rectangle(elem, cushion);
+            return !!r && r.bottom >= 0 && r.right >= 0 && r.top <= viewportH() && r.left <= viewportW();
+        },
+        // Get the vertical scroll position in pixels
+        scrollY = function() {
+            return win.pageYOffset || docElem.scrollTop;
+        },
+        // Get the horizontal scroll position in pixels
+        scrollX = function() {
+            return win.pageXOffset || docElem.scrollLeft;
+        };
     this.scrollLeft = function(val) {
         return scrollLeft(this.elements[0], val);
     };
@@ -132,16 +239,28 @@ hAzzle.define('Dimensions', function() {
     this.innerWidth = function() {
         return innerOuter(this.elements[0], 'Width', 'inner');
     };
-    this.outerHeight = function(margin) {
-        return innerOuter(this.elements[0], 'Height', 'outer', margin ? 'margin' : 'border');
+    this.outerHeight = function() {
+        return innerOuter(this.elements[0], 'Height', 'outer');
     };
-    this.outerWidth = function(margin) {
-        return innerOuter(this.elements[0], 'Width', 'outer', margin ? 'margin' : 'border');
+    this.outerWidth = function() {
+        return innerOuter(this.elements[0], 'Width', 'outer');
     };
 
     return {
         getWindow: getWindow,
         scrollLeft: scrollLeft,
-        scrollTop: scrollTop
+        scrollTop: scrollTop,
+        matchMedia: matchMedia,
+        mediaQuery: mediaQuery,
+        aspect: aspect,
+        inViewport: inViewport,
+        scrollY: scrollY,
+        scrollX: scrollX,
+        inX: inX,
+        inY: inY,
+        rectangle: rectangle,
+        viewportW: viewportW,
+        viewportH: viewportH
+
     };
 });

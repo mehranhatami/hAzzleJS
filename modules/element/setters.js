@@ -5,10 +5,14 @@ hAzzle.define('Setters', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _detection = hAzzle.require('Detection'),
+        _strings = hAzzle.require('Strings'),
         _concat = Array.prototype.concat,
         SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
         whiteSpace = /\S+/g,
-        rreturn = /\r/g,
+        wreturn = /\r/g,
+        wrapBrackets = /^[\[\s]+|\s+|[\]\s]+$/g, // replace whitespace, trim [] brackets
+        arrWhitespace = /\s*[\s\,]+\s*/,
+        escapeDots = /\\*\./g, // find periods w/ and w/o preceding backslashes
         boolElemArray = ('input select option textarea button form details').split(' '),
         boolAttrArray = ('multiple selected checked disabled readonly required ' +
             'async autofocus compact nowrap declare noshade hreflang onload src' +
@@ -51,6 +55,14 @@ hAzzle.define('Setters', function() {
             return new RegExp('^(' + SVGAttributes + ')$', 'i').test(prop);
         },
 
+        getElem = function(elem) {
+            if (elem instanceof hAzzle) {
+                return elem.elements;
+            }
+            return elem;
+
+        },
+
         // Get names on the boolean attributes
 
         getBooleanAttrName = function(elem, name) {
@@ -62,9 +74,10 @@ hAzzle.define('Setters', function() {
 
         removeAttr = function(el, value) {
 
-            var name, propName, i = 0,
-
-                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
+            var name, propName,
+                i = 0,
+                elem = getElem(el),
+            keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
 
                 l = keys.length;
 
@@ -76,34 +89,58 @@ hAzzle.define('Setters', function() {
 
                 propName = propMap[name] || name;
 
-                if (getBooleanAttrName(el, name)) {
+                if (getBooleanAttrName(elem, name)) {
 
-                    el[propName] = false;
+                    elem[propName] = false;
 
                 } else {
 
-                    el.removeAttribute(name);
+                    elem.removeAttribute(name);
                 }
             }
         },
-        
+
         // Toggle attributes        
-        
+
         toggleAttr = function(elem, attr, force) {
-        
-        typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
-        
-        var opposite = !force;
-        
-        force ? Attr(elem, attr, '') : removeAttr(elem, attr);
-        
-        return elem[attr] === opposite ? elem[attr] = force : force;
-       
-       },
+
+            elem = getElem(elem);
+
+            typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
+
+            var opposite = !force;
+
+            force ? Attr(elem, attr, '') : removeAttr(elem, attr);
+
+            return elem[attr] === opposite ? elem[attr] = force : force;
+
+        },
+
+        // Convert list of attr names or data- keys into a selector.
+
+        toAttrSelector = function(list, prefix, join) {
+            var l, s, i = 0,
+                j = 0,
+                emp = '',
+                arr = [];
+            prefix = true === prefix;
+            list = typeof list == 'string' ? list.split(arrWhitespace) : typeof list == 'number' ? '' + list : list;
+            for (l = list.length; i < l;) {
+                s = list[i++];
+                s = prefix ? _strings.hyphenate(s) : s.replace(wrapBrackets, emp);
+                s && (arr[j++] = s);
+            }
+            // Escape periods to allow atts like `[data-the.wh_o]`
+            // @link api.jquery.com/category/selectors/
+            // @link stackoverflow.com/q/13283699/770127
+            return false === join ? arr : j ? '[' + arr.join('],[').replace(escapeDots, '\\\\.') + ']' : emp;
+        },
 
         // get/set attribute
 
         Attr = function(elem, name, value) {
+
+            elem = getElem(elem);
 
             var nodeType = elem ? elem.nodeType : undefined,
                 hooks, ret, notxml;
@@ -161,6 +198,8 @@ hAzzle.define('Setters', function() {
 
         Prop = function(elem, name, value) {
 
+            elem = getElem(elem);
+
             var nodeType = elem ? elem.nodeType : undefined,
                 hook, ret;
 
@@ -210,7 +249,7 @@ hAzzle.define('Setters', function() {
 
                 return typeof ret === 'string' ?
                     // Handle most common string cases
-                    ret.replace(rreturn, '') :
+                    ret.replace(wreturn, '') :
                     // Handle cases where value is null/undef or number
                     ret == null ? '' : ret;
             }
@@ -296,12 +335,12 @@ hAzzle.define('Setters', function() {
         });
     };
 
-	this.removeProp = function( name ) {
-		return this.each(function() {
-			delete this[ propMap[ name ] || name ];
-		});
-	};
-    
+    this.removeProp = function(name) {
+        return this.each(function() {
+            delete this[propMap[name] || name];
+        });
+    };
+
     this.removeAttr = function(value) {
         return this.each(function(elem) {
             removeAttr(elem, value);
@@ -363,6 +402,8 @@ hAzzle.define('Setters', function() {
         attr: Attr,
         prop: Prop,
         removeAttr: removeAttr,
+        toggleAttr:toggleAttr,
+        toAttrSelector:toAttrSelector,
         getBooleanAttrName: getBooleanAttrName,
         SVGAttribute: SVGAttribute
     };

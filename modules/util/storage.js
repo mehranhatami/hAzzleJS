@@ -60,37 +60,35 @@ hAzzle.define('Storage', function() {
             return this.register(owner, initial);
         },
         set: function(owner, data, value) {
-            var prop,
-                cache = this.cache(owner);
+            if (owner) {
+                var prop,
+                    cache = this.cache(owner);
 
-            // Handle: [ owner, key, value ] args
-            if (typeof data === "string") {
-                cache[data] = value;
+                // Handle: [ owner, key, value ] args
+                if (typeof data === 'string') {
+                    cache[data] = value;
 
-                // Handle: [ owner, { properties } ] args
-            } else {
-                // Fresh assignments by object are shallow copied
-                if (_types.isEmptyObject(cache)) {
-
-                    _util.extend(cache, data);
-                    // Otherwise, copy the properties one-by-one to the cache object
+                    // Handle: [ owner, { properties } ] args
                 } else {
-                    for (prop in data) {
-                        cache[prop] = data[prop];
+                    // Fresh assignments by object are shallow copied
+                    if (_types.isEmptyObject(cache)) {
+
+                        _util.extend(cache, data);
+                        // Otherwise, copy the properties one-by-one to the cache object
+                    } else {
+                        for (prop in data) {
+                            cache[prop] = data[prop];
+                        }
                     }
                 }
+                return cache;
             }
-            return cache;
-        },
-        get: function(owner, key) {
-            var cache = this.cache(owner);
-            return cache !== undefined && key === undefined ? cache : cache[key];
         },
         access: function(owner, key, value) {
             var stored;
 
             if (key === undefined ||
-                ((key && typeof key === "string") && value === undefined)) {
+                ((key && typeof key === 'string') && value === undefined)) {
 
                 stored = this.get(owner, key);
 
@@ -98,11 +96,16 @@ hAzzle.define('Storage', function() {
                     stored : this.get(owner, _strings.camelize(key));
             }
 
+
             this.set(owner, key, value);
 
-            // Since the "set" path can have two possible entry points
+            // Since the 'set' path can have two possible entry points
             // return the expected data based on which path was taken[*]
             return value !== undefined ? value : key;
+        },
+        get: function(owner, key) {
+            var cache = this.cache(owner);
+            return cache !== undefined && key === undefined ? cache : cache[key];
         },
         release: function(owner, key) {
             var i, name, camel,
@@ -306,10 +309,7 @@ hAzzle.define('Storage', function() {
     }
 
     return {
-        privateData: _privateData,
-        flushData: _userData.flush,
-        hasData: _userData.hasData,
-        data: _userData.access,
-        removeData: _userData.release
+        private: _privateData,
+        data: _userData,
     };
 });

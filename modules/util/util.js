@@ -394,6 +394,7 @@ hAzzle.define('Util', function() {
         },
         // shallowCopy
         shallowCopy = function(target, source, deep) {
+var key;
             for (key in source)
 
                 if (deep && (_types.isPlainObject(source[key]) || _types.isArray(source[key]))) {
@@ -407,6 +408,21 @@ hAzzle.define('Util', function() {
             } else if (source[key] !== undefined) {
                 target[key] = source[key];
             }
+        },
+        reject = function(a, fn, scope) {
+            var r = [],
+                i = 0,
+                j = 0,
+                l = a.length;
+            for (; i < l; i++) {
+                if (i in a) {
+                    if (fn.call(scope, a[i], i, a)) {
+                        continue;
+                    }
+                    r[j++] = a[i];
+                }
+            }
+            return r;
         };
 
     return {
@@ -431,6 +447,7 @@ hAzzle.define('Util', function() {
         bind: bind,
         has: has,
         int: int,
-        shallowCopy: shallowCopy
+        shallowCopy: shallowCopy,
+        reject: reject
     };
 });

@@ -186,15 +186,14 @@ hAzzle.define('Classes', function() {
                 } else if (value === undefined || type === 'boolean') {
                     if (elem.className) {
                         // store className if set
-                        _storage.privateData.set(elem, '__className__', elem.className);
+                        _storage.private.set(elem, '__className__', elem.className);
                     }
                     elem.className = elem.className || value === false ?
                         '' :
-                        _storage.privateData.get(this, '__className__') || '';
+                        _storage.private.get(this, '__className__') || '';
                 }
             }
         };
-
 
     this.hasClass = function(classes) {
         return hasClass(this.elements, classes);

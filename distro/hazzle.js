@@ -286,6 +286,8 @@ hAzzle.define('Support', function () {
         return div.compareDocumentPosition(document.createElement('div')) & 1;
     });
     
+
+
     return {
         assert:assert,
         checkOn: checkOn,
@@ -1009,8 +1011,8 @@ hAzzle.define('Util', function() {
         },
         // shallowCopy
         shallowCopy = function(target, source, deep) {
+var key;
             for (key in source)
-
 
                 if (deep && (_types.isPlainObject(source[key]) || _types.isArray(source[key]))) {
                 if (_types.isPlainObject(source[key]) && !_types.isPlainObject(target[key])) {
@@ -1023,6 +1025,21 @@ hAzzle.define('Util', function() {
             } else if (source[key] !== undefined) {
                 target[key] = source[key];
             }
+        },
+        reject = function(a, fn, scope) {
+            var r = [],
+                i = 0,
+                j = 0,
+                l = a.length;
+            for (; i < l; i++) {
+                if (i in a) {
+                    if (fn.call(scope, a[i], i, a)) {
+                        continue;
+                    }
+                    r[j++] = a[i];
+                }
+            }
+            return r;
         };
 
     return {
@@ -1047,7 +1064,8 @@ hAzzle.define('Util', function() {
         bind: bind,
         has: has,
         int: int,
-        shallowCopy: shallowCopy
+        shallowCopy: shallowCopy,
+        reject: reject
     };
 });
 // core.js
@@ -1809,6 +1827,7 @@ hAzzle.define('Jiesa', function() {
         find: Jiesa
     };
 });
+
 // strings.js
 hAzzle.define('Strings', function() {
     var
@@ -1892,21 +1911,29 @@ hAzzle.define('Strings', function() {
         },
 
         // Convert a string from camel case to "CSS case", where word boundaries are
-        // described by hyphens ("-") and all characters are lower-case.
+        // described by hyphens ('-') and all characters are lower-case.
         // e.g. boxSizing -> box-sizing
 
         hyphenate = function(str) {
-            return str ? str.replace(sHyphenate, fhyphenate) : str;
+            if (typeof str == 'string') {
+                return str ? str.replace(sHyphenate, fhyphenate) : str;
+            } else {
+                str = typeof str == 'number' ? '' + str : '';
+            }
+            return str ? ('data-' + str.toLowerCase()) : str;
         },
 
         // Convert a string to camel case notation.
         // Support: IE9-11+
         camelize = function(str) {
-            if (str) {
+            if (str && typeof str === 'string') {
+
                 return camelCache[str] ? camelCache[str] :
-                    camelCache[str] = str.replace(msPrefix, "ms-").replace(dashAlpha, fcamelize);
+                    // Remove data- prefix and convert remaining dashed string to camelCase
+                    camelCache[str] = str.replace(msPrefix, "ms-").replace(dashAlpha, fcamelize); // -a to A
             }
-            return str;
+            // Deal with 'number' and 'boolean'
+            return typeof str == 'number' || typeof str == 'boolean' ? '' + str : str;
         },
 
         // Remove leading and trailing whitespaces of the specified string.
@@ -1915,6 +1942,14 @@ hAzzle.define('Strings', function() {
             return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
                 // Any idiots still using Android 4.1 ?
                 (str + '').replace(nNTrim, '');
+        },
+
+        // Convert a stringified primitive into its correct type.
+        parse = function(str) {
+            var n; // undefined, or becomes number
+            return typeof str !== 'string' ||
+                !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
+                (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
         };
 
     // Credit: AngularJS    
@@ -1937,9 +1972,9 @@ hAzzle.define('Strings', function() {
         uppcase: uppercase,
         manualLowercase: manualLowercase,
         manualUppercase: manualUppercase,
+        parse: parse
     };
 });
-
 // storage.js
 hAzzle.define('Storage', function() {
 
@@ -2002,37 +2037,35 @@ hAzzle.define('Storage', function() {
             return this.register(owner, initial);
         },
         set: function(owner, data, value) {
-            var prop,
-                cache = this.cache(owner);
+            if (owner) {
+                var prop,
+                    cache = this.cache(owner);
 
-            // Handle: [ owner, key, value ] args
-            if (typeof data === "string") {
-                cache[data] = value;
+                // Handle: [ owner, key, value ] args
+                if (typeof data === 'string') {
+                    cache[data] = value;
 
-                // Handle: [ owner, { properties } ] args
-            } else {
-                // Fresh assignments by object are shallow copied
-                if (_types.isEmptyObject(cache)) {
-
-                    _util.extend(cache, data);
-                    // Otherwise, copy the properties one-by-one to the cache object
+                    // Handle: [ owner, { properties } ] args
                 } else {
-                    for (prop in data) {
-                        cache[prop] = data[prop];
+                    // Fresh assignments by object are shallow copied
+                    if (_types.isEmptyObject(cache)) {
+
+                        _util.extend(cache, data);
+                        // Otherwise, copy the properties one-by-one to the cache object
+                    } else {
+                        for (prop in data) {
+                            cache[prop] = data[prop];
+                        }
                     }
                 }
+                return cache;
             }
-            return cache;
-        },
-        get: function(owner, key) {
-            var cache = this.cache(owner);
-            return cache !== undefined && key === undefined ? cache : cache[key];
         },
         access: function(owner, key, value) {
             var stored;
 
             if (key === undefined ||
-                ((key && typeof key === "string") && value === undefined)) {
+                ((key && typeof key === 'string') && value === undefined)) {
 
                 stored = this.get(owner, key);
 
@@ -2040,11 +2073,16 @@ hAzzle.define('Storage', function() {
                     stored : this.get(owner, _strings.camelize(key));
             }
 
+
             this.set(owner, key, value);
 
-            // Since the "set" path can have two possible entry points
+            // Since the 'set' path can have two possible entry points
             // return the expected data based on which path was taken[*]
             return value !== undefined ? value : key;
+        },
+        get: function(owner, key) {
+            var cache = this.cache(owner);
+            return cache !== undefined && key === undefined ? cache : cache[key];
         },
         release: function(owner, key) {
             var i, name, camel,
@@ -2248,11 +2286,8 @@ hAzzle.define('Storage', function() {
     }
 
     return {
-        privateData: _privateData,
-        flushData: _userData.flush,
-        hasData: _userData.hasData,
-        data: _userData.access,
-        removeData: _userData.release
+        private: _privateData,
+        data: _userData,
     };
 });
 
@@ -2307,12 +2342,12 @@ hAzzle.define('curCSS', function() {
         },
         computedCSS = function(elem) {
             if (elem) {
-                if (_storage.privateData.get(elem, 'computed') === undefined) {
-                    _storage.privateData.access(elem, 'computed', {
+                if (_storage.private.get(elem, 'computed') === undefined) {
+                    _storage.private.access(elem, 'computed', {
                         computedStyle: null,
                     });
                 }
-                return _storage.privateData.get(elem, 'computed');
+                return _storage.private.get(elem, 'computed');
             }
         },
         getStyles = function(elem) {
@@ -3007,9 +3042,32 @@ hAzzle.define('cssHooks', function() {
 // dimensions.js
 hAzzle.define('Dimensions', function() {
 
-    var _style = hAzzle.require('Style'),
+    var win = window,
+        doc = window.document,
+        docElem = doc.documentElement,
+        _matchMedia = win.matchMedia || win.msMatchMedia,
+        mq = _matchMedia ? function(q) {
+            return !!_matchMedia.call(win, q).matches;
+        } : function() {
+            return false;
+        },
+
+        viewportW = function() {
+            var a = docElem.clientWidth,
+                b = win.innerWidth;
+            return a < b ? b : a;
+        },
+        viewportH = function() {
+            var a = docElem.clientHeight,
+                b = win.innerHeight;
+            return a < b ? b : a;
+        },
+
+        // Include the modules    
+        _style = hAzzle.require('Style'),
         _types = hAzzle.require('Types'),
         _curcss = hAzzle.require('curCSS'),
+
         cssShow = {
             visibility: 'hidden',
             display: 'block'
@@ -3064,7 +3122,7 @@ hAzzle.define('Dimensions', function() {
             return val + 'px';
         },
 
-        innerOuter = function(elem, method, value, extra) {
+        innerOuter = function(elem, method, value) {
 
             var docElem;
 
@@ -3080,7 +3138,7 @@ hAzzle.define('Dimensions', function() {
                 }
 
                 return swap(elem, function() {
-                    return getSize(elem, method, value, extra);
+                    return getSize(elem, method, value);
                 });
             }
         },
@@ -3110,8 +3168,92 @@ hAzzle.define('Dimensions', function() {
                 }
                 return win ? win.scrollTo(val) : elem.scrollTop = val;
             });
-        };
+        },
+        // Test if a media query is active   
+        mediaQuery = function() {
+            if (!mq) {
+                hAzzle.err(true, 15, 'matchMedia are not supported by this browser!');
+                return false;
+            }
+            return true;
+        },
 
+        matchMedia = _matchMedia ? function() {
+            // matchMedia must be binded to window
+            return _matchMedia.apply(win, arguments);
+        } : function() {
+            return {};
+        },
+        // Test if any part of an element (or the first element in a matched set) is in the 
+        // current viewport
+        viewport = function() {
+            return {
+                'width': viewportW(),
+                'height': viewportH()
+            };
+        },
+        calibrate = function(coords, cushion) {
+            var opt = {};
+            cushion = +cushion || 0;
+            opt.width = (opt.right = coords.right + cushion) - (opt.left = coords.left - cushion);
+            opt.height = (opt.bottom = coords.bottom + cushion) - (opt.top = coords.top - cushion);
+            return opt;
+        },
+
+        // Get an a object containing the properties top, bottom, left, right, width, and height 
+        // with respect to the top-left corner of the current viewport, and with an 
+        // optional cushion amount
+
+        rectangle = function(elem, cushion) {
+            if (elem) {
+
+                if (elem instanceof hAzzle) {
+                    elem = elem.elements[0];
+                } else {
+
+                    elem = elem.nodeType ? elem : elem[0];
+                }
+                if (!elem || elem.nodeType !== 1) {
+                    return false;
+                }
+                return calibrate(elem.getBoundingClientRect(), cushion);
+            }
+        },
+
+        // Get the aspect ratio of the viewport or of an object with width/height properties
+
+        aspect = function(opt) {
+            opt = null == opt ? viewport() : opt.nodeType === 1 ? rectangle(opt) : opt;
+            var h = opt.height,
+                w = opt.width;
+            h = typeof h == 'function' ? h.call(opt) : h;
+            w = typeof w == 'function' ? w.call(opt) : w;
+            return w / h;
+        },
+        // Test if an element is in the same x-axis section as the viewport.
+        inX = function(elem, cushion) {
+            var r = rectangle(elem, cushion);
+            return !!r && r.right >= 0 && r.left <= viewportW();
+        },
+        // Test if an element is in the same y-axis section as the viewport.    
+
+        inY = function(elem, cushion) {
+            var r = rectangle(elem, cushion);
+            return !!r && r.bottom >= 0 && r.top <= viewportH();
+        },
+        // Test if an element is in the viewport.
+        inViewport = function(elem, cushion) {
+            var r = rectangle(elem, cushion);
+            return !!r && r.bottom >= 0 && r.right >= 0 && r.top <= viewportH() && r.left <= viewportW();
+        },
+        // Get the vertical scroll position in pixels
+        scrollY = function() {
+            return win.pageYOffset || docElem.scrollTop;
+        },
+        // Get the horizontal scroll position in pixels
+        scrollX = function() {
+            return win.pageXOffset || docElem.scrollLeft;
+        };
     this.scrollLeft = function(val) {
         return scrollLeft(this.elements[0], val);
     };
@@ -3138,17 +3280,29 @@ hAzzle.define('Dimensions', function() {
     this.innerWidth = function() {
         return innerOuter(this.elements[0], 'Width', 'inner');
     };
-    this.outerHeight = function(margin) {
-        return innerOuter(this.elements[0], 'Height', 'outer', margin ? 'margin' : 'border');
+    this.outerHeight = function() {
+        return innerOuter(this.elements[0], 'Height', 'outer');
     };
-    this.outerWidth = function(margin) {
-        return innerOuter(this.elements[0], 'Width', 'outer', margin ? 'margin' : 'border');
+    this.outerWidth = function() {
+        return innerOuter(this.elements[0], 'Width', 'outer');
     };
 
     return {
         getWindow: getWindow,
         scrollLeft: scrollLeft,
-        scrollTop: scrollTop
+        scrollTop: scrollTop,
+        matchMedia: matchMedia,
+        mediaQuery: mediaQuery,
+        aspect: aspect,
+        inViewport: inViewport,
+        scrollY: scrollY,
+        scrollX: scrollX,
+        inX: inX,
+        inY: inY,
+        rectangle: rectangle,
+        viewportW: viewportW,
+        viewportH: viewportH
+
     };
 });
 
@@ -3590,10 +3744,14 @@ hAzzle.define('Setters', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _detection = hAzzle.require('Detection'),
+        _strings = hAzzle.require('Strings'),
         _concat = Array.prototype.concat,
         SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
         whiteSpace = /\S+/g,
-        rreturn = /\r/g,
+        wreturn = /\r/g,
+        wrapBrackets = /^[\[\s]+|\s+|[\]\s]+$/g, // replace whitespace, trim [] brackets
+        arrWhitespace = /\s*[\s\,]+\s*/,
+        escapeDots = /\\*\./g, // find periods w/ and w/o preceding backslashes
         boolElemArray = ('input select option textarea button form details').split(' '),
         boolAttrArray = ('multiple selected checked disabled readonly required ' +
             'async autofocus compact nowrap declare noshade hreflang onload src' +
@@ -3636,6 +3794,14 @@ hAzzle.define('Setters', function() {
             return new RegExp('^(' + SVGAttributes + ')$', 'i').test(prop);
         },
 
+        getElem = function(elem) {
+            if (elem instanceof hAzzle) {
+                return elem.elements;
+            }
+            return elem;
+
+        },
+
         // Get names on the boolean attributes
 
         getBooleanAttrName = function(elem, name) {
@@ -3647,9 +3813,10 @@ hAzzle.define('Setters', function() {
 
         removeAttr = function(el, value) {
 
-            var name, propName, i = 0,
-
-                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
+            var name, propName,
+                i = 0,
+                elem = getElem(el),
+            keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
 
                 l = keys.length;
 
@@ -3661,13 +3828,13 @@ hAzzle.define('Setters', function() {
 
                 propName = propMap[name] || name;
 
-                if (getBooleanAttrName(el, name)) {
+                if (getBooleanAttrName(elem, name)) {
 
-                    el[propName] = false;
+                    elem[propName] = false;
 
                 } else {
 
-                    el.removeAttribute(name);
+                    elem.removeAttribute(name);
                 }
             }
         },
@@ -3675,6 +3842,8 @@ hAzzle.define('Setters', function() {
         // Toggle attributes        
 
         toggleAttr = function(elem, attr, force) {
+
+            elem = getElem(elem);
 
             typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
 
@@ -3686,9 +3855,31 @@ hAzzle.define('Setters', function() {
 
         },
 
+        // Convert list of attr names or data- keys into a selector.
+
+        toAttrSelector = function(list, prefix, join) {
+            var l, s, i = 0,
+                j = 0,
+                emp = '',
+                arr = [];
+            prefix = true === prefix;
+            list = typeof list == 'string' ? list.split(arrWhitespace) : typeof list == 'number' ? '' + list : list;
+            for (l = list.length; i < l;) {
+                s = list[i++];
+                s = prefix ? _strings.hyphenate(s) : s.replace(wrapBrackets, emp);
+                s && (arr[j++] = s);
+            }
+            // Escape periods to allow atts like `[data-the.wh_o]`
+            // @link api.jquery.com/category/selectors/
+            // @link stackoverflow.com/q/13283699/770127
+            return false === join ? arr : j ? '[' + arr.join('],[').replace(escapeDots, '\\\\.') + ']' : emp;
+        },
+
         // get/set attribute
 
         Attr = function(elem, name, value) {
+
+            elem = getElem(elem);
 
             var nodeType = elem ? elem.nodeType : undefined,
                 hooks, ret, notxml;
@@ -3746,6 +3937,8 @@ hAzzle.define('Setters', function() {
 
         Prop = function(elem, name, value) {
 
+            elem = getElem(elem);
+
             var nodeType = elem ? elem.nodeType : undefined,
                 hook, ret;
 
@@ -3795,7 +3988,7 @@ hAzzle.define('Setters', function() {
 
                 return typeof ret === 'string' ?
                     // Handle most common string cases
-                    ret.replace(rreturn, '') :
+                    ret.replace(wreturn, '') :
                     // Handle cases where value is null/undef or number
                     ret == null ? '' : ret;
             }
@@ -3948,6 +4141,8 @@ hAzzle.define('Setters', function() {
         attr: Attr,
         prop: Prop,
         removeAttr: removeAttr,
+        toggleAttr:toggleAttr,
+        toAttrSelector:toAttrSelector,
         getBooleanAttrName: getBooleanAttrName,
         SVGAttribute: SVGAttribute
     };
@@ -4134,14 +4329,838 @@ hAzzle.define('valHooks', function() {
     });
 });
 
+/** 
+ * events.js - hAzzle Event Manager module
+ *
+ * Desktop browsers support:
+ *
+ *    Chrome 9+
+ *    Safari 5.0+
+ *    Firefox 18+
+ *    Opera 15.1+
+ *    Internet Explorer 9+
+ *
+ * Mobile browsers support:
+ *
+ *    Google Android 4.0+
+ *    Apple iOS 6+
+ *    ChromiumOS
+ *    FirefoxOS
+ *
+ * Sources:
+ *
+ * - http://dean.edwards.name/weblog/2005/10/add-event/
+ * - http://dean.edwards.name/weblog/2005/10/add-event2/
+ * - http://stackoverflow.com/questions/4034742/understanding-dean-edwards-addevent-javascript
+ * - https://github.com/dperini/nwevents
+ * - https://github.com/fat/bean
+ * - jQuery
+ */
 hAzzle.define('Events', function() {
 
-    this.on = function(evt, fn) {
-        this.elements[0].addEventListener(evt, fn, false);
+    var win = window,
+        doc = win.document,
+        namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
+        nameRegex = /\..*/,
+        whiteSpace = /\S+/g,
+        docElem = doc.documentElement || {},
+        map = {},
+
+        // Include needed modules
+        _util = hAzzle.require('Util'),
+        _collection = hAzzle.require('Collection'),
+        _types = hAzzle.require('Types'),
+        _jiesa = hAzzle.require('Jiesa'),
+        _detection = hAzzle.require('Detection'),
+        _core = hAzzle.require('Core'),
+
+        // regEx
+
+        everything = /.*/,
+        keyEvent = /^key/,
+        mouseEvent = /^(?:mouse(?!(.*wheel|scroll))|pointer|menu|drag|drop|contextmenu)|click/,
+      
+        // Properties
+        commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
+            'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
+            'srcElement target timeStamp type view which propertyName').split(' '),
+        mouseProps = commonProps.concat(('button buttons clientX clientY dataTransfer ' +
+            'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ')),
+        keyProps = commonProps.concat(('char charCode key keyCode keyIdentifier ' +
+            'keyLocation location').split(' '));
+
+    // Firefox specific eventTypes
+    if (_detection.isFirefox) {
+        commonProps.concat('mozMovementY mozMovementX'.split(' '));
+    }
+    // WebKit eventTypes
+    // Support: Chrome / Opera
+
+    if (_detection.isWebkit) {
+        commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
     }
 
+    // specialEvents (e.g. focus and blur)
+    var specialEvents = {},
+
+        fixedEvents = {},
+
+        propHooks = [{ // key events
+            reg: keyEvent,
+            fix: function(original, evt) {
+                // Add which for key events
+                if (evt.which == null) {
+                    evt.which = original.charCode != null ? original.charCode : original.keyCode;
+                }
+
+                evt.keyCode = original.keyCode || original.which;
+                return keyProps;
+            }
+        }, { // mouse events
+
+            reg: mouseEvent,
+            fix: function(original, evt, type) {
+
+                // Calculate pageX/Y if missing and clientX/Y available
+                if (evt.pageX == null && original.clientX != null) {
+                    evt.pageX = original.clientX + docElem.scrollLeft - docElem.clientLeft;
 
 
+
+                    evt.pageY = original.clientY + docElem.scrollTop - docElem.clientTop;
+                }
+
+                // click: 1 === left; 2 === middle; 3 === right
+                if (!evt.which && original.button !== undefined) {
+                    evt.which = (original.button & 1 ? 1 : (original.button & 2 ? 3 : (original.button & 4 ? 2 : 0)));
+                }
+
+                if (type === 'mouseover' || type === 'mouseout') {
+                    evt.relatedTarget = original.relatedTarget || original[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
+                }
+                return mouseProps;
+            }
+        }, { // everything else
+            reg: everything,
+            fix: function() {
+                return commonProps;
+            }
+        }],
+
+        // Custom event holder
+
+        customEvents = {},
+
+        // Event fix holder
+
+        fixHooks = {},
+
+        deatch = function(element, fn, condition, args) {
+
+            var call = function(event, eargs) {
+                    return fn.apply(element, args ? _collection.slice(eargs).concat(args) : eargs);
+                },
+                findTarget = function(event, eventElement) {
+                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(event.target, element) : eventElement;
+                },
+                handler = condition ? function(event) {
+                    var target = findTarget(event, this); // deleated event
+                    if (condition.apply(target, arguments)) {
+                        if (event) {
+                            event.currentTarget = target;
+                        }
+                        return call(event, arguments);
+                    }
+                } : function(event) {
+                    if (fn.__kfx2rcf) event = event.clone(findTarget(event)); // delegated event, fix the fix
+                    return call(event, arguments);
+                };
+            handler.__kfx2rcf = fn.__kfx2rcf;
+            return handler;
+        },
+
+        // Iterate
+
+        iteratee = function(element, type, original, handler, root, callback) {
+            var t, pfx = root ? '_r' : '_$';
+
+            if (!type || type == '*') {
+
+                for (t in map) {
+                    if (t.charAt(0) == pfx) {
+                        iteratee(element, t.substr(1), original, handler, root, callback);
+                    }
+                }
+            } else {
+                var i = 0,
+                    l, list = map[pfx + type],
+                    all = element == '*';
+
+                if (!list) {
+                    return;
+                }
+
+                for (l = list.length; i < l; i++) {
+                    if ((all || list[i].matches(element, original, handler)) && !callback(list[i], list, i, type)) {
+                        return;
+                    }
+                }
+            }
+        },
+        // Check collection for registered event,
+        // match element and handler
+        isRegistered = function(element, type, original, root) {
+            var i, list = map[(root ? '_r' : '_$') + type];
+            if (list) {
+                for (i = list.length; i--;) {
+                    if (!list[i].root && list[i].matches(element, original, null)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+
+        // List event handlers bound to a given object for each type
+
+        getRegistered = function(elem, type, original, root) {
+            var entries = [];
+            iteratee(elem, type, original, null, root, function(entry) {
+                return entries.push(entry);
+            });
+            return entries;
+        },
+        // Register an event instance and its parameters
+        registrer = function(entry) {
+
+            var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
+                key = (entry.root ? '_r' : '_$') + entry.type;
+            (map[key] || (map[key] = [])).push(entry);
+            return contains;
+        },
+        // Unregister an event instance and its parameters
+        unregister = function(entry) {
+            iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
+                list.splice(i, 1);
+                entry.removed = true;
+                if (list.length === 0) {
+                    delete map[(entry.root ? '_r' : '_$') + entry.type];
+                }
+                return false;
+            });
+        },
+
+        rootListener = function(event, type) {
+
+            var listeners = getRegistered(this, type || event.type, null, false),
+                l = listeners.length,
+                i = 0;
+
+            event = new Event(event, this, true);
+
+            if (type) {
+                event.type = type;
+            }
+            for (; i < l && !event.isImmediatePropagationStopped(); i++) {
+                if (!listeners[i].removed) {
+                    listeners[i].handler.call(this, event);
+                }
+            }
+        },
+
+        once = function(rm, elem, type, callback, original) {
+            return function() {
+                callback.apply(this, arguments);
+                rm(elem, type, original);
+            };
+        },
+
+        dispatch = function(elem, type, handler, ns) {
+
+            type = type && type.replace(nameRegex, '');
+
+            var handlers = getRegistered(elem, type, null, false),
+                removed = {},
+                i, l;
+
+            for (i = 0, l = handlers.length; i < l; i++) {
+                if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(ns)) {
+                    unregister(handlers[i]);
+                    if (!removed[handlers[i].eventType])
+                        removed[handlers[i].eventType] = {
+                            t: handlers[i].eventType,
+                            c: handlers[i].type
+                        };
+                }
+            }
+
+            for (i in removed) {
+                if (!isRegistered(elem, removed[i].t, null, false)) {
+                    elem.removeEventListener(removed[i].t, rootListener, false);
+                }
+            }
+        },
+
+        findTarget = function(target, selector, root) {
+            if (root) {
+                var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
+
+                for (; target && target !== root; target = target.parentElement) {
+                    for (i = els.length; i--;) {
+                        if (els[i] === target) {
+                            return target;
+                        }
+                    }
+                }
+            }
+        },
+
+        delegate = function(selector, fn) {
+            var handler = function(e) {
+                var cur = e.target;
+                // Don't process clicks on disabled elements
+                if (cur.nodeType && cur.disabled !== true) {
+                    var m = findTarget(cur, selector, this);
+                    if (m) {
+                        fn.apply(m, arguments);
+                    }
+                }
+            };
+
+            handler.__kfx2rcf = {
+                ft: findTarget, // attach it here for customEvents to use too
+                selector: selector
+            };
+            return handler;
+        },
+
+        on = function(elem, types, selector, callback, one) {
+
+            // Check if typeof hAzzle, then wrap it out, and return current elem
+
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
+
+            var cb, type, i, args, entry, first, hooks;
+
+            // Types can be a map of types/handlers
+
+            if (typeof types == 'object') {
+                if (typeof selector !== 'string') {
+                    callback = selector;
+                    selector = undefined;
+                }
+                for (type in types) {
+                    on(elem, type, types[type]);
+                }
+                return;
+            }
+
+            // Event delegation
+
+            if (!_types.isType('Function')(selector)) {
+                cb = callback;
+                args = _collection.slice(arguments, 4);
+                callback = delegate(selector, cb);
+            } else {
+                args = _collection.slice(arguments, 3);
+                callback = cb = selector;
+            }
+
+            if (typeof callback !== 'function') {
+                hAzzle.err(true, 13, 'no handler registred for on() in events.js module');
+            }
+
+            // Handle multiple types separated by a space
+
+            types = (types || '').match((whiteSpace)) || [''];
+
+
+            if (one) {
+                callback = once(off, elem, types, callback, cb);
+            }
+
+            i = types.length;
+
+            while (i--) {
+
+                first = registrer(entry = new Registry(
+                    elem,
+                    types[i].replace(nameRegex, ''), // event type
+                    callback,
+                    cb,
+                    types[i].replace(namespaceRegex, '').split('.'), // namespaces
+                    args,
+                    false // not root
+                ));
+
+                if (first) {
+
+                    type = entry.eventType;
+
+                    if ((hooks = specialEvents[type])) {
+                        hooks(elem, type);
+                    }
+
+                    elem.addEventListener(type, rootListener, false);
+                }
+            }
+
+            return elem;
+        },
+
+        one = function(elem, types, selector, callback) {
+            return on(elem, types, selector, callback, 1);
+        },
+
+        off = function(elem, types, callback) {
+
+            if (typeof types !== 'string') {
+                hAzzle.err(true, 14, "'events' given in off() - events.js module are not valid");
+            }
+
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
+            var k, type, namespaces, i;
+
+            if (typeof types === 'string' && types.indexOf(' ') > 0) {
+                types = (types || '').match((whiteSpace)) || [''];
+                for (i = types.length; i--;) {
+                    off(elem, types[i], callback);
+                }
+                return elem;
+            }
+
+            type = typeof types === 'string' && types.replace(nameRegex, '');
+
+            if (type && customEvents[type]) {
+                type = customEvents[type].base;
+            }
+
+            if (!types || typeof types === 'string') {
+                if ((namespaces = typeof types === 'string' && types.replace(namespaceRegex, ''))) {
+                    namespaces = namespaces.split('.');
+                }
+
+                dispatch(elem, type, callback, namespaces);
+
+            } else if (_types.isType('Function')(types)) {
+                dispatch(elem, null, types);
+            } else {
+                for (k in types) {
+                    off(elem, k, types[k]);
+                }
+            }
+
+            return elem;
+        },
+
+        trigger = function(elem, type, args) {
+
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
+            var types = (type || '').match((whiteSpace)) || [''],
+                i, j, l, call, event, names, handlers, canContinue;
+
+            for (i = types.length; i--;) {
+
+                type = types[i].replace(nameRegex, '');
+
+                if ((names = types[i].replace(namespaceRegex, ''))) {
+                    names = names.split('.');
+                }
+                if (names && args) {
+                    event = new Event(null, elem);
+                    event.type = type;
+                    call = args ? 'apply' : 'call';
+                    args = args ? [event].concat(args) : event;
+                    for (j = 0, l = handlers.length; j < l; j++) {
+                        if (handlers[j].inNamespaces(names)) {
+                            handlers[j].handler.call(elem, args);
+                        }
+                    }
+                    canContinue = event.returnValue !== false;
+                } else {
+                    // 
+                    var evt = doc.createEvent('HTMLEvents');
+                    evt.detail = arguments;
+                    evt.initEvent(type, true, true);
+                    canContinue = elem.dispatchEvent(evt);
+                }
+
+                return canContinue;
+
+            }
+            return elem;
+        },
+
+        clone = function(elem, from, type) {
+            var handlers = getRegistered(from, type, null, false),
+                l = handlers.length,
+                i = 0,
+                args, kfx2rcf;
+
+            for (; i < l; i++) {
+                if (handlers[i].original) {
+                    args = [elem, handlers[i].type];
+                    if ((kfx2rcf = handlers[i].handler.__kfx2rcf)) {
+                        args.push(kfx2rcf.selector);
+                    }
+                    args.push(handlers[i].original);
+                    on.apply(null, args);
+                }
+            }
+            return elem;
+        },
+
+        Event = function(event, elem) {
+
+            // Needed for DOM0 events
+            event = event || ((elem.ownerDocument ||
+                    elem.document ||
+                    elem).parentWindow ||
+                win).event;
+
+            this.originalEvent = event;
+
+            if (!event) {
+                return;
+            }
+
+            var type = event.type,
+                // fired element (triggering the event)
+                target = event.target || event.srcElement,
+                i, l, p, props, fixer;
+
+            // Support: Safari 6.0+, Chrome<28
+            this.target = target.nodeType === 3 ? target.parentNode : target;
+            this.timeStamp = Date.now(); // Set time event was fixed
+
+            fixer = fixHooks[type];
+
+            // Haven't encountered this event type before, map a fixer function for it
+
+            if (!fixer) {
+
+                fixer = fixedEvents[type];
+
+                if (!fixer) { // haven't encountered this event type before, map a fixer function for it
+                    for (i = 0, l = propHooks.length; i < l; i++) {
+                        if (propHooks[i].reg.test(type)) { // guaranteed to match at least one, last is .*
+                            fixedEvents[type] = fixer = propHooks[i].fix;
+                            break;
+                        }
+                    }
+                }
+
+                props = fixer(event, this, type);
+                for (i = props.length; i--;) {
+                    if (!((p = props[i]) in this) && p in event) this[p] = event[p];
+                }
+            }
+        };
+
+    Event.prototype = {
+
+        // prevent default action
+
+        preventDefault: function() {
+            var e = this.originalEvent;
+            if (e && e.preventDefault) {
+                e.preventDefault();
+            } else {
+                e.returnValue = false;
+            }
+        },
+
+        // stop event propagation
+
+        stopPropagation: function() {
+            var e = this.originalEvent;
+            if (e && e.stopPropagation) {
+                e.stopPropagation();
+            } else {
+                e.cancelBubble = true;
+            }
+        },
+        // block any further event processing
+        stop: function() {
+            this.preventDefault();
+            this.stopPropagation();
+            this.stopped = true;
+        },
+
+        stopImmediatePropagation: function() {
+            var e = this.originalEvent;
+            if (e.stopImmediatePropagation) {
+                e.stopImmediatePropagation();
+            }
+            this.isImmediatePropagationStopped = function() {
+                return true;
+            };
+        },
+        isImmediatePropagationStopped: function() {
+            var e = this.originalEvent;
+            return e.isImmediatePropagationStopped && e.isImmediatePropagationStopped();
+        },
+        clone: function(target) {
+            var nE = new Event(this, this.element);
+            nE.currentTarget = target;
+            return nE;
+        }
+    };
+
+    var Registry = function(elem, type, handler, original, namespaces, args, docElem) {
+        return new Registry.prototype.init(elem, type, handler, original, namespaces, args, docElem);
+    };
+
+    Registry.prototype = {
+
+        init: function(elem, type, handler, original, namespaces, args, docElem) {
+
+            var customType = customEvents[type];
+
+            if (type == 'unload') {
+                // self clean-up
+                handler = once(dispatch, elem, type, handler, original);
+            }
+
+            if (customType) {
+                if (customType.condition) {
+                    handler = deatch(elem, handler, customType.condition, args);
+                }
+                type = customType.base || type;
+            }
+
+
+            this.element = elem;
+            this.type = type;
+            this.original = original;
+            this.namespaces = namespaces;
+            this.eventType = type;
+            this.target = elem;
+            this.root = docElem;
+            this.handler = deatch(elem, handler, null, args);
+        },
+
+
+        inNamespaces: function(checkNamespaces) {
+            var i, j, c = 0;
+            if (!checkNamespaces) {
+                return true;
+            }
+            if (!this.namespaces) {
+                return false;
+            }
+            for (i = checkNamespaces.length; i--;) {
+                for (j = this.namespaces.length; j--;) {
+                    if (checkNamespaces[i] == this.namespaces[j]) {
+                        c++;
+                    }
+                }
+            }
+            return checkNamespaces.length === c;
+        },
+
+        matches: function(checkElement, checkOriginal, checkHandler) {
+            return this.element === checkElement &&
+                (!checkOriginal || this.original === checkOriginal) &&
+                (!checkHandler || this.handler === checkHandler);
+        }
+    };
+
+    Registry.prototype.init.prototype = Registry.prototype;
+
+    // Add event listener
+
+    this.on = function(events, selector, callback) {
+        this.each(function(elem) {
+            on(elem, events, selector, callback);
+        });
+    };
+
+    // One
+    this.one = function(events, selector, callback) {
+        this.each(function(elem) {
+            one(elem, events, selector, callback);
+        });
+    };
+
+    // Remove event listeners
+    this.off = function(events, callback) {
+        this.each(function(elem) {
+            off(elem, events, callback);
+        });
+    };
+
+    // Trigger events
+    this.trigger = function(events, args) {
+        this.each(function(elem) {
+            trigger(elem, events, args);
+        });
+    };
+    // Clone events
+    this.clone = function(dest, events) {
+        clone(this.elements[0], dest, events);
+    };
+
+    this.hover = function(fnOver, fnOut) {
+            return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+        },
+
+        // Populate the custom event list
+
+        _util.each({
+            mouseenter: 'mouseover',
+            mouseleave: 'mouseout',
+            pointerenter: 'pointerover',
+            pointerleave: 'pointerout'
+        }, function(fix, orig) {
+            customEvents[orig] = {
+                base: fix,
+                condition: function(event) {
+                    var target = this,
+                        related = event.relatedTarget;
+                    return !related ? related == null : (related !== target && !_core.contains(related, target));
+                }
+            };
+        });
+
+    // Shortcuts
+
+    _util.each(('blur change click dblclick error focus focusin focusout keydown keypress ' +
+        'keyup load mousedown mouseenter mouseleave mouseout mouseover mouseup ' +
+        'mousemove resize scroll select submit unload change contextmenu').split(' '), function(name) {
+        this[name] = function(callback) {
+            return arguments.length > 0 ?
+                this.on(name, callback) :
+                this.trigger(name);
+
+        };
+    }.bind(this));
+
+
+    return {
+        specialEvents: specialEvents,
+        propHooks: propHooks,
+        mouseProps: mouseProps,
+        commonProps: commonProps, 
+        on: on,
+        one: one,
+        off: off,
+        clone: clone,
+        trigger: trigger,
+    };
+});
+// specialEvents.js
+hAzzle.define('specialEvents', function() {
+
+    var _util = hAzzle.require('Util'),
+        _detection = hAzzle.require('Detection'),
+        _events = hAzzle.require('Events');
+
+    // Handle focusin/focusout for browsers who don't support it ( e.g Firefox)
+
+    if (_detection.isFirefox) {
+        var focusBlurFn = function(elem, type) {
+
+            var key,
+                focusEventType = (type == 'focusin') ? 'focus' : 'blur',
+                focusables = (function(elem) {
+
+                    var focusables = hAzzle(elem).find('input').elements,
+                        selects = hAzzle(elem).find('select').elements;
+
+                    if (selects.length) {
+                        push.apply(focusables, selects);
+                    }
+
+                    return focusables;
+                })(elem),
+                handler = (function(type) {
+                    return function() {
+                        if (this === document.activeElement && this.blur) {
+                            hAzzle(this).trigger(type);
+                            return false;
+                        }
+                    };
+                })(type),
+
+                i = -1,
+
+                length = focusables.length;
+
+            key = '__' + focusEventType + 'fixed__';
+
+            while (++i < length) {
+
+                if (!_util.has(focusables[i], key) || !focusables[i][key]) {
+                    focusables[i][key] = true;
+                    focusables[i].addEventListener(focusEventType, handler, true);
+                }
+            }
+        };
+
+        _util.each(['focusin', 'focusout'], function(prop) {
+            _events.specialEvents[prop] = focusBlurFn;
+        });
+    }
+    return {};
+});
+
+// eventhooks.js
+hAzzle.define('eventHooks', function() {
+
+    var _event = hAzzle.require('Events'),
+
+        mouseWheelEvent = /mouse.*(wheel|scroll)/i,
+        textEvent = /^text/i,
+        touchEvent = /^touch|^gesture/i,
+        messageEvent = /^message$/i,
+        popstateEvent = /^popstate$/i,
+
+        mouseWheelProps = _event.mouseProps.concat(('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ ' +
+            'deltaY deltaX deltaZ').split(' ')),
+        textProps = _event.commonProps.concat(('data').split(' ')),
+        touchProps = _event.commonProps.concat(('touches changedTouches targetTouches scale rotation').split(' ')),
+        messageProps = _event.commonProps.concat(('data origin source').split(' ')),
+        stateProps = _event.commonProps.concat(('state').split(' '));
+
+    _event.propHooks = _event.propHooks.concat([
+
+        { // mouse wheel events
+            reg: mouseWheelEvent,
+            fix: function() {
+                return mouseWheelProps;
+            }
+        }, { // TextEvent
+            reg: textEvent,
+            fix: function() {
+                return textProps;
+            }
+        }, { // touch and gesture events
+            reg: touchEvent,
+            fix: function() {
+                return touchProps;
+            }
+        }, { // message events
+            reg: messageEvent,
+            fix: function() {
+                return messageProps;
+            }
+        }, { // popstate events
+            reg: popstateEvent,
+            fix: function() {
+                return stateProps;
+            }
+        }
+    ]);
     return {};
 });
 
@@ -4348,9 +5367,9 @@ hAzzle.define('Classes', function() {
                 }
             }
         },
-
+        
         // Check if the first element in the collection has classes
-
+        
         hasClass = function(elem, classes) {
 
             elem = elem.length ? elem : [elem];
@@ -4472,15 +5491,14 @@ hAzzle.define('Classes', function() {
                 } else if (value === undefined || type === 'boolean') {
                     if (elem.className) {
                         // store className if set
-                        _storage.privateData.set(elem, '__className__', elem.className);
+                        _storage.private.set(elem, '__className__', elem.className);
                     }
                     elem.className = elem.className || value === false ?
                         '' :
-                        _storage.privateData.get(this, '__className__') || '';
+                        _storage.private.get(this, '__className__') || '';
                 }
             }
         };
-
 
     this.hasClass = function(classes) {
         return hasClass(this.elements, classes);
@@ -4494,9 +5512,9 @@ hAzzle.define('Classes', function() {
                 hAzzle(elem).addClass(classes.call(elem, index, elem.className));
             }) : addClass(this.elements, classes, fn);
     };
-
+    
     // Replace a given class with another
-
+    
     this.replaceClass = function(firstClass, secondClass) {
         if (this.hasClass(firstClass)) {
             this.removeClass(firstClass).addClass(secondClass);
@@ -4549,14 +5567,14 @@ hAzzle.define('Visibility', function() {
                 length = elements.length;
 
             for (; index < length; index++) {
-
+              
                 elem = elements[index];
-
+              
                 if (!elem.style) {
                     continue;
                 }
 
-                values[index] = _storage.privateData.access(elem, 'cssDisplay');
+                values[index] = _storage.private.access(elem, 'cssDisplay');
                 display = elem.style.display;
                 if (show) {
                     if (!values[index] && display === 'none') {
@@ -4565,12 +5583,12 @@ hAzzle.define('Visibility', function() {
 
                     if (elem.style.display === '' && isHidden(elem)) {
 
-                        values[index] = _storage.privateData.access(elem, 'cssDisplay', getDisplay(elem.nodeName));
+                        values[index] = _storage.private.access(elem, 'cssDisplay', getDisplay(elem.nodeName));
                     }
                 } else {
                     hidden = isHidden(elem);
                     if (display && display !== 'none' || !hidden) {
-                        _storage.privateData.set(elem, 'cssDisplay', hidden ? display : _ccs.curCSS(elem, 'display'));
+                        _storage.private.set(elem, 'cssDisplay', hidden ? display : _ccs.curCSS(elem, 'display'));
                     }
                 }
             }
@@ -4649,9 +5667,9 @@ hAzzle.define('Visibility', function() {
     this.hide = function() {
         return showHide(this.elements);
     };
-
+    
     // Toggle show/hide.
-
+    
     this.toggle = function(state, /*optional*/ fn) {
 
         if (!fn && typeof state === 'function') {
@@ -4670,7 +5688,7 @@ hAzzle.define('Visibility', function() {
 
             if (fn) {
                 fn.call(elem, elem);
-                // Set to false so it  get fired only once
+                    // Set to false so it  get fired only once
                 fn = false;
             }
         });
@@ -4679,7 +5697,7 @@ hAzzle.define('Visibility', function() {
     return {
         show: show,
         hide: hide,
-        isHidden: isHidden
+        isHidden:isHidden
     };
 });
 
@@ -4692,6 +5710,7 @@ hAzzle.define('Visibility', function() {
  * - prepend
  * - before
  * - after
+
  * - replace
  * - remove
  * - matches

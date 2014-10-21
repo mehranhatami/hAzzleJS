@@ -49,12 +49,12 @@ hAzzle.define('curCSS', function() {
         },
         computedCSS = function(elem) {
             if (elem) {
-                if (_storage.privateData.get(elem, 'computed') === undefined) {
-                    _storage.privateData.access(elem, 'computed', {
+                if (_storage.private.get(elem, 'computed') === undefined) {
+                    _storage.private.access(elem, 'computed', {
                         computedStyle: null,
                     });
                 }
-                return _storage.privateData.get(elem, 'computed');
+                return _storage.private.get(elem, 'computed');
             }
         },
         getStyles = function(elem) {
