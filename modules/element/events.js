@@ -47,8 +47,9 @@ hAzzle.define('Events', function() {
 
         everything = /.*/,
         keyEvent = /^key/,
+        // Treat pointer and drag / drop events like mouse events
         mouseEvent = /^(?:mouse(?!(.*wheel|scroll))|pointer|menu|drag|drop|contextmenu)|click/,
-      
+
         // Properties
         commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
             'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
@@ -74,11 +75,15 @@ hAzzle.define('Events', function() {
 
         fixedEvents = {},
 
+        customEvents = {},
+
+        fixHooks = {},
+
         propHooks = [{ // key events
             reg: keyEvent,
             fix: function(original, evt) {
                 // Add which for key events
-                if (evt.which == null) {
+                if (!evt.which) {
                     evt.which = original.charCode != null ? original.charCode : original.keyCode;
                 }
 
@@ -93,9 +98,6 @@ hAzzle.define('Events', function() {
                 // Calculate pageX/Y if missing and clientX/Y available
                 if (evt.pageX == null && original.clientX != null) {
                     evt.pageX = original.clientX + docElem.scrollLeft - docElem.clientLeft;
-
-
-
                     evt.pageY = original.clientY + docElem.scrollTop - docElem.clientTop;
                 }
 
@@ -116,33 +118,26 @@ hAzzle.define('Events', function() {
             }
         }],
 
-        // Custom event holder
+        processHandler = function(elem, fn, condition, args) {
 
-        customEvents = {},
-
-        // Event fix holder
-
-        fixHooks = {},
-
-        deatch = function(element, fn, condition, args) {
-
-            var call = function(event, eargs) {
-                    return fn.apply(element, args ? _collection.slice(eargs).concat(args) : eargs);
+            var call = function(evt, ergs) {
+                    return fn.apply(elem, args ? _collection.slice(ergs).concat(args) : ergs);
                 },
-                findTarget = function(event, eventElement) {
-                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(event.target, element) : eventElement;
+
+                findTarget = function(evt, eventElement) {
+                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt.target, elem) : eventElement;
                 },
-                handler = condition ? function(event) {
-                    var target = findTarget(event, this); // deleated event
+                handler = condition ? function(evt) {
+                    var target = findTarget(evt, this);
                     if (condition.apply(target, arguments)) {
-                        if (event) {
-                            event.currentTarget = target;
+                        if (evt) {
+                            evt.currentTarget = target;
                         }
-                        return call(event, arguments);
+                        return call(evt, arguments);
                     }
-                } : function(event) {
-                    if (fn.__kfx2rcf) event = event.clone(findTarget(event)); // delegated event, fix the fix
-                    return call(event, arguments);
+                } : function(evt) {
+                    if (fn.__kfx2rcf) evt = evt.clone(findTarget(evt));
+                    return call(evt, arguments);
                 };
             handler.__kfx2rcf = fn.__kfx2rcf;
             return handler;
@@ -150,39 +145,43 @@ hAzzle.define('Events', function() {
 
         // Iterate
 
-        iteratee = function(element, type, original, handler, root, callback) {
-            var t, pfx = root ? '_r' : '_$';
+        iteratee = function(elem, type, original, handler, root, callback) {
+
+            var t, prefix = root ? '_r' : '_$';
 
             if (!type || type == '*') {
 
                 for (t in map) {
-                    if (t.charAt(0) == pfx) {
-                        iteratee(element, t.substr(1), original, handler, root, callback);
+
+                    if (t.charAt(0) == prefix) {
+                        iteratee(elem, t.substr(1), original, handler, root, callback);
                     }
                 }
             } else {
+
                 var i = 0,
-                    l, list = map[pfx + type],
-                    all = element == '*';
+                    l, list = map[prefix + type],
+                    a = elem == '*';
 
                 if (!list) {
                     return;
                 }
 
                 for (l = list.length; i < l; i++) {
-                    if ((all || list[i].matches(element, original, handler)) && !callback(list[i], list, i, type)) {
+                    if ((a || list[i].matches(elem, original, handler)) && !callback(list[i], list, i, type)) {
                         return;
                     }
                 }
             }
         },
+
         // Check collection for registered event,
         // match element and handler
-        isRegistered = function(element, type, original, root) {
+        isRegistered = function(elem, type, original, root) {
             var i, list = map[(root ? '_r' : '_$') + type];
             if (list) {
                 for (i = list.length; i--;) {
-                    if (!list[i].root && list[i].matches(element, original, null)) {
+                    if (!list[i].root && list[i].matches(elem, original, null)) {
                         return true;
                     }
                 }
@@ -270,8 +269,11 @@ hAzzle.define('Events', function() {
             }
         },
 
-        findTarget = function(target, selector, root) {
+        // Find event delegate
+        findDelegate = function(target, selector, root) {
+
             if (root) {
+
                 var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
 
                 for (; target && target !== root; target = target.parentElement) {
@@ -283,13 +285,13 @@ hAzzle.define('Events', function() {
                 }
             }
         },
-
+        // Event delegate
         delegate = function(selector, fn) {
             var handler = function(e) {
                 var cur = e.target;
                 // Don't process clicks on disabled elements
                 if (cur.nodeType && cur.disabled !== true) {
-                    var m = findTarget(cur, selector, this);
+                    var m = findDelegate(cur, selector, this);
                     if (m) {
                         fn.apply(m, arguments);
                     }
@@ -297,7 +299,7 @@ hAzzle.define('Events', function() {
             };
 
             handler.__kfx2rcf = {
-                ft: findTarget, // attach it here for customEvents to use too
+                ft: findDelegate,
                 selector: selector
             };
             return handler;
@@ -311,8 +313,7 @@ hAzzle.define('Events', function() {
                 elem = elem.elements[0];
             }
 
-
-            var cb, type, i, args, entry, first, hooks;
+            var cb, type, i, args, entry, first, hooks, eventType, namespace;
 
             // Types can be a map of types/handlers
 
@@ -355,12 +356,22 @@ hAzzle.define('Events', function() {
 
             while (i--) {
 
+                eventType = types[i].replace(nameRegex, '');
+
+                // There *must* be a type, no attaching namespace-only handlers
+
+                if (!eventType) {
+                    continue;
+                }
+
+                namespace = types[i].replace(namespaceRegex, '').split('.'); // namespaces
+                // Registrer
                 first = registrer(entry = new Registry(
                     elem,
-                    types[i].replace(nameRegex, ''), // event type
+                    eventType, // event type
                     callback,
                     cb,
-                    types[i].replace(namespaceRegex, '').split('.'), // namespaces
+                    namespace,
                     args,
                     false // not root
                 ));
@@ -383,7 +394,7 @@ hAzzle.define('Events', function() {
         one = function(elem, types, selector, callback) {
             return on(elem, types, selector, callback, 1);
         },
-
+        // Detach an event or set of events from an element
         off = function(elem, types, callback) {
 
             if (typeof types !== 'string') {
@@ -397,6 +408,7 @@ hAzzle.define('Events', function() {
             var k, type, namespaces, i;
 
             if (typeof types === 'string' && types.indexOf(' ') > 0) {
+                // Once for each type.namespace in types; type may be omitted
                 types = (types || '').match((whiteSpace)) || [''];
                 for (i = types.length; i--;) {
                     off(elem, types[i], callback);
@@ -434,6 +446,10 @@ hAzzle.define('Events', function() {
                 elem = elem.elements[0];
             }
 
+            // Don't do events on text and comment nodes
+            if (elem.nodeType === 3 || elem.nodeType === 8) {
+                return;
+            }
             var types = (type || '').match((whiteSpace)) || [''],
                 i, j, l, call, event, names, handlers, canContinue;
 
@@ -464,7 +480,6 @@ hAzzle.define('Events', function() {
                 }
 
                 return canContinue;
-
             }
             return elem;
         },
@@ -487,6 +502,16 @@ hAzzle.define('Events', function() {
             }
             return elem;
         },
+        addEvent = function(elem, type, handle) {
+            if (elem.addEventListener) {
+                elem.addEventListener(type, handle, false);
+            }
+        },
+        removeEvent = function(elem, type, handle) {
+            if (elem.removeEventListener) {
+                elem.removeEventListener(type, handle, false);
+            }
+        },
 
         Event = function(event, elem) {
 
@@ -502,6 +527,11 @@ hAzzle.define('Events', function() {
                 return;
             }
 
+            // Support: Cordova 2.5 (WebKit)
+            // All events should have a target; Cordova deviceready doesn't
+            if (!event.target) {
+                event.target = document;
+            }
             var type = event.type,
                 // fired element (triggering the event)
                 target = event.target || event.srcElement,
@@ -513,15 +543,13 @@ hAzzle.define('Events', function() {
 
             fixer = fixHooks[type];
 
-            // Haven't encountered this event type before, map a fixer function for it
-
             if (!fixer) {
 
                 fixer = fixedEvents[type];
 
-                if (!fixer) { // haven't encountered this event type before, map a fixer function for it
+                if (!fixer) {
                     for (i = 0, l = propHooks.length; i < l; i++) {
-                        if (propHooks[i].reg.test(type)) { // guaranteed to match at least one, last is .*
+                        if (propHooks[i].reg.test(type)) {
                             fixedEvents[type] = fixer = propHooks[i].fix;
                             break;
                         }
@@ -529,14 +557,19 @@ hAzzle.define('Events', function() {
                 }
 
                 props = fixer(event, this, type);
+
                 for (i = props.length; i--;) {
-                    if (!((p = props[i]) in this) && p in event) this[p] = event[p];
+                    if (!((p = props[i]) in this) && p in event) {
+                        this[p] = event[p];
+                    }
                 }
             }
         };
 
+    // Event is based on DOM3 Events as specified by the ECMAScript Language Binding
+    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
     Event.prototype = {
-
+        constructor: Event,
         // prevent default action
 
         preventDefault: function() {
@@ -590,23 +623,21 @@ hAzzle.define('Events', function() {
     };
 
     Registry.prototype = {
-
+        constructor: Registry,
         init: function(elem, type, handler, original, namespaces, args, docElem) {
 
             var customType = customEvents[type];
 
             if (type == 'unload') {
-                // self clean-up
                 handler = once(dispatch, elem, type, handler, original);
             }
 
             if (customType) {
                 if (customType.condition) {
-                    handler = deatch(elem, handler, customType.condition, args);
+                    handler = processHandler(elem, handler, customType.condition, args);
                 }
                 type = customType.base || type;
             }
-
 
             this.element = elem;
             this.type = type;
@@ -615,9 +646,8 @@ hAzzle.define('Events', function() {
             this.eventType = type;
             this.target = elem;
             this.root = docElem;
-            this.handler = deatch(elem, handler, null, args);
+            this.handler = processHandler(elem, handler, null, args);
         },
-
 
         inNamespaces: function(checkNamespaces) {
             var i, j, c = 0;
@@ -719,7 +749,9 @@ hAzzle.define('Events', function() {
         specialEvents: specialEvents,
         propHooks: propHooks,
         mouseProps: mouseProps,
-        commonProps: commonProps, 
+        commonProps: commonProps,
+        addEvent: addEvent,
+        removeEvent: removeEvent,
         on: on,
         one: one,
         off: off,

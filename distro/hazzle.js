@@ -4,9 +4,8 @@
  * Version: 1.0.0b-alpha
  * Released under the MIT License.
  *
- * Date: 2014-10-19
+ * Date: 2014-10-22
  */
- 
 (function() {
 
     var
@@ -215,11 +214,11 @@ hAzzle.define('Jsonxml', function() {
 });
 
 // support.js
-hAzzle.define('Support', function () {
+hAzzle.define('Support', function() {
 
     // Feature detection of elements
     var cls, MultipleArgs,
-        assert = function (fn) {
+        assert = function(fn) {
 
             var el = document.createElement('fieldset');
 
@@ -260,7 +259,7 @@ hAzzle.define('Support', function () {
     input.type = 'radio';
     radioValue = input.value === 't';
 
-   var imcHTML = (function () {
+    var imcHTML = (function() {
 
         if (typeof document.implementation.createHTMLDocument === 'function') {
             return true;
@@ -268,9 +267,9 @@ hAzzle.define('Support', function () {
         return false;
     }());
 
-// classList and MultipleArgs detections
+    // classList and MultipleArgs detections
 
-    assert(function (div) {
+    assert(function(div) {
 
         div.classList.add('a', 'b');
         // Detect if the browser supports classList
@@ -285,18 +284,18 @@ hAzzle.define('Support', function () {
         // Should return 1, but returns 4 (following)
         return div.compareDocumentPosition(document.createElement('div')) & 1;
     });
-    
+
 
 
     return {
-        assert:assert,
+        assert: assert,
         checkOn: checkOn,
         optSelected: optSelected,
         radioValue: radioValue,
         imcHTML: imcHTML,
         classList: cls,
         multipleArgs: MultipleArgs,
-        sortDetached:sortDetached,
+        sortDetached: sortDetached,
         cS: !!document.defaultView.getComputedStyle
     };
 });
@@ -1011,7 +1010,7 @@ hAzzle.define('Util', function() {
         },
         // shallowCopy
         shallowCopy = function(target, source, deep) {
-var key;
+            var key;
             for (key in source)
 
                 if (deep && (_types.isPlainObject(source[key]) || _types.isArray(source[key]))) {
@@ -1064,6 +1063,7 @@ var key;
         bind: bind,
         has: has,
         int: int,
+        noop: function() {},
         shallowCopy: shallowCopy,
         reject: reject
     };
@@ -1082,6 +1082,7 @@ hAzzle.define('Core', function() {
         hasDuplicate,
         sortInput,
         sortOrder = function(a, b) {
+
             if (a === b) {
                 hasDuplicate = true;
             }
@@ -1604,12 +1605,12 @@ hAzzle.define('Collection', function() {
         prev: 'previousElementSibling'
     }, function(value, prop) {
         this[prop] = function(sel) {
-                return this.map(function(elem) {
-                    return elem[value];
-                }).filter(sel);
-            };
-            // Note! The native 'bind' method do not give the best performance, but
-            // this happen only on pageload. Anyone who wan't to fix this?
+            return this.map(function(elem) {
+                return elem[value];
+            }).filter(sel);
+        };
+        // Note! The native 'bind' method do not give the best performance, but
+        // this happen only on pageload. Anyone who wan't to fix this?
     }.bind(this));
 
     return {
@@ -2304,7 +2305,7 @@ hAzzle.define('curCSS', function() {
         inlineRegEx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
         listItemRegEx = /^(li)$/i,
         tablerowRegEx = /^(tr)$/i,
-        
+
         docElem = window.document.documentElement,
 
         computedStyle = !!document.defaultView.getComputedStyle,
@@ -2468,55 +2469,55 @@ hAzzle.define('curCSS', function() {
                 return computedValue;
             }
         },
-        
-       
-	setOffset = function( elem, options, i ) {
-		var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-			position = curCSS( elem, "position" ),
-			curElem = hAzzle( elem ),
-			props = {};
 
-		// Set position first, in-case top/left are set even on static elem
-		if ( position === "static" ) {
-			elem.style.position = "relative";
-		}
 
-		curOffset = curElem.offset();
-		curCSSTop = curCSS( elem, "top" );
-		curCSSLeft = curCSS( elem, "left" );
-		calculatePosition = ( position === "absolute" || position === "fixed" ) &&
-			( curCSSTop + curCSSLeft ).indexOf("auto") > -1;
+        setOffset = function(elem, options, i) {
+            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+                position = curCSS(elem, "position"),
+                curElem = hAzzle(elem),
+                props = {};
 
-		// Need to be able to calculate position if either
-		// top or left is auto and position is either absolute or fixed
-		if ( calculatePosition ) {
-			curPosition = curElem.position();
-			curTop = curPosition.top;
-			curLeft = curPosition.left;
+            // Set position first, in-case top/left are set even on static elem
+            if (position === "static") {
+                elem.style.position = "relative";
+            }
 
-		} else {
-			curTop = parseFloat( curCSSTop ) || 0;
-			curLeft = parseFloat( curCSSLeft ) || 0;
-		}
+            curOffset = curElem.offset();
+            curCSSTop = curCSS(elem, "top");
+            curCSSLeft = curCSS(elem, "left");
+            calculatePosition = (position === "absolute" || position === "fixed") &&
+                (curCSSTop + curCSSLeft).indexOf("auto") > -1;
 
-		if ( _types.isType('function')( options ) ) {
-			options = options.call( elem, i, curOffset );
-		}
+            // Need to be able to calculate position if either
+            // top or left is auto and position is either absolute or fixed
+            if (calculatePosition) {
+                curPosition = curElem.position();
+                curTop = curPosition.top;
+                curLeft = curPosition.left;
 
-		if ( options.top != null ) {
-			props.top = ( options.top - curOffset.top ) + curTop;
-		}
-		if ( options.left != null ) {
-			props.left = ( options.left - curOffset.left ) + curLeft;
-		}
+            } else {
+                curTop = parseFloat(curCSSTop) || 0;
+                curLeft = parseFloat(curCSSLeft) || 0;
+            }
 
-		if ( "using" in options ) {
-			options.using.call( elem, props );
+            if (_types.isType('function')(options)) {
+                options = options.call(elem, i, curOffset);
+            }
 
-		} else {
-			curElem.css( props );
-		}
-};
+            if (options.top != null) {
+                props.top = (options.top - curOffset.top) + curTop;
+            }
+            if (options.left != null) {
+                props.left = (options.left - curOffset.left) + curLeft;
+            }
+
+            if ("using" in options) {
+                options.using.call(elem, props);
+
+            } else {
+                curElem.css(props);
+            }
+        };
 
     this.offset = function(options) {
         if (arguments.length) {
@@ -2560,63 +2561,63 @@ hAzzle.define('curCSS', function() {
     };
 
     this.position = function() {
-            if (!this.elements[0]) {
-                return;
-            }
+        if (!this.elements[0]) {
+            return;
+        }
 
-            var offsetParent, offset,
-                elem = this.elements[0],
-                parentOffset = {
-                    top: 0,
-                    left: 0
-                };
-
-            // Fixed elements are offset from window (parentOffset = {top:0, left: 0},
-            // because it is its only offset parent
-            if (curCSS(elem, 'position') === 'fixed') {
-                // Assume getBoundingClientRect is there when computed position is fixed
-                offset = elem.getBoundingClientRect();
-
-            } else {
-                // Get *real* offsetParent
-                offsetParent = this.offsetParent();
-
-                // Get correct offsets
-                offset = this.offset();
-
-                if (!_util.nodeName(offsetParent.elements[0], 'html')) {
-
-                    parentOffset = offsetParent.offset();
-                }
-
-                // Add offsetParent borders
-
-                parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
-                parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
-            }
-            // Subtract offsetParent scroll positions
-
-            parentOffset.top -= offsetParent.scrollTop();
-            parentOffset.left -= offsetParent.scrollLeft();
-            // Subtract parent offsets and element margins
-            return {
-                top: offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop', true)),
-                left: offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft', true))
+        var offsetParent, offset,
+            elem = this.elements[0],
+            parentOffset = {
+                top: 0,
+                left: 0
             };
+
+        // Fixed elements are offset from window (parentOffset = {top:0, left: 0},
+        // because it is its only offset parent
+        if (curCSS(elem, 'position') === 'fixed') {
+            // Assume getBoundingClientRect is there when computed position is fixed
+            offset = elem.getBoundingClientRect();
+
+        } else {
+            // Get *real* offsetParent
+            offsetParent = this.offsetParent();
+
+            // Get correct offsets
+            offset = this.offset();
+
+            if (!_util.nodeName(offsetParent.elements[0], 'html')) {
+
+                parentOffset = offsetParent.offset();
+            }
+
+            // Add offsetParent borders
+
+            parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
+            parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
+        }
+        // Subtract offsetParent scroll positions
+
+        parentOffset.top -= offsetParent.scrollTop();
+        parentOffset.left -= offsetParent.scrollLeft();
+        // Subtract parent offsets and element margins
+        return {
+            top: offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop', true)),
+            left: offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft', true))
         };
+    };
 
-        this.offsetParent = function() {
-            return this.map(function() {
-                var offsetParent = this.offsetParent || docElem;
+    this.offsetParent = function() {
+        return this.map(function() {
+            var offsetParent = this.offsetParent || docElem;
 
-                while (offsetParent && (!_util.nodeName(offsetParent, 'html') &&
-                        curCSS(offsetParent, 'position') === 'static')) {
-                    offsetParent = offsetParent.offsetParent;
-                }
+            while (offsetParent && (!_util.nodeName(offsetParent, 'html') &&
+                    curCSS(offsetParent, 'position') === 'static')) {
+                offsetParent = offsetParent.offsetParent;
+            }
 
-                return offsetParent || docElem;
-            });
-        };
+            return offsetParent || docElem;
+        });
+    };
 
     return {
         computedCSS: computedCSS,
@@ -2829,7 +2830,7 @@ hAzzle.define('Style', function() {
 
                     // Convert '+=' or '-=' to relative numbers, and
                     // and convert all unit types to PX (e.g. 10em will become 160px)
-                     
+
                     if (type === 'string' && (ret = sNumbs.exec(value))) {
                         value = _units.units(_curcss.curCSS(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                         type = 'number';
@@ -3423,7 +3424,7 @@ hAzzle.define('Manipulation', function() {
                     }
 
                     do {
-                        if (!tag || sandbox.nodeType == 1) {
+                        if (!tag || sandbox.nodeType === 1) {
                             els.push(sandbox);
                         }
                     } while (sandbox = sandbox.nextSibling);
@@ -3635,7 +3636,7 @@ hAzzle.define('Manipulation', function() {
 
     // Text
 
-    this.text = function(value, method) { 
+    this.text = function(value, method) {
         return value === undefined ?
             _text.getText(this.elements) :
             this.empty().each(function(elem) {
@@ -3658,6 +3659,7 @@ hAzzle.define('Manipulation', function() {
     this.html = function(value) {
 
         var els = this.elements,
+            elem = els[0],
             i = 0,
             l = this.length;
 
@@ -3816,7 +3818,7 @@ hAzzle.define('Setters', function() {
             var name, propName,
                 i = 0,
                 elem = getElem(el),
-            keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
+                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
 
                 l = keys.length;
 
@@ -4141,8 +4143,8 @@ hAzzle.define('Setters', function() {
         attr: Attr,
         prop: Prop,
         removeAttr: removeAttr,
-        toggleAttr:toggleAttr,
-        toAttrSelector:toAttrSelector,
+        toggleAttr: toggleAttr,
+        toAttrSelector: toAttrSelector,
         getBooleanAttrName: getBooleanAttrName,
         SVGAttribute: SVGAttribute
     };
@@ -4378,8 +4380,9 @@ hAzzle.define('Events', function() {
 
         everything = /.*/,
         keyEvent = /^key/,
+        // Treat pointer and drag / drop events like mouse events
         mouseEvent = /^(?:mouse(?!(.*wheel|scroll))|pointer|menu|drag|drop|contextmenu)|click/,
-      
+
         // Properties
         commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
             'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
@@ -4405,11 +4408,15 @@ hAzzle.define('Events', function() {
 
         fixedEvents = {},
 
+        customEvents = {},
+
+        fixHooks = {},
+
         propHooks = [{ // key events
             reg: keyEvent,
             fix: function(original, evt) {
                 // Add which for key events
-                if (evt.which == null) {
+                if (!evt.which) {
                     evt.which = original.charCode != null ? original.charCode : original.keyCode;
                 }
 
@@ -4424,9 +4431,6 @@ hAzzle.define('Events', function() {
                 // Calculate pageX/Y if missing and clientX/Y available
                 if (evt.pageX == null && original.clientX != null) {
                     evt.pageX = original.clientX + docElem.scrollLeft - docElem.clientLeft;
-
-
-
                     evt.pageY = original.clientY + docElem.scrollTop - docElem.clientTop;
                 }
 
@@ -4447,33 +4451,26 @@ hAzzle.define('Events', function() {
             }
         }],
 
-        // Custom event holder
+        processHandler = function(elem, fn, condition, args) {
 
-        customEvents = {},
-
-        // Event fix holder
-
-        fixHooks = {},
-
-        deatch = function(element, fn, condition, args) {
-
-            var call = function(event, eargs) {
-                    return fn.apply(element, args ? _collection.slice(eargs).concat(args) : eargs);
+            var call = function(evt, ergs) {
+                    return fn.apply(elem, args ? _collection.slice(ergs).concat(args) : ergs);
                 },
-                findTarget = function(event, eventElement) {
-                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(event.target, element) : eventElement;
+
+                findTarget = function(evt, eventElement) {
+                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt.target, elem) : eventElement;
                 },
-                handler = condition ? function(event) {
-                    var target = findTarget(event, this); // deleated event
+                handler = condition ? function(evt) {
+                    var target = findTarget(evt, this);
                     if (condition.apply(target, arguments)) {
-                        if (event) {
-                            event.currentTarget = target;
+                        if (evt) {
+                            evt.currentTarget = target;
                         }
-                        return call(event, arguments);
+                        return call(evt, arguments);
                     }
-                } : function(event) {
-                    if (fn.__kfx2rcf) event = event.clone(findTarget(event)); // delegated event, fix the fix
-                    return call(event, arguments);
+                } : function(evt) {
+                    if (fn.__kfx2rcf) evt = evt.clone(findTarget(evt));
+                    return call(evt, arguments);
                 };
             handler.__kfx2rcf = fn.__kfx2rcf;
             return handler;
@@ -4481,39 +4478,43 @@ hAzzle.define('Events', function() {
 
         // Iterate
 
-        iteratee = function(element, type, original, handler, root, callback) {
-            var t, pfx = root ? '_r' : '_$';
+        iteratee = function(elem, type, original, handler, root, callback) {
+
+            var t, prefix = root ? '_r' : '_$';
 
             if (!type || type == '*') {
 
                 for (t in map) {
-                    if (t.charAt(0) == pfx) {
-                        iteratee(element, t.substr(1), original, handler, root, callback);
+
+                    if (t.charAt(0) == prefix) {
+                        iteratee(elem, t.substr(1), original, handler, root, callback);
                     }
                 }
             } else {
+
                 var i = 0,
-                    l, list = map[pfx + type],
-                    all = element == '*';
+                    l, list = map[prefix + type],
+                    a = elem == '*';
 
                 if (!list) {
                     return;
                 }
 
                 for (l = list.length; i < l; i++) {
-                    if ((all || list[i].matches(element, original, handler)) && !callback(list[i], list, i, type)) {
+                    if ((a || list[i].matches(elem, original, handler)) && !callback(list[i], list, i, type)) {
                         return;
                     }
                 }
             }
         },
+
         // Check collection for registered event,
         // match element and handler
-        isRegistered = function(element, type, original, root) {
+        isRegistered = function(elem, type, original, root) {
             var i, list = map[(root ? '_r' : '_$') + type];
             if (list) {
                 for (i = list.length; i--;) {
-                    if (!list[i].root && list[i].matches(element, original, null)) {
+                    if (!list[i].root && list[i].matches(elem, original, null)) {
                         return true;
                     }
                 }
@@ -4601,8 +4602,11 @@ hAzzle.define('Events', function() {
             }
         },
 
-        findTarget = function(target, selector, root) {
+        // Find event delegate
+        findDelegate = function(target, selector, root) {
+
             if (root) {
+
                 var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
 
                 for (; target && target !== root; target = target.parentElement) {
@@ -4614,13 +4618,13 @@ hAzzle.define('Events', function() {
                 }
             }
         },
-
+        // Event delegate
         delegate = function(selector, fn) {
             var handler = function(e) {
                 var cur = e.target;
                 // Don't process clicks on disabled elements
                 if (cur.nodeType && cur.disabled !== true) {
-                    var m = findTarget(cur, selector, this);
+                    var m = findDelegate(cur, selector, this);
                     if (m) {
                         fn.apply(m, arguments);
                     }
@@ -4628,7 +4632,7 @@ hAzzle.define('Events', function() {
             };
 
             handler.__kfx2rcf = {
-                ft: findTarget, // attach it here for customEvents to use too
+                ft: findDelegate,
                 selector: selector
             };
             return handler;
@@ -4641,7 +4645,6 @@ hAzzle.define('Events', function() {
             if (elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
-
 
             var cb, type, i, args, entry, first, hooks;
 
@@ -4686,9 +4689,16 @@ hAzzle.define('Events', function() {
 
             while (i--) {
 
+                type = types[i].replace(nameRegex, '');
+
+                // There *must* be a type, no attaching namespace-only handlers
+                if (!type) {
+                    continue;
+                }
+
                 first = registrer(entry = new Registry(
                     elem,
-                    types[i].replace(nameRegex, ''), // event type
+                    type, // event type
                     callback,
                     cb,
                     types[i].replace(namespaceRegex, '').split('.'), // namespaces
@@ -4714,7 +4724,7 @@ hAzzle.define('Events', function() {
         one = function(elem, types, selector, callback) {
             return on(elem, types, selector, callback, 1);
         },
-
+        // Detach an event or set of events from an element
         off = function(elem, types, callback) {
 
             if (typeof types !== 'string') {
@@ -4728,6 +4738,7 @@ hAzzle.define('Events', function() {
             var k, type, namespaces, i;
 
             if (typeof types === 'string' && types.indexOf(' ') > 0) {
+                // Once for each type.namespace in types; type may be omitted
                 types = (types || '').match((whiteSpace)) || [''];
                 for (i = types.length; i--;) {
                     off(elem, types[i], callback);
@@ -4765,6 +4776,10 @@ hAzzle.define('Events', function() {
                 elem = elem.elements[0];
             }
 
+            // Don't do events on text and comment nodes
+            if (elem.nodeType === 3 || elem.nodeType === 8) {
+                return;
+            }
             var types = (type || '').match((whiteSpace)) || [''],
                 i, j, l, call, event, names, handlers, canContinue;
 
@@ -4795,7 +4810,6 @@ hAzzle.define('Events', function() {
                 }
 
                 return canContinue;
-
             }
             return elem;
         },
@@ -4818,6 +4832,16 @@ hAzzle.define('Events', function() {
             }
             return elem;
         },
+        addEvent = function(elem, type, handle) {
+            if (elem.addEventListener) {
+                elem.addEventListener(type, handle, false);
+            }
+        },
+        removeEvent = function(elem, type, handle) {
+            if (elem.removeEventListener) {
+                elem.removeEventListener(type, handle, false);
+            }
+        },
 
         Event = function(event, elem) {
 
@@ -4833,6 +4857,11 @@ hAzzle.define('Events', function() {
                 return;
             }
 
+            // Support: Cordova 2.5 (WebKit)
+            // All events should have a target; Cordova deviceready doesn't
+            if (!event.target) {
+                event.target = document;
+            }
             var type = event.type,
                 // fired element (triggering the event)
                 target = event.target || event.srcElement,
@@ -4844,15 +4873,13 @@ hAzzle.define('Events', function() {
 
             fixer = fixHooks[type];
 
-            // Haven't encountered this event type before, map a fixer function for it
-
             if (!fixer) {
 
                 fixer = fixedEvents[type];
 
-                if (!fixer) { // haven't encountered this event type before, map a fixer function for it
+                if (!fixer) {
                     for (i = 0, l = propHooks.length; i < l; i++) {
-                        if (propHooks[i].reg.test(type)) { // guaranteed to match at least one, last is .*
+                        if (propHooks[i].reg.test(type)) {
                             fixedEvents[type] = fixer = propHooks[i].fix;
                             break;
                         }
@@ -4860,14 +4887,19 @@ hAzzle.define('Events', function() {
                 }
 
                 props = fixer(event, this, type);
+
                 for (i = props.length; i--;) {
-                    if (!((p = props[i]) in this) && p in event) this[p] = event[p];
+                    if (!((p = props[i]) in this) && p in event) {
+                        this[p] = event[p];
+                    }
                 }
             }
         };
 
+    // Event is based on DOM3 Events as specified by the ECMAScript Language Binding
+    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
     Event.prototype = {
-
+        constructor: Event,
         // prevent default action
 
         preventDefault: function() {
@@ -4921,23 +4953,21 @@ hAzzle.define('Events', function() {
     };
 
     Registry.prototype = {
-
+        constructor: Registry,
         init: function(elem, type, handler, original, namespaces, args, docElem) {
 
             var customType = customEvents[type];
 
             if (type == 'unload') {
-                // self clean-up
                 handler = once(dispatch, elem, type, handler, original);
             }
 
             if (customType) {
                 if (customType.condition) {
-                    handler = deatch(elem, handler, customType.condition, args);
+                    handler = processHandler(elem, handler, customType.condition, args);
                 }
                 type = customType.base || type;
             }
-
 
             this.element = elem;
             this.type = type;
@@ -4946,9 +4976,8 @@ hAzzle.define('Events', function() {
             this.eventType = type;
             this.target = elem;
             this.root = docElem;
-            this.handler = deatch(elem, handler, null, args);
+            this.handler = processHandler(elem, handler, null, args);
         },
-
 
         inNamespaces: function(checkNamespaces) {
             var i, j, c = 0;
@@ -5050,7 +5079,9 @@ hAzzle.define('Events', function() {
         specialEvents: specialEvents,
         propHooks: propHooks,
         mouseProps: mouseProps,
-        commonProps: commonProps, 
+        commonProps: commonProps,
+        addEvent: addEvent,
+        removeEvent: removeEvent,
         on: on,
         one: one,
         off: off,
@@ -5367,9 +5398,9 @@ hAzzle.define('Classes', function() {
                 }
             }
         },
-        
+
         // Check if the first element in the collection has classes
-        
+
         hasClass = function(elem, classes) {
 
             elem = elem.length ? elem : [elem];
@@ -5512,9 +5543,9 @@ hAzzle.define('Classes', function() {
                 hAzzle(elem).addClass(classes.call(elem, index, elem.className));
             }) : addClass(this.elements, classes, fn);
     };
-    
+
     // Replace a given class with another
-    
+
     this.replaceClass = function(firstClass, secondClass) {
         if (this.hasClass(firstClass)) {
             this.removeClass(firstClass).addClass(secondClass);
@@ -5567,9 +5598,9 @@ hAzzle.define('Visibility', function() {
                 length = elements.length;
 
             for (; index < length; index++) {
-              
+
                 elem = elements[index];
-              
+
                 if (!elem.style) {
                     continue;
                 }
@@ -5667,9 +5698,9 @@ hAzzle.define('Visibility', function() {
     this.hide = function() {
         return showHide(this.elements);
     };
-    
+
     // Toggle show/hide.
-    
+
     this.toggle = function(state, /*optional*/ fn) {
 
         if (!fn && typeof state === 'function') {
@@ -5688,7 +5719,7 @@ hAzzle.define('Visibility', function() {
 
             if (fn) {
                 fn.call(elem, elem);
-                    // Set to false so it  get fired only once
+                // Set to false so it  get fired only once
                 fn = false;
             }
         });
@@ -5697,10 +5728,542 @@ hAzzle.define('Visibility', function() {
     return {
         show: show,
         hide: hide,
-        isHidden:isHidden
+        isHidden: isHidden
     };
 });
 
+// xhr.js
+hAzzle.define('xhr', function() {
+
+    var
+        win = window,
+        doc = win.document,
+
+        // Modules
+
+        _util = hAzzle.require('Util'),
+        _detection = hAzzle.require('detection'),
+        _jsonxml = hAzzle.require('Jsonxml'),
+        _types = hAzzle.require('Types'),
+
+        // Regex
+
+        _s20 = /%20/g,
+        _bracket = /\[\]$/,
+        _https = /^http/,
+        _protocol = /(^\w+):\/\//,
+        _hash = /#.*$/,
+        _protocolDash = /^\/\//,
+        _url = /^([\w.+-]+:)(?:\/\/(?:[^\/?#]*@|)([^\/?#:]*)(?::(\d+)|)|)/,
+
+        _ajaxLocation = location.href,
+        _ajaxLocParts = _url.exec(_ajaxLocation.toLowerCase()) || [],
+
+        _head = doc.head || doc.getElementsByTagName('head')[0],
+        _uniqid = 0,
+        _callbackPrefix = 'xhr_' + _util.now,
+        _lastValue,
+
+        _accepts = {
+            '*': 'text/javascript, text/html, application/xml, text/xml, */*',
+            'xml': 'application/xml, text/xml',
+            'html': 'text/html',
+            'text': 'text/plain',
+            'json': 'application/json, text/javascript',
+        },
+
+        _defaultHeaders = {
+            'contentType': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'requestedWith': 'XMLHttpRequest'
+        },
+        _createXhr = function(options) {
+            if (options.crossOrigin === true) {
+                var xhr = window.XMLHttpRequest ? new XMLHttpRequest() : null;
+                if (xhr && 'withCredentials' in xhr) {
+                    return xhr;
+                } else {
+                    hAzzle.err(true, 16, 'Browser does not support cross-origin requests');
+                }
+            } else if (window.XMLHttpRequest) {
+                return new XMLHttpRequest();
+            } else {
+                hAzzle.err(true, 15, 'This browser does not support XMLHttpRequest');
+            }
+        },
+        xhrHooks = {
+            dataFilter: function(data) {
+                return data;
+            }
+        },
+
+        // Serialize an array of form elements or a set of
+        // key/values into a query string  
+
+        toQueryString = function(options, trad) {
+            var prefix, i, traditional = trad || false,
+                s = [],
+                enc = encodeURIComponent,
+                add = function(key, value) {
+                    // If value is a function, invoke it and return its value
+                    value = (typeof value === 'function') ? value() : (value == null ? '' : value);
+                    s[s.length] = enc(key) + '=' + enc(value);
+                };
+
+            // If an array was passed in, assume that it is an array of form elements.
+            if (_types.isArray(options)) {
+                for (i = 0; options && i < options.length; i++) {
+                    add(options[i].name, options[i].value);
+                }
+            } else {
+
+                for (prefix in options) {
+                    if (options.hasOwnProperty(prefix)) {
+                        buildParams(prefix, options[prefix], traditional, add);
+                    }
+                }
+            }
+
+            // Return the resulting serialization
+            return s.join('&').replace(_s20, '+');
+        },
+
+        buildParams = function(prefix, obj, trad, add) {
+            var name, i, v;
+
+            if (hAzzle.isArray(obj)) {
+                // Serialize array item.
+                for (i = 0; obj && i < obj.length; i++) {
+                    v = obj[i];
+                    if (trad || _bracket.test(prefix)) {
+                        // Treat each array item as a scalar.
+                        add(prefix, v);
+                    } else {
+                        buildParams(prefix + '[' + (typeof v === 'object' ? i : '') + ']',
+                            v,
+                            trad,
+                            add);
+                    }
+                }
+            } else if (!trad && obj.toString() === '[object Object]') {
+                // Serialize object item.
+                for (name in obj) {
+                    buildParams(prefix + '[' + name + ']', obj[name], trad, add);
+                }
+
+            } else {
+                // Serialize scalar item.
+                add(prefix, obj);
+            }
+        },
+
+        get_callbackPrefix = function() {
+            return _callbackPrefix;
+        },
+
+        xhrSetup = function(options) {
+            var k;
+            options = options || {};
+            for (k in options) {
+                xhrHooks[k] = options[k];
+            }
+        },
+
+        handleReadyState = function(obj, success, error) {
+
+            return function() {
+
+                var xhr = obj.request,
+                    state = xhr.status,
+                    protocol = _protocol.exec(obj.url);
+
+                if (obj.aborted) {
+                    return error(xhr);
+                }
+                if (xhr && xhr.readyState === 4) {
+
+                    xhr.onreadystatechange = _util.noop;
+
+                    protocol = (protocol && protocol[1]) || window.location.protocol;
+
+                    if (_https.test(protocol)) {
+                        // normalize IE bug (http://bugs.jquery.com/ticket/1450)     
+                        state === 1223 ? 204 : state;
+                    } else {
+                        state = !!xhr.response;
+                    }
+
+                    if (state) {
+                        success(xhr);
+                    } else {
+                        error(xhr);
+                    }
+                }
+            };
+        },
+
+        generalCallback = function(data) {
+            _lastValue = data;
+        },
+
+        // Note! Use of native indexOf are slower, so we are using the internal one
+
+        createURL = function(url, data) {
+            return url += (~_util.indexOf(url, '?') ? '&' : '?') + data;
+        },
+
+        jsonpReq = function(options, fn, err, url) {
+            var jsonPID = _uniqid++,
+                cbkey = options.jsonpCallback || 'callback', // the 'callback' key
+                cbval = options.jsonpCallbackName || get_callbackPrefix(jsonPID),
+                cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
+                match = url.match(cbreg),
+                script = doc.createElement('script'),
+                loaded = 0;
+
+            if (match) {
+                if (match[3] === '?') {
+                    url = url.replace(cbreg, '$1=' + cbval);
+                } else {
+                    cbval = match[3];
+                }
+            } else {
+                url = createURL(url, cbkey + '=' + cbval);
+            }
+
+            win.cbval = generalCallback;
+
+            script.type = 'text/javascript';
+            script.src = url;
+            script.async = true;
+
+            if (typeof script.onreadystatechange !== 'undefined' && _detection.ie !== 10) {
+                script.event = 'onclick';
+                script.htmlFor = script.id = '_xhr_' + jsonPID;
+            }
+
+            script.onload = script.onreadystatechange = function() {
+
+                if ((script.readyState && script.readyState !== 'complete' && script.readyState !== 'loaded') || loaded) {
+                    return false;
+                }
+
+                script.onload = script.onreadystatechange = null;
+                script.onclick && script.onclick();
+                // Call the user callback with the last value stored and clean up values and scripts.
+                fn(_lastValue);
+                _lastValue = undefined;
+                _head.removeChild(script);
+                loaded = 1;
+            };
+
+            // Add the script to the DOM head
+            _head.appendChild(script);
+
+            // Enable JSONP timeout
+            return {
+                abort: function() {
+                    script.onload = script.onreadystatechange = null;
+                    err({}, 'Request is aborted: timeout', {});
+                    _lastValue = undefined;
+                    _head.removeChild(script);
+                    loaded = 1;
+                }
+            };
+        },
+
+        getRequest = function(fn, err) {
+            var options = this.options,
+                method = (options.method || /*DEFAULT*/ 'GET').toUpperCase(),
+
+                // Make sure we are working with correct URL
+
+                url = (((typeof options === 'string' ? options : options.url) || _ajaxLocation) + '')
+                .replace(_hash, '')
+                .replace(_protocolDash, _ajaxLocParts[1] + '//'),
+                data = (options.processData !== false && options.data && typeof options.data !== 'string') ?
+                toQueryString(options.data) : (options.data || null),
+                http,
+                sendWait = false;
+
+            // if we're working on a GET request and we have data then we should append
+            // query string to end of URL and not post data
+            if ((options.type == 'jsonp' || method == 'GET') && data) {
+                url = createURL(url, data);
+                data = null;
+            }
+
+            if (options.type == 'jsonp') {
+                return jsonpReq(options, fn, err, url);
+            }
+
+            http = _createXhr(options);
+            http.open(method, url, true);
+
+            var headers = options.headers || {};
+
+            headers.Accept = headers.Accept || _accepts[options.type] || _accepts['*'];
+
+            var isAFormData = typeof FormData === 'function' && (options.data instanceof FormData);
+
+            if (!options.crossOrigin && !headers['X-Requested-With']) {
+                headers['X-Requested-With'] = _defaultHeaders['X-Requested-With'];
+            }
+
+            if (!headers.contentType && !isAFormData) {
+                headers.contentType = options.contentType ||
+                    _defaultHeaders.contentType;
+            }
+
+            _util.each(headers, function(value, key) {
+                if (typeof value !== 'undefined') {
+                    http.setRequestHeader(key, value);
+                }
+            });
+
+            if (typeof options.withCredentials !== 'undefined' && typeof http.withCredentials !== 'undefined') {
+                http.withCredentials = !!options.withCredentials;
+            }
+
+            if (win['XDomainRequest'] && http instanceof win['XDomainRequest']) {
+                http.onload = fn;
+                http.onerror = err;
+                http.onprogress = function() {};
+                sendWait = true;
+            } else {
+                http.onreadystatechange = handleReadyState(this, fn, err);
+            }
+
+            options.before && options.before(http);
+
+            if (sendWait) {
+                setTimeout(function() {
+                    http.send(data);
+                }, 200);
+            } else {
+                http.send(data);
+            }
+            return http;
+        },
+        XHR = function(options, fn) {
+            return new XHR.prototype.init(options, fn);
+        },
+
+        setType = function(header) {
+            // json, javascript, text/plain, text/html, xml
+            if (header.match('json')) {
+                return 'json';
+            }
+            if (header.match('javascript')) {
+                return 'js';
+            }
+            if (header.match('text')) {
+                return 'html';
+            }
+            if (header.match('xml')) {
+                return 'xml';
+            }
+        },
+
+        post = function(url, data, success, error, type) {
+            if (type === undefined && _types.isString(error)) {
+                type = error;
+                error = false;
+            }
+            return typeof success === 'function' ? XHR({
+                url: url,
+                data: data,
+                method: 'post',
+                type: type,
+                success: success,
+                error: error ? error : _util.noop
+            }) : '';
+        },
+        get = function(url, data, success, error, type) {
+            if (type === undefined && _types.isString(error)) {
+                type = error;
+                error = false;
+            }
+            return typeof success === 'function' ? XHR({
+                url: url,
+                data: data,
+                method: 'get',
+                type: type,
+                success: success,
+                error: error ? error : _util.noop
+            }) : '';
+        };
+
+    XHR.prototype = {
+
+        init: function(options, fn) {
+
+            this.options = options;
+            this.fn = fn;
+            this.url = typeof options == 'string' ? options : options.url;
+            this.timeout = null;
+            this.fulfilled = false;
+            this.successHandler = function() {};
+            this.fulfillmentHandlers = [];
+            this.errorHandlers = [];
+            this.completeHandlers = [];
+            this.errorMsg = false;
+            this.responseArgs = {};
+
+            var self = this;
+
+            fn = fn || function() {};
+
+            if (options.timeout) {
+                this.timeout = setTimeout(function() {
+                    self.abort();
+                }, options.timeout);
+            }
+
+            if (options.success) {
+                this.successHandler = function() {
+                    options.success.apply(options, arguments);
+                };
+            }
+
+            if (options.error) {
+                this.errorHandlers.push(function() {
+                    options.error.apply(options, arguments);
+                });
+            }
+
+            if (options.complete) {
+                this.completeHandlers.push(function() {
+                    options.complete.apply(options, arguments);
+                });
+            }
+
+            function complete(resp) {
+                options.timeout && clearTimeout(self.timeout);
+                self.timeout = null;
+                while (self.completeHandlers.length > 0) {
+                    self.completeHandlers.shift()(resp);
+                }
+            }
+
+            function success(xhr) {
+                var type = options.type || xhr && setType(xhr.getResponseHeader('Content-Type')),
+                    resp, filteredResponse, data;
+
+                xhr = (type !== 'jsonp') ? self.request : xhr;
+
+                // responseText is the old-school way of retrieving response (supported by IE8 & 9)
+                // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
+
+                resp = ('response' in xhr) ? xhr.response : xhr.responseText;
+
+                // Use global data filter on response text
+
+                filteredResponse = xhrHooks.dataFilter(resp, type);
+                data = filteredResponse;
+
+                xhr.responseText = data;
+
+                // Dependencies: jsonxml.js module required
+
+                if (data || data === '') {
+                    if (type === 'json') {
+                        xhr = JSON.parse(data + '');
+                    } else if (type === 'html') {
+                        xhr = data;
+                    } else if (type === 'xml') {
+                        if (hAzzle.installed.Jsonxml !== undefined) {
+                            xhr = _jsonxml.parseXML(xhr.responseXML);
+                        } else {
+                            hAzzle.err(true, 18, "Can't complete the XML request - Jsonxml.js module not installed");
+                        }
+                    }
+                }
+
+                self.responseArgs.resp = xhr;
+                self.fulfilled = true;
+                fn(xhr);
+                self.successHandler(xhr);
+                while (self.fulfillmentHandlers.length > 0) {
+                    xhr = self.fulfillmentHandlers.shift()(xhr);
+                }
+
+                complete(xhr);
+            }
+
+            function error(resp, msg, t) {
+                resp = self.request;
+                self.responseArgs.resp = resp;
+                self.responseArgs.msg = msg;
+                self.responseArgs.t = t;
+                self.errorMsg = true;
+                while (self.errorHandlers.length > 0) {
+                    self.errorHandlers.shift()(resp, msg, t);
+                }
+                complete(resp);
+            }
+
+            this.request = getRequest.call(this, success, error);
+        },
+
+        abort: function() {
+            this.aborted = true;
+            this.request.abort();
+        },
+
+        retry: function() {
+            this.init(this.options, this.fn);
+        },
+
+        then: function(success, fail) {
+            success = success || function() {};
+            fail = fail || function() {};
+            if (this.fulfilled) {
+                this.responseArgs.resp = success(this.responseArgs.resp);
+
+            } else if (this.errorMsg) {
+                fail(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
+            } else {
+                this.fulfillmentHandlers.push(success);
+                this.errorHandlers.push(fail);
+            }
+            return this;
+        },
+
+        always: function(fn) {
+            if (this.fulfilled || this.errorMsg) {
+                fn(this.responseArgs.resp);
+            } else {
+                this.completeHandlers.push(fn);
+            }
+            return this;
+        },
+
+        fail: function(fn) {
+            if (this.errorMsg) {
+                fn(this.responseArgs.resp, this.responseArgs.msg, this.responseArgs.t);
+            } else {
+                this.errorHandlers.push(fn);
+            }
+            return this;
+        },
+        'catch': function(fn) {
+            return this.fail(fn);
+        }
+    };
+
+    XHR.prototype.init.prototype = XHR.prototype;
+
+    return {
+
+        xhr: XHR,
+        post: post,
+        get: get,
+        xhrSetup: xhrSetup,
+        buildParams: buildParams,
+        toQueryString: toQueryString,
+        xhrHooks: xhrHooks
+    };
+});
 /**
  * DOM 4 shim / pollify for hAzzle
  *

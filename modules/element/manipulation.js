@@ -115,7 +115,7 @@ hAzzle.define('Manipulation', function() {
                     }
 
                     do {
-                        if (!tag || sandbox.nodeType == 1) {
+                        if (!tag || sandbox.nodeType === 1) {
                             els.push(sandbox);
                         }
                     } while (sandbox = sandbox.nextSibling);
@@ -350,6 +350,7 @@ hAzzle.define('Manipulation', function() {
     this.html = function(value) {
 
         var els = this.elements,
+            elem = els[0],
             i = 0,
             l = this.length;
 

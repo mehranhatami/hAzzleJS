@@ -447,6 +447,7 @@ var key;
         bind: bind,
         has: has,
         int: int,
+        noop: function() {},
         shallowCopy: shallowCopy,
         reject: reject
     };
