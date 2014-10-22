@@ -72,7 +72,7 @@ hAzzle.define('Manipulation', function() {
                 }
             }
             // If 'deep' clone events
-            if (deep) {
+            if (deep && (source.nodeType === 1 || source.nodeType === 11)) {
 
                 hAzzle(source).cloneEvents(elem);
 
