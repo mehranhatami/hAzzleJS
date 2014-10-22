@@ -96,7 +96,6 @@ hAzzle.define('Storage', function() {
                     stored : this.get(owner, _strings.camelize(key));
             }
 
-
             this.set(owner, key, value);
 
             // Since the 'set' path can have two possible entry points
@@ -152,17 +151,6 @@ hAzzle.define('Storage', function() {
 
     var _privateData = new Storage(),
         _userData = new Storage();
-
-
-    /**
-     * Store arbitrary data associated with the matched elements or return the
-     * value at the named data store for the first element in the set of matched
-     * elements.
-     *
-     * @param  {String|Object|Array}  key
-     * @param  {Object}               value
-     * @return {Object|String }
-     */
 
     this.data = function(key, value) {
 

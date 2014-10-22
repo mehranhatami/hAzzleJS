@@ -29,6 +29,17 @@ hAzzle.define('Strings', function() {
 
         escHTML = /[&<>"']/g,
 
+        // isBlank regExp 
+        iBlank = /^\s*$/,
+
+        // stripTags regExp
+
+        sTags = /<\/?[^>]+>/g,
+
+        // escapeRegExp regExp
+
+        eRegExp = /([.*+?^=!:${}()|[\]\/\\])/g,
+
         // Microsoft RegExp
 
         msPrefix = /^-ms-/,
@@ -135,6 +146,21 @@ hAzzle.define('Strings', function() {
                 // Any idiots still using Android 4.1 ?
                 (str + '').replace(nNTrim, '');
         },
+        // Check if a string is blank
+        isBlank = function(str) {
+            if (!str) {
+                str = '';
+            }
+            return (iBlank).test(str);
+        },
+
+        // Strip tags
+        stripTags = function(str) {
+            if (!str) {
+                return '';
+            }
+            return String(str).replace(sTags, '');
+        },
 
         // Convert a stringified primitive into its correct type.
         parse = function(str) {
@@ -158,6 +184,22 @@ hAzzle.define('Strings', function() {
             }
 
             return count;
+        },
+
+        truncate = function(str, length, truncateStr) {
+            if (!str) {
+                return '';
+            }
+            str = String(str);
+            truncateStr = truncateStr || '...';
+            length = ~~length;
+            return str.length > length ? str.slice(0, length) + truncateStr : str;
+        },
+        escapeRegExp = function(str) {
+            if (!str == null) {
+                return '';
+            }
+            return String(str).replace(eRegExp, '\\$1');
         },
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
@@ -192,6 +234,9 @@ hAzzle.define('Strings', function() {
     for (var key in escapeChars) {
         reversedEscapeChars[escapeChars[key]] = key;
     }
+    reversedEscapeChars["'"] = '#39';
+
+    // Exporting
 
     return {
 
@@ -206,7 +251,11 @@ hAzzle.define('Strings', function() {
         parse: parse,
         count: count,
         contains: contains,
+        isBlank: isBlank,
+        stripTags: stripTags,
         escapeHTML: escapeHTML,
-        unescapeHTML: unescapeHTML
+        unescapeHTML: unescapeHTML,
+        escapeRegExp: escapeRegExp,
+        truncate: truncate
     };
 });

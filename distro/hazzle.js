@@ -167,225 +167,225 @@
 
     var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-// support.js
-hAzzle.define('Support', function () {
+    // support.js
+    hAzzle.define('Support', function() {
 
-    // Feature detection of elements
-    var cls, MultipleArgs, sortDetached,
-        assert = function (fn) {
+        // Feature detection of elements
+        var cls, MultipleArgs, sortDetached,
+            assert = function(fn) {
 
-            var el = document.createElement('fieldset');
+                var el = document.createElement('fieldset');
 
-            try {
-                return !!fn(el);
-            } catch (e) {
-                return false;
-            } finally {
+                try {
+                    return !!fn(el);
+                } catch (e) {
+                    return false;
+                } finally {
 
-                // Remove from its parent by default
-                if (el.parentNode) {
-                    el.parentNode.removeChild(el);
+                    // Remove from its parent by default
+                    if (el.parentNode) {
+                        el.parentNode.removeChild(el);
+                    }
+                    // release memory in IE
+                    el = null;
                 }
-                // release memory in IE
-                el = null;
+            },
+
+            checkOn, optSelected, radioValue,
+            input = document.createElement('input'),
+            select = document.createElement('select'),
+            opt = select.appendChild(document.createElement('option'));
+
+        input.type = 'checkbox';
+
+        // Support: iOS<=5.1, Android<=4.2+
+        // Default value for a checkbox should be 'on'
+        checkOn = input.value !== '';
+
+        // Support: IE<=11+
+        // Must access selectedIndex to make default options select
+        optSelected = opt.selected;
+
+        // Support: IE<=11+
+        // An input loses its value after becoming a radio
+        input = document.createElement('input');
+        input.value = 't';
+        input.type = 'radio';
+        radioValue = input.value === 't';
+
+        var imcHTML = (function() {
+
+            if (typeof document.implementation.createHTMLDocument === 'function') {
+                return true;
             }
-        },
+            return false;
+        }());
 
-        checkOn, optSelected, radioValue,
-        input = document.createElement('input'),
-        select = document.createElement('select'),
-        opt = select.appendChild(document.createElement('option'));
+        // classList and MultipleArgs detections
 
-    input.type = 'checkbox';
+        assert(function(div) {
 
-    // Support: iOS<=5.1, Android<=4.2+
-    // Default value for a checkbox should be 'on'
-    checkOn = input.value !== '';
+            div.classList.add('a', 'b');
+            // Detect if the browser supports classList
+            cls = !!document.documentElement.classList;
+            // Detect if the classList API supports multiple arguments
+            // IE11-- don't support it
 
-    // Support: IE<=11+
-    // Must access selectedIndex to make default options select
-    optSelected = opt.selected;
+            MultipleArgs = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+        });
 
-    // Support: IE<=11+
-    // An input loses its value after becoming a radio
-    input = document.createElement('input');
-    input.value = 't';
-    input.type = 'radio';
-    radioValue = input.value === 't';
+        sortDetached = assert(function(div) {
+            // Should return 1, but returns 4 (following)
+            return div.compareDocumentPosition(document.createElement('div')) & 1;
+        });
 
-   var imcHTML = (function () {
-
-        if (typeof document.implementation.createHTMLDocument === 'function') {
-            return true;
-        }
-        return false;
-    }());
-
-// classList and MultipleArgs detections
-
-    assert(function (div) {
-
-        div.classList.add('a', 'b');
-        // Detect if the browser supports classList
-        cls = !!document.documentElement.classList;
-        // Detect if the classList API supports multiple arguments
-        // IE11-- don't support it
-
-        MultipleArgs = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+        return {
+            assert: assert,
+            checkOn: checkOn,
+            optSelected: optSelected,
+            radioValue: radioValue,
+            imcHTML: imcHTML,
+            classList: cls,
+            multipleArgs: MultipleArgs,
+            sortDetached: sortDetached,
+            cS: !!document.defaultView.getComputedStyle
+        };
     });
 
-    sortDetached = assert(function(div) {
-        // Should return 1, but returns 4 (following)
-        return div.compareDocumentPosition(document.createElement('div')) & 1;
-    });
-    
-    return {
-        assert:assert,
-        checkOn: checkOn,
-        optSelected: optSelected,
-        radioValue: radioValue,
-        imcHTML: imcHTML,
-        classList: cls,
-        multipleArgs: MultipleArgs,
-        sortDetached:sortDetached,
-        cS: !!document.defaultView.getComputedStyle
-    };
-});
+    // has.js
+    hAzzle.define('has', function() {
 
-// has.js
-hAzzle.define('has', function() {
+        var
+            ua = navigator.userAgent,
+            win = window,
+            doc = win.document,
+            isBrowser =
+            // the most fundamental decision: are we in the browser?
+            typeof window !== 'undefined' &&
+            typeof location !== 'undefined' &&
+            typeof document !== 'undefined' &&
+            window.location === location &&
+            window.document === document,
+            doc = isBrowser && document,
+            element = doc && doc.createElement('DiV'),
+            hasCache = {},
 
-    var
-        ua = navigator.userAgent,
-        win = window,
-        doc = win.document,
-        isBrowser =
-        // the most fundamental decision: are we in the browser?
-        typeof window !== 'undefined' &&
-        typeof location !== 'undefined' &&
-        typeof document !== 'undefined' &&
-        window.location === location &&
-        window.document === document,
-        doc = isBrowser && document,
-        element = doc && doc.createElement('DiV'),
-        hasCache = {},
+            // IE feature detection
 
-        // IE feature detection
+            ie = (function() {
 
-        ie = (function() {
+                if (doc.documentMode) {
+                    return doc.documentMode;
+                } else {
+                    for (var i = 7; i > 4; i--) {
+                        var div = doc.createElement('div');
 
-            if (doc.documentMode) {
-                return doc.documentMode;
-            } else {
-                for (var i = 7; i > 4; i--) {
-                    var div = doc.createElement('div');
+                        div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
 
-                    div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
+                        if (div.getElementsByTagName('span').length) {
+                            div = null;
 
-                    if (div.getElementsByTagName('span').length) {
-                        div = null;
-
-                        return i;
+                            return i;
+                        }
                     }
                 }
-            }
 
-            return undefined;
-        })(),
+                return undefined;
+            })(),
 
-        has = function(name) {
-            return typeof hasCache[name] === 'function' ?
-                (hasCache[name] = hasCache[name](win, doc, element)) :
-                hasCache[name]; // Boolean
-        },
+            has = function(name) {
+                return typeof hasCache[name] === 'function' ?
+                    (hasCache[name] = hasCache[name](win, doc, element)) :
+                    hasCache[name]; // Boolean
+            },
 
-        add = function(name, test, now, force) {
-            (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
-            return now && has(name);
-        },
-        clearElement = function(element) {
-            if (element) {
-                while (element.lastChild) {
-                    element.removeChild(element.lastChild);
+            add = function(name, test, now, force) {
+                (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
+                return now && has(name);
+            },
+            clearElement = function(element) {
+                if (element) {
+                    while (element.lastChild) {
+                        element.removeChild(element.lastChild);
+                    }
                 }
-            }
-            return element;
+                return element;
+            };
+
+        // XPath
+
+        add('xpath', function() {
+            return !!(doc.evaluate);
+        });
+
+        // Air 
+
+        add('air', function() {
+            return !!(win.runtime);
+        });
+
+        // Detects native support for the Dart programming language
+
+        add('dart', function() {
+            return !!(win.startDart || doc.startDart);
+        });
+
+        // Detects native support for promises
+
+        add('promise', function() {
+            return !!(win.Promise);
+        });
+
+        // mobile
+
+        add('mobile', function() {
+            return /^Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+        });
+
+        // android
+
+        add('android', function() {
+            return /^Android/i.test(ua);
+        });
+
+        // opera
+        add('opera', function() {
+            return !!win.opera || ua.indexOf(' OPR/') >= 0;
+        });
+
+
+        // Firefox
+        add('firefox', function() {
+            return typeof InstallTrigger !== 'undefined';
+        });
+
+        // Chrome
+        add('chrome', function() {
+            return win.chrome;
+        });
+
+        // Webkit
+        add('webkit', function() {
+            return 'WebkitAppearance' in doc.documentElement.style;
+        });
+
+        // Safari
+        add('safari', function() {
+            return Object.prototype.toString.call(win.HTMLElement).indexOf('Constructor') > 0;
+        });
+
+        // Safari
+        add('ie', function() {
+            return false || !!doc.documentMode;
+        });
+
+        return {
+            has: has,
+            add: add,
+            clearElement: clearElement,
+            ie: ie
         };
-
-    // XPath
-
-    add('xpath', function() {
-        return !!(doc.evaluate);
     });
-
-    // Air 
-
-    add('air', function() {
-        return !!(win.runtime);
-    });
-
-    // Detects native support for the Dart programming language
-
-    add('dart', function() {
-        return !!(win.startDart || doc.startDart);
-    });
-
-    // Detects native support for promises
-
-    add('promise', function() {
-        return !!(win.Promise);
-    });
-
-    // mobile
-
-    add('mobile', function() {
-        return /^Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-    });
-
-    // android
-
-    add('android', function() {
-        return /^Android/i.test(ua);
-    });
-
-    // opera
-    add('opera', function() {
-        return !!win.opera || ua.indexOf(' OPR/') >= 0;
-    });
-
-
-    // Firefox
-    add('firefox', function() {
-        return typeof InstallTrigger !== 'undefined';
-    });
-
-    // Chrome
-    add('chrome', function() {
-        return win.chrome;
-    });
-
-    // Webkit
-    add('webkit', function() {
-        return 'WebkitAppearance' in doc.documentElement.style;
-    });
-
-    // Safari
-    add('safari', function() {
-        return Object.prototype.toString.call(win.HTMLElement).indexOf('Constructor') > 0;
-    });
-
-    // Safari
-    add('ie', function() {
-        return false || !!doc.documentMode;
-    });
-
-    return {
-        has: has,
-        add: add,
-        clearElement: clearElement,
-        ie: ie
-    };
-});
 
     // types.js
     hAzzle.define('Types', function() {
@@ -1115,560 +1115,560 @@ hAzzle.define('has', function() {
             consoleLog: consoleLog
         };
     });
-// core.js
-hAzzle.define('Core', function() {
+    // core.js
+    hAzzle.define('Core', function() {
 
-    var winDoc = window.document,
-        docElem = winDoc.documentElement,
-        _support = hAzzle.require('Support'),
-        _indexOf = Array.prototype.indexOf,
-        rnative = /^[^{]+\{\s*\[native \w/,
-        matches,
-        Core = {},
-        CoreCache = {},
-        hasDuplicate,
-        sortInput,
-        sortOrder = function(a, b) {
-            if (a === b) {
-                hasDuplicate = true;
-            }
-            return 0;
-        },
-        siblingCheck = function(a, b) {
-            var cur = b && a,
-                diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
-                (~b.sourceIndex || 1 << 31) -
-                (~a.sourceIndex || 1 << 31);
-
-            // Use IE sourceIndex if available on both nodes
-            if (diff) {
-                return diff;
-            }
-
-            // Check if b follows a
-            if (cur) {
-                while ((cur = cur.nextSibling)) {
-                    if (cur === b) {
-                        return -1;
-                    }
+        var winDoc = window.document,
+            docElem = winDoc.documentElement,
+            _support = hAzzle.require('Support'),
+            _indexOf = Array.prototype.indexOf,
+            rnative = /^[^{]+\{\s*\[native \w/,
+            matches,
+            Core = {},
+            CoreCache = {},
+            hasDuplicate,
+            sortInput,
+            sortOrder = function(a, b) {
+                if (a === b) {
+                    hasDuplicate = true;
                 }
-            }
+                return 0;
+            },
+            siblingCheck = function(a, b) {
+                var cur = b && a,
+                    diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
+                    (~b.sourceIndex || 1 << 31) -
+                    (~a.sourceIndex || 1 << 31);
 
-            return a ? 1 : -1;
-        };
+                // Use IE sourceIndex if available on both nodes
+                if (diff) {
+                    return diff;
+                }
 
-    Core.uidX = 1;
-    Core.uidK = 'hAzzle_id';
-    Core.expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
-
-        // Check if this is XML doc or not
-
-        Core.isXML = function(elem) {
-            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-
-            if (documentElement) {
-                return documentElement.nodeName !== 'HTML'
-            } else {
-                return false;
-            }
-        };
-
-    // Get unique XML document ID
-
-    Core.xmlID = function(elem) {
-        var uid = elem.getAttribute(this.uidK);
-
-        if (!uid) {
-            uid = this.uidX++;
-            elem.setAttribute(this.uidK, uid);
-        }
-        return uid;
-    };
-
-    // Get unique HTML document ID
-
-    Core.htmlID = function(elem) {
-        return elem.uniqueNumber ||
-            (elem.uniqueNumber = this.uidX++);
-    };
-
-    Core.native = rnative.test(docElem.compareDocumentPosition);
-    // Set document
-
-    Core.setDocument = function(document) {
-
-        // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
-        var nodeType = document.nodeType,
-            doc = document ? document.ownerDocument || document : winDoc;
-
-        if (nodeType === 9) { // document
-
-        } else if (nodeType) {
-            doc = document.ownerDocument; // node
-        } else if (document.navigator) {
-            doc = document.document; // window
-        } else {
-            return;
-        }
-
-        // Check if it's the old document
-
-        if (this.document === doc) {
-            return;
-        }
-        // Override default window.document, and set our document
-
-        document = doc;
-        this.document = doc;
-
-        var root = document.documentElement,
-            rootID = this.xmlID(root),
-            features = CoreCache[rootID],
-            feature;
-
-        // Don't run feature detection twice
-
-        if (features) {
-            for (feature in features) {
-                this[feature] = features[feature];
-            }
-            return;
-        }
-
-        features = CoreCache[rootID] = {};
-        features.root = root;
-        features.isXMLDocument = this.isXML(document);
-        features.detectDuplicates = !!hasDuplicate;
-        features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
-
-        // on non-HTML documents innerHTML and getElementsById doesnt work properly
-        _support.assert(function(div) {
-            div.innerHTML = '<a id="hAzzle_id"></a>';
-            features.isHTMLDocument = !!document.getElementById('hAzzle_id');
-        });
-
-        // iF HTML doc
-
-        if (!Core.isXML(root)) {
-
-            // Check if getElementsByTagName("*") returns only elements
-            features.getElementsByTagName = _support.assert(function(div) {
-                div.appendChild(doc.createComment(''));
-                return !div.getElementsByTagName('*').length;
-            }); // IE returns elements with the name instead of just id for getElementsById for some documents
-            features.getById = _support.assert(function(div) {
-                div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
-                return document.getElementById('hAzzle_id') === div.firstChild;
-            });
-
-            var rbuggyMatches = [],
-                rbuggyQSA = [];
-
-            if ((_support.qsa = rnative.test(doc.querySelectorAll))) {
-                // Build QSA regex
-                // Regex strategy adopted from Diego Perini
-                _support.assert(function(div) {
-                    div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
-
-                    // Webkit/Opera - :checked should return selected option elements
-                    // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-                    if (!div.querySelectorAll(":checked").length) {
-                        rbuggyQSA.push(":checked");
-                    }
-                });
-
-                _support.assert(function(div) {
-                    // Support: Windows 8 Native Apps
-                    // The type and name attributes are restricted during .innerHTML assignment
-                    var input = doc.createElement("input");
-                    input.setAttribute("type", "hidden");
-                    div.appendChild(input).setAttribute("name", "D");
-                });
-            }
-
-            if ((features.matchesSelector = rnative.test((matches = docElem.matches ||
-                    docElem.webkitMatchesSelector ||
-                    docElem.mozMatchesSelector ||
-                    docElem.oMatchesSelector ||
-                    docElem.msMatchesSelector)))) {
-
-                _support.assert(function(div) {
-                    // Check to see if it's possible to do matchesSelector
-                    // on a disconnected node (IE 9)
-                    features.disconnectedMatch = matches.call(div, "div");
-                });
-            }
-
-            rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|"));
-            rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join("|"));
-        }
-
-        // Contains
-
-        features.contains = Core.native || Core.native.test(docElem.contains) ?
-            function(a, b) {
-                var adown = a.nodeType === 9 ? a.documentElement : a,
-                    bup = b && b.parentNode;
-                return a === bup || !!(bup && bup.nodeType === 1 && (
-                    adown.contains ?
-                    adown.contains(bup) :
-                    a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-                ));
-            } :
-            function(a, b) {
-                if (b) {
-                    while ((b = b.parentNode)) {
-                        if (b === a) {
-                            return true;
+                // Check if b follows a
+                if (cur) {
+                    while ((cur = cur.nextSibling)) {
+                        if (cur === b) {
+                            return -1;
                         }
                     }
                 }
-                return false;
+
+                return a ? 1 : -1;
             };
 
-        // Document order sorting
-        Core.sortOrder = Core.native ?
-            function(a, b) {
+        Core.uidX = 1;
+        Core.uidK = 'hAzzle_id';
+        Core.expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
 
-                // Flag for duplicate removal
-                if (a === b) {
-                    hasDuplicate = true;
-                    return 0;
-                }
+            // Check if this is XML doc or not
 
-                // Sort on method existence if only one input has compareDocumentPosition
-                var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-                if (compare) {
-                    return compare;
-                }
+            Core.isXML = function(elem) {
+                var documentElement = elem && (elem.ownerDocument || elem).documentElement;
 
-                // Calculate position if both inputs belong to the same document
-                compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                    a.compareDocumentPosition(b) : 1;
-
-                // Disconnected nodes
-                if (compare & 1 ||
-                    (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
-
-                    // Choose the first element that is related to our preferred document
-                    if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
-                        return -1;
-                    }
-                    if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
-                        return 1;
-                    }
-
-                    // Maintain original order
-                    return sortInput ?
-                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
-                        0;
-                }
-
-                return compare & 4 ? -1 : 1;
-            } :
-            function(a, b) {
-                // Exit early if the nodes are identical
-                if (a === b) {
-                    hasDuplicate = true;
-                    return 0;
-                }
-
-                var cur,
-                    i = 0,
-                    aup = a.parentNode,
-                    bup = b.parentNode,
-                    ap = [a],
-                    bp = [b];
-
-                // Parentless nodes are either documents or disconnected
-                if (!aup || !bup) {
-                    return a === doc ? -1 :
-                        b === doc ? 1 :
-                        aup ? -1 :
-                        bup ? 1 :
-                        sortInput ?
-                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
-                        0;
-
-                    // If the nodes are siblings, we can do a quick check
-                } else if (aup === bup) {
-                    return siblingCheck(a, b);
-                }
-
-                // Otherwise we need full lists of their ancestors for comparison
-                cur = a;
-                while ((cur = cur.parentNode)) {
-                    ap.unshift(cur);
-                }
-                cur = b;
-                while ((cur = cur.parentNode)) {
-                    bp.unshift(cur);
-                }
-
-                // Walk down the tree looking for a discrepancy
-                while (ap[i] === bp[i]) {
-                    i++;
-                }
-
-                return i ?
-                    // Do a sibling check if the nodes have a common ancestor
-                    siblingCheck(ap[i], bp[i]) :
-
-                    // Otherwise nodes in our document sort first
-                    ap[i] === winDoc ? -1 :
-                    bp[i] === winDoc ? 1 :
-                    0;
-            };
-
-        root = null;
-
-        for (feature in features) {
-            this[feature] = features[feature];
-        }
-    };
-
-    // Set correct sortOrder
-
-    sortOrder = Core.sortOrder;
-
-    // Set document
-
-    Core.setDocument(winDoc);
-
-    function uniqueSort(results) {
-
-        var elem,
-            duplicates = [],
-            j = 0,
-            i = 0;
-
-        // Unless we *know* we can detect duplicates, assume their presence
-        hasDuplicate = !Core.detectDuplicates;
-        sortInput = !Core.sortStable && results.slice(0);
-        results.sort(sortOrder);
-
-        if (hasDuplicate) {
-            while ((elem = results[i++])) {
-                if (elem === results[i]) {
-                    j = duplicates.push(i);
-                }
-            }
-            while (j--) {
-                results.splice(duplicates[j], 1);
-            }
-        }
-
-        sortInput = null;
-
-        return results;
-    }
-
-    return {
-        root: Core.root,
-        isXML: Core.isXML,
-        isHTML: !Core.isXML(winDoc),
-        expando: Core.expando,
-        uniqueSort: uniqueSort,
-        contains: Core.contains
-    };
-});
-// collection.js
-hAzzle.define('Collection', function() {
-
-    var _util = hAzzle.require('Util'),
-        _types = hAzzle.require('Types'),
-        _arrayProto = Array.prototype,
-        _keys = Object.keys,
-        _concat = _arrayProto.concat,
-        _push = _arrayProto.push,
-        inArray = function(elem, array, i) {
-            return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
-        },
-        makeArray = function(arr, results) {
-            var ret = results || [];
-
-            if (arr !== undefined) {
-                if (_types.isArrayLike(Object(arr))) {
-                    _util.merge(ret, _types.isString(arr) ? [arr] : arr);
+                if (documentElement) {
+                    return documentElement.nodeName !== 'HTML'
                 } else {
-                    _push.call(ret, arr);
+                    return false;
                 }
+            };
+
+        // Get unique XML document ID
+
+        Core.xmlID = function(elem) {
+            var uid = elem.getAttribute(this.uidK);
+
+            if (!uid) {
+                uid = this.uidX++;
+                elem.setAttribute(this.uidK, uid);
             }
-
-            return ret;
-        },
-
-        //  Reduces a collection
-        // Replacement for reduce -  ECMAScript 5 15.4.4.21     
-        reduce = function(collection, fn, accumulator, args) {
-
-            if (!collection) {
-                collection = [];
-            }
-
-            fn = _util.createCallback(fn, args, 4);
-
-            var keys = collection.length !== +collection.length && _keys(collection),
-                length = (keys || collection).length,
-                index = 0,
-                currentKey;
-
-            if (arguments.length < 3) {
-
-                if (!length) {
-                    hAzzle.err(true, 7, ' no collection length exist in collection.reduce()');
-                }
-
-                accumulator = collection[keys ? keys[index++] : index++];
-            }
-            for (; index < length; index++) {
-                currentKey = keys ? keys[index] : index;
-                accumulator = fn(accumulator, collection[currentKey], currentKey, collection);
-            }
-            return accumulator;
-        },
-
-        slice = function(array, start, end) {
-            if (typeof start === 'undefined') {
-                start = 0;
-            }
-            if (typeof end === 'undefined') {
-                end = array ? array.length : 0;
-            }
-            var index = -1,
-                length = end - start || 0,
-                result = Array(length < 0 ? 0 : length);
-
-            while (++index < length) {
-                result[index] = array[start + index];
-            }
-            return result;
+            return uid;
         };
 
-    /* ------------- INTERNAL ARRAY METHODS ------------------------------- */
+        // Get unique HTML document ID
 
-    // Retrieve the DOM elements matched by the hAzzle object.
-    this.get = function(index) {
-        return index === undefined ? slice(this.elements) : this.elements[index >= 0 ? index : index + this.length];
-    };
+        Core.htmlID = function(elem) {
+            return elem.uniqueNumber ||
+                (elem.uniqueNumber = this.uidX++);
+        };
 
-    // Get the element at position specified by index from the current collection.
-    this.eq = function(index) {
-        return index === -1 ? hAzzle(slice(this.elements, this.length - 1)) : hAzzle(slice(this.elements, index, index + 1));
-    };
+        Core.native = rnative.test(docElem.compareDocumentPosition);
+        // Set document
 
-    this.reduce = function(fn, accumulator, args) {
-        return reduce(this.elements, fn, accumulator, args);
-    };
+        Core.setDocument = function(document) {
 
-    this.indexOf = function(elem, arr, i) {
-        return arr == null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
-    };
+            // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
+            var nodeType = document.nodeType,
+                doc = document ? document.ownerDocument || document : winDoc;
 
-    this.map = function(fn, args) {
-        return hAzzle(_util.map(this.elements, fn, args));
-    };
+            if (nodeType === 9) { // document
 
-    this.each = function(fn, args, rev) {
-        _util.each(this.elements, fn, args, rev);
-        return this;
-    };
+            } else if (nodeType) {
+                doc = document.ownerDocument; // node
+            } else if (document.navigator) {
+                doc = document.document; // window
+            } else {
+                return;
+            }
 
-    this.slice = function(start, end) {
-        return new hAzzle(slice(this.elements, start, end));
-    };
+            // Check if it's the old document
 
-    // Concatenate two elements lists
-    this.concat = function() {
-        var args = _util.map(slice(arguments), function(arr) {
-            return arr instanceof hAzzle ? arr.elements : arr;
-        });
-        return hAzzle(_concat.apply(this.elements, args));
-    };
+            if (this.document === doc) {
+                return;
+            }
+            // Override default window.document, and set our document
 
-    this.is = function(sel) {
-        return this.length > 0 && this.filter(sel).length > 0;
-    };
+            document = doc;
+            this.document = doc;
 
-    // Get elements in list but not with this selector
+            var root = document.documentElement,
+                rootID = this.xmlID(root),
+                features = CoreCache[rootID],
+                feature;
 
-    this.not = function(sel) {
-        return this.filter(sel, true);
-    };
+            // Don't run feature detection twice
 
-    // Determine the position of an element within the set
+            if (features) {
+                for (feature in features) {
+                    this[feature] = features[feature];
+                }
+                return;
+            }
 
-    this.index = function(sel) {
-        return sel === undefined ?
-            this.parent().children().indexOf(this.elements[0]) :
-            this.elements.indexOf(hAzzle(sel).elements[0]);
-    };
+            features = CoreCache[rootID] = {};
+            features.root = root;
+            features.isXMLDocument = this.isXML(document);
+            features.detectDuplicates = !!hasDuplicate;
+            features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
 
-    this.add = function(sel, ctx) {
-        var elements = sel;
-        if (typeof sel === 'string') {
-            elements = hAzzle(sel, ctx).elements;
+            // on non-HTML documents innerHTML and getElementsById doesnt work properly
+            _support.assert(function(div) {
+                div.innerHTML = '<a id="hAzzle_id"></a>';
+                features.isHTMLDocument = !!document.getElementById('hAzzle_id');
+            });
+
+            // iF HTML doc
+
+            if (!Core.isXML(root)) {
+
+                // Check if getElementsByTagName("*") returns only elements
+                features.getElementsByTagName = _support.assert(function(div) {
+                    div.appendChild(doc.createComment(''));
+                    return !div.getElementsByTagName('*').length;
+                }); // IE returns elements with the name instead of just id for getElementsById for some documents
+                features.getById = _support.assert(function(div) {
+                    div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
+                    return document.getElementById('hAzzle_id') === div.firstChild;
+                });
+
+                var rbuggyMatches = [],
+                    rbuggyQSA = [];
+
+                if ((_support.qsa = rnative.test(doc.querySelectorAll))) {
+                    // Build QSA regex
+                    // Regex strategy adopted from Diego Perini
+                    _support.assert(function(div) {
+                        div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
+
+                        // Webkit/Opera - :checked should return selected option elements
+                        // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+                        if (!div.querySelectorAll(":checked").length) {
+                            rbuggyQSA.push(":checked");
+                        }
+                    });
+
+                    _support.assert(function(div) {
+                        // Support: Windows 8 Native Apps
+                        // The type and name attributes are restricted during .innerHTML assignment
+                        var input = doc.createElement("input");
+                        input.setAttribute("type", "hidden");
+                        div.appendChild(input).setAttribute("name", "D");
+                    });
+                }
+
+                if ((features.matchesSelector = rnative.test((matches = docElem.matches ||
+                        docElem.webkitMatchesSelector ||
+                        docElem.mozMatchesSelector ||
+                        docElem.oMatchesSelector ||
+                        docElem.msMatchesSelector)))) {
+
+                    _support.assert(function(div) {
+                        // Check to see if it's possible to do matchesSelector
+                        // on a disconnected node (IE 9)
+                        features.disconnectedMatch = matches.call(div, "div");
+                    });
+                }
+
+                rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|"));
+                rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join("|"));
+            }
+
+            // Contains
+
+            features.contains = Core.native || Core.native.test(docElem.contains) ?
+                function(a, b) {
+                    var adown = a.nodeType === 9 ? a.documentElement : a,
+                        bup = b && b.parentNode;
+                    return a === bup || !!(bup && bup.nodeType === 1 && (
+                        adown.contains ?
+                        adown.contains(bup) :
+                        a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+                    ));
+                } :
+                function(a, b) {
+                    if (b) {
+                        while ((b = b.parentNode)) {
+                            if (b === a) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                };
+
+            // Document order sorting
+            Core.sortOrder = Core.native ?
+                function(a, b) {
+
+                    // Flag for duplicate removal
+                    if (a === b) {
+                        hasDuplicate = true;
+                        return 0;
+                    }
+
+                    // Sort on method existence if only one input has compareDocumentPosition
+                    var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+                    if (compare) {
+                        return compare;
+                    }
+
+                    // Calculate position if both inputs belong to the same document
+                    compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
+                        a.compareDocumentPosition(b) : 1;
+
+                    // Disconnected nodes
+                    if (compare & 1 ||
+                        (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
+
+                        // Choose the first element that is related to our preferred document
+                        if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
+                            return -1;
+                        }
+                        if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
+                            return 1;
+                        }
+
+                        // Maintain original order
+                        return sortInput ?
+                            (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                            0;
+                    }
+
+                    return compare & 4 ? -1 : 1;
+                } :
+                function(a, b) {
+                    // Exit early if the nodes are identical
+                    if (a === b) {
+                        hasDuplicate = true;
+                        return 0;
+                    }
+
+                    var cur,
+                        i = 0,
+                        aup = a.parentNode,
+                        bup = b.parentNode,
+                        ap = [a],
+                        bp = [b];
+
+                    // Parentless nodes are either documents or disconnected
+                    if (!aup || !bup) {
+                        return a === doc ? -1 :
+                            b === doc ? 1 :
+                            aup ? -1 :
+                            bup ? 1 :
+                            sortInput ?
+                            (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                            0;
+
+                        // If the nodes are siblings, we can do a quick check
+                    } else if (aup === bup) {
+                        return siblingCheck(a, b);
+                    }
+
+                    // Otherwise we need full lists of their ancestors for comparison
+                    cur = a;
+                    while ((cur = cur.parentNode)) {
+                        ap.unshift(cur);
+                    }
+                    cur = b;
+                    while ((cur = cur.parentNode)) {
+                        bp.unshift(cur);
+                    }
+
+                    // Walk down the tree looking for a discrepancy
+                    while (ap[i] === bp[i]) {
+                        i++;
+                    }
+
+                    return i ?
+                        // Do a sibling check if the nodes have a common ancestor
+                        siblingCheck(ap[i], bp[i]) :
+
+                        // Otherwise nodes in our document sort first
+                        ap[i] === winDoc ? -1 :
+                        bp[i] === winDoc ? 1 :
+                        0;
+                };
+
+            root = null;
+
+            for (feature in features) {
+                this[feature] = features[feature];
+            }
+        };
+
+        // Set correct sortOrder
+
+        sortOrder = Core.sortOrder;
+
+        // Set document
+
+        Core.setDocument(winDoc);
+
+        function uniqueSort(results) {
+
+            var elem,
+                duplicates = [],
+                j = 0,
+                i = 0;
+
+            // Unless we *know* we can detect duplicates, assume their presence
+            hasDuplicate = !Core.detectDuplicates;
+            sortInput = !Core.sortStable && results.slice(0);
+            results.sort(sortOrder);
+
+            if (hasDuplicate) {
+                while ((elem = results[i++])) {
+                    if (elem === results[i]) {
+                        j = duplicates.push(i);
+                    }
+                }
+                while (j--) {
+                    results.splice(duplicates[j], 1);
+                }
+            }
+
+            sortInput = null;
+
+            return results;
         }
-        return this.concat(elements);
-    };
 
-    this.first = function(index) {
-        return index ? this.slice(0, index) : this.eq(0);
-    };
+        return {
+            root: Core.root,
+            isXML: Core.isXML,
+            isHTML: !Core.isXML(winDoc),
+            expando: Core.expando,
+            uniqueSort: uniqueSort,
+            contains: Core.contains
+        };
+    });
+    // collection.js
+    hAzzle.define('Collection', function() {
 
-    this.last = function(index) {
-        return index ? this.slice(this.length - index) : this.eq(-1);
-    };
+        var _util = hAzzle.require('Util'),
+            _types = hAzzle.require('Types'),
+            _arrayProto = Array.prototype,
+            _keys = Object.keys,
+            _concat = _arrayProto.concat,
+            _push = _arrayProto.push,
+            inArray = function(elem, array, i) {
+                return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
+            },
+            makeArray = function(arr, results) {
+                var ret = results || [];
 
-    this.parentElement = function() {
-        return this.parent().children();
-    };
+                if (arr !== undefined) {
+                    if (_types.isArrayLike(Object(arr))) {
+                        _util.merge(ret, _types.isString(arr) ? [arr] : arr);
+                    } else {
+                        _push.call(ret, arr);
+                    }
+                }
 
-    this.firstElementChild = function() {
-        return this.children().first();
-    };
+                return ret;
+            },
 
-    this.lastElementChild = function() {
-        return this.children().last();
-    };
+            //  Reduces a collection
+            // Replacement for reduce -  ECMAScript 5 15.4.4.21     
+            reduce = function(collection, fn, accumulator, args) {
 
-    this.previousElementSibling = function() {
-        return this.prev().last();
-    };
+                if (!collection) {
+                    collection = [];
+                }
 
-    this.nextElementSibling = function() {
-        return this.next().first();
-    };
+                fn = _util.createCallback(fn, args, 4);
 
-    this.childElementCount = function() {
-        return this.children().length;
-    };
+                var keys = collection.length !== +collection.length && _keys(collection),
+                    length = (keys || collection).length,
+                    index = 0,
+                    currentKey;
 
-    this.size = function() {
-        return this.length;
-    };
+                if (arguments.length < 3) {
 
-    // First() and prev()
-    _util.each({
-        next: 'nextElementSibling',
-        prev: 'previousElementSibling'
-    }, function(value, prop) {
-        this[prop] = function(sel) {
+                    if (!length) {
+                        hAzzle.err(true, 7, ' no collection length exist in collection.reduce()');
+                    }
+
+                    accumulator = collection[keys ? keys[index++] : index++];
+                }
+                for (; index < length; index++) {
+                    currentKey = keys ? keys[index] : index;
+                    accumulator = fn(accumulator, collection[currentKey], currentKey, collection);
+                }
+                return accumulator;
+            },
+
+            slice = function(array, start, end) {
+                if (typeof start === 'undefined') {
+                    start = 0;
+                }
+                if (typeof end === 'undefined') {
+                    end = array ? array.length : 0;
+                }
+                var index = -1,
+                    length = end - start || 0,
+                    result = Array(length < 0 ? 0 : length);
+
+                while (++index < length) {
+                    result[index] = array[start + index];
+                }
+                return result;
+            };
+
+        /* ------------- INTERNAL ARRAY METHODS ------------------------------- */
+
+        // Retrieve the DOM elements matched by the hAzzle object.
+        this.get = function(index) {
+            return index === undefined ? slice(this.elements) : this.elements[index >= 0 ? index : index + this.length];
+        };
+
+        // Get the element at position specified by index from the current collection.
+        this.eq = function(index) {
+            return index === -1 ? hAzzle(slice(this.elements, this.length - 1)) : hAzzle(slice(this.elements, index, index + 1));
+        };
+
+        this.reduce = function(fn, accumulator, args) {
+            return reduce(this.elements, fn, accumulator, args);
+        };
+
+        this.indexOf = function(elem, arr, i) {
+            return arr == null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
+        };
+
+        this.map = function(fn, args) {
+            return hAzzle(_util.map(this.elements, fn, args));
+        };
+
+        this.each = function(fn, args, rev) {
+            _util.each(this.elements, fn, args, rev);
+            return this;
+        };
+
+        this.slice = function(start, end) {
+            return new hAzzle(slice(this.elements, start, end));
+        };
+
+        // Concatenate two elements lists
+        this.concat = function() {
+            var args = _util.map(slice(arguments), function(arr) {
+                return arr instanceof hAzzle ? arr.elements : arr;
+            });
+            return hAzzle(_concat.apply(this.elements, args));
+        };
+
+        this.is = function(sel) {
+            return this.length > 0 && this.filter(sel).length > 0;
+        };
+
+        // Get elements in list but not with this selector
+
+        this.not = function(sel) {
+            return this.filter(sel, true);
+        };
+
+        // Determine the position of an element within the set
+
+        this.index = function(sel) {
+            return sel === undefined ?
+                this.parent().children().indexOf(this.elements[0]) :
+                this.elements.indexOf(hAzzle(sel).elements[0]);
+        };
+
+        this.add = function(sel, ctx) {
+            var elements = sel;
+            if (typeof sel === 'string') {
+                elements = hAzzle(sel, ctx).elements;
+            }
+            return this.concat(elements);
+        };
+
+        this.first = function(index) {
+            return index ? this.slice(0, index) : this.eq(0);
+        };
+
+        this.last = function(index) {
+            return index ? this.slice(this.length - index) : this.eq(-1);
+        };
+
+        this.parentElement = function() {
+            return this.parent().children();
+        };
+
+        this.firstElementChild = function() {
+            return this.children().first();
+        };
+
+        this.lastElementChild = function() {
+            return this.children().last();
+        };
+
+        this.previousElementSibling = function() {
+            return this.prev().last();
+        };
+
+        this.nextElementSibling = function() {
+            return this.next().first();
+        };
+
+        this.childElementCount = function() {
+            return this.children().length;
+        };
+
+        this.size = function() {
+            return this.length;
+        };
+
+        // First() and prev()
+        _util.each({
+            next: 'nextElementSibling',
+            prev: 'previousElementSibling'
+        }, function(value, prop) {
+            this[prop] = function(sel) {
                 return this.map(function(elem) {
                     return elem[value];
                 }).filter(sel);
             };
             // Note! The native 'bind' method do not give the best performance, but
             // this happen only on pageload. Anyone who wan't to fix this?
-    }.bind(this));
+        }.bind(this));
 
-    return {
-        makeArray: makeArray,
-        slice: slice,
-        reduce: reduce,
-        inArray: inArray
-    };
-});
+        return {
+            makeArray: makeArray,
+            slice: slice,
+            reduce: reduce,
+            inArray: inArray
+        };
+    });
 
     // jiesa.js
     hAzzle.define('Jiesa', function() {
@@ -1879,218 +1879,267 @@ hAzzle.define('Collection', function() {
         };
     });
 
-// strings.js
-hAzzle.define('Strings', function() {
-    var
-    // Save a reference to some core methods
+    // strings.js
+    hAzzle.define('Strings', function() {
+        var
+        // Save a reference to some core methods
 
-        nTrim = String.prototype.trim,
+            nTrim = String.prototype.trim,
 
-        // Support: Android<4.1
+            // Support: Android<4.1
 
-        nNTrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
+            nNTrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
 
-        // Hyphenate RegExp
+            // Hyphenate RegExp
 
-        sHyphenate = /[A-Z]/g,
+            sHyphenate = /[A-Z]/g,
 
-        // Capitalize RegExp
+            // Capitalize RegExp
 
-        sCapitalize = /\b[a-z]/g,
+            sCapitalize = /\b[a-z]/g,
 
-        // UnescapeHTML RegExp
+            // UnescapeHTML RegExp
 
-        unEscapeFirst = /^#x([\da-fA-F]+)$/,
+            unEscapeFirst = /^#x([\da-fA-F]+)$/,
 
-        // UnescapeHTML RegExp
+            // UnescapeHTML RegExp
 
-        unEscapeLast = /^#(\d+)$/,
+            unEscapeLast = /^#(\d+)$/,
 
-        // escapeHTML regExp
+            // escapeHTML regExp
 
-        escHTML = /[&<>"']/g,
+            escHTML = /[&<>"']/g,
 
-        // Microsoft RegExp
+            // isBlank regExp 
+            iBlank = /^\s*$/,
 
-        msPrefix = /^-ms-/,
+            // stripTags regExp
 
-        // camlize RegExp
+            sTags = /<\/?[^>]+>/g,
 
-        dashAlpha = /-([\da-z])/gi,
+            // escapeRegExp regExp
 
-        // manualLowercase regExp
+            eRegExp = /([.*+?^=!:${}()|[\]\/\\])/g,
 
-        capitalizedChars = /[A-Z]/g,
+            // Microsoft RegExp
 
-        // manualUppercase regExp
+            msPrefix = /^-ms-/,
 
-        nonCapitalizedChars = /[a-z]/g,
+            // camlize RegExp
 
-        // Cache array for hAzzle.camelize()
+            dashAlpha = /-([\da-z])/gi,
 
-        camelCache = [],
+            // manualLowercase regExp
 
-        escapeChars = {
-            lt: '<',
-            gt: '>',
-            quot: '"',
-            apos: "'",
-            amp: '&'
-        },
+            capitalizedChars = /[A-Z]/g,
 
-        reversedEscapeChars = {},
+            // manualUppercase regExp
 
-        // Used by hAzzle.capitalize as callback to replace()
+            nonCapitalizedChars = /[a-z]/g,
 
-        fcapitalize = function(letter) {
-            return letter.toUpperCase();
-        },
+            // Cache array for hAzzle.camelize()
 
-        // Used by hAzzle.camelize as callback to replace()
+            camelCache = [],
 
-        fcamelize = function(all, letter) {
-            return letter.toUpperCase();
-        },
-        // Used by hAzzle.hyphenate as callback to replace()
+            escapeChars = {
+                lt: '<',
+                gt: '>',
+                quot: '"',
+                apos: "'",
+                amp: '&'
+            },
 
-        fhyphenate = function(letter) {
-            return ('-' + letter.charAt(0).toLowerCase());
-        },
+            reversedEscapeChars = {},
 
-        // Converts the specified string to lowercase.
+            // Used by hAzzle.capitalize as callback to replace()
 
-        lowercase = function(str) {
-            return typeof str === 'string' ? str.toLowerCase() : str;
-        },
-        // Converts the specified string to uppercase
-        uppercase = function(str) {
-            return typeof str === 'string' ? str.toUpperCase() : str;
-        },
-        manualLowercase = function(str) {
-            /* jshint bitwise: false */
-            return typeof str === 'string' ? str.replace(capitalizedChars, function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) | 32);
-            }) : str;
-        },
-        manualUppercase = function(str) {
-            /* jshint bitwise: false */
-            return typeof str === 'string' ? str.replace(nonCapitalizedChars, function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) & ~32);
-            }) : str;
-        },
+            fcapitalize = function(letter) {
+                return letter.toUpperCase();
+            },
 
-        capitalize = function(str) {
-            return str ? str.replace(sCapitalize, fcapitalize) : str;
-        },
+            // Used by hAzzle.camelize as callback to replace()
 
-        // Convert a string from camel case to 'CSS case', where word boundaries are
-        // described by hyphens ('-') and all characters are lower-case.
-        // e.g. boxSizing -> box-sizing
+            fcamelize = function(all, letter) {
+                return letter.toUpperCase();
+            },
+            // Used by hAzzle.hyphenate as callback to replace()
 
-        hyphenate = function(str) {
-            if (typeof str === 'string') {
-                return str ? str.replace(sHyphenate, fhyphenate) : str;
-            } else {
-                str = typeof str === 'number' ? '' + str : '';
-            }
-            return str ? ('data-' + str.toLowerCase()) : str;
-        },
+            fhyphenate = function(letter) {
+                return ('-' + letter.charAt(0).toLowerCase());
+            },
 
-        // Convert a string to camel case notation.
-        // Support: IE9-11+
-        camelize = function(str) {
-            if (str && typeof str === 'string') {
+            // Converts the specified string to lowercase.
 
-                return camelCache[str] ? camelCache[str] :
-                    // Remove data- prefix and convert remaining dashed string to camelCase
-                    camelCache[str] = str.replace(msPrefix, "ms-").replace(dashAlpha, fcamelize); // -a to A
-            }
-            // Deal with 'number' and 'boolean'
-            return typeof str === 'number' || typeof str === 'boolean' ? '' + str : str;
-        },
+            lowercase = function(str) {
+                return typeof str === 'string' ? str.toLowerCase() : str;
+            },
+            // Converts the specified string to uppercase
+            uppercase = function(str) {
+                return typeof str === 'string' ? str.toUpperCase() : str;
+            },
+            manualLowercase = function(str) {
+                /* jshint bitwise: false */
+                return typeof str === 'string' ? str.replace(capitalizedChars, function(ch) {
+                    return String.fromCharCode(ch.charCodeAt(0) | 32);
+                }) : str;
+            },
+            manualUppercase = function(str) {
+                /* jshint bitwise: false */
+                return typeof str === 'string' ? str.replace(nonCapitalizedChars, function(ch) {
+                    return String.fromCharCode(ch.charCodeAt(0) & ~32);
+                }) : str;
+            },
 
-        // Remove leading and trailing whitespaces of the specified string.
+            capitalize = function(str) {
+                return str ? str.replace(sCapitalize, fcapitalize) : str;
+            },
 
-        trim = function(str) {
-            return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
-                // Any idiots still using Android 4.1 ?
-                (str + '').replace(nNTrim, '');
-        },
+            // Convert a string from camel case to 'CSS case', where word boundaries are
+            // described by hyphens ('-') and all characters are lower-case.
+            // e.g. boxSizing -> box-sizing
 
-        // Convert a stringified primitive into its correct type.
-        parse = function(str) {
-            var n; // undefined, or becomes number
-            return typeof str !== 'string' ||
-                !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
-                (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
-        },
-
-        contains = function(str, needle) {
-            return str.indexOf(needle) >= 0;
-        },
-
-        count = function(string, needle) {
-            var count = 0,
-                pos = string.indexOf(needle);
-
-            while (pos >= 0) {
-                count += 1;
-                pos = string.indexOf(needle, pos + 1);
-            }
-
-            return count;
-        },
-        escapeHTML = function(str) {
-            return str.replace(escHTML, function(m) {
-                return '&' + reversedEscapeChars[m] + ';';
-            });
-        },
-        unescapeHTML = function(str) {
-            return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
-                var m;
-                if (entityCode in escapeChars) {
-                    return escapeChars[entityCode];
-                } else if ((m = entityCode.match(unEscapeFirst))) {
-                    return String.fromCharCode(parseInt(m[1], 16));
-                } else if ((m = entityCode.match(unEscapeLast))) {
-                    return String.fromCharCode(~~m[1]);
+            hyphenate = function(str) {
+                if (typeof str === 'string') {
+                    return str ? str.replace(sHyphenate, fhyphenate) : str;
                 } else {
-                    return entity;
+                    str = typeof str === 'number' ? '' + str : '';
                 }
-            });
+                return str ? ('data-' + str.toLowerCase()) : str;
+            },
+
+            // Convert a string to camel case notation.
+            // Support: IE9-11+
+            camelize = function(str) {
+                if (str && typeof str === 'string') {
+
+                    return camelCache[str] ? camelCache[str] :
+                        // Remove data- prefix and convert remaining dashed string to camelCase
+                        camelCache[str] = str.replace(msPrefix, "ms-").replace(dashAlpha, fcamelize); // -a to A
+                }
+                // Deal with 'number' and 'boolean'
+                return typeof str === 'number' || typeof str === 'boolean' ? '' + str : str;
+            },
+
+            // Remove leading and trailing whitespaces of the specified string.
+
+            trim = function(str) {
+                return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
+                    // Any idiots still using Android 4.1 ?
+                    (str + '').replace(nNTrim, '');
+            },
+            // Check if a string is blank
+            isBlank = function(str) {
+                if (!str) {
+                    str = '';
+                }
+                return (iBlank).test(str);
+            },
+
+            // Strip tags
+            stripTags = function(str) {
+                if (!str) {
+                    return '';
+                }
+                return String(str).replace(sTags, '');
+            },
+
+            // Convert a stringified primitive into its correct type.
+            parse = function(str) {
+                var n; // undefined, or becomes number
+                return typeof str !== 'string' ||
+                    !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
+                    (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
+            },
+
+            contains = function(str, needle) {
+                return str.indexOf(needle) >= 0;
+            },
+
+            count = function(string, needle) {
+                var count = 0,
+                    pos = string.indexOf(needle);
+
+                while (pos >= 0) {
+                    count += 1;
+                    pos = string.indexOf(needle, pos + 1);
+                }
+
+                return count;
+            },
+
+            truncate = function(str, length, truncateStr) {
+                if (!str) {
+                    return '';
+                }
+                str = String(str);
+                truncateStr = truncateStr || '...';
+                length = ~~length;
+                return str.length > length ? str.slice(0, length) + truncateStr : str;
+            },
+            escapeRegExp = function(str) {
+                if (!str == null) {
+                    return '';
+                }
+                return String(str).replace(eRegExp, '\\$1');
+            },
+            escapeHTML = function(str) {
+                return str.replace(escHTML, function(m) {
+                    return '&' + reversedEscapeChars[m] + ';';
+                });
+            },
+            unescapeHTML = function(str) {
+                return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
+                    var m;
+                    if (entityCode in escapeChars) {
+                        return escapeChars[entityCode];
+                    } else if ((m = entityCode.match(unEscapeFirst))) {
+                        return String.fromCharCode(parseInt(m[1], 16));
+                    } else if ((m = entityCode.match(unEscapeLast))) {
+                        return String.fromCharCode(~~m[1]);
+                    } else {
+                        return entity;
+                    }
+                });
+            };
+
+        // Credit: AngularJS    
+        // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
+        // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
+        // with correct but slower alternatives.
+
+        if ('i' !== 'I'.toLowerCase()) {
+            lowercase = manualLowercase;
+            uppercase = manualUppercase;
+        }
+
+        for (var key in escapeChars) {
+            reversedEscapeChars[escapeChars[key]] = key;
+        }
+        reversedEscapeChars["'"] = '#39';
+
+        // Exporting
+
+        return {
+
+            capitalize: capitalize,
+            hyphenate: hyphenate,
+            camelize: camelize,
+            trim: trim,
+            lowercase: lowercase,
+            uppcase: uppercase,
+            manualLowercase: manualLowercase,
+            manualUppercase: manualUppercase,
+            parse: parse,
+            count: count,
+            contains: contains,
+            isBlank: isBlank,
+            stripTags: stripTags,
+            escapeHTML: escapeHTML,
+            unescapeHTML: unescapeHTML,
+            escapeRegExp: escapeRegExp,
+            truncate: truncate
         };
-
-    // Credit: AngularJS    
-    // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
-    // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
-    // with correct but slower alternatives.
-
-    if ('i' !== 'I'.toLowerCase()) {
-        lowercase = manualLowercase;
-        uppercase = manualUppercase;
-    }
-
-    for (var key in escapeChars) {
-        reversedEscapeChars[escapeChars[key]] = key;
-    }
-
-    return {
-
-        capitalize: capitalize,
-        hyphenate: hyphenate,
-        camelize: camelize,
-        trim: trim,
-        lowercase: lowercase,
-        uppcase: uppercase,
-        manualLowercase: manualLowercase,
-        manualUppercase: manualUppercase,
-        parse: parse,
-        count: count,
-        contains: contains,
-        escapeHTML: escapeHTML,
-        unescapeHTML: unescapeHTML
-    };
-});
+    });
     // storage.js
     hAzzle.define('Storage', function() {
 
@@ -2189,7 +2238,6 @@ hAzzle.define('Strings', function() {
                         stored : this.get(owner, _strings.camelize(key));
                 }
 
-
                 this.set(owner, key, value);
 
                 // Since the 'set' path can have two possible entry points
@@ -2245,17 +2293,6 @@ hAzzle.define('Strings', function() {
 
         var _privateData = new Storage(),
             _userData = new Storage();
-
-
-        /**
-         * Store arbitrary data associated with the matched elements or return the
-         * value at the named data store for the first element in the set of matched
-         * elements.
-         *
-         * @param  {String|Object|Array}  key
-         * @param  {Object}               value
-         * @return {Object|String }
-         */
 
         this.data = function(key, value) {
 
@@ -2358,7 +2395,7 @@ hAzzle.define('Strings', function() {
          * Remove attributes from element collection
          *
          * @param {String} key
-    
+
          *
          * @return {Object}
          */
@@ -2406,7 +2443,6 @@ hAzzle.define('Strings', function() {
             data: _userData
         };
     });
-
     // curcss.js
     hAzzle.define('curCSS', function() {
 
@@ -2822,438 +2858,462 @@ hAzzle.define('Strings', function() {
         };
     });
 
-    // manipulation.js
-    hAzzle.define('Manipulation', function() {
+// manipulation.js
+hAzzle.define('Manipulation', function() {
 
-        var _util = hAzzle.require('Util'),
-            _support = hAzzle.require('Support'),
-            _core = hAzzle.require('Core'),
-            _types = hAzzle.require('Types'),
-            _text = hAzzle.require('Text'),
-            _has = hAzzle.require('has'),
-            scriptStyle = /<(?:script|style|link)/i,
-            tagName = /<([\w:]+)/,
-            htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-            whitespace = /^\s*<([^\s>]+)/,
-            scriptTag = /\s*<script +src=['"]([^'"]+)['"]>/,
-            table = ['<table>', '</table>', 1],
-            td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
-            option = ['<select>', '</select>', 1],
-            noscope = ['_', '', 0, 1],
+    var _util = hAzzle.require('Util'),
+        _support = hAzzle.require('Support'),
+        _core = hAzzle.require('Core'),
+        _types = hAzzle.require('Types'),
+        _text = hAzzle.require('Text'),
+        _has = hAzzle.require('has'),
+        scriptStyle = /<(?:script|style|link)/i,
+        tagName = /<([\w:]+)/,
+        htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        whitespace = /^\s*<([^\s>]+)/,
+        scriptTag = /\s*<script +src=['"]([^'"]+)['"]>/,
+        table = ['<table>', '</table>', 1],
+        td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
+        option = ['<select>', '</select>', 1],
+        noscope = ['_', '', 0, 1],
 
-            tagMap = {
-                style: table,
-                table: table,
-                thead: table,
-                tbody: table,
-                tfoot: table,
-                colgroup: table,
-                caption: table,
-                tr: ['<table><tbody>', '</tbody></table>', 2],
-                th: td,
-                td: td,
-                col: ['<table><colgroup>', '</colgroup></table>', 2],
-                fieldset: ['<form>', '</form>', 1],
-                legend: ['<form><fieldset>', '</fieldset></form>', 2],
-                option: option,
-                optgroup: option,
-                script: noscope,
-                link: noscope,
+        tagMap = {
+            style: table,
+            table: table,
+            thead: table,
+            tbody: table,
+            tfoot: table,
+            colgroup: table,
+            caption: table,
+            tr: ['<table><tbody>', '</tbody></table>', 2],
+            th: td,
+            td: td,
+            col: ['<table><colgroup>', '</colgroup></table>', 2],
+            fieldset: ['<form>', '</form>', 1],
+            legend: ['<form><fieldset>', '</fieldset></form>', 2],
+            option: option,
+            optgroup: option,
+            script: noscope,
+            link: noscope,
+            param: noscope,
+            base: noscope
+        },
 
-                param: noscope,
-                base: noscope
-            },
+        iAText = {
+            prepend: 'beforeBegin',
+            append: 'afterBegin',
+            after: 'beforeEnd',
+            before: 'afterEnd'
 
-            iAText = {
-                prepend: 'beforeBegin',
-                append: 'afterBegin',
-                after: 'beforeEnd',
-                before: 'afterEnd'
+        },
+        createHTML = function(html, context) {
+            return hAzzle(create(html, context));
+        },
 
-            },
-            createHTML = function(html, context) {
-                return hAzzle(create(html, context));
-            },
+        createScriptFromHtml = function(html, context) {
+            var scriptEl = context.createElement('script'),
+                matches = html.match(scriptTag);
+            scriptEl.src = matches[1];
+            return scriptEl;
+        },
 
-            createScriptFromHtml = function(html, context) {
-                var scriptEl = context.createElement('script'),
-                    matches = html.match(scriptTag);
-                scriptEl.src = matches[1];
-                return scriptEl;
-            },
+        deepEach = function(array, fn, context) {
+            if (array) {
+                var index = array.length;
+                while (index--) {
+                    if (_types.isNode(array[index])) {
+                        deepEach(array[index].children, fn, context);
 
-            deepEach = function(array, fn, context) {
-                if (array) {
-                    var index = array.length;
-                    while (index--) {
-                        if (_types.isNode(array[index])) {
-                            deepEach(array[index].children, fn, context);
-                            fn.call(context || array[index], array[index], index, array);
-                        }
+                        fn.call(context || array[index], array[index], index, array);
                     }
                 }
-                return array;
-            },
-
-            create = function(node, context) {
-                if (node) {
-                    // Mitigate XSS vulnerability
-
-                    var defaultContext = _support.imcHTML ?
-                        document.implementation.createHTMLDocument() :
-                        document,
-                        ctx = context || defaultContext,
-                        fragment = ctx.createDocumentFragment();
-
-                    if (typeof node === 'string' && node !== '') {
-
-                        /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
-                           create it if match 
-                         */
-                        if (scriptTag.test(node)) {
-                            return [createScriptFromHtml(node, context)];
-                        }
-
-                        // Deserialize a standard representation
-
-                        var i, tag = node.match(whitespace),
-                            sandbox = fragment.appendChild(ctx.createElement('div')),
-                            els = [],
-                            map = tag ? tagMap[tag[1].toLowerCase()] : null,
-                            dep = map ? map[2] + 1 : 1,
-                            noScoop = map && map[3];
-
-                        if (map) {
-                            sandbox.innerHTML = (map[0] + node + map[1]);
-                        } else {
-                            sandbox.innerHTML = node;
-                        }
-
-                        while (dep--) {
-                            sandbox = sandbox.firstChild;
-                        }
-
-                        // for IE NoScope, we may insert cruft at the begining just to get it to work
-
-                        if (noScoop && sandbox && sandbox.nodeType !== 1) {
-                            sandbox = sandbox.nextSibling;
-                        }
-
-                        do {
-                            if (!tag || sandbox.nodeType === 1) {
-                                els.push(sandbox);
-                            }
-                        } while (sandbox = sandbox.nextSibling);
-
-                        for (i in els) {
-                            if (els[i].parentNode) {
-                                els[i].parentNode.removeChild(els[i]);
-                            }
-                        }
-
-                        return els;
-
-                    } else if (_util.isNode(node)) {
-                        return [node.cloneNode(true)];
-                    }
-                }
-            },
-            // Grab childnodes
-
-            grab = function(context, tag) {
-                var ret = context.getElementsByTagName(tag || '*');
-                return tag === undefined || tag && _util.nodeName(context, tag) ?
-                    _util.merge([context], ret) :
-                    ret;
-            },
-
-            // Removes the data associated with an element
-            // This 'clearData' function will be fixed later on
-
-            clearData = function(elems) {
-                var elem, i = 0;
-                for (;
-                    (elem = elems[i]) !== undefined; i++) {
-                    // Coming soon as events are fixed !!
-                }
-            },
-
-            normalize = function(node, clone) {
-
-                var i, l, ret;
-
-                if (typeof node === 'string') {
-                    return create(node);
-                }
-
-                if (node instanceof hAzzle) {
-                    node = node.elements;
-                }
-
-                if (_types.isNode(node)) {
-                    node = [node];
-                }
-
-                if (clone) {
-                    ret = []; // don't change original array
-                    for (i = 0, l = node.length; i < l; i++) {
-                        ret[i] = node[i].cloneNode(true);
-                    }
-                    return ret;
-                }
-                return node;
-            },
-            createGlobal = function(elem, content, method) {
-                if (typeof content === 'string' &&
-                    _core.isHTML &&
-                    elem.parentNode && elem.parentNode.nodeType === 1) {
-                    elem.insertAdjacentHTML(method, content.replace(htmlTag, '<$1></$2>'));
-                } else {
-                    _util.each(normalize(content, 0), function(relatedNode) {
-                        elem[method](relatedNode); // DOM Level 4
-                    });
-                }
-            },
-            prepend = function(elem, content) {
-                createGlobal(elem, content, 'prepend');
-            },
-
-            append = function(elem, content) {
-                createGlobal(elem, content, 'append');
-            };
-
-        // insertAdjacentHTML method for append, prepend, before and after
-
-        this.iAHMethod = function(method, html, fn) {
-            return this.each(function(elem, index) {
-                if (typeof html === 'string' &&
-                    _core.isHTML &&
-                    elem.parentNode && elem.parentNode.nodeType === 1) {
-                    elem.insertAdjacentHTML(method, html.replace(htmlTag, '<$1></$2>'));
-                } else {
-                    fn(elem, index);
-                }
-            });
-        };
-
-        this.append = function(content) {
-            return this.iAHMethod('beforeend', content, function(node, state) {
-                if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                    _util.each(normalize(content, state), function(relatedNode) {
-                        node.appendChild(relatedNode); // DOM Level 4
-                    });
-                }
-            });
-        };
-
-        this.prepend = function(content) {
-            return this.iAHMethod('afterbegin', content, function(node, state) {
-                if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                    _util.each(normalize(content, state), function(relatedNode) {
-                        node.prepend(relatedNode); // DOM Level 4
-                    });
-                }
-            });
-        };
-
-        this.before = function(content) {
-            return this.iAHMethod('beforebegin', content, function(node, state) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.before(relatedNode); // DOM Level 4
-
-                });
-            });
-        };
-
-        this.after = function(content) {
-            return this.iAHMethod('afterend', content, function(node, state) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.after(relatedNode); // DOM Level 4
-                });
-            });
-        };
-
-        this.appendTo = function(content) {
-            return this.domManip(content, function(node, el) {
-                node.appendChild(el);
-            });
-        };
-
-        this.prependTo = function(content) {
-            return this.domManip(content, function(node, el) {
-                node.insertBefore(el, node.firstChild);
-            });
-        };
-
-        this.insertBefore = function(content) {
-            return this.domManip(content, function(node, el) {
-                node.parentNode.insertBefore(el, node);
-            });
-        };
-
-        this.insertAfter = function(content) {
-            return this.domManip(content, function(node, el) {
-                var sibling = node.nextSibling;
-                sibling ?
-                    node.parentNode.insertBefore(el, sibling) :
-                    node.parentNode.appendChild(el);
-            }, 1);
-        };
-
-        // Same as 'ReplaceWith' in jQuery
-
-        this.replace = function(html) {
-            return this.each(function(el, i) {
-                _util.each(normalize(html, i), function(i) {
-                    el.replace(i); // DOM Level 4
-                });
-            });
-        };
-
-        // Thanks to jQuery for the function name!!
-
-        this.domManip = function(content, fn, /*reverse */ rev) {
-
-            var i = 0,
-                r = [];
-
-            // Nasty looking code, but this has to be fast
-
-            var self = this.elements,
-                elems, nodes;
-
-            if (typeof content === 'string' &&
-                content[0] === '<' &&
-                content[content.length - 1] === '>' &&
-                content.length >= 3) {
-                nodes = content;
-
-            } else {
-                nodes = hAzzle(content);
             }
+            return array;
+        },
 
-            // Start the iteration and loop through the content
+        create = function(node, context) {
+            if (node) {
+                // Mitigate XSS vulnerability
 
-            _util.each(normalize(nodes), function(elem, index) {
-                _util.each(self, function(el) {
-                    elems = index > 0 ? el.cloneNode(true) : el;
-                    if (elem) {
-                        fn(elem, elems);
+                var defaultContext = _support.imcHTML ?
+                    document.implementation.createHTMLDocument() :
+                    document,
+                    ctx = context || defaultContext,
+                    fragment = ctx.createDocumentFragment();
+
+                if (typeof node === 'string' && node !== '') {
+
+                    /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
+                       create it if match 
+                     */
+                    if (scriptTag.test(node)) {
+                        return [createScriptFromHtml(node, context)];
                     }
-                }, null, rev);
 
-            }, this, rev);
-            self.length = i;
-            _util.each(r, function(e) {
-                self[--i] = e;
-            }, null, !rev);
-            return self;
-        };
+                    // Deserialize a standard representation
 
-        // Text
+                    var i, tag = node.match(whitespace),
+                        sandbox = fragment.appendChild(ctx.createElement('div')),
+                        els = [],
+                        map = tag ? tagMap[tag[1].toLowerCase()] : null,
+                        dep = map ? map[2] + 1 : 1,
+                        noScoop = map && map[3];
 
-        this.text = function(value, method) {
-            return value === undefined ?
-                _text.getText(this.elements) :
-                this.empty().each(function(elem) {
-                    if (method && typeof method === 'string' && typeof value === 'string' &&
-                        // Firefox doesen't support insertAdjacentText
-                        !_has.has('firefox')) {
-                        elem.insertAdjacentText(iAText[method] || 'beforeBegin', value);
+                    if (map) {
+                        sandbox.innerHTML = (map[0] + node + map[1]);
                     } else {
-                        if (elem.nodeType === 1 ||
-                            elem.nodeType === 11 ||
-                            elem.nodeType === 9) {
-                            elem.textContent = value;
+                        sandbox.innerHTML = node;
+                    }
+
+                    while (dep--) {
+                        sandbox = sandbox.firstChild;
+                    }
+
+                    // for IE NoScope, we may insert cruft at the begining just to get it to work
+
+                    if (noScoop && sandbox && sandbox.nodeType !== 1) {
+                        sandbox = sandbox.nextSibling;
+                    }
+
+                    do {
+                        if (!tag || sandbox.nodeType === 1) {
+                            els.push(sandbox);
+                        }
+                    } while (sandbox = sandbox.nextSibling);
+
+                    for (i in els) {
+                        if (els[i].parentNode) {
+                            els[i].parentNode.removeChild(els[i]);
                         }
                     }
+
+                    return els;
+
+                } else if (_util.isNode(node)) {
+                    return [node.cloneNode(true)];
+                }
+            }
+        },
+
+        // Grab childnodes
+
+        grab = function(context, tag) {
+            var ret = context.getElementsByTagName(tag || '*');
+            return tag === undefined || tag && _util.nodeName(context, tag) ?
+                _util.merge([context], ret) :
+                ret;
+        },
+
+        // Removes the data associated with an element
+
+        clearData = function(elems) {
+
+        // No point to continue clearing events if the events.js module
+        // are not installed
+        
+            if (!hAzzle.installed.Events) {
+                hAzzle.err(true, 17, "events.js module are not installed");
+            }
+            
+            var elem, i = 0;
+            
+            // If instanceof hAzzle...
+            
+            if (elems instanceof hAzzle) {
+                elems = [elems.elements[0]];
+            } else {
+                elems = elems.length ? elems : [elems];
+            }
+
+            for (;
+                (elem = elems[i]) !== undefined; i++) {
+                // Remove all eventListeners
+                hAzzle(elem).off();
+            }
+        },
+
+        normalize = function(node, clone) {
+
+            var i, l, ret;
+
+            if (typeof node === 'string') {
+                return create(node);
+            }
+
+            if (node instanceof hAzzle) {
+                node = node.elements;
+            }
+
+            if (_types.isNode(node)) {
+                node = [node];
+            }
+
+            if (clone) {
+                ret = []; // don't change original array
+                for (i = 0, l = node.length; i < l; i++) {
+                    ret[i] = node[i].cloneNode(true);
+                }
+                return ret;
+            }
+            return node;
+        },
+        createGlobal = function(elem, content, method) {
+            if (typeof content === 'string' &&
+                _core.isHTML &&
+                elem.parentNode && elem.parentNode.nodeType === 1) {
+                elem.insertAdjacentHTML(method, content.replace(htmlTag, '<$1></$2>'));
+            } else {
+                _util.each(normalize(content, 0), function(relatedNode) {
+                    elem[method](relatedNode); // DOM Level 4
                 });
+            }
+        },
+        prepend = function(elem, content) {
+            createGlobal(elem, content, 'prepend');
+        },
+
+        append = function(elem, content) {
+            createGlobal(elem, content, 'append');
         };
 
-        // HTML
+    // insertAdjacentHTML method for append, prepend, before and after
 
-        this.html = function(value) {
-
-            var els = this.elements,
-                elem = els[0],
-                i = 0,
-                l = this.length;
-
-            if (value === undefined && els[0].nodeType === 1) {
-                return els[0].innerHTML;
+    this.iAHMethod = function(method, html, fn) {
+        return this.each(function(elem, index) {
+            if (typeof html === 'string' &&
+                _core.isHTML &&
+                elem.parentNode && elem.parentNode.nodeType === 1) {
+                elem.insertAdjacentHTML(method, html.replace(htmlTag, '<$1></$2>'));
+            } else {
+                fn(elem, index);
             }
-            // See if we can take a shortcut and just use innerHTML
+        });
+    };
 
-            if (typeof value === 'string' && !scriptStyle.test(value) &&
-                !tagMap[(tagName.exec(value) || ['', ''])[1].toLowerCase()]) {
+    this.append = function(content) {
+        return this.iAHMethod('beforeend', content, function(node, state) {
+            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
+                _util.each(normalize(content, state), function(relatedNode) {
+                    node.appendChild(relatedNode); // DOM Level 4
+                });
+            }
+        });
+    };
 
-                value = value.replace(htmlTag, '<$1></$2>'); // DOM Level 4
+    this.prepend = function(content) {
+        return this.iAHMethod('afterbegin', content, function(node, state) {
+            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
+                _util.each(normalize(content, state), function(relatedNode) {
+                    node.prepend(relatedNode); // DOM Level 4
+                });
+            }
+        });
+    };
 
-                try {
+    this.before = function(content) {
+        return this.iAHMethod('beforebegin', content, function(node, state) {
+            _util.each(normalize(content, state), function(relatedNode) {
+                node.before(relatedNode); // DOM Level 4
 
-                    for (; i < l; i++) {
+            });
+        });
+    };
 
-                        elem = els[i] || {};
+    this.after = function(content) {
+        return this.iAHMethod('afterend', content, function(node, state) {
+            _util.each(normalize(content, state), function(relatedNode) {
+                node.after(relatedNode); // DOM Level 4
+            });
+        });
+    };
 
-                        // Remove element nodes and prevent memory leaks
-                        if (elem.nodeType === 1) {
-                            clearData(grab(elem, false));
-                            elem.innerHTML = value;
-                        }
+    this.appendTo = function(content) {
+        return this.domManip(content, function(node, el) {
+            node.appendChild(el);
+        });
+    };
+
+    this.prependTo = function(content) {
+        return this.domManip(content, function(node, el) {
+            node.insertBefore(el, node.firstChild);
+        });
+    };
+
+    this.insertBefore = function(content) {
+        return this.domManip(content, function(node, el) {
+            node.parentNode.insertBefore(el, node);
+        });
+    };
+
+    this.insertAfter = function(content) {
+        return this.domManip(content, function(node, el) {
+            var sibling = node.nextSibling;
+            sibling ?
+                node.parentNode.insertBefore(el, sibling) :
+                node.parentNode.appendChild(el);
+        }, 1);
+    };
+
+    // Same as 'ReplaceWith' in jQuery
+
+    this.replace = function(html) {
+        return this.each(function(el, i) {
+            _util.each(normalize(html, i), function(i) {
+                el.replace(i); // DOM Level 4
+            });
+        });
+    };
+
+    // Thanks to jQuery for the function name!!
+
+    this.domManip = function(content, fn, /*reverse */ rev) {
+
+        var i = 0,
+            r = [];
+
+        // Nasty looking code, but this has to be fast
+
+        var self = this.elements,
+            elems, nodes;
+
+        if (typeof content === 'string' &&
+            content[0] === '<' &&
+            content[content.length - 1] === '>' &&
+            content.length >= 3) {
+            nodes = content;
+
+        } else {
+            nodes = hAzzle(content);
+        }
+
+        // Start the iteration and loop through the content
+
+        _util.each(normalize(nodes), function(elem, index) {
+            _util.each(self, function(el) {
+                elems = index > 0 ? el.cloneNode(true) : el;
+                if (elem) {
+                    fn(elem, elems);
+                }
+            }, null, rev);
+
+        }, this, rev);
+        self.length = i;
+        _util.each(r, function(e) {
+            self[--i] = e;
+        }, null, !rev);
+        return self;
+    };
+
+    // Text
+
+    this.text = function(value, method) {
+        return value === undefined ?
+            _text.getText(this.elements) :
+            this.empty().each(function(elem) {
+                if (method && typeof method === 'string' && typeof value === 'string' &&
+                    // Firefox doesen't support insertAdjacentText
+                    !_has.has('firefox')) {
+                    elem.insertAdjacentText(iAText[method] || 'beforeBegin', value);
+                } else {
+                    if (elem.nodeType === 1 ||
+                        elem.nodeType === 11 ||
+                        elem.nodeType === 9) {
+                        elem.textContent = value;
                     }
-
-                    elem = 0;
-
-                    // If using innerHTML throws an exception, use the fallback method
-                } catch (e) {}
-            }
-
-            if (elem) {
-                return this.empty().append(value);
-            }
-        };
-
-        this.deepEach = function(fn, scope) {
-            return deepEach(this, fn, scope);
-        };
-
-        this.detach = function() {
-            return this.each(function(el) {
-                if (el.parentElement) {
-                    el.parentElement.removeChild(el);
                 }
             });
-        };
+    };
 
-        this.empty = function() {
-            return this.each(function(el) {
-                deepEach(el.children, clearData);
-                while (el.firstChild) {
-                    el.removeChild(el.firstChild);
+    // HTML
+
+    this.html = function(value) {
+
+        var els = this.elements,
+            elem = els[0],
+            i = 0,
+            l = this.length;
+
+        if (value === undefined && els[0].nodeType === 1) {
+            return els[0].innerHTML;
+        }
+        // See if we can take a shortcut and just use innerHTML
+
+        if (typeof value === 'string' && !scriptStyle.test(value) &&
+            !tagMap[(tagName.exec(value) || ['', ''])[1].toLowerCase()]) {
+
+            value = value.replace(htmlTag, '<$1></$2>'); // DOM Level 4
+
+            try {
+
+                for (; i < l; i++) {
+
+                    elem = els[i] || {};
+
+                    // Remove element nodes and prevent memory leaks
+                    if (elem.nodeType === 1) {
+                        clearData(grab(elem, false));
+                        elem.innerHTML = value;
+                    }
                 }
-            });
-        };
 
-        this.remove = function() {
-            this.deepEach(clearData);
-            return this.detach();
-        };
+                elem = 0;
 
-        this.clone = function(deep) {
-            return this.map(function(elem) {
-                return elem.cloneNode(deep);
-            });
-        };
+                // If using innerHTML throws an exception, use the fallback method
+            } catch (e) {}
+        }
 
-        return {
-            grab: grab,
-            clearData: clearData,
-            create: create,
-            createHTML: createHTML,
-            append: append,
-            prepend: prepend
-        };
-    });
+        if (elem) {
+            return this.empty().append(value);
+        }
+    };
+
+    this.deepEach = function(fn, scope) {
+        return deepEach(this.elements, fn, scope);
+    };
+
+    this.detach = function() {
+        return this.each(function(elem) {
+            if (elem.parentElement) {
+                elem.parentElement.removeChild(elem);
+            }
+        });
+    };
+
+    this.empty = function() {
+        return this.each(function(elem) {
+        // Do a 'deep each' and clear all listeners if any 
+            deepEach(elem.children, clearData);
+            while (elem.firstChild) {
+                elem.removeChild(elem.firstChild);
+            }
+        });
+    };
+
+    this.remove = function() {
+        this.deepEach(clearData);
+        return this.detach();
+    };
+
+    // Simple clone function
+    // NOTE! This function is not so fancy as jQuery.clone(), but 
+    // the Core need to be small as possible. And events can be
+    // cloned with events -> this.cloneEvents().
+    // So maybe a module for this in near future?? Anyone??
+
+    this.clone = function(deep) {
+        return this.map(function(elem) {
+            return elem.cloneNode(deep);
+        });
+    };
+
+    return {
+        clearData: clearData,
+        create: create,
+        createHTML: createHTML,
+        append: append,
+        prepend: prepend
+    };
+});
     // setters.js
     hAzzle.define('Setters', function() {
 
@@ -3846,826 +3906,823 @@ hAzzle.define('Strings', function() {
         });
     });
 
-    /** 
-     * events.js - hAzzle Event Manager module
-     *
-     * Desktop browsers support:
-     *
-     *    Chrome 9+
-     *    Safari 5.0+
-     *    Firefox 18+
-     *    Opera 15.1+
-     *    Internet Explorer 9+
-     *
-     * Mobile browsers support:
-     *
-     *    Google Android 4.0+
-     *    Apple iOS 6+
-     *    ChromiumOS
-     *    FirefoxOS
-     *
-     * Sources:
-     *
-     * - http://dean.edwards.name/weblog/2005/10/add-event/
-     * - http://dean.edwards.name/weblog/2005/10/add-event2/
-     * - http://stackoverflow.com/questions/4034742/understanding-dean-edwards-addevent-javascript
-     * - https://github.com/dperini/nwevents
-     * - https://github.com/fat/bean
-     * - jQuery
-     */
-    hAzzle.define('Events', function() {
+/** 
+ * events.js - hAzzle Event Manager module
+ *
+ * Desktop browsers support:
+ *
+ *    Chrome 9+
+ *    Safari 5.0+
+ *    Firefox 18+
+ *    Opera 15.1+
+ *    Internet Explorer 9+
+ *
+ * Mobile browsers support:
+ *
+ *    Google Android 4.0+
+ *    Apple iOS 6+
+ *    ChromiumOS
+ *    FirefoxOS
+ *
+ * Sources:
+ *
+ * - http://dean.edwards.name/weblog/2005/10/add-event/
+ * - http://dean.edwards.name/weblog/2005/10/add-event2/
+ * - http://stackoverflow.com/questions/4034742/understanding-dean-edwards-addevent-javascript
+ * - https://github.com/dperini/nwevents
+ * - https://github.com/fat/bean
+ * - jQuery
+ */
+hAzzle.define('Events', function() {
 
-        var win = window,
-            doc = win.document,
-            namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
-            nameRegex = /\..*/,
-            whiteSpace = /\S+/g,
-            docElem = doc.documentElement || {},
-            map = {},
+    var win = window,
+        doc = win.document,
+        namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
+        nameRegex = /\..*/,
+        whiteSpace = /\S+/g,
+        docElem = doc.documentElement || {},
+        map = {},
 
-            // Include needed modules
-            _util = hAzzle.require('Util'),
-            _collection = hAzzle.require('Collection'),
-            _types = hAzzle.require('Types'),
-            _jiesa = hAzzle.require('Jiesa'),
-            _has = hAzzle.require('has'),
-            _core = hAzzle.require('Core'),
+        // Include needed modules
+        _util = hAzzle.require('Util'),
+        _collection = hAzzle.require('Collection'),
+        _types = hAzzle.require('Types'),
+        _jiesa = hAzzle.require('Jiesa'),
+        _has = hAzzle.require('has'),
+        _core = hAzzle.require('Core'),
 
-            // regEx
+        // regEx
 
-            everything = /.*/,
-            keyEvent = /^key/,
-            // Treat pointer and drag / drop events like mouse events
-            mouseEvent = /^(?:mouse(?!(.*wheel|scroll))|pointer|menu|drag|drop|contextmenu)|click/,
+        everything = /.*/,
+        keyEvent = /^key/,
+        // Treat pointer and drag / drop events like mouse events
+        mouseEvent = /^(?:mouse(?!(.*wheel|scroll))|pointer|menu|drag|drop|contextmenu)|click/,
 
-            // Properties
-            commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
-                'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
-                'srcElement target timeStamp type view which propertyName').split(' '),
-            mouseProps = commonProps.concat(('button buttons clientX clientY dataTransfer ' +
-                'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ')),
-            keyProps = commonProps.concat(('char charCode key keyCode keyIdentifier ' +
-                'keyLocation location').split(' '));
+        // Properties
+        commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
+            'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
+            'srcElement target timeStamp type view which propertyName').split(' '),
+        mouseProps = commonProps.concat(('button buttons clientX clientY dataTransfer ' +
+            'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ')),
+        keyProps = commonProps.concat(('char charCode key keyCode keyIdentifier ' +
+            'keyLocation location').split(' '));
 
-        // Firefox specific eventTypes
-        if (_has.has('firefox')) {
-            commonProps.concat('mozMovementY mozMovementX'.split(' '));
-        }
-        // WebKit eventTypes
-        // Support: Chrome / Opera
+    // Firefox specific eventTypes
+    if (_has.has('firefox')) {
+        commonProps.concat('mozMovementY mozMovementX'.split(' '));
+    }
+    // WebKit eventTypes
+    // Support: Chrome / Opera
 
-        if (_has.has('webkit')) {
-            commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
-        }
+    if (_has.has('webkit')) {
+        commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
+    }
 
-        // specialEvents (e.g. focus and blur)
-        var specialEvents = {},
+    // specialEvents (e.g. focus and blur)
+    var specialEvents = {},
 
-            fixedEvents = {},
+        fixedEvents = {},
 
-            customEvents = {},
+        customEvents = {},
 
-            fixHooks = {},
+        fixHooks = {},
 
-            propHooks = [{ // key events
-                reg: keyEvent,
-                fix: function(original, evt) {
-                    // Add which for key events
-                    if (!evt.which) {
-                        evt.which = original.charCode != null ? original.charCode : original.keyCode;
-                    }
-
-                    evt.keyCode = original.keyCode || original.which;
-                    return keyProps;
+        propHooks = [{ // key events
+            reg: keyEvent,
+            fix: function(original, evt) {
+                // Add which for key events
+                if (!evt.which) {
+                    evt.which = original.charCode != null ? original.charCode : original.keyCode;
                 }
-            }, { // mouse events
 
-                reg: mouseEvent,
-                fix: function(original, evt, type) {
+                evt.keyCode = original.keyCode || original.which;
+                return keyProps;
+            }
+        }, { // mouse events
 
-                    // Calculate pageX/Y if missing and clientX/Y available
-                    if (evt.pageX == null && original.clientX != null) {
-                        evt.pageX = original.clientX + docElem.scrollLeft - docElem.clientLeft;
-                        evt.pageY = original.clientY + docElem.scrollTop - docElem.clientTop;
-                    }
+            reg: mouseEvent,
+            fix: function(original, evt, type) {
 
-                    // click: 1 === left; 2 === middle; 3 === right
-                    if (!evt.which && original.button !== undefined) {
-                        evt.which = (original.button & 1 ? 1 : (original.button & 2 ? 3 : (original.button & 4 ? 2 : 0)));
-                    }
-
-                    if (type === 'mouseover' || type === 'mouseout') {
-                        evt.relatedTarget = original.relatedTarget || original[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
-                    }
-                    return mouseProps;
+                // Calculate pageX/Y if missing and clientX/Y available
+                if (evt.pageX == null && original.clientX != null) {
+                    evt.pageX = original.clientX + docElem.scrollLeft - docElem.clientLeft;
+                    evt.pageY = original.clientY + docElem.scrollTop - docElem.clientTop;
                 }
-            }, { // everything else
-                reg: everything,
-                fix: function() {
-                    return commonProps;
+
+                // click: 1 === left; 2 === middle; 3 === right
+                if (!evt.which && original.button !== undefined) {
+                    evt.which = (original.button & 1 ? 1 : (original.button & 2 ? 3 : (original.button & 4 ? 2 : 0)));
                 }
-            }],
 
-            processHandler = function(elem, fn, condition, args) {
+                if (type === 'mouseover' || type === 'mouseout') {
+                    evt.relatedTarget = original.relatedTarget || original[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
+                }
+                return mouseProps;
+            }
+        }, { // everything else
+            reg: everything,
+            fix: function() {
+                return commonProps;
+            }
+        }],
 
-                var call = function(evt, ergs) {
-                        return fn.apply(elem, args ? _collection.slice(ergs).concat(args) : ergs);
-                    },
+        processHandler = function(elem, fn, condition, args) {
 
-                    findTarget = function(evt, eventElement) {
-                        return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt.target, elem) : eventElement;
-                    },
-                    handler = condition ? function(evt) {
-                        var target = findTarget(evt, this);
-                        if (condition.apply(target, arguments)) {
-                            if (evt) {
-                                evt.currentTarget = target;
-                            }
-                            return call(evt, arguments);
-                        }
-                    } : function(evt) {
-                        if (fn.__kfx2rcf) {
-                            evt = evt.clone(findTarget(evt));
+            var call = function(evt, ergs) {
+                    return fn.apply(elem, args ? _collection.slice(ergs).concat(args) : ergs);
+                },
+
+                findTarget = function(evt, eventElement) {
+                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt.target, elem) : eventElement;
+                },
+                handler = condition ? function(evt) {
+                    var target = findTarget(evt, this);
+                    if (condition.apply(target, arguments)) {
+                        if (evt) {
+                            evt.currentTarget = target;
                         }
                         return call(evt, arguments);
-                    };
-                handler.__kfx2rcf = fn.__kfx2rcf;
-                return handler;
-            },
-
-            // Iterate
-
-            iteratee = function(elem, type, original, handler, root, callback) {
-
-                var t, prefix = root ? '_r' : '_$';
-
-                if (!type || type === '*') {
-
-                    for (t in map) {
-
-                        if (t.charAt(0) === prefix) {
-                            iteratee(elem, t.substr(1), original, handler, root, callback);
-                        }
                     }
-                } else {
+                } : function(evt) {
+                    if (fn.__kfx2rcf) {
+                        evt = evt.clone(findTarget(evt));
+                    }
+                    return call(evt, arguments);
+                };
+            handler.__kfx2rcf = fn.__kfx2rcf;
+            return handler;
+        },
 
-                    var i = 0,
-                        l, list = map[prefix + type],
-                        a = elem === '*';
+        // Iterate
 
-                    if (!list) {
+        iteratee = function(elem, type, original, handler, root, callback) {
+
+            var t, prefix = root ? 'r' : '$';
+
+            if (!type || type === '*') {
+
+                for (t in map) {
+
+                    if (t.charAt(0) === prefix) {
+                        iteratee(elem, t.slice(1), original, handler, root, callback);
+                    }
+                }
+            } else {
+
+                var i = 0,
+                    l, list = map[prefix + type],
+                    a = elem === '*';
+
+                if (!list) {
+                    return;
+                }
+
+                for (l = list.length; i < l; i++) {
+                    if ((a || list[i].matches(elem, original, handler)) && !callback(list[i], list, i, type)) {
                         return;
                     }
+                }
+            }
+        },
 
-                    for (l = list.length; i < l; i++) {
-                        if ((a || list[i].matches(elem, original, handler)) && !callback(list[i], list, i, type)) {
-                            return;
-                        }
+        // Check collection for registered event,
+        // match element and handler
+        isRegistered = function(elem, type, original, root) {
+            var i, list = map[(root ? 'r' : '$') + type];
+            if (list) {
+                for (i = list.length; i--;) {
+                    if (!list[i].root && list[i].matches(elem, original, null)) {
+                        return true;
                     }
                 }
-            },
+            }
+            return false;
+        },
 
-            // Check collection for registered event,
-            // match element and handler
-            isRegistered = function(elem, type, original, root) {
-                var i, list = map[(root ? '_r' : '_$') + type];
-                if (list) {
-                    for (i = list.length; i--;) {
-                        if (!list[i].root && list[i].matches(elem, original, null)) {
-                            return true;
-                        }
-                    }
+        // List event handlers bound to a given object for each type
+
+        getRegistered = function(elem, type, original, root) {
+            var entries = [];
+            iteratee(elem, type, original, null, root, function(entry) {
+
+                return entries.push(entry);
+            });
+            return entries;
+        },
+        // Register an event instance and its parameters
+        registrer = function(entry) {
+
+            var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
+                key = (entry.root ? 'r' : '$') + entry.type;
+            (map[key] || (map[key] = [])).push(entry);
+            return contains;
+        },
+        // Unregister an event instance and its parameters
+        unregister = function(entry) {
+            iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
+                list.splice(i, 1);
+                entry.removed = true;
+                if (list.length === 0) {
+                    delete map[(entry.root ? 'r' : '$') + entry.type];
                 }
                 return false;
-            },
+            });
+        },
 
-            // List event handlers bound to a given object for each type
+        rootListener = function(event, type) {
 
-            getRegistered = function(elem, type, original, root) {
-                var entries = [];
-                iteratee(elem, type, original, null, root, function(entry) {
-                    return entries.push(entry);
-                });
-                return entries;
-            },
-            // Register an event instance and its parameters
-            registrer = function(entry) {
+            var listeners = getRegistered(this, type || event.type, null, false),
+                l = listeners.length,
+                i = 0;
 
-                var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
-                    key = (entry.root ? '_r' : '_$') + entry.type;
-                (map[key] || (map[key] = [])).push(entry);
-                return contains;
-            },
-            // Unregister an event instance and its parameters
-            unregister = function(entry) {
-                iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
-                    list.splice(i, 1);
-                    entry.removed = true;
-                    if (list.length === 0) {
-                        delete map[(entry.root ? '_r' : '_$') + entry.type];
-                    }
-                    return false;
-                });
-            },
+            event = new Event(event, this, true);
 
-            rootListener = function(event, type) {
-
-                var listeners = getRegistered(this, type || event.type, null, false),
-                    l = listeners.length,
-                    i = 0;
-
-                event = new Event(event, this, true);
-
-                if (type) {
-                    event.type = type;
+            if (type) {
+                event.type = type;
+            }
+            for (; i < l && !event.isImmediatePropagationStopped(); i++) {
+                if (!listeners[i].removed) {
+                    listeners[i].handler.call(this, event);
                 }
-                for (; i < l && !event.isImmediatePropagationStopped(); i++) {
-                    if (!listeners[i].removed) {
-                        listeners[i].handler.call(this, event);
+            }
+        },
+
+        once = function(rm, elem, type, callback, original) {
+            return function() {
+                callback.apply(this, arguments);
+                rm(elem, type, original);
+            };
+        },
+
+        dispatch = function(elem, type, handler, ns) {
+
+            type = type && type.replace(nameRegex, '');
+
+            var handlers = getRegistered(elem, type, null, false),
+                removed = {},
+                i, l;
+
+            for (i = 0, l = handlers.length; i < l; i++) {
+                if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(ns)) {
+                    unregister(handlers[i]);
+                    if (!removed[handlers[i].eventType]) {
+                        removed[handlers[i].eventType] = {
+                            t: handlers[i].eventType,
+                            c: handlers[i].type
+                        };
                     }
                 }
-            },
+            }
 
-            once = function(rm, elem, type, callback, original) {
-                return function() {
-                    callback.apply(this, arguments);
-                    rm(elem, type, original);
-                };
-            },
+            for (i in removed) {
+                if (!isRegistered(elem, removed[i].t, null, false)) {
+                    elem.removeEventListener(removed[i].t, rootListener, false);
+                }
+            }
+        },
 
-            dispatch = function(elem, type, handler, ns) {
+        // Find event delegate
+        findDelegate = function(target, selector, root) {
 
-                type = type && type.replace(nameRegex, '');
+            if (root) {
 
-                var handlers = getRegistered(elem, type, null, false),
-                    removed = {},
-                    i, l;
+                var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
 
-                for (i = 0, l = handlers.length; i < l; i++) {
-                    if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(ns)) {
-                        unregister(handlers[i]);
-                        if (!removed[handlers[i].eventType]) {
-                            removed[handlers[i].eventType] = {
-                                t: handlers[i].eventType,
-                                c: handlers[i].type
-                            };
+                for (; target && target !== root; target = target.parentElement) {
+                    for (i = els.length; i--;) {
+                        if (els[i] === target) {
+                            return target;
                         }
                     }
                 }
-
-                for (i in removed) {
-                    if (!isRegistered(elem, removed[i].t, null, false)) {
-                        elem.removeEventListener(removed[i].t, rootListener, false);
+            }
+        },
+        // Event delegate
+        delegate = function(selector, fn) {
+            var handler = function(e) {
+                var cur = e.target;
+                // Don't process clicks on disabled elements
+                if (cur.nodeType && cur.disabled !== true) {
+                    var m = findDelegate(cur, selector, this);
+                    if (m) {
+                        fn.apply(m, arguments);
                     }
                 }
-            },
+            };
 
-            // Find event delegate
-            findDelegate = function(target, selector, root) {
+            handler.__kfx2rcf = {
+                ft: findDelegate,
+                selector: selector
+            };
+            return handler;
+        },
 
-                if (root) {
+        on = function(elem, types, selector, callback, one) {
 
-                    var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
+            // Check if typeof hAzzle, then wrap it out, and return current elem
 
-                    for (; target && target !== root; target = target.parentElement) {
-                        for (i = els.length; i--;) {
-                            if (els[i] === target) {
-                                return target;
-                            }
-                        }
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
+            var cb, type, i, args, entry, first, hooks, eventType, namespace;
+
+            // Types can be a map of types/handlers
+
+            if (_types.isType(types) === 'object') {
+                if (typeof selector !== 'string') {
+                    callback = selector;
+                    selector = undefined;
+                }
+                for (type in types) {
+                    on(elem, type, types[type]);
+                }
+                return;
+            }
+
+            // Event delegation
+
+            if (!_types.isType('Function')(selector)) {
+                cb = callback;
+                args = _collection.slice(arguments, 4);
+                callback = delegate(selector, cb);
+            } else {
+                args = _collection.slice(arguments, 3);
+                callback = cb = selector;
+            }
+
+            if (typeof callback !== 'function') {
+                hAzzle.err(true, 13, 'no handler registred for on() in events.js module');
+            }
+
+            // Handle multiple types separated by a space
+
+            types = (types || '').match((whiteSpace)) || [''];
+
+
+            if (one) {
+                callback = once(off, elem, types, callback, cb);
+            }
+
+            i = types.length;
+
+            while (i--) {
+
+                eventType = types[i].replace(nameRegex, '');
+
+                // There *must* be a type, no attaching namespace-only handlers
+
+                if (!eventType) {
+                    continue;
+                }
+
+                namespace = types[i].replace(namespaceRegex, '').split('.'); // namespaces
+                // Registrer
+                first = registrer(entry = new Registry(
+                    elem,
+                    eventType, // event type
+                    callback,
+                    cb,
+                    namespace,
+                    args,
+                    false // not root
+                ));
+
+                if (first) {
+
+                    type = entry.eventType;
+
+                    if ((hooks = specialEvents[type])) {
+                        hooks(elem, type);
                     }
+
+                    elem.addEventListener(type, rootListener, false);
                 }
-            },
-            // Event delegate
-            delegate = function(selector, fn) {
-                var handler = function(e) {
-                    var cur = e.target;
-                    // Don't process clicks on disabled elements
-                    if (cur.nodeType && cur.disabled !== true) {
-                        var m = findDelegate(cur, selector, this);
-                        if (m) {
-                            fn.apply(m, arguments);
-                        }
-                    }
-                };
+            }
 
-                handler.__kfx2rcf = {
-                    ft: findDelegate,
-                    selector: selector
-                };
-                return handler;
-            },
+            return elem;
+        },
 
-            on = function(elem, types, selector, callback, one) {
+        one = function(elem, types, selector, callback) {
+            return on(elem, types, selector, callback, 1);
+        },
+        // Detach an event or set of events from an element
+        off = function(elem, types, callback) {
 
-                // Check if typeof hAzzle, then wrap it out, and return current elem
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
 
-                if (elem instanceof hAzzle) {
-                    elem = elem.elements[0];
-                }
+            var k, type, namespaces, i;
 
-                var cb, type, i, args, entry, first, hooks, eventType, namespace;
-
-                // Types can be a map of types/handlers
-
-                if (_types.isType(types) === 'object') {
-                    if (typeof selector !== 'string') {
-                        callback = selector;
-                        selector = undefined;
-                    }
-                    for (type in types) {
-                        on(elem, type, types[type]);
-                    }
-                    return;
-                }
-
-                // Event delegation
-
-                if (!_types.isType('Function')(selector)) {
-                    cb = callback;
-                    args = _collection.slice(arguments, 4);
-                    callback = delegate(selector, cb);
-                } else {
-                    args = _collection.slice(arguments, 3);
-                    callback = cb = selector;
-                }
-
-                if (typeof callback !== 'function') {
-                    hAzzle.err(true, 13, 'no handler registred for on() in events.js module');
-                }
-
-                // Handle multiple types separated by a space
-
+            if (typeof types === 'string' && types.indexOf(' ') > 0) {
+                // Once for each type.namespace in types; type may be omitted
                 types = (types || '').match((whiteSpace)) || [''];
-
-
-                if (one) {
-                    callback = once(off, elem, types, callback, cb);
-                }
-
-                i = types.length;
-
-                while (i--) {
-
-                    eventType = types[i].replace(nameRegex, '');
-
-                    // There *must* be a type, no attaching namespace-only handlers
-
-                    if (!eventType) {
-                        continue;
-                    }
-
-                    namespace = types[i].replace(namespaceRegex, '').split('.'); // namespaces
-                    // Registrer
-                    first = registrer(entry = new Registry(
-                        elem,
-                        eventType, // event type
-                        callback,
-                        cb,
-                        namespace,
-                        args,
-                        false // not root
-                    ));
-
-                    if (first) {
-
-                        type = entry.eventType;
-
-                        if ((hooks = specialEvents[type])) {
-                            hooks(elem, type);
-                        }
-
-                        elem.addEventListener(type, rootListener, false);
-                    }
-                }
-
-                return elem;
-            },
-
-            one = function(elem, types, selector, callback) {
-                return on(elem, types, selector, callback, 1);
-            },
-            // Detach an event or set of events from an element
-            off = function(elem, types, callback) {
-
-                if (typeof types !== 'string') {
-                    hAzzle.err(true, 14, "'events' given in off() - events.js module are not valid");
-                }
-
-                if (elem instanceof hAzzle) {
-                    elem = elem.elements[0];
-                }
-
-                var k, type, namespaces, i;
-
-                if (typeof types === 'string' && types.indexOf(' ') > 0) {
-                    // Once for each type.namespace in types; type may be omitted
-                    types = (types || '').match((whiteSpace)) || [''];
-                    for (i = types.length; i--;) {
-                        off(elem, types[i], callback);
-                    }
-                    return elem;
-                }
-
-                type = typeof types === 'string' && types.replace(nameRegex, '');
-
-                if (type && customEvents[type]) {
-                    type = customEvents[type].base;
-                }
-
-                if (!types || typeof types === 'string') {
-                    if ((namespaces = typeof types === 'string' && types.replace(namespaceRegex, ''))) {
-                        namespaces = namespaces.split('.');
-                    }
-
-                    dispatch(elem, type, callback, namespaces);
-
-                } else if (_types.isType('Function')(types)) {
-                    dispatch(elem, null, types);
-                } else {
-                    for (k in types) {
-                        off(elem, k, types[k]);
-                    }
-                }
-
-                return elem;
-            },
-
-            trigger = function(elem, type, args) {
-
-                if (elem instanceof hAzzle) {
-                    elem = elem.elements[0];
-                }
-
-                // Don't do events on text and comment nodes
-                if (elem.nodeType === 3 || elem.nodeType === 8) {
-                    return;
-                }
-                var types = (type || '').match((whiteSpace)) || [''],
-                    i, j, l, call, event, names, handlers, canContinue;
-
                 for (i = types.length; i--;) {
-
-                    type = types[i].replace(nameRegex, '');
-
-                    if ((names = types[i].replace(namespaceRegex, ''))) {
-                        names = names.split('.');
-                    }
-                    if (names && args) {
-                        event = new Event(null, elem);
-                        event.type = type;
-                        call = args ? 'apply' : 'call';
-                        args = args ? [event].concat(args) : event;
-                        for (j = 0, l = handlers.length; j < l; j++) {
-                            if (handlers[j].inNamespaces(names)) {
-                                handlers[j].handler.call(elem, args);
-                            }
-                        }
-                        canContinue = event.returnValue !== false;
-                    } else {
-                        // 
-                        var evt = doc.createEvent('HTMLEvents');
-                        evt.detail = arguments;
-                        evt.initEvent(type, true, true);
-                        canContinue = elem.dispatchEvent(evt);
-                    }
-
-                    return canContinue;
+                    off(elem, types[i], callback);
                 }
                 return elem;
-            },
+            }
 
-            clone = function(elem, from, type) {
-                var handlers = getRegistered(from, type, null, false),
-                    l = handlers.length,
-                    i = 0,
-                    args, kfx2rcf;
+            type = typeof types === 'string' && types.replace(nameRegex, '');
 
-                for (; i < l; i++) {
-                    if (handlers[i].original) {
-                        args = [elem, handlers[i].type];
-                        if ((kfx2rcf = handlers[i].handler.__kfx2rcf)) {
-                            args.push(kfx2rcf.selector);
+            if (type && customEvents[type]) {
+                type = customEvents[type].base;
+            }
+
+            if (!types || typeof types === 'string') {
+                if ((namespaces = typeof types === 'string' && types.replace(namespaceRegex, ''))) {
+                    namespaces = namespaces.split('.');
+                }
+
+                dispatch(elem, type, callback, namespaces);
+
+            } else if (_types.isType('Function')(types)) {
+                dispatch(elem, null, types);
+            } else {
+                for (k in types) {
+                    off(elem, k, types[k]);
+                }
+            }
+
+            return elem;
+        },
+
+        trigger = function(elem, type, args) {
+
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
+            // Don't do events on text and comment nodes
+            if (elem.nodeType === 3 || elem.nodeType === 8) {
+                return;
+            }
+            var types = (type || '').match((whiteSpace)) || [''],
+                i, j, l, call, event, names, handlers, canContinue;
+
+            for (i = types.length; i--;) {
+
+                type = types[i].replace(nameRegex, '');
+
+                if ((names = types[i].replace(namespaceRegex, ''))) {
+                    names = names.split('.');
+                }
+                if (names && args) {
+                    event = new Event(null, elem);
+                    event.type = type;
+                    call = args ? 'apply' : 'call';
+                    args = args ? [event].concat(args) : event;
+                    for (j = 0, l = handlers.length; j < l; j++) {
+                        if (handlers[j].inNamespaces(names)) {
+                            handlers[j].handler.call(elem, args);
                         }
-                        args.push(handlers[i].original);
-                        on.apply(null, args);
                     }
-                }
-                return elem;
-            },
-            addEvent = function(elem, type, handle) {
-                if (elem.addEventListener) {
-                    elem.addEventListener(type, handle, false);
-                }
-            },
-            removeEvent = function(elem, type, handle) {
-                if (elem.removeEventListener) {
-                    elem.removeEventListener(type, handle, false);
-                }
-            },
-
-            Event = function(event, elem) {
-
-                // Needed for DOM0 events
-                event = event || ((elem.ownerDocument ||
-                        elem.document ||
-                        elem).parentWindow ||
-                    win).event;
-
-                this.originalEvent = event;
-
-                if (!event) {
-                    return;
+                    canContinue = event.returnValue !== false;
+                } else {
+                    // 
+                    var evt = doc.createEvent('HTMLEvents');
+                    evt.detail = arguments;
+                    evt.initEvent(type, true, true);
+                    canContinue = elem.dispatchEvent(evt);
                 }
 
-                // Support: Cordova 2.5 (WebKit)
-                // All events should have a target; Cordova deviceready doesn't
-                if (!event.target) {
-                    event.target = document;
+                return canContinue;
+            }
+            return elem;
+        },
+
+        clone = function(elem, from, type) {
+            var handlers = getRegistered(from, type, null, false),
+                l = handlers.length,
+                i = 0,
+                args, kfx2rcf;
+
+            for (; i < l; i++) {
+                if (handlers[i].original) {
+                    args = [elem, handlers[i].type];
+                    if ((kfx2rcf = handlers[i].handler.__kfx2rcf)) {
+                        args.push(kfx2rcf.selector);
+                    }
+                    args.push(handlers[i].original);
+                    on.apply(null, args);
                 }
-                var type = event.type,
-                    // fired element (triggering the event)
-                    target = event.target || event.srcElement,
-                    i, l, p, props, fixer;
+            }
+            return elem;
+        },
+        addEvent = function(elem, type, handle) {
+            if (elem.addEventListener) {
+                elem.addEventListener(type, handle, false);
+            }
+        },
+        removeEvent = function(elem, type, handle) {
+            if (elem.removeEventListener) {
+                elem.removeEventListener(type, handle, false);
+            }
+        },
 
-                // Support: Safari 6.0+, Chrome<28
-                this.target = target.nodeType === 3 ? target.parentNode : target;
-                this.timeStamp = Date.now(); // Set time event was fixed
+        Event = function(event, elem) {
 
-                fixer = fixHooks[type];
+            // Needed for DOM0 events
+            event = event || ((elem.ownerDocument ||
+                    elem.document ||
+                    elem).parentWindow ||
+                win).event;
+
+            this.originalEvent = event;
+
+            if (!event) {
+                return;
+            }
+
+            // Support: Cordova 2.5 (WebKit)
+            // All events should have a target; Cordova deviceready doesn't
+            if (!event.target) {
+                event.target = document;
+            }
+            var type = event.type,
+                // fired element (triggering the event)
+                target = event.target || event.srcElement,
+                i, l, p, props, fixer;
+
+            // Support: Safari 6.0+, Chrome<28
+            this.target = target.nodeType === 3 ? target.parentNode : target;
+            this.timeStamp = Date.now(); // Set time event was fixed
+
+            fixer = fixHooks[type];
+
+            if (!fixer) {
+
+                fixer = fixedEvents[type];
 
                 if (!fixer) {
-
-                    fixer = fixedEvents[type];
-
-                    if (!fixer) {
-                        for (i = 0, l = propHooks.length; i < l; i++) {
-                            if (propHooks[i].reg.test(type)) {
-                                fixedEvents[type] = fixer = propHooks[i].fix;
-                                break;
-                            }
-                        }
-                    }
-
-                    props = fixer(event, this, type);
-
-                    for (i = props.length; i--;) {
-                        if (!((p = props[i]) in this) && p in event) {
-                            this[p] = event[p];
+                    for (i = 0, l = propHooks.length; i < l; i++) {
+                        if (propHooks[i].reg.test(type)) {
+                            fixedEvents[type] = fixer = propHooks[i].fix;
+                            break;
                         }
                     }
                 }
+
+                props = fixer(event, this, type);
+
+                for (i = props.length; i--;) {
+                    if (!((p = props[i]) in this) && p in event) {
+                        this[p] = event[p];
+                    }
+                }
+            }
+        };
+
+    // Event is based on DOM3 Events as specified by the ECMAScript Language Binding
+    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
+    Event.prototype = {
+        constructor: Event,
+        // prevent default action
+
+        preventDefault: function() {
+            var e = this.originalEvent;
+            if (e && e.preventDefault) {
+                e.preventDefault();
+            } else {
+                e.returnValue = false;
+            }
+        },
+
+        // stop event propagation
+
+        stopPropagation: function() {
+            var e = this.originalEvent;
+            if (e && e.stopPropagation) {
+                e.stopPropagation();
+            } else {
+                e.cancelBubble = true;
+            }
+        },
+        // block any further event processing
+        stop: function() {
+            this.preventDefault();
+            this.stopPropagation();
+            this.stopped = true;
+        },
+
+        stopImmediatePropagation: function() {
+            var e = this.originalEvent;
+            if (e.stopImmediatePropagation) {
+                e.stopImmediatePropagation();
+            }
+            this.isImmediatePropagationStopped = function() {
+                return true;
             };
+        },
+        isImmediatePropagationStopped: function() {
+            var e = this.originalEvent;
+            return e.isImmediatePropagationStopped && e.isImmediatePropagationStopped();
+        },
+        clone: function(target) {
+            var nE = new Event(this, this.element);
+            nE.currentTarget = target;
+            return nE;
+        }
+    };
 
-        // Event is based on DOM3 Events as specified by the ECMAScript Language Binding
-        // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
-        Event.prototype = {
-            constructor: Event,
-            // prevent default action
+    var Registry = function(elem, type, handler, original, namespaces, args, docElem) {
+        return new Registry.prototype.init(elem, type, handler, original, namespaces, args, docElem);
+    };
 
-            preventDefault: function() {
-                var e = this.originalEvent;
-                if (e && e.preventDefault) {
-                    e.preventDefault();
-                } else {
-                    e.returnValue = false;
-                }
-            },
+    Registry.prototype = {
+        constructor: Registry,
+        init: function(elem, type, handler, original, namespaces, args, docElem) {
 
-            // stop event propagation
+            var customType = customEvents[type];
 
-            stopPropagation: function() {
-                var e = this.originalEvent;
-                if (e && e.stopPropagation) {
-                    e.stopPropagation();
-                } else {
-                    e.cancelBubble = true;
-                }
-            },
-            // block any further event processing
-            stop: function() {
-                this.preventDefault();
-                this.stopPropagation();
-                this.stopped = true;
-            },
-
-            stopImmediatePropagation: function() {
-                var e = this.originalEvent;
-                if (e.stopImmediatePropagation) {
-                    e.stopImmediatePropagation();
-                }
-                this.isImmediatePropagationStopped = function() {
-                    return true;
-                };
-            },
-            isImmediatePropagationStopped: function() {
-                var e = this.originalEvent;
-                return e.isImmediatePropagationStopped && e.isImmediatePropagationStopped();
-            },
-            clone: function(target) {
-                var nE = new Event(this, this.element);
-                nE.currentTarget = target;
-                return nE;
+            if (type === 'unload') {
+                handler = once(dispatch, elem, type, handler, original);
             }
-        };
 
-        var Registry = function(elem, type, handler, original, namespaces, args, docElem) {
-            return new Registry.prototype.init(elem, type, handler, original, namespaces, args, docElem);
-        };
-
-        Registry.prototype = {
-            constructor: Registry,
-            init: function(elem, type, handler, original, namespaces, args, docElem) {
-
-                var customType = customEvents[type];
-
-                if (type === 'unload') {
-                    handler = once(dispatch, elem, type, handler, original);
+            if (customType) {
+                if (customType.condition) {
+                    handler = processHandler(elem, handler, customType.condition, args);
                 }
-
-                if (customType) {
-                    if (customType.condition) {
-                        handler = processHandler(elem, handler, customType.condition, args);
-                    }
-                    type = customType.base || type;
-                }
-
-                this.element = elem;
-                this.type = type;
-                this.original = original;
-                this.namespaces = namespaces;
-                this.eventType = type;
-                this.target = elem;
-                this.root = docElem;
-                this.handler = processHandler(elem, handler, null, args);
-            },
-
-            inNamespaces: function(checkNamespaces) {
-                var i, j, c = 0;
-                if (!checkNamespaces) {
-                    return true;
-                }
-                if (!this.namespaces) {
-                    return false;
-                }
-                for (i = checkNamespaces.length; i--;) {
-                    for (j = this.namespaces.length; j--;) {
-                        if (checkNamespaces[i] === this.namespaces[j]) {
-                            c++;
-                        }
-                    }
-                }
-                return checkNamespaces.length === c;
-            },
-
-            matches: function(checkElement, checkOriginal, checkHandler) {
-                return this.element === checkElement &&
-                    (!checkOriginal || this.original === checkOriginal) &&
-                    (!checkHandler || this.handler === checkHandler);
+                type = customType.base || type;
             }
-        };
 
-        Registry.prototype.init.prototype = Registry.prototype;
+            this.element = elem;
+            this.type = type;
+            this.original = original;
+            this.namespaces = namespaces;
+            this.eventType = type;
+            this.target = elem;
+            this.root = docElem;
+            this.handler = processHandler(elem, handler, null, args);
+        },
 
-        // Add event listener
-
-        this.on = function(events, selector, callback) {
-            this.each(function(elem) {
-                on(elem, events, selector, callback);
-            });
-        };
-
-        // One
-        this.one = function(events, selector, callback) {
-            this.each(function(elem) {
-                one(elem, events, selector, callback);
-            });
-        };
-
-        // Remove event listeners
-        this.off = function(events, callback) {
-            this.each(function(elem) {
-                off(elem, events, callback);
-
-            });
-        };
-
-        // Trigger events
-        this.trigger = function(events, args) {
-            this.each(function(elem) {
-                trigger(elem, events, args);
-            });
-        };
-        // Clone events
-        this.clone = function(dest, events) {
-            clone(this.elements[0], dest, events);
-        };
-
-        this.hover = function(fnOver, fnOut) {
-                return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
-            },
-
-            // Populate the custom event list
-
-            _util.each({
-                mouseenter: 'mouseover',
-                mouseleave: 'mouseout',
-                pointerenter: 'pointerover',
-                pointerleave: 'pointerout'
-            }, function(fix, orig) {
-                customEvents[orig] = {
-                    base: fix,
-                    condition: function(event) {
-                        var target = this,
-                            related = event.relatedTarget;
-                        return !related ? related == null : (related !== target && !_core.contains(related, target));
+        inNamespaces: function(checkNamespaces) {
+            var i, j, c = 0;
+            if (!checkNamespaces) {
+                return true;
+            }
+            if (!this.namespaces) {
+                return false;
+            }
+            for (i = checkNamespaces.length; i--;) {
+                for (j = this.namespaces.length; j--;) {
+                    if (checkNamespaces[i] === this.namespaces[j]) {
+                        c++;
                     }
-                };
-            });
-
-        // Shortcuts
-
-        _util.each(('blur change click dblclick error focus focusin focusout keydown keypress ' +
-            'keyup load mousedown mouseenter mouseleave mouseout mouseover mouseup ' +
-            'mousemove resize scroll select submit unload change contextmenu').split(' '), function(name) {
-            this[name] = function(callback) {
-                return arguments.length > 0 ?
-                    this.on(name, callback) :
-                    this.trigger(name);
-
-            };
-        }.bind(this));
-
-        return {
-            specialEvents: specialEvents,
-            propHooks: propHooks,
-            mouseProps: mouseProps,
-            commonProps: commonProps,
-            addEvent: addEvent,
-            removeEvent: removeEvent,
-            on: on,
-            one: one,
-            off: off,
-            clone: clone,
-            trigger: trigger
-        };
-    });
-
-// specialEvents.js
-hAzzle.define('specialEvents', function() {
-
-    var _util = hAzzle.require('Util'),
-        _has = hAzzle.require('has'),
-        _events = hAzzle.require('Events');
-
-    // Handle focusin/focusout for browsers who don't support it ( e.g Firefox)
-
-    if (_has.has('firefox')) {
-        var focusBlurFn = function(elem, type) {
-
-            var key,
-                focusEventType = (type === 'focusin') ? 'focus' : 'blur',
-                focusables = (function(elem) {
-
-                    var focusables = hAzzle(elem).find('input').elements,
-                        selects = hAzzle(elem).find('select').elements;
-
-                    if (selects.length) {
-                        push.apply(focusables, selects);
-                    }
-
-                    return focusables;
-                })(elem),
-                handler = (function(type) {
-                    return function() {
-                        if (this === document.activeElement && this.blur) {
-                            hAzzle(this).trigger(type);
-                            return false;
-                        }
-                    };
-                })(type),
-
-                i = -1,
-
-                length = focusables.length;
-
-            key = '__' + focusEventType + 'fixed__';
-
-            while (++i < length) {
-
-                if (!_util.has(focusables[i], key) || !focusables[i][key]) {
-                    focusables[i][key] = true;
-                    focusables[i].addEventListener(focusEventType, handler, true);
                 }
             }
-        };
+            return checkNamespaces.length === c;
+        },
 
-        _util.each(['focusin', 'focusout'], function(prop) {
-            _events.specialEvents[prop] = focusBlurFn;
+        matches: function(checkElement, checkOriginal, checkHandler) {
+            return this.element === checkElement &&
+                (!checkOriginal || this.original === checkOriginal) &&
+                (!checkHandler || this.handler === checkHandler);
+        }
+    };
+
+    Registry.prototype.init.prototype = Registry.prototype;
+
+    // Add event listener
+
+    this.on = function(events, selector, callback) {
+        this.each(function(elem) {
+            on(elem, events, selector, callback);
         });
-    }
-    return {};
+    };
+
+    // One
+    this.one = function(events, selector, callback) {
+        this.each(function(elem) {
+            one(elem, events, selector, callback);
+        });
+    };
+
+    // Remove event listeners
+    this.off = function(events, callback) {
+        this.each(function(elem) {
+            off(elem, events, callback);
+        });
+    };
+
+    // Trigger events
+    this.trigger = function(events, args) {
+        this.each(function(elem) {
+            trigger(elem, events, args);
+        });
+    };
+    // Clone events
+    this.cloneEvent = function(dest, events) {
+        clone(this.elements[0], dest, events);
+    };
+
+    this.hover = function(fnOver, fnOut) {
+            return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+        },
+
+        // Populate the custom event list
+
+        _util.each({
+            mouseenter: 'mouseover',
+            mouseleave: 'mouseout',
+            pointerenter: 'pointerover',
+            pointerleave: 'pointerout'
+        }, function(fix, orig) {
+            customEvents[orig] = {
+                base: fix,
+                condition: function(event) {
+                    var target = this,
+                        related = event.relatedTarget;
+                    return !related ? related == null : (related !== target && !_core.contains(related, target));
+                }
+            };
+        });
+
+    // Shortcuts
+
+    _util.each(('blur change click dblclick error focus focusin focusout keydown keypress ' +
+        'keyup load mousedown mouseenter mouseleave mouseout mouseover mouseup ' +
+        'mousemove resize scroll select submit unload change contextmenu').split(' '), function(name) {
+        this[name] = function(callback) {
+            return arguments.length > 0 ?
+                this.on(name, callback) :
+                this.trigger(name);
+
+        };
+    }.bind(this));
+
+
+    return {
+        specialEvents: specialEvents,
+        propHooks: propHooks,
+        mouseProps: mouseProps,
+        commonProps: commonProps,
+        addEvent: addEvent,
+        removeEvent: removeEvent,
+        on: on,
+        one: one,
+        off: off,
+        clone: clone,
+        trigger: trigger
+    };
 });
+
+   // specialEvents.js
+    hAzzle.define('specialEvents', function() {
+
+        var _util = hAzzle.require('Util'),
+            _has = hAzzle.require('has'),
+            _events = hAzzle.require('Events');
+
+        // Handle focusin/focusout for browsers who don't support it ( e.g Firefox)
+
+        if (_has.has('firefox')) {
+            var focusBlurFn = function(elem, type) {
+
+                var key,
+                    focusEventType = (type === 'focusin') ? 'focus' : 'blur',
+                    focusables = (function(elem) {
+
+                        var focusables = hAzzle(elem).find('input').elements,
+                            selects = hAzzle(elem).find('select').elements;
+
+                        if (selects.length) {
+                            push.apply(focusables, selects);
+                        }
+
+                        return focusables;
+                    })(elem),
+                    handler = (function(type) {
+                        return function() {
+                            if (this === document.activeElement && this.blur) {
+                                hAzzle(this).trigger(type);
+                                return false;
+                            }
+                        };
+                    })(type),
+
+                    i = -1,
+
+                    length = focusables.length;
+
+                key = '__' + focusEventType + 'fixed__';
+
+                while (++i < length) {
+
+                    if (!_util.has(focusables[i], key) || !focusables[i][key]) {
+                        focusables[i][key] = true;
+                        focusables[i].addEventListener(focusEventType, handler, true);
+                    }
+                }
+            };
+
+            _util.each(['focusin', 'focusout'], function(prop) {
+                _events.specialEvents[prop] = focusBlurFn;
+            });
+        }
+        return {};
+    });
     // eventhooks.js
     hAzzle.define('eventHooks', function() {
 
@@ -5105,7 +5162,6 @@ hAzzle.define('specialEvents', function() {
      * - prepend
      * - before
      * - after
-    
      * - replace
      * - remove
      * - matches
@@ -5142,22 +5198,22 @@ hAzzle.define('specialEvents', function() {
                 },
                 'before',
                 function before() {
-                    var parentNode = this.parentNode;
-                    if (parentNode) {
-                        parentNode.insertBefore(
+                    var parentElement = this.parentElement;
+                    if (parentElement) {
+                        parentElement.insertBefore(
                             applyToFragment(arguments), this
                         );
                     }
                 },
                 'after',
                 function after() {
-                    if (this.parentNode) {
+                    if (this.parentElement) {
                         if (this.nextSibling) {
-                            this.parentNode.insertBefore(
+                            this.parentElement.insertBefore(
                                 applyToFragment(arguments), this.nextSibling
                             );
                         } else {
-                            this.parentNode.appendChild(
+                            this.parentElement.appendChild(
                                 applyToFragment(arguments)
                             );
                         }
@@ -5165,16 +5221,16 @@ hAzzle.define('specialEvents', function() {
                 },
                 'replace',
                 function replace() {
-                    if (this.parentNode) {
-                        this.parentNode.replaceChild(
+                    if (this.parentElement) {
+                        this.parentElement.replaceChild(
                             applyToFragment(arguments), this
                         );
                     }
                 },
                 'remove',
                 function remove() {
-                    if (this.parentNode) {
-                        this.parentNode.removeChild(this);
+                    if (this.parentElement) {
+                        this.parentElement.removeChild(this);
                     }
                 },
                 'matches', (
@@ -5182,12 +5238,12 @@ hAzzle.define('specialEvents', function() {
                     ElementPrototype.webkitMatchesSelector ||
                     ElementPrototype.mozMatchesSelector ||
                     ElementPrototype.msMatchesSelector ||
+                    // FIX ME!! Need a better solution for this in hAzzle
                     function matches(selector) {
-                        var parentNode = this.parentNode;
-                        return !!parentNode && -1 < indexOf.call(
-                            parentNode.querySelectorAll(selector),
+                        var parentElement = this.parentElement;
+                        return !!parentElement && -1 < indexOf.call(
+                            parentElement.querySelectorAll(selector),
                             this
-
                         );
                     }
                 )
@@ -5195,14 +5251,10 @@ hAzzle.define('specialEvents', function() {
             // slice = properties.slice,
             i = properties.length;
 
-
         // Loop through
         for (; i; i -= 2) {
-
-            property = properties[i - 2];
-
-            if (!(property in ElementPrototype)) {
-                ElementPrototype[property] = properties[i - 1];
+            if (!(properties[i - 2] in ElementPrototype)) {
+                ElementPrototype[properties[i - 2]] = properties[i - 1];
             }
         }
 

@@ -149,14 +149,14 @@ hAzzle.define('Events', function() {
 
         iteratee = function(elem, type, original, handler, root, callback) {
 
-            var t, prefix = root ? '_r' : '_$';
+            var t, prefix = root ? 'r' : '$';
 
             if (!type || type === '*') {
 
                 for (t in map) {
 
                     if (t.charAt(0) === prefix) {
-                        iteratee(elem, t.substr(1), original, handler, root, callback);
+                        iteratee(elem, t.slice(1), original, handler, root, callback);
                     }
                 }
             } else {
@@ -180,7 +180,7 @@ hAzzle.define('Events', function() {
         // Check collection for registered event,
         // match element and handler
         isRegistered = function(elem, type, original, root) {
-            var i, list = map[(root ? '_r' : '_$') + type];
+            var i, list = map[(root ? 'r' : '$') + type];
             if (list) {
                 for (i = list.length; i--;) {
                     if (!list[i].root && list[i].matches(elem, original, null)) {
@@ -196,6 +196,7 @@ hAzzle.define('Events', function() {
         getRegistered = function(elem, type, original, root) {
             var entries = [];
             iteratee(elem, type, original, null, root, function(entry) {
+
                 return entries.push(entry);
             });
             return entries;
@@ -204,7 +205,7 @@ hAzzle.define('Events', function() {
         registrer = function(entry) {
 
             var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
-                key = (entry.root ? '_r' : '_$') + entry.type;
+                key = (entry.root ? 'r' : '$') + entry.type;
             (map[key] || (map[key] = [])).push(entry);
             return contains;
         },
@@ -214,7 +215,7 @@ hAzzle.define('Events', function() {
                 list.splice(i, 1);
                 entry.removed = true;
                 if (list.length === 0) {
-                    delete map[(entry.root ? '_r' : '_$') + entry.type];
+                    delete map[(entry.root ? 'r' : '$') + entry.type];
                 }
                 return false;
             });
@@ -399,10 +400,6 @@ hAzzle.define('Events', function() {
         },
         // Detach an event or set of events from an element
         off = function(elem, types, callback) {
-
-            if (typeof types !== 'string') {
-                hAzzle.err(true, 14, "'events' given in off() - events.js module are not valid");
-            }
 
             if (elem instanceof hAzzle) {
                 elem = elem.elements[0];
@@ -708,7 +705,7 @@ hAzzle.define('Events', function() {
         });
     };
     // Clone events
-    this.clone = function(dest, events) {
+    this.cloneEvent = function(dest, events) {
         clone(this.elements[0], dest, events);
     };
 
@@ -746,7 +743,6 @@ hAzzle.define('Events', function() {
 
         };
     }.bind(this));
-
 
     return {
         specialEvents: specialEvents,

@@ -43,22 +43,22 @@
             },
             'before',
             function before() {
-                var parentNode = this.parentNode;
-                if (parentNode) {
-                    parentNode.insertBefore(
+                var parentElement = this.parentElement;
+                if (parentElement) {
+                    parentElement.insertBefore(
                         applyToFragment(arguments), this
                     );
                 }
             },
             'after',
             function after() {
-                if (this.parentNode) {
+                if (this.parentElement) {
                     if (this.nextSibling) {
-                        this.parentNode.insertBefore(
+                        this.parentElement.insertBefore(
                             applyToFragment(arguments), this.nextSibling
                         );
                     } else {
-                        this.parentNode.appendChild(
+                        this.parentElement.appendChild(
                             applyToFragment(arguments)
                         );
                     }
@@ -66,16 +66,16 @@
             },
             'replace',
             function replace() {
-                if (this.parentNode) {
-                    this.parentNode.replaceChild(
+                if (this.parentElement) {
+                    this.parentElement.replaceChild(
                         applyToFragment(arguments), this
                     );
                 }
             },
             'remove',
             function remove() {
-                if (this.parentNode) {
-                    this.parentNode.removeChild(this);
+                if (this.parentElement) {
+                    this.parentElement.removeChild(this);
                 }
             },
             'matches', (
@@ -83,10 +83,11 @@
                 ElementPrototype.webkitMatchesSelector ||
                 ElementPrototype.mozMatchesSelector ||
                 ElementPrototype.msMatchesSelector ||
+                // FIX ME!! Need a better solution for this in hAzzle
                 function matches(selector) {
-                    var parentNode = this.parentNode;
-                    return !!parentNode && -1 < indexOf.call(
-                        parentNode.querySelectorAll(selector),
+                    var parentElement = this.parentElement;
+                    return !!parentElement && -1 < indexOf.call(
+                        parentElement.querySelectorAll(selector),
                         this
                     );
                 }
@@ -97,11 +98,8 @@
 
     // Loop through
     for (; i; i -= 2) {
-
-        property = properties[i - 2];
-
-        if (!(property in ElementPrototype)) {
-            ElementPrototype[property] = properties[i - 1];
+        if (!(properties[i - 2] in ElementPrototype)) {
+            ElementPrototype[properties[i - 2]] = properties[i - 1];
         }
     }
 
@@ -130,7 +128,6 @@
             try {
                 fragment.appendChild(stringNode(container[i]));
             } catch (e) {}
-
         }
 
         return fragment;

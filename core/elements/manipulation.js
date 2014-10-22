@@ -63,6 +63,7 @@ hAzzle.define('Manipulation', function() {
                 while (index--) {
                     if (_types.isNode(array[index])) {
                         deepEach(array[index].children, fn, context);
+
                         fn.call(context || array[index], array[index], index, array);
                     }
                 }
@@ -133,6 +134,7 @@ hAzzle.define('Manipulation', function() {
                 }
             }
         },
+
         // Grab childnodes
 
         grab = function(context, tag) {
@@ -143,13 +145,30 @@ hAzzle.define('Manipulation', function() {
         },
 
         // Removes the data associated with an element
-        // This 'clearData' function will be fixed later on
 
         clearData = function(elems) {
+
+        // No point to continue clearing events if the events.js module
+        // are not installed
+        
+            if (!hAzzle.installed.Events) {
+                hAzzle.err(true, 17, "events.js module are not installed");
+            }
+            
             var elem, i = 0;
+            
+            // If instanceof hAzzle...
+            
+            if (elems instanceof hAzzle) {
+                elems = [elems.elements[0]];
+            } else {
+                elems = elems.length ? elems : [elems];
+            }
+
             for (;
                 (elem = elems[i]) !== undefined; i++) {
-                // Coming soon as events are fixed !!
+                // Remove all eventListeners
+                hAzzle(elem).off();
             }
         },
 
@@ -327,7 +346,7 @@ hAzzle.define('Manipulation', function() {
 
     // Text
 
-    this.text = function(value, method) { 
+    this.text = function(value, method) {
         return value === undefined ?
             _text.getText(this.elements) :
             this.empty().each(function(elem) {
@@ -389,22 +408,23 @@ hAzzle.define('Manipulation', function() {
     };
 
     this.deepEach = function(fn, scope) {
-        return deepEach(this, fn, scope);
+        return deepEach(this.elements, fn, scope);
     };
 
     this.detach = function() {
-        return this.each(function(el) {
-            if (el.parentElement) {
-                el.parentElement.removeChild(el);
+        return this.each(function(elem) {
+            if (elem.parentElement) {
+                elem.parentElement.removeChild(elem);
             }
         });
     };
 
     this.empty = function() {
-        return this.each(function(el) {
-            deepEach(el.children, clearData);
-            while (el.firstChild) {
-                el.removeChild(el.firstChild);
+        return this.each(function(elem) {
+        // Do a 'deep each' and clear all listeners if any 
+            deepEach(elem.children, clearData);
+            while (elem.firstChild) {
+                elem.removeChild(elem.firstChild);
             }
         });
     };
@@ -414,6 +434,12 @@ hAzzle.define('Manipulation', function() {
         return this.detach();
     };
 
+    // Simple clone function
+    // NOTE! This function is not so fancy as jQuery.clone(), but 
+    // the Core need to be small as possible. And events can be
+    // cloned with events -> this.cloneEvents().
+    // So maybe a module for this in near future?? Anyone??
+
     this.clone = function(deep) {
         return this.map(function(elem) {
             return elem.cloneNode(deep);
@@ -421,7 +447,6 @@ hAzzle.define('Manipulation', function() {
     };
 
     return {
-        grab: grab,
         clearData: clearData,
         create: create,
         createHTML: createHTML,
