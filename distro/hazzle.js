@@ -172,7 +172,6 @@ hAzzle.define('Support', function() {
 
     // Feature detection of elements
     var cls, MultipleArgs, sortDetached,
-        checkClone,
         noCloneChecked,
 
         assert = function(fn) {
@@ -194,16 +193,12 @@ hAzzle.define('Support', function() {
             }
         },
 
-        checkOn, optSelected, radioValue,
+        optSelected, radioValue,
         input = document.createElement('input'),
         select = document.createElement('select'),
         opt = select.appendChild(document.createElement('option'));
 
     input.type = 'checkbox';
-
-    // Support: iOS<=5.1, Android<=4.2+
-    // Default value for a checkbox should be 'on'
-    checkOn = input.value !== '';
 
     // Support: IE<=11+
     // Must access selectedIndex to make default options select
@@ -242,9 +237,9 @@ hAzzle.define('Support', function() {
         return div.compareDocumentPosition(document.createElement('div')) & 1;
     });
 
-    assert(function(div) {
+    assert(function(adiv) {
         var fragment = document.createDocumentFragment(),
-            div = fragment.appendChild(div),
+            div = fragment.appendChild(adiv),
             input = document.createElement('input');
 
         input.setAttribute('type', 'radio');
@@ -252,7 +247,7 @@ hAzzle.define('Support', function() {
         input.setAttribute('name', 't');
 
         div.appendChild(input);
-        checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+        
         // Support: IE<=11+
         // Make sure textarea (and checkbox) defaultValue is properly cloned
         div.innerHTML = '<textarea>x</textarea>';
@@ -262,14 +257,12 @@ hAzzle.define('Support', function() {
 
     return {
         assert: assert,
-        checkOn: checkOn,
         optSelected: optSelected,
         radioValue: radioValue,
         imcHTML: imcHTML,
         classList: cls,
         multipleArgs: MultipleArgs,
         sortDetached: sortDetached,
-        checkClone: checkClone,
         noCloneChecked: noCloneChecked,
         cS: !!document.defaultView.getComputedStyle
     };
@@ -1780,6 +1773,7 @@ hAzzle.define('Support', function() {
                                 }
                             } else {
                                 return [];
+
                             }
                         } else {
                             // Context is not a document
@@ -2881,499 +2875,499 @@ hAzzle.define('Support', function() {
         };
     });
 
-// manipulation.js
-hAzzle.define('Manipulation', function() {
+    // manipulation.js
+    hAzzle.define('Manipulation', function() {
 
-    var _util = hAzzle.require('Util'),
-        _support = hAzzle.require('Support'),
-        _core = hAzzle.require('Core'),
-        _types = hAzzle.require('Types'),
-        _text = hAzzle.require('Text'),
-        _scriptStyle = /<(?:script|style|link)/i,
-        _tagName = /<([\w:]+)/,
-        _htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-        _rcheckableType = (/^(?:checkbox|radio)$/i),
-        _whitespace = /^\s*<([^\s>]+)/,
-        _scriptTag = /\s*<script +src=['"]([^'"]+)['"]>/,
-        table = ['<table>', '</table>', 1],
-        td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
-        option = ['<select>', '</select>', 1],
-        noscope = ['_', '', 0, 1],
+        var _util = hAzzle.require('Util'),
+            _support = hAzzle.require('Support'),
+            _core = hAzzle.require('Core'),
+            _types = hAzzle.require('Types'),
+            _text = hAzzle.require('Text'),
+            _scriptStyle = /<(?:script|style|link)/i,
+            _tagName = /<([\w:]+)/,
+            _htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+            _rcheckableType = (/^(?:checkbox|radio)$/i),
+            _whitespace = /^\s*<([^\s>]+)/,
+            _scriptTag = /\s*<script +src=['"]([^'"]+)['"]>/,
+            table = ['<table>', '</table>', 1],
+            td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
+            option = ['<select>', '</select>', 1],
+            noscope = ['_', '', 0, 1],
 
-        tagMap = {
-            style: table,
-            table: table,
-            thead: table,
-            tbody: table,
-            tfoot: table,
-            colgroup: table,
-            caption: table,
-            tr: ['<table><tbody>', '</tbody></table>', 2],
-            th: td,
-            td: td,
-            col: ['<table><colgroup>', '</colgroup></table>', 2],
-            fieldset: ['<form>', '</form>', 1],
-            legend: ['<form><fieldset>', '</fieldset></form>', 2],
-            option: option,
-            optgroup: option,
-            script: noscope,
-            link: noscope,
-            param: noscope,
-            base: noscope
-        },
-        createHTML = function(html, context) {
-            return hAzzle(create(html, context));
-        },
+            tagMap = {
+                style: table,
+                table: table,
+                thead: table,
+                tbody: table,
+                tfoot: table,
+                colgroup: table,
+                caption: table,
+                tr: ['<table><tbody>', '</tbody></table>', 2],
+                th: td,
+                td: td,
+                col: ['<table><colgroup>', '</colgroup></table>', 2],
+                fieldset: ['<form>', '</form>', 1],
+                legend: ['<form><fieldset>', '</fieldset></form>', 2],
+                option: option,
+                optgroup: option,
+                script: noscope,
+                link: noscope,
+                param: noscope,
+                base: noscope
+            },
+            createHTML = function(html, context) {
+                return hAzzle(create(html, context));
+            },
 
-        fixInput = function(src, dest) {
-            var nodeName = dest.nodeName.toLowerCase();
+            fixInput = function(src, dest) {
+                var nodeName = dest.nodeName.toLowerCase();
 
-            // Fails to persist the checked state of a cloned checkbox or radio button.
-            if (nodeName === 'input' && _rcheckableType.test(src.type)) {
-                dest.checked = src.checked;
+                // Fails to persist the checked state of a cloned checkbox or radio button.
+                if (nodeName === 'input' && _rcheckableType.test(src.type)) {
+                    dest.checked = src.checked;
 
-                // Fails to return the selected option to the default selected state when cloning options
-            } else if (nodeName === 'input' || nodeName === 'textarea') {
-                dest.defaultValue = src.defaultValue;
-            }
-        },
-        cloneElem = function(elem, deep) {
-
-            var source = elem.cloneNode(true),
-                destElements,
-                srcElements,
-                i, l;
-
-            // Fix IE cloning issues
-            if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
-                !_core.isXML(elem)) {
-                destElements = grab(source);
-                srcElements = grab(elem);
-
-                for (i = 0, l = srcElements.length; i < l; i++) {
-                    fixInput(srcElements[i], destElements[i]);
+                    // Fails to return the selected option to the default selected state when cloning options
+                } else if (nodeName === 'input' || nodeName === 'textarea') {
+                    dest.defaultValue = src.defaultValue;
                 }
-            }
-            // If 'deep' clone events
-            if (deep && (source.nodeType === 1 || source.nodeType === 11)) {
+            },
+            cloneElem = function(elem, deep) {
 
-                hAzzle(source).cloneEvents(elem);
+                var source = elem.cloneNode(true),
+                    destElements,
+                    srcElements,
+                    i, l;
 
-                // Copy the events from the original to the clone
+                // Fix IE cloning issues
+                if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
+                    !_core.isXML(elem)) {
+                    destElements = grab(source);
+                    srcElements = grab(elem);
 
-                destElements = grab(source);
-                srcElements = grab(elem);
-
-                for (i = 0; i < srcElements.length; i++) {
-                    hAzzle(destElements[i]).cloneEvents(srcElements[i]);
-                }
-            }
-            return source;
-        },
-
-        createScriptFromHtml = function(html, context) {
-            var scriptEl = context.createElement('script'),
-                matches = html.match(_scriptTag);
-            scriptEl.src = matches[1];
-            return scriptEl;
-        },
-
-        deepEach = function(array, fn, context) {
-            if (array) {
-                var index = array.length;
-                while (index--) {
-                    if (_types.isNode(array[index])) {
-                        deepEach(array[index].children, fn, context);
-
-                        fn.call(context || array[index], array[index], index, array);
+                    for (i = 0, l = srcElements.length; i < l; i++) {
+                        fixInput(srcElements[i], destElements[i]);
                     }
                 }
-            }
-            return array;
-        },
+                // If 'deep' clone events
+                if (deep && (source.nodeType === 1 || source.nodeType === 9)) {
 
-        create = function(node, context) {
-            if (node) {
-                // Mitigate XSS vulnerability
+                    hAzzle(source).cloneEvents(elem);
 
-                var defaultContext = _support.imcHTML ?
-                    document.implementation.createHTMLDocument() :
-                    document,
-                    ctx = context || defaultContext,
-                    fragment = ctx.createDocumentFragment();
+                    // Copy the events from the original to the clone
 
-                if (typeof node === 'string' && node !== '') {
+                    destElements = grab(source);
+                    srcElements = grab(elem);
 
-                    /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
-                       create it if match 
-                     */
-                    if (_scriptTag.test(node)) {
-                        return [createScriptFromHtml(node, context)];
+                    for (i = 0; i < srcElements.length; i++) {
+                        hAzzle(destElements[i]).cloneEvents(srcElements[i]);
                     }
+                }
+                return source;
+            },
 
-                    // Deserialize a standard representation
+            createScriptFromHtml = function(html, context) {
+                var scriptEl = context.createElement('script'),
+                    matches = html.match(_scriptTag);
+                scriptEl.src = matches[1];
+                return scriptEl;
+            },
 
-                    var i, tag = node.match(_whitespace),
-                        sandbox = fragment.appendChild(ctx.createElement('div')),
-                        els = [],
-                        map = tag ? tagMap[tag[1].toLowerCase()] : null,
-                        dep = map ? map[2] + 1 : 1,
-                        noScoop = map && map[3];
+            deepEach = function(array, fn, context) {
+                if (array) {
+                    var index = array.length;
+                    while (index--) {
+                        if (_types.isNode(array[index])) {
+                            deepEach(array[index].children, fn, context);
 
-                    if (map) {
-                        sandbox.innerHTML = (map[0] + node + map[1]);
-                    } else {
-                        sandbox.innerHTML = node;
-                    }
-
-                    while (dep--) {
-                        sandbox = sandbox.firstChild;
-                    }
-
-                    // for IE NoScope, we may insert cruft at the begining just to get it to work
-
-                    if (noScoop && sandbox && sandbox.nodeType !== 1) {
-                        sandbox = sandbox.nextSibling;
-                    }
-
-                    do {
-                        if (!tag || sandbox.nodeType === 1) {
-                            els.push(sandbox);
-                        }
-                    } while (sandbox = sandbox.nextSibling);
-
-                    for (i in els) {
-                        if (els[i].parentNode) {
-                            els[i].parentNode.removeChild(els[i]);
+                            fn.call(context || array[index], array[index], index, array);
                         }
                     }
-
-                    return els;
-
-                } else if (_util.isNode(node)) {
-                    return [node.cloneNode(true)];
                 }
-            }
-        },
+                return array;
+            },
 
-        // Grab childnodes
+            create = function(node, context) {
+                if (node) {
+                    // Mitigate XSS vulnerability
 
-        grab = function(context, tag) {
-            var ret = context.getElementsByTagName(tag || '*');
-            return tag === undefined || tag && _util.nodeName(context, tag) ?
-                _util.merge([context], ret) :
-                ret;
-        },
+                    var defaultContext = _support.imcHTML ?
+                        document.implementation.createHTMLDocument() :
+                        document,
+                        ctx = context || defaultContext,
+                        fragment = ctx.createDocumentFragment();
 
-        // Removes the data associated with an element
+                    if (typeof node === 'string' && node !== '') {
 
-        clearData = function(elems) {
+                        /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
+                           create it if match 
+                         */
+                        if (_scriptTag.test(node)) {
+                            return [createScriptFromHtml(node, context)];
+                        }
 
-            // No point to continue clearing events if the events.js module
-            // are not installed
+                        // Deserialize a standard representation
 
-            if (!hAzzle.installed.Events) {
-                hAzzle.err(true, 17, 'events.js module are not installed');
-            }
+                        var i, tag = node.match(_whitespace),
+                            sandbox = fragment.appendChild(ctx.createElement('div')),
+                            els = [],
+                            map = tag ? tagMap[tag[1].toLowerCase()] : null,
+                            dep = map ? map[2] + 1 : 1,
+                            noScoop = map && map[3];
 
-            var elem, i = 0;
+                        if (map) {
+                            sandbox.innerHTML = (map[0] + node + map[1]);
+                        } else {
+                            sandbox.innerHTML = node;
+                        }
 
-            // If instanceof hAzzle...
+                        while (dep--) {
+                            sandbox = sandbox.firstChild;
+                        }
 
-            if (elems instanceof hAzzle) {
-                elems = [elems.elements[0]];
-            } else {
-                elems = elems.length ? elems : [elems];
-            }
+                        // for IE NoScope, we may insert cruft at the begining just to get it to work
 
-            for (;
-                (elem = elems[i]) !== undefined; i++) {
-                // Remove all eventListeners
-                hAzzle(elem).off();
-            }
-        },
+                        if (noScoop && sandbox && sandbox.nodeType !== 1) {
+                            sandbox = sandbox.nextSibling;
+                        }
 
-        normalize = function(node, clone) {
+                        do {
+                            if (!tag || sandbox.nodeType === 1) {
+                                els.push(sandbox);
+                            }
+                        } while (sandbox = sandbox.nextSibling);
 
-            var i, l, ret;
+                        for (i in els) {
+                            if (els[i].parentNode) {
+                                els[i].parentNode.removeChild(els[i]);
+                            }
+                        }
 
-            if (typeof node === 'string') {
-                return create(node);
-            }
+                        return els;
 
-            if (node instanceof hAzzle) {
-                node = node.elements;
-            }
-
-            if (_types.isNode(node)) {
-                node = [node];
-            }
-
-            if (clone) {
-                ret = []; // don't change original array
-                for (i = 0, l = node.length; i < l; i++) {
-                    ret[i] = cloneElem(node[i], true);
+                    } else if (_util.isNode(node)) {
+                        return [node.cloneNode(true)];
+                    }
                 }
-                return ret;
-            }
-            return node;
-        },
-        createGlobal = function(elem, content, method) {
-            if (typeof content === 'string' &&
-                _core.isHTML &&
-                elem.parentNode && elem.parentNode.nodeType === 1) {
-                elem.insertAdjacentHTML(method, content.replace(_htmlTag, '<$1></$2>'));
-            } else {
-                _util.each(normalize(content, 0), function(relatedNode) {
-                    elem[method](relatedNode); // DOM Level 4
-                });
-            }
-        },
-        prepend = function(elem, content) {
-            createGlobal(elem, content, 'prepend');
-        },
+            },
 
-        append = function(elem, content) {
-            createGlobal(elem, content, 'append');
+            // Grab childnodes
+
+            grab = function(context, tag) {
+                var ret = context.getElementsByTagName(tag || '*');
+                return tag === undefined || tag && _util.nodeName(context, tag) ?
+                    _util.merge([context], ret) :
+                    ret;
+            },
+
+            // Removes the data associated with an element
+
+            clearData = function(elems) {
+
+                // No point to continue clearing events if the events.js module
+                // are not installed
+
+                if (!hAzzle.installed.Events) {
+                    hAzzle.err(true, 17, 'events.js module are not installed');
+                }
+
+                var elem, i = 0;
+
+                // If instanceof hAzzle...
+
+                if (elems instanceof hAzzle) {
+                    elems = [elems.elements[0]];
+                } else {
+                    elems = elems.length ? elems : [elems];
+                }
+
+                for (;
+                    (elem = elems[i]) !== undefined; i++) {
+                    // Remove all eventListeners
+                    hAzzle(elem).off();
+                }
+            },
+
+            normalize = function(node, clone) {
+
+                var i, l, ret;
+
+                if (typeof node === 'string') {
+                    return create(node);
+                }
+
+                if (node instanceof hAzzle) {
+                    node = node.elements;
+                }
+
+                if (_types.isNode(node)) {
+                    node = [node];
+                }
+
+                if (clone) {
+                    ret = []; // don't change original array
+                    for (i = 0, l = node.length; i < l; i++) {
+                        ret[i] = cloneElem(node[i], true);
+                    }
+                    return ret;
+                }
+                return node;
+            },
+            createGlobal = function(elem, content, method) {
+                if (typeof content === 'string' &&
+                    _core.isHTML &&
+                    elem.parentNode && elem.parentNode.nodeType === 1) {
+                    elem.insertAdjacentHTML(method, content.replace(_htmlTag, '<$1></$2>'));
+                } else {
+                    _util.each(normalize(content, 0), function(relatedNode) {
+                        elem[method](relatedNode); // DOM Level 4
+                    });
+                }
+            },
+            prepend = function(elem, content) {
+                createGlobal(elem, content, 'prepend');
+            },
+
+            append = function(elem, content) {
+                createGlobal(elem, content, 'append');
+            };
+
+        // insertAdjacentHTML method for append, prepend, before and after
+
+        this.iAHMethod = function(method, html, fn) {
+            return this.each(function(elem, index) {
+                if (typeof html === 'string' &&
+                    _core.isHTML &&
+                    elem.parentNode && elem.parentNode.nodeType === 1) {
+                    elem.insertAdjacentHTML(method, html.replace(_htmlTag, '<$1></$2>'));
+                } else {
+                    fn(elem, index);
+                }
+            });
         };
 
-    // insertAdjacentHTML method for append, prepend, before and after
+        this.append = function(content) {
+            return this.iAHMethod('beforeend', content, function(node, state) {
+                if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
+                    _util.each(normalize(content, state), function(relatedNode) {
+                        node.appendChild(relatedNode); // DOM Level 4
+                    });
+                }
+            });
+        };
 
-    this.iAHMethod = function(method, html, fn) {
-        return this.each(function(elem, index) {
-            if (typeof html === 'string' &&
-                _core.isHTML &&
-                elem.parentNode && elem.parentNode.nodeType === 1) {
-                elem.insertAdjacentHTML(method, html.replace(_htmlTag, '<$1></$2>'));
+        this.prepend = function(content) {
+            return this.iAHMethod('afterbegin', content, function(node, state) {
+                if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
+                    _util.each(normalize(content, state), function(relatedNode) {
+                        node.prepend(relatedNode); // DOM Level 4
+                    });
+                }
+            });
+        };
+
+        this.before = function(content) {
+            return this.iAHMethod('beforebegin', content, function(node, state) {
+                _util.each(normalize(content, state), function(relatedNode) {
+                    node.before(relatedNode); // DOM Level 4
+
+                });
+            });
+        };
+
+        this.after = function(content) {
+            return this.iAHMethod('afterend', content, function(node, state) {
+                _util.each(normalize(content, state), function(relatedNode) {
+                    node.after(relatedNode); // DOM Level 4
+                });
+            });
+        };
+
+        this.appendTo = function(content) {
+            return this.domManip(content, function(node, el) {
+                node.appendChild(el);
+            });
+        };
+
+        this.prependTo = function(content) {
+            return this.domManip(content, function(node, el) {
+                node.insertBefore(el, node.firstChild);
+            });
+        };
+
+        this.insertBefore = function(content) {
+            return this.domManip(content, function(node, el) {
+                node.parentNode.insertBefore(el, node);
+            });
+        };
+
+        this.insertAfter = function(content) {
+            return this.domManip(content, function(node, el) {
+                var sibling = node.nextSibling;
+                sibling ?
+                    node.parentNode.insertBefore(el, sibling) :
+                    node.parentNode.appendChild(el);
+            }, 1);
+        };
+
+        // Same as 'ReplaceWith' in jQuery
+
+        this.replace = function(html) {
+            return this.each(function(el, i) {
+                _util.each(normalize(html, i), function(i) {
+                    el.replace(i); // DOM Level 4
+                });
+            });
+        };
+
+        // Thanks to jQuery for the function name!!
+
+        this.domManip = function(content, fn, /*reverse */ rev) {
+
+            var i = 0,
+                r = [];
+
+            // Nasty looking code, but this has to be fast
+
+            var self = this.elements,
+                elems, nodes;
+
+            if (typeof content === 'string' &&
+                content[0] === '<' &&
+                content[content.length - 1] === '>' &&
+                content.length >= 3) {
+                nodes = content;
+
             } else {
-                fn(elem, index);
+                nodes = hAzzle(content);
             }
-        });
-    };
 
-    this.append = function(content) {
-        return this.iAHMethod('beforeend', content, function(node, state) {
-            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.appendChild(relatedNode); // DOM Level 4
-                });
-            }
-        });
-    };
+            // Start the iteration and loop through the content
 
-    this.prepend = function(content) {
-        return this.iAHMethod('afterbegin', content, function(node, state) {
-            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.prepend(relatedNode); // DOM Level 4
-                });
-            }
-        });
-    };
-
-    this.before = function(content) {
-        return this.iAHMethod('beforebegin', content, function(node, state) {
-            _util.each(normalize(content, state), function(relatedNode) {
-                node.before(relatedNode); // DOM Level 4
-
-            });
-        });
-    };
-
-    this.after = function(content) {
-        return this.iAHMethod('afterend', content, function(node, state) {
-            _util.each(normalize(content, state), function(relatedNode) {
-                node.after(relatedNode); // DOM Level 4
-            });
-        });
-    };
-
-    this.appendTo = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.appendChild(el);
-        });
-    };
-
-    this.prependTo = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.insertBefore(el, node.firstChild);
-        });
-    };
-
-    this.insertBefore = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.parentNode.insertBefore(el, node);
-        });
-    };
-
-    this.insertAfter = function(content) {
-        return this.domManip(content, function(node, el) {
-            var sibling = node.nextSibling;
-            sibling ?
-                node.parentNode.insertBefore(el, sibling) :
-                node.parentNode.appendChild(el);
-        }, 1);
-    };
-
-    // Same as 'ReplaceWith' in jQuery
-
-    this.replace = function(html) {
-        return this.each(function(el, i) {
-            _util.each(normalize(html, i), function(i) {
-                el.replace(i); // DOM Level 4
-            });
-        });
-    };
-
-    // Thanks to jQuery for the function name!!
-
-    this.domManip = function(content, fn, /*reverse */ rev) {
-
-        var i = 0,
-            r = [];
-
-        // Nasty looking code, but this has to be fast
-
-        var self = this.elements,
-            elems, nodes;
-
-        if (typeof content === 'string' &&
-            content[0] === '<' &&
-            content[content.length - 1] === '>' &&
-            content.length >= 3) {
-            nodes = content;
-
-        } else {
-            nodes = hAzzle(content);
-        }
-
-        // Start the iteration and loop through the content
-
-        _util.each(normalize(nodes), function(elem, index) {
-            _util.each(self, function(el) {
-                elems = index > 0 ? el.cloneNode(true) : el;
-                if (elem) {
-                    fn(elem, elems);
-                }
-            }, null, rev);
-
-        }, this, rev);
-        self.length = i;
-        _util.each(r, function(e) {
-            self[--i] = e;
-        }, null, !rev);
-        return self;
-    };
-
-    // Text
-
-    this.text = function(value) {
-        return value === undefined ?
-            _text.getText(this.elements) :
-            this.empty().each(function(elem) {
-                if (elem.nodeType === 1 ||
-                    elem.nodeType === 11 ||
-                    elem.nodeType === 9) {
-                    elem.textContent = value;
-                }
-            });
-    };
-
-    // HTML
-
-    this.html = function(value) {
-
-        var els = this.elements,
-            elem = els[0],
-            i = 0,
-            l = this.length;
-
-        if (value === undefined && els[0].nodeType === 1) {
-            return els[0].innerHTML;
-        }
-        // See if we can take a shortcut and just use innerHTML
-
-        if (typeof value === 'string' && !_scriptStyle.test(value) &&
-            !tagMap[(_tagName.exec(value) || ['', ''])[1].toLowerCase()]) {
-
-            value = value.replace(_htmlTag, '<$1></$2>'); // DOM Level 4
-
-            try {
-
-                for (; i < l; i++) {
-
-                    elem = els[i] || {};
-
-                    // Remove element nodes and prevent memory leaks
-                    if (elem.nodeType === 1) {
-                        clearData(grab(elem, false));
-                        elem.innerHTML = value;
+            _util.each(normalize(nodes), function(elem, index) {
+                _util.each(self, function(el) {
+                    elems = index > 0 ? el.cloneNode(true) : el;
+                    if (elem) {
+                        fn(elem, elems);
                     }
+                }, null, rev);
+
+            }, this, rev);
+            self.length = i;
+            _util.each(r, function(e) {
+                self[--i] = e;
+            }, null, !rev);
+            return self;
+        };
+
+        // Text
+
+        this.text = function(value) {
+            return value === undefined ?
+                _text.getText(this.elements) :
+                this.empty().each(function(elem) {
+                    if (elem.nodeType === 1 ||
+                        elem.nodeType === 11 ||
+                        elem.nodeType === 9) {
+                        elem.textContent = value;
+                    }
+                });
+        };
+
+        // HTML
+
+        this.html = function(value) {
+
+            var els = this.elements,
+                elem = els[0],
+                i = 0,
+                l = this.length;
+
+            if (value === undefined && els[0].nodeType === 1) {
+                return els[0].innerHTML;
+            }
+            // See if we can take a shortcut and just use innerHTML
+
+            if (typeof value === 'string' && !_scriptStyle.test(value) &&
+                !tagMap[(_tagName.exec(value) || ['', ''])[1].toLowerCase()]) {
+
+                value = value.replace(_htmlTag, '<$1></$2>'); // DOM Level 4
+
+                try {
+
+                    for (; i < l; i++) {
+
+                        elem = els[i] || {};
+
+                        // Remove element nodes and prevent memory leaks
+                        if (elem.nodeType === 1) {
+                            clearData(grab(elem, false));
+                            elem.innerHTML = value;
+                        }
+                    }
+
+                    elem = 0;
+
+                    // If using innerHTML throws an exception, use the fallback method
+                } catch (e) {}
+            }
+
+            if (elem) {
+                return this.empty().append(value);
+            }
+        };
+
+        this.deepEach = function(fn, scope) {
+            return deepEach(this.elements, fn, scope);
+        };
+
+        this.detach = function() {
+            return this.each(function(elem) {
+                if (elem.parentElement) {
+                    elem.parentElement.removeChild(elem);
                 }
+            });
+        };
 
-                elem = 0;
+        this.empty = function() {
+            return this.each(function(elem) {
+                // Do a 'deep each' and clear all listeners if any 
+                deepEach(elem.children, clearData);
+                while (elem.firstChild) {
+                    elem.removeChild(elem.firstChild);
+                }
+            });
+        };
 
-                // If using innerHTML throws an exception, use the fallback method
-            } catch (e) {}
-        }
+        this.remove = function() {
+            this.deepEach(clearData);
+            return this.detach();
+        };
 
-        if (elem) {
-            return this.empty().append(value);
-        }
-    };
+        // 'deep' - let you clone events
 
-    this.deepEach = function(fn, scope) {
-        return deepEach(this.elements, fn, scope);
-    };
+        this.clone = function(deep) {
+            // Better performance with a 'normal' for-loop then
+            // map() or each()       
+            var elems = this.elements,
+                ret = [],
+                i = 0,
+                l = this.length;
 
-    this.detach = function() {
-        return this.each(function(elem) {
-            if (elem.parentElement) {
-                elem.parentElement.removeChild(elem);
+            for (; i < l; i++) {
+                ret[i] = cloneElem(elems[i], deep);
             }
-        });
-    };
+            return hAzzle(ret);
+        };
 
-    this.empty = function() {
-        return this.each(function(elem) {
-            // Do a 'deep each' and clear all listeners if any 
-            deepEach(elem.children, clearData);
-            while (elem.firstChild) {
-                elem.removeChild(elem.firstChild);
-            }
-        });
-    };
-
-    this.remove = function() {
-        this.deepEach(clearData);
-        return this.detach();
-    };
-
-    // 'deep' - let you clone events
-
-    this.clone = function(deep) {
-        // Better performance with a 'normal' for-loop then
-        // map() or each()       
-        var elems = this.elements,
-            ret = [],
-            i = 0,
-            l = this.length;
-
-        for (; i < l; i++) {
-            ret[i] = cloneElem(elems[i], deep);
-        }
-        return hAzzle(ret);
-    };
-
-    return {
-        clearData: clearData,
-        create: create,
-        createHTML: createHTML,
-        clone: cloneElem,
-        append: append,
-        prepend: prepend
-    };
-});
+        return {
+            clearData: clearData,
+            create: create,
+            createHTML: createHTML,
+            clone: cloneElem,
+            append: append,
+            prepend: prepend
+        };
+    });
     // setters.js
     hAzzle.define('Setters', function() {
 
@@ -3966,769 +3960,770 @@ hAzzle.define('Manipulation', function() {
         });
     });
 
-/** 
- * events.js - hAzzle Event Manager module
- *
- * Desktop browsers support:
- *
- *    Chrome 9+
- *    Safari 5.0+
- *    Firefox 18+
- *    Opera 15.1+
- *    Internet Explorer 9+
- *
- * Mobile browsers support:
- *
- *    Google Android 4.0+
- *    Apple iOS 6+
- *    ChromiumOS
- *    FirefoxOS
- *
- * Sources:
- *
- * - http://dean.edwards.name/weblog/2005/10/add-event/
- * - http://dean.edwards.name/weblog/2005/10/add-event2/
- * - http://stackoverflow.com/questions/4034742/understanding-dean-edwards-addevent-javascript
- * - https://github.com/dperini/nwevents
- * - https://github.com/fat/bean
- * - jQuery
- */
-hAzzle.define('Events', function() {
+    /** 
+     * events.js - hAzzle Event Manager module
+     *
+     * Desktop browsers support:
+     *
+     *    Chrome 9+
+     *    Safari 5.0+
+     *    Firefox 18+
+     *    Opera 15.1+
+     *    Internet Explorer 9+
+     *
+     * Mobile browsers support:
+     *
+     *    Google Android 4.0+
+     *    Apple iOS 6+
+     *    ChromiumOS
+     *    FirefoxOS
+     *
+     * Sources:
+     *
+     * - http://dean.edwards.name/weblog/2005/10/add-event/
+     * - http://dean.edwards.name/weblog/2005/10/add-event2/
+     * - http://stackoverflow.com/questions/4034742/understanding-dean-edwards-addevent-javascript
+     * - https://github.com/dperini/nwevents
+     * - https://github.com/fat/bean
+     * - jQuery
+     */
+    hAzzle.define('Events', function() {
 
-    var win = window,
-        doc = win.document,
-        namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
-        nameRegex = /\..*/,
-        whiteSpace = /\S+/g,
-        docElem = doc.documentElement || {},
-        map = {},
+        var win = window,
+            doc = win.document,
+            namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
+            nameRegex = /\..*/,
+            whiteSpace = /\S+/g,
+            docElem = doc.documentElement || {},
+            map = {},
 
-        // Include needed modules
-        _util = hAzzle.require('Util'),
-        _collection = hAzzle.require('Collection'),
-        _types = hAzzle.require('Types'),
-        _jiesa = hAzzle.require('Jiesa'),
-        _has = hAzzle.require('has'),
-        _core = hAzzle.require('Core'),
+            // Include needed modules
+            _util = hAzzle.require('Util'),
+            _collection = hAzzle.require('Collection'),
+            _types = hAzzle.require('Types'),
+            _jiesa = hAzzle.require('Jiesa'),
+            _has = hAzzle.require('has'),
+            _core = hAzzle.require('Core'),
 
-        // regEx
+            // regEx
 
-        everything = /.*/,
-        keyEvent = /^key/,
-        // Treat pointer and drag / drop events like mouse events
-        mouseEvent = /^(?:mouse(?!(.*wheel|scroll))|pointer|menu|drag|drop|contextmenu)|click/,
+            everything = /.*/,
+            keyEvent = /^key/,
+            // Treat pointer and drag / drop events like mouse events
+            mouseEvent = /^(?:mouse(?!(.*wheel|scroll))|pointer|menu|drag|drop|contextmenu)|click/,
 
-        // Properties
-        commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
-            'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
-            'srcElement target timeStamp type view which propertyName').split(' '),
-        mouseProps = commonProps.concat(('button buttons clientX clientY dataTransfer ' +
-            'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ')),
-        keyProps = commonProps.concat(('char charCode key keyCode keyIdentifier ' +
-            'keyLocation location').split(' '));
+            // Properties
+            commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
+                'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
+                'srcElement target timeStamp type view which propertyName').split(' '),
+            mouseProps = commonProps.concat(('button buttons clientX clientY dataTransfer ' +
+                'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ')),
+            keyProps = commonProps.concat(('char charCode key keyCode keyIdentifier ' +
+                'keyLocation location').split(' '));
 
-    // Firefox specific eventTypes
-    if (_has.has('firefox')) {
-        commonProps.concat('mozMovementY mozMovementX'.split(' '));
-    }
-    // WebKit eventTypes
-    // Support: Chrome / Opera
+        // Firefox specific eventTypes
+        if (_has.has('firefox')) {
+            commonProps.concat('mozMovementY mozMovementX'.split(' '));
+        }
+        // WebKit eventTypes
+        // Support: Chrome / Opera
 
-    if (_has.has('webkit')) {
-        commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
-    }
+        if (_has.has('webkit')) {
+            commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
+        }
 
-    // specialEvents (e.g. focus and blur)
-    var specialEvents = {},
+        // specialEvents (e.g. focus and blur)
+        var specialEvents = {},
 
-        fixedEvents = {},
+            fixedEvents = {},
 
-        customEvents = {},
+            customEvents = {},
 
-        fixHooks = {},
+            fixHooks = {},
 
-        propHooks = [{ // key events
-            reg: keyEvent,
-            fix: function(original, evt) {
-                // Add which for key events
-                if (!evt.which) {
-                    evt.which = original.charCode != null ? original.charCode : original.keyCode;
+            propHooks = [{ // key events
+                reg: keyEvent,
+                fix: function(original, evt) {
+                    // Add which for key events
+                    if (!evt.which) {
+                        evt.which = original.charCode != null ? original.charCode : original.keyCode;
+                    }
+
+                    evt.keyCode = original.keyCode || original.which;
+                    return keyProps;
                 }
+            }, { // mouse events
 
-                evt.keyCode = original.keyCode || original.which;
-                return keyProps;
-            }
-        }, { // mouse events
+                reg: mouseEvent,
+                fix: function(original, evt, type) {
 
-            reg: mouseEvent,
-            fix: function(original, evt, type) {
+                    // Calculate pageX/Y if missing and clientX/Y available
+                    if (evt.pageX == null && original.clientX != null) {
+                        evt.pageX = original.clientX + docElem.scrollLeft - docElem.clientLeft;
+                        evt.pageY = original.clientY + docElem.scrollTop - docElem.clientTop;
+                    }
 
-                // Calculate pageX/Y if missing and clientX/Y available
-                if (evt.pageX == null && original.clientX != null) {
-                    evt.pageX = original.clientX + docElem.scrollLeft - docElem.clientLeft;
-                    evt.pageY = original.clientY + docElem.scrollTop - docElem.clientTop;
+                    // click: 1 === left; 2 === middle; 3 === right
+                    if (!evt.which && original.button !== undefined) {
+                        evt.which = (original.button & 1 ? 1 : (original.button & 2 ? 3 : (original.button & 4 ? 2 : 0)));
+                    }
+
+                    if (type === 'mouseover' || type === 'mouseout') {
+                        evt.relatedTarget = original.relatedTarget || original[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
+                    }
+                    return mouseProps;
                 }
-
-                // click: 1 === left; 2 === middle; 3 === right
-                if (!evt.which && original.button !== undefined) {
-                    evt.which = (original.button & 1 ? 1 : (original.button & 2 ? 3 : (original.button & 4 ? 2 : 0)));
+            }, { // everything else
+                reg: everything,
+                fix: function() {
+                    return commonProps;
                 }
+            }],
 
-                if (type === 'mouseover' || type === 'mouseout') {
-                    evt.relatedTarget = original.relatedTarget || original[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
-                }
-                return mouseProps;
-            }
-        }, { // everything else
-            reg: everything,
-            fix: function() {
-                return commonProps;
-            }
-        }],
+            // Create event handler
+            createEventHandler = function(elem, fn, condition, args) {
 
-        processHandler = function(elem, fn, condition, args) {
+                var call = function(evt, ergs) {
+                        return fn.apply(elem, args ? _collection.slice(ergs).concat(args) : ergs);
+                    },
 
-            var call = function(evt, ergs) {
-                    return fn.apply(elem, args ? _collection.slice(ergs).concat(args) : ergs);
-                },
-
-                findTarget = function(evt, eventElement) {
-                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt.target, elem) : eventElement;
-                },
-                handler = condition ? function(evt) {
-                    var target = findTarget(evt, this);
-                    if (condition.apply(target, arguments)) {
-                        if (evt) {
-                            evt.currentTarget = target;
+                    findTarget = function(evt, eventElement) {
+                        return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt.target, elem) : eventElement;
+                    },
+                    handler = condition ? function(evt) {
+                        var target = findTarget(evt, this);
+                        if (condition.apply(target, arguments)) {
+                            if (evt) {
+                                evt.currentTarget = target;
+                            }
+                            return call(evt, arguments);
+                        }
+                    } : function(evt) {
+                        if (fn.__kfx2rcf) {
+                            evt = evt.clone(findTarget(evt));
                         }
                         return call(evt, arguments);
+                    };
+                handler.__kfx2rcf = fn.__kfx2rcf;
+                return handler;
+            },
+
+            // Iterate
+
+            iteratee = function(elem, type, original, handler, root, callback) {
+
+                var t, prefix = root ? '¤' : '#';
+
+                if (!type || type === '*') {
+
+                    for (t in map) {
+
+                        if (t.charAt(0) === prefix) {
+                            iteratee(elem, t.slice(1), original, handler, root, callback);
+                        }
                     }
-                } : function(evt) {
-                    if (fn.__kfx2rcf) {
-                        evt = evt.clone(findTarget(evt));
+                } else {
+
+                    var i = 0,
+                        l, list = map[prefix + type],
+                        a = elem === '*';
+
+                    if (!list) {
+                        return;
                     }
-                    return call(evt, arguments);
-                };
-            handler.__kfx2rcf = fn.__kfx2rcf;
-            return handler;
-        },
 
-        // Iterate
-
-        iteratee = function(elem, type, original, handler, root, callback) {
-
-            var t, prefix = root ? 'r' : '$';
-
-            if (!type || type === '*') {
-
-                for (t in map) {
-
-                    if (t.charAt(0) === prefix) {
-                        iteratee(elem, t.slice(1), original, handler, root, callback);
+                    for (l = list.length; i < l; i++) {
+                        if ((a || list[i].matches(elem, original, handler)) && !callback(list[i], list, i, type)) {
+                            return;
+                        }
                     }
                 }
-            } else {
+            },
 
-                var i = 0,
-                    l, list = map[prefix + type],
-                    a = elem === '*';
+            // Check collection for registered event,
+            // match element and handler
+            isRegistered = function(elem, type, original, root) {
+                var i, list = map[(root ? '¤' : '#') + type];
+                if (list) {
+                    for (i = list.length; i--;) {
+                        if (!list[i].root && list[i].matches(elem, original, null)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            },
 
-                if (!list) {
+            // List event handlers bound to a given object for each type
+
+            getRegistered = function(elem, type, original, root) {
+                var entries = [];
+                iteratee(elem, type, original, null, root, function(entry) {
+
+                    return entries.push(entry);
+                });
+                return entries;
+            },
+            // Register an event instance and its parameters
+            registrer = function(entry) {
+
+                var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
+                    key = (entry.root ? '¤' : '#') + entry.type;
+                (map[key] || (map[key] = [])).push(entry);
+                return contains;
+            },
+            // Unregister an event instance and its parameters
+            unregister = function(entry) {
+                iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
+                    list.splice(i, 1);
+                    entry.removed = true;
+                    if (list.length === 0) {
+                        delete map[(entry.root ? '¤' : '#') + entry.type];
+                    }
+                    return false;
+                });
+            },
+
+            rootHandler = function(event, type) {
+
+                var listeners = getRegistered(this, type || event.type, null, false),
+                    l = listeners.length,
+                    i = 0;
+
+                event = new Event(event, this, true);
+
+                if (type) {
+                    event.type = type;
+                }
+                for (; i < l && !event.isImmediatePropagationStopped(); i++) {
+                    if (!listeners[i].removed) {
+                        listeners[i].handler.call(this, event);
+                    }
+                }
+            },
+
+            removeHandlers = function(elem, type, handler, ns) {
+
+                type = type && type.replace(nameRegex, '');
+
+                var handlers = getRegistered(elem, type, null, false),
+                    removed = {},
+                    i, l;
+
+                for (i = 0, l = handlers.length; i < l; i++) {
+                    if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(ns)) {
+                        unregister(handlers[i]);
+                        if (!removed[handlers[i].eventType]) {
+                            removed[handlers[i].eventType] = {
+                                t: handlers[i].eventType,
+                                c: handlers[i].type
+                            };
+                        }
+                    }
+                }
+
+                for (i in removed) {
+                    if (!isRegistered(elem, removed[i].t, null, false)) {
+                        elem.removeEventListener(removed[i].t, rootHandler, false);
+                    }
+                }
+            },
+
+            once = function(rm, elem, type, callback, original) {
+                return function() {
+                    callback.apply(this, arguments);
+                    rm(elem, type, original);
+                };
+            },
+
+            // Find event delegate
+            findDelegate = function(target, selector, root) {
+
+                if (root) {
+
+                    var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
+
+                    for (; target && target !== root; target = target.parentElement) {
+                        for (i = els.length; i--;) {
+                            if (els[i] === target) {
+                                return target;
+                            }
+                        }
+                    }
+                }
+            },
+            // Event delegate
+            delegate = function(selector, fn) {
+                var handler = function(e) {
+                    var cur = e.target;
+                    // Don't process clicks on disabled elements
+                    if (cur.nodeType && cur.disabled !== true) {
+                        var m = findDelegate(cur, selector, this);
+                        if (m) {
+                            fn.apply(m, arguments);
+                        }
+                    }
+                };
+
+                handler.__kfx2rcf = {
+                    ft: findDelegate,
+                    selector: selector
+                };
+                return handler;
+            },
+
+            // Add event to element
+
+            on = function(elem, types, selector, callback, one) {
+
+                // Check if typeof hAzzle, then wrap it out, and return current elem
+
+                if (elem instanceof hAzzle) {
+                    elem = elem.elements[0];
+                }
+
+                var cb, type, i, args, entry, first, hooks, eventType, namespace;
+
+                // Types can be a map of types/handlers
+
+                if (_types.isType(types) === 'object') {
+                    if (typeof selector !== 'string') {
+                        callback = selector;
+                        selector = undefined;
+                    }
+                    for (type in types) {
+                        on(elem, type, types[type]);
+                    }
                     return;
                 }
 
-                for (l = list.length; i < l; i++) {
-                    if ((a || list[i].matches(elem, original, handler)) && !callback(list[i], list, i, type)) {
-                        return;
-                    }
-                }
-            }
-        },
+                // Event delegation
 
-        // Check collection for registered event,
-        // match element and handler
-        isRegistered = function(elem, type, original, root) {
-            var i, list = map[(root ? 'r' : '$') + type];
-            if (list) {
-                for (i = list.length; i--;) {
-                    if (!list[i].root && list[i].matches(elem, original, null)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        },
-
-        // List event handlers bound to a given object for each type
-
-        getRegistered = function(elem, type, original, root) {
-            var entries = [];
-            iteratee(elem, type, original, null, root, function(entry) {
-
-                return entries.push(entry);
-            });
-            return entries;
-        },
-        // Register an event instance and its parameters
-        registrer = function(entry) {
-
-            var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
-                key = (entry.root ? 'r' : '$') + entry.type;
-            (map[key] || (map[key] = [])).push(entry);
-            return contains;
-        },
-        // Unregister an event instance and its parameters
-        unregister = function(entry) {
-            iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
-                list.splice(i, 1);
-                entry.removed = true;
-                if (list.length === 0) {
-                    delete map[(entry.root ? 'r' : '$') + entry.type];
-                }
-                return false;
-            });
-        },
-
-        rootListener = function(event, type) {
-
-            var listeners = getRegistered(this, type || event.type, null, false),
-                l = listeners.length,
-                i = 0;
-
-            event = new Event(event, this, true);
-
-            if (type) {
-                event.type = type;
-            }
-            for (; i < l && !event.isImmediatePropagationStopped(); i++) {
-                if (!listeners[i].removed) {
-                    listeners[i].handler.call(this, event);
-                }
-            }
-        },
-
-        once = function(rm, elem, type, callback, original) {
-            return function() {
-                callback.apply(this, arguments);
-                rm(elem, type, original);
-            };
-        },
-
-        dispatch = function(elem, type, handler, ns) {
-
-            type = type && type.replace(nameRegex, '');
-
-            var handlers = getRegistered(elem, type, null, false),
-                removed = {},
-                i, l;
-
-            for (i = 0, l = handlers.length; i < l; i++) {
-                if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(ns)) {
-                    unregister(handlers[i]);
-                    if (!removed[handlers[i].eventType]) {
-                        removed[handlers[i].eventType] = {
-                            t: handlers[i].eventType,
-                            c: handlers[i].type
-                        };
-                    }
-                }
-            }
-
-            for (i in removed) {
-                if (!isRegistered(elem, removed[i].t, null, false)) {
-                    elem.removeEventListener(removed[i].t, rootListener, false);
-                }
-            }
-        },
-
-        // Find event delegate
-        findDelegate = function(target, selector, root) {
-
-            if (root) {
-
-                var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
-
-                for (; target && target !== root; target = target.parentElement) {
-                    for (i = els.length; i--;) {
-                        if (els[i] === target) {
-                            return target;
-                        }
-                    }
-                }
-            }
-        },
-        // Event delegate
-        delegate = function(selector, fn) {
-            var handler = function(e) {
-                var cur = e.target;
-                // Don't process clicks on disabled elements
-                if (cur.nodeType && cur.disabled !== true) {
-                    var m = findDelegate(cur, selector, this);
-                    if (m) {
-                        fn.apply(m, arguments);
-                    }
-                }
-            };
-
-            handler.__kfx2rcf = {
-                ft: findDelegate,
-                selector: selector
-            };
-            return handler;
-        },
-
-        on = function(elem, types, selector, callback, one) {
-
-            // Check if typeof hAzzle, then wrap it out, and return current elem
-
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
-
-            var cb, type, i, args, entry, first, hooks, eventType, namespace;
-
-            // Types can be a map of types/handlers
-
-            if (_types.isType(types) === 'object') {
-                if (typeof selector !== 'string') {
-                    callback = selector;
-                    selector = undefined;
-                }
-                for (type in types) {
-                    on(elem, type, types[type]);
-                }
-                return;
-            }
-
-            // Event delegation
-
-            if (!_types.isType('Function')(selector)) {
-                cb = callback;
-                args = _collection.slice(arguments, 4);
-                callback = delegate(selector, cb);
-            } else {
-                args = _collection.slice(arguments, 3);
-                callback = cb = selector;
-            }
-
-            if (typeof callback !== 'function') {
-                hAzzle.err(true, 13, 'no handler registred for on() in events.js module');
-            }
-
-            // Handle multiple types separated by a space
-
-            types = (types || '').match((whiteSpace)) || [''];
-
-
-            if (one) {
-                callback = once(off, elem, types, callback, cb);
-            }
-
-            i = types.length;
-
-            while (i--) {
-
-                eventType = types[i].replace(nameRegex, '');
-
-                // There *must* be a type, no attaching namespace-only handlers
-
-                if (!eventType) {
-                    continue;
+                if (!_types.isType('Function')(selector)) {
+                    cb = callback;
+                    args = _collection.slice(arguments, 4);
+                    callback = delegate(selector, cb);
+                } else {
+                    args = _collection.slice(arguments, 3);
+                    callback = cb = selector;
                 }
 
-                namespace = types[i].replace(namespaceRegex, '').split('.'); // namespaces
-                // Registrer
-                first = registrer(entry = new Registry(
-                    elem,
-                    eventType, // event type
-                    callback,
-                    cb,
-                    namespace,
-                    args,
-                    false // not root
-                ));
-
-                if (first) {
-
-                    type = entry.eventType;
-
-                    if ((hooks = specialEvents[type])) {
-                        hooks(elem, type);
-                    }
-
-                    elem.addEventListener(type, rootListener, false);
+                if (typeof callback !== 'function') {
+                    hAzzle.err(true, 13, 'no handler registred for on() in events.js module');
                 }
-            }
 
-            return elem;
-        },
+                // Handle multiple types separated by a space
 
-        one = function(elem, types, selector, callback) {
-            return on(elem, types, selector, callback, 1);
-        },
-        // Detach an event or set of events from an element
-        off = function(elem, types, callback) {
-
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
-
-            var k, type, namespaces, i;
-
-            if (typeof types === 'string' && types.indexOf(' ') > 0) {
-                // Once for each type.namespace in types; type may be omitted
                 types = (types || '').match((whiteSpace)) || [''];
+
+
+                if (one) {
+                    callback = once(off, elem, types, callback, cb);
+                }
+
+                i = types.length;
+
+                while (i--) {
+
+                    eventType = types[i].replace(nameRegex, '');
+
+                    // There *must* be a type, no attaching namespace-only handlers
+
+                    if (!eventType) {
+                        continue;
+                    }
+
+                    namespace = types[i].replace(namespaceRegex, '').split('.'); // namespaces
+                    // Registrer
+                    first = registrer(entry = new Registry(
+                        elem,
+                        eventType, // event type
+                        callback,
+                        cb,
+                        namespace,
+                        args,
+                        false // not root
+                    ));
+
+                    if (first) {
+
+                        type = entry.eventType;
+
+                        if ((hooks = specialEvents[type])) {
+                            hooks(elem, type);
+                        }
+                        // Add rootHandler
+                        elem.addEventListener(type, rootHandler, false);
+                    }
+                }
+
+                return elem;
+            },
+
+            one = function(elem, types, selector, callback) {
+                return on(elem, types, selector, callback, 1);
+            },
+            // Remove event from element
+            off = function(elem, types, callback) {
+
+                if (elem instanceof hAzzle) {
+                    elem = elem.elements[0];
+                }
+
+                var k, type, namespaces, i;
+
+                if (typeof types === 'string' && types.indexOf(' ') > 0) {
+                    // Once for each type.namespace in types; type may be omitted
+                    types = (types || '').match((whiteSpace)) || [''];
+                    for (i = types.length; i--;) {
+                        off(elem, types[i], callback);
+                    }
+                    return elem;
+                }
+
+                type = typeof types === 'string' && types.replace(nameRegex, '');
+
+                if (type && customEvents[type]) {
+                    type = customEvents[type].base;
+                }
+
+                if (!types || typeof types === 'string') {
+                    if ((namespaces = typeof types === 'string' && types.replace(namespaceRegex, ''))) {
+                        namespaces = namespaces.split('.');
+                    }
+
+                    removeHandlers(elem, type, callback, namespaces);
+
+                } else if (_types.isType('Function')(types)) {
+                    removeHandlers(elem, null, types);
+                } else {
+                    for (k in types) {
+                        off(elem, k, types[k]);
+                    }
+                }
+
+                return elem;
+            },
+
+            // Trigger specific event for element collection
+
+            trigger = function(elem, type, args) {
+
+                if (elem instanceof hAzzle) {
+                    elem = elem.elements[0];
+                }
+
+                // Don't do events on text and comment nodes
+                if (elem.nodeType === 3 || elem.nodeType === 8) {
+                    return;
+                }
+                var types = (type || '').match((whiteSpace)) || [''],
+                    i, j, l, call, event, names, handlers, canContinue;
+
                 for (i = types.length; i--;) {
-                    off(elem, types[i], callback);
+
+                    type = types[i].replace(nameRegex, '');
+
+                    if ((names = types[i].replace(namespaceRegex, ''))) {
+                        names = names.split('.');
+                    }
+                    if (names && args) {
+                        event = new Event(null, elem);
+                        event.type = type;
+                        call = args ? 'apply' : 'call';
+                        args = args ? [event].concat(args) : event;
+                        for (j = 0, l = handlers.length; j < l; j++) {
+                            if (handlers[j].inNamespaces(names)) {
+                                handlers[j].handler.call(elem, args);
+                            }
+                        }
+                        canContinue = event.returnValue !== false;
+                    } else {
+                        // 
+                        var evt = doc.createEvent('HTMLEvents');
+                        evt.detail = arguments;
+                        evt.initEvent(type, true, true);
+                        canContinue = elem.dispatchEvent(evt);
+                    }
+
+                    return canContinue;
                 }
                 return elem;
-            }
+            },
 
-            type = typeof types === 'string' && types.replace(nameRegex, '');
+            clone = function(elem, from, type) {
+                var handlers = getRegistered(from, type, null, false),
+                    l = handlers.length,
+                    i = 0,
+                    args, kfx2rcf;
 
-            if (type && customEvents[type]) {
-                type = customEvents[type].base;
-            }
-
-            if (!types || typeof types === 'string') {
-                if ((namespaces = typeof types === 'string' && types.replace(namespaceRegex, ''))) {
-                    namespaces = namespaces.split('.');
-                }
-
-                dispatch(elem, type, callback, namespaces);
-
-            } else if (_types.isType('Function')(types)) {
-                dispatch(elem, null, types);
-            } else {
-                for (k in types) {
-                    off(elem, k, types[k]);
-                }
-            }
-
-            return elem;
-        },
-
-        trigger = function(elem, type, args) {
-
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
-
-            // Don't do events on text and comment nodes
-            if (elem.nodeType === 3 || elem.nodeType === 8) {
-                return;
-            }
-            var types = (type || '').match((whiteSpace)) || [''],
-                i, j, l, call, event, names, handlers, canContinue;
-
-            for (i = types.length; i--;) {
-
-                type = types[i].replace(nameRegex, '');
-
-                if ((names = types[i].replace(namespaceRegex, ''))) {
-                    names = names.split('.');
-                }
-                if (names && args) {
-                    event = new Event(null, elem);
-                    event.type = type;
-                    call = args ? 'apply' : 'call';
-                    args = args ? [event].concat(args) : event;
-                    for (j = 0, l = handlers.length; j < l; j++) {
-                        if (handlers[j].inNamespaces(names)) {
-                            handlers[j].handler.call(elem, args);
+                for (; i < l; i++) {
+                    if (handlers[i].original) {
+                        args = [elem, handlers[i].type];
+                        if ((kfx2rcf = handlers[i].handler.__kfx2rcf)) {
+                            args.push(kfx2rcf.selector);
                         }
+                        args.push(handlers[i].original);
+                        on.apply(null, args);
                     }
-                    canContinue = event.returnValue !== false;
-                } else {
-                    // 
-                    var evt = doc.createEvent('HTMLEvents');
-                    evt.detail = arguments;
-                    evt.initEvent(type, true, true);
-                    canContinue = elem.dispatchEvent(evt);
+                }
+                return elem;
+            },
+            addEvent = function(elem, type, handle) {
+                if (elem.addEventListener) {
+                    elem.addEventListener(type, handle, false);
+                }
+            },
+            removeEvent = function(elem, type, handle) {
+                if (elem.removeEventListener) {
+                    elem.removeEventListener(type, handle, false);
+                }
+            },
+
+            Event = function(event, elem) {
+
+                // Needed for DOM0 events
+                event = event || ((elem.ownerDocument ||
+                        elem.document ||
+                        elem).parentWindow ||
+                    win).event;
+
+                this.originalEvent = event;
+
+                if (!event) {
+                    return;
                 }
 
-                return canContinue;
-            }
-            return elem;
-        },
-
-        clone = function(elem, from, type) {
-            var handlers = getRegistered(from, type, null, false),
-                l = handlers.length,
-                i = 0,
-                args, kfx2rcf;
-
-            for (; i < l; i++) {
-                if (handlers[i].original) {
-                    args = [elem, handlers[i].type];
-                    if ((kfx2rcf = handlers[i].handler.__kfx2rcf)) {
-                        args.push(kfx2rcf.selector);
-                    }
-                    args.push(handlers[i].original);
-                    on.apply(null, args);
+                // Support: Cordova 2.5 (WebKit)
+                // All events should have a target; Cordova deviceready doesn't
+                if (!event.target) {
+                    event.target = document;
                 }
-            }
-            return elem;
-        },
-        addEvent = function(elem, type, handle) {
-            if (elem.addEventListener) {
-                elem.addEventListener(type, handle, false);
-            }
-        },
-        removeEvent = function(elem, type, handle) {
-            if (elem.removeEventListener) {
-                elem.removeEventListener(type, handle, false);
-            }
-        },
+                var type = event.type,
+                    // fired element (triggering the event)
+                    target = event.target || event.srcElement,
+                    i, l, p, props, fixer;
 
-        Event = function(event, elem) {
+                // Support: Safari 6.0+, Chrome<28
+                this.target = target.nodeType === 3 ? target.parentNode : target;
+                this.timeStamp = Date.now(); // Set time event was fixed
 
-            // Needed for DOM0 events
-            event = event || ((elem.ownerDocument ||
-                    elem.document ||
-                    elem).parentWindow ||
-                win).event;
-
-            this.originalEvent = event;
-
-            if (!event) {
-                return;
-            }
-
-            // Support: Cordova 2.5 (WebKit)
-            // All events should have a target; Cordova deviceready doesn't
-            if (!event.target) {
-                event.target = document;
-            }
-            var type = event.type,
-                // fired element (triggering the event)
-                target = event.target || event.srcElement,
-                i, l, p, props, fixer;
-
-            // Support: Safari 6.0+, Chrome<28
-            this.target = target.nodeType === 3 ? target.parentNode : target;
-            this.timeStamp = Date.now(); // Set time event was fixed
-
-            fixer = fixHooks[type];
-
-            if (!fixer) {
-
-                fixer = fixedEvents[type];
+                fixer = fixHooks[type];
 
                 if (!fixer) {
-                    for (i = 0, l = propHooks.length; i < l; i++) {
-                        if (propHooks[i].reg.test(type)) {
-                            fixedEvents[type] = fixer = propHooks[i].fix;
-                            break;
+
+                    fixer = fixedEvents[type];
+
+                    if (!fixer) {
+                        for (i = 0, l = propHooks.length; i < l; i++) {
+                            if (propHooks[i].reg.test(type)) {
+                                fixedEvents[type] = fixer = propHooks[i].fix;
+                                break;
+                            }
+                        }
+                    }
+
+                    props = fixer(event, this, type);
+
+                    for (i = props.length; i--;) {
+                        if (!((p = props[i]) in this) && p in event) {
+                            this[p] = event[p];
                         }
                     }
                 }
+            };
 
-                props = fixer(event, this, type);
+        Event.prototype = {
+            constructor: Event,
+            // prevent default action
 
-                for (i = props.length; i--;) {
-                    if (!((p = props[i]) in this) && p in event) {
-                        this[p] = event[p];
-                    }
+            preventDefault: function() {
+                var e = this.originalEvent;
+                if (e && e.preventDefault) {
+                    e.preventDefault();
+                } else {
+                    e.returnValue = false;
                 }
+            },
+
+            // stop event propagation
+
+            stopPropagation: function() {
+                var e = this.originalEvent;
+                if (e && e.stopPropagation) {
+                    e.stopPropagation();
+                } else {
+                    e.cancelBubble = true;
+                }
+            },
+            // block any further event processing
+            stop: function() {
+                this.preventDefault();
+                this.stopPropagation();
+                this.stopped = true;
+            },
+
+            stopImmediatePropagation: function() {
+                var e = this.originalEvent;
+                if (e.stopImmediatePropagation) {
+                    e.stopImmediatePropagation();
+                }
+                this.isImmediatePropagationStopped = function() {
+                    return true;
+                };
+            },
+            isImmediatePropagationStopped: function() {
+                var e = this.originalEvent;
+                return e.isImmediatePropagationStopped && e.isImmediatePropagationStopped();
+            },
+            clone: function(target) {
+                var nE = new Event(this, this.element);
+                nE.currentTarget = target;
+                return nE;
             }
         };
 
-    // Event is based on DOM3 Events as specified by the ECMAScript Language Binding
-    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
-    Event.prototype = {
-        constructor: Event,
-        // prevent default action
+        var Registry = function(elem, type, handler, original, namespaces, args, docElem) {
+            return new Registry.prototype.init(elem, type, handler, original, namespaces, args, docElem);
+        };
 
-        preventDefault: function() {
-            var e = this.originalEvent;
-            if (e && e.preventDefault) {
-                e.preventDefault();
-            } else {
-                e.returnValue = false;
-            }
-        },
+        Registry.prototype = {
+            constructor: Registry,
+            init: function(elem, type, handler, original, namespaces, args, docElem) {
 
-        // stop event propagation
+                var customType = customEvents[type];
 
-        stopPropagation: function() {
-            var e = this.originalEvent;
-            if (e && e.stopPropagation) {
-                e.stopPropagation();
-            } else {
-                e.cancelBubble = true;
-            }
-        },
-        // block any further event processing
-        stop: function() {
-            this.preventDefault();
-            this.stopPropagation();
-            this.stopped = true;
-        },
-
-        stopImmediatePropagation: function() {
-            var e = this.originalEvent;
-            if (e.stopImmediatePropagation) {
-                e.stopImmediatePropagation();
-            }
-            this.isImmediatePropagationStopped = function() {
-                return true;
-            };
-        },
-        isImmediatePropagationStopped: function() {
-            var e = this.originalEvent;
-            return e.isImmediatePropagationStopped && e.isImmediatePropagationStopped();
-        },
-        clone: function(target) {
-            var nE = new Event(this, this.element);
-            nE.currentTarget = target;
-            return nE;
-        }
-    };
-
-    var Registry = function(elem, type, handler, original, namespaces, args, docElem) {
-        return new Registry.prototype.init(elem, type, handler, original, namespaces, args, docElem);
-    };
-
-    Registry.prototype = {
-        constructor: Registry,
-        init: function(elem, type, handler, original, namespaces, args, docElem) {
-
-            var customType = customEvents[type];
-
-            if (type === 'unload') {
-                handler = once(dispatch, elem, type, handler, original);
-            }
-
-            if (customType) {
-                if (customType.condition) {
-                    handler = processHandler(elem, handler, customType.condition, args);
+                if (type === 'unload') {
+                    handler = once(removeHandlers, elem, type, handler, original);
                 }
-                type = customType.base || type;
-            }
 
-            this.element = elem;
-            this.type = type;
-            this.original = original;
-            this.namespaces = namespaces;
-            this.eventType = type;
-            this.target = elem;
-            this.root = docElem;
-            this.handler = processHandler(elem, handler, null, args);
-        },
+                if (customType) {
+                    if (customType.condition) {
+                        handler = createEventHandler(elem, handler, customType.condition, args);
+                    }
+                    type = customType.base || type;
+                }
 
-        inNamespaces: function(checkNamespaces) {
-            var i, j, c = 0;
-            if (!checkNamespaces) {
-                return true;
-            }
-            if (!this.namespaces) {
-                return false;
-            }
-            for (i = checkNamespaces.length; i--;) {
-                for (j = this.namespaces.length; j--;) {
-                    if (checkNamespaces[i] === this.namespaces[j]) {
-                        c++;
+                this.element = elem;
+                this.type = type;
+                this.original = original;
+                this.namespaces = namespaces;
+                this.eventType = type;
+                this.target = elem;
+                this.root = docElem;
+                this.handler = createEventHandler(elem, handler, null, args);
+            },
+
+            inNamespaces: function(checkNamespaces) {
+                var i, j, c = 0;
+                if (!checkNamespaces) {
+                    return true;
+                }
+                if (!this.namespaces) {
+                    return false;
+                }
+                for (i = checkNamespaces.length; i--;) {
+                    for (j = this.namespaces.length; j--;) {
+                        if (checkNamespaces[i] === this.namespaces[j]) {
+                            c++;
+                        }
                     }
                 }
+                return checkNamespaces.length === c;
+            },
+
+            matches: function(checkElement, checkOriginal, checkHandler) {
+                return this.element === checkElement &&
+                    (!checkOriginal || this.original === checkOriginal) &&
+                    (!checkHandler || this.handler === checkHandler);
             }
-            return checkNamespaces.length === c;
-        },
-
-        matches: function(checkElement, checkOriginal, checkHandler) {
-            return this.element === checkElement &&
-                (!checkOriginal || this.original === checkOriginal) &&
-                (!checkHandler || this.handler === checkHandler);
-        }
-    };
-
-    Registry.prototype.init.prototype = Registry.prototype;
-
-    // Add event listener
-
-    this.on = function(events, selector, callback) {
-        this.each(function(elem) {
-            on(elem, events, selector, callback);
-        });
-    };
-
-    // One
-    this.one = function(events, selector, callback) {
-        this.each(function(elem) {
-            one(elem, events, selector, callback);
-        });
-    };
-
-    // Remove event listeners
-    this.off = function(events, callback) {
-        this.each(function(elem) {
-            off(elem, events, callback);
-        });
-    };
-
-    // Trigger events
-    this.trigger = function(events, args) {
-        this.each(function(elem) {
-            trigger(elem, events, args);
-        });
-    };
-    // Clone events
-    this.cloneEvent = function(dest, events) {
-        clone(this.elements[0], dest, events);
-    };
-
-    this.hover = function(fnOver, fnOut) {
-            return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
-        },
-
-        // Populate the custom event list
-
-        _util.each({
-            mouseenter: 'mouseover',
-            mouseleave: 'mouseout',
-            pointerenter: 'pointerover',
-            pointerleave: 'pointerout'
-        }, function(fix, orig) {
-            customEvents[orig] = {
-                base: fix,
-                condition: function(event) {
-                    var target = this,
-                        related = event.relatedTarget;
-                    return !related ? related == null : (related !== target && !_core.contains(related, target));
-                }
-            };
-        });
-
-    // Shortcuts
-
-    _util.each(('blur change click dblclick error focus focusin focusout keydown keypress ' +
-        'keyup load mousedown mouseenter mouseleave mouseout mouseover mouseup ' +
-        'mousemove resize scroll select submit unload change contextmenu').split(' '), function(name) {
-        this[name] = function(callback) {
-            return arguments.length > 0 ?
-                this.on(name, callback) :
-                this.trigger(name);
-
         };
-    }.bind(this));
 
+        Registry.prototype.init.prototype = Registry.prototype;
 
-    return {
-        specialEvents: specialEvents,
-        propHooks: propHooks,
-        mouseProps: mouseProps,
-        commonProps: commonProps,
-        addEvent: addEvent,
-        removeEvent: removeEvent,
-        on: on,
-        one: one,
-        off: off,
-        clone: clone,
-        trigger: trigger
-    };
-});
+        // Add event listener
 
-   // specialEvents.js
+        this.on = function(events, selector, callback) {
+            this.each(function(elem) {
+                on(elem, events, selector, callback);
+            });
+        };
+
+        // One
+        this.one = function(events, selector, callback) {
+            this.each(function(elem) {
+                one(elem, events, selector, callback);
+            });
+        };
+
+        // Remove event listeners
+        this.off = function(events, callback) {
+            this.each(function(elem) {
+                off(elem, events, callback);
+            });
+        };
+
+        // Trigger events
+        this.trigger = function(events, args) {
+            this.each(function(elem) {
+                trigger(elem, events, args);
+            });
+        };
+        // Clone events
+        this.cloneEvents = function(dest, events) {
+            clone(this.elements[0], dest, events);
+        };
+
+        this.hover = function(fnOver, fnOut) {
+                return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
+            },
+
+            // Populate the custom event list
+
+            _util.each({
+                mouseenter: 'mouseover',
+                mouseleave: 'mouseout',
+                pointerenter: 'pointerover',
+                pointerleave: 'pointerout'
+            }, function(fix, orig) {
+                customEvents[orig] = {
+                    base: fix,
+                    condition: function(event) {
+                        var target = this,
+                            related = event.relatedTarget;
+                        return !related ? related == null : (related !== target && !_core.contains(related, target));
+                    }
+                };
+            });
+
+        // Shortcuts
+
+        _util.each(('blur change click dblclick error focus focusin focusout keydown keypress ' +
+            'keyup load mousedown mouseenter mouseleave mouseout mouseover mouseup ' +
+            'mousemove resize scroll select submit unload change contextmenu').split(' '), function(name) {
+            this[name] = function(callback) {
+                return arguments.length > 0 ?
+                    this.on(name, callback) :
+                    this.trigger(name);
+
+            };
+        }.bind(this));
+
+        return {
+            specialEvents: specialEvents,
+            propHooks: propHooks,
+            mouseProps: mouseProps,
+            commonProps: commonProps,
+            addEvent: addEvent,
+            removeEvent: removeEvent,
+            on: on,
+            one: one,
+            off: off,
+            clone: clone,
+            trigger: trigger
+        };
+    });
+    // specialEvents.js
     hAzzle.define('specialEvents', function() {
 
         var _util = hAzzle.require('Util'),

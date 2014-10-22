@@ -3,7 +3,6 @@ hAzzle.define('Support', function() {
 
     // Feature detection of elements
     var cls, MultipleArgs, sortDetached,
-        checkClone,
         noCloneChecked,
 
         assert = function(fn) {
@@ -25,16 +24,12 @@ hAzzle.define('Support', function() {
             }
         },
 
-        checkOn, optSelected, radioValue,
+        optSelected, radioValue,
         input = document.createElement('input'),
         select = document.createElement('select'),
         opt = select.appendChild(document.createElement('option'));
 
     input.type = 'checkbox';
-
-    // Support: iOS<=5.1, Android<=4.2+
-    // Default value for a checkbox should be 'on'
-    checkOn = input.value !== '';
 
     // Support: IE<=11+
     // Must access selectedIndex to make default options select
@@ -73,9 +68,9 @@ hAzzle.define('Support', function() {
         return div.compareDocumentPosition(document.createElement('div')) & 1;
     });
 
-    assert(function(div) {
+    assert(function(adiv) {
         var fragment = document.createDocumentFragment(),
-            div = fragment.appendChild(div),
+            div = fragment.appendChild(adiv),
             input = document.createElement('input');
 
         input.setAttribute('type', 'radio');
@@ -83,7 +78,7 @@ hAzzle.define('Support', function() {
         input.setAttribute('name', 't');
 
         div.appendChild(input);
-        checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+        
         // Support: IE<=11+
         // Make sure textarea (and checkbox) defaultValue is properly cloned
         div.innerHTML = '<textarea>x</textarea>';
@@ -93,14 +88,12 @@ hAzzle.define('Support', function() {
 
     return {
         assert: assert,
-        checkOn: checkOn,
         optSelected: optSelected,
         radioValue: radioValue,
         imcHTML: imcHTML,
         classList: cls,
         multipleArgs: MultipleArgs,
         sortDetached: sortDetached,
-        checkClone: checkClone,
         noCloneChecked: noCloneChecked,
         cS: !!document.defaultView.getComputedStyle
     };

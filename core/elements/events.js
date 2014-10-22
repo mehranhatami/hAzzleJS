@@ -118,7 +118,8 @@ hAzzle.define('Events', function() {
             }
         }],
 
-        processHandler = function(elem, fn, condition, args) {
+        // Create event handler
+        createEventHandler = function(elem, fn, condition, args) {
 
             var call = function(evt, ergs) {
                     return fn.apply(elem, args ? _collection.slice(ergs).concat(args) : ergs);
@@ -149,7 +150,7 @@ hAzzle.define('Events', function() {
 
         iteratee = function(elem, type, original, handler, root, callback) {
 
-            var t, prefix = root ? 'r' : '$';
+            var t, prefix = root ? '¤' : '#';
 
             if (!type || type === '*') {
 
@@ -180,7 +181,7 @@ hAzzle.define('Events', function() {
         // Check collection for registered event,
         // match element and handler
         isRegistered = function(elem, type, original, root) {
-            var i, list = map[(root ? 'r' : '$') + type];
+            var i, list = map[(root ? '¤' : '#') + type];
             if (list) {
                 for (i = list.length; i--;) {
                     if (!list[i].root && list[i].matches(elem, original, null)) {
@@ -205,7 +206,7 @@ hAzzle.define('Events', function() {
         registrer = function(entry) {
 
             var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
-                key = (entry.root ? 'r' : '$') + entry.type;
+                key = (entry.root ? '¤' : '#') + entry.type;
             (map[key] || (map[key] = [])).push(entry);
             return contains;
         },
@@ -215,13 +216,13 @@ hAzzle.define('Events', function() {
                 list.splice(i, 1);
                 entry.removed = true;
                 if (list.length === 0) {
-                    delete map[(entry.root ? 'r' : '$') + entry.type];
+                    delete map[(entry.root ? '¤' : '#') + entry.type];
                 }
                 return false;
             });
         },
 
-        rootListener = function(event, type) {
+        rootHandler = function(event, type) {
 
             var listeners = getRegistered(this, type || event.type, null, false),
                 l = listeners.length,
@@ -239,14 +240,7 @@ hAzzle.define('Events', function() {
             }
         },
 
-        once = function(rm, elem, type, callback, original) {
-            return function() {
-                callback.apply(this, arguments);
-                rm(elem, type, original);
-            };
-        },
-
-        dispatch = function(elem, type, handler, ns) {
+        removeHandlers = function(elem, type, handler, ns) {
 
             type = type && type.replace(nameRegex, '');
 
@@ -268,9 +262,16 @@ hAzzle.define('Events', function() {
 
             for (i in removed) {
                 if (!isRegistered(elem, removed[i].t, null, false)) {
-                    elem.removeEventListener(removed[i].t, rootListener, false);
+                    elem.removeEventListener(removed[i].t, rootHandler, false);
                 }
             }
+        },
+
+        once = function(rm, elem, type, callback, original) {
+            return function() {
+                callback.apply(this, arguments);
+                rm(elem, type, original);
+            };
         },
 
         // Find event delegate
@@ -308,6 +309,8 @@ hAzzle.define('Events', function() {
             };
             return handler;
         },
+
+        // Add event to element
 
         on = function(elem, types, selector, callback, one) {
 
@@ -387,8 +390,8 @@ hAzzle.define('Events', function() {
                     if ((hooks = specialEvents[type])) {
                         hooks(elem, type);
                     }
-
-                    elem.addEventListener(type, rootListener, false);
+                    // Add rootHandler
+                    elem.addEventListener(type, rootHandler, false);
                 }
             }
 
@@ -398,7 +401,7 @@ hAzzle.define('Events', function() {
         one = function(elem, types, selector, callback) {
             return on(elem, types, selector, callback, 1);
         },
-        // Detach an event or set of events from an element
+        // Remove event from element
         off = function(elem, types, callback) {
 
             if (elem instanceof hAzzle) {
@@ -427,10 +430,10 @@ hAzzle.define('Events', function() {
                     namespaces = namespaces.split('.');
                 }
 
-                dispatch(elem, type, callback, namespaces);
+                removeHandlers(elem, type, callback, namespaces);
 
             } else if (_types.isType('Function')(types)) {
-                dispatch(elem, null, types);
+                removeHandlers(elem, null, types);
             } else {
                 for (k in types) {
                     off(elem, k, types[k]);
@@ -439,6 +442,8 @@ hAzzle.define('Events', function() {
 
             return elem;
         },
+
+        // Trigger specific event for element collection
 
         trigger = function(elem, type, args) {
 
@@ -566,8 +571,6 @@ hAzzle.define('Events', function() {
             }
         };
 
-    // Event is based on DOM3 Events as specified by the ECMAScript Language Binding
-    // http://www.w3.org/TR/2003/WD-DOM-Level-3-Events-20030331/ecma-script-binding.html
     Event.prototype = {
         constructor: Event,
         // prevent default action
@@ -629,12 +632,12 @@ hAzzle.define('Events', function() {
             var customType = customEvents[type];
 
             if (type === 'unload') {
-                handler = once(dispatch, elem, type, handler, original);
+                handler = once(removeHandlers, elem, type, handler, original);
             }
 
             if (customType) {
                 if (customType.condition) {
-                    handler = processHandler(elem, handler, customType.condition, args);
+                    handler = createEventHandler(elem, handler, customType.condition, args);
                 }
                 type = customType.base || type;
             }
@@ -646,7 +649,7 @@ hAzzle.define('Events', function() {
             this.eventType = type;
             this.target = elem;
             this.root = docElem;
-            this.handler = processHandler(elem, handler, null, args);
+            this.handler = createEventHandler(elem, handler, null, args);
         },
 
         inNamespaces: function(checkNamespaces) {
