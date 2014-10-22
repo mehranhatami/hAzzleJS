@@ -51,7 +51,7 @@ hAzzle.define('curCSS', function() {
             if (elem) {
                 if (_storage.private.get(elem, 'computed') === undefined) {
                     _storage.private.access(elem, 'computed', {
-                        computedStyle: null,
+                        computedStyle: null
                     });
                 }
                 return _storage.private.get(elem, 'computed');

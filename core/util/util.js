@@ -389,12 +389,10 @@ hAzzle.define('Util', function() {
                 return ctx;
             }
         },
-        int = function(str) {
-            return parseInt(str, 10);
-        },
+
         // shallowCopy
         shallowCopy = function(target, source, deep) {
-var key;
+            var key;
             for (key in source)
 
                 if (deep && (_types.isPlainObject(source[key]) || _types.isArray(source[key]))) {
@@ -425,10 +423,10 @@ var key;
             return r;
         },
         consoleLog = function(msg) {
-        if (typeof console !== 'undefined' && _types.isHostMethod(console, 'log')) {
-            console.log(msg);
+            if (typeof console !== 'undefined' && _types.isHostMethod(console, 'log')) {
+                console.log(msg);
+            }
         }
-    }
 
     return {
         each: each,
@@ -451,10 +449,9 @@ var key;
         now: Date.now,
         bind: bind,
         has: has,
-        int: int,
         noop: function() {},
         shallowCopy: shallowCopy,
         reject: reject,
-        consoleLog:consoleLog
+        consoleLog: consoleLog
     };
 });

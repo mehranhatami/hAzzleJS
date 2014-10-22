@@ -23,7 +23,7 @@ hAzzle.define('Setters', function() {
 
         propMap = {
             'class': 'className',
-            'for': 'htmlFor',
+            'for': 'htmlFor'
         },
         attrHooks = {
             get: {},

@@ -310,6 +310,6 @@ hAzzle.define('Storage', function() {
 
     return {
         private: _privateData,
-        data: _userData,
+        data: _userData
     };
 });

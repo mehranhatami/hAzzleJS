@@ -348,6 +348,6 @@ hAzzle.define('Core', function() {
         isHTML: !Core.isXML(winDoc),
         expando: Core.expando,
         uniqueSort: uniqueSort,
-        contains: Core.contains,
+        contains: Core.contains
     };
 });

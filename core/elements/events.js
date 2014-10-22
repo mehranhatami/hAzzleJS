@@ -759,6 +759,6 @@ hAzzle.define('Events', function() {
         one: one,
         off: off,
         clone: clone,
-        trigger: trigger,
+        trigger: trigger
     };
 });
