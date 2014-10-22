@@ -8,9 +8,9 @@ module.exports = function (config) {
 
   var hAzzleModules = [
       //hAzzle modules
-      'modules/hazzle.js',
-      'modules/util/types.js',
-      'modules/util/util.js'
+      'core/hazzle.js',
+      'core/util/types.js',
+      'core/util/util.js'
     ],
     hAzzleModulesTests = hAzzleModules.map(function (module) {
       return 'test/' + module;
