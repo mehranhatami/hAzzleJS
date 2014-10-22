@@ -232,10 +232,6 @@ hAzzle.define('Setters', function() {
         var hooks, ret, isFunction,
             elem = this.elements[0];
 
-        if (!elem && !elem.nodeName) {
-            return;
-        }
-
         if (!arguments.length) {
             if (elem) {
                 hooks = valHooks.get[elem.type] ||

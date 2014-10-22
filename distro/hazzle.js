@@ -1686,215 +1686,214 @@ hAzzle.define('Support', function() {
         };
     });
 
-    // jiesa.js
-    hAzzle.define('Jiesa', function() {
+// jiesa.js
+hAzzle.define('Jiesa', function() {
 
-        var _util = hAzzle.require('Util'),
-            _core = hAzzle.require('Core'),
-            _collection = hAzzle.require('Collection'),
-            _support = hAzzle.require('Support'),
+    var _util = hAzzle.require('Util'),
+        _core = hAzzle.require('Core'),
+        _collection = hAzzle.require('Collection'),
+        _support = hAzzle.require('Support'),
 
-            reSpace = /[\n\t\r]/g,
-            idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-            tagNameAndOrIdAndOrClassExp = /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/;
+        reSpace = /[\n\t\r]/g,
+        idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
+        tagNameAndOrIdAndOrClassExp = /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/;
 
-        /**
-         * Determine if the element contains the klass.
-         * Uses the `classList` api if it's supported.
-         * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
-    
-         *
-         * @param {Object} el
-         * @param {String} klass
-         *
-         * @return {Array}
-         */
+    /**
+     * Determine if the element contains the klass.
+     * Uses the `classList` api if it's supported.
+     * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
+     *
+     * @param {Object} el
+     * @param {String} klass
+     *
+     * @return {Array}
+     */
 
-        function containsClass(el, klass) {
-            if (_support.classList) {
-                return el.classList.contains(klass);
-            } else {
-                return (' ' + el.className + ' ').replace(reSpace, ' ').indexOf(klass) >= 0;
-            }
+    function containsClass(el, klass) {
+        if (_support.classList) {
+            return el.classList.contains(klass);
+        } else {
+            return (' ' + el.className + ' ').replace(reSpace, ' ').indexOf(klass) >= 0;
+        }
+    }
+
+    /**
+     * Find elements by selectors.
+     *
+     * Supported:
+     * - #foo
+     * - .foo
+     * - div (tagname)
+     *
+     * @param {String} sel The selector string
+     * @param {Object} ctx The context. Default is document.
+     * @param {Bool} c Save to cache? Default is true.
+     */
+
+    function Jiesa(sel, ctx) {
+        var m, nodeType, elem, results = [];
+
+        ctx = ctx || document;
+
+        if (!sel || typeof sel !== 'string') {
+            return results;
         }
 
-        /**
-         * Find elements by selectors.
-         *
-         * Supported:
-         * - #foo
-         * - .foo
-         * - div (tagname)
-         *
-         * @param {String} sel The selector string
-         * @param {Object} ctx The context. Default is document.
-         * @param {Bool} c Save to cache? Default is true.
-         */
+        if ((nodeType = ctx.nodeType) !== 1 && nodeType !== 9 && nodeType !== 11) {
+            return [];
+        }
 
-        function Jiesa(sel, ctx) {
-            var m, nodeType, elem, results = [];
-
-            ctx = ctx || document;
-
-            if (!sel || typeof sel !== 'string') {
-                return results;
-            }
-
-            if ((nodeType = ctx.nodeType) !== 1 && nodeType !== 9 && nodeType !== 11) {
-                return [];
-            }
-
-            // Split selectors by comma if it's exists.
-            if (_util.indexOf(sel, ',') !== -1 && (m = sel.split(','))) {
-                // Comma separated selectors. E.g $('p, a');
-                // unique result, e.g "ul id=foo class=foo" should not appear two times.
-                _util.each(m, function(el) {
-                    _util.each(Jiesa(el), function(el) {
-                        // FIXME! For better performance, do a test to see if we only can
-                        // use inArray() here, and not bother the DOM.
-
-                        if (!_core.contains(results, el)) {
-                            results.push(el);
-                        }
-                    });
+        // Split selectors by comma if it's exists.
+        if (_util.indexOf(sel, ',') !== -1 && (m = sel.split(','))) {
+            // Comma separated selectors. E.g $('p, a');
+            // unique result, e.g "ul id=foo class=foo" should not appear two times.
+            _util.each(m, function(el) {
+                _util.each(Jiesa(el), function(el) {
+                    // FIXME! For better performance, do a test to see if we only can
+                    // use inArray() here, and not bother the DOM.
+                    if (!_core.contains(results, el)) {
+                        results.push(el);
+                    }
                 });
-                return results;
-            }
+            });
+            return results;
+        }
 
-            if (_core.isHTML) {
+        if (_core.isHTML) {
 
-                if ((m = idClassTagNameExp.exec(sel))) {
-                    if ((sel = m[1])) {
-                        if (nodeType === 9) {
-                            elem = ctx.getElementById(sel);
-                            if (elem && elem.parentNode) {
-                                if (elem.id === sel) {
-                                    return [elem];
-                                }
-                            } else {
-                                return [];
-
-                            }
-                        } else {
-                            // Context is not a document
-                            if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(sel)) &&
-                                _core.contains(ctx, elem) && elem.id === m) {
+            if ((m = idClassTagNameExp.exec(sel))) {
+                if ((sel = m[1])) {
+                    if (nodeType === 9) {
+                        elem = ctx.getElementById(sel);
+                        if (elem && elem.parentNode) {
+                            if (elem.id === sel) {
                                 return [elem];
                             }
+                        } else {
+                            return [];
                         }
-                    } else if ((sel = m[2])) {
-                        return _collection.slice(ctx.getElementsByClassName(sel));
-                    } else if ((sel = m[3])) {
-                        return _collection.slice(ctx.getElementsByTagName(sel));
-                    }
-                    // E.g. hAzzle( 'span.selected' )  
-                } else if ((m = tagNameAndOrIdAndOrClassExp.exec(sel))) {
-                    var result = ctx.getElementsByTagName(m[1]),
-                        id = m[2],
-                        className = m[3];
-                    _util.each(result, function(el) {
-                        if (el.id === id || containsClass(el, className)) {
-                            results.push(el);
+                    } else {
+                        // Context is not a document
+                        if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(sel)) &&
+                            _core.contains(ctx, elem) && elem.id === m) {
+                            return [elem];
                         }
-                    });
-                    return results;
-                } else {
-                    return _collection.slice(document.querySelectorAll(sel));
-                }
-            }
-        }
-
-        // Find is not the same as 'Jiesa', but a optimized version for 
-        // better performance
-
-        this.find = function(selector, context, /*internal*/ internal) {
-
-            // Only for use by hAzzle.js module
-
-            if (internal) {
-                return Jiesa(selector, context)
-            }
-
-            if (typeof selector === 'string') {
-
-                // Single look-up should always be faster then multiple look-ups
-
-                if (this.length === 1) {
-                    return new hAzzle(Jiesa(selector, this.elements[0]));
-                } else {
-                    elements = _collection.reduce(this.elements, function(els, element) {
-                        return new hAzzle(els.concat(_collection.slice(Jiesa(selector, element))));
-                    }, []);
-                }
-            }
-
-            var i,
-                len = this.length,
-                self = this.elements;
-
-            return new hAzzle(_util.filter(hAzzle(selector).elements, function(node) {
-                for (i = 0; i < len; i++) {
-                    if (_core.contains(self[i], node)) {
-                        return true;
                     }
+                } else if ((sel = m[2])) {
+                    return _collection.slice(ctx.getElementsByClassName(sel));
+                } else if ((sel = m[3])) {
+                    return _collection.slice(ctx.getElementsByTagName(sel));
                 }
-            }));
-        };
-
-        // Filter element collection
-
-        this.filter = function(selector, not) {
-            if (selector === undefined) {
-                return this;
-            }
-            if (typeof selector === 'function') {
-                var els = [];
-                this.each(function(el, index) {
-                    if (selector.call(el, index)) {
-                        els.push(el);
+                // E.g. hAzzle( 'span.selected' )  
+            } else if ((m = tagNameAndOrIdAndOrClassExp.exec(sel))) {
+                var result = ctx.getElementsByTagName(m[1]),
+                    id = m[2],
+                    className = m[3];
+                _util.each(result, function(el) {
+                    if (el.id === id || containsClass(el, className)) {
+                        results.push(el);
                     }
                 });
+                return results;
+            } else { // Fallback to QSA
+                     // FIXME! Need to finish developing Jiesa 
+                return _collection.slice(document.querySelectorAll(sel));
+            }
+        }
+    }
 
-                return new hAzzle(els);
+    // Find is not the same as 'Jiesa', but a optimized version for 
+    // better performance
+
+    this.find = function(selector, context, /*internal*/ internal) {
+
+        // Only for use by hAzzle.js module
+
+        if (internal) {
+            return Jiesa(selector, context)
+        }
+
+        if (typeof selector === 'string') {
+
+            // Single look-up should always be faster then multiple look-ups
+
+            if (this.length === 1) {
+                return hAzzle(Jiesa(selector, this.elements[0]));
             } else {
-                return this.filter(function() {
-                    return matches(this, selector) != (not || false);
-                });
+                elements = _collection.reduce(this.elements, function(els, element) {
+                    return hAzzle(els.concat(_collection.slice(Jiesa(selector, element))));
+                }, []);
             }
-        };
-
-        function matches(element, selector) {
-            var match;
-
-            if (!element || !_util.isElement(element) || !selector) {
-                return false;
-            }
-
-            if (selector.nodeType) {
-                return element === selector;
-            }
-
-            // If instance of hAzzle
-
-            if (selector instanceof hAzzle) {
-                return _util.some(selector.elements, function(selector) {
-                    return matches(element, selector);
-                });
-            }
-
-            if (element === document) {
-                return false;
-            }
-
-            return element.matches(selector)
-
         }
 
-        return {
-            matches: matches,
-            find: Jiesa
-        };
-    });
+        var i,
+            len = this.length,
+            self = this.elements;
+
+        return hAzzle(_util.filter(hAzzle(selector).elements, function(node) {
+            for (i = 0; i < len; i++) {
+                if (_core.contains(self[i], node)) {
+                    return true;
+                }
+            }
+        }));
+    };
+
+    // Filter element collection
+
+    this.filter = function(selector, not) {
+        
+        if (selector === undefined) {
+            return this;
+        } 
+        if (typeof selector === 'function') {
+            var els = [];
+            this.each(function(el, index) {
+                if (selector.call(el, index)) {
+                    els.push(el);
+                }
+            });
+
+            return hAzzle(els);
+            
+        } else {
+            return this.filter(function() {
+                return matches(this, selector) != (not || false);
+            });
+        }
+    };
+
+    function matches(element, selector) {
+        var match;
+
+        if (!element || !_util.isElement(element) || !selector) {
+            return false;
+        }
+
+        if (selector.nodeType) {
+            return element === selector;
+        }
+
+        // If instance of hAzzle
+
+        if (selector instanceof hAzzle) {
+            return _util.some(selector.elements, function(selector) {
+                return matches(element, selector);
+            });
+        }
+
+        if (element === document) {
+            return false;
+        }
+
+        return element.matches(selector)
+    }
+
+    return {
+        matches: matches,
+        find: Jiesa
+    };
+});
 
     // strings.js
     hAzzle.define('Strings', function() {
@@ -3368,416 +3367,412 @@ hAzzle.define('Support', function() {
             prepend: prepend
         };
     });
-    // setters.js
-    hAzzle.define('Setters', function() {
+// setters.js
+hAzzle.define('Setters', function() {
 
-        var _util = hAzzle.require('Util'),
-            _core = hAzzle.require('Core'),
-            _types = hAzzle.require('Types'),
-            _has = hAzzle.require('has'),
-            _strings = hAzzle.require('Strings'),
-            _concat = Array.prototype.concat,
-            SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
-            whiteSpace = /\S+/g,
-            wreturn = /\r/g,
-            wrapBrackets = /^[\[\s]+|\s+|[\]\s]+$/g, // replace whitespace, trim [] brackets
-            arrWhitespace = /\s*[\s\,]+\s*/,
-            escapeDots = /\\*\./g, // find periods w/ and w/o preceding backslashes
-            boolElemArray = ('input select option textarea button form details').split(' '),
-            boolAttrArray = ('multiple selected checked disabled readonly required ' +
-                'async autofocus compact nowrap declare noshade hreflang onload src' +
-                'noresize defaultChecked autoplay controls defer autocomplete ' +
-                'hidden tabindex readonly type accesskey dropzone spellcheck ismap loop scoped open').split(' '),
-            boolAttr = {}, // Boolean attributes
-            boolElem = {}, // Boolean elements
+    var _util = hAzzle.require('Util'),
+        _core = hAzzle.require('Core'),
+        _types = hAzzle.require('Types'),
+        _has = hAzzle.require('has'),
+        _strings = hAzzle.require('Strings'),
+        _concat = Array.prototype.concat,
+        SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
+        whiteSpace = /\S+/g,
+        wreturn = /\r/g,
+        wrapBrackets = /^[\[\s]+|\s+|[\]\s]+$/g, // replace whitespace, trim [] brackets
+        arrWhitespace = /\s*[\s\,]+\s*/,
+        escapeDots = /\\*\./g, // find periods w/ and w/o preceding backslashes
+        boolElemArray = ('input select option textarea button form details').split(' '),
+        boolAttrArray = ('multiple selected checked disabled readonly required ' +
+            'async autofocus compact nowrap declare noshade hreflang onload src' +
+            'noresize defaultChecked autoplay controls defer autocomplete ' +
+            'hidden tabindex readonly type accesskey dropzone spellcheck ismap loop scoped open').split(' '),
+        boolAttr = {}, // Boolean attributes
+        boolElem = {}, // Boolean elements
 
-            propMap = {
-                'class': 'className',
-                'for': 'htmlFor'
-            },
-            attrHooks = {
-                get: {},
-                set: {}
-            },
-            propHooks = {
-                get: {},
-                set: {}
-            },
-            nodeHooks = {
-                get: {},
-                set: {}
-            },
-            boolHooks = {
-                get: {},
-                set: {}
-            },
-            valHooks = {
-                get: {},
-                set: {}
-            },
+        propMap = {
+            'class': 'className',
+            'for': 'htmlFor'
+        },
+        attrHooks = {
+            get: {},
+            set: {}
+        },
+        propHooks = {
+            get: {},
+            set: {}
+        },
+        nodeHooks = {
+            get: {},
+            set: {}
+        },
+        boolHooks = {
+            get: {},
+            set: {}
+        },
+        valHooks = {
+            get: {},
+            set: {}
+        },
 
-            SVGAttribute = function(prop) {
+        SVGAttribute = function(prop) {
 
-                if (_has.ie || (_has.has('android') && !_has.has('chrome'))) {
-                    SVGAttributes += '|transform';
-                }
+            if (_has.ie || (_has.has('android') && !_has.has('chrome'))) {
+                SVGAttributes += '|transform';
+            }
 
-                return new RegExp('^(' + SVGAttributes + ')$', 'i').test(prop);
-            },
+            return new RegExp('^(' + SVGAttributes + ')$', 'i').test(prop);
+        },
 
-            getElem = function(elem) {
-                if (elem instanceof hAzzle) {
-                    return elem.elements;
-                }
-                return elem;
+        getElem = function(elem) {
+            if (elem instanceof hAzzle) {
+                return elem.elements;
+            }
+            return elem;
 
-            },
+        },
 
-            // Get names on the boolean attributes
+        // Get names on the boolean attributes
 
-            getBooleanAttrName = function(elem, name) {
-                // check dom last since we will most likely fail on name
-                var booleanAttr = boolAttr[name.toLowerCase()];
-                // booleanAttr is here twice to minimize DOM access
-                return booleanAttr && boolElem[elem.nodeName] && booleanAttr;
-            },
+        getBooleanAttrName = function(elem, name) {
+            // check dom last since we will most likely fail on name
+            var booleanAttr = boolAttr[name.toLowerCase()];
+            // booleanAttr is here twice to minimize DOM access
+            return booleanAttr && boolElem[elem.nodeName] && booleanAttr;
+        },
 
-            removeAttr = function(el, value) {
+        removeAttr = function(el, value) {
 
-                var name, propName,
-                    i = 0,
-                    elem = getElem(el),
-                    keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
+            var name, propName,
+                i = 0,
+                elem = getElem(el),
+            keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
 
-                    l = keys.length;
+                l = keys.length;
 
-                for (; i < l; i++) {
+            for (; i < l; i++) {
 
-                    name = keys[i];
+                name = keys[i];
 
-                    // Get the properties
+                // Get the properties
 
-                    propName = propMap[name] || name;
+                propName = propMap[name] || name;
 
-                    if (getBooleanAttrName(elem, name)) {
+                if (getBooleanAttrName(elem, name)) {
 
-                        elem[propName] = false;
-
-                    } else {
-
-                        elem.removeAttribute(name);
-                    }
-                }
-            },
-
-            // Toggle attributes        
-
-            toggleAttr = function(elem, attr, force) {
-
-                elem = getElem(elem);
-
-                typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
-
-                var opposite = !force;
-
-                force ? Attr(elem, attr, '') : removeAttr(elem, attr);
-
-                return elem[attr] === opposite ? elem[attr] = force : force;
-
-            },
-
-            // Convert list of attr names or data- keys into a selector.
-
-            toAttrSelector = function(list, prefix, join) {
-                var l, s, i = 0,
-                    j = 0,
-                    emp = '',
-                    arr = [];
-                prefix = true === prefix;
-                list = typeof list == 'string' ? list.split(arrWhitespace) : typeof list == 'number' ? '' + list : list;
-                for (l = list.length; i < l;) {
-                    s = list[i++];
-                    s = prefix ? _strings.hyphenate(s) : s.replace(wrapBrackets, emp);
-                    s && (arr[j++] = s);
-                }
-                // Escape periods to allow atts like `[data-the.wh_o]`
-                // @link api.jquery.com/category/selectors/
-                // @link stackoverflow.com/q/13283699/770127
-                return false === join ? arr : j ? '[' + arr.join('],[').replace(escapeDots, '\\\\.') + ']' : emp;
-            },
-
-            // get/set attribute
-
-            Attr = function(elem, name, value) {
-
-                elem = getElem(elem);
-
-                var nodeType = elem ? elem.nodeType : undefined,
-                    hooks, ret, notxml;
-
-                if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
-                    return '';
-                }
-                // don't get/set attributes on text, comment and attribute nodes
-
-
-                // Fallback to prop when attributes are not supported
-                if (typeof elem.getAttribute === 'undefined') {
-                    return Prop(elem, name, value);
-                }
-
-                notxml = nodeType !== 1 || !_core.isXML(elem);
-
-                if (notxml) {
-
-                    name = name.toLowerCase();
-                    hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
-                        getBooleanAttrName(elem, name) ?
-                        boolHooks[value === 'undefined' ?
-                            'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
-                }
-
-                // getAttribute
-
-                if (value === undefined) {
-
-                    if (hooks && (ret = hooks.get(elem, name))) {
-                        if (ret !== null) {
-                            return ret;
-                        }
-                    }
-
-                    ret = elem.getAttribute(name, 2);
-                    // Non-existent attributes return null, we normalize to undefined
-                    return ret == null ?
-                        undefined :
-                        ret;
-                }
-
-                // setAttribute          
-
-                if (value === null) {
-                    removeAttr(elem, name);
-                } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
-                    return ret;
-                } else {
-                    elem.setAttribute(name, value + '');
-                }
-
-            },
-
-            Prop = function(elem, name, value) {
-
-                elem = getElem(elem);
-
-                var nodeType = elem ? elem.nodeType : undefined,
-                    hook, ret;
-
-                if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
-                    return '';
-                }
-                if (nodeType !== 1 || _core.isHTML) {
-
-                    // Fix name and attach hooks
-                    name = propMap[name] || name;
-                    hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
-                }
-
-                if (typeof value !== 'undefined') {
-
-                    return hook && (ret = hook.set(elem, value, name)) !== undefined ?
-                        ret :
-                        (elem[name] = value);
+                    elem[propName] = false;
 
                 } else {
 
-                    return hook && (ret = hook(elem, name)) !== null ?
-                        ret :
-                        elem[name];
+                    elem.removeAttribute(name);
                 }
-            };
+            }
+        },
 
-        this.val = function(value) {
+        // Toggle attributes        
 
-            var hooks, ret, isFunction,
-                elem = this.elements[0];
+        toggleAttr = function(elem, attr, force) {
 
-            if (!elem && !elem.nodeName) {
+            elem = getElem(elem);
+
+            typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
+
+            var opposite = !force;
+
+            force ? Attr(elem, attr, '') : removeAttr(elem, attr);
+
+            return elem[attr] === opposite ? elem[attr] = force : force;
+
+        },
+
+        // Convert list of attr names or data- keys into a selector.
+
+        toAttrSelector = function(list, prefix, join) {
+            var l, s, i = 0,
+                j = 0,
+                emp = '',
+                arr = [];
+            prefix = true === prefix;
+            list = typeof list == 'string' ? list.split(arrWhitespace) : typeof list == 'number' ? '' + list : list;
+            for (l = list.length; i < l;) {
+                s = list[i++];
+                s = prefix ? _strings.hyphenate(s) : s.replace(wrapBrackets, emp);
+                s && (arr[j++] = s);
+            }
+            // Escape periods to allow atts like `[data-the.wh_o]`
+            // @link api.jquery.com/category/selectors/
+            // @link stackoverflow.com/q/13283699/770127
+            return false === join ? arr : j ? '[' + arr.join('],[').replace(escapeDots, '\\\\.') + ']' : emp;
+        },
+
+        // get/set attribute
+
+        Attr = function(elem, name, value) {
+
+            elem = getElem(elem);
+
+            var nodeType = elem ? elem.nodeType : undefined,
+                hooks, ret, notxml;
+
+            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
+                return '';
+            }
+            // don't get/set attributes on text, comment and attribute nodes
+
+
+            // Fallback to prop when attributes are not supported
+            if (typeof elem.getAttribute === 'undefined') {
+                return Prop(elem, name, value);
+            }
+
+            notxml = nodeType !== 1 || !_core.isXML(elem);
+
+            if (notxml) {
+
+                name = name.toLowerCase();
+                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
+                    getBooleanAttrName(elem, name) ?
+                    boolHooks[value === 'undefined' ?
+                        'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
+            }
+
+            // getAttribute
+
+            if (value === undefined) {
+
+                if (hooks && (ret = hooks.get(elem, name))) {
+                    if (ret !== null) {
+                        return ret;
+                    }
+                }
+
+                ret = elem.getAttribute(name, 2);
+                // Non-existent attributes return null, we normalize to undefined
+                return ret == null ?
+                    undefined :
+                    ret;
+            }
+
+            // setAttribute          
+
+            if (value === null) {
+                removeAttr(elem, name);
+            } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
+                return ret;
+            } else {
+                elem.setAttribute(name, value + '');
+            }
+
+        },
+
+        Prop = function(elem, name, value) {
+
+            elem = getElem(elem);
+
+            var nodeType = elem ? elem.nodeType : undefined,
+                hook, ret;
+
+            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
+                return '';
+            }
+            if (nodeType !== 1 || _core.isHTML) {
+
+                // Fix name and attach hooks
+                name = propMap[name] || name;
+                hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
+            }
+
+            if (typeof value !== 'undefined') {
+
+                return hook && (ret = hook.set(elem, value, name)) !== undefined ?
+                    ret :
+                    (elem[name] = value);
+
+            } else {
+
+                return hook && (ret = hook(elem, name)) !== null ?
+                    ret :
+                    elem[name];
+            }
+        };
+
+    this.val = function(value) {
+
+        var hooks, ret, isFunction,
+            elem = this.elements[0];
+
+        if (!arguments.length) {
+            if (elem) {
+                hooks = valHooks.get[elem.type] ||
+                    valHooks.get[elem.nodeName.toLowerCase()];
+
+                if (hooks) {
+                    return hooks(elem, 'value');
+                }
+
+                ret = elem.value;
+
+                return typeof ret === 'string' ?
+                    // Handle most common string cases
+                    ret.replace(wreturn, '') :
+                    // Handle cases where value is null/undef or number
+                    ret == null ? '' : ret;
+            }
+
+            return;
+        }
+
+        isFunction = _types.isFunction(value);
+
+        return this.each(function(elem, index) {
+            var val;
+
+            if (elem.nodeType !== 1) {
                 return;
             }
 
-            if (!arguments.length) {
-                if (elem) {
-                    hooks = valHooks.get[elem.type] ||
-                        valHooks.get[elem.nodeName.toLowerCase()];
-
-                    if (hooks) {
-                        return hooks(elem, 'value');
-                    }
-
-                    ret = elem.value;
-
-                    return typeof ret === 'string' ?
-                        // Handle most common string cases
-                        ret.replace(wreturn, '') :
-                        // Handle cases where value is null/undef or number
-                        ret == null ? '' : ret;
-                }
-
-                return;
+            if (isFunction) {
+                val = value.call(elem, index, hAzzle(elem).val());
+            } else {
+                val = value;
             }
 
-            isFunction = _types.isFunction(value);
+            // Treat null/undefined as ""; convert numbers to string
+            if (val == null) {
+                val = '';
 
-            return this.each(function(elem, index) {
-                var val;
+            } else if (typeof val === "number") {
+                val += '';
 
-                if (elem.nodeType !== 1) {
-                    return;
-                }
-
-                if (isFunction) {
-                    val = value.call(elem, index, hAzzle(elem).val());
-                } else {
-                    val = value;
-                }
-
-                // Treat null/undefined as ""; convert numbers to string
-                if (val == null) {
-                    val = '';
-
-                } else if (typeof val === "number") {
-                    val += '';
-
-                } else if (_types.isArray(val)) {
-                    val = _util.map(val, function(value) {
-                        return value == null ? "" : value + "";
-                    });
-                }
-
-                hooks = valHooks.set[elem.type] || valHooks.set[elem.nodeName.toLowerCase()];
-
-                // If set returns undefined, fall back to normal setting
-                if (!hooks || hooks(elem, val, 'value') === undefined) {
-                    elem.value = val;
-                }
-            });
-        };
-
-
-        this.hasAttr = function(name) {
-            return name && typeof this.attr(name) !== 'undefined';
-        };
-
-        // Toggle properties on DOM elements
-
-        this.toggleProp = function(prop) {
-            return this.each(function(elem) {
-                return elem.prop(prop, !elem.prop(prop));
-            });
-        };
-
-        this.prop = function(name, value) {
-            var elem = this.elements;
-            if (typeof name === 'object') {
-                return this.each(function(elem) {
-                    _util.each(name, function(value, key) {
-                        Prop(elem, key, value);
-                    });
+            } else if (_types.isArray(val)) {
+                val = _util.map(val, function(value) {
+                    return value == null ? "" : value + "";
                 });
             }
 
-            if (typeof value === 'undefined') {
-                return Prop(elem[0], name);
+            hooks = valHooks.set[elem.type] || valHooks.set[elem.nodeName.toLowerCase()];
+
+            // If set returns undefined, fall back to normal setting
+            if (!hooks || hooks(elem, val, 'value') === undefined) {
+                elem.value = val;
             }
+        });
+    };
 
-            this.each(elem, function(elem) {
-                Prop(elem, name, value);
 
-            });
-        };
+    this.hasAttr = function(name) {
+        return name && typeof this.attr(name) !== 'undefined';
+    };
 
-        // Toggle properties on DOM elements
+    // Toggle properties on DOM elements
 
-        this.toggleProp = function(prop) {
+    this.toggleProp = function(prop) {
+        return this.each(function(elem) {
+            return elem.prop(prop, !elem.prop(prop));
+        });
+    };
+
+    this.prop = function(name, value) {
+        var elem = this.elements;
+        if (typeof name === 'object') {
             return this.each(function(elem) {
-                return elem.prop(prop, !elem.prop(prop));
+                _util.each(name, function(value, key) {
+                    Prop(elem, key, value);
+                });
             });
-        };
+        }
 
-        this.removeProp = function(name) {
-            return this.each(function() {
-                delete this[propMap[name] || name];
-            });
-        };
+        if (typeof value === 'undefined') {
+            return Prop(elem[0], name);
+        }
 
-        this.removeAttr = function(value) {
+        this.each(elem, function(elem) {
+            Prop(elem, name, value);
+
+        });
+    };
+
+    // Toggle properties on DOM elements
+
+    this.toggleProp = function(prop) {
+        return this.each(function(elem) {
+            return elem.prop(prop, !elem.prop(prop));
+        });
+    };
+
+    this.removeProp = function(name) {
+        return this.each(function() {
+            delete this[propMap[name] || name];
+        });
+    };
+
+    this.removeAttr = function(value) {
+        return this.each(function(elem) {
+            removeAttr(elem, value);
+        });
+    };
+
+    this.attr = function(name, value) {
+
+        var elem = this.elements;
+
+        if (typeof name === 'object') {
             return this.each(function(elem) {
-                removeAttr(elem, value);
+                _util.each(name, function(value, key) {
+                    Attr(elem, key, value);
+                });
             });
-        };
+        }
+        return typeof value === 'undefined' ?
+            Attr(elem[0], name) :
+            this.each(function(elem) {
+                Attr(elem, name, value);
+            });
+    };
 
-        this.attr = function(name, value) {
+    //  Check if  element has an attribute
 
-            var elem = this.elements;
+    this.hasAttr = function(name) {
+        return name && typeof this.attr(name) !== 'undefined';
+    };
 
-            if (typeof name === 'object') {
-                return this.each(function(elem) {
-                    _util.each(name, function(value, key) {
-                        Attr(elem, key, value);
-                    });
-                });
-            }
-            return typeof value === 'undefined' ?
-                Attr(elem[0], name) :
-                this.each(function(elem) {
-                    Attr(elem, name, value);
-                });
-        };
-
-        //  Check if  element has an attribute
-
-        this.hasAttr = function(name) {
-            return name && typeof this.attr(name) !== 'undefined';
-        };
-
-        _util.each(boolAttrArray, function(prop) {
-            boolAttr[boolAttrArray[prop]] = boolAttrArray[prop];
-        });
-
-        _util.each(boolElemArray, function(prop) {
-            boolElem[prop.toUpperCase()] = true;
-        });
-
-        // Populate propMap
-        _util.each(['cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
-            'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',
-            'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex', 'dropZone', 'spellCheck',
-            'hrefLang', 'isMap', 'srcDoc', 'mediaGroup', 'autoComplete', 'noValidate',
-            'radioGroup'
-        ], function(prop) {
-
-            propMap[prop.toLowerCase()] = prop;
-        });
-
-        return {
-            attrHooks: attrHooks,
-            propHooks: propHooks,
-            boolHooks: boolHooks,
-            nodeHooks: nodeHooks,
-            valHooks: valHooks,
-            propMap: propMap,
-            boolAttr: boolAttr,
-            boolElem: boolElem,
-            attr: Attr,
-            prop: Prop,
-            removeAttr: removeAttr,
-            toggleAttr: toggleAttr,
-            toAttrSelector: toAttrSelector,
-            getBooleanAttrName: getBooleanAttrName,
-            SVGAttribute: SVGAttribute
-        };
+    _util.each(boolAttrArray, function(prop) {
+        boolAttr[boolAttrArray[prop]] = boolAttrArray[prop];
     });
+
+    _util.each(boolElemArray, function(prop) {
+        boolElem[prop.toUpperCase()] = true;
+    });
+
+    // Populate propMap
+    _util.each(['cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
+        'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',
+        'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex', 'dropZone', 'spellCheck',
+        'hrefLang', 'isMap', 'srcDoc', 'mediaGroup', 'autoComplete', 'noValidate',
+        'radioGroup'
+    ], function(prop) {
+
+        propMap[prop.toLowerCase()] = prop;
+    });
+
+    return {
+        attrHooks: attrHooks,
+        propHooks: propHooks,
+        boolHooks: boolHooks,
+        nodeHooks: nodeHooks,
+        valHooks: valHooks,
+        propMap: propMap,
+        boolAttr: boolAttr,
+        boolElem: boolElem,
+        attr: Attr,
+        prop: Prop,
+        removeAttr: removeAttr,
+        toggleAttr:toggleAttr,
+        toAttrSelector:toAttrSelector,
+        getBooleanAttrName: getBooleanAttrName,
+        SVGAttribute: SVGAttribute
+    };
+});
     // attrhooks.js
     hAzzle.define('attrHooks', function() {
 
