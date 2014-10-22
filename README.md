@@ -142,8 +142,6 @@ for more advanced CSS like jQuery style, you need to include **style.js** and **
 * core/util/storage.js 
 * core/elements/curcss.js 
 * core/util/units.js 
-* core/elements/style.js 
-* core/util/csshooks.js 
 * core/elements/setters.js 
 * core/util/attrhooks.js 
 * core/util/prophooks.js 
