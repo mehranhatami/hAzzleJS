@@ -120,7 +120,7 @@ hAzzle also support modern Javascript and also a DOM Level 4 shim. So for the **
 
 For **CSS** there exist native CSS functions in **curcss.js** module. You can use it as a stand-alone function like this:
 
-**  _curcss.curCSS() **
+**_curcss.curCSS()**
 
 for more advanced CSS like jQuery style, you need to include **style.js** and **csshooks.js** modules from the **module** folder.
 
