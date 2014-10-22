@@ -164,7 +164,7 @@ hAzzle.define('Strings', function() {
                 return '&' + reversedEscapeChars[m] + ';';
             });
         },
-        unescapeHTML = function(str) { //from underscore.string
+        unescapeHTML = function(str) { 
             return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
                 var m;
                 if (entityCode in escapeChars) {

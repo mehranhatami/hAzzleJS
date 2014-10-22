@@ -2047,7 +2047,7 @@ hAzzle.define('Strings', function() {
                 return '&' + reversedEscapeChars[m] + ';';
             });
         },
-        unescapeHTML = function(str) { //from underscore.string
+        unescapeHTML = function(str) { _has
             return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
                 var m;
                 if (entityCode in escapeChars) {
@@ -3471,6 +3471,7 @@ hAzzle.define('Manipulation', function() {
                 elems = index > 0 ? el.cloneNode(true) : el;
                 if (elem) {
                     fn(elem, elems);
+
                 }
             }, null, rev);
 
@@ -4766,6 +4767,7 @@ hAzzle.define('Events', function() {
 
         // stop event propagation
 
+
         stopPropagation: function() {
             var e = this.originalEvent;
             if (e && e.stopPropagation) {
@@ -5655,7 +5657,6 @@ hAzzle.define('Visibility', function() {
             function replace() {
                 if (this.parentNode) {
                     this.parentNode.replaceChild(
-
                         applyToFragment(arguments), this
                     );
                 }
