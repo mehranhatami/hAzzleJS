@@ -92,7 +92,7 @@ hAzzle.define('Collection', function() {
     };
 
     this.map = function(fn, args) {
-        return new hAzzle(_util.map(this.elements, fn, args));
+        return hAzzle(_util.map(this.elements, fn, args));
     };
 
     this.each = function(fn, args, rev) {
@@ -109,7 +109,7 @@ hAzzle.define('Collection', function() {
         var args = _util.map(slice(arguments), function(arr) {
             return arr instanceof hAzzle ? arr.elements : arr;
         });
-        return new hAzzle(_concat.apply(this.elements, args));
+        return hAzzle(_concat.apply(this.elements, args));
     };
 
     this.is = function(sel) {
@@ -127,13 +127,13 @@ hAzzle.define('Collection', function() {
     this.index = function(sel) {
         return sel === undefined ?
             this.parent().children().indexOf(this.elements[0]) :
-            this.elements.indexOf(new hAzzle(sel).elements[0]);
+            this.elements.indexOf(hAzzle(sel).elements[0]);
     };
 
     this.add = function(sel, ctx) {
         var elements = sel;
         if (typeof sel === 'string') {
-            elements = new hAzzle(sel, ctx).elements;
+            elements = hAzzle(sel, ctx).elements;
         }
         return this.concat(elements);
     };

@@ -48,7 +48,12 @@ hAzzle.define('Core', function() {
 
         Core.isXML = function(elem) {
             var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-            return documentElement ? documentElement.nodeName !== 'HTML' : false;
+
+            if (documentElement) {
+                return documentElement.nodeName !== 'HTML'
+            } else {
+                return false;
+            }
         };
 
     // Get unique XML document ID
@@ -76,9 +81,8 @@ hAzzle.define('Core', function() {
     Core.setDocument = function(document) {
 
         // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
-        var nodeType = document.nodeType;
-
-        var doc = document ? document.ownerDocument || document : winDoc;
+        var nodeType = document.nodeType,
+            doc = document ? document.ownerDocument || document : winDoc;
 
         if (nodeType === 9) { // document
 

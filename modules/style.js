@@ -181,7 +181,7 @@ hAzzle.define('Style', function() {
 
         if (value === undefined) {
 
-            if (typeof name == 'string') {
+            if (typeof name === 'string') {
                 return node[0] && getCSS(node[0], name);
             }
 

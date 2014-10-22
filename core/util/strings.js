@@ -107,10 +107,10 @@ hAzzle.define('Strings', function() {
         // e.g. boxSizing -> box-sizing
 
         hyphenate = function(str) {
-            if (typeof str == 'string') {
+            if (typeof str === 'string') {
                 return str ? str.replace(sHyphenate, fhyphenate) : str;
             } else {
-                str = typeof str == 'number' ? '' + str : '';
+                str = typeof str === 'number' ? '' + str : '';
             }
             return str ? ('data-' + str.toLowerCase()) : str;
         },
@@ -125,7 +125,7 @@ hAzzle.define('Strings', function() {
                     camelCache[str] = str.replace(msPrefix, "ms-").replace(dashAlpha, fcamelize); // -a to A
             }
             // Deal with 'number' and 'boolean'
-            return typeof str == 'number' || typeof str == 'boolean' ? '' + str : str;
+            return typeof str === 'number' || typeof str === 'boolean' ? '' + str : str;
         },
 
         // Remove leading and trailing whitespaces of the specified string.
@@ -164,14 +164,14 @@ hAzzle.define('Strings', function() {
                 return '&' + reversedEscapeChars[m] + ';';
             });
         },
-        unescapeHTML = function(str) { 
+        unescapeHTML = function(str) {
             return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
                 var m;
                 if (entityCode in escapeChars) {
                     return escapeChars[entityCode];
-                } else if (m = entityCode.match(unEscapeFirst)) {
+                } else if ((m = entityCode.match(unEscapeFirst))) {
                     return String.fromCharCode(parseInt(m[1], 16));
-                } else if (m = entityCode.match(unEscapeLast)) {
+                } else if ((m = entityCode.match(unEscapeLast))) {
                     return String.fromCharCode(~~m[1]);
                 } else {
                     return entity;

@@ -46,7 +46,7 @@ hAzzle.define('has', function() {
         },
 
         add = function(name, test, now, force) {
-            (typeof hasCache[name] == 'undefined' || force) && (hasCache[name] = test);
+            (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
             return now && has(name);
         },
         clearElement = function(element) {
@@ -85,13 +85,13 @@ hAzzle.define('has', function() {
     // mobile
 
     add('mobile', function() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+        return /^Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
     });
 
     // android
 
     add('android', function() {
-        return /Android/i.test(ua);
+        return /^Android/i.test(ua);
     });
 
     // opera

@@ -11,7 +11,7 @@ hAzzle.define('specialEvents', function() {
         var focusBlurFn = function(elem, type) {
 
             var key,
-                focusEventType = (type == 'focusin') ? 'focus' : 'blur',
+                focusEventType = (type === 'focusin') ? 'focus' : 'blur',
                 focusables = (function(elem) {
 
                     var focusables = hAzzle(elem).find('input').elements,

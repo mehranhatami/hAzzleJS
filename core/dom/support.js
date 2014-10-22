@@ -2,7 +2,7 @@
 hAzzle.define('Support', function () {
 
     // Feature detection of elements
-    var cls, MultipleArgs,
+    var cls, MultipleArgs, sortDetached,
         assert = function (fn) {
 
             var el = document.createElement('fieldset');
