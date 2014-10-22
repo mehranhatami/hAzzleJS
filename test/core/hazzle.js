@@ -8,7 +8,7 @@ describe('hAzzle()', function () {
 
   it('hAzzle.version', function () {
     expect(hAzzle.version).to.be.a('string');
-    expect(hAzzle.version).to.equal('1.0.0a-alpha');
+    expect(hAzzle.version).to.equal('1.0.0a-rc');
   });
   
   it('hAzzle.err', function () {
