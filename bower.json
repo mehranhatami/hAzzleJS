@@ -1,7 +1,7 @@
 {
-    "name": "hAzzle-alpha",
-    "description": "hAzzle - alpha",
-    "version": "0.0.0",
+    "name": "hAzzle",
+    "description": "hAzzle",
+    "version": "1.0.0rc",
     "main": "index.js",
     "ignore": [
         "test",
