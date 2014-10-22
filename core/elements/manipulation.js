@@ -6,12 +6,12 @@ hAzzle.define('Manipulation', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _text = hAzzle.require('Text'),
-        _has = hAzzle.require('has'),
-        scriptStyle = /<(?:script|style|link)/i,
-        tagName = /<([\w:]+)/,
-        htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-        whitespace = /^\s*<([^\s>]+)/,
-        scriptTag = /\s*<script +src=['"]([^'"]+)['"]>/,
+        _scriptStyle = /<(?:script|style|link)/i,
+        _tagName = /<([\w:]+)/,
+        _htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
+        _rcheckableType = (/^(?:checkbox|radio)$/i),
+        _whitespace = /^\s*<([^\s>]+)/,
+        _scriptTag = /\s*<script +src=['"]([^'"]+)['"]>/,
         table = ['<table>', '</table>', 1],
         td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
         option = ['<select>', '</select>', 1],
@@ -38,21 +38,59 @@ hAzzle.define('Manipulation', function() {
             param: noscope,
             base: noscope
         },
-
-        iAText = {
-            prepend: 'beforeBegin',
-            append: 'afterBegin',
-            after: 'beforeEnd',
-            before: 'afterEnd'
-
-        },
         createHTML = function(html, context) {
             return hAzzle(create(html, context));
         },
 
+        fixInput = function(src, dest) {
+            var nodeName = dest.nodeName.toLowerCase();
+
+            // Fails to persist the checked state of a cloned checkbox or radio button.
+            if (nodeName === 'input' && _rcheckableType.test(src.type)) {
+                dest.checked = src.checked;
+
+                // Fails to return the selected option to the default selected state when cloning options
+            } else if (nodeName === 'input' || nodeName === 'textarea') {
+                dest.defaultValue = src.defaultValue;
+            }
+        },
+        cloneElem = function(elem, deep) {
+
+            var source = elem.cloneNode(true),
+                destElements,
+                srcElements,
+                i, l;
+
+            // Fix IE cloning issues
+            if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
+                !_core.isXML(elem)) {
+                destElements = grab(source);
+                srcElements = grab(elem);
+
+                for (i = 0, l = srcElements.length; i < l; i++) {
+                    fixInput(srcElements[i], destElements[i]);
+                }
+            }
+            // If 'deep' clone events
+            if (deep) {
+
+                hAzzle(source).cloneEvents(elem);
+
+                // Copy the events from the original to the clone
+
+                destElements = grab(source);
+                srcElements = grab(elem);
+
+                for (i = 0; i < srcElements.length; i++) {
+                    hAzzle(destElements[i]).cloneEvents(srcElements[i]);
+                }
+            }
+            return source;
+        },
+
         createScriptFromHtml = function(html, context) {
             var scriptEl = context.createElement('script'),
-                matches = html.match(scriptTag);
+                matches = html.match(_scriptTag);
             scriptEl.src = matches[1];
             return scriptEl;
         },
@@ -86,13 +124,13 @@ hAzzle.define('Manipulation', function() {
                     /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
                        create it if match 
                      */
-                    if (scriptTag.test(node)) {
+                    if (_scriptTag.test(node)) {
                         return [createScriptFromHtml(node, context)];
                     }
 
                     // Deserialize a standard representation
 
-                    var i, tag = node.match(whitespace),
+                    var i, tag = node.match(_whitespace),
                         sandbox = fragment.appendChild(ctx.createElement('div')),
                         els = [],
                         map = tag ? tagMap[tag[1].toLowerCase()] : null,
@@ -148,17 +186,17 @@ hAzzle.define('Manipulation', function() {
 
         clearData = function(elems) {
 
-        // No point to continue clearing events if the events.js module
-        // are not installed
-        
+            // No point to continue clearing events if the events.js module
+            // are not installed
+
             if (!hAzzle.installed.Events) {
-                hAzzle.err(true, 17, "events.js module are not installed");
+                hAzzle.err(true, 17, 'events.js module are not installed');
             }
-            
+
             var elem, i = 0;
-            
+
             // If instanceof hAzzle...
-            
+
             if (elems instanceof hAzzle) {
                 elems = [elems.elements[0]];
             } else {
@@ -191,7 +229,7 @@ hAzzle.define('Manipulation', function() {
             if (clone) {
                 ret = []; // don't change original array
                 for (i = 0, l = node.length; i < l; i++) {
-                    ret[i] = node[i].cloneNode(true);
+                    ret[i] = cloneElem(node[i], true);
                 }
                 return ret;
             }
@@ -201,7 +239,7 @@ hAzzle.define('Manipulation', function() {
             if (typeof content === 'string' &&
                 _core.isHTML &&
                 elem.parentNode && elem.parentNode.nodeType === 1) {
-                elem.insertAdjacentHTML(method, content.replace(htmlTag, '<$1></$2>'));
+                elem.insertAdjacentHTML(method, content.replace(_htmlTag, '<$1></$2>'));
             } else {
                 _util.each(normalize(content, 0), function(relatedNode) {
                     elem[method](relatedNode); // DOM Level 4
@@ -223,7 +261,7 @@ hAzzle.define('Manipulation', function() {
             if (typeof html === 'string' &&
                 _core.isHTML &&
                 elem.parentNode && elem.parentNode.nodeType === 1) {
-                elem.insertAdjacentHTML(method, html.replace(htmlTag, '<$1></$2>'));
+                elem.insertAdjacentHTML(method, html.replace(_htmlTag, '<$1></$2>'));
             } else {
                 fn(elem, index);
             }
@@ -346,20 +384,14 @@ hAzzle.define('Manipulation', function() {
 
     // Text
 
-    this.text = function(value, method) {
+    this.text = function(value) {
         return value === undefined ?
             _text.getText(this.elements) :
             this.empty().each(function(elem) {
-                if (method && typeof method === 'string' && typeof value === 'string' &&
-                    // Firefox doesen't support insertAdjacentText
-                    !_has.has('firefox')) {
-                    elem.insertAdjacentText(iAText[method] || 'beforeBegin', value);
-                } else {
-                    if (elem.nodeType === 1 ||
-                        elem.nodeType === 11 ||
-                        elem.nodeType === 9) {
-                        elem.textContent = value;
-                    }
+                if (elem.nodeType === 1 ||
+                    elem.nodeType === 11 ||
+                    elem.nodeType === 9) {
+                    elem.textContent = value;
                 }
             });
     };
@@ -378,10 +410,10 @@ hAzzle.define('Manipulation', function() {
         }
         // See if we can take a shortcut and just use innerHTML
 
-        if (typeof value === 'string' && !scriptStyle.test(value) &&
-            !tagMap[(tagName.exec(value) || ['', ''])[1].toLowerCase()]) {
+        if (typeof value === 'string' && !_scriptStyle.test(value) &&
+            !tagMap[(_tagName.exec(value) || ['', ''])[1].toLowerCase()]) {
 
-            value = value.replace(htmlTag, '<$1></$2>'); // DOM Level 4
+            value = value.replace(_htmlTag, '<$1></$2>'); // DOM Level 4
 
             try {
 
@@ -421,7 +453,7 @@ hAzzle.define('Manipulation', function() {
 
     this.empty = function() {
         return this.each(function(elem) {
-        // Do a 'deep each' and clear all listeners if any 
+            // Do a 'deep each' and clear all listeners if any 
             deepEach(elem.children, clearData);
             while (elem.firstChild) {
                 elem.removeChild(elem.firstChild);
@@ -434,22 +466,27 @@ hAzzle.define('Manipulation', function() {
         return this.detach();
     };
 
-    // Simple clone function
-    // NOTE! This function is not so fancy as jQuery.clone(), but 
-    // the Core need to be small as possible. And events can be
-    // cloned with events -> this.cloneEvents().
-    // So maybe a module for this in near future?? Anyone??
+    // 'deep' - let you clone events
 
     this.clone = function(deep) {
-        return this.map(function(elem) {
-            return elem.cloneNode(deep);
-        });
+        // Better performance with a 'normal' for-loop then
+        // map() or each()       
+        var elems = this.elements,
+            ret = [],
+            i = 0,
+            l = this.length;
+
+        for (; i < l; i++) {
+            ret[i] = cloneElem(elems[i], deep);
+        }
+        return hAzzle(ret);
     };
 
     return {
         clearData: clearData,
         create: create,
         createHTML: createHTML,
+        clone: cloneElem,
         append: append,
         prepend: prepend
     };

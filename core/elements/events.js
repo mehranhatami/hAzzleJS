@@ -705,7 +705,7 @@ hAzzle.define('Events', function() {
         });
     };
     // Clone events
-    this.cloneEvent = function(dest, events) {
+    this.cloneEvents = function(dest, events) {
         clone(this.elements[0], dest, events);
     };
 

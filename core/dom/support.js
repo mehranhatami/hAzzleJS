@@ -1,9 +1,12 @@
 // support.js
-hAzzle.define('Support', function () {
+hAzzle.define('Support', function() {
 
     // Feature detection of elements
     var cls, MultipleArgs, sortDetached,
-        assert = function (fn) {
+        checkClone,
+        noCloneChecked,
+
+        assert = function(fn) {
 
             var el = document.createElement('fieldset');
 
@@ -44,7 +47,7 @@ hAzzle.define('Support', function () {
     input.type = 'radio';
     radioValue = input.value === 't';
 
-   var imcHTML = (function () {
+    var imcHTML = (function() {
 
         if (typeof document.implementation.createHTMLDocument === 'function') {
             return true;
@@ -52,9 +55,9 @@ hAzzle.define('Support', function () {
         return false;
     }());
 
-// classList and MultipleArgs detections
+    // classList and MultipleArgs detections
 
-    assert(function (div) {
+    assert(function(div) {
 
         div.classList.add('a', 'b');
         // Detect if the browser supports classList
@@ -69,16 +72,36 @@ hAzzle.define('Support', function () {
         // Should return 1, but returns 4 (following)
         return div.compareDocumentPosition(document.createElement('div')) & 1;
     });
-    
+
+    assert(function(div) {
+        var fragment = document.createDocumentFragment(),
+            div = fragment.appendChild(div),
+            input = document.createElement('input');
+
+        input.setAttribute('type', 'radio');
+        input.setAttribute('checked', 'checked');
+        input.setAttribute('name', 't');
+
+        div.appendChild(input);
+        checkClone = div.cloneNode(true).cloneNode(true).lastChild.checked;
+        // Support: IE<=11+
+        // Make sure textarea (and checkbox) defaultValue is properly cloned
+        div.innerHTML = '<textarea>x</textarea>';
+        noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+
+    });
+
     return {
-        assert:assert,
+        assert: assert,
         checkOn: checkOn,
         optSelected: optSelected,
         radioValue: radioValue,
         imcHTML: imcHTML,
         classList: cls,
         multipleArgs: MultipleArgs,
-        sortDetached:sortDetached,
+        sortDetached: sortDetached,
+        checkClone: checkClone,
+        noCloneChecked: noCloneChecked,
         cS: !!document.defaultView.getComputedStyle
     };
 });
