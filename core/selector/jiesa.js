@@ -153,9 +153,10 @@ hAzzle.define('Jiesa', function() {
     // Filter element collection
 
     this.filter = function(selector, not) {
+        
         if (selector === undefined) {
             return this;
-        }
+        } 
         if (typeof selector === 'function') {
             var els = [];
             this.each(function(el, index) {

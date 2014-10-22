@@ -253,12 +253,12 @@ hAzzle.define('xhr', function() {
 
             // if we're working on a GET request and we have data then we should append
             // query string to end of URL and not post data
-            if ((options.type == 'jsonp' || method == 'GET') && data) {
+            if ((options.type === 'jsonp' || method === 'GET') && data) {
                 url = createURL(url, data);
                 data = null;
             }
 
-            if (options.type == 'jsonp') {
+            if (options.type === 'jsonp') {
                 return jsonpReq(options, fn, err, url);
             }
 
@@ -365,7 +365,7 @@ hAzzle.define('xhr', function() {
 
             this.options = options;
             this.fn = fn;
-            this.url = typeof options == 'string' ? options : options.url;
+            this.url = typeof options === 'string' ? options : options.url;
             this.timeout = null;
             this.fulfilled = false;
             this.successHandler = function() {};

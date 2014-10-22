@@ -107,7 +107,7 @@ hAzzle.define('Events', function() {
                 }
 
                 if (type === 'mouseover' || type === 'mouseout') {
-                    evt.relatedTarget = original.relatedTarget || original[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
+                    evt.relatedTarget = original.relatedTarget || original[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
                 }
                 return mouseProps;
             }
@@ -136,7 +136,9 @@ hAzzle.define('Events', function() {
                         return call(evt, arguments);
                     }
                 } : function(evt) {
-                    if (fn.__kfx2rcf) evt = evt.clone(findTarget(evt));
+                    if (fn.__kfx2rcf) {
+                        evt = evt.clone(findTarget(evt));
+                    }
                     return call(evt, arguments);
                 };
             handler.__kfx2rcf = fn.__kfx2rcf;
@@ -149,11 +151,11 @@ hAzzle.define('Events', function() {
 
             var t, prefix = root ? '_r' : '_$';
 
-            if (!type || type == '*') {
+            if (!type || type === '*') {
 
                 for (t in map) {
 
-                    if (t.charAt(0) == prefix) {
+                    if (t.charAt(0) === prefix) {
                         iteratee(elem, t.substr(1), original, handler, root, callback);
                     }
                 }
@@ -161,7 +163,7 @@ hAzzle.define('Events', function() {
 
                 var i = 0,
                     l, list = map[prefix + type],
-                    a = elem == '*';
+                    a = elem === '*';
 
                 if (!list) {
                     return;
@@ -254,11 +256,12 @@ hAzzle.define('Events', function() {
             for (i = 0, l = handlers.length; i < l; i++) {
                 if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(ns)) {
                     unregister(handlers[i]);
-                    if (!removed[handlers[i].eventType])
+                    if (!removed[handlers[i].eventType]) {
                         removed[handlers[i].eventType] = {
                             t: handlers[i].eventType,
                             c: handlers[i].type
                         };
+                    }
                 }
             }
 
@@ -317,7 +320,7 @@ hAzzle.define('Events', function() {
 
             // Types can be a map of types/handlers
 
-            if (typeof types == 'object') {
+            if (_types.isType(types) === 'object') {
                 if (typeof selector !== 'string') {
                     callback = selector;
                     selector = undefined;
@@ -628,7 +631,7 @@ hAzzle.define('Events', function() {
 
             var customType = customEvents[type];
 
-            if (type == 'unload') {
+            if (type === 'unload') {
                 handler = once(dispatch, elem, type, handler, original);
             }
 
@@ -659,7 +662,7 @@ hAzzle.define('Events', function() {
             }
             for (i = checkNamespaces.length; i--;) {
                 for (j = this.namespaces.length; j--;) {
-                    if (checkNamespaces[i] == this.namespaces[j]) {
+                    if (checkNamespaces[i] === this.namespaces[j]) {
                         c++;
                     }
                 }

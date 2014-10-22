@@ -47,7 +47,7 @@ hAzzle.define('Manipulation', function() {
 
         },
         createHTML = function(html, context) {
-            return new hAzzle(create(html, context));
+            return hAzzle(create(html, context));
         },
 
         createScriptFromHtml = function(html, context) {
