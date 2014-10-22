@@ -1,7 +1,7 @@
 // curcss.js
 hAzzle.define('curCSS', function() {
 
-    var _detection = hAzzle.require('Detection'),
+    var _has = hAzzle.require('has'),
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _util = hAzzle.require('Util'),
@@ -11,12 +11,12 @@ hAzzle.define('curCSS', function() {
         inlineRegEx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
         listItemRegEx = /^(li)$/i,
         tablerowRegEx = /^(tr)$/i,
-        
+
         docElem = window.document.documentElement,
 
         computedStyle = !!document.defaultView.getComputedStyle,
 
-        computedValues = _support.computedStyle && _detection.isWebkit ? function(elem) {
+        computedValues = _support.computedStyle && _has.has('webkit') ? function(elem) {
             // Looks stupid, but gives better performance in Webkit browsers
             var str;
             if (elem.nodeType === 1) {
@@ -144,15 +144,14 @@ hAzzle.define('curCSS', function() {
                 // IE and Firefox do not return a value for the generic borderColor -- they only return 
                 // individual values for each border side's color.
 
-                if ((_detection.ie ||
-                        _detection.isFirefox) && prop === 'borderColor') {
+                if ((_has.ie || _has.has('firefox')) && prop === 'borderColor') {
                     prop = 'borderTopColor';
                 }
 
                 // IE9 has a bug in which the 'filter' property must be accessed from 
                 // computedStyle using the getPropertyValue method instead of a direct property lookup. 
 
-                if (_detection === 9 && prop === 'filter') {
+                if (_has.ie === 9 && prop === 'filter') {
                     computedValue = computedStyle.getPropertyValue(prop);
                 } else {
                     computedValue = computedStyle[prop];
@@ -175,55 +174,55 @@ hAzzle.define('curCSS', function() {
                 return computedValue;
             }
         },
-        
-       
-	setOffset = function( elem, options, i ) {
-		var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-			position = curCSS( elem, "position" ),
-			curElem = hAzzle( elem ),
-			props = {};
 
-		// Set position first, in-case top/left are set even on static elem
-		if ( position === "static" ) {
-			elem.style.position = "relative";
-		}
 
-		curOffset = curElem.offset();
-		curCSSTop = curCSS( elem, "top" );
-		curCSSLeft = curCSS( elem, "left" );
-		calculatePosition = ( position === "absolute" || position === "fixed" ) &&
-			( curCSSTop + curCSSLeft ).indexOf("auto") > -1;
+        setOffset = function(elem, options, i) {
+            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+                position = curCSS(elem, "position"),
+                curElem = hAzzle(elem),
+                props = {};
 
-		// Need to be able to calculate position if either
-		// top or left is auto and position is either absolute or fixed
-		if ( calculatePosition ) {
-			curPosition = curElem.position();
-			curTop = curPosition.top;
-			curLeft = curPosition.left;
+            // Set position first, in-case top/left are set even on static elem
+            if (position === "static") {
+                elem.style.position = "relative";
+            }
 
-		} else {
-			curTop = parseFloat( curCSSTop ) || 0;
-			curLeft = parseFloat( curCSSLeft ) || 0;
-		}
+            curOffset = curElem.offset();
+            curCSSTop = curCSS(elem, "top");
+            curCSSLeft = curCSS(elem, "left");
+            calculatePosition = (position === "absolute" || position === "fixed") &&
+                (curCSSTop + curCSSLeft).indexOf("auto") > -1;
 
-		if ( _types.isType('function')( options ) ) {
-			options = options.call( elem, i, curOffset );
-		}
+            // Need to be able to calculate position if either
+            // top or left is auto and position is either absolute or fixed
+            if (calculatePosition) {
+                curPosition = curElem.position();
+                curTop = curPosition.top;
+                curLeft = curPosition.left;
 
-		if ( options.top != null ) {
-			props.top = ( options.top - curOffset.top ) + curTop;
-		}
-		if ( options.left != null ) {
-			props.left = ( options.left - curOffset.left ) + curLeft;
-		}
+            } else {
+                curTop = parseFloat(curCSSTop) || 0;
+                curLeft = parseFloat(curCSSLeft) || 0;
+            }
 
-		if ( "using" in options ) {
-			options.using.call( elem, props );
+            if (_types.isType('function')(options)) {
+                options = options.call(elem, i, curOffset);
+            }
 
-		} else {
-			curElem.css( props );
-		}
-};
+            if (options.top != null) {
+                props.top = (options.top - curOffset.top) + curTop;
+            }
+            if (options.left != null) {
+                props.left = (options.left - curOffset.left) + curLeft;
+            }
+
+            if ("using" in options) {
+                options.using.call(elem, props);
+
+            } else {
+                curElem.css(props);
+            }
+        };
 
     this.offset = function(options) {
         if (arguments.length) {
@@ -267,63 +266,63 @@ hAzzle.define('curCSS', function() {
     };
 
     this.position = function() {
-            if (!this.elements[0]) {
-                return;
-            }
+        if (!this.elements[0]) {
+            return;
+        }
 
-            var offsetParent, offset,
-                elem = this.elements[0],
-                parentOffset = {
-                    top: 0,
-                    left: 0
-                };
-
-            // Fixed elements are offset from window (parentOffset = {top:0, left: 0},
-            // because it is its only offset parent
-            if (curCSS(elem, 'position') === 'fixed') {
-                // Assume getBoundingClientRect is there when computed position is fixed
-                offset = elem.getBoundingClientRect();
-
-            } else {
-                // Get *real* offsetParent
-                offsetParent = this.offsetParent();
-
-                // Get correct offsets
-                offset = this.offset();
-
-                if (!_util.nodeName(offsetParent.elements[0], 'html')) {
-
-                    parentOffset = offsetParent.offset();
-                }
-
-                // Add offsetParent borders
-
-                parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
-                parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
-            }
-            // Subtract offsetParent scroll positions
-
-            parentOffset.top -= offsetParent.scrollTop();
-            parentOffset.left -= offsetParent.scrollLeft();
-            // Subtract parent offsets and element margins
-            return {
-                top: offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop', true)),
-                left: offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft', true))
+        var offsetParent, offset,
+            elem = this.elements[0],
+            parentOffset = {
+                top: 0,
+                left: 0
             };
+
+        // Fixed elements are offset from window (parentOffset = {top:0, left: 0},
+        // because it is its only offset parent
+        if (curCSS(elem, 'position') === 'fixed') {
+            // Assume getBoundingClientRect is there when computed position is fixed
+            offset = elem.getBoundingClientRect();
+
+        } else {
+            // Get *real* offsetParent
+            offsetParent = this.offsetParent();
+
+            // Get correct offsets
+            offset = this.offset();
+
+            if (!_util.nodeName(offsetParent.elements[0], 'html')) {
+
+                parentOffset = offsetParent.offset();
+            }
+
+            // Add offsetParent borders
+
+            parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
+            parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
+        }
+        // Subtract offsetParent scroll positions
+
+        parentOffset.top -= offsetParent.scrollTop();
+        parentOffset.left -= offsetParent.scrollLeft();
+        // Subtract parent offsets and element margins
+        return {
+            top: offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop', true)),
+            left: offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft', true))
         };
+    };
 
-        this.offsetParent = function() {
-            return this.map(function() {
-                var offsetParent = this.offsetParent || docElem;
+    this.offsetParent = function() {
+        return this.map(function() {
+            var offsetParent = this.offsetParent || docElem;
 
-                while (offsetParent && (!_util.nodeName(offsetParent, 'html') &&
-                        curCSS(offsetParent, 'position') === 'static')) {
-                    offsetParent = offsetParent.offsetParent;
-                }
+            while (offsetParent && (!_util.nodeName(offsetParent, 'html') &&
+                    curCSS(offsetParent, 'position') === 'static')) {
+                offsetParent = offsetParent.offsetParent;
+            }
 
-                return offsetParent || docElem;
-            });
-        };
+            return offsetParent || docElem;
+        });
+    };
 
     return {
         computedCSS: computedCSS,

@@ -4,7 +4,7 @@ hAzzle.define('Setters', function() {
     var _util = hAzzle.require('Util'),
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _strings = hAzzle.require('Strings'),
         _concat = Array.prototype.concat,
         SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
@@ -48,7 +48,7 @@ hAzzle.define('Setters', function() {
 
         SVGAttribute = function(prop) {
 
-            if (_detection.ie || (_detection.isAndroid && !_detection.isChrome)) {
+            if (_has.ie || (_has.has('android') && !_has.has('chrome'))) {
                 SVGAttributes += '|transform';
             }
 

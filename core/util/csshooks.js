@@ -2,14 +2,14 @@
 hAzzle.define('cssHooks', function() {
 
     var _util = hAzzle.require('Util'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _style = hAzzle.require('Style'),
         _types = hAzzle.require('Types'),
         _ccs = hAzzle.require('curCSS');
 
     // Fixes Chrome bug / issue
 
-    if (_detection.isChrome) {
+    if (_has.has('chrome')) {
         _style.cssHooks.textDecoration = {
             get: function(elem, computed) {
                 if (computed) {
@@ -27,7 +27,7 @@ hAzzle.define('cssHooks', function() {
         };
     }
 
-    if (_detection.opera) {
+    if (_has.has('opera')) {
         _style.cssHooks.get.textShadow = function(elem) {
             var val = _ccs.curCSS(elem, 'textShadow');
             if (val && val !== 'none') {

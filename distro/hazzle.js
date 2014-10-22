@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0b-alpha
+ * Version: 1.0.0 Release Candidate 
  * Released under the MIT License.
  *
  * Date: 2014-10-22
@@ -9,11 +9,11 @@
 (function() {
 
     var
-    // Quick-lookup for hAzzle(id)
+       // Quick-lookup for hAzzle(id)
 
         idOnly = /^#([\w\-]*)$/,
 
-        // Minimalist module system
+        // Holder for all modules
 
         modules = {},
 
@@ -22,11 +22,11 @@
         installed = {},
 
         version = {
-            full: '1.0.0a-alpha',
+            full: '1.0.0a-rc',
             major: 1,
             minor: 0,
             dot: 0,
-            codeName: 'new-era'
+            codeName: 'new-age'
         },
 
         // Throws an error if `condition` is `true`.
@@ -254,15 +254,16 @@ hAzzle.define('Support', function() {
     };
 });
 
-// detection.js
-hAzzle.define('Detection', function() {
+// has.js
+hAzzle.define('has', function () {
 
-    var ua = navigator.userAgent,
+ var 
+     ua = navigator.userAgent,
 
         // Special detection for IE, because we got a lot of trouble
         // with it. Damn IE!!
 
-        ie = (function() {
+        ie = (function () {
 
             if (document.documentMode) {
                 return document.documentMode;
@@ -281,21 +282,100 @@ hAzzle.define('Detection', function() {
             }
 
             return undefined;
-        })();
+        })(),
+ 
+ 
+    isBrowser =
+    // the most fundamental decision: are we in the browser?
+    typeof window !== 'undefined' &&
+    typeof location !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    window.location === location &&
+    window.document === document,
+    doc = isBrowser && document,
+    element = doc && doc.createElement('DiV'),
+    hasCache = {},
+ 
+    has = function(name) {
+        return typeof hasCache[name] === 'function' ?
+            (hasCache[name] = hasCache[name](window, doc, element)) :
+            hasCache[name]; // Boolean
+    },
 
-    return {
-
-        isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua),
-        isAndroid: /Android/i.test(ua),
-        isOpera: !!window.opera || ua.indexOf(' OPR/') >= 0,
-        isFirefox: typeof InstallTrigger !== 'undefined', // Firefox
-        isChrome: window.chrome,
-        isSafari: Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0,
-        isIE: false || !!document.documentMode, // IE
-        isWebkit: 'WebkitAppearance' in document.documentElement.style,
-        ie: ie
-
+    add = function(name, test, now, force) {
+        (typeof hasCache[name] == 'undefined' || force) && (hasCache[name] = test);
+        return now && has(name);
+    },
+    clearElement = function(element) {
+        if (element) {
+            while (element.lastChild) {
+                element.removeChild(element.lastChild);
+            }
+        }
+        return element;
     };
+
+ // XPath
+
+ add('xpath', function() {
+    return !!(document.evaluate);
+ });
+
+ // Air 
+ 
+ add('air', function() {
+    return !!(window.runtime);
+ });
+ 
+ // mobile
+ 
+ add('mobile', function() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+ });
+
+ // android
+ 
+ add('android', function() {
+    return /Android/i.test(ua);
+ });
+
+ // opera
+ add('opera', function() {
+    return !!window.opera || ua.indexOf(' OPR/') >= 0;
+ });
+
+
+ // Firefox
+ add('firefox', function() {
+    return typeof InstallTrigger !== 'undefined';
+ });
+
+ // Chrome
+ add('chrome', function() {
+    return window.chrome;
+ });
+
+ // Webkit
+ add('webkit', function() {
+    return 'WebkitAppearance' in document.documentElement.style;
+ });
+
+ // Safari
+ add('safari', function() {
+    return Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+ });
+
+ // Safari
+ add('ie', function() {
+    return false || !!document.documentMode;
+ });
+
+return {
+     has:has,
+     add:add,
+     clearElement:clearElement,
+     ie:ie
+     };
 });
 
 // types.js
@@ -2249,7 +2329,7 @@ hAzzle.define('Storage', function() {
 // curcss.js
 hAzzle.define('curCSS', function() {
 
-    var _detection = hAzzle.require('Detection'),
+    var _has = hAzzle.require('has'),
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _util = hAzzle.require('Util'),
@@ -2264,7 +2344,7 @@ hAzzle.define('curCSS', function() {
 
         computedStyle = !!document.defaultView.getComputedStyle,
 
-        computedValues = _support.computedStyle && _detection.isWebkit ? function(elem) {
+        computedValues = _support.computedStyle && _has.has('webkit') ? function(elem) {
             // Looks stupid, but gives better performance in Webkit browsers
             var str;
             if (elem.nodeType === 1) {
@@ -2392,15 +2472,14 @@ hAzzle.define('curCSS', function() {
                 // IE and Firefox do not return a value for the generic borderColor -- they only return 
                 // individual values for each border side's color.
 
-                if ((_detection.ie ||
-                        _detection.isFirefox) && prop === 'borderColor') {
+                if ((_has.ie || _has.has('firefox')) && prop === 'borderColor') {
                     prop = 'borderTopColor';
                 }
 
                 // IE9 has a bug in which the 'filter' property must be accessed from 
                 // computedStyle using the getPropertyValue method instead of a direct property lookup. 
 
-                if (_detection === 9 && prop === 'filter') {
+                if (_has.ie === 9 && prop === 'filter') {
                     computedValue = computedStyle.getPropertyValue(prop);
                 } else {
                     computedValue = computedStyle[prop];
@@ -2882,14 +2961,14 @@ hAzzle.define('Style', function() {
 hAzzle.define('cssHooks', function() {
 
     var _util = hAzzle.require('Util'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _style = hAzzle.require('Style'),
         _types = hAzzle.require('Types'),
         _ccs = hAzzle.require('curCSS');
 
     // Fixes Chrome bug / issue
 
-    if (_detection.isChrome) {
+    if (_has.has('chrome')) {
         _style.cssHooks.textDecoration = {
             get: function(elem, computed) {
                 if (computed) {
@@ -2907,7 +2986,7 @@ hAzzle.define('cssHooks', function() {
         };
     }
 
-    if (_detection.opera) {
+    if (_has.has('opera')) {
         _style.cssHooks.get.textShadow = function(elem) {
             var val = _ccs.curCSS(elem, 'textShadow');
             if (val && val !== 'none') {
@@ -2933,8 +3012,8 @@ hAzzle.define('cssHooks', function() {
                 _ccs.curCSS(elem, vals[3]);
         };
     });
-
-    // Getter    
+    
+       // Getter    
     _util.extend(_style.cssHooks.get, {
         'opacity': function(elem, computed) {
             if (computed) {
@@ -2943,57 +3022,56 @@ hAzzle.define('cssHooks', function() {
                 return ret === '' ? '1' : ret;
             }
         },
-        'zIndex': function(elem) {
-            var val = _ccs.curCSS(elem, 'zIndex');
-            return val === 'auto' ? 0 : val;
-        },
-        'height': function(elem) {
+        'zIndex': function( elem ){
+        var val = _ccs.curCSS( elem, 'zIndex' );
+        return val === 'auto' ? 0 : val;
+    },
+    'height': function(elem) {
 
-            var docElem;
-
-            if (!elem) {
+       var docElem;
+            
+            if( !elem ){
                 return;
             }
-
-            if (_types.isWindow(elem)) {
+            
+            if( _types.isWindow(elem) ){
                 return elem.document.documentElement.clientHeight;
             }
-
-            if (elem.nodeType === 9) {
+    
+            if( elem.nodeType === 9 ){      
                 docElem = elem.documentElement;
-                return Math.max(docElem.scrollHeight, docElem.clientHeight);
+                return Math.max( docElem.scrollHeight, docElem.clientHeight ) ;
             }
-
-            return _style.swap(elem, function() {
-                return _ccs.curCSS(elem, 'height');
+            
+            return _style.swap( elem, function(){
+                return _ccs.curCSS( elem, 'height' );
             });
-        },
-        'width': function(elem) {
+     },
+    'width': function(elem) {
 
-            var docElem;
-
-            if (!elem) {
+       var docElem;
+            
+            if( !elem ){
                 return;
             }
-
-            if (_types.isWindow(elem)) {
+            
+            if( _types.isWindow(elem) ){
                 return elem.document.documentElement.clientWidth;
             }
-
-            if (elem.nodeType === 9) {
+    
+            if( elem.nodeType === 9 ){      
                 docElem = elem.documentElement;
-                return Math.max(docElem.scrollWidth, docElem.clientWidth);
+                return Math.max( docElem.scrollWidth, docElem.clientWidth ) ;
             }
-
-            return _style.swap(elem, function() {
-                return _ccs.curCSS(elem, 'Width');
+            
+            return _style.swap( elem, function(){
+                return _ccs.curCSS( elem, 'Width' );
             });
-        },
+     },
     });
 
     return {};
 });
-
 // manipulation.js
 hAzzle.define('Manipulation', function() {
 
@@ -3002,7 +3080,7 @@ hAzzle.define('Manipulation', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _text = hAzzle.require('Text'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         scriptStyle = /<(?:script|style|link)/i,
         tagName = /<([\w:]+)/,
         htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
@@ -3043,7 +3121,7 @@ hAzzle.define('Manipulation', function() {
 
         },
         createHTML = function(html, context) {
-            return new hAzzle(create(html, context));
+            return hAzzle(create(html, context));
         },
 
         createScriptFromHtml = function(html, context) {
@@ -3323,13 +3401,13 @@ hAzzle.define('Manipulation', function() {
 
     // Text
 
-    this.text = function(value, method) {
+    this.text = function(value, method) { 
         return value === undefined ?
             _text.getText(this.elements) :
             this.empty().each(function(elem) {
                 if (method && typeof method === 'string' && typeof value === 'string' &&
                     // Firefox doesen't support insertAdjacentText
-                    !_detection.isFirefox) {
+                    !_has.has('firefox')) {
                     elem.insertAdjacentText(iAText[method] || 'beforeBegin', value);
                 } else {
                     if (elem.nodeType === 1 ||
@@ -3425,14 +3503,13 @@ hAzzle.define('Manipulation', function() {
         prepend: prepend
     };
 });
-
 // setters.js
 hAzzle.define('Setters', function() {
 
     var _util = hAzzle.require('Util'),
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _strings = hAzzle.require('Strings'),
         _concat = Array.prototype.concat,
         SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
@@ -3476,7 +3553,7 @@ hAzzle.define('Setters', function() {
 
         SVGAttribute = function(prop) {
 
-            if (_detection.ie || (_detection.isAndroid && !_detection.isChrome)) {
+            if (_has.ie || (_has.has('android') && !_has.has('chrome'))) {
                 SVGAttributes += '|transform';
             }
 
@@ -3505,7 +3582,7 @@ hAzzle.define('Setters', function() {
             var name, propName,
                 i = 0,
                 elem = getElem(el),
-                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
+            keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
 
                 l = keys.length;
 
@@ -3830,8 +3907,8 @@ hAzzle.define('Setters', function() {
         attr: Attr,
         prop: Prop,
         removeAttr: removeAttr,
-        toggleAttr: toggleAttr,
-        toAttrSelector: toAttrSelector,
+        toggleAttr:toggleAttr,
+        toAttrSelector:toAttrSelector,
         getBooleanAttrName: getBooleanAttrName,
         SVGAttribute: SVGAttribute
     };
@@ -3841,7 +3918,9 @@ hAzzle.define('attrHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters');
+        _setters = hAzzle.require('Setters'),
+        _docElem = document.documentElement,
+        _winDoc = window.document;
 
     // Setter
     _util.extend(_setters.attrHooks.set, {
@@ -3858,20 +3937,18 @@ hAzzle.define('attrHooks', function() {
             }
         },
         // Title hook for DOM        
-
         'title': function(elem, value) {
-            (elem = document.documentElement ? window.document : elem).title = value;
+            (elem = _docElem ? _winDoc : elem).title = value;
         }
     });
     // Getter    
     _util.extend(_setters.attrHooks.get, {
         'title': function(elem) {
-            return elem === document.documentElement ? window.document.title : elem.title;
+            return elem === _docElem ? _winDoc.title : elem.title;
         }
     });
     return {};
 });
-
 
 // prophooks.js
 hAzzle.define('propHooks', function() {
@@ -4060,7 +4137,7 @@ hAzzle.define('Events', function() {
         _collection = hAzzle.require('Collection'),
         _types = hAzzle.require('Types'),
         _jiesa = hAzzle.require('Jiesa'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _core = hAzzle.require('Core'),
 
         // regEx
@@ -4080,13 +4157,13 @@ hAzzle.define('Events', function() {
             'keyLocation location').split(' '));
 
     // Firefox specific eventTypes
-    if (_detection.isFirefox) {
+    if (_has.has('firefox')) {
         commonProps.concat('mozMovementY mozMovementX'.split(' '));
     }
     // WebKit eventTypes
     // Support: Chrome / Opera
 
-    if (_detection.isWebkit) {
+    if (_has.has('webkit')) {
         commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
     }
 
@@ -4127,7 +4204,7 @@ hAzzle.define('Events', function() {
                 }
 
                 if (type === 'mouseover' || type === 'mouseout') {
-                    evt.relatedTarget = original.relatedTarget || original[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
+                    evt.relatedTarget = original.relatedTarget || original[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
                 }
                 return mouseProps;
             }
@@ -4156,7 +4233,9 @@ hAzzle.define('Events', function() {
                         return call(evt, arguments);
                     }
                 } : function(evt) {
-                    if (fn.__kfx2rcf) evt = evt.clone(findTarget(evt));
+                    if (fn.__kfx2rcf) {
+                        evt = evt.clone(findTarget(evt));
+                    }
                     return call(evt, arguments);
                 };
             handler.__kfx2rcf = fn.__kfx2rcf;
@@ -4169,11 +4248,11 @@ hAzzle.define('Events', function() {
 
             var t, prefix = root ? '_r' : '_$';
 
-            if (!type || type == '*') {
+            if (!type || type === '*') {
 
                 for (t in map) {
 
-                    if (t.charAt(0) == prefix) {
+                    if (t.charAt(0) === prefix) {
                         iteratee(elem, t.substr(1), original, handler, root, callback);
                     }
                 }
@@ -4181,7 +4260,7 @@ hAzzle.define('Events', function() {
 
                 var i = 0,
                     l, list = map[prefix + type],
-                    a = elem == '*';
+                    a = elem === '*';
 
                 if (!list) {
                     return;
@@ -4274,11 +4353,12 @@ hAzzle.define('Events', function() {
             for (i = 0, l = handlers.length; i < l; i++) {
                 if ((!handler || handlers[i].original === handler) && handlers[i].inNamespaces(ns)) {
                     unregister(handlers[i]);
-                    if (!removed[handlers[i].eventType])
+                    if (!removed[handlers[i].eventType]) {
                         removed[handlers[i].eventType] = {
                             t: handlers[i].eventType,
                             c: handlers[i].type
                         };
+                    }
                 }
             }
 
@@ -4333,11 +4413,11 @@ hAzzle.define('Events', function() {
                 elem = elem.elements[0];
             }
 
-            var cb, type, i, args, entry, first, hooks;
+            var cb, type, i, args, entry, first, hooks, eventType, namespace;
 
             // Types can be a map of types/handlers
 
-            if (typeof types == 'object') {
+            if (_types.isType(types) === 'object') {
                 if (typeof selector !== 'string') {
                     callback = selector;
                     selector = undefined;
@@ -4376,19 +4456,22 @@ hAzzle.define('Events', function() {
 
             while (i--) {
 
-                type = types[i].replace(nameRegex, '');
+                eventType = types[i].replace(nameRegex, '');
 
                 // There *must* be a type, no attaching namespace-only handlers
-                if (!type) {
+
+                if (!eventType) {
                     continue;
                 }
 
+                namespace = types[i].replace(namespaceRegex, '').split('.'); // namespaces
+                // Registrer
                 first = registrer(entry = new Registry(
                     elem,
-                    type, // event type
+                    eventType, // event type
                     callback,
                     cb,
-                    types[i].replace(namespaceRegex, '').split('.'), // namespaces
+                    namespace,
                     args,
                     false // not root
                 ));
@@ -4645,7 +4728,7 @@ hAzzle.define('Events', function() {
 
             var customType = customEvents[type];
 
-            if (type == 'unload') {
+            if (type === 'unload') {
                 handler = once(dispatch, elem, type, handler, original);
             }
 
@@ -4676,7 +4759,7 @@ hAzzle.define('Events', function() {
             }
             for (i = checkNamespaces.length; i--;) {
                 for (j = this.namespaces.length; j--;) {
-                    if (checkNamespaces[i] == this.namespaces[j]) {
+                    if (checkNamespaces[i] === this.namespaces[j]) {
                         c++;
                     }
                 }
@@ -4780,12 +4863,12 @@ hAzzle.define('Events', function() {
 hAzzle.define('specialEvents', function() {
 
     var _util = hAzzle.require('Util'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _events = hAzzle.require('Events');
 
     // Handle focusin/focusout for browsers who don't support it ( e.g Firefox)
 
-    if (_detection.isFirefox) {
+    if (_has.has('firefox')) {
         var focusBlurFn = function(elem, type) {
 
             var key,
@@ -4831,7 +4914,6 @@ hAzzle.define('specialEvents', function() {
     }
     return {};
 });
-
 // eventhooks.js
 hAzzle.define('eventHooks', function() {
 

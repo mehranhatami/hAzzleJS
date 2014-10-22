@@ -6,7 +6,7 @@ hAzzle.define('Manipulation', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _text = hAzzle.require('Text'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         scriptStyle = /<(?:script|style|link)/i,
         tagName = /<([\w:]+)/,
         htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
@@ -333,7 +333,7 @@ hAzzle.define('Manipulation', function() {
             this.empty().each(function(elem) {
                 if (method && typeof method === 'string' && typeof value === 'string' &&
                     // Firefox doesen't support insertAdjacentText
-                    !_detection.isFirefox) {
+                    !_has.has('firefox')) {
                     elem.insertAdjacentText(iAText[method] || 'beforeBegin', value);
                 } else {
                     if (elem.nodeType === 1 ||

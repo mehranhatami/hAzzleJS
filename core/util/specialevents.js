@@ -2,12 +2,12 @@
 hAzzle.define('specialEvents', function() {
 
     var _util = hAzzle.require('Util'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _events = hAzzle.require('Events');
 
     // Handle focusin/focusout for browsers who don't support it ( e.g Firefox)
 
-    if (_detection.isFirefox) {
+    if (_has.has('firefox')) {
         var focusBlurFn = function(elem, type) {
 
             var key,

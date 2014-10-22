@@ -40,7 +40,7 @@ hAzzle.define('Events', function() {
         _collection = hAzzle.require('Collection'),
         _types = hAzzle.require('Types'),
         _jiesa = hAzzle.require('Jiesa'),
-        _detection = hAzzle.require('Detection'),
+        _has = hAzzle.require('has'),
         _core = hAzzle.require('Core'),
 
         // regEx
@@ -60,13 +60,13 @@ hAzzle.define('Events', function() {
             'keyLocation location').split(' '));
 
     // Firefox specific eventTypes
-    if (_detection.isFirefox) {
+    if (_has.has('firefox')) {
         commonProps.concat('mozMovementY mozMovementX'.split(' '));
     }
     // WebKit eventTypes
     // Support: Chrome / Opera
 
-    if (_detection.isWebkit) {
+    if (_has.has('webkit')) {
         commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
     }
 

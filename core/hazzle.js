@@ -1,19 +1,19 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0b-alpha
+ * Version: 1.0.0 Release Candidate 
  * Released under the MIT License.
  *
- * Date: 2014-10-19
+ * Date: 2014-10-22
  */
 (function() {
 
     var
-    // Quick-lookup for hAzzle(id)
+       // Quick-lookup for hAzzle(id)
 
         idOnly = /^#([\w\-]*)$/,
 
-        // Minimalist module system
+        // Holder for all modules
 
         modules = {},
 
@@ -22,11 +22,11 @@
         installed = {},
 
         version = {
-            full: '1.0.0a-alpha',
+            full: '1.0.0a-rc',
             major: 1,
             minor: 0,
             dot: 0,
-            codeName: 'new-era'
+            codeName: 'new-age'
         },
 
         // Throws an error if `condition` is `true`.
