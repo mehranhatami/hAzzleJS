@@ -112,6 +112,10 @@ Bugs can occur, so report back to me as soon as you discover some - if you do !
 
 Folder 'modules' contains modules - not part of the main core.
 
+##### NOTE!! The **Core folder** contains modules for the whole Core, but you are not forced to use them all. If you only need **map()**, **each()** and this functions, you **only** have to include **hazzle.js** and **utility.js**. 
+
+Everything are modular, so use the modules you need, but be aware that a few modules need each other. Example **types.js**
+
 **Correct module order for the Core:**
 
 * core/hAzzle.js 
