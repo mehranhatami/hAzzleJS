@@ -102,7 +102,7 @@ hAzzle.define('Style', function() {
 
         setCSS = function(elem, name, value) {
 
-            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
+            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) { // Text or Comment
 
                 var ret, style, hook, type, action, origName = _strings.camelize(name);
 

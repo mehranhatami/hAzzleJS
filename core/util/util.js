@@ -423,7 +423,12 @@ var key;
                 }
             }
             return r;
-        };
+        },
+        consoleLog = function(msg) {
+        if (typeof console !== 'undefined' && _types.isHostMethod(console, 'log')) {
+            console.log(msg);
+        }
+    }
 
     return {
         each: each,
@@ -449,6 +454,7 @@ var key;
         int: int,
         noop: function() {},
         shallowCopy: shallowCopy,
-        reject: reject
+        reject: reject,
+        consoleLog:consoleLog
     };
 });

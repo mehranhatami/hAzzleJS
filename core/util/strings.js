@@ -17,6 +17,18 @@ hAzzle.define('Strings', function() {
 
         sCapitalize = /\b[a-z]/g,
 
+        // UnescapeHTML RegExp
+
+        unEscapeFirst = /^#x([\da-fA-F]+)$/,
+
+        // UnescapeHTML RegExp
+
+        unEscapeLast = /^#(\d+)$/,
+
+        // escapeHTML regExp
+
+        escHTML = /[&<>"']/g,
+
         // Microsoft RegExp
 
         msPrefix = /^-ms-/,
@@ -36,6 +48,16 @@ hAzzle.define('Strings', function() {
         // Cache array for hAzzle.camelize()
 
         camelCache = [],
+
+        escapeChars = {
+            lt: '<',
+            gt: '>',
+            quot: '"',
+            apos: "'",
+            amp: '&'
+        },
+
+        reversedEscapeChars = {},
 
         // Used by hAzzle.capitalize as callback to replace()
 
@@ -80,7 +102,7 @@ hAzzle.define('Strings', function() {
             return str ? str.replace(sCapitalize, fcapitalize) : str;
         },
 
-        // Convert a string from camel case to "CSS case", where word boundaries are
+        // Convert a string from camel case to 'CSS case', where word boundaries are
         // described by hyphens ('-') and all characters are lower-case.
         // e.g. boxSizing -> box-sizing
 
@@ -120,6 +142,41 @@ hAzzle.define('Strings', function() {
             return typeof str !== 'string' ||
                 !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
                 (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
+        },
+
+        contains = function(str, needle) {
+            return str.indexOf(needle) >= 0;
+        },
+
+        count = function(string, needle) {
+            var count = 0,
+                pos = string.indexOf(needle);
+
+            while (pos >= 0) {
+                count += 1;
+                pos = string.indexOf(needle, pos + 1);
+            }
+
+            return count;
+        },
+        escapeHTML = function(str) {
+            return str.replace(escHTML, function(m) {
+                return '&' + reversedEscapeChars[m] + ';';
+            });
+        },
+        unescapeHTML = function(str) { //from underscore.string
+            return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
+                var m;
+                if (entityCode in escapeChars) {
+                    return escapeChars[entityCode];
+                } else if (m = entityCode.match(unEscapeFirst)) {
+                    return String.fromCharCode(parseInt(m[1], 16));
+                } else if (m = entityCode.match(unEscapeLast)) {
+                    return String.fromCharCode(~~m[1]);
+                } else {
+                    return entity;
+                }
+            });
         };
 
     // Credit: AngularJS    
@@ -132,6 +189,10 @@ hAzzle.define('Strings', function() {
         uppercase = manualUppercase;
     }
 
+    for (var key in escapeChars) {
+        reversedEscapeChars[escapeChars[key]] = key;
+    }
+
     return {
 
         capitalize: capitalize,
@@ -142,6 +203,10 @@ hAzzle.define('Strings', function() {
         uppcase: uppercase,
         manualLowercase: manualLowercase,
         manualUppercase: manualUppercase,
-        parse: parse
+        parse: parse,
+        count: count,
+        contains: contains,
+        escapeHTML: escapeHTML,
+        unescapeHTML: unescapeHTML
     };
 });

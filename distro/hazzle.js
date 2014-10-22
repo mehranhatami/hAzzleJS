@@ -255,21 +255,32 @@ hAzzle.define('Support', function() {
 });
 
 // has.js
-hAzzle.define('has', function () {
+hAzzle.define('has', function() {
 
- var 
-     ua = navigator.userAgent,
+    var
+        ua = navigator.userAgent,
+        win = window,
+        doc = win.document,
+        isBrowser =
+        // the most fundamental decision: are we in the browser?
+        typeof window !== 'undefined' &&
+        typeof location !== 'undefined' &&
+        typeof document !== 'undefined' &&
+        window.location === location &&
+        window.document === document,
+        doc = isBrowser && document,
+        element = doc && doc.createElement('DiV'),
+        hasCache = {},
 
-        // Special detection for IE, because we got a lot of trouble
-        // with it. Damn IE!!
+        // IE feature detection
 
-        ie = (function () {
+        ie = (function() {
 
-            if (document.documentMode) {
-                return document.documentMode;
+            if (doc.documentMode) {
+                return doc.documentMode;
             } else {
                 for (var i = 7; i > 4; i--) {
-                    var div = document.createElement('div');
+                    var div = doc.createElement('div');
 
                     div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
 
@@ -283,99 +294,98 @@ hAzzle.define('has', function () {
 
             return undefined;
         })(),
- 
- 
-    isBrowser =
-    // the most fundamental decision: are we in the browser?
-    typeof window !== 'undefined' &&
-    typeof location !== 'undefined' &&
-    typeof document !== 'undefined' &&
-    window.location === location &&
-    window.document === document,
-    doc = isBrowser && document,
-    element = doc && doc.createElement('DiV'),
-    hasCache = {},
- 
-    has = function(name) {
-        return typeof hasCache[name] === 'function' ?
-            (hasCache[name] = hasCache[name](window, doc, element)) :
-            hasCache[name]; // Boolean
-    },
 
-    add = function(name, test, now, force) {
-        (typeof hasCache[name] == 'undefined' || force) && (hasCache[name] = test);
-        return now && has(name);
-    },
-    clearElement = function(element) {
-        if (element) {
-            while (element.lastChild) {
-                element.removeChild(element.lastChild);
+        has = function(name) {
+            return typeof hasCache[name] === 'function' ?
+                (hasCache[name] = hasCache[name](win, doc, element)) :
+                hasCache[name]; // Boolean
+        },
+
+        add = function(name, test, now, force) {
+            (typeof hasCache[name] == 'undefined' || force) && (hasCache[name] = test);
+            return now && has(name);
+        },
+        clearElement = function(element) {
+            if (element) {
+                while (element.lastChild) {
+                    element.removeChild(element.lastChild);
+                }
             }
-        }
-        return element;
+            return element;
+        };
+
+    // XPath
+
+    add('xpath', function() {
+        return !!(doc.evaluate);
+    });
+
+    // Air 
+
+    add('air', function() {
+        return !!(win.runtime);
+    });
+
+    // Detects native support for the Dart programming language
+    
+     add('dart', function() {
+        return !!(win.startDart || doc.startDart);
+    });
+
+    // Detects native support for promises
+    
+     add('promise', function() {
+        return !!(win.Promise);
+    });
+
+    // mobile
+
+    add('mobile', function() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    });
+
+    // android
+
+    add('android', function() {
+        return /Android/i.test(ua);
+    });
+
+    // opera
+    add('opera', function() {
+        return !!win.opera || ua.indexOf(' OPR/') >= 0;
+    });
+
+    // Firefox
+    add('firefox', function() {
+        return typeof InstallTrigger !== 'undefined';
+    });
+
+    // Chrome
+    add('chrome', function() {
+        return win.chrome;
+    });
+
+    // Webkit
+    add('webkit', function() {
+        return 'WebkitAppearance' in doc.documentElement.style;
+    });
+
+    // Safari
+    add('safari', function() {
+        return Object.prototype.toString.call(win.HTMLElement).indexOf('Constructor') > 0;
+    });
+
+    // Safari
+    add('ie', function() {
+        return false || !!doc.documentMode;
+    });
+
+    return {
+        has: has,
+        add: add,
+        clearElement: clearElement,
+        ie: ie
     };
-
- // XPath
-
- add('xpath', function() {
-    return !!(document.evaluate);
- });
-
- // Air 
- 
- add('air', function() {
-    return !!(window.runtime);
- });
- 
- // mobile
- 
- add('mobile', function() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
- });
-
- // android
- 
- add('android', function() {
-    return /Android/i.test(ua);
- });
-
- // opera
- add('opera', function() {
-    return !!window.opera || ua.indexOf(' OPR/') >= 0;
- });
-
-
- // Firefox
- add('firefox', function() {
-    return typeof InstallTrigger !== 'undefined';
- });
-
- // Chrome
- add('chrome', function() {
-    return window.chrome;
- });
-
- // Webkit
- add('webkit', function() {
-    return 'WebkitAppearance' in document.documentElement.style;
- });
-
- // Safari
- add('safari', function() {
-    return Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
- });
-
- // Safari
- add('ie', function() {
-    return false || !!document.documentMode;
- });
-
-return {
-     has:has,
-     add:add,
-     clearElement:clearElement,
-     ie:ie
-     };
 });
 
 // types.js
@@ -422,7 +432,6 @@ hAzzle.define('Types', function() {
         isNumeric = function(obj) {
             return !isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
         },
-
         isEmpty = function(value) {
             var i = 0;
             return isArray(value) ? value.length === 0 :
@@ -440,20 +449,16 @@ hAzzle.define('Types', function() {
             return (value && typeof value === 'object' && value.ELEMENT_NODE &&
                 _toString.call(value).indexOf('Element') > -1) || false;
         },
-
         isNaN = function(value) {
             // `NaN` as a primitive is the only value that is not equal to itself
             return isNumber(value) && value != +value;
         },
-
         isUndefined = function(value) {
             return typeof value === 'undefined';
         },
-
         isDefined = function(value) {
             return typeof value !== 'undefined';
         },
-
         isEmptyObject = function(obj) {
             var name;
             for (name in obj) {
@@ -461,6 +466,7 @@ hAzzle.define('Types', function() {
             }
             return true;
         },
+        // This looks bad. Is it worth it?
         isWindow = function(obj) {
             return obj && obj.window === obj;
         },
@@ -482,7 +488,7 @@ hAzzle.define('Types', function() {
         },
 
         isPlainObject = function(obj) {
-            return isType(obj) !== "object" && !isWindow(obj) && Object.getPrototypeOf(obj) == Object.prototype;
+            return isType(obj) !== 'object' && !isWindow(obj) && Object.getPrototypeOf(obj) == Object.prototype;
         },
 
         isNode = function(elem) {
@@ -498,13 +504,18 @@ hAzzle.define('Types', function() {
             if (!('length' in nodes) || !('item' in nodes)) {
                 return false;
             }
-            // use the trick NodeList(index), all browsers support
             try {
                 if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) return true;
             } catch (e) {
                 return false;
             }
             return false;
+        },
+        // Trio of functions taken from Peter Michaux's article:
+        // http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
+        isHostMethod = function(o, p) {
+            var t = typeof o[p];
+            return t === 'function' || (!!(t == 'object' && o[p])) || t == 'unknown';
         };
 
     this.isNodeList = isNodeList;
@@ -529,7 +540,8 @@ hAzzle.define('Types', function() {
         isNaN: isNaN,
         isDefined: isDefined,
         isUndefined: isUndefined,
-        isNodeList: isNodeList
+        isNodeList: isNodeList,
+        isHostMethod: isHostMethod
     };
 });
 // ready.js
@@ -600,9 +612,9 @@ hAzzle.define('Ready', function() {
 });
 
 // text.js
-hAzzle.define('Text', function() {
+hAzzle.define('Text', function () {
 
-    var getText = function(elem) {
+    var getText = function (elem) {
 
         if (elem) {
 
@@ -633,10 +645,9 @@ hAzzle.define('Text', function() {
 
                     for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
                         ret += getText(elem);
-
                     }
                 }
-            } else if (nodetype === 3 || nodetype === 4) {
+            } else if (nodetype === 3 || nodetype === 4) { // Text or CDataSection
                 return elem.nodeValue;
             }
             return ret;
@@ -1044,7 +1055,7 @@ hAzzle.define('Util', function() {
         },
         // shallowCopy
         shallowCopy = function(target, source, deep) {
-            var key;
+var key;
             for (key in source)
 
                 if (deep && (_types.isPlainObject(source[key]) || _types.isArray(source[key]))) {
@@ -1073,7 +1084,12 @@ hAzzle.define('Util', function() {
                 }
             }
             return r;
-        };
+        },
+        consoleLog = function(msg) {
+        if (typeof console !== 'undefined' && _types.isHostMethod(console, 'log')) {
+            console.log(msg);
+        }
+    }
 
     return {
         each: each,
@@ -1099,7 +1115,8 @@ hAzzle.define('Util', function() {
         int: int,
         noop: function() {},
         shallowCopy: shallowCopy,
-        reject: reject
+        reject: reject,
+        consoleLog:consoleLog
     };
 });
 // core.js
@@ -1882,6 +1899,18 @@ hAzzle.define('Strings', function() {
 
         sCapitalize = /\b[a-z]/g,
 
+        // UnescapeHTML RegExp
+
+        unEscapeFirst = /^#x([\da-fA-F]+)$/,
+
+        // UnescapeHTML RegExp
+
+        unEscapeLast = /^#(\d+)$/,
+
+        // escapeHTML regExp
+
+        escHTML = /[&<>"']/g,
+
         // Microsoft RegExp
 
         msPrefix = /^-ms-/,
@@ -1901,6 +1930,16 @@ hAzzle.define('Strings', function() {
         // Cache array for hAzzle.camelize()
 
         camelCache = [],
+
+        escapeChars = {
+            lt: '<',
+            gt: '>',
+            quot: '"',
+            apos: "'",
+            amp: '&'
+        },
+
+        reversedEscapeChars = {},
 
         // Used by hAzzle.capitalize as callback to replace()
 
@@ -1945,9 +1984,10 @@ hAzzle.define('Strings', function() {
             return str ? str.replace(sCapitalize, fcapitalize) : str;
         },
 
-        // Convert a string from camel case to "CSS case", where word boundaries are
+        // Convert a string from camel case to 'CSS case', where word boundaries are
         // described by hyphens ('-') and all characters are lower-case.
         // e.g. boxSizing -> box-sizing
+
 
         hyphenate = function(str) {
             if (typeof str == 'string') {
@@ -1985,6 +2025,41 @@ hAzzle.define('Strings', function() {
             return typeof str !== 'string' ||
                 !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
                 (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
+        },
+
+        contains = function(str, needle) {
+            return str.indexOf(needle) >= 0;
+        },
+
+        count = function(string, needle) {
+            var count = 0,
+                pos = string.indexOf(needle);
+
+            while (pos >= 0) {
+                count += 1;
+                pos = string.indexOf(needle, pos + 1);
+            }
+
+            return count;
+        },
+        escapeHTML = function(str) {
+            return str.replace(escHTML, function(m) {
+                return '&' + reversedEscapeChars[m] + ';';
+            });
+        },
+        unescapeHTML = function(str) { //from underscore.string
+            return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
+                var m;
+                if (entityCode in escapeChars) {
+                    return escapeChars[entityCode];
+                } else if (m = entityCode.match(unEscapeFirst)) {
+                    return String.fromCharCode(parseInt(m[1], 16));
+                } else if (m = entityCode.match(unEscapeLast)) {
+                    return String.fromCharCode(~~m[1]);
+                } else {
+                    return entity;
+                }
+            });
         };
 
     // Credit: AngularJS    
@@ -1997,6 +2072,10 @@ hAzzle.define('Strings', function() {
         uppercase = manualUppercase;
     }
 
+    for (var key in escapeChars) {
+        reversedEscapeChars[escapeChars[key]] = key;
+    }
+
     return {
 
         capitalize: capitalize,
@@ -2007,7 +2086,11 @@ hAzzle.define('Strings', function() {
         uppcase: uppercase,
         manualLowercase: manualLowercase,
         manualUppercase: manualUppercase,
-        parse: parse
+        parse: parse,
+        count: count,
+        contains: contains,
+        escapeHTML: escapeHTML,
+        unescapeHTML: unescapeHTML
     };
 });
 // storage.js
@@ -2845,7 +2928,7 @@ hAzzle.define('Style', function() {
 
         setCSS = function(elem, name, value) {
 
-            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) {
+            if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) { // Text or Comment
 
                 var ret, style, hook, type, action, origName = _strings.camelize(name);
 
@@ -5572,6 +5655,7 @@ hAzzle.define('Visibility', function() {
             function replace() {
                 if (this.parentNode) {
                     this.parentNode.replaceChild(
+
                         applyToFragment(arguments), this
                     );
                 }

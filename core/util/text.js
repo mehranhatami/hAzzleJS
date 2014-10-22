@@ -34,7 +34,7 @@ hAzzle.define('Text', function () {
                         ret += getText(elem);
                     }
                 }
-            } else if (nodetype === 3 || nodetype === 4) {
+            } else if (nodetype === 3 || nodetype === 4) { // Text or CDataSection
                 return elem.nodeValue;
             }
             return ret;

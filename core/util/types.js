@@ -42,7 +42,6 @@ hAzzle.define('Types', function() {
         isNumeric = function(obj) {
             return !isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
         },
-
         isEmpty = function(value) {
             var i = 0;
             return isArray(value) ? value.length === 0 :
@@ -60,20 +59,16 @@ hAzzle.define('Types', function() {
             return (value && typeof value === 'object' && value.ELEMENT_NODE &&
                 _toString.call(value).indexOf('Element') > -1) || false;
         },
-
         isNaN = function(value) {
             // `NaN` as a primitive is the only value that is not equal to itself
             return isNumber(value) && value != +value;
         },
-
         isUndefined = function(value) {
             return typeof value === 'undefined';
         },
-
         isDefined = function(value) {
             return typeof value !== 'undefined';
         },
-
         isEmptyObject = function(obj) {
             var name;
             for (name in obj) {
@@ -81,6 +76,7 @@ hAzzle.define('Types', function() {
             }
             return true;
         },
+        // This looks bad. Is it worth it?
         isWindow = function(obj) {
             return obj && obj.window === obj;
         },
@@ -102,7 +98,7 @@ hAzzle.define('Types', function() {
         },
 
         isPlainObject = function(obj) {
-            return isType(obj) !== "object" && !isWindow(obj) && Object.getPrototypeOf(obj) == Object.prototype;
+            return isType(obj) !== 'object' && !isWindow(obj) && Object.getPrototypeOf(obj) == Object.prototype;
         },
 
         isNode = function(elem) {
@@ -118,13 +114,18 @@ hAzzle.define('Types', function() {
             if (!('length' in nodes) || !('item' in nodes)) {
                 return false;
             }
-            // use the trick NodeList(index), all browsers support
             try {
                 if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) return true;
             } catch (e) {
                 return false;
             }
             return false;
+        },
+        // Trio of functions taken from Peter Michaux's article:
+        // http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
+        isHostMethod = function(o, p) {
+            var t = typeof o[p];
+            return t === 'function' || (!!(t == 'object' && o[p])) || t == 'unknown';
         };
 
     this.isNodeList = isNodeList;
@@ -149,6 +150,7 @@ hAzzle.define('Types', function() {
         isNaN: isNaN,
         isDefined: isDefined,
         isUndefined: isUndefined,
-        isNodeList: isNodeList
+        isNodeList: isNodeList,
+        isHostMethod: isHostMethod
     };
 });
