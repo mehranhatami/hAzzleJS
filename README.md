@@ -124,7 +124,7 @@ hAzzle also support modern Javascript and also a DOM Level 4 shim. So for the **
 * core/hAzzle.js 
 * core/dom/support.js 
 * core/dom/core.js 
-* core/util/detection.js 
+* core/util/has.js 
 * core/util/types.js 
 * core/util/util.js 
 * core/dp,/ready.js 
