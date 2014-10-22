@@ -73,9 +73,18 @@ hAzzle.define('Collection', function() {
 
     /* ------------- INTERNAL ARRAY METHODS ------------------------------- */
 
-    // Retrieve the DOM elements matched by the hAzzle object.
+    // Return an array or a specific DOM element matched by the hAzzle object
+    
     this.get = function(index) {
-        return index === undefined ? slice(this.elements) : this.elements[index >= 0 ? index : index + this.length];
+        var result;
+			if (index === undefined) {
+				result = slice(this.elements, 0);
+			} else if (index < 0) {
+				result = this.elements[this.length + index];
+			} else {
+				result = this.elements[index];
+			}
+			return result;
     };
 
     // Get the element at position specified by index from the current collection.
