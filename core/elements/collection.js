@@ -133,10 +133,19 @@ hAzzle.define('Collection', function() {
 
     // Determine the position of an element within the set
 
-    this.index = function(sel) {
-        return sel === undefined ?
-            this.parent().children().indexOf(this.elements[0]) :
-            this.elements.indexOf(hAzzle(sel).elements[0]);
+    this.index = function(node) {
+        var els = this.elements;
+        if (!node) {
+            return (els[0] && els[0].parentElement) ? this.first().prevAll().length : -1;
+        }
+
+        // Index in selector
+        if (typeof node === 'string') {
+            return _util.indexOf(hAzzle(node).elements, els[0]);
+        }
+
+        // Locate the position of the desired element
+        return _util.indexOf(els, node instanceof hAzzle ? node.elements[0] : node);
     };
 
     this.add = function(sel, ctx) {
@@ -155,30 +164,6 @@ hAzzle.define('Collection', function() {
         return index ? this.slice(this.length - index) : this.eq(-1);
     };
 
-    this.parentElement = function() {
-        return this.parent().children();
-    };
-
-    this.firstElementChild = function() {
-        return this.children().first();
-    };
-
-    this.lastElementChild = function() {
-        return this.children().last();
-    };
-
-    this.previousElementSibling = function() {
-        return this.prev().last();
-    };
-
-    this.nextElementSibling = function() {
-        return this.next().first();
-    };
-
-    this.childElementCount = function() {
-        return this.children().length;
-    };
-
     this.size = function() {
         return this.length;
     };
@@ -193,8 +178,6 @@ hAzzle.define('Collection', function() {
                 return elem[value];
             }).filter(sel);
         };
-        // Note! The native 'bind' method do not give the best performance, but
-        // this happen only on pageload. Anyone who wan't to fix this?
     }.bind(this));
 
     // prevAll() and nextAll()
@@ -202,7 +185,7 @@ hAzzle.define('Collection', function() {
         prevAll: 'previousElementSibling',
         nextAll: 'nextElementSibling'
     }, function(value, prop) {
-        this[prop] = function(sel) {
+        this[prop] = function() {
             var matched = [];
             this.each(function(elem) {
                 while ((elem = elem[value]) && elem.nodeType !== 9) {
@@ -211,8 +194,6 @@ hAzzle.define('Collection', function() {
             });
             return hAzzle(matched);
         };
-        // Note! The native 'bind' method do not give the best performance, but
-        // this happen only on pageload. Anyone who wan't to fix this?
     }.bind(this));
 
 

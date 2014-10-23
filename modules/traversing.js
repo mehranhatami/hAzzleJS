@@ -133,5 +133,29 @@ hAzzle.define('Traversing', function() {
         ));
     };
 
+ this.parentElement = function() {
+        return this.parent().children();
+    };
+
+    this.firstElementChild = function() {
+        return this.children().first();
+    };
+
+    this.lastElementChild = function() {
+        return this.children().last();
+    };
+
+    this.previousElementSibling = function() {
+        return this.prev().last();
+    };
+
+    this.nextElementSibling = function() {
+        return this.next().first();
+    };
+
+    this.childElementCount = function() {
+        return this.children().length;
+    };
+    
     return {};
 });

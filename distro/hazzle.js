@@ -275,6 +275,7 @@ hAzzle.define('Support', function() {
 // has.js
 
 
+
 hAzzle.define('has', function() {
 
     var
@@ -1588,10 +1589,19 @@ hAzzle.define('Collection', function() {
 
     // Determine the position of an element within the set
 
-    this.index = function(sel) {
-        return sel === undefined ?
-            this.parent().children().indexOf(this.elements[0]) :
-            this.elements.indexOf(hAzzle(sel).elements[0]);
+    this.index = function(node) {
+        var els = this.elements;
+        if (!node) {
+            return (els[0] && els[0].parentElement) ? this.first().prevAll().length : -1;
+        }
+
+        // Index in selector
+        if (typeof node === 'string') {
+            return _util.indexOf(hAzzle(node).elements, els[0]);
+        }
+
+        // Locate the position of the desired element
+        return _util.indexOf(els, node instanceof hAzzle ? node.elements[0] : node);
     };
 
     this.add = function(sel, ctx) {
@@ -1610,30 +1620,6 @@ hAzzle.define('Collection', function() {
         return index ? this.slice(this.length - index) : this.eq(-1);
     };
 
-    this.parentElement = function() {
-        return this.parent().children();
-    };
-
-    this.firstElementChild = function() {
-        return this.children().first();
-    };
-
-    this.lastElementChild = function() {
-        return this.children().last();
-    };
-
-    this.previousElementSibling = function() {
-        return this.prev().last();
-    };
-
-    this.nextElementSibling = function() {
-        return this.next().first();
-    };
-
-    this.childElementCount = function() {
-        return this.children().length;
-    };
-
     this.size = function() {
         return this.length;
     };
@@ -1648,8 +1634,6 @@ hAzzle.define('Collection', function() {
                 return elem[value];
             }).filter(sel);
         };
-        // Note! The native 'bind' method do not give the best performance, but
-        // this happen only on pageload. Anyone who wan't to fix this?
     }.bind(this));
 
     // prevAll() and nextAll()
@@ -1657,7 +1641,7 @@ hAzzle.define('Collection', function() {
         prevAll: 'previousElementSibling',
         nextAll: 'nextElementSibling'
     }, function(value, prop) {
-        this[prop] = function(sel) {
+        this[prop] = function() {
             var matched = [];
             this.each(function(elem) {
                 while ((elem = elem[value]) && elem.nodeType !== 9) {
@@ -1666,8 +1650,6 @@ hAzzle.define('Collection', function() {
             });
             return hAzzle(matched);
         };
-        // Note! The native 'bind' method do not give the best performance, but
-        // this happen only on pageload. Anyone who wan't to fix this?
     }.bind(this));
 
 
@@ -1679,7 +1661,7 @@ hAzzle.define('Collection', function() {
     };
 });
 
-// jiesa.js
+ // jiesa.js
 hAzzle.define('Jiesa', function() {
 
     var _util = hAzzle.require('Util'),
@@ -2202,6 +2184,7 @@ hAzzle.define('Strings', function() {
         lowercase = manualLowercase;
         uppercase = manualUppercase;
     }
+
 
     for (var key in escapeChars) {
         reversedEscapeChars[escapeChars[key]] = key;
@@ -2834,6 +2817,7 @@ hAzzle.define('curCSS', function() {
             // Add offsetParent borders
 
             parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
+
             parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
         }
         // Subtract offsetParent scroll positions
@@ -2949,499 +2933,6 @@ hAzzle.define('Units', function() {
     };
 });
 
-// manipulation.js
-hAzzle.define('Manipulation', function() {
-
-    var _util = hAzzle.require('Util'),
-        _support = hAzzle.require('Support'),
-        _core = hAzzle.require('Core'),
-        _types = hAzzle.require('Types'),
-        _text = hAzzle.require('Text'),
-        _scriptStyle = /<(?:script|style|link)/i,
-        _tagName = /<([\w:]+)/,
-        _htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
-        _rcheckableType = (/^(?:checkbox|radio)$/i),
-        _whitespace = /^\s*<([^\s>]+)/,
-        _scriptTag = /\s*<script +src=['"]([^'"]+)['"]>/,
-        table = ['<table>', '</table>', 1],
-        td = ['<table><tbody><tr>', '</tr></tbody></table>', 3],
-        option = ['<select>', '</select>', 1],
-        noscope = ['_', '', 0, 1],
-
-        tagMap = {
-            style: table,
-            table: table,
-            thead: table,
-            tbody: table,
-            tfoot: table,
-            colgroup: table,
-            caption: table,
-            tr: ['<table><tbody>', '</tbody></table>', 2],
-            th: td,
-            td: td,
-            col: ['<table><colgroup>', '</colgroup></table>', 2],
-            fieldset: ['<form>', '</form>', 1],
-            legend: ['<form><fieldset>', '</fieldset></form>', 2],
-            option: option,
-            optgroup: option,
-            script: noscope,
-            link: noscope,
-            param: noscope,
-            base: noscope
-        },
-        createHTML = function(html, context) {
-            return hAzzle(create(html, context));
-        },
-
-        fixInput = function(src, dest) {
-            var nodeName = dest.nodeName.toLowerCase();
-
-            // Fails to persist the checked state of a cloned checkbox or radio button.
-            if (nodeName === 'input' && _rcheckableType.test(src.type)) {
-                dest.checked = src.checked;
-
-                // Fails to return the selected option to the default selected state when cloning options
-            } else if (nodeName === 'input' || nodeName === 'textarea') {
-                dest.defaultValue = src.defaultValue;
-            }
-        },
-        cloneElem = function(elem, deep) {
-
-            var source = elem.cloneNode(true),
-                destElements,
-                srcElements,
-                i, l;
-
-            // Fix IE cloning issues
-            if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
-                !_core.isXML(elem)) {
-                destElements = grab(source);
-                srcElements = grab(elem);
-
-                for (i = 0, l = srcElements.length; i < l; i++) {
-                    fixInput(srcElements[i], destElements[i]);
-                }
-            }
-            // If 'deep' clone events
-            if (deep && (source.nodeType === 1 || source.nodeType === 9)) {
-
-                hAzzle(source).cloneEvents(elem);
-
-                // Copy the events from the original to the clone
-
-                destElements = grab(source);
-                srcElements = grab(elem);
-
-                for (i = 0; i < srcElements.length; i++) {
-                    hAzzle(destElements[i]).cloneEvents(srcElements[i]);
-                }
-            }
-            return source;
-        },
-
-        createScriptFromHtml = function(html, context) {
-            var scriptEl = context.createElement('script'),
-                matches = html.match(_scriptTag);
-            scriptEl.src = matches[1];
-            return scriptEl;
-        },
-
-        deepEach = function(array, fn, context) {
-            if (array) {
-                var index = array.length;
-                while (index--) {
-                    if (_types.isNode(array[index])) {
-                        deepEach(array[index].children, fn, context);
-
-                        fn.call(context || array[index], array[index], index, array);
-                    }
-                }
-            }
-            return array;
-        },
-
-        create = function(node, context) {
-            if (node) {
-                // Mitigate XSS vulnerability
-
-                var defaultContext = _support.imcHTML ?
-                    document.implementation.createHTMLDocument() :
-                    document,
-                    ctx = context || defaultContext,
-                    fragment = ctx.createDocumentFragment();
-
-                if (typeof node === 'string' && node !== '') {
-
-                    /* Check for 'script tags' (e.g <script type="text/javascript" src="doml4.js"></script>, and
-                       create it if match 
-                     */
-                    if (_scriptTag.test(node)) {
-                        return [createScriptFromHtml(node, context)];
-                    }
-
-                    // Deserialize a standard representation
-
-                    var i, tag = node.match(_whitespace),
-                        sandbox = fragment.appendChild(ctx.createElement('div')),
-                        els = [],
-                        map = tag ? tagMap[tag[1].toLowerCase()] : null,
-                        dep = map ? map[2] + 1 : 1,
-                        noScoop = map && map[3];
-
-                    if (map) {
-                        sandbox.innerHTML = (map[0] + node + map[1]);
-                    } else {
-                        sandbox.innerHTML = node;
-                    }
-
-                    while (dep--) {
-                        sandbox = sandbox.firstChild;
-                    }
-
-                    // for IE NoScope, we may insert cruft at the begining just to get it to work
-
-                    if (noScoop && sandbox && sandbox.nodeType !== 1) {
-                        sandbox = sandbox.nextSibling;
-                    }
-
-                    do {
-                        if (!tag || sandbox.nodeType === 1) {
-                            els.push(sandbox);
-                        }
-                    } while (sandbox = sandbox.nextSibling);
-
-                    for (i in els) {
-                        if (els[i].parentNode) {
-                            els[i].parentNode.removeChild(els[i]);
-                        }
-                    }
-
-                    return els;
-
-                } else if (_util.isNode(node)) {
-                    return [node.cloneNode(true)];
-                }
-            }
-        },
-
-        // Grab childnodes
-
-        grab = function(context, tag) {
-            var ret = context.getElementsByTagName(tag || '*');
-            return tag === undefined || tag && _util.nodeName(context, tag) ?
-                _util.merge([context], ret) :
-                ret;
-        },
-
-        // Removes the data associated with an element
-
-        clearData = function(elems) {
-
-            // No point to continue clearing events if the events.js module
-            // are not installed
-
-            if (!hAzzle.installed.Events) {
-                hAzzle.err(true, 17, 'events.js module are not installed');
-            }
-
-            var elem, i = 0;
-
-            // If instanceof hAzzle...
-
-            if (elems instanceof hAzzle) {
-                elems = [elems.elements[0]];
-            } else {
-                elems = elems.length ? elems : [elems];
-            }
-
-            for (;
-                (elem = elems[i]) !== undefined; i++) {
-                // Remove all eventListeners
-                hAzzle(elem).off();
-            }
-        },
-
-        normalize = function(node, clone) {
-
-            var i, l, ret;
-
-            if (typeof node === 'string') {
-                return create(node);
-            }
-
-            if (node instanceof hAzzle) {
-                node = node.elements;
-            }
-
-            if (_types.isNode(node)) {
-                node = [node];
-            }
-
-            if (clone) {
-                ret = []; // don't change original array
-                for (i = 0, l = node.length; i < l; i++) {
-                    ret[i] = cloneElem(node[i], true);
-                }
-                return ret;
-            }
-            return node;
-        },
-        createGlobal = function(elem, content, method) {
-            if (typeof content === 'string' &&
-                _core.isHTML &&
-                elem.parentNode && elem.parentNode.nodeType === 1) {
-                elem.insertAdjacentHTML(method, content.replace(_htmlTag, '<$1></$2>'));
-            } else {
-                _util.each(normalize(content, 0), function(relatedNode) {
-                    elem[method](relatedNode); // DOM Level 4
-                });
-            }
-        },
-        prepend = function(elem, content) {
-            createGlobal(elem, content, 'prepend');
-        },
-
-        append = function(elem, content) {
-            createGlobal(elem, content, 'append');
-        };
-
-    // insertAdjacentHTML method for append, prepend, before and after
-
-    this.iAHMethod = function(method, html, fn) {
-        return this.each(function(elem, index) {
-            if (typeof html === 'string' &&
-                _core.isHTML &&
-                elem.parentNode && elem.parentNode.nodeType === 1) {
-                elem.insertAdjacentHTML(method, html.replace(_htmlTag, '<$1></$2>'));
-            } else {
-                fn(elem, index);
-            }
-        });
-    };
-
-    this.append = function(content) {
-        return this.iAHMethod('beforeend', content, function(node, state) {
-            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.appendChild(relatedNode); // DOM Level 4
-                });
-            }
-        });
-    };
-
-    this.prepend = function(content) {
-        return this.iAHMethod('afterbegin', content, function(node, state) {
-            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.prepend(relatedNode); // DOM Level 4
-                });
-            }
-        });
-    };
-
-    this.before = function(content) {
-        return this.iAHMethod('beforebegin', content, function(node, state) {
-            _util.each(normalize(content, state), function(relatedNode) {
-                node.before(relatedNode); // DOM Level 4
-
-            });
-        });
-    };
-
-    this.after = function(content) {
-        return this.iAHMethod('afterend', content, function(node, state) {
-            _util.each(normalize(content, state), function(relatedNode) {
-                node.after(relatedNode); // DOM Level 4
-            });
-        });
-    };
-
-    this.appendTo = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.appendChild(el);
-        });
-    };
-
-    this.prependTo = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.insertBefore(el, node.firstChild);
-        });
-    };
-
-    this.insertBefore = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.parentNode.insertBefore(el, node);
-        });
-    };
-
-    this.insertAfter = function(content) {
-        return this.domManip(content, function(node, el) {
-            var sibling = node.nextSibling;
-            sibling ?
-                node.parentNode.insertBefore(el, sibling) :
-                node.parentNode.appendChild(el);
-        }, 1);
-    };
-
-    // Same as 'ReplaceWith' in jQuery
-
-    this.replace = function(html) {
-        return this.each(function(el, i) {
-            _util.each(normalize(html, i), function(i) {
-                el.replace(i); // DOM Level 4
-            });
-        });
-    };
-
-    // Thanks to jQuery for the function name!!
-
-    this.domManip = function(content, fn, /*reverse */ rev) {
-
-        var i = 0,
-            r = [];
-
-        // Nasty looking code, but this has to be fast
-
-        var self = this.elements,
-            elems, nodes;
-
-        if (typeof content === 'string' &&
-            content[0] === '<' &&
-            content[content.length - 1] === '>' &&
-            content.length >= 3) {
-            nodes = content;
-
-        } else {
-            nodes = hAzzle(content);
-        }
-
-        // Start the iteration and loop through the content
-
-        _util.each(normalize(nodes), function(elem, index) {
-            _util.each(self, function(el) {
-                elems = index > 0 ? el.cloneNode(true) : el;
-                if (elem) {
-                    fn(elem, elems);
-                }
-            }, null, rev);
-
-        }, this, rev);
-        self.length = i;
-        _util.each(r, function(e) {
-            self[--i] = e;
-        }, null, !rev);
-        return self;
-    };
-
-    // Text
-
-    this.text = function(value) {
-        return value === undefined ?
-            _text.getText(this.elements) :
-            this.empty().each(function(elem) {
-                if (elem.nodeType === 1 ||
-                    elem.nodeType === 11 ||
-                    elem.nodeType === 9) {
-                    elem.textContent = value;
-                }
-            });
-    };
-
-    // HTML
-
-    this.html = function(value) {
-
-        var els = this.elements,
-            elem = els[0],
-            i = 0,
-            l = this.length;
-
-        if (value === undefined && els[0].nodeType === 1) {
-            return els[0].innerHTML;
-        }
-        // See if we can take a shortcut and just use innerHTML
-
-        if (typeof value === 'string' && !_scriptStyle.test(value) &&
-            !tagMap[(_tagName.exec(value) || ['', ''])[1].toLowerCase()]) {
-
-            value = value.replace(_htmlTag, '<$1></$2>'); // DOM Level 4
-
-            try {
-
-                for (; i < l; i++) {
-
-                    elem = els[i] || {};
-
-                    // Remove element nodes and prevent memory leaks
-                    if (elem.nodeType === 1) {
-                        clearData(grab(elem, false));
-                        elem.innerHTML = value;
-                    }
-                }
-
-                elem = 0;
-
-                // If using innerHTML throws an exception, use the fallback method
-            } catch (e) {}
-        }
-
-        if (elem) {
-            return this.empty().append(value);
-        }
-    };
-
-    this.deepEach = function(fn, scope) {
-        return deepEach(this.elements, fn, scope);
-    };
-
-    this.detach = function() {
-        return this.each(function(elem) {
-            if (elem.parentElement) {
-                elem.parentElement.removeChild(elem);
-            }
-        });
-    };
-
-    this.empty = function() {
-        return this.each(function(elem) {
-            // Do a 'deep each' and clear all listeners if any 
-            deepEach(elem.children, clearData);
-            while (elem.firstChild) {
-                elem.removeChild(elem.firstChild);
-            }
-        });
-    };
-
-    this.remove = function() {
-        this.deepEach(clearData);
-        return this.detach();
-    };
-
-    // 'deep' - let you clone events
-
-    this.clone = function(deep) {
-        // Better performance with a 'normal' for-loop then
-        // map() or each()       
-        var elems = this.elements,
-            ret = [],
-            i = 0,
-            l = this.length;
-
-        for (; i < l; i++) {
-            ret[i] = cloneElem(elems[i], deep);
-        }
-        return hAzzle(ret);
-    };
-
-    return {
-        clearData: clearData,
-        create: create,
-        createHTML: createHTML,
-        clone: cloneElem,
-        append: append,
-        prepend: prepend
-    };
-});
 // setters.js
 hAzzle.define('Setters', function() {
 
@@ -4910,143 +4401,6 @@ hAzzle.define('eventHooks', function() {
     return {};
 });
 
-// traversing.js
-hAzzle.define('Traversing', function() {
-
-    var _jiesa = hAzzle.require('Jiesa'),
-        _collection = hAzzle.require('Collection'),
-        _core = hAzzle.require('Core'),
-        _util = hAzzle.require('Util');
-
-    // Returns all sibling elements for nodes
-    // Optionally takes a query to filter the sibling elements.
-
-    this.siblings = function(selector) {
-
-        var ret = [],
-            i, nodes;
-
-        this.each(function(element) {
-
-            nodes = element.parentElement.children;
-
-            i = nodes.length;
-
-            while (i--) {
-                if (nodes[i] !== element) {
-                    ret.push(nodes[i]);
-                }
-            }
-        });
-        return selector === undefined ? hAzzle(ret) : hAzzle(ret).filter(selector);
-    };
-
-    // Get immediate parents of each element in the collection.
-    // If CSS selector is given, filter results to include only ones matching the selector.
-
-    this.parent = function(sel) {
-        var matched = this.map(function(elem) {
-            var parent = elem.parentElement;
-            return parent && parent.nodeType !== 11 ? parent : null;
-        }).filter(sel);
-
-        if (this.length > 1) {
-            // Remove duplicates
-            _core.uniqueSort(matched.elements);
-        }
-        return matched;
-    };
-
-    // Returns all parent elements for nodes
-    // Optionally takes a query to filter the child elements.
-
-    this.parents = function(selector) {
-        var ancestors = [],
-            elements = this.elements;
-        while (elements.length > 0 && elements[0] !== undefined) {
-            elements = _util.map(elements, function(elem) {
-                if (elem && (elem = elem.parentElement) && elem.nodeType !== 9) {
-                    ancestors.push(elem);
-                    return elem;
-                }
-            });
-        }
-
-        if (this.length > 1) {
-            // Remove duplicates
-            _core.uniqueSort(ancestors);
-            // Reverse order for parents
-            ancestors.reverse();
-        }
-        return selector === undefined ? hAzzle(ancestors) : hAzzle(ancestors).filter(selector);
-    };
-
-    // Get the first element that matches the selector, beginning at 
-    // the current element and progressing up through the DOM tree.
-
-    this.closest = function(selector, ctx) {
-        var cur,
-            i = 0,
-            l = this.length,
-            matched = [];
-
-        for (; i < l; i++) {
-            for (cur = this.elements[i]; cur && cur !== ctx; cur = cur.parentNode) {
-                // Always skip document fragments
-                if (cur.nodeType < 11 &&
-                    cur.nodeType === 1 &&
-                    _jiesa.matches(cur, selector)) {
-
-                    matched.push(cur);
-                    break;
-                }
-            }
-        }
-
-        return hAzzle(matched.length > 1 ? _core.uniqueSort(matched) : matched);
-    };
-
-    // Get immediate children of each element in the current collection.
-    // If selector is given, filter the results to only include ones matching the CSS selector.
-
-    this.children = function(selector) {
-        var children = [];
-        this.each(function(elem) {
-            _util.each(_collection.slice(elem.children), function(value) {
-                children.push(value);
-            });
-        });
-        return selector === undefined ? hAzzle(children) : hAzzle(children).filter(selector);
-    };
-
-    // Return elements that is a descendant of another.
-
-    this.contains = function(selector) {
-        var matches;
-        return new hAzzle(_collection.reduce(this.elements, function(elements, element) {
-            matches = _jiesa.find(element, selector);
-            return elements.concat(matches.length ? element : null);
-        }, []));
-    };
-
-    // Reduce the set of matched elements to those that have a descendant that matches the 
-    //selector or DOM element.
-
-    this.has = function(sel) {
-        return hAzzle(_util.filter(
-            this.elements,
-            _util.isElement(sel) ? function(el) {
-                return _core.contains(sel, el);
-            } : typeof sel === 'string' && sel.length ? function(el) {
-                return _jiesa.find(sel, el).length;
-            } : function() {
-                return false;
-            }
-        ));
-    };
-
-    return {};
-});
 /**
  * DOM 4 shim / pollify for hAzzle
  *

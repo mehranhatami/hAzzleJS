@@ -11,7 +11,7 @@ hAzzle.define('Classes', function() {
         a1 = [''],
 
         str2array = function(classes) {
-            if (typeof classes == "string") {
+            if (typeof classes == 'string') {
                 if (classes && !_whitespace.test(classes)) {
                     a1[0] = classes;
                     return a1;
@@ -138,6 +138,7 @@ hAzzle.define('Classes', function() {
                     }
                 }, fn);
             });
+            return elem;
         },
 
         // Remove classes from element collection
@@ -243,22 +244,21 @@ hAzzle.define('Classes', function() {
 
     this.replaceClass = function(firstClass, secondClass) {
         if (this.hasClass(firstClass)) {
-            this.removeClass(firstClass).addClass(secondClass);
+            return this.removeClass(firstClass).addClass(secondClass);
         } else if (this.hasClass(secondClass)) {
-            this.removeClass(secondClass).addClass(firstClass);
+            return this.removeClass(secondClass).addClass(firstClass);
         }
-
-        return this;
     };
+
     // Removes CSS class `className` from `element`.
 
     this.removeClass = function(classes) {
-        removeClass(this.elements, classes);
+        return removeClass(this.elements, classes);
     };
 
     this.toggleClass = function(value, condition) {
-        return toggleClass(this.elements, value, condition);
-
+        toggleClass(this.elements, value, condition);
+        return this;
     };
 
     return {
