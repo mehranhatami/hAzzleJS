@@ -1,11 +1,11 @@
 // text.js
-hAzzle.define('Text', function () {
+hAzzle.define('Text', function() {
 
-    var getText = function (elem) {
+    var getText = function(elem) {
 
         if (elem) {
 
-            var node, ret = '',
+            var node, text = '',
                 i = 0,
                 l = elem.length,
                 etc, nodetype = elem.nodeType;
@@ -16,8 +16,10 @@ hAzzle.define('Text', function () {
 
                     node = elem[i++];
 
-                    // Do not traverse comment nodes
-                    ret += getText(node);
+                    ///Skip comments.
+                    if (node.nodeType !== 8) {
+                        text += getText(node);
+                    }
                 }
 
             } else if (nodetype === 1 ||
@@ -31,13 +33,17 @@ hAzzle.define('Text', function () {
                 } else {
 
                     for (elem = elem.firstChild; elem; elem = elem.nextSibling) {
-                        ret += getText(elem);
+                        text += getText(elem);
                     }
                 }
             } else if (nodetype === 3 || nodetype === 4) { // Text or CDataSection
+
+                // Use nodedValue so we avoid that <br/> tags e.g, end up in
+                // the text as any sort of line return.
+
                 return elem.nodeValue;
             }
-            return ret;
+            return text;
         }
         return;
     };

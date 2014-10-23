@@ -6,30 +6,51 @@ hAzzle.define('Classes', function() {
         _storage = hAzzle.require('Storage'),
         _strings = hAzzle.require('Strings'),
         _types = hAzzle.require('Types'),
-        whitespace = (/\S+/g),
-        reSpace = /[\n\t\r]/g,
+        _reSpace = /[\n\t\r]/g,
+        _whitespace = /\s+/,
+        a1 = [''],
+
+        str2array = function(classes) {
+            if (typeof classes == "string") {
+                if (classes && !_whitespace.test(classes)) {
+                    a1[0] = classes;
+                    return a1;
+                }
+                var arr = classes.split(_whitespace);
+                if (arr.length && !arr[0]) {
+                    arr.shift();
+                }
+                if (arr.length && !arr[arr.length - 1]) {
+                    arr.pop();
+                }
+                return arr;
+            }
+            // Assumed to be an array
+            if (!classes) {
+                return [];
+            }
+            return classes;
+
+        },
 
         addRemove = function(elem, classes, nativeMethodName, fn, done) {
 
             if (!_types.isEmptyObject(elem)) {
 
+                // Array support (e.g. ['hello', 'world']  
+
+                classes = str2array(classes);
+
                 var length, i,
                     based = false;
 
-                // Support for array (e.g. ['hello', 'world']
-
-                classes = _types.isString(classes) ?
-                    classes :
-                    _types.isArray(classes) ?
-                    classes.join(' ') : '';
-
                 if (nativeMethodName === 'remove' && !classes) {
+
                     elem.className = '';
                 }
-
                 // use native classList property if possible
 
-                if (_support.classList) {
+                if (!_support.classList) {
 
                     // Flag native
 
@@ -39,8 +60,6 @@ hAzzle.define('Classes', function() {
                         return elem.classList[nativeMethodName](cls);
                     };
                 }
-
-                classes = (classes || '').match(whitespace) || [];
 
                 // Some browsers (e.g. IE) don't support multiple  arguments
 
@@ -62,10 +81,13 @@ hAzzle.define('Classes', function() {
                 }
             }
         },
-        
+
         // Check if the first element in the collection has classes
-        
+
         hasClass = function(elem, classes) {
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
 
             elem = elem.length ? elem : [elem];
 
@@ -82,7 +104,7 @@ hAzzle.define('Classes', function() {
                             return true;
                         }
                     } else {
-                        if ((' ' + els[i].className + ' ').replace(reSpace, ' ').indexOf(className) >= 0) {
+                        if ((' ' + els[i].className + ' ').replace(_reSpace, ' ').indexOf(className) >= 0) {
                             return true;
                         }
                     }
@@ -94,12 +116,15 @@ hAzzle.define('Classes', function() {
         // Add classes to element collection
 
         addClass = function(elem, classes, /*optional*/ fn) {
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
 
             var els = elem.length ? elem : [elem];
             _util.each(els, function(elem) {
                 return addRemove(elem, classes, 'add', function(elem, cls) {
 
-                    var cur = (' ' + elem.className + ' ').replace(reSpace, ' '),
+                    var cur = (' ' + elem.className + ' ').replace(_reSpace, ' '),
                         finalValue;
 
                     if (cur.indexOf(' ' + cls + ' ') < 0) {
@@ -118,13 +143,16 @@ hAzzle.define('Classes', function() {
         // Remove classes from element collection
 
         removeClass = function(elem, classes, /*optional*/ fn) {
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
 
             var els = elem.length ? elem : [elem];
 
             _util.each(els, function(elem) {
                 return addRemove(elem, classes, 'remove', function(elem, cls) {
 
-                    var cur = (' ' + elem.className + ' ').replace(reSpace, ' '),
+                    var cur = (' ' + elem.className + ' ').replace(_reSpace, ' '),
                         finalValue;
 
                     if (cur.indexOf(' ' + cls + ' ') >= 0) {
@@ -150,14 +178,18 @@ hAzzle.define('Classes', function() {
 
         // Toggles the presence of CSS class `className` on `element`.
 
-        toggleClass = function(elem, value, stateVal) {
+        toggleClass = function(elem, value, condition) {
+
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
 
             var els = elem.length ? elem : [elem],
                 type = typeof value;
-
-            if (typeof stateVal === 'boolean' && type === 'string') {
-                return stateVal ? addClass(els, value) : removeClass(els, value);
+            if (typeof condition === 'boolean' && type === 'string') {
+                return condition ? addClass(els, value) : removeClass(els, value);
             }
+
             var i = 0,
                 len = els.length;
 
@@ -169,8 +201,7 @@ hAzzle.define('Classes', function() {
                     // Toggle individual class names
                     var className,
                         self = hAzzle(elem),
-                        classNames = value.match(whitespace) || [];
-
+                        classNames = str2array(value);
                     i = 0;
 
                     while ((className = classNames[i++])) {
@@ -207,9 +238,9 @@ hAzzle.define('Classes', function() {
                 hAzzle(elem).addClass(classes.call(elem, index, elem.className));
             }) : addClass(this.elements, classes, fn);
     };
-    
+
     // Replace a given class with another
-    
+
     this.replaceClass = function(firstClass, secondClass) {
         if (this.hasClass(firstClass)) {
             this.removeClass(firstClass).addClass(secondClass);
@@ -225,8 +256,8 @@ hAzzle.define('Classes', function() {
         removeClass(this.elements, classes);
     };
 
-    this.toggleClass = function(value, stateVal) {
-        return toggleClass(this.elements, value, stateVal);
+    this.toggleClass = function(value, condition) {
+        return toggleClass(this.elements, value, condition);
 
     };
 

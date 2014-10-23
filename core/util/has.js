@@ -4,7 +4,6 @@ hAzzle.define('has', function() {
     var
         ua = navigator.userAgent,
         win = window,
-        doc = win.document,
         isBrowser =
         // the most fundamental decision: are we in the browser?
         typeof window !== 'undefined' &&
@@ -13,9 +12,9 @@ hAzzle.define('has', function() {
         window.location === location &&
         window.document === document,
         doc = isBrowser && document,
-        element = doc && doc.createElement('DiV'),
-        hasCache = {},
-
+        element = doc && doc.createElement('div'),
+        hasCache = {}
+        
         // IE feature detection
 
         ie = (function() {
@@ -123,6 +122,30 @@ hAzzle.define('has', function() {
     // Safari
     add('ie', function() {
         return false || !!doc.documentMode;
+    });
+
+    // Touch support
+
+    add('touch', function() {
+        return 'ontouchstart' in document || 
+        ('onpointerdown' in document && navigator.maxTouchPoints > 0) ||
+         window.navigator.msMaxTouchPoints;
+    });
+
+    // Touch events 
+
+    add('touchEvents', function() {
+        return 'ontouchstart' in document;
+    });
+
+    // Pointer Events
+
+    add('pointerEvents', function() {
+        return 'onpointerdown' in document;
+    });
+
+    add('MSPointer', function() {
+        return 'msMaxTouchPoints' in navigator; //IE10+
     });
 
     return {

@@ -22,6 +22,7 @@ hAzzle.define('Setters', function() {
         boolElem = {}, // Boolean elements
 
         propMap = {
+            // properties renamed to avoid clashes with reserved words  
             'class': 'className',
             'for': 'htmlFor'
         },
@@ -375,7 +376,7 @@ hAzzle.define('Setters', function() {
         boolElem[prop.toUpperCase()] = true;
     });
 
-    // Populate propMap
+    // Populate propMap - all properties written as camelCase
     _util.each(['cellPadding', 'cellSpacing', 'maxLength', 'rowSpan',
         'colSpan', 'useMap', 'frameBorder', 'contentEditable', 'textContent', 'valueType',
         'tabIndex', 'readOnly', 'type', 'accessKey', 'tabIndex', 'dropZone', 'spellCheck',
