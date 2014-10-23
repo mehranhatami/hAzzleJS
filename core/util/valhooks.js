@@ -9,7 +9,7 @@ hAzzle.define('valHooks', function() {
         _setters = hAzzle.require('Setters');
 
     // Setter
-    _util.extend(_setters.valHooks.set, {
+    _util.mixin(_setters.valHooks.set, {
 
         'select': function(elem, value) {
             var optionSet, option,
@@ -33,7 +33,7 @@ hAzzle.define('valHooks', function() {
     });
 
     // Getter    
-    _util.extend(_setters.valHooks.get, {
+    _util.mixin(_setters.valHooks.get, {
 
         'option': function(elem) {
 

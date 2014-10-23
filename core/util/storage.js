@@ -73,7 +73,7 @@ hAzzle.define('Storage', function() {
                     // Fresh assignments by object are shallow copied
                     if (_types.isEmptyObject(cache)) {
 
-                        _util.extend(cache, data);
+                        _util.mixin(cache, data);
                         // Otherwise, copy the properties one-by-one to the cache object
                     } else {
                         for (prop in data) {

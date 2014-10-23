@@ -124,7 +124,7 @@ hAzzle.define('Util', function() {
         // Extends the destination object `obj` by copying all of the 
         // properties from the `src` object(s)
 
-        extend = function(obj) {
+        mixin = function(obj) {
             if (!_types.isObject(obj)) {
 
                 return obj;
@@ -390,8 +390,8 @@ hAzzle.define('Util', function() {
             }
         },
 
-        // shallowCopy
-        shallowCopy = function(target, source, deep) {
+        // extend
+        extend = function(target, source, deep) {
             var key;
             for (key in source)
 
@@ -402,7 +402,7 @@ hAzzle.define('Util', function() {
                 if (_types.isArray(source[key]) && !_types.isArray(target[key])) {
                     target[key] = [];
                 }
-                shallowCopy(target[key], source[key], deep);
+                extend(target[key], source[key], deep);
             } else if (source[key] !== undefined) {
                 target[key] = source[key];
             }
@@ -430,7 +430,7 @@ hAzzle.define('Util', function() {
 
     return {
         each: each,
-        extend: extend,
+        mixin: mixin,
         makeArray: makeArray,
         merge: merge,
         acceptData: acceptData,
@@ -450,7 +450,7 @@ hAzzle.define('Util', function() {
         bind: bind,
         has: has,
         noop: function() {},
-        shallowCopy: shallowCopy,
+        extend: extend,
         reject: reject,
         consoleLog: consoleLog
     };

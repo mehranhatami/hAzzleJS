@@ -272,141 +272,163 @@ hAzzle.define('Support', function() {
     };
 });
 
-    // has.js
-    hAzzle.define('has', function() {
+// has.js
+hAzzle.define('has', function() {
 
-        var
-            ua = navigator.userAgent,
-            win = window,
-            doc = win.document,
-            isBrowser =
-            // the most fundamental decision: are we in the browser?
-            typeof window !== 'undefined' &&
-            typeof location !== 'undefined' &&
-            typeof document !== 'undefined' &&
-            window.location === location &&
-            window.document === document,
-            doc = isBrowser && document,
-            element = doc && doc.createElement('DiV'),
-            hasCache = {},
+    var
+        ua = navigator.userAgent,
+        win = window,
+        isBrowser =
+        // the most fundamental decision: are we in the browser?
+        typeof window !== 'undefined' &&
+        typeof location !== 'undefined' &&
+        typeof document !== 'undefined' &&
+        window.location === location &&
+        window.document === document,
+        doc = isBrowser && document,
+        element = doc && doc.createElement('div'),
+        hasCache = {}
+        
+        // IE feature detection
 
-            // IE feature detection
+        ie = (function() {
 
-            ie = (function() {
+            if (doc.documentMode) {
+                return doc.documentMode;
+            } else {
+                for (var i = 7; i > 4; i--) {
+                    var div = doc.createElement('div');
 
-                if (doc.documentMode) {
-                    return doc.documentMode;
-                } else {
-                    for (var i = 7; i > 4; i--) {
-                        var div = doc.createElement('div');
+                    div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
 
-                        div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
+                    if (div.getElementsByTagName('span').length) {
+                        div = null;
 
-                        if (div.getElementsByTagName('span').length) {
-                            div = null;
-
-                            return i;
-                        }
+                        return i;
                     }
                 }
+            }
 
-                return undefined;
-            })(),
+            return undefined;
+        })(),
 
-            has = function(name) {
-                return typeof hasCache[name] === 'function' ?
-                    (hasCache[name] = hasCache[name](win, doc, element)) :
-                    hasCache[name]; // Boolean
-            },
+        has = function(name) {
+            return typeof hasCache[name] === 'function' ?
+                (hasCache[name] = hasCache[name](win, doc, element)) :
+                hasCache[name]; // Boolean
+        },
 
-            add = function(name, test, now, force) {
-                (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
-                return now && has(name);
-            },
-            clearElement = function(element) {
-                if (element) {
-                    while (element.lastChild) {
-                        element.removeChild(element.lastChild);
-                    }
+        add = function(name, test, now, force) {
+            (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
+            return now && has(name);
+        },
+        clearElement = function(element) {
+            if (element) {
+                while (element.lastChild) {
+                    element.removeChild(element.lastChild);
                 }
-                return element;
-            };
-
-        // XPath
-
-        add('xpath', function() {
-            return !!(doc.evaluate);
-        });
-
-        // Air 
-
-        add('air', function() {
-            return !!(win.runtime);
-        });
-
-        // Detects native support for the Dart programming language
-
-        add('dart', function() {
-            return !!(win.startDart || doc.startDart);
-        });
-
-        // Detects native support for promises
-
-        add('promise', function() {
-            return !!(win.Promise);
-        });
-
-        // mobile
-
-        add('mobile', function() {
-            return /^Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-        });
-
-        // android
-
-        add('android', function() {
-            return /^Android/i.test(ua);
-        });
-
-        // opera
-        add('opera', function() {
-            return !!win.opera || ua.indexOf(' OPR/') >= 0;
-        });
-
-
-        // Firefox
-        add('firefox', function() {
-            return typeof InstallTrigger !== 'undefined';
-        });
-
-        // Chrome
-        add('chrome', function() {
-            return win.chrome;
-        });
-
-        // Webkit
-        add('webkit', function() {
-            return 'WebkitAppearance' in doc.documentElement.style;
-        });
-
-        // Safari
-        add('safari', function() {
-            return Object.prototype.toString.call(win.HTMLElement).indexOf('Constructor') > 0;
-        });
-
-        // Safari
-        add('ie', function() {
-            return false || !!doc.documentMode;
-        });
-
-        return {
-            has: has,
-            add: add,
-            clearElement: clearElement,
-            ie: ie
+            }
+            return element;
         };
+
+    // XPath
+
+    add('xpath', function() {
+        return !!(doc.evaluate);
     });
 
+    // Air 
+
+    add('air', function() {
+        return !!(win.runtime);
+    });
+
+    // Detects native support for the Dart programming language
+
+    add('dart', function() {
+        return !!(win.startDart || doc.startDart);
+    });
+
+    // Detects native support for promises
+
+    add('promise', function() {
+        return !!(win.Promise);
+    });
+
+    // mobile
+
+    add('mobile', function() {
+        return /^Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    });
+
+    // android
+
+    add('android', function() {
+        return /^Android/i.test(ua);
+    });
+
+    // opera
+    add('opera', function() {
+        return !!win.opera || ua.indexOf(' OPR/') >= 0;
+    });
+
+
+    // Firefox
+    add('firefox', function() {
+        return typeof InstallTrigger !== 'undefined';
+    });
+
+    // Chrome
+    add('chrome', function() {
+        return win.chrome;
+    });
+
+    // Webkit
+    add('webkit', function() {
+        return 'WebkitAppearance' in doc.documentElement.style;
+    });
+
+    // Safari
+    add('safari', function() {
+        return Object.prototype.toString.call(win.HTMLElement).indexOf('Constructor') > 0;
+    });
+
+    // Safari
+    add('ie', function() {
+        return false || !!doc.documentMode;
+    });
+
+    // Touch support
+
+    add('touch', function() {
+        return 'ontouchstart' in document || 
+        ('onpointerdown' in document && navigator.maxTouchPoints > 0) ||
+         window.navigator.msMaxTouchPoints;
+    });
+
+    // Touch events 
+
+    add('touchEvents', function() {
+        return 'ontouchstart' in document;
+    });
+
+    // Pointer Events
+
+    add('pointerEvents', function() {
+        return 'onpointerdown' in document;
+    });
+
+    add('MSPointer', function() {
+        return 'msMaxTouchPoints' in navigator; //IE10+
+    });
+
+    return {
+        has: has,
+        add: add,
+        clearElement: clearElement,
+        ie: ie
+    };
+});
     // types.js
     hAzzle.define('Types', function() {
 
@@ -744,7 +766,7 @@ hAzzle.define('Text', function() {
             // Extends the destination object `obj` by copying all of the 
             // properties from the `src` object(s)
 
-            extend = function(obj) {
+            mixin = function(obj) {
                 if (!_types.isObject(obj)) {
 
                     return obj;
@@ -1010,8 +1032,8 @@ hAzzle.define('Text', function() {
                 }
             },
 
-            // shallowCopy
-            shallowCopy = function(target, source, deep) {
+            // extend
+            extend = function(target, source, deep) {
                 var key;
                 for (key in source)
 
@@ -1022,7 +1044,7 @@ hAzzle.define('Text', function() {
                     if (_types.isArray(source[key]) && !_types.isArray(target[key])) {
                         target[key] = [];
                     }
-                    shallowCopy(target[key], source[key], deep);
+                    extend(target[key], source[key], deep);
                 } else if (source[key] !== undefined) {
                     target[key] = source[key];
                 }
@@ -1050,7 +1072,7 @@ hAzzle.define('Text', function() {
 
         return {
             each: each,
-            extend: extend,
+            mixin: mixin,
             makeArray: makeArray,
             merge: merge,
             acceptData: acceptData,
@@ -1070,7 +1092,7 @@ hAzzle.define('Text', function() {
             bind: bind,
             has: has,
             noop: function() {},
-            shallowCopy: shallowCopy,
+            extend: extend,
             reject: reject,
             consoleLog: consoleLog
         };
@@ -2257,7 +2279,7 @@ hAzzle.define('Jiesa', function() {
                         // Fresh assignments by object are shallow copied
                         if (_types.isEmptyObject(cache)) {
 
-                            _util.extend(cache, data);
+                            _util.mixin(cache, data);
                             // Otherwise, copy the properties one-by-one to the cache object
                         } else {
                             for (prop in data) {
@@ -3809,7 +3831,7 @@ hAzzle.define('Setters', function() {
             _winDoc = window.document;
 
         // Setter
-        _util.extend(_setters.attrHooks.set, {
+        _util.mixin(_setters.attrHooks.set, {
 
             'type': function(elem, value) {
                 if (!_support.radioValue && value === 'radio' &&
@@ -3828,7 +3850,7 @@ hAzzle.define('Setters', function() {
             }
         });
         // Getter    
-        _util.extend(_setters.attrHooks.get, {
+        _util.mixin(_setters.attrHooks.get, {
             'title': function(elem) {
                 return elem === _docElem ? _winDoc.title : elem.title;
             }
@@ -3846,7 +3868,7 @@ hAzzle.define('Setters', function() {
             _focusable = /^(?:input|select|textarea|button)$/i;
 
         // Getter    
-        _util.extend(_setters.propHooks.get, {
+        _util.mixin(_setters.propHooks.get, {
             'tabIndex': function(elem) {
                 return elem.hasAttribute('tabindex') ||
                     focusable.test(elem.nodeName) || elem.href ?
@@ -3898,7 +3920,7 @@ hAzzle.define('Setters', function() {
             _setters = hAzzle.require('Setters');
 
         // Setter
-        _util.extend(_setters.valHooks.set, {
+        _util.mixin(_setters.valHooks.set, {
 
             'select': function(elem, value) {
                 var optionSet, option,
@@ -3922,7 +3944,7 @@ hAzzle.define('Setters', function() {
         });
 
         // Getter    
-        _util.extend(_setters.valHooks.get, {
+        _util.mixin(_setters.valHooks.get, {
 
             'option': function(elem) {
 

@@ -8,7 +8,7 @@ hAzzle.define('propHooks', function () {
         _focusable = /^(?:input|select|textarea|button)$/i;
 
     // Getter    
-    _util.extend(_setters.propHooks.get, {
+    _util.mixin(_setters.propHooks.get, {
         'tabIndex': function (elem) {
             return elem.hasAttribute('tabindex') ||
                 focusable.test(elem.nodeName) || elem.href ?

@@ -8,7 +8,7 @@ hAzzle.define('attrHooks', function() {
         _winDoc = window.document;
 
     // Setter
-    _util.extend(_setters.attrHooks.set, {
+    _util.mixin(_setters.attrHooks.set, {
 
         'type': function(elem, value) {
             if (!_support.radioValue && value === 'radio' &&
@@ -27,7 +27,7 @@ hAzzle.define('attrHooks', function() {
         }
     });
     // Getter    
-    _util.extend(_setters.attrHooks.get, {
+    _util.mixin(_setters.attrHooks.get, {
         'title': function(elem) {
             return elem === _docElem ? _winDoc.title : elem.title;
         }
