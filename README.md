@@ -13,10 +13,13 @@ One important thing to note is that **hAzzle** doesn't try to subclass Array in 
 
 This alone gives you over 100 different ways to deal with the **.elements array**, and you are not restricted to a few methods as you find in **jQuery** / **Zepto**. 
 
-Still. There is no reason to get panic.**hAzzle** also provide some of the same **DOM traversing methods** you might know from this libraries like .next, .prev, .children, etc. in the **traversing.js module**.
+The **util.js module** ( part of the Core) uses some of this native functions.
 
-The **util.js module** ( part of the Core) uses some of the native functions.
+Anyway. There is no reason to get panic.**hAzzle** also provide some of the same **DOM traversing methods** you might know from this libraries like **.siblings()**, **.has()**, **.children()**, etc. in the **traversing.js module**.
 
+You will also find similar methods like **.eq()**, **.prev()**, **.nextAll()*, **.next()** e.g., as you may know from **jQuery / Zepto** in the **collection.js module** ( part of the Core) to traverse through the elements array
+
+Other methodds such as **.addClass()**, **.prepend()**, **.text()**, **.html()** e.g. are all included in the **module folder*
 
 Browser compatiblity
 --------------------
@@ -32,17 +35,17 @@ Browser compatiblity
 <tbody>
 <tr>
 <td style="text-align:left;"> Chrome  </td>
-<td style="text-align:left;">6+       </td>
+<td style="text-align:left;">20+       </td>
 </tr>
 
 <tr>
 <td style="text-align:left;"> Safari  </td>
-<td style="text-align:left;">5+       </td>
+<td style="text-align:left;">6       </td>
 </tr>
 
 <tr>
 <td style="text-align:left;"> Firefox </td>
-<td style="text-align:left;">9+       </td>
+<td style="text-align:left;">22+       </td>
 </tr>
 
 <tr>
@@ -52,7 +55,7 @@ Browser compatiblity
 
 <tr>
 <td style="text-align:left;"> Opera   </td>
-<td style="text-align:left;">14+    </td>
+<td style="text-align:left;">15+    </td>
 </tr>
 
 </tbody>
