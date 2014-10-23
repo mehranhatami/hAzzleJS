@@ -6,7 +6,6 @@
  *
  * Date: 2014-10-24
  */
- 
 (function() {
 
     var
@@ -34,31 +33,29 @@
 
         err = function(condition, code, message) {
             if (condition) {
-                var e = new Error('[hAzzle-' + code + '] ' + message);
-                e.code = code;
-                throw e;
+                throw new Error( '[hAzzle-' + code + '] ' + message );
             }
         },
 
-        // Returns an instance for `id`
+        // Returns an instance for `name`
 
-        require = function(id) {
-            return modules[id];
+        require = function(name) {
+            return modules[name];
         },
 
-        // Defines a module for `id: String`, `fn: Function`,
+        // Defines a module for `name: String`, `fn: Function`,
 
-        define = function(id, fn) {
+        define = function(name, fn) {
 
             // Check arguments
-            err(typeof id !== 'string', 1, 'id must be a string "' + id + '"');
-            err(modules[id], 2, 'id already defined "' + id + '"');
-            err(typeof fn !== 'function', 3, 'function body for "' + id + '" must be an function "' + fn + '"');
+            err(typeof name !== 'string', 1, 'id must be a string "' + name + '"');
+            err(modules[name], 2, 'module already included "' + name + '"');
+            err(typeof fn !== 'function', 3, 'function body for "' + name + '" must be an function "' + fn + '"');
 
             // append to module object
-            installed[id] = true;
+            installed[name] = true;
 
-            modules[id] = fn.call(hAzzle.prototype);
+            modules[name] = fn.call(hAzzle.prototype);
         },
 
         validTypes = function(elem) {
@@ -151,11 +148,6 @@
             return this;
         };
 
-    // Define constructor
-    hAzzle.prototype = {
-        constructor: hAzzle
-    };
-
     // Expose
 
     hAzzle.version = version.full;
@@ -169,8 +161,6 @@
     window.hAzzle = hAzzle;
 
 }(window));
-
-var hAzzle = window.hAzzle || (window.hAzzle = {});
 
 // support.js
 hAzzle.define('Support', function() {

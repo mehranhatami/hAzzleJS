@@ -71,18 +71,21 @@ hAzzle.define('Manipulation', function() {
                     fixInput(srcElements[i], destElements[i]);
                 }
             }
-            // If 'deep' clone events
-            if (deep && (source.nodeType === 1 || source.nodeType === 9)) {
+            // Only allow cloning of events if the Events.js module are installed
+            if (hAzzle.installed.Events) {
+                // If 'deep' clone events
+                if (deep && (source.nodeType === 1 || source.nodeType === 9)) {
 
-                hAzzle(source).cloneEvents(elem);
+                    hAzzle(source).cloneEvents(elem);
 
-                // Copy the events from the original to the clone
+                    // Copy the events from the original to the clone
 
-                destElements = grab(source);
-                srcElements = grab(elem);
+                    destElements = grab(source);
+                    srcElements = grab(elem);
 
-                for (i = 0; i < srcElements.length; i++) {
-                    hAzzle(destElements[i]).cloneEvents(srcElements[i]);
+                    for (i = 0; i < srcElements.length; i++) {
+                        hAzzle(destElements[i]).cloneEvents(srcElements[i]);
+                    }
                 }
             }
             return source;
@@ -228,6 +231,7 @@ hAzzle.define('Manipulation', function() {
 
             if (clone) {
                 ret = []; // don't change original array
+
                 for (i = 0, l = node.length; i < l; i++) {
                     ret[i] = cloneElem(node[i], true);
                 }
