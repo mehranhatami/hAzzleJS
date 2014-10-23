@@ -4,8 +4,9 @@
  * Version: 1.0.0 Release Candidate 
  * Released under the MIT License.
  *
- * Date: 2014-10-22
+ * Date: 2014-10-23
  */
+ 
 (function() {
 
     var
@@ -151,7 +152,7 @@
         constructor: hAzzle
     };
 
-    // Expose to the global scope
+    // Expose
 
     hAzzle.version = version.full;
     hAzzle.err = err;

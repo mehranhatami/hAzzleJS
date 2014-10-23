@@ -134,7 +134,7 @@ hAzzle.define('Core', function() {
 
         if (!Core.isXML(root)) {
 
-            // Check if getElementsByTagName("*") returns only elements
+            // Check if getElementsByTagName('*') returns only elements
             features.getElementsByTagName = _support.assert(function(div) {
                 div.appendChild(doc.createComment(''));
                 return !div.getElementsByTagName('*').length;
@@ -144,28 +144,20 @@ hAzzle.define('Core', function() {
                 return document.getElementById('hAzzle_id') === div.firstChild;
             });
 
-            var rbuggyMatches = [],
-                rbuggyQSA = [];
+            var rbuggyMatches = Core.rbuggyMatches = [],
+                rbuggyQSA = Core.rbuggyQSA = [];
 
             if ((_support.qsa = rnative.test(doc.querySelectorAll))) {
                 // Build QSA regex
                 // Regex strategy adopted from Diego Perini
-                _support.assert(function(div) {
+                _support.assert(function(div) { 
                     div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
 
                     // Webkit/Opera - :checked should return selected option elements
                     // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-                    if (!div.querySelectorAll(":checked").length) {
-                        rbuggyQSA.push(":checked");
+                    if (!div.querySelectorAll(':checked').length) {
+                        rbuggyQSA.push(':checked');
                     }
-                });
-
-                _support.assert(function(div) {
-                    // Support: Windows 8 Native Apps
-                    // The type and name attributes are restricted during .innerHTML assignment
-                    var input = doc.createElement("input");
-                    input.setAttribute("type", "hidden");
-                    div.appendChild(input).setAttribute("name", "D");
                 });
             }
 
@@ -178,12 +170,12 @@ hAzzle.define('Core', function() {
                 _support.assert(function(div) {
                     // Check to see if it's possible to do matchesSelector
                     // on a disconnected node (IE 9)
-                    features.disconnectedMatch = matches.call(div, "div");
+                    Core.disconnectedMatch = matches.call(div, 'div');
                 });
             }
 
-            rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|"));
-            rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join("|"));
+            rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join('|'));
+            rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join('|'));
         }
 
         // Contains
@@ -352,6 +344,7 @@ hAzzle.define('Core', function() {
         isHTML: !Core.isXML(winDoc),
         expando: Core.expando,
         uniqueSort: uniqueSort,
-        contains: Core.contains
+        contains: Core.contains,
+        rbuggyQSA:Core.rbuggyQSA 
     };
 });

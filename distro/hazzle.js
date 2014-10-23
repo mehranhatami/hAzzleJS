@@ -151,7 +151,7 @@
             constructor: hAzzle
         };
 
-        // Expose to the global scope
+        // Expose 
 
         hAzzle.version = version.full;
         hAzzle.err = err;
@@ -1131,363 +1131,356 @@ hAzzle.define('Support', function() {
             consoleLog: consoleLog
         };
     });
-    // core.js
-    hAzzle.define('Core', function() {
+// core.js
+hAzzle.define('Core', function() {
 
-        var winDoc = window.document,
-            docElem = winDoc.documentElement,
-            _support = hAzzle.require('Support'),
-            _indexOf = Array.prototype.indexOf,
-            rnative = /^[^{]+\{\s*\[native \w/,
-            matches,
-            Core = {},
-            CoreCache = {},
-            hasDuplicate,
-            sortInput,
-            sortOrder = function(a, b) {
-                if (a === b) {
-                    hasDuplicate = true;
-                }
-                return 0;
-            },
-            siblingCheck = function(a, b) {
-                var cur = b && a,
-                    diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
-                    (~b.sourceIndex || 1 << 31) -
-                    (~a.sourceIndex || 1 << 31);
+    var winDoc = window.document,
+        docElem = winDoc.documentElement,
+        _support = hAzzle.require('Support'),
+        _indexOf = Array.prototype.indexOf,
+        rnative = /^[^{]+\{\s*\[native \w/,
+        matches,
+        Core = {},
+        CoreCache = {},
+        hasDuplicate,
+        sortInput,
+        sortOrder = function(a, b) {
+            if (a === b) {
+                hasDuplicate = true;
+            }
+            return 0;
+        },
+        siblingCheck = function(a, b) {
+            var cur = b && a,
+                diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
+                (~b.sourceIndex || 1 << 31) -
+                (~a.sourceIndex || 1 << 31);
 
-                // Use IE sourceIndex if available on both nodes
-                if (diff) {
-                    return diff;
-                }
+            // Use IE sourceIndex if available on both nodes
+            if (diff) {
+                return diff;
+            }
 
-                // Check if b follows a
-                if (cur) {
-                    while ((cur = cur.nextSibling)) {
-                        if (cur === b) {
-                            return -1;
-                        }
+            // Check if b follows a
+            if (cur) {
+                while ((cur = cur.nextSibling)) {
+                    if (cur === b) {
+                        return -1;
                     }
                 }
-
-                return a ? 1 : -1;
-            };
-
-        Core.uidX = 1;
-        Core.uidK = 'hAzzle_id';
-        Core.expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
-
-            // Check if this is XML doc or not
-
-            Core.isXML = function(elem) {
-                var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-
-                if (documentElement) {
-                    return documentElement.nodeName !== 'HTML'
-                } else {
-                    return false;
-                }
-            };
-
-        // Get unique XML document ID
-
-        Core.xmlID = function(elem) {
-            var uid = elem.getAttribute(this.uidK);
-
-            if (!uid) {
-                uid = this.uidX++;
-                elem.setAttribute(this.uidK, uid);
             }
-            return uid;
+
+            return a ? 1 : -1;
         };
 
-        // Get unique HTML document ID
+    Core.uidX = 1;
+    Core.uidK = 'hAzzle_id';
+    Core.expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
 
-        Core.htmlID = function(elem) {
-            return elem.uniqueNumber ||
-                (elem.uniqueNumber = this.uidX++);
-        };
+        // Check if this is XML doc or not
 
-        Core.native = rnative.test(docElem.compareDocumentPosition);
-        // Set document
+        Core.isXML = function(elem) {
+            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
 
-        Core.setDocument = function(document) {
-
-            // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
-            var nodeType = document.nodeType,
-                doc = document ? document.ownerDocument || document : winDoc;
-
-            if (nodeType === 9) { // document
-
-            } else if (nodeType) {
-                doc = document.ownerDocument; // node
-            } else if (document.navigator) {
-                doc = document.document; // window
+            if (documentElement) {
+                return documentElement.nodeName !== 'HTML'
             } else {
-                return;
+                return false;
             }
+        };
 
-            // Check if it's the old document
+    // Get unique XML document ID
 
-            if (this.document === doc) {
-                return;
-            }
-            // Override default window.document, and set our document
+    Core.xmlID = function(elem) {
+        var uid = elem.getAttribute(this.uidK);
 
-            document = doc;
-            this.document = doc;
+        if (!uid) {
+            uid = this.uidX++;
+            elem.setAttribute(this.uidK, uid);
+        }
+        return uid;
+    };
 
-            var root = document.documentElement,
-                rootID = this.xmlID(root),
-                features = CoreCache[rootID],
-                feature;
+    // Get unique HTML document ID
 
-            // Don't run feature detection twice
+    Core.htmlID = function(elem) {
+        return elem.uniqueNumber ||
+            (elem.uniqueNumber = this.uidX++);
+    };
 
-            if (features) {
-                for (feature in features) {
-                    this[feature] = features[feature];
-                }
-                return;
-            }
+    Core.native = rnative.test(docElem.compareDocumentPosition);
+    // Set document
 
-            features = CoreCache[rootID] = {};
-            features.root = root;
-            features.isXMLDocument = this.isXML(document);
-            features.detectDuplicates = !!hasDuplicate;
-            features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
+    Core.setDocument = function(document) {
 
-            // on non-HTML documents innerHTML and getElementsById doesnt work properly
-            _support.assert(function(div) {
-                div.innerHTML = '<a id="hAzzle_id"></a>';
-                features.isHTMLDocument = !!document.getElementById('hAzzle_id');
-            });
+        // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
+        var nodeType = document.nodeType,
+            doc = document ? document.ownerDocument || document : winDoc;
 
-            // iF HTML doc
+        if (nodeType === 9) { // document
 
-            if (!Core.isXML(root)) {
+        } else if (nodeType) {
+            doc = document.ownerDocument; // node
+        } else if (document.navigator) {
+            doc = document.document; // window
+        } else {
+            return;
+        }
 
-                // Check if getElementsByTagName("*") returns only elements
-                features.getElementsByTagName = _support.assert(function(div) {
-                    div.appendChild(doc.createComment(''));
-                    return !div.getElementsByTagName('*').length;
-                }); // IE returns elements with the name instead of just id for getElementsById for some documents
-                features.getById = _support.assert(function(div) {
-                    div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
-                    return document.getElementById('hAzzle_id') === div.firstChild;
-                });
+        // Check if it's the old document
 
-                var rbuggyMatches = [],
-                    rbuggyQSA = [];
+        if (this.document === doc) {
+            return;
+        }
+        // Override default window.document, and set our document
 
-                if ((_support.qsa = rnative.test(doc.querySelectorAll))) {
-                    // Build QSA regex
-                    // Regex strategy adopted from Diego Perini
-                    _support.assert(function(div) {
-                        div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
+        document = doc;
+        this.document = doc;
 
-                        // Webkit/Opera - :checked should return selected option elements
-                        // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-                        if (!div.querySelectorAll(":checked").length) {
-                            rbuggyQSA.push(":checked");
-                        }
-                    });
+        var root = document.documentElement,
+            rootID = this.xmlID(root),
+            features = CoreCache[rootID],
+            feature;
 
-                    _support.assert(function(div) {
-                        // Support: Windows 8 Native Apps
-                        // The type and name attributes are restricted during .innerHTML assignment
-                        var input = doc.createElement("input");
-                        input.setAttribute("type", "hidden");
-                        div.appendChild(input).setAttribute("name", "D");
-                    });
-                }
+        // Don't run feature detection twice
 
-                if ((features.matchesSelector = rnative.test((matches = docElem.matches ||
-                        docElem.webkitMatchesSelector ||
-                        docElem.mozMatchesSelector ||
-                        docElem.oMatchesSelector ||
-                        docElem.msMatchesSelector)))) {
-
-                    _support.assert(function(div) {
-                        // Check to see if it's possible to do matchesSelector
-                        // on a disconnected node (IE 9)
-                        features.disconnectedMatch = matches.call(div, "div");
-                    });
-                }
-
-                rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join("|"));
-                rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join("|"));
-            }
-
-            // Contains
-
-            features.contains = Core.native || Core.native.test(docElem.contains) ?
-                function(a, b) {
-                    var adown = a.nodeType === 9 ? a.documentElement : a,
-                        bup = b && b.parentNode;
-                    return a === bup || !!(bup && bup.nodeType === 1 && (
-                        adown.contains ?
-                        adown.contains(bup) :
-                        a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-                    ));
-                } :
-                function(a, b) {
-                    if (b) {
-                        while ((b = b.parentNode)) {
-                            if (b === a) {
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                };
-
-            // Document order sorting
-            Core.sortOrder = Core.native ?
-                function(a, b) {
-
-                    // Flag for duplicate removal
-                    if (a === b) {
-                        hasDuplicate = true;
-                        return 0;
-                    }
-
-                    // Sort on method existence if only one input has compareDocumentPosition
-                    var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-                    if (compare) {
-                        return compare;
-                    }
-
-                    // Calculate position if both inputs belong to the same document
-                    compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                        a.compareDocumentPosition(b) : 1;
-
-                    // Disconnected nodes
-                    if (compare & 1 ||
-                        (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
-
-                        // Choose the first element that is related to our preferred document
-                        if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
-                            return -1;
-                        }
-                        if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
-                            return 1;
-                        }
-
-                        // Maintain original order
-                        return sortInput ?
-                            (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
-                            0;
-                    }
-
-                    return compare & 4 ? -1 : 1;
-                } :
-                function(a, b) {
-                    // Exit early if the nodes are identical
-                    if (a === b) {
-                        hasDuplicate = true;
-                        return 0;
-                    }
-
-                    var cur,
-                        i = 0,
-                        aup = a.parentNode,
-                        bup = b.parentNode,
-                        ap = [a],
-                        bp = [b];
-
-                    // Parentless nodes are either documents or disconnected
-                    if (!aup || !bup) {
-                        return a === doc ? -1 :
-                            b === doc ? 1 :
-                            aup ? -1 :
-                            bup ? 1 :
-                            sortInput ?
-                            (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
-                            0;
-
-                        // If the nodes are siblings, we can do a quick check
-                    } else if (aup === bup) {
-                        return siblingCheck(a, b);
-                    }
-
-                    // Otherwise we need full lists of their ancestors for comparison
-                    cur = a;
-                    while ((cur = cur.parentNode)) {
-                        ap.unshift(cur);
-                    }
-                    cur = b;
-                    while ((cur = cur.parentNode)) {
-                        bp.unshift(cur);
-                    }
-
-                    // Walk down the tree looking for a discrepancy
-                    while (ap[i] === bp[i]) {
-                        i++;
-                    }
-
-                    return i ?
-                        // Do a sibling check if the nodes have a common ancestor
-                        siblingCheck(ap[i], bp[i]) :
-
-                        // Otherwise nodes in our document sort first
-                        ap[i] === winDoc ? -1 :
-                        bp[i] === winDoc ? 1 :
-                        0;
-                };
-
-            root = null;
-
+        if (features) {
             for (feature in features) {
                 this[feature] = features[feature];
             }
-        };
-
-        // Set correct sortOrder
-
-        sortOrder = Core.sortOrder;
-
-        // Set document
-
-        Core.setDocument(winDoc);
-
-        function uniqueSort(results) {
-
-            var elem,
-                duplicates = [],
-                j = 0,
-                i = 0;
-
-            // Unless we *know* we can detect duplicates, assume their presence
-            hasDuplicate = !Core.detectDuplicates;
-            sortInput = !Core.sortStable && results.slice(0);
-            results.sort(sortOrder);
-
-            if (hasDuplicate) {
-                while ((elem = results[i++])) {
-                    if (elem === results[i]) {
-                        j = duplicates.push(i);
-                    }
-                }
-                while (j--) {
-                    results.splice(duplicates[j], 1);
-                }
-            }
-
-            sortInput = null;
-
-            return results;
+            return;
         }
 
-        return {
-            root: Core.root,
-            isXML: Core.isXML,
-            isHTML: !Core.isXML(winDoc),
-            expando: Core.expando,
-            uniqueSort: uniqueSort,
-            contains: Core.contains
-        };
-    });
+        features = CoreCache[rootID] = {};
+        features.root = root;
+        features.isXMLDocument = this.isXML(document);
+        features.detectDuplicates = !!hasDuplicate;
+        features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
+
+        // on non-HTML documents innerHTML and getElementsById doesnt work properly
+        _support.assert(function(div) {
+            div.innerHTML = '<a id="hAzzle_id"></a>';
+            features.isHTMLDocument = !!document.getElementById('hAzzle_id');
+        });
+
+        // iF HTML doc
+
+        if (!Core.isXML(root)) {
+
+            // Check if getElementsByTagName('*') returns only elements
+            features.getElementsByTagName = _support.assert(function(div) {
+                div.appendChild(doc.createComment(''));
+                return !div.getElementsByTagName('*').length;
+            }); // IE returns elements with the name instead of just id for getElementsById for some documents
+            features.getById = _support.assert(function(div) {
+                div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
+                return document.getElementById('hAzzle_id') === div.firstChild;
+            });
+
+            var rbuggyMatches = Core.rbuggyMatches = [],
+                rbuggyQSA = Core.rbuggyQSA = [];
+
+            if ((_support.qsa = rnative.test(doc.querySelectorAll))) {
+                // Build QSA regex
+                // Regex strategy adopted from Diego Perini
+                _support.assert(function(div) { 
+                    div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
+
+                    // Webkit/Opera - :checked should return selected option elements
+                    // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+                    if (!div.querySelectorAll(':checked').length) {
+                        rbuggyQSA.push(':checked');
+                    }
+                });
+            }
+
+            if ((features.matchesSelector = rnative.test((matches = docElem.matches ||
+                    docElem.webkitMatchesSelector ||
+                    docElem.mozMatchesSelector ||
+                    docElem.oMatchesSelector ||
+                    docElem.msMatchesSelector)))) {
+
+                _support.assert(function(div) {
+                    // Check to see if it's possible to do matchesSelector
+                    // on a disconnected node (IE 9)
+                    Core.disconnectedMatch = matches.call(div, 'div');
+                });
+            }
+
+            rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join('|'));
+            rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join('|'));
+        }
+
+        // Contains
+
+        features.contains = Core.native || Core.native.test(docElem.contains) ?
+            function(a, b) {
+                var adown = a.nodeType === 9 ? a.documentElement : a,
+                    bup = b && b.parentNode;
+                return a === bup || !!(bup && bup.nodeType === 1 && (
+                    adown.contains ?
+                    adown.contains(bup) :
+                    a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+                ));
+            } :
+            function(a, b) {
+                if (b) {
+                    while ((b = b.parentNode)) {
+                        if (b === a) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+
+        // Document order sorting
+        Core.sortOrder = Core.native ?
+            function(a, b) {
+
+                // Flag for duplicate removal
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                // Sort on method existence if only one input has compareDocumentPosition
+                var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+                if (compare) {
+                    return compare;
+                }
+
+                // Calculate position if both inputs belong to the same document
+                compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
+                    a.compareDocumentPosition(b) : 1;
+
+                // Disconnected nodes
+                if (compare & 1 ||
+                    (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
+
+                    // Choose the first element that is related to our preferred document
+                    if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
+                        return -1;
+                    }
+                    if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
+                        return 1;
+                    }
+
+                    // Maintain original order
+                    return sortInput ?
+                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                        0;
+                }
+
+                return compare & 4 ? -1 : 1;
+            } :
+            function(a, b) {
+                // Exit early if the nodes are identical
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                var cur,
+                    i = 0,
+                    aup = a.parentNode,
+                    bup = b.parentNode,
+                    ap = [a],
+                    bp = [b];
+
+                // Parentless nodes are either documents or disconnected
+                if (!aup || !bup) {
+                    return a === doc ? -1 :
+                        b === doc ? 1 :
+                        aup ? -1 :
+                        bup ? 1 :
+                        sortInput ?
+                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                        0;
+
+                    // If the nodes are siblings, we can do a quick check
+                } else if (aup === bup) {
+                    return siblingCheck(a, b);
+                }
+
+                // Otherwise we need full lists of their ancestors for comparison
+                cur = a;
+                while ((cur = cur.parentNode)) {
+                    ap.unshift(cur);
+                }
+                cur = b;
+                while ((cur = cur.parentNode)) {
+                    bp.unshift(cur);
+                }
+
+                // Walk down the tree looking for a discrepancy
+                while (ap[i] === bp[i]) {
+                    i++;
+                }
+
+                return i ?
+                    // Do a sibling check if the nodes have a common ancestor
+                    siblingCheck(ap[i], bp[i]) :
+
+                    // Otherwise nodes in our document sort first
+                    ap[i] === winDoc ? -1 :
+                    bp[i] === winDoc ? 1 :
+                    0;
+            };
+
+        root = null;
+
+        for (feature in features) {
+            this[feature] = features[feature];
+        }
+    };
+
+    // Set correct sortOrder
+
+    sortOrder = Core.sortOrder;
+
+    // Set document
+
+    Core.setDocument(winDoc);
+
+    function uniqueSort(results) {
+
+        var elem,
+            duplicates = [],
+            j = 0,
+            i = 0;
+
+        // Unless we *know* we can detect duplicates, assume their presence
+        hasDuplicate = !Core.detectDuplicates;
+        sortInput = !Core.sortStable && results.slice(0);
+        results.sort(sortOrder);
+
+        if (hasDuplicate) {
+            while ((elem = results[i++])) {
+                if (elem === results[i]) {
+                    j = duplicates.push(i);
+                }
+            }
+            while (j--) {
+                results.splice(duplicates[j], 1);
+            }
+        }
+
+        sortInput = null;
+
+        return results;
+    }
+
+    return {
+        root: Core.root,
+        isXML: Core.isXML,
+        isHTML: !Core.isXML(winDoc),
+        expando: Core.expando,
+        uniqueSort: uniqueSort,
+        contains: Core.contains,
+        rbuggyQSA:Core.rbuggyQSA 
+    };
+});
 // collection.js
 hAzzle.define('Collection', function() {
 
@@ -1702,114 +1695,220 @@ hAzzle.define('Jiesa', function() {
         _core = hAzzle.require('Core'),
         _collection = hAzzle.require('Collection'),
         _support = hAzzle.require('Support'),
+        _relativeSel = /^\s*[+~]/,
+        _reSpace = /[\n\t\r]/g,
+        _idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
+        _tagNameAndOrIdAndOrClassExp = /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/,
+        _unionSplit = /([^\s,](?:"(?:\\.|[^"])+"|'(?:\\.|[^'])+'|[^,])*)/g,
 
-        reSpace = /[\n\t\r]/g,
-        idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
-        tagNameAndOrIdAndOrClassExp = /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/;
+        // http://www.w3.org/TR/css3-selectors/#whitespace
+        whitespace = "[\\x20\\t\\r\\n\\f]",
 
-    /**
-     * Determine if the element contains the klass.
-     * Uses the `classList` api if it's supported.
-     * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
-     *
-     * @param {Object} el
-     * @param {String} klass
-     *
-     * @return {Array}
-     */
+        rattributeQuotes = new RegExp("=" + whitespace + "*([^\\]'\"]*?)" + whitespace + "*\\]", "g"),
+        docElem = window.document.documentElement,
 
-    function containsClass(el, klass) {
-        if (_support.classList) {
-            return el.classList.contains(klass);
-        } else {
-            return (' ' + el.className + ' ').replace(reSpace, ' ').indexOf(klass) >= 0;
-        }
-    }
+        _matches = docElem.matches ||
+        docElem.webkitMatchesSelector ||
+        docElem.mozMatchesSelector ||
+        docElem.oMatchesSelector ||
+        docElem.msMatchesSelector,
 
-    /**
-     * Find elements by selectors.
-     *
-     * Supported:
-     * - #foo
-     * - .foo
-     * - div (tagname)
-     *
-     * @param {String} sel The selector string
-     * @param {Object} ctx The context. Default is document.
-     * @param {Bool} c Save to cache? Default is true.
-     */
+        fixedRoot = function(context, query, method) {
+            var oldContext = context,
+                old = context.getAttribute('id'),
+                nid = old || '__hAzzle__',
+                hasParent = context.parentNode,
+                relativeHierarchySelector = _relativeSel.test(query);
 
-    function Jiesa(sel, ctx) {
-        var m, nodeType, elem, results = [];
+            if (relativeHierarchySelector && !hasParent) {
+                return [];
+            }
+            if (!old) {
+                context.setAttribute('id', nid);
+            } else {
+                nid = nid.replace(/'/g, '\\$&');
+            }
+            if (relativeHierarchySelector && hasParent) {
+                context = context.parentNode;
+            }
+            var selectors = query.match(_unionSplit);
+            for (var i = 0; i < selectors.length; i++) {
+                selectors[i] = "[id='" + nid + "'] " + selectors[i];
+            }
+            query = selectors.join(",");
 
-        ctx = ctx || document;
-
-        if (!sel || typeof sel !== 'string') {
-            return results;
-        }
-
-        if ((nodeType = ctx.nodeType) !== 1 && nodeType !== 9 && nodeType !== 11) {
-            return [];
-        }
-
-        // Split selectors by comma if it's exists.
-        if (_util.indexOf(sel, ',') !== -1 && (m = sel.split(','))) {
-            // Comma separated selectors. E.g $('p, a');
-            // unique result, e.g "ul id=foo class=foo" should not appear two times.
-            _util.each(m, function(el) {
-                _util.each(Jiesa(el), function(el) {
-                    // FIXME! For better performance, do a test to see if we only can
-                    // use inArray() here, and not bother the DOM.
-                    if (!_core.contains(results, el)) {
-                        results.push(el);
-                    }
-                });
-            });
-            return results;
-        }
-
-        if (_core.isHTML) {
-
-            if ((m = idClassTagNameExp.exec(sel))) {
-                if ((sel = m[1])) {
-                    if (nodeType === 9) {
-                        elem = ctx.getElementById(sel);
-                        if (elem && elem.parentNode) {
-                            if (elem.id === sel) {
-                                return [elem];
-                            }
-                        } else {
-                            return [];
-                        }
-                    } else {
-                        // Context is not a document
-                        if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(sel)) &&
-                            _core.contains(ctx, elem) && elem.id === m) {
-                            return [elem];
-                        }
-                    }
-                } else if ((sel = m[2])) {
-                    return _collection.slice(ctx.getElementsByClassName(sel));
-                } else if ((sel = m[3])) {
-                    return _collection.slice(ctx.getElementsByTagName(sel));
+            try {
+                return method.call(context, query);
+            } finally {
+                if (!old) {
+                    oldContext.removeAttribute('id');
                 }
-                // E.g. hAzzle( 'span.selected' )  
-            } else if ((m = tagNameAndOrIdAndOrClassExp.exec(sel))) {
-                var result = ctx.getElementsByTagName(m[1]),
-                    id = m[2],
-                    className = m[3];
-                _util.each(result, function(el) {
-                    if (el.id === id || containsClass(el, className)) {
-                        results.push(el);
-                    }
+            }
+        },
+
+        matchesSelector = function(elem, sel, ctx) {
+
+            if (ctx && ctx.nodeType !== 9) {
+                // doesn't support three args, use rooted id trick
+                return fixedRoot(ctx, sel, function(query) {
+                    return _matches(elem, query);
+                });
+            }
+            // we have a native matchesSelector, use that
+            return _matches.call(elem, sel);
+        },
+
+        /**
+         * Determine if the element contains the klass.
+         * Uses the `classList` api if it's supported.
+         * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
+         *
+         * @param {Object} el
+         * @param {String} klass
+         *
+         * @return {Array}
+         */
+
+        containsClass = function(el, klass) {
+            if (_support.classList) {
+                return el.classList.contains(klass);
+            } else {
+                return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
+            }
+        },
+
+        /**
+         * Find elements by selectors.
+         *
+         * Supported:
+         * - #foo
+         * - .foo
+         * - div (tagname)
+         *
+         * @param {String} sel The selector string
+         * @param {Object} ctx The context. Default is document.
+         * @param {Bool} c Save to cache? Default is true.
+         */
+
+        Jiesa = function(sel, ctx) {
+            var m, nodeType, elem, results = [];
+
+            ctx = ctx || document;
+
+            if (!sel || typeof sel !== 'string') {
+                return results;
+            }
+
+            if ((nodeType = ctx.nodeType) !== 1 && nodeType !== 9 && nodeType !== 11) {
+                return [];
+            }
+
+            // Split selectors by comma if it's exists.
+            if (_util.indexOf(sel, ',') !== -1 && (m = sel.split(','))) {
+                // Comma separated selectors. E.g $('p, a');
+                // unique result, e.g 'ul id=foo class=foo' should not appear two times.
+                _util.each(m, function(el) {
+                    _util.each(Jiesa(el), function(el) {
+                        // FIXME! For better performance, do a test to see if we only can
+                        // use inArray() here, and not bother the DOM.
+                        if (!_core.contains(results, el)) {
+                            results.push(el);
+                        }
+                    });
                 });
                 return results;
-            } else { // Fallback to QSA
-                     // FIXME! Need to finish developing Jiesa 
-                return _collection.slice(document.querySelectorAll(sel));
             }
-        }
-    }
+
+            if (_core.isHTML) {
+
+                if ((m = _idClassTagNameExp.exec(sel))) {
+                    if ((sel = m[1])) {
+                        if (nodeType === 9) {
+                            elem = ctx.getElementById(sel);
+                            if (elem && elem.parentNode) {
+                                if (elem.id === sel) {
+                                    return [elem];
+                                }
+                            } else {
+                                return [];
+                            }
+                        } else {
+                            // Context is not a document
+                            if (ctx.ownerDocument && (elem = ctx.ownerDocument.getElementById(sel)) &&
+                                _core.contains(ctx, elem) && elem.id === m) {
+                                return [elem];
+                            }
+                        }
+                    } else if ((sel = m[2])) {
+                        return _collection.slice(ctx.getElementsByClassName(sel));
+                    } else if ((sel = m[3])) {
+                        return _collection.slice(ctx.getElementsByTagName(sel));
+                    }
+                    // E.g. hAzzle( 'span.selected' )  
+                } else if ((m = _tagNameAndOrIdAndOrClassExp.exec(sel))) {
+                    var result = ctx.getElementsByTagName(m[1]),
+                        id = m[2],
+                        className = m[3];
+                    _util.each(result, function(el) {
+                        if (el.id === id || containsClass(el, className)) {
+                            results.push(el);
+                        }
+                    });
+                    return results;
+                } else { // Fallback to QSA 
+                    // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
+                    if (_support.qsa && !_core.rbuggyQSA.length) {
+                        if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
+                            return _collection.slice(fixedRoot(ctx, sel, ctx.querySelectorAll));
+                        } else {
+                            // we can use the native qSA
+                            return _collection.slice(ctx.querySelectorAll(sel));
+                        }
+                    }
+                }
+            }
+        },
+        matches = function(elem, sel) {
+
+            if (sel.nodeType) {
+                return elem === sel;
+            }
+            // Set document vars if needed
+            if ((elem.ownerDocument || elem) !== document) {
+                _core.setDocument(elem);
+            }
+
+            // Make sure that attribute selectors are quoted
+            sel = typeof sel === 'string' ? sel.replace(rattributeQuotes, "='$1']") : sel;
+
+            // If instance of hAzzle
+
+            if (sel instanceof hAzzle) {
+                return _util.some(sel.elements, function(sel) {
+                    return matches(elem, sel);
+                });
+            }
+
+            if (elem === document) {
+                return false;
+            }
+
+            if (_core && _core.isHTML) {
+
+                try {
+                    var ret = matchesSelector(elem, sel);
+
+                    // IE 9's matchesSelector returns false on disconnected nodes
+                    if (ret || _core.disconnectedMatch ||
+                        // As well, disconnected nodes are said to be in a document
+                        // fragment in IE 9
+                        elem.document && elem.document.nodeType !== 11) {
+                        return ret;
+                    }
+                } catch (e) {}
+            }
+            // FIX ME!! Fallback solution need to be developed here!
+        };
 
     // Find is not the same as 'Jiesa', but a optimized version for 
     // better performance
@@ -1819,7 +1918,7 @@ hAzzle.define('Jiesa', function() {
         // Only for use by hAzzle.js module
 
         if (internal) {
-            return Jiesa(selector, context)
+            return Jiesa(selector, context);
         }
 
         if (typeof selector === 'string') {
@@ -1829,7 +1928,7 @@ hAzzle.define('Jiesa', function() {
             if (this.length === 1) {
                 return hAzzle(Jiesa(selector, this.elements[0]));
             } else {
-                elements = _collection.reduce(this.elements, function(els, element) {
+                return _collection.reduce(this.elements, function(els, element) {
                     return hAzzle(els.concat(_collection.slice(Jiesa(selector, element))));
                 }, []);
             }
@@ -1851,10 +1950,10 @@ hAzzle.define('Jiesa', function() {
     // Filter element collection
 
     this.filter = function(selector, not) {
-        
+
         if (selector === undefined) {
             return this;
-        } 
+        }
         if (typeof selector === 'function') {
             var els = [];
             this.each(function(el, index) {
@@ -1864,7 +1963,7 @@ hAzzle.define('Jiesa', function() {
             });
 
             return hAzzle(els);
-            
+
         } else {
             return this.filter(function() {
                 return matches(this, selector) != (not || false);
@@ -1872,38 +1971,12 @@ hAzzle.define('Jiesa', function() {
         }
     };
 
-    function matches(element, selector) {
-        var match;
-
-        if (!element || !_util.isElement(element) || !selector) {
-            return false;
-        }
-
-        if (selector.nodeType) {
-            return element === selector;
-        }
-
-        // If instance of hAzzle
-
-        if (selector instanceof hAzzle) {
-            return _util.some(selector.elements, function(selector) {
-                return matches(element, selector);
-            });
-        }
-
-        if (element === document) {
-            return false;
-        }
-
-        return element.matches(selector)
-    }
-
     return {
+        matchesSelector: matchesSelector,
         matches: matches,
         find: Jiesa
     };
 });
-
     // strings.js
     hAzzle.define('Strings', function() {
         var
