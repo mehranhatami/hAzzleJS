@@ -1,169 +1,173 @@
-    /*!
-     * hAzzle.js
-     * Copyright (c) 2014 Kenny Flashlight
-     * Version: 1.0.0 Release Candidate
-     * Released under the MIT License.
-     *
-     * Date: 2014-10-22
-     */
-    (function() {
+/*!
+ * hAzzle.js
+ * Copyright (c) 2014 Kenny Flashlight
+ * Version: 1.0.0 Release Candidate
+ * Released under the MIT License.
+ *
+ * Date: 2014-10-23
+ */
+(function() {
 
-        var
-        // Quick-lookup for hAzzle(id)
+    var
+    // Quick-lookup for hAzzle(id)
 
-            idOnly = /^#([\w\-]*)$/,
+        idOnly = /^#([\w\-]*)$/,
 
-            // Holder for all modules
+        // Holder for all modules
 
-            modules = {},
+        modules = {},
 
-            // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
+        // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
 
-            installed = {},
+        installed = {},
 
-            version = {
-                full: '1.0.0a-rc',
-                major: 1,
-                minor: 0,
-                dot: 0,
-                codeName: 'new-age'
-            },
+        version = {
+            full: '1.0.0a-rc',
+            major: 1,
+            minor: 0,
+            dot: 0,
+            codeName: 'new-age'
+        },
 
-            // Throws an error if `condition` is `true`.
+        // Throws an error if `condition` is `true`.
 
-            err = function(condition, code, message) {
-                if (condition) {
-                    var e = new Error('[hAzzle-' + code + '] ' + message);
-                    e.code = code;
-                    throw e;
-                }
-            },
+        err = function(condition, code, message) {
+            if (condition) {
+                var e = new Error('[hAzzle-' + code + '] ' + message);
+                e.code = code;
+                throw e;
+            }
+        },
 
-            // Returns an instance for `id`
+        // Returns an instance for `id`
 
-            require = function(id) {
-                return modules[id];
-            },
+        require = function(id) {
+            return modules[id];
+        },
 
-            // Defines a module for `id: String`, `fn: Function`,
+        // Defines a module for `id: String`, `fn: Function`,
 
-            define = function(id, fn) {
+        define = function(id, fn) {
 
-                // Check arguments
-                err(typeof id !== 'string', 1, 'id must be a string "' + id + '"');
-                err(modules[id], 2, 'id already defined "' + id + '"');
-                err(typeof fn !== 'function', 3, 'function body for "' + id + '" must be an function "' + fn + '"');
+            // Check arguments
+            err(typeof id !== 'string', 1, 'id must be a string "' + id + '"');
+            err(modules[id], 2, 'id already defined "' + id + '"');
+            err(typeof fn !== 'function', 3, 'function body for "' + id + '" must be an function "' + fn + '"');
 
-                // append to module object
-                installed[id] = true;
+            // append to module object
+            installed[id] = true;
 
-                modules[id] = fn.call(hAzzle.prototype);
-            },
+            modules[id] = fn.call(hAzzle.prototype);
+        },
 
-            validTypes = function(elem) {
-                return elem && (elem.ELEMENT_NODE || elem.DOCUMENT_NODE);
-            },
+        validTypes = function(elem) {
+            return elem && (elem.ELEMENT_NODE || elem.DOCUMENT_NODE);
+        },
 
-            // Define a local copy of hAzzle
-            // NOTE! Everything need to be returned as an array
-            // so important to wrap [] around the 'sel' to avoid
-            // errors
+        // Define a local copy of hAzzle
+        // NOTE! Everything need to be returned as an array
+        // so important to wrap [] around the 'sel' to avoid
+        // errors
 
-            hAzzle = function(sel, ctx) {
+        hAzzle = function(sel, ctx) {
 
-                // hAzzle(), hAzzle(null), hAzzle(undefined), hAzzle(false)
-                if (!sel) {
-                    return;
-                }
-                // Allow instantiation without the 'new' keyword
-                if (!(this instanceof hAzzle)) {
-                    return new hAzzle(sel, ctx);
-                }
+            // hAzzle(), hAzzle(null), hAzzle(undefined), hAzzle(false)
+            if (!sel) {
+                return;
+            }
+            // Allow instantiation without the 'new' keyword
+            if (!(this instanceof hAzzle)) {
+                return new hAzzle(sel, ctx);
+            }
 
-                if (sel instanceof hAzzle) {
-                    return sel;
-                }
+            if (sel instanceof hAzzle) {
+                return sel;
+            }
 
-                // Include required module
+            // Include required module
 
-                var m, _util = hAzzle.require('Util'),
-                    _ready = hAzzle.require('Ready');
+            var m, _util = hAzzle.require('Util'),
+                _ready = hAzzle.require('Ready');
 
-                // If a function is given, call it when the DOM is ready
+            // If a function is given, call it when the DOM is ready
 
-                if (typeof sel === 'function') {
+            if (typeof sel === 'function') {
+                if (installed.Ready) {
                     _ready.ready(sel);
+                } else {
+                    err(true, 6, 'ready.js module not installed');
+                }
+            }
+
+            if (typeof sel === 'string') {
+
+                // Quick look-up for hAzzle(#id)
+
+                if ((m = idOnly.exec(sel)) && !ctx) {
+                    this.elements = [document.getElementById(m[1])];
                 }
 
-                if (typeof sel === 'string') {
+                if (this.elements === null || this.elements === undefined) {
 
-                    // Quick look-up for hAzzle(#id)
+                    // The 'find' method need to have a boolean value set to 'true', to 
+                    // work as expected. Else it will behave like the global .find method
 
-                    if ((m = idOnly.exec(sel)) && !ctx) {
-                        this.elements = [document.getElementById(m[1])];
-                    }
-
-                    if (this.elements === null || this.elements === undefined) {
-
-                        // The 'find' method need to have a boolean value set to 'true', to 
-                        // work as expected. Else it will behave like the global .find method
-
-                        this.elements = this.find(sel, ctx, true);
-                    }
-                    // hAzzle([dom]) 
-                } else if (sel instanceof Array) {
-                    this.elements = _util.unique(_util.filter(sel, validTypes));
-                    // hAzzle(dom)
-                } else if (this.isNodeList(sel)) {
-                    this.elements = _util.filter(_util.makeArray(sel), validTypes);
-                    // hAzzle(dom)
-                } else if (sel.nodeType) {
-                    // If it's a html fragment, create nodes from it
-                    if (sel.nodeType === 11) {
-                        // This children? Are they an array or not?
-                        this.elements = sel.children;
-                    } else {
-                        this.elements = [sel];
-                    }
-                    // window     
-                } else if (sel === window) {
+                    this.elements = this.find(sel, ctx, true);
+                }
+                // hAzzle([dom]) 
+            } else if (sel instanceof Array) {
+                this.elements = _util.unique(_util.filter(sel, validTypes));
+                // hAzzle(dom)
+            } else if (this.isNodeList(sel)) {
+                this.elements = _util.filter(_util.makeArray(sel), validTypes);
+                // hAzzle(dom)
+            } else if (sel.nodeType) {
+                // If it's a html fragment, create nodes from it
+                if (sel.nodeType === 11) {
+                    // This children? Are they an array or not?
+                    this.elements = sel.children;
+                } else {
                     this.elements = [sel];
-                } else {
-                    this.elements = [];
                 }
+                // window     
+            } else if (sel === window) {
+                this.elements = [sel];
+            } else {
+                this.elements = [];
+            }
 
-                // Create a new hAzzle collection from the nodes found
-                // NOTE!! If undefined, set length to 0, and
-                // elements to an empty array [] to avoid hAzzle
-                // throwing errors
+            // Create a new hAzzle collection from the nodes found
+            // NOTE!! If undefined, set length to 0, and
+            // elements to an empty array [] to avoid hAzzle
+            // throwing errors
 
-                if (this.elements === undefined) {
-                    this.length = 0;
-                    this.elements = [];
-                } else {
-                    this.length = this.elements.length;
-                }
-                return this;
-            };
-
-        // Define constructor
-        hAzzle.prototype = {
-            constructor: hAzzle
+            if (this.elements === undefined) {
+                this.length = 0;
+                this.elements = [];
+            } else {
+                this.length = this.elements.length;
+            }
+            return this;
         };
 
-        // Expose 
+    // Define constructor
+    hAzzle.prototype = {
+        constructor: hAzzle
+    };
 
-        hAzzle.version = version.full;
-        hAzzle.err = err;
-        hAzzle.installed = installed;
-        hAzzle.require = require;
-        hAzzle.define = define;
+    // Expose
 
-        // Hook hAzzle on the window object
+    hAzzle.version = version.full;
+    hAzzle.err = err;
+    hAzzle.installed = installed;
+    hAzzle.require = require;
+    hAzzle.define = define;
 
-        window.hAzzle = hAzzle;
+    // Hook hAzzle on the window object
 
-    }(window));
+    window.hAzzle = hAzzle;
+
+}(window));
 
     var hAzzle = window.hAzzle || (window.hAzzle = {});
 
@@ -557,72 +561,6 @@ hAzzle.define('Support', function() {
             isUndefined: isUndefined,
             isNodeList: isNodeList,
             isHostMethod: isHostMethod
-        };
-    });
-    // ready.js
-    hAzzle.define('Ready', function() {
-
-        var
-
-            _util = hAzzle.require('Util'),
-
-            // Static property indicating whether DOM is ready.
-
-            isReady = false,
-
-            // List of functions to be executed after DOM is ready.
-
-            readyList = [],
-
-            /**
-             * Specify a function to execute when the DOM is fully loaded.
-             *
-             * @param {Function} callback
-             */
-
-            ready = function(callback) {
-
-                // Handler
-                var readyHandler = function() {
-                    if (!isReady) {
-                        isReady = true;
-                        ready = function(callback) {
-                            return callback(hAzzle);
-                        };
-
-                        _util.each(readyList, function(callback) {
-                            // Remove the handlers
-                            document.removeEventListener('DOMContentLoaded', readyHandler, false);
-                            window.removeEventListener('load', readyHandler, false);
-                            // Execute the callback
-                            callback(hAzzle);
-                        });
-                        readyList = []; // Clear the ready list
-                    }
-                };
-
-                // Catch cases where hAzzle.ready() is called after the browser event has already occurred.
-                if (document.readyState === 'complete') {
-                    readyHandler();
-                } else {
-                    if (document.addEventListener) { // Standards-based browsers support DOMContentLoaded
-                        // Use the handy event callback
-                        document.addEventListener('DOMContentLoaded', readyHandler, false);
-                        // A fallback to window.onload, that will always work
-                        window.addEventListener('load', readyHandler, false);
-                    }
-                    ready = function(callback) {
-                        readyList.push(callback);
-                    };
-                    return ready(callback);
-                }
-            };
-
-        return {
-
-            isReady: isReady,
-            readyList: readyList,
-            ready: ready
         };
     });
 

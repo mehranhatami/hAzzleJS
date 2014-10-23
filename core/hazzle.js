@@ -1,16 +1,15 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0 Release Candidate 
+ * Version: 1.0.0 Release Candidate
  * Released under the MIT License.
  *
  * Date: 2014-10-23
  */
- 
 (function() {
 
     var
-       // Quick-lookup for hAzzle(id)
+    // Quick-lookup for hAzzle(id)
 
         idOnly = /^#([\w\-]*)$/,
 
@@ -93,7 +92,11 @@
             // If a function is given, call it when the DOM is ready
 
             if (typeof sel === 'function') {
-                _ready.ready(sel);
+                if (installed.Ready) {
+                    _ready.ready(sel);
+                } else {
+                    err(true, 6, 'ready.js module not installed');
+                }
             }
 
             if (typeof sel === 'string') {
