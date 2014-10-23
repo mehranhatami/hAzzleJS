@@ -277,7 +277,7 @@ hAzzle.define('Jiesa', function() {
 
         } else {
             return this.filter(function() {
-                return matches(this, selector) != (not || false);
+                return matchesSelector(this, selector) != (not || false);
             });
         }
     };

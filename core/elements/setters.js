@@ -26,6 +26,13 @@ hAzzle.define('Setters', function() {
             'class': 'className',
             'for': 'htmlFor'
         },
+        forcePropNames = {
+            innerHTML: 1,
+            textContent: 1,
+            className: 1,
+            htmlFor: _has.has('ie'),
+            value: 1
+        },
         attrHooks = {
             get: {},
             set: {}
@@ -73,13 +80,15 @@ hAzzle.define('Setters', function() {
             return booleanAttr && boolElem[elem.nodeName] && booleanAttr;
         },
 
-        removeAttr = function(el, value) {
+        // Removes an attribute from an HTML element.
+
+        removeAttr = function(elem, value) {
+
+            elem = getElem(elem);
 
             var name, propName,
                 i = 0,
-                elem = getElem(el),
-            keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
-
+                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
                 l = keys.length;
 
             for (; i < l; i++) {
@@ -91,11 +100,8 @@ hAzzle.define('Setters', function() {
                 propName = propMap[name] || name;
 
                 if (getBooleanAttrName(elem, name)) {
-
                     elem[propName] = false;
-
                 } else {
-
                     elem.removeAttribute(name);
                 }
             }
@@ -144,7 +150,7 @@ hAzzle.define('Setters', function() {
             elem = getElem(elem);
 
             var nodeType = elem ? elem.nodeType : undefined,
-                hooks, ret, notxml;
+                hooks, ret, notxml, forceProp = forcePropNames[name];
 
             if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
                 return '';
@@ -177,7 +183,9 @@ hAzzle.define('Setters', function() {
                         return ret;
                     }
                 }
-
+                if (name == 'textContent') {
+                    return Prop(elem, name);
+                }
                 ret = elem.getAttribute(name, 2);
                 // Non-existent attributes return null, we normalize to undefined
                 return ret == null ?
@@ -187,14 +195,16 @@ hAzzle.define('Setters', function() {
 
             // setAttribute          
 
-            if (value === null) {
+            if (!value) {
                 removeAttr(elem, name);
             } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
                 return ret;
             } else {
+                if (forceProp || typeof value == 'boolean' || _types.isFunction(value)) {
+                    return Prop(elem, name, value);
+                }
                 elem.setAttribute(name, value + '');
             }
-
         },
 
         Prop = function(elem, name, value) {
@@ -269,16 +279,16 @@ hAzzle.define('Setters', function() {
                 val = value;
             }
 
-            // Treat null/undefined as ""; convert numbers to string
+            // Treat null/undefined as ''; convert numbers to string
             if (val == null) {
                 val = '';
 
-            } else if (typeof val === "number") {
+            } else if (typeof val === 'number') {
                 val += '';
 
             } else if (_types.isArray(val)) {
                 val = _util.map(val, function(value) {
-                    return value == null ? "" : value + "";
+                    return value == null ? '' : value + '';
                 });
             }
 
@@ -290,7 +300,6 @@ hAzzle.define('Setters', function() {
             }
         });
     };
-
 
     this.hasAttr = function(name) {
         return name && typeof this.attr(name) !== 'undefined';
@@ -399,8 +408,8 @@ hAzzle.define('Setters', function() {
         attr: Attr,
         prop: Prop,
         removeAttr: removeAttr,
-        toggleAttr:toggleAttr,
-        toAttrSelector:toAttrSelector,
+        toggleAttr: toggleAttr,
+        toAttrSelector: toAttrSelector,
         getBooleanAttrName: getBooleanAttrName,
         SVGAttribute: SVGAttribute
     };
