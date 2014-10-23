@@ -17,9 +17,9 @@ The **util.js module** ( part of the Core) uses some of this native functions.
 
 Anyway. There is no reason to get panic.**hAzzle** also provide some of the same **DOM traversing methods** you might know from this libraries like **.siblings()**, **.has()**, **.children()**, etc. in the **traversing.js module**.
 
-You will also find similar methods like **.eq()**, **.prev()**, **.nextAll()*, **.next()** e.g., as you may know from **jQuery / Zepto** in the **collection.js module** ( part of the Core) to traverse through the elements array
+You will also find similar methods like **.eq()**, **.prev()**, **.nextAll()*, **.next()** e.g., as you may know from **jQuery / Zepto** in the **collection.js module** ( part of the Core) to traverse through the **.elements array**
 
-Other methodds such as **.addClass()**, **.prepend()**, **.text()**, **.html()** e.g. are all included in the **module folder*
+Other methodds such as **.addClass()**, **.prepend()**, **.text()**, **.html()** e.g. are all included in the **module folder**.
 
 Browser compatiblity
 --------------------
