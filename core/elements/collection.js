@@ -74,17 +74,17 @@ hAzzle.define('Collection', function() {
     /* ------------- INTERNAL ARRAY METHODS ------------------------------- */
 
     // Return an array or a specific DOM element matched by the hAzzle object
-    
+
     this.get = function(index) {
         var result;
-			if (index === undefined) {
-				result = slice(this.elements, 0);
-			} else if (index < 0) {
-				result = this.elements[this.length + index];
-			} else {
-				result = this.elements[index];
-			}
-			return result;
+        if (index === undefined) {
+            result = slice(this.elements, 0);
+        } else if (index < 0) {
+            result = this.elements[this.length + index];
+        } else {
+            result = this.elements[index];
+        }
+        return result;
     };
 
     // Get the element at position specified by index from the current collection.
@@ -189,13 +189,32 @@ hAzzle.define('Collection', function() {
         prev: 'previousElementSibling'
     }, function(value, prop) {
         this[prop] = function(sel) {
-                return this.map(function(elem) {
-                    return elem[value];
-                }).filter(sel);
-            };
-            // Note! The native 'bind' method do not give the best performance, but
-            // this happen only on pageload. Anyone who wan't to fix this?
+            return this.map(function(elem) {
+                return elem[value];
+            }).filter(sel);
+        };
+        // Note! The native 'bind' method do not give the best performance, but
+        // this happen only on pageload. Anyone who wan't to fix this?
     }.bind(this));
+
+    // prevAll() and nextAll()
+    _util.each({
+        prevAll: 'previousElementSibling',
+        nextAll: 'nextElementSibling'
+    }, function(value, prop) {
+        this[prop] = function(sel) {
+            var matched = [];
+            this.each(function(elem) {
+                while ((elem = elem[value]) && elem.nodeType !== 9) {
+                    matched.push(elem);
+                }
+            });
+            return hAzzle(matched);
+        };
+        // Note! The native 'bind' method do not give the best performance, but
+        // this happen only on pageload. Anyone who wan't to fix this?
+    }.bind(this));
+
 
     return {
         makeArray: makeArray,

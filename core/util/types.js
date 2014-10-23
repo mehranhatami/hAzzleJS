@@ -43,17 +43,22 @@ hAzzle.define('Types', function() {
             return !isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
         },
         isEmpty = function(value) {
-            var i = 0;
-            return isArray(value) ? value.length === 0 :
-                isObject(value) ? (function() {
-                    var _;
-                    for (_ in value) {
-                        i++;
-                        break;
-                    }
-                    return (i === 0);
-                }()) :
-                value === '';
+            // Take a shortcut if this is a instanceof hAzzle 
+            if (value instanceof hAzzle && value.length > 0) {
+                return false;
+            } else {
+                var i = 0;
+                return isArray(value) ? value.length === 0 :
+                    isObject(value) ? (function() {
+                        var _;
+                        for (_ in value) {
+                            i++;
+                            break;
+                        }
+                        return (i === 0);
+                    }()) :
+                    value === '';
+            }
         },
         isElement = function(value) {
             return (value && typeof value === 'object' && value.ELEMENT_NODE &&
