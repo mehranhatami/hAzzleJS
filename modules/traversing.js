@@ -1,13 +1,50 @@
 // traversing.js
-
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
 hAzzle.define('Traversing', function() {
 
     var _jiesa = hAzzle.require('Jiesa'),
         _collection = hAzzle.require('Collection'),
+        _types = hAzzle.require('Types'),
         _core = hAzzle.require('Core'),
-        _util = hAzzle.require('Util');
+        _util = hAzzle.require('Util'),
+
+        getIndex = function(selector, index) {
+            return _types.isUndefined(selector) && !_types.isNumber(index) ? 0 :
+                _types.isNumber(selector) ? selector : _types.isNumber(index) ? index : null;
+        },
+        gather = function(els, callback) {
+            var ret = [],
+                res, i = 0,
+                j, len = els.length,
+                f;
+            for (; i < len;) {
+                for (j = 0, f = (res = callback(els[i], i++)).length; j < f;) {
+                    ret.push(res[j++]);
+                }
+            }
+            return ret;
+        },
+        traverse = function(els, method, selector, index) {
+            index = getIndex(selector, index);
+            return gather(els, function(el, elind) {
+                var matches, i = index || 0,
+                    ret = [],
+                    elem = el[method];
+                while (elem && (index === null || i >= 0)) {
+                    matches = _jiesa.matches(elem, typeof selector === 'string' ? selector : '*')
+                    if (_types.isElement(elem) && matches && (index === null || i-- === 0)) {
+                        if (index === null && method !== 'nextElementSibling' && method !== 'parentElement') {
+                            ret.unshift(elem);
+                        } else {
+                            ret.push(elem);
+                        }
+                    }
+                    elem = elem[method];
+                }
+                return ret;
+            });
+        };
 
     // Returns all sibling elements for nodes
     // Optionally takes a query to filter the sibling elements.
@@ -136,7 +173,40 @@ hAzzle.define('Traversing', function() {
         ));
     };
 
- this.parentElement = function() {
+    // Traverse up the DOM tree
+
+    this.up = function(sel, index) {
+        return hAzzle(traverse(this.elements, 'parentElement', sel, index));
+    };
+    // Traverse down the DOM tree 
+    this.down = function(sel, index) {
+        index = getIndex(sel, index);
+        return hAzzle(gather(this.elements, function(elem) {
+            var jf = _jiesa.find(typeof sel === 'string' ? sel : '*', elem);
+            return index === null ? jf : ([jf[index]] || []);
+        }));
+    };
+
+    // First() and prev()
+    // Note! This methods will overwrite the exist Core functions with the
+    // same name, and add some extra features
+
+    _util.each({
+        next: 'nextElementSibling',
+        prev: 'previousElementSibling'
+    }, function(value, prop) {
+        this[prop] = function(sel, index) {
+            if (index) {
+                return hAzzle(traverse(this.elements, value, sel, index));
+            } else {
+                return this.map(function(elem) {
+                    return elem[value];
+                }).filter(sel);
+            }
+        };
+    }.bind(this));
+
+    this.parentElement = function() {
         return this.parent().children();
     };
 
@@ -159,6 +229,6 @@ hAzzle.define('Traversing', function() {
     this.childElementCount = function() {
         return this.children().length;
     };
-    
+
     return {};
 });
