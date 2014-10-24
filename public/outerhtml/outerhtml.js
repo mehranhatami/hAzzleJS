@@ -9,11 +9,9 @@ hAzzle.define('html', function() {
 
     this.outerHTML = function(value) {
 
-        // If there is no element in the jQuery object
-        if (!this.length)
+        if (!this.length) {
             return null;
-        // Returns the value
-        else if (value === undefined) {
+        } else if (value === undefined) {
 
             var element = (this.length) ? this.elements[0] : this.elements,
                 result;
@@ -56,7 +54,6 @@ hAzzle.define('html', function() {
                 // Clone the value for each element being replaced
                 $cloneValue = $value.clone(true);
 
-                // Use jQuery to replace the content
                 $this.eq(x).replaceWith($cloneValue);
 
                 // Add the replacing content to the collection
