@@ -1,0 +1,8 @@
+Dependencies:
+
+- manipulation.js
+- strings.js
+- types.js
+- clone.js
+
+and the Core itself

@@ -341,7 +341,7 @@ hAzzle.define('Manipulation', function() {
 
     // Same as 'ReplaceWith' in jQuery
 
-    this.replace = function(html) {
+    this.replaceWith = function(html) {
         return this.each(function(el, i) {
             _util.each(normalize(html, i), function(i) {
                 el.replace(i); // DOM Level 4
