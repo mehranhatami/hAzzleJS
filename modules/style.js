@@ -7,7 +7,7 @@ hAzzle.define('Style', function() {
         _strings = hAzzle.require('Strings'),
         _curcss = hAzzle.require('curCSS'),
 
-        unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
+        _unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
             'column-count flex-shrink flex-height order orphans widows rotate3d flipped ' +
             'transform ms-flex-order transform-origin perspective transform-style ' +
             'ms-flex-negative ms-flex-positive transform-origin perspective ' +
@@ -17,11 +17,23 @@ hAzzle.define('Style', function() {
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
 
-        sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
+        _sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
-        prefixElement = document.createElement('div'),
+        // _vPrix regEx
 
-        prefixMatches = {},
+        _prReg = /^\w/
+
+    // Used by vendorPrefixes as callback to replace()
+
+    _vPrix = function(match) {
+            return match.toUpperCase();
+        },
+
+        _vendors = ['', 'Webkit', 'Moz', 'ms', 'O'],
+
+        _prefixElement = document.createElement('div'),
+
+        _prefixCache = {},
 
         cssProps = {
             'float': 'cssFloat'
@@ -34,35 +46,28 @@ hAzzle.define('Style', function() {
             set: {}
         },
 
-        prefixCheck = function(prop) {
-            // If this property has already been checked, return the cached value
-            if (prefixMatches[prop]) {
-                return [prefixMatches[prop], true];
+        vendorPrefixes = function(prop) {
+            if (_prefixCache[prop]) {
+                return [_prefixCache[prop], true];
             } else {
-                var vendors = ['', 'Webkit', 'Moz', 'ms', 'O'];
 
-                for (var i = 0, vendorsLength = vendors.length; i < vendorsLength; i++) {
-                    var propertyPrefixed;
+                var i = 0,
+                    _vendorsLength = _vendors.length,
+                    propertyPrefixed;
+
+                for (; i < _vendorsLength; i++) {
 
                     if (i === 0) {
                         propertyPrefixed = prop;
                     } else {
-                        // Capitalize the first letter of the property to conform to JavaScript vendor prefix notation (e.g. webkitFilter).
-                        propertyPrefixed = vendors[i] + prop.replace(/^\w/, function(match) {
-                            return match.toUpperCase();
-                        });
+                        propertyPrefixed = _vendors[i] + prop.replace(_prReg, _vPrix);
                     }
 
-                    // Check if the browser supports this property as prefixed
-                    if (typeof prefixElement.style[propertyPrefixed] === 'string') {
-                        // Cache the match
-                        prefixMatches[prop] = propertyPrefixed;
-
+                    if (typeof _prefixElement.style[propertyPrefixed] === 'string') {
+                        _prefixCache[prop] = propertyPrefixed;
                         return [propertyPrefixed, true];
                     }
                 }
-
-                // If the browser doesn't support this property in any form, include a false flag so that the caller can decide how to proceed.
                 return [prop, false];
             }
         },
@@ -73,7 +78,7 @@ hAzzle.define('Style', function() {
 
             var val, hooks, computed, style,
                 origName = _strings.camelize(name),
-                p = prefixCheck(origName);
+                p = vendorPrefixes(origName);
 
 
             // Make sure that we're working with the right name
@@ -106,7 +111,7 @@ hAzzle.define('Style', function() {
 
                 var ret, style, hook, type, action, origName = _strings.camelize(name);
 
-                name = cssProps[origName] || (cssProps[origName] = prefixCheck(name)[0]);
+                name = cssProps[origName] || (cssProps[origName] = vendorPrefixes(name)[0]);
 
                 style = elem.style;
                 if (!style) {
@@ -118,10 +123,11 @@ hAzzle.define('Style', function() {
 
                     hook = cssHooks.set[name];
 
+
                     // Convert '+=' or '-=' to relative numbers, and
                     // and convert all unit types to PX (e.g. 10em will become 160px)
-                     
-                    if (type === 'string' && (ret = sNumbs.exec(value))) {
+
+                    if (type === 'string' && (ret = _sNumbs.exec(value))) {
                         value = _units.units(_curcss.css(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                         type = 'number';
                     }
@@ -202,7 +208,7 @@ hAzzle.define('Style', function() {
 
     // Populate the unitless properties list
 
-    _util.each(unitlessProps, function(prop) {
+    _util.each(_unitlessProps, function(prop) {
         unitless[_strings.camelize(prop)] = true;
     });
 

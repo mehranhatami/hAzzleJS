@@ -70,18 +70,18 @@ hAzzle.define('Strings', function() {
 
         reversedEscapeChars = {},
 
-        // Used by hAzzle.capitalize as callback to replace()
+        // Used by capitalize as callback to replace()
 
         fcapitalize = function(letter) {
             return letter.toUpperCase();
         },
 
-        // Used by hAzzle.camelize as callback to replace()
+        // Used by camelize as callback to replace()
 
         fcamelize = function(all, letter) {
             return letter.toUpperCase();
         },
-        // Used by hAzzle.hyphenate as callback to replace()
+        // Used by hyphenate as callback to replace()
 
         fhyphenate = function(letter) {
             return ('-' + letter.charAt(0).toLowerCase());
