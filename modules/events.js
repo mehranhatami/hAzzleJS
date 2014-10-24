@@ -25,6 +25,9 @@
  * - https://github.com/fat/bean
  * - jQuery
  */
+ 
+ var hAzzle = window.hAzzle || (window.hAzzle = {});
+ 
 hAzzle.define('Events', function() {
 
     var win = window,

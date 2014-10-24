@@ -1,4 +1,7 @@
 // manipulation.js
+
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 hAzzle.define('Manipulation', function() {
 
     var _util = hAzzle.require('Util'),

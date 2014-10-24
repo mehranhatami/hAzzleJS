@@ -1,4 +1,7 @@
 // style.js
+
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 hAzzle.define('Style', function() {
 
     var _util = hAzzle.require('Util'),
@@ -21,11 +24,11 @@ hAzzle.define('Style', function() {
 
         // _vPrix regEx
 
-        _prReg = /^\w/
+        _prReg = /^\w/,
 
-    // Used by vendorPrefixes as callback to replace()
+        // Used by vendorPrefixes as callback to replace()
 
-    _vPrix = function(match) {
+        _vPrix = function(match) {
             return match.toUpperCase();
         },
 
@@ -76,17 +79,15 @@ hAzzle.define('Style', function() {
 
         getCSS = function(elem, name) {
 
-            var val, hooks, computed, style,
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
+            var val, hooks, computed, style = elem.style,
                 origName = _strings.camelize(name),
                 p = vendorPrefixes(origName);
 
-
-            // Make sure that we're working with the right name
-
-            name = cssProps[origName] ||
-                (p[1] ? cssProps[origName] = p[0] : name);
-
-            style = elem.style;
+            name = cssProps[origName] || (p[1] ? cssProps[origName] = p[0] : name);
 
             // Try prefixed name followed by the unprefixed name
             hooks = cssHooks.get[name] || cssHooks.get[origName];
@@ -106,7 +107,10 @@ hAzzle.define('Style', function() {
         // setCSS        
 
         setCSS = function(elem, name, value) {
-
+            
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) { // Text or Comment
 
                 var ret, style, hook, type, action, origName = _strings.camelize(name);
@@ -122,7 +126,6 @@ hAzzle.define('Style', function() {
                     type = typeof value;
 
                     hook = cssHooks.set[name];
-
 
                     // Convert '+=' or '-=' to relative numbers, and
                     // and convert all unit types to PX (e.g. 10em will become 160px)
@@ -169,7 +172,7 @@ hAzzle.define('Style', function() {
 
     this.css = function(name, value) {
 
-        var node = this.elements;
+        var elem = this.elements;
 
         // jQuery method
 
@@ -179,7 +182,7 @@ hAzzle.define('Style', function() {
                 i = name.length;
 
             while (i--) {
-                map[name[i]] = getCSS(node[0], name[i], false);
+                map[name[i]] = getCSS(elem[0], name[i], false);
             }
 
             return map;
@@ -188,7 +191,7 @@ hAzzle.define('Style', function() {
         if (value === undefined) {
 
             if (typeof name === 'string') {
-                return node[0] && getCSS(node[0], name);
+                return elem[0] && getCSS(elem[0], name);
             }
 
             // Object

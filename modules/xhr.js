@@ -1,4 +1,7 @@
 // xhr.js
+
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 hAzzle.define('xhr', function() {
 
     var

@@ -1,4 +1,7 @@
 // visibility.js
+
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 hAzzle.define('Visibility', function() {
 
     var _ccs = hAzzle.require('curCSS'),

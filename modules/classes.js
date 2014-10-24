@@ -1,4 +1,7 @@
 // classes.js
+
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 hAzzle.define('Classes', function() {
 
     var _support = hAzzle.require('Support'),

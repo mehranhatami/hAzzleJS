@@ -1,4 +1,7 @@
 // traversing.js
+
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 hAzzle.define('Traversing', function() {
 
     var _jiesa = hAzzle.require('Jiesa'),

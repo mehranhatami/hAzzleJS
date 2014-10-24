@@ -163,6 +163,8 @@
 
 }(window));
 
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 // support.js
 hAzzle.define('Support', function() {
 
