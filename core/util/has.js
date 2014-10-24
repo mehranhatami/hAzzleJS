@@ -1,17 +1,10 @@
-// has.js
+// has.js- feature detection
 hAzzle.define('has', function() {
 
     var
         ua = navigator.userAgent,
         win = window,
-        isBrowser =
-        // the most fundamental decision: are we in the browser?
-        typeof window !== 'undefined' &&
-        typeof location !== 'undefined' &&
-        typeof document !== 'undefined' &&
-        window.location === location &&
-        window.document === document,
-        doc = isBrowser && document,
+        doc = win.document,
         element = doc && doc.createElement('div'),
         hasCache = {},
 
@@ -37,17 +30,18 @@ hAzzle.define('has', function() {
 
             return undefined;
         })(),
-
+        // Return the current value of the named feature
         has = function(name) {
             return typeof hasCache[name] === 'function' ?
                 (hasCache[name] = hasCache[name](win, doc, element)) :
                 hasCache[name]; // Boolean
         },
-
+        // Register a new feature test for some named feature.
         add = function(name, test, now, force) {
             (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
             return now && has(name);
         },
+        // Deletes the contents of the element passed to test functions.
         clearElement = function(element) {
             if (element) {
                 while (element.lastChild) {

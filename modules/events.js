@@ -25,9 +25,8 @@
  * - https://github.com/fat/bean
  * - jQuery
  */
- 
- var hAzzle = window.hAzzle || (window.hAzzle = {});
- 
+var hAzzle = window.hAzzle || (window.hAzzle = {});
+
 hAzzle.define('Events', function() {
 
     var win = window,
@@ -340,14 +339,19 @@ hAzzle.define('Events', function() {
 
             // Event delegation
 
-            if (!_types.isType('Function')(selector)) {
+            if (!_types.isFunction(selector)) {
                 cb = callback;
                 args = _collection.slice(arguments, 4);
-                callback = delegate(selector, cb);
+                // Make sure the callback are a function
+                if (_types.isFunction(callback)) {
+                    callback = delegate(selector, cb);
+                }
             } else {
                 args = _collection.slice(arguments, 3);
                 callback = cb = selector;
             }
+
+            // If not a valid callback, stop here
 
             if (typeof callback !== 'function') {
                 hAzzle.err(true, 13, 'no handler registred for on() in events.js module');
@@ -685,6 +689,7 @@ hAzzle.define('Events', function() {
     // Add event listener
 
     this.on = function(events, selector, callback) {
+
         this.each(function(elem) {
             on(elem, events, selector, callback);
         });

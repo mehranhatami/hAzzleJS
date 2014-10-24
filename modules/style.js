@@ -1,5 +1,4 @@
 // style.js
-
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
 hAzzle.define('Style', function() {
@@ -32,7 +31,7 @@ hAzzle.define('Style', function() {
             return match.toUpperCase();
         },
 
-        _vendors = ['', 'Webkit', 'Moz', 'ms', 'O'],
+        _prefixes = ['', 'Webkit', 'O', 'Moz', 'ms', 'Khtml'],
 
         _prefixElement = document.createElement('div'),
 
@@ -50,20 +49,21 @@ hAzzle.define('Style', function() {
         },
 
         vendorPrefixes = function(prop) {
+            // Cache on first iteration to avoid multiple lookups
             if (_prefixCache[prop]) {
                 return [_prefixCache[prop], true];
             } else {
 
                 var i = 0,
-                    _vendorsLength = _vendors.length,
+                    prefixesLength = _prefixes.length,
                     propertyPrefixed;
-
-                for (; i < _vendorsLength; i++) {
+              // Iterate prefixes from most to least likely
+                for (; i < prefixesLength; i++) {
 
                     if (i === 0) {
                         propertyPrefixed = prop;
                     } else {
-                        propertyPrefixed = _vendors[i] + prop.replace(_prReg, _vPrix);
+                        propertyPrefixed = _prefixes[i] + prop.replace(_prReg, _vPrix);
                     }
 
                     if (typeof _prefixElement.style[propertyPrefixed] === 'string') {
@@ -107,7 +107,7 @@ hAzzle.define('Style', function() {
         // setCSS        
 
         setCSS = function(elem, name, value) {
-            
+
             if (elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }

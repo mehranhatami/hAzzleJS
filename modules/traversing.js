@@ -110,9 +110,8 @@ hAzzle.define('Traversing', function() {
         }
         return selector === undefined ? hAzzle(ancestors) : hAzzle(ancestors).filter(selector);
     };
-
-    // Get the first element that matches the selector, beginning at 
-    // the current element and progressing up through the DOM tree.
+    
+    // Return the closest parent of an element based on a selector
 
     this.closest = function(selector, ctx) {
         var cur,

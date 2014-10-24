@@ -1,7 +1,7 @@
 // strings.js
 hAzzle.define('Strings', function() {
     var
-    // Save a reference to some core methods
+    // Aliasing to the native function
 
         nTrim = String.prototype.trim,
 
@@ -29,13 +29,6 @@ hAzzle.define('Strings', function() {
 
         escHTML = /[&<>"']/g,
 
-        // isBlank regExp 
-        iBlank = /^\s*$/,
-
-        // stripTags regExp
-
-        sTags = /<\/?[^>]+>/g,
-
         // escapeRegExp regExp
 
         eRegExp = /([.*+?^=!:${}()|[\]\/\\])/g,
@@ -60,7 +53,7 @@ hAzzle.define('Strings', function() {
 
         camelCache = [],
 
-        escapeChars = {
+        escapeMap = {
             lt: '<',
             gt: '>',
             quot: '"',
@@ -68,7 +61,7 @@ hAzzle.define('Strings', function() {
             amp: '&'
         },
 
-        reversedEscapeChars = {},
+        reversedescapeMap = {},
 
         // Used by capitalize as callback to replace()
 
@@ -143,49 +136,9 @@ hAzzle.define('Strings', function() {
 
         trim = function(str) {
             return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
-                // Any idiots still using Android 4.1 ?
+                // Who are still using Android 4.1 ?
                 (str + '').replace(nNTrim, '');
         },
-        // Check if a string is blank
-        isBlank = function(str) {
-            if (!str) {
-                str = '';
-            }
-            return (iBlank).test(str);
-        },
-
-        // Strip tags
-        stripTags = function(str) {
-            if (!str) {
-                return '';
-            }
-            return String(str).replace(sTags, '');
-        },
-
-        // Convert a stringified primitive into its correct type.
-        parse = function(str) {
-            var n; // undefined, or becomes number
-            return typeof str !== 'string' ||
-                !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
-                (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
-        },
-
-        contains = function(str, needle) {
-            return str.indexOf(needle) >= 0;
-        },
-
-        count = function(string, needle) {
-            var count = 0,
-                pos = string.indexOf(needle);
-
-            while (pos >= 0) {
-                count += 1;
-                pos = string.indexOf(needle, pos + 1);
-            }
-
-            return count;
-        },
-
         truncate = function(str, length, truncateStr) {
             if (!str) {
                 return '';
@@ -203,14 +156,14 @@ hAzzle.define('Strings', function() {
         },
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
-                return '&' + reversedEscapeChars[m] + ';';
+                return '&' + reversedescapeMap[m] + ';';
             });
         },
         unescapeHTML = function(str) {
             return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
                 var m;
-                if (entityCode in escapeChars) {
-                    return escapeChars[entityCode];
+                if (entityCode in escapeMap) {
+                    return escapeMap[entityCode];
                 } else if ((m = entityCode.match(unEscapeFirst))) {
                     return String.fromCharCode(parseInt(m[1], 16));
                 } else if ((m = entityCode.match(unEscapeLast))) {
@@ -231,12 +184,10 @@ hAzzle.define('Strings', function() {
         uppercase = manualUppercase;
     }
 
-    for (var key in escapeChars) {
-        reversedEscapeChars[escapeChars[key]] = key;
+    for (var key in escapeMap) {
+        reversedescapeMap[escapeMap[key]] = key;
     }
-    reversedEscapeChars["'"] = '#39';
-
-    // Exporting
+    reversedescapeMap["'"] = '#39';
 
     return {
 
@@ -248,11 +199,6 @@ hAzzle.define('Strings', function() {
         uppcase: uppercase,
         manualLowercase: manualLowercase,
         manualUppercase: manualUppercase,
-        parse: parse,
-        count: count,
-        contains: contains,
-        isBlank: isBlank,
-        stripTags: stripTags,
         escapeHTML: escapeHTML,
         unescapeHTML: unescapeHTML,
         escapeRegExp: escapeRegExp,

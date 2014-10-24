@@ -266,26 +266,19 @@ hAzzle.define('Support', function() {
     };
 });
 
-// has.js
+// has.js- feature detection
 hAzzle.define('has', function() {
 
     var
         ua = navigator.userAgent,
         win = window,
-        isBrowser =
-        // the most fundamental decision: are we in the browser?
-        typeof window !== 'undefined' &&
-        typeof location !== 'undefined' &&
-        typeof document !== 'undefined' &&
-        window.location === location &&
-        window.document === document,
-        doc = isBrowser && document,
+        doc = win.document,
         element = doc && doc.createElement('div'),
-        hasCache = {}
+        hasCache = {},
 
-    // IE feature detection
-    // Props: Velocity.js 
-    ie = (function() {
+        // IE feature detection
+        // Props: Velocity.js 
+        ie = (function() {
 
             if (doc.documentMode) {
                 return doc.documentMode;
@@ -305,17 +298,18 @@ hAzzle.define('has', function() {
 
             return undefined;
         })(),
-
+        // Return the current value of the named feature
         has = function(name) {
             return typeof hasCache[name] === 'function' ?
                 (hasCache[name] = hasCache[name](win, doc, element)) :
                 hasCache[name]; // Boolean
         },
-
+        // Register a new feature test for some named feature.
         add = function(name, test, now, force) {
             (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
             return now && has(name);
         },
+        // Deletes the contents of the element passed to test functions.
         clearElement = function(element) {
             if (element) {
                 while (element.lastChild) {
@@ -423,6 +417,7 @@ hAzzle.define('has', function() {
         ie: ie
     };
 });
+
 // types.js
 hAzzle.define('Types', function() {
 
@@ -1525,7 +1520,7 @@ hAzzle.define('Collection', function() {
     // where 'this' contains the elements. The '.elements Array 
     // will be kept, but it will be possible to run jQuery / Zepto functions
 
-    this.toJquery = function() {
+    this.toJqueryZepto = function() {
         var i = this.length,
             els = this.elements;
         while (i--) {
@@ -1625,8 +1620,17 @@ hAzzle.define('Collection', function() {
         return index ? this.slice(this.length - index) : this.eq(-1);
     };
 
-    this.size = function() {
-        return this.length;
+    // Return 'even' elements from the '.elements array'
+    this.even = function() {
+        return this.filter(function(index) {
+            return index % 2 !== 0;
+        });
+    };
+    // Return 'odd' elements from the '.elements array'
+    this.odd = function() {
+        return this.filter(function(index) {
+            return index % 2 === 0;
+        });
     };
 
     // First() and prev()
@@ -1656,7 +1660,6 @@ hAzzle.define('Collection', function() {
             return hAzzle(matched);
         };
     }.bind(this));
-
 
     return {
         makeArray: makeArray,
@@ -1960,7 +1963,7 @@ hAzzle.define('Jiesa', function() {
 // strings.js
 hAzzle.define('Strings', function() {
     var
-    // Save a reference to some core methods
+    // Aliasing to the native function
 
         nTrim = String.prototype.trim,
 
@@ -1988,13 +1991,6 @@ hAzzle.define('Strings', function() {
 
         escHTML = /[&<>"']/g,
 
-        // isBlank regExp 
-        iBlank = /^\s*$/,
-
-        // stripTags regExp
-
-        sTags = /<\/?[^>]+>/g,
-
         // escapeRegExp regExp
 
         eRegExp = /([.*+?^=!:${}()|[\]\/\\])/g,
@@ -2019,7 +2015,7 @@ hAzzle.define('Strings', function() {
 
         camelCache = [],
 
-        escapeChars = {
+        escapeMap = {
             lt: '<',
             gt: '>',
             quot: '"',
@@ -2027,20 +2023,20 @@ hAzzle.define('Strings', function() {
             amp: '&'
         },
 
-        reversedEscapeChars = {},
+        reversedescapeMap = {},
 
-        // Used by hAzzle.capitalize as callback to replace()
+        // Used by capitalize as callback to replace()
 
         fcapitalize = function(letter) {
             return letter.toUpperCase();
         },
 
-        // Used by hAzzle.camelize as callback to replace()
+        // Used by camelize as callback to replace()
 
         fcamelize = function(all, letter) {
             return letter.toUpperCase();
         },
-        // Used by hAzzle.hyphenate as callback to replace()
+        // Used by hyphenate as callback to replace()
 
         fhyphenate = function(letter) {
             return ('-' + letter.charAt(0).toLowerCase());
@@ -2102,49 +2098,9 @@ hAzzle.define('Strings', function() {
 
         trim = function(str) {
             return str == null ? '' : nTrim ? (typeof str === 'string' ? str.trim() : str) :
-                // Any idiots still using Android 4.1 ?
+                // Who are still using Android 4.1 ?
                 (str + '').replace(nNTrim, '');
         },
-        // Check if a string is blank
-        isBlank = function(str) {
-            if (!str) {
-                str = '';
-            }
-            return (iBlank).test(str);
-        },
-
-        // Strip tags
-        stripTags = function(str) {
-            if (!str) {
-                return '';
-            }
-            return String(str).replace(sTags, '');
-        },
-
-        // Convert a stringified primitive into its correct type.
-        parse = function(str) {
-            var n; // undefined, or becomes number
-            return typeof str !== 'string' ||
-                !str ? str : str === 'false' ? false : str === 'true' ? true : str === 'null' ? null : str === 'undefined' ||
-                (n = (+str)) || n === 0 || str === 'NaN' ? n : str;
-        },
-
-        contains = function(str, needle) {
-            return str.indexOf(needle) >= 0;
-        },
-
-        count = function(string, needle) {
-            var count = 0,
-                pos = string.indexOf(needle);
-
-            while (pos >= 0) {
-                count += 1;
-                pos = string.indexOf(needle, pos + 1);
-            }
-
-            return count;
-        },
-
         truncate = function(str, length, truncateStr) {
             if (!str) {
                 return '';
@@ -2162,14 +2118,14 @@ hAzzle.define('Strings', function() {
         },
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
-                return '&' + reversedEscapeChars[m] + ';';
+                return '&' + reversedescapeMap[m] + ';';
             });
         },
         unescapeHTML = function(str) {
             return str.replace(/\&([^;]+);/g, function(entity, entityCode) {
                 var m;
-                if (entityCode in escapeChars) {
-                    return escapeChars[entityCode];
+                if (entityCode in escapeMap) {
+                    return escapeMap[entityCode];
                 } else if ((m = entityCode.match(unEscapeFirst))) {
                     return String.fromCharCode(parseInt(m[1], 16));
                 } else if ((m = entityCode.match(unEscapeLast))) {
@@ -2190,13 +2146,10 @@ hAzzle.define('Strings', function() {
         uppercase = manualUppercase;
     }
 
-
-    for (var key in escapeChars) {
-        reversedEscapeChars[escapeChars[key]] = key;
+    for (var key in escapeMap) {
+        reversedescapeMap[escapeMap[key]] = key;
     }
-    reversedEscapeChars["'"] = '#39';
-
-    // Exporting
+    reversedescapeMap["'"] = '#39';
 
     return {
 
@@ -2208,17 +2161,13 @@ hAzzle.define('Strings', function() {
         uppcase: uppercase,
         manualLowercase: manualLowercase,
         manualUppercase: manualUppercase,
-        parse: parse,
-        count: count,
-        contains: contains,
-        isBlank: isBlank,
-        stripTags: stripTags,
         escapeHTML: escapeHTML,
         unescapeHTML: unescapeHTML,
         escapeRegExp: escapeRegExp,
         truncate: truncate
     };
 });
+
 // storage.js
 hAzzle.define('Storage', function() {
 

@@ -78,27 +78,27 @@ hAzzle.define('Collection', function() {
     // will be kept, but it will be possible to run jQuery / Zepto functions
 
     this.toJqueryZepto = function() {
-            var i = this.length,
-                els = this.elements;
-            while (i--) {
-                this[i] = els[i];
-            }
-            return this;
-        };
+        var i = this.length,
+            els = this.elements;
+        while (i--) {
+            this[i] = els[i];
+        }
+        return this;
+    };
 
-        // Return an array or a specific DOM element matched by the hAzzle object
+    // Return an array or a specific DOM element matched by the hAzzle object
 
-        this.get = function(index) {
-            var result;
-            if (index === undefined) {
-                result = slice(this.elements, 0);
-            } else if (index < 0) {
-                result = this.elements[this.length + index];
-            } else {
-                result = this.elements[index];
-            }
-            return result;
-        };
+    this.get = function(index) {
+        var result;
+        if (index === undefined) {
+            result = slice(this.elements, 0);
+        } else if (index < 0) {
+            result = this.elements[this.length + index];
+        } else {
+            result = this.elements[index];
+        }
+        return result;
+    };
 
     // Get the element at position specified by index from the current collection.
     this.eq = function(index) {
@@ -177,8 +177,17 @@ hAzzle.define('Collection', function() {
         return index ? this.slice(this.length - index) : this.eq(-1);
     };
 
-    this.size = function() {
-        return this.length;
+    // Return 'even' elements from the '.elements array'
+    this.even = function() {
+        return this.filter(function(index) {
+            return index % 2 !== 0;
+        });
+    };
+    // Return 'odd' elements from the '.elements array'
+    this.odd = function() {
+        return this.filter(function(index) {
+            return index % 2 === 0;
+        });
     };
 
     // First() and prev()
