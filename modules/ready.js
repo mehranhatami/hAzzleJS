@@ -92,7 +92,7 @@ hAzzle.define('Ready', function() {
             poller();
         }
     }
-
+ 
     return {
         ready: domReady
     };

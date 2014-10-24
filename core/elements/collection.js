@@ -73,19 +73,32 @@ hAzzle.define('Collection', function() {
 
     /* ------------- INTERNAL ARRAY METHODS ------------------------------- */
 
-    // Return an array or a specific DOM element matched by the hAzzle object
+    // Convert hAzzle '.elements Array' to a jQuery / Zepto array
+    // where 'this' contains the elements. The '.elements Array 
+    // will be kept, but it will be possible to run jQuery / Zepto functions
 
-    this.get = function(index) {
-        var result;
-        if (index === undefined) {
-            result = slice(this.elements, 0);
-        } else if (index < 0) {
-            result = this.elements[this.length + index];
-        } else {
-            result = this.elements[index];
-        }
-        return result;
-    };
+    this.toJqueryZepto = function() {
+            var i = this.length,
+                els = this.elements;
+            while (i--) {
+                this[i] = els[i];
+            }
+            return this;
+        };
+
+        // Return an array or a specific DOM element matched by the hAzzle object
+
+        this.get = function(index) {
+            var result;
+            if (index === undefined) {
+                result = slice(this.elements, 0);
+            } else if (index < 0) {
+                result = this.elements[this.length + index];
+            } else {
+                result = this.elements[index];
+            }
+            return result;
+        };
 
     // Get the element at position specified by index from the current collection.
     this.eq = function(index) {

@@ -1521,6 +1521,19 @@ hAzzle.define('Collection', function() {
 
     /* ------------- INTERNAL ARRAY METHODS ------------------------------- */
 
+    // Convert hAzzle '.elements Array' to a jQuery / Zepto array
+    // where 'this' contains the elements. The '.elements Array 
+    // will be kept, but it will be possible to run jQuery / Zepto functions
+
+    this.toJquery = function() {
+        var i = this.length,
+            els = this.elements;
+        while (i--) {
+            this[i] = els[i];
+        }
+        return this;
+    };
+
     // Return an array or a specific DOM element matched by the hAzzle object
 
     this.get = function(index) {
@@ -1653,7 +1666,7 @@ hAzzle.define('Collection', function() {
     };
 });
 
- // jiesa.js
+// jiesa.js
 hAzzle.define('Jiesa', function() {
 
     var _util = hAzzle.require('Util'),

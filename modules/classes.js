@@ -11,12 +11,14 @@ hAzzle.define('Classes', function() {
         a1 = [''],
 
         str2array = function(classes) {
-            if (typeof classes == 'string') {
+            if (typeof classes === 'string') {
                 if (classes && !_whitespace.test(classes)) {
                     a1[0] = classes;
                     return a1;
                 }
+
                 var arr = classes.split(_whitespace);
+
                 if (arr.length && !arr[0]) {
                     arr.shift();
                 }
@@ -30,7 +32,6 @@ hAzzle.define('Classes', function() {
                 return [];
             }
             return classes;
-
         },
 
         addRemove = function(elem, classes, nativeMethodName, fn, done) {
@@ -41,8 +42,7 @@ hAzzle.define('Classes', function() {
 
                 classes = str2array(classes);
 
-                var length, i,
-                    based = false;
+                var length, i, based = false;
 
                 if (nativeMethodName === 'remove' && !classes) {
 
@@ -85,6 +85,7 @@ hAzzle.define('Classes', function() {
         // Check if the first element in the collection has classes
 
         hasClass = function(elem, classes) {
+
             if (elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
@@ -116,6 +117,7 @@ hAzzle.define('Classes', function() {
         // Add classes to element collection
 
         addClass = function(elem, classes, /*optional*/ fn) {
+
             if (elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
@@ -144,6 +146,7 @@ hAzzle.define('Classes', function() {
         // Remove classes from element collection
 
         removeClass = function(elem, classes, /*optional*/ fn) {
+
             if (elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
@@ -187,6 +190,7 @@ hAzzle.define('Classes', function() {
 
             var els = elem.length ? elem : [elem],
                 type = typeof value;
+
             if (typeof condition === 'boolean' && type === 'string') {
                 return condition ? addClass(els, value) : removeClass(els, value);
             }
