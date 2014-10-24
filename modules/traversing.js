@@ -9,30 +9,32 @@ hAzzle.define('Traversing', function() {
         _core = hAzzle.require('Core'),
         _util = hAzzle.require('Util'),
 
-        getIndex = function(selector, index) {
-            return _types.isUndefined(selector) && !_types.isNumber(index) ? 0 :
-                _types.isNumber(selector) ? selector : _types.isNumber(index) ? index : null;
+        // Return correct index value
+
+        inVal = function(sel, index) {
+            return typeof sel === 'undefined' && !_types.isNumber(index) ? 0 :
+                _types.isNumber(sel) ? sel : _types.isNumber(index) ? index : null;
         },
-        gather = function(els, callback) {
+        gather = function(els, fn) {
             var ret = [],
                 res, i = 0,
                 j, len = els.length,
                 f;
             for (; i < len;) {
-                for (j = 0, f = (res = callback(els[i], i++)).length; j < f;) {
+                for (j = 0, f = (res = fn(els[i], i++)).length; j < f;) {
                     ret.push(res[j++]);
                 }
             }
             return ret;
         },
-        traverse = function(els, method, selector, index) {
-            index = getIndex(selector, index);
+        traverse = function(els, method, sel, index) {
+            index = inVal(sel, index);
             return gather(els, function(el, elind) {
                 var matches, i = index || 0,
                     ret = [],
                     elem = el[method];
                 while (elem && (index === null || i >= 0)) {
-                    matches = _jiesa.matches(elem, typeof selector === 'string' ? selector : '*')
+                    matches = _jiesa.matches(elem, typeof sel === 'string' ? sel : '*')
                     if (_types.isElement(elem) && matches && (index === null || i-- === 0)) {
                         if (index === null && method !== 'nextElementSibling' && method !== 'parentElement') {
                             ret.unshift(elem);
@@ -174,22 +176,26 @@ hAzzle.define('Traversing', function() {
     };
 
     // Traverse up the DOM tree
+    // E.g hAzzle('test').up(2) or hAzzle('test').up('li', 2) 
 
     this.up = function(sel, index) {
         return hAzzle(traverse(this.elements, 'parentElement', sel, index));
     };
+
     // Traverse down the DOM tree 
+    // E.g hAzzle('test').down(2) or hAzzle('test').down('nav') 
+
     this.down = function(sel, index) {
-        index = getIndex(sel, index);
+        index = inVal(sel, index);
         return hAzzle(gather(this.elements, function(elem) {
             var jf = _jiesa.find(typeof sel === 'string' ? sel : '*', elem);
             return index === null ? jf : ([jf[index]] || []);
         }));
     };
 
-    // First() and prev()
-    // Note! This methods will overwrite the exist Core functions with the
-    // same name, and add some extra features
+    // This methods will overwrite the existing first() and prev() methods already
+    // included in the Core, and add extra features.
+    // E.g hAzzle('test').next('nav', 4) or hAzzle('test').prev('nav') 
 
     _util.each({
         next: 'nextElementSibling',
@@ -205,30 +211,6 @@ hAzzle.define('Traversing', function() {
             }
         };
     }.bind(this));
-
-    this.parentElement = function() {
-        return this.parent().children();
-    };
-
-    this.firstElementChild = function() {
-        return this.children().first();
-    };
-
-    this.lastElementChild = function() {
-        return this.children().last();
-    };
-
-    this.previousElementSibling = function() {
-        return this.prev().last();
-    };
-
-    this.nextElementSibling = function() {
-        return this.next().first();
-    };
-
-    this.childElementCount = function() {
-        return this.children().length;
-    };
 
     return {};
 });
