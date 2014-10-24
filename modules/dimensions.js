@@ -68,15 +68,15 @@ hAzzle.define('Dimensions', function() {
             }
 
             // inner = outer - border
-            val -= parseFloat(_curcss.curCSS(elem, 'border' + type[0] + 'Width')) +
-                parseFloat(_curcss.curCSS(elem, 'border' + type[1] + 'Width'));
+            val -= parseFloat(_curcss.css(elem, 'border' + type[0] + 'Width')) +
+                parseFloat(_curcss.css(elem, 'border' + type[1] + 'Width'));
 
             if (extra === 'inner') {
                 return val;
             }
             // normal = inner - padding
-            val -= parseFloat(_curcss.curCSS(elem, 'padding' + type[0])) +
-                parseFloat(_curcss.curCSS(elem, 'padding' + type[1]));
+            val -= parseFloat(_curcss.css(elem, 'padding' + type[0])) +
+                parseFloat(_curcss.css(elem, 'padding' + type[1]));
 
             return val + 'px';
         },
@@ -224,13 +224,13 @@ hAzzle.define('Dimensions', function() {
         if (val) {
             _style.setCSS(this.elements[0], 'height', val);
         }
-        return _curcss.curCSS(this.elements[0], 'width', /*force*/ true);
+        return _curcss.css(this.elements[0], 'width', /*force*/ true);
     };
     this.width = function(val) {
         if (val) {
             _style.setCSS(this.elements[0], 'width', val);
         }
-        return _curcss.curCSS(this.elements[0], 'width', /*force*/ true);
+        return _curcss.css(this.elements[0], 'width', /*force*/ true);
     };
 
     this.innerHeight = function() {

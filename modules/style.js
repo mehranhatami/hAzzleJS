@@ -90,7 +90,7 @@ hAzzle.define('Style', function() {
             val = hooks ? hooks(elem, true) : val;
 
             if (!computed && val === undefined) {
-                style = _curcss.getStyles(elem);
+                style = _curcss.styles(elem);
                 val = hooks ? hooks(elem, true) : style[name];
                 computed = true;
             }
@@ -122,7 +122,7 @@ hAzzle.define('Style', function() {
                     // and convert all unit types to PX (e.g. 10em will become 160px)
                      
                     if (type === 'string' && (ret = sNumbs.exec(value))) {
-                        value = _units.units(_curcss.curCSS(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                        value = _units.units(_curcss.css(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                         type = 'number';
                     }
 

@@ -16,7 +16,7 @@ hAzzle.define('has', function() {
         hasCache = {}
         
         // IE feature detection
-
+        // Props: Velocity.js 
         ie = (function() {
 
             if (doc.documentMode) {

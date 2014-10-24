@@ -5,7 +5,7 @@ hAzzle.define('cssHooks', function() {
         _has = hAzzle.require('has'),
         _style = hAzzle.require('Style'),
         _types = hAzzle.require('Types'),
-        _ccs = hAzzle.require('curCSS');
+        _curCSS = hAzzle.require('curCSS');
 
     // Fixes Chrome bug / issue
 
@@ -17,7 +17,7 @@ hAzzle.define('cssHooks', function() {
                     //Chrome 31-36 return text-decoration-line and text-decoration-color
                     //which are not expected yet.
                     //see https://code.google.com/p/chromium/issues/detail?id=342126
-                    var ret = _ccs.curCSS(elem, 'text-decoration');
+                    var ret = _curCSS.css(elem, 'text-decoration');
                     //We cannot assume the first word as 'text-decoration-style'
                     if (/\b(inherit|(?:und|ov)erline|blink|line\-through|none)\b/.test(ret)) {
                         return RegExp.$1;
@@ -29,7 +29,7 @@ hAzzle.define('cssHooks', function() {
 
     if (_has.has('opera')) {
         _style.cssHooks.get.textShadow = function(elem) {
-            var val = _ccs.curCSS(elem, 'textShadow');
+            var val = _curCSS.css(elem, 'textShadow');
             if (val && val !== 'none') {
                 return val.replace(/(.+)(rgb.+)/, '$2' + ' $1');
             }
@@ -47,10 +47,10 @@ hAzzle.define('cssHooks', function() {
     }, function(vals, name) {
         vals = vals.split(' ');
         _style.cssHooks.get[name] = function(elem) {
-            return _ccs.curCSS(elem, vals[0]) + ' ' +
-                _ccs.curCSS(elem, vals[1]) + ' ' +
-                _ccs.curCSS(elem, vals[2]) + ' ' +
-                _ccs.curCSS(elem, vals[3]);
+            return _curCSS.css(elem, vals[0]) + ' ' +
+                _curCSS.css(elem, vals[1]) + ' ' +
+                _curCSS.css(elem, vals[2]) + ' ' +
+                _curCSS.css(elem, vals[3]);
         };
     });
     
@@ -59,12 +59,12 @@ hAzzle.define('cssHooks', function() {
         'opacity': function(elem, computed) {
             if (computed) {
                 // We should always get a number back from opacity
-                var ret = _ccs.curCSS(elem, 'opacity');
+                var ret = _curCSS.css(elem, 'opacity');
                 return ret === '' ? '1' : ret;
             }
         },
         'zIndex': function( elem ){
-        var val = _ccs.curCSS( elem, 'zIndex' );
+        var val = _curCSS.css( elem, 'zIndex' );
         return val === 'auto' ? 0 : val;
     },
     'height': function(elem) {
@@ -85,7 +85,7 @@ hAzzle.define('cssHooks', function() {
             }
             
             return _style.swap( elem, function(){
-                return _ccs.curCSS( elem, 'height' );
+                return _curCSS.css( elem, 'height' );
             });
      },
     'width': function(elem) {
@@ -106,7 +106,7 @@ hAzzle.define('cssHooks', function() {
             }
             
             return _style.swap( elem, function(){
-                return _ccs.curCSS( elem, 'Width' );
+                return _curCSS.css( elem, 'Width' );
             });
      },
     });

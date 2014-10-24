@@ -28,12 +28,12 @@ hAzzle.define('Units', function() {
                     prop = 'height';
                 }
 
-                elem = relAbsFixed.test(_curcss.curCSS(elem, 'position')) ?
+                elem = relAbsFixed.test(_curcss.css(elem, 'position')) ?
                     elem.offsetParent : elem.parentNode;
 
                 if (elem) {
 
-                    prop = parseFloat(_curcss.curCSS(elem, prop));
+                    prop = parseFloat(_curcss.css(elem, prop));
 
                     if (prop !== 0) {
 
@@ -45,7 +45,7 @@ hAzzle.define('Units', function() {
 
             if (unit === 'em') {
 
-                return px / parseFloat(_curcss.curCSS(elem, 'fontSize'));
+                return px / parseFloat(_curcss.css(elem, 'fontSize'));
             }
 
             // The first time we calculate how many pixels there is in 1 meter

@@ -8,10 +8,6 @@ hAzzle.define('curCSS', function() {
         _support = hAzzle.require('Support'),
         _storage = hAzzle.require('Storage'),
 
-        inlineRegEx = /^(b|big|i|small|tt|abbr|acronym|cite|code|dfn|em|kbd|strong|samp|var|a|bdo|br|img|map|object|q|script|span|sub|sup|button|input|label|select|textarea)$/i,
-        listItemRegEx = /^(li)$/i,
-        tablerowRegEx = /^(tr)$/i,
-
         docElem = window.document.documentElement,
 
         computedStyle = !!document.defaultView.getComputedStyle,
@@ -67,50 +63,6 @@ hAzzle.define('curCSS', function() {
 
             return computed;
         },
-
-        curHeight = function(elem, toggleDisplay) {
-            var contentBoxHeight = elem.offsetHeight -
-                (parseFloat(curCSS(elem, 'borderTopWidth')) || 0) -
-                (parseFloat(curCSS(elem, 'borderBottomWidth')) || 0) -
-                (parseFloat(curCSS(elem, 'paddingTop')) || 0) -
-                (parseFloat(curCSS(elem, 'paddingBottom')) || 0);
-
-            revertDisplay(elem, toggleDisplay);
-
-            return contentBoxHeight;
-        },
-        curWidth = function(elem, toggleDisplay) {
-            var contentBoxWidth = elem.offsetWidth -
-                (parseFloat(curCSS(elem, 'borderLeftWidth')) || 0) -
-                (parseFloat(curCSS(elem, 'borderRightWidth')) || 0) -
-                (parseFloat(curCSS(elem, 'paddingLeft')) || 0) -
-                (parseFloat(curCSS(elem, 'paddingRight')) || 0);
-
-            revertDisplay(elem, toggleDisplay);
-
-            return contentBoxWidth;
-        },
-
-        revertDisplay = function(elem, toggleDisplay) {
-            if (toggleDisplay) {
-                elem.style.display = 'none';
-            }
-        },
-
-        getDisplayType = function(elem) {
-            var tagName = elem.tagName.toLowerCase();
-            if (inlineRegEx.test(tagName)) {
-                return 'inline';
-            }
-            if (listItemRegEx.test(tagName)) {
-                return 'list-item';
-            }
-            if (tablerowRegEx.test(tagName)) {
-                return 'table-row';
-            }
-            return 'block';
-        },
-
         // Prop to jQuery for the name!
 
         curCSS = function(elem, prop, force) {
@@ -118,23 +70,13 @@ hAzzle.define('curCSS', function() {
             if (typeof elem === 'object' && elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
-            var computedValue = 0,
-                toggleDisplay = false;
-
-            if ((prop === 'height' || prop === 'width') && curCSS(elem, 'display') === 0) {
-                toggleDisplay = true;
-                elem.style.display = hAzzle.getDisplayType(elem);
-            }
+            var computedValue = 0;
 
             if (!force) {
 
                 if (prop === 'height' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                    return curHeight(elem, toggleDisplay);
-                } else if (prop === 'width' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                    return curWidth(elem, toggleDisplay);
-                }
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {} else if (prop === 'width' &&
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {}
             }
 
             var computedStyle = getStyles(elem);
@@ -148,9 +90,9 @@ hAzzle.define('curCSS', function() {
                     prop = 'borderTopColor';
                 }
 
-                // IE9 has a bug in which the 'filter' property must be accessed from 
-                // computedStyle using the getPropertyValue method instead of a direct property lookup. 
-
+              // Support: IE9
+	          // getPropertyValue is only needed for .css('filter')
+    
                 if (_has.ie === 9 && prop === 'filter') {
                     computedValue = computedStyle.getPropertyValue(prop);
                 } else {
@@ -178,20 +120,20 @@ hAzzle.define('curCSS', function() {
 
         setOffset = function(elem, options, i) {
             var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-                position = curCSS(elem, "position"),
+                position = curCSS(elem, 'position'),
                 curElem = hAzzle(elem),
                 props = {};
 
             // Set position first, in-case top/left are set even on static elem
-            if (position === "static") {
-                elem.style.position = "relative";
+            if (position === 'static') {
+                elem.style.position = 'relative';
             }
 
             curOffset = curElem.offset();
-            curCSSTop = curCSS(elem, "top");
-            curCSSLeft = curCSS(elem, "left");
-            calculatePosition = (position === "absolute" || position === "fixed") &&
-                (curCSSTop + curCSSLeft).indexOf("auto") > -1;
+            curCSSTop = curCSS(elem, 'top');
+            curCSSLeft = curCSS(elem, 'left');
+            calculatePosition = (position === 'absolute' || position === 'fixed') &&
+                (curCSSTop + curCSSLeft).indexOf('auto') > -1;
 
             // Need to be able to calculate position if either
             // top or left is auto and position is either absolute or fixed
@@ -216,7 +158,7 @@ hAzzle.define('curCSS', function() {
                 props.left = (options.left - curOffset.left) + curLeft;
             }
 
-            if ("using" in options) {
+            if ('using' in options) {
                 options.using.call(elem, props);
 
             } else {
@@ -251,8 +193,6 @@ hAzzle.define('curCSS', function() {
         if (!_core.contains(docElem, elem)) {
             return box;
         }
-
-        // Support: BlackBerry 5, iOS 3 (original iPhone)
         // If we don't have gBCR, just use 0,0 rather than error
         if (elem.getBoundingClientRect) {
             box = elem.getBoundingClientRect();
@@ -325,9 +265,8 @@ hAzzle.define('curCSS', function() {
     };
 
     return {
-        computedCSS: computedCSS,
+        computed: computedCSS,
         getStyles: getStyles,
-        curCSS: curCSS,
-        getDisplayType: getDisplayType
+        css: curCSS,
     };
 });
