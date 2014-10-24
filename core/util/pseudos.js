@@ -50,6 +50,5 @@ hAzzle.define('pseudos', function() {
             },
         });
 
-    console.log(_jiesa.pseudos)
     return {};
 });
