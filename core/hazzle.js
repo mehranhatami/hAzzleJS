@@ -33,10 +33,11 @@
 
         err = function(condition, code, message) {
             if (condition) {
-                throw new Error( '[hAzzle-' + code + '] ' + message );
+                var e = new Error('[hAzzle-' + code + '] ' + message);
+                e.code = code;
+                throw e;
             }
         },
-
         // Returns an instance for `name`
 
         require = function(name) {
