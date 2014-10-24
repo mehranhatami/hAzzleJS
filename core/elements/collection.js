@@ -127,6 +127,7 @@ hAzzle.define('Collection', function() {
     };
 
     // Concatenate two elements lists
+
     this.concat = function() {
         var args = _util.map(slice(arguments), function(arr) {
             return arr instanceof hAzzle ? arr.elements : arr;
@@ -134,11 +135,14 @@ hAzzle.define('Collection', function() {
         return hAzzle(_concat.apply(this.elements, args));
     };
 
+    // Check the current matched set of elements against a selector, element, or 
+    // hAzzle object and return true if at least one of these elements matches the given arguments.
+
     this.is = function(sel) {
         return this.length > 0 && this.filter(sel).length > 0;
     };
 
-    // Get elements in list but not with this selector
+    // Remove elements from the set of matched elements
 
     this.not = function(sel) {
         return this.filter(sel, true);
@@ -160,6 +164,8 @@ hAzzle.define('Collection', function() {
         // Locate the position of the desired element
         return _util.indexOf(els, node instanceof hAzzle ? node.elements[0] : node);
     };
+    // Concatenate new elements to the '.elements array
+    // Similar to jQuery / Zepto .add() method
 
     this.add = function(sel, ctx) {
         var elements = sel;
@@ -169,12 +175,17 @@ hAzzle.define('Collection', function() {
         return this.concat(elements);
     };
 
-    this.first = function(index) {
-        return index ? this.slice(0, index) : this.eq(0);
+    // Reduce the set of matched elements to the first in the set, or 
+    // to the 'num' first element in the set
+
+    this.first = function(num) {
+        return num ? this.slice(0, num) : this.eq(0);
     };
 
-    this.last = function(index) {
-        return index ? this.slice(this.length - index) : this.eq(-1);
+    // Reduce the set of matched elements to the final one in the set, or 
+    // to the 'num' last element in the set
+    this.last = function(num) {
+        return num ? this.slice(this.length - num) : this.eq(-1);
     };
 
     // Return 'even' elements from the '.elements array'
