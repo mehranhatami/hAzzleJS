@@ -91,7 +91,7 @@
             // If a function is given, call it when the DOM is ready
 
             if (typeof sel === 'function') {
-             if (installed.Ready) {
+                if (installed.Ready) {
                     _ready.ready(sel);
                 } else {
                     err(true, 6, 'ready.js module not installed');
@@ -282,10 +282,10 @@ hAzzle.define('has', function() {
         doc = isBrowser && document,
         element = doc && doc.createElement('div'),
         hasCache = {}
-        
-        // IE feature detection
-        // Props: Velocity.js 
-        ie = (function() {
+
+    // IE feature detection
+    // Props: Velocity.js 
+    ie = (function() {
 
             if (doc.documentMode) {
                 return doc.documentMode;
@@ -395,9 +395,9 @@ hAzzle.define('has', function() {
     // Touch support
 
     add('touch', function() {
-        return 'ontouchstart' in document || 
-        ('onpointerdown' in document && navigator.maxTouchPoints > 0) ||
-         window.navigator.msMaxTouchPoints;
+        return 'ontouchstart' in document ||
+            ('onpointerdown' in document && navigator.maxTouchPoints > 0) ||
+            window.navigator.msMaxTouchPoints;
     });
 
     // Touch events 
@@ -814,6 +814,7 @@ hAzzle.define('Util', function() {
             }
             return property(value);
         },
+
 
         // Keep the identity function around for default iteratees.
         identity = function(value) {
@@ -2586,7 +2587,7 @@ hAzzle.define('curCSS', function() {
 
             return computed;
         },
-         curHeight = function(elem) {
+        curHeight = function(elem) {
             return elem.offsetHeight -
                 (parseFloat(curCSS(elem, 'borderTopWidth')) || 0) -
                 (parseFloat(curCSS(elem, 'borderBottomWidth')) || 0) -
@@ -2613,11 +2614,11 @@ hAzzle.define('curCSS', function() {
 
                 if (prop === 'height' &&
                     curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                         return curHeight(elem);
-                   } else if (prop === 'width' &&               
-                  curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-                       return curWidth(elem);
-               }
+                    return curHeight(elem);
+                } else if (prop === 'width' &&
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                    return curWidth(elem);
+                }
             }
 
             var computedStyle = getStyles(elem);
@@ -2631,9 +2632,9 @@ hAzzle.define('curCSS', function() {
                     prop = 'borderTopColor';
                 }
 
-              // Support: IE9
-	          // getPropertyValue is only needed for .css('filter')
-    
+                // Support: IE9
+                // getPropertyValue is only needed for .css('filter')
+
                 if (_has.ie === 9 && prop === 'filter') {
                     computedValue = computedStyle.getPropertyValue(prop);
                 } else {
@@ -2808,7 +2809,7 @@ hAzzle.define('curCSS', function() {
     return {
         computed: computedCSS,
         getStyles: getStyles,
-        css: curCSS,
+        css: curCSS
     };
 });
 // units.js
@@ -3360,7 +3361,7 @@ hAzzle.define('propHooks', function() {
     _util.mixin(_setters.propHooks.get, {
         'tabIndex': function(elem) {
             return elem.hasAttribute('tabindex') ||
-                focusable.test(elem.nodeName) || elem.href ?
+                _focusable.test(elem.nodeName) || elem.href ?
                 elem.tabIndex :
                 -1;
         }
@@ -3388,7 +3389,7 @@ hAzzle.define('boolHooks', function() {
     _setters.boolHooks.set = function(elem, value, name) {
         if (value === false) {
             // Remove boolean attributes when set to false
-            removeAttr(elem, name);
+            _setters.removeAttr(elem, name);
         } else {
             elem.setAttribute(name, name);
         }

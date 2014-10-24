@@ -285,6 +285,6 @@ hAzzle.define('curCSS', function() {
     return {
         computed: computedCSS,
         getStyles: getStyles,
-        css: curCSS,
+        css: curCSS
     };
 });
