@@ -13,8 +13,8 @@ hAzzle.define('has', function() {
         window.document === document,
         doc = isBrowser && document,
         element = doc && doc.createElement('div'),
-        hasCache = {}
-        
+        hasCache = {},
+
         // IE feature detection
         // Props: Velocity.js 
         ie = (function() {
@@ -127,9 +127,9 @@ hAzzle.define('has', function() {
     // Touch support
 
     add('touch', function() {
-        return 'ontouchstart' in document || 
-        ('onpointerdown' in document && navigator.maxTouchPoints > 0) ||
-         window.navigator.msMaxTouchPoints;
+        return 'ontouchstart' in document ||
+            ('onpointerdown' in document && navigator.maxTouchPoints > 0) ||
+            window.navigator.msMaxTouchPoints;
     });
 
     // Touch events 

@@ -91,7 +91,7 @@
             // If a function is given, call it when the DOM is ready
 
             if (typeof sel === 'function') {
-                if (installed.Ready) {
+             if (installed.Ready) {
                     _ready.ready(sel);
                 } else {
                     err(true, 6, 'ready.js module not installed');
@@ -2586,6 +2586,20 @@ hAzzle.define('curCSS', function() {
 
             return computed;
         },
+         curHeight = function(elem) {
+            return elem.offsetHeight -
+                (parseFloat(curCSS(elem, 'borderTopWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'borderBottomWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingTop')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingBottom')) || 0);
+        },
+        curWidth = function(elem) {
+            return elem.offsetWidth -
+                (parseFloat(curCSS(elem, 'borderLeftWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'borderRightWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingLeft')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingRight')) || 0);
+        },
         // Prop to jQuery for the name!
 
         curCSS = function(elem, prop, force) {
@@ -2598,8 +2612,12 @@ hAzzle.define('curCSS', function() {
             if (!force) {
 
                 if (prop === 'height' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {} else if (prop === 'width' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {}
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                         return curHeight(elem);
+                   } else if (prop === 'width' &&               
+                  curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                       return curWidth(elem);
+               }
             }
 
             var computedStyle = getStyles(elem);
@@ -2750,7 +2768,6 @@ hAzzle.define('curCSS', function() {
             // Get *real* offsetParent
             offsetParent = this.offsetParent();
 
-
             // Get correct offsets
             offset = this.offset();
 
@@ -2789,9 +2806,9 @@ hAzzle.define('curCSS', function() {
     };
 
     return {
-        computedCSS: computedCSS,
-        styles: getStyles,
-        curCSS: curCSS,
+        computed: computedCSS,
+        getStyles: getStyles,
+        css: curCSS,
     };
 });
 // units.js

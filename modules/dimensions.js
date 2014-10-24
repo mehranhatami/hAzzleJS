@@ -4,6 +4,7 @@ hAzzle.define('Dimensions', function() {
     var win = window,
         doc = window.document,
         docElem = doc.documentElement,
+        _types = hAzzle.require('Types'),
         _matchMedia = win.matchMedia || win.msMatchMedia,
         mq = _matchMedia ? function(q) {
             return !!_matchMedia.call(win, q).matches;
@@ -182,11 +183,11 @@ hAzzle.define('Dimensions', function() {
         // Get the aspect ratio of the viewport or of an object with width/height properties
 
         aspect = function(opt) {
-            opt = null == opt ? viewport() : opt.nodeType === 1 ? rectangle(opt) : opt;
+            opt = !null ? viewport() : opt.nodeType === 1 ? rectangle(opt) : opt;
             var h = opt.height,
                 w = opt.width;
-            h = typeof h == 'function' ? h.call(opt) : h;
-            w = typeof w == 'function' ? w.call(opt) : w;
+            h = _types.isFunction(h) ? h.call(opt) : h;
+            w = _types.isFunction(w) ? w.call(opt) : w;
             return w / h;
         },
         // Test if an element is in the same x-axis section as the viewport.

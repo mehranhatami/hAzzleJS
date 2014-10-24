@@ -63,6 +63,20 @@ hAzzle.define('curCSS', function() {
 
             return computed;
         },
+        curHeight = function(elem) {
+            return elem.offsetHeight -
+                (parseFloat(curCSS(elem, 'borderTopWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'borderBottomWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingTop')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingBottom')) || 0);
+        },
+        curWidth = function(elem) {
+            return elem.offsetWidth -
+                (parseFloat(curCSS(elem, 'borderLeftWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'borderRightWidth')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingLeft')) || 0) -
+                (parseFloat(curCSS(elem, 'paddingRight')) || 0);
+        },
         // Prop to jQuery for the name!
 
         curCSS = function(elem, prop, force) {
@@ -75,8 +89,12 @@ hAzzle.define('curCSS', function() {
             if (!force) {
 
                 if (prop === 'height' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {} else if (prop === 'width' &&
-                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {}
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                    return curHeight(elem);
+                } else if (prop === 'width' &&
+                    curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
+                    return curWidth(elem);
+                }
             }
 
             var computedStyle = getStyles(elem);
@@ -90,9 +108,9 @@ hAzzle.define('curCSS', function() {
                     prop = 'borderTopColor';
                 }
 
-              // Support: IE9
-	          // getPropertyValue is only needed for .css('filter')
-    
+                // Support: IE9
+                // getPropertyValue is only needed for .css('filter')
+
                 if (_has.ie === 9 && prop === 'filter') {
                     computedValue = computedStyle.getPropertyValue(prop);
                 } else {

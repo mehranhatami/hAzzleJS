@@ -11,7 +11,7 @@ hAzzle.define('propHooks', function () {
     _util.mixin(_setters.propHooks.get, {
         'tabIndex': function (elem) {
             return elem.hasAttribute('tabindex') ||
-                focusable.test(elem.nodeName) || elem.href ?
+                _focusable.test(elem.nodeName) || elem.href ?
                 elem.tabIndex :
                 -1;
         }

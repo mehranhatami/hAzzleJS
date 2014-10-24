@@ -8,7 +8,7 @@ hAzzle.define('boolHooks', function () {
     _setters.boolHooks.set = function (elem, value, name) {
         if (value === false) {
             // Remove boolean attributes when set to false
-            removeAttr(elem, name);
+            _setters.removeAttr(elem, name);
         } else {
             elem.setAttribute(name, name);
         }
