@@ -1,4 +1,5 @@
-// support.js
+// support.js'
+// NOTE! support.js module are not the same as has.js, and should not be merged into one 
 hAzzle.define('Support', function() {
 
     // Feature detection of elements
