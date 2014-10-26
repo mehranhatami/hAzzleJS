@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0b Release Candidate
+ * Version: 1.0.0c Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-24
+ * Date: 2014-10-26
  */
 (function() {
 
@@ -537,6 +537,7 @@ hAzzle.define('Types', function() {
             }
             // Detect length and item 
             if (!('length' in nodes) || !('item' in nodes)) {
+
                 return false;
             }
             try {
@@ -2003,69 +2004,69 @@ hAzzle.define('pseudos', function() {
         _jiesa = hAzzle.require('Jiesa');
 
     _util.mixin(_jiesa.pseudos, {
-        
-            ':hidden': function(elem) {
 
-                var style = elem.style;
-                if (style) {
-                    if (style.display === 'none' ||
-                        style.visibility === 'hidden') {
-                        return true;
-                    }
+        ':hidden': function(elem) {
+
+            var style = elem.style;
+            if (style) {
+                if (style.display === 'none' ||
+                    style.visibility === 'hidden') {
+                    return true;
                 }
-                return elem.type === 'hidden';
-            },
-
-            ':visible': function(elem) {
-                return !_jiesa.pseudos[':hidden'](elem);
-
-            },
-            ':active': function(elem) {
-                return elem === document.activeElement;
-            },
-
-            ':empty': function(elem) {
-                // DomQuery and jQuery get this wrong, oddly enough.
-                // The CSS 3 selectors spec is pretty explicit about it, too.
-                var cn = elem.childNodes,
-                    cnl = elem.childNodes.length,
-                    nt,
-                    x = cnl - 1;
-
-                for (; x >= 0; x--) {
-
-                    nt = cn[x].nodeType;
-
-                    if ((nt === 1) || (nt === 3)) {
-                        return false;
-                    }
-                }
-                return true;
-            },
-            ':text': function(elem) {
-                var attr;
-                return elem.nodeName.toLowerCase() === 'input' &&
-                    elem.type === 'text' &&
-                    ((attr = elem.getAttribute('type')) === null ||
-                        attr.toLowerCase() === 'text');
-            },
-            ':button': function(elem) {
-                var name = elem.nodeName.toLowerCase();
-                return name === 'input' && elem.type === 'button' ||
-                    name === 'button';
-            },
-            ':input': function(elem) {
-                return /^(?:input|select|textarea|button)$/i.test(elem.nodeName);
-            },
-            ':selected': function(elem) {
-                // Accessing this property makes selected-by-default
-                // options in Safari work properly
-                if (elem.parentNode) {
-                    elem.parentNode.selectedIndex;
-                }
-                return elem.selected === true;
             }
-        });
+            return elem.type === 'hidden';
+        },
+
+        ':visible': function(elem) {
+            return !_jiesa.pseudos[':hidden'](elem);
+
+        },
+        ':active': function(elem) {
+            return elem === document.activeElement;
+        },
+
+        ':empty': function(elem) {
+            // DomQuery and jQuery get this wrong, oddly enough.
+            // The CSS 3 selectors spec is pretty explicit about it, too.
+            var cn = elem.childNodes,
+                cnl = elem.childNodes.length,
+                nt,
+                x = cnl - 1;
+
+            for (; x >= 0; x--) {
+
+                nt = cn[x].nodeType;
+
+                if ((nt === 1) || (nt === 3)) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        ':text': function(elem) {
+            var attr;
+            return elem.nodeName.toLowerCase() === 'input' &&
+                elem.type === 'text' &&
+                ((attr = elem.getAttribute('type')) === null ||
+                    attr.toLowerCase() === 'text');
+        },
+        ':button': function(elem) {
+            var name = elem.nodeName.toLowerCase();
+            return name === 'input' && elem.type === 'button' ||
+                name === 'button';
+        },
+        ':input': function(elem) {
+            return /^(?:input|select|textarea|button)$/i.test(elem.nodeName);
+        },
+        ':selected': function(elem) {
+            // Accessing this property makes selected-by-default
+            // options in Safari work properly
+            if (elem.parentNode) {
+                elem.parentNode.selectedIndex;
+            }
+            return elem.selected === true;
+        }
+    });
 
     // Add button/input type pseudos
 
@@ -2146,10 +2147,6 @@ hAzzle.define('Strings', function() {
 
         escHTML = /[&<>"']/g,
 
-        // escapeRegExp regExp
-
-        eRegExp = /([.*+?^=!:${}()|[\]\/\\])/g,
-
         // Microsoft RegExp
 
         msPrefix = /^-ms-/,
@@ -2157,14 +2154,6 @@ hAzzle.define('Strings', function() {
         // camlize RegExp
 
         dashAlpha = /-([\da-z])/gi,
-
-        // manualLowercase regExp
-
-        capitalizedChars = /[A-Z]/g,
-
-        // manualUppercase regExp
-
-        nonCapitalizedChars = /[a-z]/g,
 
         // Cache array for hAzzle.camelize()
 
@@ -2195,28 +2184,6 @@ hAzzle.define('Strings', function() {
 
         fhyphenate = function(letter) {
             return ('-' + letter.charAt(0).toLowerCase());
-        },
-
-        // Converts the specified string to lowercase.
-
-        lowercase = function(str) {
-            return typeof str === 'string' ? str.toLowerCase() : str;
-        },
-        // Converts the specified string to uppercase
-        uppercase = function(str) {
-            return typeof str === 'string' ? str.toUpperCase() : str;
-        },
-        manualLowercase = function(str) {
-            /* jshint bitwise: false */
-            return typeof str === 'string' ? str.replace(capitalizedChars, function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) | 32);
-            }) : str;
-        },
-        manualUppercase = function(str) {
-            /* jshint bitwise: false */
-            return typeof str === 'string' ? str.replace(nonCapitalizedChars, function(ch) {
-                return String.fromCharCode(ch.charCodeAt(0) & ~32);
-            }) : str;
         },
 
         capitalize = function(str) {
@@ -2265,12 +2232,6 @@ hAzzle.define('Strings', function() {
             length = ~~length;
             return str.length > length ? str.slice(0, length) + truncateStr : str;
         },
-        escapeRegExp = function(str) {
-            if (!str == null) {
-                return '';
-            }
-            return String(str).replace(eRegExp, '\\$1');
-        },
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
                 return '&' + reversedescapeMap[m] + ';';
@@ -2291,16 +2252,6 @@ hAzzle.define('Strings', function() {
             });
         };
 
-    // Credit: AngularJS    
-    // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
-    // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
-    // with correct but slower alternatives.
-
-    if ('i' !== 'I'.toLowerCase()) {
-        lowercase = manualLowercase;
-        uppercase = manualUppercase;
-    }
-
     for (var key in escapeMap) {
         reversedescapeMap[escapeMap[key]] = key;
     }
@@ -2312,13 +2263,8 @@ hAzzle.define('Strings', function() {
         hyphenate: hyphenate,
         camelize: camelize,
         trim: trim,
-        lowercase: lowercase,
-        uppcase: uppercase,
-        manualLowercase: manualLowercase,
-        manualUppercase: manualUppercase,
         escapeHTML: escapeHTML,
         unescapeHTML: unescapeHTML,
-        escapeRegExp: escapeRegExp,
         truncate: truncate
     };
 });
@@ -3420,9 +3366,7 @@ hAzzle.define('attrHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters'),
-        _docElem = document.documentElement,
-        _winDoc = window.document;
+        _setters = hAzzle.require('Setters');
 
     // Setter
     _util.mixin(_setters.attrHooks.set, {
@@ -3437,16 +3381,6 @@ hAzzle.define('attrHooks', function() {
                 }
                 return value;
             }
-        },
-        // Title hook for DOM        
-        'title': function(elem, value) {
-            (elem = _docElem ? _winDoc : elem).title = value;
-        }
-    });
-    // Getter    
-    _util.mixin(_setters.attrHooks.get, {
-        'title': function(elem) {
-            return elem === _docElem ? _winDoc.title : elem.title;
         }
     });
     return {};
@@ -3457,15 +3391,12 @@ hAzzle.define('propHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters'),
+        _setters = hAzzle.require('Setters');
 
-        _focusable = /^(?:input|select|textarea|button)$/i;
-
-    // Getter    
     _util.mixin(_setters.propHooks.get, {
         'tabIndex': function(elem) {
             return elem.hasAttribute('tabindex') ||
-                _focusable.test(elem.nodeName) || elem.href ?
+                /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ?
                 elem.tabIndex :
                 -1;
         }
@@ -3482,18 +3413,16 @@ hAzzle.define('propHooks', function() {
     }
     return {};
 });
-
 // boolhooks.js
 hAzzle.define('boolHooks', function() {
 
     var _setters = hAzzle.require('Setters');
 
-    // Setter    
-
     _setters.boolHooks.set = function(elem, value, name) {
+        // If value is false, remove the attribute
         if (value === false) {
-            // Remove boolean attributes when set to false
             _setters.removeAttr(elem, name);
+            // If value is not false, set the same name value (checked = 'checked')
         } else {
             elem.setAttribute(name, name);
         }
@@ -3508,9 +3437,10 @@ hAzzle.define('valHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _strings = hAzzle.require('Strings'),
-        _getText = hAzzle.require('Text'),
+        _text = hAzzle.require('Text'),
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
+        _support = hAzzle.require('Support'),
         _setters = hAzzle.require('Setters');
 
     // Setter
@@ -3546,43 +3476,46 @@ hAzzle.define('valHooks', function() {
 
             return val !== null ?
                 val :
-                _strings.trim(_getText.getText(elem));
+                _strings.trim(_text.getText(elem));
         },
 
-        'select': function(elem, value) {
+        'select': function(elem) {
 
-            // Selectbox has special case
+            var index = elem.selectedIndex,
+                // Single box type attribute for select-one
+                // Checkbox type attribute for select-multiple
+                one = elem.type === 'select-one',
+                options = elem.options,
+                vals = [],
+                val, max, option, i;
 
-            var option, options = elem.options,
-                index = elem.selectedIndex,
-                one = elem.type === 'select-one' || index < 0,
-                values = one ? null : [],
-                max = one ? index + 1 : options.length,
-                i = index < 0 ? max : one ? index : 0;
+            if (index < 0) {
+                return '';
+            }
 
+            i = one ? index : 0;
+            max = one ? index + 1 : options.length;
             for (; i < max; i++) {
-
                 option = options[i];
+                // Traverse the option element when the elements needed to filter out disabled
+                if (option.selected && (_support.optDisabled ? !option.disabled : option.getAttribute('disabled') === null) &&
+                    (!option.parentElement.disabled || option.parentElement.tagName !== 'OPTGROUP')) {
 
-                if ((option.selected || i === index) &&
-                    option.getAttribute('disabled') === null &&
-                    (!option.parentNode.disabled || !_util.nodeName(option.parentNode, 'optgroup'))) {
-
-                    // Get the specific value for the option
-
-                    value = hAzzle(option).val();
-
-                    // We don't need an array for one selects
+                    val = hAzzle(option).val();
 
                     if (one) {
-                        return value;
+                        return val;
                     }
 
-                    // Multi-Selects return an array
-                    values.push(value);
+                    vals.push(val);
                 }
             }
-            return values;
+
+            if (one && !vals.length && options.length) {
+                return options[index].value;
+            }
+
+            return vals;
         }
     });
 

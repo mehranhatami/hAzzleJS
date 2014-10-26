@@ -3,9 +3,10 @@ hAzzle.define('valHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _strings = hAzzle.require('Strings'),
-        _getText = hAzzle.require('Text'),
+        _text = hAzzle.require('Text'),
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
+        _support = hAzzle.require('Support'),
         _setters = hAzzle.require('Setters');
 
     // Setter
@@ -41,43 +42,46 @@ hAzzle.define('valHooks', function() {
 
             return val !== null ?
                 val :
-                _strings.trim(_getText.getText(elem));
+                _strings.trim(_text.getText(elem));
         },
 
-        'select': function(elem, value) {
+        'select': function(elem) {
 
-            // Selectbox has special case
+            var index = elem.selectedIndex,
+                // Single box type attribute for select-one
+                // Checkbox type attribute for select-multiple
+                one = elem.type === 'select-one',
+                options = elem.options,
+                vals = [],
+                val, max, option, i;
 
-            var option, options = elem.options,
-                index = elem.selectedIndex,
-                one = elem.type === 'select-one' || index < 0,
-                values = one ? null : [],
-                max = one ? index + 1 : options.length,
-                i = index < 0 ? max : one ? index : 0;
+            if (index < 0) {
+                return '';
+            }
 
+            i = one ? index : 0;
+            max = one ? index + 1 : options.length;
             for (; i < max; i++) {
-
                 option = options[i];
+                // Traverse the option element when the elements needed to filter out disabled
+                if (option.selected && (_support.optDisabled ? !option.disabled : option.getAttribute('disabled') === null) &&
+                    (!option.parentElement.disabled || option.parentElement.tagName !== 'OPTGROUP')) {
 
-                if ((option.selected || i === index) &&
-                    option.getAttribute('disabled') === null &&
-                    (!option.parentNode.disabled || !_util.nodeName(option.parentNode, 'optgroup'))) {
-
-                    // Get the specific value for the option
-
-                    value = hAzzle(option).val();
-
-                    // We don't need an array for one selects
+                    val = hAzzle(option).val();
 
                     if (one) {
-                        return value;
+                        return val;
                     }
 
-                    // Multi-Selects return an array
-                    values.push(value);
+                    vals.push(val);
                 }
             }
-            return values;
+
+            if (one && !vals.length && options.length) {
+                return options[index].value;
+            }
+
+            return vals;
         }
     });
 
