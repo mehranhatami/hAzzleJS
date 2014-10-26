@@ -2767,10 +2767,6 @@ hAzzle.define('curCSS', function() {
                 });
         }
         var docElem, elem = this.elements[0],
-            box = {
-                top: 0,
-                left: 0
-            },
             doc = elem && elem.ownerDocument;
 
         if (!doc) {
@@ -2781,49 +2777,21 @@ hAzzle.define('curCSS', function() {
 
         // Make sure it's not a disconnected DOM node
         if (!_core.contains(docElem, elem)) {
-            return box;
-        }
-        // If we don't have gBCR, just use 0,0 rather than error
-        if (elem.getBoundingClientRect) {
-
-            var bound = elem.getBoundingClientRect(),
-                isFixed = (curCSS(elem, 'position') == 'fixed');
             return {
-                top: bound.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : docElem.scrollTop) - docElem.clientTop,
-                left: bound.left + elem.parentNode.scrollLeft + ((isFixed) ? 0 : docElem.scrollLeft) - docElem.clientLeft
+                top: 0,
+                left: 0
             };
         }
+        // All major browsers supported by hAzzle supports getBoundingClientRect, so no
+        // need for a workaround
 
-        // Get *real* offsetParent
-        var offsetParent = this.offsetParent();
-
-        while (elem) {
-            box.left += elem.offsetLeft;
-            box.top += elem.offsetTop;
-
-            if (_has.has('firefox')) {
-                if (curCSS(elem, '-moz-box-sizing') !== 'border-box') {
-
-                    box.top += parseInt(curCSS(elem, 'border-top-width')) || 0;
-                    box.left += parseInt(curCSS(elem, 'border-left-width')) || 0;
-                }
-                var parent = elem.parentNode;
-                if (parent && curCSS(parent, 'overflow') != 'visible') {
-                    box.top += parseInt(curCSS(parent, 'border-top-width')) || 0;
-                    box.left += parseInt(curCSS(parent, 'border-left-width')) || 0;
-                }
-            } else if (elem !== offsetParent.elements[0] && _has.has('safari')) {
-                box.top += parseInt(curCSS(elem, 'border-top-width')) || 0;
-                box.left += parseInt(curCSS(elem, 'border-left-width')) || 0;
-            }
-
-            if (_has.has('firefox') && curCSS(offsetParent.elements[0], '-moz-box-sizing') !== 'border-box') {
-                box.top -= parseInt(curCSS(offsetParent.elements[0], 'border-top-width')) || 0;
-                box.left -= parseInt(curCSS(offsetParent.elements[0], 'border-left-width')) || 0;
-            }
-
-            return box;
-        }
+            var bcr = elem.getBoundingClientRect(),
+                isFixed = (curCSS(elem, 'position') == 'fixed'),
+                win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
+            return {
+                top: bcr.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : win.pageYOffset) - docElem.clientTop,
+                left: bcr.left + elem.parentNode.scrollLeft + ((isFixed) ? 0 : win.pageXOffset) - docElem.clientLeft
+            };
     };
 
     this.position = function(relative) {
@@ -2843,12 +2811,11 @@ hAzzle.define('curCSS', function() {
             return;
         }
 
-        var element = elem.parentNode;
+        elem = elem.parentNode;
         
-        while (element && !_util.nodeName(element, 'html')) {
-            scroll.top += element.scrollLeft;
-            scroll.left += element.scrollTop;
-            element = element.parentNode;
+       if( !_util.nodeName(elem, 'html')) {
+            scroll.top += elem.scrollLeft;
+            scroll.left += elem.scrollTop;
         }
          position = {
             top: offset.top - scroll.top,
@@ -2858,8 +2825,8 @@ hAzzle.define('curCSS', function() {
         if (relative && (relative = hAzzle(relative))) {
             var relativePosition = relative.getPosition();
             return {
-                top: position.top - relativePosition.top - parseInt(curCSS(relative, 'border-left-width')) || 0,
-                y: position.left - relativePosition.left - parseInt(curCSS(relative, 'border-top-width')) || 0
+                top: position.top - relativePosition.top - parseInt(curCSS(relative, 'borderLeftWidth')) || 0,
+                y: position.left - relativePosition.left - parseInt(curCSS(relative, 'borderTopWidth')) || 0
             };
         }
         return position;
