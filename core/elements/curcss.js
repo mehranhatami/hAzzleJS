@@ -135,7 +135,6 @@ hAzzle.define('curCSS', function() {
             }
         },
 
-
         setOffset = function(elem, options, i) {
             var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
                 position = curCSS(elem, 'position'),
@@ -192,9 +191,7 @@ hAzzle.define('curCSS', function() {
                     setOffset(elem, options, i);
                 });
         }
-
-        var docElem, win,
-            elem = this.elements[0],
+        var docElem, elem = this.elements[0],
             box = {
                 top: 0,
                 left: 0
@@ -213,60 +210,84 @@ hAzzle.define('curCSS', function() {
         }
         // If we don't have gBCR, just use 0,0 rather than error
         if (elem.getBoundingClientRect) {
-            box = elem.getBoundingClientRect();
-        }
-        win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
 
-        return {
-            top: box.top + win.pageYOffset - docElem.clientTop,
-            left: box.left + win.pageXOffset - docElem.clientLeft
-        };
+            var bound = elem.getBoundingClientRect(),
+                isFixed = (curCSS(elem, 'position') == 'fixed');
+            return {
+                top: bound.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : docElem.scrollTop) - docElem.clientTop,
+                left: bound.left + elem.parentNode.scrollLeft + ((isFixed) ? 0 : docElem.scrollLeft) - docElem.clientLeft
+            };
+        }
+
+        // Get *real* offsetParent
+        var offsetParent = this.offsetParent();
+
+        while (elem) {
+            box.left += elem.offsetLeft;
+            box.top += elem.offsetTop;
+
+            if (_has.has('firefox')) {
+                if (curCSS(elem, '-moz-box-sizing') !== 'border-box') {
+
+                    box.top += parseInt(curCSS(elem, 'border-top-width')) || 0;
+                    box.left += parseInt(curCSS(elem, 'border-left-width')) || 0;
+                }
+                var parent = elem.parentNode;
+                if (parent && curCSS(parent, 'overflow') != 'visible') {
+                    box.top += parseInt(curCSS(parent, 'border-top-width')) || 0;
+                    box.left += parseInt(curCSS(parent, 'border-left-width')) || 0;
+                }
+            } else if (elem !== offsetParent.elements[0] && _has.has('safari')) {
+                box.top += parseInt(curCSS(elem, 'border-top-width')) || 0;
+                box.left += parseInt(curCSS(elem, 'border-left-width')) || 0;
+            }
+
+            if (_has.has('firefox') && curCSS(offsetParent.elements[0], '-moz-box-sizing') !== 'border-box') {
+                box.top -= parseInt(curCSS(offsetParent.elements[0], 'border-top-width')) || 0;
+                box.left -= parseInt(curCSS(offsetParent.elements[0], 'border-left-width')) || 0;
+            }
+
+            return box;
+        }
     };
 
-    this.position = function() {
-        if (!this.elements[0]) {
-            return;
-        }
+    this.position = function(relative) {
 
-        var offsetParent, offset,
+        var offset = this.offset(),
             elem = this.elements[0],
-            parentOffset = {
+            scroll = {
+                top: 0,
+                left: 0
+            },
+            position = {
                 top: 0,
                 left: 0
             };
 
-        // Fixed elements are offset from window (parentOffset = {top:0, left: 0},
-        // because it is its only offset parent
-        if (curCSS(elem, 'position') === 'fixed') {
-            // Assume getBoundingClientRect is there when computed position is fixed
-            offset = elem.getBoundingClientRect();
-
-        } else {
-            // Get *real* offsetParent
-            offsetParent = this.offsetParent();
-
-            // Get correct offsets
-            offset = this.offset();
-
-            if (!_util.nodeName(offsetParent.elements[0], 'html')) {
-
-                parentOffset = offsetParent.offset();
-            }
-
-            // Add offsetParent borders
-
-            parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
-            parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
+        if (!this.elements[0]) {
+            return;
         }
-        // Subtract offsetParent scroll positions
 
-        parentOffset.top -= offsetParent.scrollTop();
-        parentOffset.left -= offsetParent.scrollLeft();
-        // Subtract parent offsets and element margins
-        return {
-            top: offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop', true)),
-            left: offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft', true))
+        var element = elem.parentNode;
+        
+        while (element && !_util.nodeName(element, 'html')) {
+            scroll.top += element.scrollLeft;
+            scroll.left += element.scrollTop;
+            element = element.parentNode;
+        }
+         position = {
+            top: offset.top - scroll.top,
+            left: offset.left - scroll.left
         };
+
+        if (relative && (relative = hAzzle(relative))) {
+            var relativePosition = relative.getPosition();
+            return {
+                top: position.top - relativePosition.top - parseInt(curCSS(relative, 'border-left-width')) || 0,
+                y: position.left - relativePosition.left - parseInt(curCSS(relative, 'border-top-width')) || 0
+            };
+        }
+        return position;
     };
 
     this.offsetParent = function() {
