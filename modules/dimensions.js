@@ -235,6 +235,10 @@ hAzzle.define('Dimensions', function() {
                     doc['client' + val]
                 );
             }
+             return value === undefined ?
+            _curcss.css(this.elements[0], 'width', /*force*/ true) :
+            _style.setCSS(this.elements[0], 'height', val);
+
         }
     }.bind(this));
 

@@ -15,8 +15,6 @@ hAzzle.define('cssHooks', function() {
             borderColor: 'borderTopColor borderRightColor borderBottomColor borderLeftColor',
         };
 
-    // If borderRadius support
-
     if (_support.borderRadius) {
         padMarg.borderRadius = 'borderTopLeftRadius borderTopRightRadius borderBottomRightRadius borderBottomLeftRadius';
     }
@@ -60,7 +58,6 @@ hAzzle.define('cssHooks', function() {
         };
     });
 
-    // Getter    
     _util.extend(_style.cssHooks.get, {
         'opacity': function(elem, computed) {
             if (computed) {

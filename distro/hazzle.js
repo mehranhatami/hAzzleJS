@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0c Release Candidate
+ * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-26
+ * Date: 2014-10-27
  */
 (function() {
 
@@ -246,16 +246,16 @@ hAzzle.define('Support', function() {
         input.setAttribute('name', 't');
 
         div.appendChild(input);
-        
+
         // Support: IE<=11+
         // Make sure textarea (and checkbox) defaultValue is properly cloned
         div.innerHTML = '<textarea>x</textarea>';
         noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
     });
-     assert(function(div) {
-       supportBorderRadius = div.style.borderRadius != null;         
-         });
+    assert(function(div) {
+        supportBorderRadius = div.style.borderRadius != null;
+    });
 
     return {
         assert: assert,
@@ -267,7 +267,7 @@ hAzzle.define('Support', function() {
         sortDetached: sortDetached,
         noCloneChecked: noCloneChecked,
         cS: !!document.defaultView.getComputedStyle,
-        borderRadius:supportBorderRadius
+        borderRadius: supportBorderRadius
     };
 });
 
@@ -305,14 +305,14 @@ hAzzle.define('has', function() {
         })(),
         // Return the current value of the named feature
         has = function(name) {
-               if(typeof hasCache[name] == 'function'){
-            hasCache[name] = hasCache[name](win, doc, element);
-        }
-        return hasCache[name]; // Boolean
+            if (typeof hasCache[name] == 'function') {
+                hasCache[name] = hasCache[name](win, doc, element);
+            }
+            return hasCache[name]; // Boolean
         },
         // Register a new feature test for some named feature.
         add = function(name, test, now) {
-           hasCache[name] = now ? test(win, doc, element) : test; 
+            hasCache[name] = now ? test(win, doc, element) : test;
         },
         // Deletes the contents of the element passed to test functions.
         clearElement = function(elem) {
@@ -1074,6 +1074,7 @@ hAzzle.define('Util', function() {
         each: each,
         mixin: mixin,
         makeArray: makeArray,
+
         merge: merge,
         acceptData: acceptData,
         createCallback: createCallback,
@@ -2578,6 +2579,9 @@ hAzzle.define('Storage', function() {
     };
 });
 // curcss.js
+// Note! Contains *only* native CSS, and position, and offset, for more *advanced* CSS, 
+// use the style.js module
+
 hAzzle.define('curCSS', function() {
 
     var _has = hAzzle.require('has'),
@@ -2654,7 +2658,6 @@ hAzzle.define('curCSS', function() {
                 (parseFloat(curCSS(elem, 'paddingLeft')) || 0) -
                 (parseFloat(curCSS(elem, 'paddingRight')) || 0);
         },
-        // Prop to jQuery for the name!
 
         curCSS = function(elem, prop, force) {
 
@@ -2686,7 +2689,7 @@ hAzzle.define('curCSS', function() {
                 }
 
                 // Support: IE9
-                // getPropertyValue is only needed for .css('filter')
+                // getPropertyValue is only needed for .css('filter'). It's terrible slow and ugly too!
 
                 if (_has.ie === 9 && prop === 'filter') {
                     computedValue = computedStyle.getPropertyValue(prop);
@@ -2702,9 +2705,9 @@ hAzzle.define('curCSS', function() {
 
                 if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
 
-                    var position = curCSS(elem, 'position');
+                    var pos = curCSS(elem, 'position');
 
-                    if (position === 'fixed' || (position === 'absolute' && (prop === 'left' || prop === 'top'))) {
+                    if (pos === 'fixed' || (pos === 'absolute' && (prop === 'left' || prop === 'top'))) {
                         computedValue = hAzzle(elem).position()[prop] + 'px';
                     }
                 }
@@ -2712,7 +2715,7 @@ hAzzle.define('curCSS', function() {
             }
         },
 
-        setOffset = function(elem, options, i) {
+        setOffset = function(elem, opts, i) {
             var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
                 position = curCSS(elem, 'position'),
                 curElem = hAzzle(elem),
@@ -2741,31 +2744,31 @@ hAzzle.define('curCSS', function() {
                 curLeft = parseFloat(curCSSLeft) || 0;
             }
 
-            if (_types.isType('function')(options)) {
-                options = options.call(elem, i, curOffset);
+            if (_types.isType('function')(opts)) {
+                opts = opts.call(elem, i, curOffset);
             }
 
-            if (options.top != null) {
-                props.top = (options.top - curOffset.top) + curTop;
+            if (opts.top != null) {
+                props.top = (opts.top - curOffset.top) + curTop;
             }
-            if (options.left != null) {
-                props.left = (options.left - curOffset.left) + curLeft;
+            if (opts.left != null) {
+                props.left = (opts.left - curOffset.left) + curLeft;
             }
 
-            if ('using' in options) {
-                options.using.call(elem, props);
+            if ('using' in opts) {
+                opts.using.call(elem, props);
 
             } else {
                 curElem.css(props);
             }
         };
 
-    this.offset = function(options) {
+    this.offset = function(opts) {
         if (arguments.length) {
-            return options === undefined ?
+            return opts === undefined ?
                 this.elements :
                 this.each(function(elem, i) {
-                    setOffset(elem, options, i);
+                    setOffset(elem, opts, i);
                 });
         }
         var docElem, elem = this.elements[0],

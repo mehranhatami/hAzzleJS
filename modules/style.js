@@ -178,19 +178,19 @@ hAzzle.define('Style', function() {
         },
         swap = function(elem, fn) {
             var obj = {},
-                name, val;
+                name, style = elem.style, val;
 
             if (elem.offsetWidth) {
                 val = fn();
             } else {
                 for (name in cssShow) {
-                    obj[name] = elem.style[name];
-                    elem.style[name] = cssShow[name];
+                    obj[name] = style[name];
+                    style[name] = cssShow[name];
                 }
 
                 val = fn();
                 for (name in obj) {
-                    elem.style[name] = obj[name];
+                    style[name] = obj[name];
                 }
             }
 
