@@ -362,7 +362,7 @@ hAzzle.define('Events', function() {
             types = (types || '').match((whiteSpace)) || [''];
 
 
-            if (one) {
+            if (one) { 
                 fn = once(off, elem, types, fn, cb);
             }
 
@@ -691,7 +691,6 @@ hAzzle.define('Events', function() {
     // Add event listener
 
     this.on = function(events, selector, fn) {
-
         this.each(function(elem) {
             on(elem, events, selector, fn);
         });

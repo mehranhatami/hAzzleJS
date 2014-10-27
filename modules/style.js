@@ -18,6 +18,12 @@ hAzzle.define('Style', function() {
             'background-color border-bottom-color border-left-color border-right-color border-top-color ' +
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
+            
+                    cssShow = {
+            visibility: 'hidden',
+            display: 'block'
+        },
+
 
         _sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
@@ -57,7 +63,7 @@ hAzzle.define('Style', function() {
                 var i = 0,
                     prefixesLength = _prefixes.length,
                     propertyPrefixed;
-              // Iterate prefixes from most to least likely
+                // Iterate prefixes from most to least likely
                 for (; i < prefixesLength; i++) {
 
                     if (i === 0) {
@@ -83,7 +89,7 @@ hAzzle.define('Style', function() {
                 elem = elem.elements[0];
             }
 
-            var val, hooks, computed, style = elem.style,
+            var val, hooks, computed, style, style = elem.style,
                 origName = _strings.camelize(name),
                 p = vendorPrefixes(origName);
 
@@ -96,6 +102,7 @@ hAzzle.define('Style', function() {
             val = hooks ? hooks(elem, true) : val;
 
             if (!computed && val === undefined) {
+                console.log(_curcss)
                 style = _curcss.styles(elem);
                 val = hooks ? hooks(elem, true) : style[name];
                 computed = true;
@@ -112,7 +119,7 @@ hAzzle.define('Style', function() {
                 elem = elem.elements[0];
             }
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) { // Text or Comment
-
+            
                 var ret, style, hook, type, action, origName = _strings.camelize(name);
 
                 name = cssProps[origName] || (cssProps[origName] = vendorPrefixes(name)[0]);
@@ -168,14 +175,32 @@ hAzzle.define('Style', function() {
                     return style[name];
                 }
             }
+        },
+                swap = function(elem, fn) {
+            var obj = {},
+                name, val;
+
+            if (elem.offsetWidth) {
+                val = fn();
+            } else {
+                for (name in cssShow) {
+                    obj[name] = elem.style[name];
+                    elem.style[name] = cssShow[name];
+                }
+
+                val = fn();
+                for (name in obj) {
+                    elem.style[name] = obj[name];
+                }
+            }
+
+            return val;
         };
 
     this.css = function(name, value) {
 
         var elem = this.elements;
-
-        // jQuery method
-
+        
         if (_types.isArray(name)) {
 
             var map = {},
@@ -208,6 +233,33 @@ hAzzle.define('Style', function() {
             setCSS(elem, name, value);
         });
     };
+    // Width and height
+    _util.each({
+        height: 'Height',
+        width: 'Width'
+    }, function(val, prop) {
+        cssHooks.get[prop] = function(elem) {
+
+            var docElem;
+
+            if (!elem) {
+                return;
+            }
+
+            if (_types.isWindow(elem)) {
+                return elem.document.documentElement['client' + val];
+            }
+
+            if (elem.nodeType === 9) {
+                docElem = elem.documentElement;
+                return Math.max(docElem['scroll' + val], docElem['client' + val]);
+            }
+
+            return swap(elem, function() {
+                return _curcss.css(elem, prop);
+            });
+        };
+    });
 
     // Populate the unitless properties list
 

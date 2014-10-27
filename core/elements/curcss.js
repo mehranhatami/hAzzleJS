@@ -27,21 +27,19 @@ hAzzle.define('curCSS', function() {
         } :
 
         function(elem) {
-            var view = false;
 
-            if (elem && elem !== window) {
-
-                if (elem.ownerDocument !== undefined) {
-                    view = elem.ownerDocument.defaultView;
+            if (elem && elem.ownerDocument !== null) {
+                var view = false;
+                if (elem) {
+                    if (elem.ownerDocument !== undefined) {
+                        view = elem.ownerDocument.defaultView;
+                    }
+                    return _support.cS ? (view && computedStyle ?
+                        (view.opener ? view.getComputedStyle(elem, null) :
+                            window.getComputedStyle(elem, null)) : elem.style) : elem.style;
                 }
-                // Support: IE<=11+, Firefox<=30+
-                // IE throws on elements created in popups
-                // FF meanwhile throws on frame elements through 'defaultView.getComputedStyle'
-                return _support.cS ? (view && computedStyle ?
-                    (view.opener ? view.getComputedStyle(elem, null) :
-                        window.getComputedStyle(elem, null)) : elem.style) : elem.style;
             }
-            return null;
+            return '';
         },
         computedCSS = function(elem) {
             if (elem) {
@@ -210,13 +208,13 @@ hAzzle.define('curCSS', function() {
         // All major browsers supported by hAzzle supports getBoundingClientRect, so no
         // need for a workaround
 
-            var bcr = elem.getBoundingClientRect(),
-                isFixed = (curCSS(elem, 'position') == 'fixed'),
-                win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
-            return {
-                top: bcr.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : win.pageYOffset) - docElem.clientTop,
-                left: bcr.left + elem.parentNode.scrollLeft + ((isFixed) ? 0 : win.pageXOffset) - docElem.clientLeft
-            };
+        var bcr = elem.getBoundingClientRect(),
+            isFixed = (curCSS(elem, 'position') === 'fixed'),
+            win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
+        return {
+            top: bcr.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : win.pageYOffset) - docElem.clientTop,
+            left: bcr.left + elem.parentNode.scrollLeft + ((isFixed) ? 0 : win.pageXOffset) - docElem.clientLeft
+        };
     };
 
     this.position = function(relative) {
@@ -237,12 +235,12 @@ hAzzle.define('curCSS', function() {
         }
 
         elem = elem.parentNode;
-        
-       if( !_util.nodeName(elem, 'html')) {
+
+        if (!_util.nodeName(elem, 'html')) {
             scroll.top += elem.scrollLeft;
             scroll.left += elem.scrollTop;
         }
-         position = {
+        position = {
             top: offset.top - scroll.top,
             left: offset.left - scroll.left
         };
@@ -272,7 +270,7 @@ hAzzle.define('curCSS', function() {
 
     return {
         computed: computedCSS,
-        getStyles: getStyles,
+        styles: getStyles,
         css: curCSS
     };
 });

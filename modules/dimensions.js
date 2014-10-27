@@ -5,6 +5,7 @@ hAzzle.define('Dimensions', function() {
         doc = window.document,
         docElem = doc.documentElement,
         _types = hAzzle.require('Types'),
+        _style = hAzzle.require('Style'),
         _matchMedia = win.matchMedia || win.msMatchMedia,
         mq = _matchMedia ? function(q) {
             return !!_matchMedia.call(win, q).matches;
@@ -28,36 +29,11 @@ hAzzle.define('Dimensions', function() {
         _types = hAzzle.require('Types'),
         _curcss = hAzzle.require('curCSS'),
 
-        cssShow = {
-            visibility: 'hidden',
-            display: 'block'
-        },
         sizeParams = {
             'Width': ['Left', 'Right'],
             'Height': ['Top', 'Bottom']
 
         },
-        swap = function(elem, fn) {
-            var obj = {},
-                name, val;
-
-            if (elem.offsetWidth) {
-                val = fn();
-            } else {
-                for (name in cssShow) {
-                    obj[name] = elem.style[name];
-                    elem.style[name] = cssShow[name];
-                }
-
-                val = fn();
-                for (name in obj) {
-                    elem.style[name] = obj[name];
-                }
-            }
-
-            return val;
-        },
-
         getSize = function(elem, type, extra) {
 
             var val = elem['offset' + type];
@@ -97,7 +73,7 @@ hAzzle.define('Dimensions', function() {
                     return Math.max(docElem.scroll[method], docElem.client[method]);
                 }
 
-                return swap(elem, function() {
+                return _style.swap(elem, function() {
                     return getSize(elem, method, value);
                 });
             }
@@ -221,11 +197,29 @@ hAzzle.define('Dimensions', function() {
         return scrollTop(this.elements[0], val);
     };
 
-    this.height = function(val) {
-        if (val) {
-            _style.setCSS(this.elements[0], 'height', val);
+    this.height = function(value) {
+        var elem = this.elements[0],
+            doc;
+
+        if (_types.isWindow(elem)) {
+            return elem.document.documentElement["clientHeight"];
         }
-        return _curcss.css(this.elements[0], 'width', /*force*/ true);
+
+        if (elem.nodeType === 9) {
+            doc = elem.documentElement;
+
+            return Math.max(
+                elem.body["scrollHeight"], doc["scrollHeight"],
+                elem.body["offsetHeight"], doc["offsetHeight"],
+                doc["clientHeight"]
+            );
+        }
+
+        return value === undefined ?
+            _curcss.css(this.elements[0], 'width', /*force*/ true) :
+
+            _style.setCSS(this.elements[0], 'height', val);
+
     };
     this.width = function(val) {
         if (val) {
