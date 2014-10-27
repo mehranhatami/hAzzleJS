@@ -18,8 +18,8 @@ hAzzle.define('Style', function() {
             'background-color border-bottom-color border-left-color border-right-color border-top-color ' +
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
-            
-                    cssShow = {
+
+        cssShow = {
             visibility: 'hidden',
             display: 'block'
         },
@@ -89,7 +89,7 @@ hAzzle.define('Style', function() {
                 elem = elem.elements[0];
             }
 
-            var val, hooks, computed, style, style = elem.style,
+            var val, hooks, computed, style = elem.style,
                 origName = _strings.camelize(name),
                 p = vendorPrefixes(origName);
 
@@ -119,7 +119,7 @@ hAzzle.define('Style', function() {
                 elem = elem.elements[0];
             }
             if (elem && (elem.nodeType !== 3 || elem.nodeType !== 8)) { // Text or Comment
-            
+
                 var ret, style, hook, type, action, origName = _strings.camelize(name);
 
                 name = cssProps[origName] || (cssProps[origName] = vendorPrefixes(name)[0]);
@@ -176,7 +176,7 @@ hAzzle.define('Style', function() {
                 }
             }
         },
-                swap = function(elem, fn) {
+        swap = function(elem, fn) {
             var obj = {},
                 name, val;
 
@@ -200,7 +200,7 @@ hAzzle.define('Style', function() {
     this.css = function(name, value) {
 
         var elem = this.elements;
-        
+
         if (_types.isArray(name)) {
 
             var map = {},

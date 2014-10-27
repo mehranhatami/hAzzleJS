@@ -4,8 +4,14 @@ hAzzle.define('Dimensions', function() {
     var win = window,
         doc = window.document,
         docElem = doc.documentElement,
+
+        // Include the modules    
+
+        _util = hAzzle.require('Util'),
         _types = hAzzle.require('Types'),
         _style = hAzzle.require('Style'),
+        _curcss = hAzzle.require('curCSS'),
+
         _matchMedia = win.matchMedia || win.msMatchMedia,
         mq = _matchMedia ? function(q) {
             return !!_matchMedia.call(win, q).matches;
@@ -23,11 +29,6 @@ hAzzle.define('Dimensions', function() {
                 b = win.innerHeight;
             return a < b ? b : a;
         },
-
-        // Include the modules    
-        _style = hAzzle.require('Style'),
-        _types = hAzzle.require('Types'),
-        _curcss = hAzzle.require('curCSS'),
 
         sizeParams = {
             'Width': ['Left', 'Right'],
@@ -197,37 +198,6 @@ hAzzle.define('Dimensions', function() {
         return scrollTop(this.elements[0], val);
     };
 
-    this.height = function(value) {
-        var elem = this.elements[0],
-            doc;
-
-        if (_types.isWindow(elem)) {
-            return elem.document.documentElement["clientHeight"];
-        }
-
-        if (elem.nodeType === 9) {
-            doc = elem.documentElement;
-
-            return Math.max(
-                elem.body["scrollHeight"], doc["scrollHeight"],
-                elem.body["offsetHeight"], doc["offsetHeight"],
-                doc["clientHeight"]
-            );
-        }
-
-        return value === undefined ?
-            _curcss.css(this.elements[0], 'width', /*force*/ true) :
-
-            _style.setCSS(this.elements[0], 'height', val);
-
-    };
-    this.width = function(val) {
-        if (val) {
-            _style.setCSS(this.elements[0], 'width', val);
-        }
-        return _curcss.css(this.elements[0], 'width', /*force*/ true);
-    };
-
     this.innerHeight = function() {
         return innerOuter(this.elements[0], 'Height', 'inner');
     };
@@ -240,6 +210,33 @@ hAzzle.define('Dimensions', function() {
     this.outerWidth = function() {
         return innerOuter(this.elements[0], 'Width', 'outer');
     };
+
+    // 'this' height and width
+
+    _util.each({
+        height: 'height',
+        width: 'Width'
+    }, function(val, prop) {
+
+        this[prop] = function(value) {
+            var elem = this.elements[0],
+                doc;
+
+            if (_types.isWindow(elem)) {
+                return elem.document.documentElement['client' + val];
+            }
+
+            if (elem.nodeType === 9) {
+                doc = elem.documentElement;
+
+                return Math.max(
+                    elem.body['scroll' + val], doc['scroll' + val],
+                    elem.body['offset' + val], doc['offset' + val],
+                    doc['client' + val]
+                );
+            }
+        }
+    }.bind(this));
 
     return {
         getWindow: getWindow,
