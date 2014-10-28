@@ -552,10 +552,10 @@ hAzzle.define('Events', function() {
         return this;
     };
 
-    /* =========================== EVENT PROPAGATION ========================== */
 
     Event.prototype = {
         constructor: Event,
+
         // prevent default action
 
         preventDefault: function() {
@@ -777,14 +777,7 @@ hAzzle.define('Events', function() {
             return handler;
         };
 
-    /**
-     * Add event to element
-     *
-     * @param {String} events
-     * @param {String} selector
-     * @param {Function} fn
-     * @return {hAzzle}
-     */
+    // Add event to element
 
     this.on = function(events, selector, fn) {
         return this.each(function(el) {
@@ -797,14 +790,7 @@ hAzzle.define('Events', function() {
         });
     };
 
-    /**
-     * Remove event from element
-     *
-     * @param {String} events
-     * @param {String} selector
-     * @param {Function} fn
-     * @return {hAzzle}
-     */
+    // Remove event from element
 
     this.off = function(events, fn) {
         return this.each(function(el) {
@@ -812,12 +798,7 @@ hAzzle.define('Events', function() {
         });
     };
 
-    /**
-     * Trigger specific event for element collection
-     *
-     * @param {String} type
-     * @return {hAzzle}
-     */
+    // Trigger specific event for element collection
 
     this.trigger = function(type, args) {
 
@@ -830,13 +811,7 @@ hAzzle.define('Events', function() {
         return this.mouseenter(fnOver).mouseleave(fnOut || fnOver);
     };
 
-    /**
-     * Clone events attached to elements
-     *
-     * @param {Object} cloneElem
-     * @param {String} type (e.g. 'click', 'mouseover')
-     * @return {hAzzle}
-     */
+    // Clone events attached to elements
 
     this.cloneEvents = function(cloneElem, type) {
         return this.each(function(el) {
