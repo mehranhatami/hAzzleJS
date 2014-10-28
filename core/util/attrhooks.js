@@ -3,9 +3,7 @@ hAzzle.define('attrHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters'),
-        _docElem = document.documentElement,
-        _winDoc = window.document;
+        _setters = hAzzle.require('Setters');
 
     // Setter
     _util.mixin(_setters.attrHooks.set, {
@@ -20,16 +18,6 @@ hAzzle.define('attrHooks', function() {
                 }
                 return value;
             }
-        },
-        // Title hook for DOM        
-        'title': function(elem, value) {
-            (elem = _docElem ? _winDoc : elem).title = value;
-        }
-    });
-    // Getter    
-    _util.mixin(_setters.attrHooks.get, {
-        'title': function(elem) {
-            return elem === _docElem ? _winDoc.title : elem.title;
         }
     });
     return {};
