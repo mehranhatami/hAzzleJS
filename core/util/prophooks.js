@@ -3,12 +3,15 @@ hAzzle.define('propHooks', function () {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters');
+        _setters = hAzzle.require('Setters'),
 
+        _focusable = /^(?:input|select|textarea|button)$/i;
+
+    // Getter    
     _util.mixin(_setters.propHooks.get, {
         'tabIndex': function (elem) {
             return elem.hasAttribute('tabindex') ||
-                /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ?
+                _focusable.test(elem.nodeName) || elem.href ?
                 elem.tabIndex :
                 -1;
         }

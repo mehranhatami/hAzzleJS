@@ -32,23 +32,23 @@ hAzzle.define('has', function() {
         })(),
         // Return the current value of the named feature
         has = function(name) {
-               if(typeof hasCache[name] == 'function'){
-            hasCache[name] = hasCache[name](win, doc, element);
-        }
-        return hasCache[name]; // Boolean
+            return typeof hasCache[name] === 'function' ?
+                (hasCache[name] = hasCache[name](win, doc, element)) :
+                hasCache[name]; // Boolean
         },
         // Register a new feature test for some named feature.
-        add = function(name, test, now) {
-           hasCache[name] = now ? test(win, doc, element) : test; 
+        add = function(name, test, now, force) {
+            (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
+            return now && has(name);
         },
         // Deletes the contents of the element passed to test functions.
-        clearElement = function(elem) {
-            if (elem) {
-                while (elem.lastChild) {
-                    elem.removeChild(elem.lastChild);
+        clearElement = function(element) {
+            if (element) {
+                while (element.lastChild) {
+                    element.removeChild(element.lastChild);
                 }
             }
-            return elem;
+            return element;
         };
 
     // XPath

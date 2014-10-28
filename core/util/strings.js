@@ -29,6 +29,10 @@ hAzzle.define('Strings', function() {
 
         escHTML = /[&<>"']/g,
 
+        // escapeRegExp regExp
+
+        eRegExp = /([.*+?^=!:${}()|[\]\/\\])/g,
+
         // Microsoft RegExp
 
         msPrefix = /^-ms-/,
@@ -36,6 +40,14 @@ hAzzle.define('Strings', function() {
         // camlize RegExp
 
         dashAlpha = /-([\da-z])/gi,
+
+        // manualLowercase regExp
+
+        capitalizedChars = /[A-Z]/g,
+
+        // manualUppercase regExp
+
+        nonCapitalizedChars = /[a-z]/g,
 
         // Cache array for hAzzle.camelize()
 
@@ -66,6 +78,28 @@ hAzzle.define('Strings', function() {
 
         fhyphenate = function(letter) {
             return ('-' + letter.charAt(0).toLowerCase());
+        },
+
+        // Converts the specified string to lowercase.
+
+        lowercase = function(str) {
+            return typeof str === 'string' ? str.toLowerCase() : str;
+        },
+        // Converts the specified string to uppercase
+        uppercase = function(str) {
+            return typeof str === 'string' ? str.toUpperCase() : str;
+        },
+        manualLowercase = function(str) {
+            /* jshint bitwise: false */
+            return typeof str === 'string' ? str.replace(capitalizedChars, function(ch) {
+                return String.fromCharCode(ch.charCodeAt(0) | 32);
+            }) : str;
+        },
+        manualUppercase = function(str) {
+            /* jshint bitwise: false */
+            return typeof str === 'string' ? str.replace(nonCapitalizedChars, function(ch) {
+                return String.fromCharCode(ch.charCodeAt(0) & ~32);
+            }) : str;
         },
 
         capitalize = function(str) {
@@ -114,6 +148,12 @@ hAzzle.define('Strings', function() {
             length = ~~length;
             return str.length > length ? str.slice(0, length) + truncateStr : str;
         },
+        escapeRegExp = function(str) {
+            if (!str == null) {
+                return '';
+            }
+            return String(str).replace(eRegExp, '\\$1');
+        },
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
                 return '&' + reversedescapeMap[m] + ';';
@@ -134,6 +174,16 @@ hAzzle.define('Strings', function() {
             });
         };
 
+    // Credit: AngularJS    
+    // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
+    // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
+    // with correct but slower alternatives.
+
+    if ('i' !== 'I'.toLowerCase()) {
+        lowercase = manualLowercase;
+        uppercase = manualUppercase;
+    }
+
     for (var key in escapeMap) {
         reversedescapeMap[escapeMap[key]] = key;
     }
@@ -145,8 +195,13 @@ hAzzle.define('Strings', function() {
         hyphenate: hyphenate,
         camelize: camelize,
         trim: trim,
+        lowercase: lowercase,
+        uppcase: uppercase,
+        manualLowercase: manualLowercase,
+        manualUppercase: manualUppercase,
         escapeHTML: escapeHTML,
         unescapeHTML: unescapeHTML,
+        escapeRegExp: escapeRegExp,
         truncate: truncate
     };
 });
