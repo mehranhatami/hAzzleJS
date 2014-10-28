@@ -1,9 +1,10 @@
-// support.js
+// support.js'
+// NOTE! support.js module are not the same as has.js, and should not be merged into one 
 hAzzle.define('Support', function() {
 
     // Feature detection of elements
     var cls, MultipleArgs, sortDetached,
-        noCloneChecked,
+        noCloneChecked, supportBorderRadius,
 
         assert = function(fn) {
 
@@ -85,6 +86,9 @@ hAzzle.define('Support', function() {
         noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
     });
+     assert(function(div) {
+       supportBorderRadius = div.style.borderRadius != null;         
+         });
 
     return {
         assert: assert,
@@ -95,6 +99,7 @@ hAzzle.define('Support', function() {
         multipleArgs: MultipleArgs,
         sortDetached: sortDetached,
         noCloneChecked: noCloneChecked,
-        cS: !!document.defaultView.getComputedStyle
+        cS: !!document.defaultView.getComputedStyle,
+        borderRadius:supportBorderRadius
     };
 });
