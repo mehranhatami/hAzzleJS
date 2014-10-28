@@ -5,6 +5,14 @@ hAzzle.define('Events', function() {
     var win = window,
         doc = window.document || {},
         docElem = doc.documentElement,
+
+        // Include needed modules
+        _util = hAzzle.require('Util'),
+        _core = hAzzle.require('Core'),
+        _collection = hAzzle.require('Collection'),
+        _types = hAzzle.require('Types'),
+        _jiesa = hAzzle.require('Jiesa'),
+
         evwhite = (/\S+/g),
         mouseEvent = /^click|mouse(?!(.*wheel|scroll))|menu|pointer|contextmenu|drag|drop/i,
         keyEvent = /^key/,
@@ -16,16 +24,12 @@ hAzzle.define('Events', function() {
         messageEvent = /^message$/i,
         popstateEvent = /^popstate$/i,
         map = {},
-
+        fixHook = {},
         customEvents = {},
 
-        // Include needed modules
-        _util = hAzzle.require('Util'),
-        _core = hAzzle.require('Core'),
-        _collection = hAzzle.require('Collection'),
-        _types = hAzzle.require('Types'),
-        _jiesa = hAzzle.require('Jiesa'),
-        slice = Array.prototype.slice,
+        props = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget detail ' +
+            'eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget ' +
+            'shiftKey srcElement target timeStamp type view which propertyName').split(' '),
 
         global = {},
 
@@ -122,7 +126,7 @@ hAzzle.define('Events', function() {
                     elem.addEventListener(entry.eventType, rootHandler, false);
                 }
             }
-
+            // Keep track of which events have ever been used, for event optimization
             global[entry.eventType] = true;
         },
 
@@ -133,7 +137,7 @@ hAzzle.define('Events', function() {
             };
         },
 
-        // Remove event from element
+        // Detach an event or set of events from an element
 
         removeEvent = function(elem, types, selector, fn) {
 
@@ -144,23 +148,26 @@ hAzzle.define('Events', function() {
             var k, type, namespaces, i;
 
             if (!elem) {
+                hAzzle.err(true, 17, "no element exist in removeEvent() in events.js module");
                 return;
             }
 
+            // removeEvent(el, 't1 t2 t3', fn) or off(el, 't1 t2 t3')
             if (typeof types === 'string' && _collection.inArray(types, ' ') > 0) {
 
+                // Once for each type.namespace in types; type may be omitted
                 types = (types || '').match(evwhite) || [''];
 
                 i = types.length;
 
                 while (i--) {
-                    this.removeEvent(elem, types[i], selector, fn);
+                    removeEvent(elem, types[i], selector, fn);
                 }
 
                 return elem;
             }
 
-            // Check for namespace
+            // Namespace
 
             if (typeof types === 'string') {
                 type = types.replace(nameRegex, '');
@@ -171,18 +178,16 @@ hAzzle.define('Events', function() {
             }
 
             if (!types || typeof types === 'string') {
-
-                // namespace
-
+                // removeEvent(el) or off(el, t1.ns) or removeEvent(el, .ns) or removeEvent(el, .ns1.ns2.ns3)
                 if ((namespaces = typeof types === 'string' && types.replace(namespaceRegex, ''))) {
                     namespaces = namespaces.split('.');
                 }
-
                 removeHandlers(elem, type, fn, namespaces, selector);
-
             } else if (typeof types === 'function') {
+                // removeEvent(el, fn)
                 removeHandlers(elem, null, types, null, selector);
             } else {
+                // removeEvent(el, { t1: fn1, t2, fn2 })
                 for (k in types) {
                     if (types.hasOwnProperty(k)) {
                         this.removeEvent(elem, k, types[k]);
@@ -193,7 +198,7 @@ hAzzle.define('Events', function() {
             return elem;
         },
 
-        clone = function(element, from, type) {
+        clone = function(elem, from, type) {
             var handlers = getRegistered(from, type, null, false),
                 l = handlers.length,
                 i = 0,
@@ -201,7 +206,7 @@ hAzzle.define('Events', function() {
 
             for (; i < l; i++) {
                 if (handlers[i].original) {
-                    args = [element, handlers[i].type];
+                    args = [elem, handlers[i].type];
                     if ((kfx2rcf = handlers[i].handler.__kfx2rcf)) {
 
                         args.push(kfx2rcf);
@@ -210,21 +215,11 @@ hAzzle.define('Events', function() {
                     addEvent.apply(null, args);
                 }
             }
-            return element;
+            return elem;
         },
 
         // Trigger specific event for element collection
         trigger = function(elem, type, args) {
-
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
-
-            // Don't do events on text and comment nodes
-
-            if (elem.nodeType === 3 || elem.nodeType === 8 || !type) {
-                return;
-            }
 
             var cur, types = type.split(' '),
                 i = types.length,
@@ -232,7 +227,17 @@ hAzzle.define('Events', function() {
                 canContinue,
                 l, call, evt, names, handlers;
 
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
+
             cur = elem || doc;
+
+            // Don't do events on text and comment nodes
+
+            if (elem.nodeType === 3 || elem.nodeType === 8 || !type) {
+                return;
+            }
 
             for (; i--;) {
 
@@ -308,27 +313,20 @@ hAzzle.define('Events', function() {
             if (!type || type == '*') {
                 for (t in map) {
                     if (t.charAt(0) == pfx) {
-                        iteratee(elem, t.substr(1), original, handler, root, fn);
+                        iteratee(elem, _collection.slice(t, 1), original, handler, root, fn);
                     }
                 }
             } else {
 
-                var i = 0,
-                    l,
-                    list = map[pfx + type],
+                var i, l, list = map[pfx + type],
                     all = elem == '*';
 
                 if (!list) {
-
                     return;
                 }
 
-                l = list.length;
-
-                for (; i < l; i++) {
-
+                for (i = 0, l = list.length; i < l; i++) {
                     if ((all || list[i].matches(elem, original, handler)) && !fn(list[i], list, i, type)) {
-
                         return;
                     }
                 }
@@ -347,7 +345,6 @@ hAzzle.define('Events', function() {
                 while (i--) {
 
                     if (!list[i].root && list[i].matches(elem, original, null)) {
-
                         return true;
                     }
                 }
@@ -367,42 +364,27 @@ hAzzle.define('Events', function() {
 
         register = function(entry) {
             var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
-                key;
-
-            if (entry.root) {
-                key = '€' + entry.type;
-            } else {
-                key = '#' + entry.type;
-            }
-
+                key = (entry.root ? '€' : '#') + entry.type;
             (map[key] || (map[key] = [])).push(entry);
-
             return contains;
         },
 
         unregister = function(entry) {
 
             iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
-
                 list.splice(i, 1);
-
                 entry.removed = true;
-
                 if (list.length === 0) {
-
                     delete map[(entry.root ? '€' : '#') + entry.type];
                 }
                 return false;
             });
         },
 
-        fixHook = {},
+        
 
         // Common properties for all event types
 
-        props = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget detail ' +
-            'eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget ' +
-            'shiftKey srcElement target timeStamp type view which propertyName').split(' '),
 
         // Return all common properties
 
@@ -640,7 +622,7 @@ hAzzle.define('Events', function() {
 
 
             var call = function(event, eargs) {
-                    return fn.apply(element, args ? slice.call(eargs).concat(args) : eargs);
+                    return fn.apply(element, args ? _collection.slice(eargs).concat(args) : eargs);
                 },
 
                 // Get correct target for delegated events
@@ -830,9 +812,7 @@ hAzzle.define('Events', function() {
                 this.trigger(prop);
         };
 
-
     }.bind(this));
-
 
     // Mouse wheel
 
@@ -866,7 +846,6 @@ hAzzle.define('Events', function() {
             }
         };
     });
-
 
     return {
 
