@@ -29,6 +29,8 @@ hAzzle.define('Events', function() {
 
         global = {},
 
+        // Add event to element
+
         addEvent = function(elem, events, selector, fn, /* internal */ one) {
 
             // Check if typeof hAzzle, then wrap it out, and return current elem
@@ -117,11 +119,7 @@ hAzzle.define('Events', function() {
                 ));
 
                 if (first) {
-
-                    type = entry.eventType;
-
-                    // Add rootHandler
-                    elem.addEventListener(type, rootHandler, false);
+                    elem.addEventListener(entry.eventType, rootHandler, false);
                 }
             }
 
@@ -150,7 +148,7 @@ hAzzle.define('Events', function() {
             }
 
             if (typeof types === 'string' && _collection.inArray(types, ' ') > 0) {
-                // Once for each type.namespace in types; type may be omitted
+
                 types = (types || '').match(evwhite) || [''];
 
                 i = types.length;
@@ -183,17 +181,10 @@ hAzzle.define('Events', function() {
                 removeHandlers(elem, type, fn, namespaces, selector);
 
             } else if (typeof types === 'function') {
-
-                // removeEvent(el, fn)
-
                 removeHandlers(elem, null, types, null, selector);
-
             } else {
-                // removeEvent(el, { t1: fn1, t2, fn2 })
                 for (k in types) {
-
                     if (types.hasOwnProperty(k)) {
-
                         this.removeEvent(elem, k, types[k]);
                     }
                 }
@@ -206,16 +197,15 @@ hAzzle.define('Events', function() {
             var handlers = getRegistered(from, type, null, false),
                 l = handlers.length,
                 i = 0,
-                args, core;
+                args, kfx2rcf;
 
             for (; i < l; i++) {
                 if (handlers[i].original) {
                     args = [element, handlers[i].type];
-                    if ((core = handlers[i].handler.__kfx2rcf)) {
+                    if ((kfx2rcf = handlers[i].handler.__kfx2rcf)) {
 
-                        args.push(core);
+                        args.push(kfx2rcf);
                     }
-
                     args.push(handlers[i].original);
                     addEvent.apply(null, args);
                 }
@@ -223,14 +213,12 @@ hAzzle.define('Events', function() {
             return element;
         },
 
+        // Trigger specific event for element collection
         trigger = function(elem, type, args) {
 
-            var cur, types = type.split(' '),
-                i = types.length,
-                j = 0,
-                l, call, evt, names, handlers;
-
-            cur = elem || doc;
+            if (elem instanceof hAzzle) {
+                elem = elem.elements[0];
+            }
 
             // Don't do events on text and comment nodes
 
@@ -238,21 +226,23 @@ hAzzle.define('Events', function() {
                 return;
             }
 
-            while (i--) {
+            var cur, types = type.split(' '),
+                i = types.length,
+                j = 0,
+                canContinue,
+                l, call, evt, names, handlers;
+
+            cur = elem || doc;
+
+            for (; i--;) {
 
                 type = types[i].replace(nameRegex, '');
 
                 if ((names = types[i].replace(namespaceRegex, ''))) {
-
                     names = names.split('.');
                 }
 
-                if (!names && !args) {
-                    evt = document.createEvent('HTMLEvents');
-                    evt.initEvent(type, true, true, win, 1);
-                    elem.dispatchEvent(evt);
-
-                } else {
+                if (names && args) {
 
                     // non-native event, either because of a namespace, arguments or a non DOM element
                     // iterate over all listeners and manually 'fire'
@@ -260,24 +250,25 @@ hAzzle.define('Events', function() {
                     handlers = getRegistered(cur, type, null, false);
 
                     evt = Event(null, cur);
-
                     evt.type = type;
-
                     call = args ? 'apply' : 'call';
-
                     args = args ? [evt].concat(args) : evt;
 
-                    l = handlers.length;
-
-                    for (; j < l; j++) {
-
+                    for (j = 0, l = handlers.length; j < l; j++) {
                         if (handlers[j].inNamespaces(names)) {
-
                             handlers[j].handler.apply(cur, args);
                         }
                     }
+                    canContinue = event.returnValue !== false;
+                } else {
+
+                    evt = document.createEvent('HTMLEvents');
+                    evt.initEvent(type, true, true, win, 1);
+                    canContinue = elem.dispatchEvent(evt);
                 }
+                return canContinue;
             }
+            return elem;
         },
 
         removeHandlers = function(elem, types, handler, namespaces) {
@@ -904,10 +895,9 @@ hAzzle.define('Events', function() {
 
     return {
 
-            /*     on: on,
-                 one: one,
-                 off: off,
-                 clone: clone,
-                 trigger: fire,*/
+        addEvent: addEvent,
+        removeEvent: removeEvent,
+        clone: clone,
+        fire: trigger
     };
 });
