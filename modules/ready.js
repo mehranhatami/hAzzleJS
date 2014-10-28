@@ -20,7 +20,6 @@ hAzzle.define('Ready', function() {
     }
 
     domReady.load = function(id, req, load) {
-        clearTimeout(poller);
         domReady(load);
     };
     function processQ() {
@@ -60,8 +59,9 @@ hAzzle.define('Ready', function() {
                 });
             };
 
+
+
         on(doc, 'DOMContentLoaded');
-        // This is based on the custom load event
         on(window, 'load');
 
         if ('onreadystatechange' in doc) {

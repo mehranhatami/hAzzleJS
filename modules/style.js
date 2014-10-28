@@ -19,12 +19,6 @@ hAzzle.define('Style', function() {
             'color column-rule-color outline-color text-decoration-color text-emphasis-color ' +
             'alpha z-index font-weight opacity red green blue').split(' '),
 
-        cssShow = {
-            visibility: 'hidden',
-            display: 'block'
-        },
-
-
         _sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
         // _vPrix regEx
@@ -63,7 +57,7 @@ hAzzle.define('Style', function() {
                 var i = 0,
                     prefixesLength = _prefixes.length,
                     propertyPrefixed;
-                // Iterate prefixes from most to least likely
+              // Iterate prefixes from most to least likely
                 for (; i < prefixesLength; i++) {
 
                     if (i === 0) {
@@ -102,7 +96,6 @@ hAzzle.define('Style', function() {
             val = hooks ? hooks(elem, true) : val;
 
             if (!computed && val === undefined) {
-                console.log(_curcss)
                 style = _curcss.styles(elem);
                 val = hooks ? hooks(elem, true) : style[name];
                 computed = true;
@@ -175,31 +168,13 @@ hAzzle.define('Style', function() {
                     return style[name];
                 }
             }
-        },
-        swap = function(elem, fn) {
-            var obj = {},
-                name, style = elem.style, val;
-
-            if (elem.offsetWidth) {
-                val = fn();
-            } else {
-                for (name in cssShow) {
-                    obj[name] = style[name];
-                    style[name] = cssShow[name];
-                }
-
-                val = fn();
-                for (name in obj) {
-                    style[name] = obj[name];
-                }
-            }
-
-            return val;
         };
 
     this.css = function(name, value) {
 
         var elem = this.elements;
+
+        // jQuery method
 
         if (_types.isArray(name)) {
 
@@ -233,33 +208,6 @@ hAzzle.define('Style', function() {
             setCSS(elem, name, value);
         });
     };
-    // Width and height
-    _util.each({
-        height: 'Height',
-        width: 'Width'
-    }, function(val, prop) {
-        cssHooks.get[prop] = function(elem) {
-
-            var docElem;
-
-            if (!elem) {
-                return;
-            }
-
-            if (_types.isWindow(elem)) {
-                return elem.document.documentElement['client' + val];
-            }
-
-            if (elem.nodeType === 9) {
-                docElem = elem.documentElement;
-                return Math.max(docElem['scroll' + val], docElem['client' + val]);
-            }
-
-            return swap(elem, function() {
-                return _curcss.css(elem, prop);
-            });
-        };
-    });
 
     // Populate the unitless properties list
 

@@ -1,10 +1,10 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0d Release Candidate
+ * Version: 1.0.0b Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-27
+ * Date: 2014-10-24
  */
 (function() {
 
@@ -165,13 +165,12 @@
 
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-// support.js'
-// NOTE! support.js module are not the same as has.js, and should not be merged into one 
+// support.js
 hAzzle.define('Support', function() {
 
     // Feature detection of elements
     var cls, MultipleArgs, sortDetached,
-        noCloneChecked, supportBorderRadius,
+        noCloneChecked,
 
         assert = function(fn) {
 
@@ -253,9 +252,6 @@ hAzzle.define('Support', function() {
         noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
     });
-    assert(function(div) {
-        supportBorderRadius = div.style.borderRadius != null;
-    });
 
     return {
         assert: assert,
@@ -266,8 +262,7 @@ hAzzle.define('Support', function() {
         multipleArgs: MultipleArgs,
         sortDetached: sortDetached,
         noCloneChecked: noCloneChecked,
-        cS: !!document.defaultView.getComputedStyle,
-        borderRadius: supportBorderRadius
+        cS: !!document.defaultView.getComputedStyle
     };
 });
 
@@ -305,23 +300,23 @@ hAzzle.define('has', function() {
         })(),
         // Return the current value of the named feature
         has = function(name) {
-            if (typeof hasCache[name] == 'function') {
-                hasCache[name] = hasCache[name](win, doc, element);
-            }
-            return hasCache[name]; // Boolean
+            return typeof hasCache[name] === 'function' ?
+                (hasCache[name] = hasCache[name](win, doc, element)) :
+                hasCache[name]; // Boolean
         },
         // Register a new feature test for some named feature.
-        add = function(name, test, now) {
-            hasCache[name] = now ? test(win, doc, element) : test;
+        add = function(name, test, now, force) {
+            (typeof hasCache[name] === 'undefined' || force) && (hasCache[name] = test);
+            return now && has(name);
         },
         // Deletes the contents of the element passed to test functions.
-        clearElement = function(elem) {
-            if (elem) {
-                while (elem.lastChild) {
-                    elem.removeChild(elem.lastChild);
+        clearElement = function(element) {
+            if (element) {
+                while (element.lastChild) {
+                    element.removeChild(element.lastChild);
                 }
             }
-            return elem;
+            return element;
         };
 
     // XPath
@@ -542,7 +537,6 @@ hAzzle.define('Types', function() {
             }
             // Detect length and item 
             if (!('length' in nodes) || !('item' in nodes)) {
-
                 return false;
             }
             try {
@@ -1074,7 +1068,6 @@ hAzzle.define('Util', function() {
         each: each,
         mixin: mixin,
         makeArray: makeArray,
-
         merge: merge,
         acceptData: acceptData,
         createCallback: createCallback,
@@ -1105,14 +1098,15 @@ hAzzle.define('Core', function() {
         docElem = winDoc.documentElement,
         _support = hAzzle.require('Support'),
         _indexOf = Array.prototype.indexOf,
-        _rnative = /^[^{]+\{\s*\[native \w/,
-        _matches,
-        _CoreCache = {},
-        _hasDuplicate,
-        _sortInput,
+        rnative = /^[^{]+\{\s*\[native \w/,
+        matches,
+        Core = {},
+        CoreCache = {},
+        hasDuplicate,
+        sortInput,
         sortOrder = function(a, b) {
             if (a === b) {
-                _hasDuplicate = true;
+                hasDuplicate = true;
             }
             return 0;
         },
@@ -1137,272 +1131,270 @@ hAzzle.define('Core', function() {
             }
 
             return a ? 1 : -1;
-        },
+        };
 
-        Core = {
+    Core.uidX = 1;
+    Core.uidK = 'hAzzle_id';
+    Core.expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
 
-            uidX: 1,
-            uidK: 'hAzzle_id',
-            expando: 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
+        // Check if this is XML doc or not
 
-            // Check if this is XML doc or not
+        Core.isXML = function(elem) {
+            var documentElement = elem && (elem.ownerDocument || elem).documentElement;
 
-            isXML: function(elem) {
-                var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-
-                if (documentElement) {
-                    return documentElement.nodeName !== 'HTML'
-                } else {
-                    return false;
-                }
-            },
-
-            // Get unique XML document ID
-
-            xmlID: function(elem) {
-                var uid = elem.getAttribute(this.uidK);
-
-                if (!uid) {
-                    uid = this.uidX++;
-                    elem.setAttribute(this.uidK, uid);
-                }
-                return uid;
-            },
-
-            // Get unique HTML document ID
-
-            htmlID: function(elem) {
-                return elem.uniqueNumber ||
-                    (elem.uniqueNumber = this.uidX++);
-            },
-
-            native: _rnative.test(docElem.compareDocumentPosition),
-            // Set document
-
-            setDocument: function(document) {
-
-                // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
-                var nodeType = document.nodeType,
-                    doc = document ? document.ownerDocument || document : winDoc;
-
-                if (nodeType === 9) { // document
-
-                } else if (nodeType) {
-                    doc = document.ownerDocument; // node
-                } else if (document.navigator) {
-                    doc = document.document; // window
-                } else {
-                    return;
-                }
-
-                // Check if it's the old document
-
-                if (this.document === doc) {
-                    return;
-                }
-                // Override default window.document, and set our document
-
-                document = doc;
-                this.document = doc;
-
-                var root = document.documentElement,
-                    rootID = this.xmlID(root),
-                    features = _CoreCache[rootID],
-                    feature;
-
-                // Don't run feature detection twice
-
-                if (features) {
-                    for (feature in features) {
-                        this[feature] = features[feature];
-                    }
-                    return;
-                }
-
-                features = _CoreCache[rootID] = {};
-                features.root = root;
-                features.isXMLDocument = this.isXML(document);
-                features.detectDuplicates = !!_hasDuplicate;
-                features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
-
-                // On non-HTML documents innerHTML and getElementsById doesnt work properly
-                _support.assert(function(div) {
-                    div.innerHTML = '<a id="hAzzle_id"></a>';
-                    features.isHTMLDocument = !!document.getElementById('hAzzle_id');
-                });
-
-                // If HTML document
-
-                if (!Core.isXML(root)) {
-
-                    // Check if getElementsByTagName('*') returns only elements
-                    features.getElementsByTagName = _support.assert(function(div) {
-                        div.appendChild(doc.createComment(''));
-                        return !div.getElementsByTagName('*').length;
-                    }); // IE returns elements with the name instead of just id for getElementsById for some documents
-                    features.getById = _support.assert(function(div) {
-                        div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
-                        return document.getElementById('hAzzle_id') === div.firstChild;
-                    });
-
-                    var rbuggyMatches = Core.rbuggyMatches = [],
-                        rbuggyQSA = Core.rbuggyQSA = [];
-
-                    if ((_support.qsa = _rnative.test(doc.querySelectorAll))) {
-                        // Build QSA regex
-                        // Regex strategy adopted from Diego Perini
-                        _support.assert(function(div) {
-                            div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
-
-                            // Webkit/Opera - :checked should return selected option elements
-                            // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-                            if (!div.querySelectorAll(':checked').length) {
-                                rbuggyQSA.push(':checked');
-                            }
-                        });
-                    }
-
-                    if ((features._matchesSelector = _rnative.test((_matches = docElem._matches ||
-                            docElem.webkitMatchesSelector ||
-                            docElem.mozMatchesSelector ||
-                            docElem.oMatchesSelector ||
-                            docElem.msMatchesSelector)))) {
-
-                        _support.assert(function(div) {
-                            // Check to see if it's possible to do _matchesSelector
-                            // on a disconnected node (IE 9)
-                            Core.disconnectedMatch = _matches.call(div, 'div');
-                        });
-                    }
-
-                    rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join('|'));
-                    rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join('|'));
-                }
-
-                // Contains
-
-                features.contains = Core.native || Core.native.test(docElem.contains) ?
-                    function(a, b) {
-                        var adown = a.nodeType === 9 ? a.documentElement : a,
-                            bup = b && b.parentNode;
-                        return a === bup || !!(bup && bup.nodeType === 1 && (
-                            adown.contains ?
-                            adown.contains(bup) :
-                            a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-                        ));
-                    } :
-                    function(a, b) {
-                        if (b) {
-                            while ((b = b.parentNode)) {
-                                if (b === a) {
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    };
-
-                // Document order sorting
-                Core.sortOrder = Core.native ?
-                    function(a, b) {
-
-                        // Flag for duplicate removal
-                        if (a === b) {
-                            _hasDuplicate = true;
-                            return 0;
-                        }
-
-                        // Sort on method existence if only one input has compareDocumentPosition
-                        var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-                        if (compare) {
-                            return compare;
-                        }
-
-                        // Calculate position if both inputs belong to the same document
-                        compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                            a.compareDocumentPosition(b) : 1;
-
-                        // Disconnected nodes
-                        if (compare & 1 ||
-                            (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
-
-                            // Choose the first element that is related to our preferred document
-                            if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
-                                return -1;
-                            }
-                            if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
-                                return 1;
-                            }
-
-                            // Maintain original order
-                            return _sortInput ?
-                                (_indexOf.call(_sortInput, a) - _indexOf.call(_sortInput, b)) :
-                                0;
-                        }
-
-                        return compare & 4 ? -1 : 1;
-                    } :
-                    function(a, b) {
-                        // Exit early if the nodes are identical
-                        if (a === b) {
-                            _hasDuplicate = true;
-                            return 0;
-                        }
-
-                        var cur,
-                            i = 0,
-                            aup = a.parentNode,
-                            bup = b.parentNode,
-                            ap = [a],
-                            bp = [b];
-
-                        // Parentless nodes are either documents or disconnected
-                        if (!aup || !bup) {
-                            return a === doc ? -1 :
-                                b === doc ? 1 :
-                                aup ? -1 :
-                                bup ? 1 :
-                                _sortInput ?
-                                (_indexOf.call(_sortInput, a) - _indexOf.call(_sortInput, b)) :
-                                0;
-
-                            // If the nodes are siblings, we can do a quick check
-                        } else if (aup === bup) {
-                            return siblingCheck(a, b);
-                        }
-
-                        // Otherwise we need full lists of their ancestors for comparison
-                        cur = a;
-                        while ((cur = cur.parentNode)) {
-                            ap.unshift(cur);
-                        }
-                        cur = b;
-                        while ((cur = cur.parentNode)) {
-                            bp.unshift(cur);
-                        }
-
-                        // Walk down the tree looking for a discrepancy
-                        while (ap[i] === bp[i]) {
-                            i++;
-                        }
-
-                        return i ?
-                            // Do a sibling check if the nodes have a common ancestor
-                            siblingCheck(ap[i], bp[i]) :
-
-                            // Otherwise nodes in our document sort first
-                            ap[i] === winDoc ? -1 :
-                            bp[i] === winDoc ? 1 :
-                            0;
-                    };
-
-                root = null;
-
-                for (feature in features) {
-                    this[feature] = features[feature];
-                }
+            if (documentElement) {
+                return documentElement.nodeName !== 'HTML'
+            } else {
+                return false;
             }
         };
+
+    // Get unique XML document ID
+
+    Core.xmlID = function(elem) {
+        var uid = elem.getAttribute(this.uidK);
+
+        if (!uid) {
+            uid = this.uidX++;
+            elem.setAttribute(this.uidK, uid);
+        }
+        return uid;
+    };
+
+    // Get unique HTML document ID
+
+    Core.htmlID = function(elem) {
+        return elem.uniqueNumber ||
+            (elem.uniqueNumber = this.uidX++);
+    };
+
+    Core.native = rnative.test(docElem.compareDocumentPosition);
+    // Set document
+
+    Core.setDocument = function(document) {
+
+        // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
+        var nodeType = document.nodeType,
+            doc = document ? document.ownerDocument || document : winDoc;
+
+        if (nodeType === 9) { // document
+
+        } else if (nodeType) {
+            doc = document.ownerDocument; // node
+        } else if (document.navigator) {
+            doc = document.document; // window
+        } else {
+            return;
+        }
+
+        // Check if it's the old document
+
+        if (this.document === doc) {
+            return;
+        }
+        // Override default window.document, and set our document
+
+        document = doc;
+        this.document = doc;
+
+        var root = document.documentElement,
+            rootID = this.xmlID(root),
+            features = CoreCache[rootID],
+            feature;
+
+        // Don't run feature detection twice
+
+        if (features) {
+            for (feature in features) {
+                this[feature] = features[feature];
+            }
+            return;
+        }
+
+        features = CoreCache[rootID] = {};
+        features.root = root;
+        features.isXMLDocument = this.isXML(document);
+        features.detectDuplicates = !!hasDuplicate;
+        features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
+
+        // on non-HTML documents innerHTML and getElementsById doesnt work properly
+        _support.assert(function(div) {
+            div.innerHTML = '<a id="hAzzle_id"></a>';
+            features.isHTMLDocument = !!document.getElementById('hAzzle_id');
+        });
+
+        // iF HTML doc
+
+        if (!Core.isXML(root)) {
+
+            // Check if getElementsByTagName('*') returns only elements
+            features.getElementsByTagName = _support.assert(function(div) {
+                div.appendChild(doc.createComment(''));
+                return !div.getElementsByTagName('*').length;
+            }); // IE returns elements with the name instead of just id for getElementsById for some documents
+            features.getById = _support.assert(function(div) {
+                div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
+                return document.getElementById('hAzzle_id') === div.firstChild;
+            });
+
+            var rbuggyMatches = Core.rbuggyMatches = [],
+                rbuggyQSA = Core.rbuggyQSA = [];
+
+            if ((_support.qsa = rnative.test(doc.querySelectorAll))) {
+                // Build QSA regex
+                // Regex strategy adopted from Diego Perini
+                _support.assert(function(div) {
+                    div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
+
+                    // Webkit/Opera - :checked should return selected option elements
+                    // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
+                    if (!div.querySelectorAll(':checked').length) {
+                        rbuggyQSA.push(':checked');
+                    }
+                });
+            }
+
+            if ((features.matchesSelector = rnative.test((matches = docElem.matches ||
+                    docElem.webkitMatchesSelector ||
+                    docElem.mozMatchesSelector ||
+                    docElem.oMatchesSelector ||
+                    docElem.msMatchesSelector)))) {
+
+                _support.assert(function(div) {
+                    // Check to see if it's possible to do matchesSelector
+                    // on a disconnected node (IE 9)
+                    Core.disconnectedMatch = matches.call(div, 'div');
+                });
+            }
+
+            rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join('|'));
+            rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join('|'));
+        }
+
+        // Contains
+
+        features.contains = Core.native || Core.native.test(docElem.contains) ?
+            function(a, b) {
+                var adown = a.nodeType === 9 ? a.documentElement : a,
+                    bup = b && b.parentNode;
+                return a === bup || !!(bup && bup.nodeType === 1 && (
+                    adown.contains ?
+                    adown.contains(bup) :
+                    a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+                ));
+            } :
+            function(a, b) {
+                if (b) {
+                    while ((b = b.parentNode)) {
+                        if (b === a) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
+
+        // Document order sorting
+        Core.sortOrder = Core.native ?
+            function(a, b) {
+
+                // Flag for duplicate removal
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                // Sort on method existence if only one input has compareDocumentPosition
+                var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+                if (compare) {
+                    return compare;
+                }
+
+                // Calculate position if both inputs belong to the same document
+                compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
+                    a.compareDocumentPosition(b) : 1;
+
+                // Disconnected nodes
+                if (compare & 1 ||
+                    (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
+
+                    // Choose the first element that is related to our preferred document
+                    if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
+                        return -1;
+                    }
+                    if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
+                        return 1;
+                    }
+
+                    // Maintain original order
+                    return sortInput ?
+                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                        0;
+                }
+
+                return compare & 4 ? -1 : 1;
+            } :
+            function(a, b) {
+                // Exit early if the nodes are identical
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                var cur,
+                    i = 0,
+                    aup = a.parentNode,
+                    bup = b.parentNode,
+                    ap = [a],
+                    bp = [b];
+
+                // Parentless nodes are either documents or disconnected
+                if (!aup || !bup) {
+                    return a === doc ? -1 :
+                        b === doc ? 1 :
+                        aup ? -1 :
+                        bup ? 1 :
+                        sortInput ?
+                        (_indexOf.call(sortInput, a) - _indexOf.call(sortInput, b)) :
+                        0;
+
+                    // If the nodes are siblings, we can do a quick check
+                } else if (aup === bup) {
+                    return siblingCheck(a, b);
+                }
+
+                // Otherwise we need full lists of their ancestors for comparison
+                cur = a;
+                while ((cur = cur.parentNode)) {
+                    ap.unshift(cur);
+                }
+                cur = b;
+                while ((cur = cur.parentNode)) {
+                    bp.unshift(cur);
+                }
+
+                // Walk down the tree looking for a discrepancy
+                while (ap[i] === bp[i]) {
+                    i++;
+                }
+
+                return i ?
+                    // Do a sibling check if the nodes have a common ancestor
+                    siblingCheck(ap[i], bp[i]) :
+
+                    // Otherwise nodes in our document sort first
+                    ap[i] === winDoc ? -1 :
+                    bp[i] === winDoc ? 1 :
+                    0;
+            };
+
+        root = null;
+
+        for (feature in features) {
+            this[feature] = features[feature];
+        }
+    };
+
     // Set correct sortOrder
 
     sortOrder = Core.sortOrder;
@@ -1418,11 +1410,12 @@ hAzzle.define('Core', function() {
             j = 0,
             i = 0;
 
-        _hasDuplicate = !Core.detectDuplicates;
-        _sortInput = !Core.sortStable && results.slice(0);
+        // Unless we *know* we can detect duplicates, assume their presence
+        hasDuplicate = !Core.detectDuplicates;
+        sortInput = !Core.sortStable && results.slice(0);
         results.sort(sortOrder);
 
-        if (_hasDuplicate) {
+        if (hasDuplicate) {
             while ((elem = results[i++])) {
                 if (elem === results[i]) {
                     j = duplicates.push(i);
@@ -1433,7 +1426,7 @@ hAzzle.define('Core', function() {
             }
         }
 
-        _sortInput = null;
+        sortInput = null;
 
         return results;
     }
@@ -1689,7 +1682,6 @@ hAzzle.define('Collection', function() {
 });
 
 // jiesa.js
-// jiesa.js
 hAzzle.define('Jiesa', function() {
 
     var _util = hAzzle.require('Util'),
@@ -1707,10 +1699,6 @@ hAzzle.define('Jiesa', function() {
 
         rattributeQuotes = new RegExp("=" + whitespace + "*([^\\]'\"]*?)" + whitespace + "*\\]", "g"),
         docElem = window.document.documentElement,
-
-        // Holder for pseudo selectors
-
-        pseudos = {},
 
         _matches = docElem.matches ||
         docElem.webkitMatchesSelector ||
@@ -1736,9 +1724,8 @@ hAzzle.define('Jiesa', function() {
             if (relativeHierarchySelector && hasParent) {
                 context = context.parentNode;
             }
-            var selectors = query.match(_unionSplit),
-                i = 0;
-            for (; i < selectors.length; i++) {
+            var selectors = query.match(_unionSplit);
+            for (var i = 0; i < selectors.length; i++) {
                 selectors[i] = "[id='" + nid + "'] " + selectors[i];
             }
             query = selectors.join(",");
@@ -1902,27 +1889,17 @@ hAzzle.define('Jiesa', function() {
 
             if (_core && _core.isHTML) {
 
-                // Do a quick lookup and check for pseudo selectors directly without
-                // touching the DOM
+                try {
+                    var ret = matchesSelector(elem, sel);
 
-                if (pseudos[sel]) {
-
-                    return pseudos[sel](elem)
-
-                } else {
-
-                    try {
-                        var ret = matchesSelector(elem, sel);
-
-                        // IE 9's matchesSelector returns false on disconnected nodes
-                        if (ret || _core.disconnectedMatch ||
-                            // As well, disconnected nodes are said to be in a document
-                            // fragment in IE 9
-                            elem.document && elem.document.nodeType !== 11) {
-                            return ret;
-                        }
-                    } catch (e) {}
-                }
+                    // IE 9's matchesSelector returns false on disconnected nodes
+                    if (ret || _core.disconnectedMatch ||
+                        // As well, disconnected nodes are said to be in a document
+                        // fragment in IE 9
+                        elem.document && elem.document.nodeType !== 11) {
+                        return ret;
+                    }
+                } catch (e) {}
             }
             // FIX ME!! Fallback solution need to be developed here!
         };
@@ -1966,160 +1943,33 @@ hAzzle.define('Jiesa', function() {
 
     // Filter element collection
 
-    this.filter = function(sel, not) {
+    this.filter = function(selector, not) {
 
-        if (sel === undefined) {
+        if (selector === undefined) {
             return this;
         }
-
-        var elems = this.elements,
-            ret = [];
-        if (typeof sel === 'function') {
-            this.each(function(elem, index) {
-                if (sel.call(elem, index, elem)) {
-                    ret.push(elem);
+        if (typeof selector === 'function') {
+            var els = [];
+            this.each(function(el, index) {
+                if (selector.call(el, index)) {
+                    els.push(el);
                 }
             });
-        } else if (typeof sel === 'string') {
-            // Single element lookup are faster then multiple elements
-            if (this.length === 1 && elems[0].nodeType === 1) {
-                return hAzzle(matchesSelector(elems[0], sel));
-            } else {
-                _util.each(elems, function(elem) {
 
-                    if (matches(elem, sel) !== (not || false) && elem.nodeType === 1) {
-                        ret.push(elem);
-                    }
-                });
-            }
-            return hAzzle(ret);
+            return hAzzle(els);
+
+        } else {
+            return this.filter(function() {
+                return matchesSelector(this, selector) != (not || false);
+            });
         }
     };
 
     return {
         matchesSelector: matchesSelector,
         matches: matches,
-        pseudos: pseudos,
         find: Jiesa
     };
-});
-// pseudos.js
-hAzzle.define('pseudos', function() {
-
-    var _util = hAzzle.require('Util'),
-        _jiesa = hAzzle.require('Jiesa');
-
-    _util.mixin(_jiesa.pseudos, {
-
-        ':hidden': function(elem) {
-
-            var style = elem.style;
-            if (style) {
-                if (style.display === 'none' ||
-                    style.visibility === 'hidden') {
-                    return true;
-                }
-            }
-            return elem.type === 'hidden';
-        },
-
-        ':visible': function(elem) {
-            return !_jiesa.pseudos[':hidden'](elem);
-
-        },
-        ':active': function(elem) {
-            return elem === document.activeElement;
-        },
-
-        ':empty': function(elem) {
-            // DomQuery and jQuery get this wrong, oddly enough.
-            // The CSS 3 selectors spec is pretty explicit about it, too.
-            var cn = elem.childNodes,
-                cnl = elem.childNodes.length,
-                nt,
-                x = cnl - 1;
-
-            for (; x >= 0; x--) {
-
-                nt = cn[x].nodeType;
-
-                if ((nt === 1) || (nt === 3)) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        ':text': function(elem) {
-            var attr;
-            return elem.nodeName.toLowerCase() === 'input' &&
-                elem.type === 'text' &&
-                ((attr = elem.getAttribute('type')) === null ||
-                    attr.toLowerCase() === 'text');
-        },
-        ':button': function(elem) {
-            var name = elem.nodeName.toLowerCase();
-            return name === 'input' && elem.type === 'button' ||
-                name === 'button';
-        },
-        ':input': function(elem) {
-            return /^(?:input|select|textarea|button)$/i.test(elem.nodeName);
-        },
-        ':selected': function(elem) {
-            // Accessing this property makes selected-by-default
-            // options in Safari work properly
-            if (elem.parentNode) {
-                elem.parentNode.selectedIndex;
-            }
-            return elem.selected === true;
-        }
-    });
-
-    // Add button/input type pseudos
-
-    _util.each({
-        radio: true,
-        checkbox: true,
-        file: true,
-        password: true,
-        image: true
-    }, function(value, prop) {
-        _jiesa.pseudos[':' + prop] = createInputPseudo(prop);
-    });
-
-    _util.each({
-        submit: true,
-        reset: true
-    }, function(value, prop) {
-        _jiesa.pseudos[':' + prop] = createButtonPseudo(prop);
-    });
-
-    function createInputPseudo(type) {
-        return function(elem) {
-            var name = elem.nodeName.toLowerCase();
-            return name === 'input' && elem.type === type.toLowerCase();
-        };
-    }
-
-    function createButtonPseudo(type) {
-        return function(elem) {
-            var name = elem.nodeName.toLowerCase();
-            return (name === 'input' || name === 'button') && elem.type === type.toLowerCase();
-        };
-    }
-
-    function createDisabledPseudo(disabled) {
-        return function(elem) {
-            return (disabled || 'label' in elem || elem.href) && elem.disabled === disabled ||
-                'form' in elem && elem.disabled === false && (
-                    elem.isDisabled === disabled ||
-                    elem.isDisabled !== !disabled &&
-                    ('label' in elem) !== disabled
-                );
-        };
-    }
-    _jiesa.pseudos[':enabled'] = createDisabledPseudo(false);
-    _jiesa.pseudos[':disabled'] = createDisabledPseudo(true);
-    return {};
 });
 
 // strings.js
@@ -2153,6 +2003,10 @@ hAzzle.define('Strings', function() {
 
         escHTML = /[&<>"']/g,
 
+        // escapeRegExp regExp
+
+        eRegExp = /([.*+?^=!:${}()|[\]\/\\])/g,
+
         // Microsoft RegExp
 
         msPrefix = /^-ms-/,
@@ -2160,6 +2014,14 @@ hAzzle.define('Strings', function() {
         // camlize RegExp
 
         dashAlpha = /-([\da-z])/gi,
+
+        // manualLowercase regExp
+
+        capitalizedChars = /[A-Z]/g,
+
+        // manualUppercase regExp
+
+        nonCapitalizedChars = /[a-z]/g,
 
         // Cache array for hAzzle.camelize()
 
@@ -2190,6 +2052,28 @@ hAzzle.define('Strings', function() {
 
         fhyphenate = function(letter) {
             return ('-' + letter.charAt(0).toLowerCase());
+        },
+
+        // Converts the specified string to lowercase.
+
+        lowercase = function(str) {
+            return typeof str === 'string' ? str.toLowerCase() : str;
+        },
+        // Converts the specified string to uppercase
+        uppercase = function(str) {
+            return typeof str === 'string' ? str.toUpperCase() : str;
+        },
+        manualLowercase = function(str) {
+            /* jshint bitwise: false */
+            return typeof str === 'string' ? str.replace(capitalizedChars, function(ch) {
+                return String.fromCharCode(ch.charCodeAt(0) | 32);
+            }) : str;
+        },
+        manualUppercase = function(str) {
+            /* jshint bitwise: false */
+            return typeof str === 'string' ? str.replace(nonCapitalizedChars, function(ch) {
+                return String.fromCharCode(ch.charCodeAt(0) & ~32);
+            }) : str;
         },
 
         capitalize = function(str) {
@@ -2238,6 +2122,12 @@ hAzzle.define('Strings', function() {
             length = ~~length;
             return str.length > length ? str.slice(0, length) + truncateStr : str;
         },
+        escapeRegExp = function(str) {
+            if (!str == null) {
+                return '';
+            }
+            return String(str).replace(eRegExp, '\\$1');
+        },
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
                 return '&' + reversedescapeMap[m] + ';';
@@ -2258,6 +2148,16 @@ hAzzle.define('Strings', function() {
             });
         };
 
+    // Credit: AngularJS    
+    // String#toLowerCase and String#toUpperCase don't produce correct results in browsers with Turkish
+    // locale, for this reason we need to detect this case and redefine lowercase/uppercase methods
+    // with correct but slower alternatives.
+
+    if ('i' !== 'I'.toLowerCase()) {
+        lowercase = manualLowercase;
+        uppercase = manualUppercase;
+    }
+
     for (var key in escapeMap) {
         reversedescapeMap[escapeMap[key]] = key;
     }
@@ -2269,8 +2169,13 @@ hAzzle.define('Strings', function() {
         hyphenate: hyphenate,
         camelize: camelize,
         trim: trim,
+        lowercase: lowercase,
+        uppcase: uppercase,
+        manualLowercase: manualLowercase,
+        manualUppercase: manualUppercase,
         escapeHTML: escapeHTML,
         unescapeHTML: unescapeHTML,
+        escapeRegExp: escapeRegExp,
         truncate: truncate
     };
 });
@@ -2579,9 +2484,6 @@ hAzzle.define('Storage', function() {
     };
 });
 // curcss.js
-// Note! Contains *only* native CSS, and position, and offset, for more *advanced* CSS, 
-// use the style.js module
-
 hAzzle.define('curCSS', function() {
 
     var _has = hAzzle.require('has'),
@@ -2610,19 +2512,21 @@ hAzzle.define('curCSS', function() {
         } :
 
         function(elem) {
+            var view = false;
 
-            if (elem && elem.ownerDocument !== null) {
-                var view = false;
-                if (elem) {
-                    if (elem.ownerDocument !== undefined) {
-                        view = elem.ownerDocument.defaultView;
-                    }
-                    return _support.cS ? (view && computedStyle ?
-                        (view.opener ? view.getComputedStyle(elem, null) :
-                            window.getComputedStyle(elem, null)) : elem.style) : elem.style;
+            if (elem && elem !== window) {
+
+                if (elem.ownerDocument !== undefined) {
+                    view = elem.ownerDocument.defaultView;
                 }
+                // Support: IE<=11+, Firefox<=30+
+                // IE throws on elements created in popups
+                // FF meanwhile throws on frame elements through 'defaultView.getComputedStyle'
+                return _support.cS ? (view && computedStyle ?
+                    (view.opener ? view.getComputedStyle(elem, null) :
+                        window.getComputedStyle(elem, null)) : elem.style) : elem.style;
             }
-            return '';
+            return null;
         },
         computedCSS = function(elem) {
             if (elem) {
@@ -2658,6 +2562,7 @@ hAzzle.define('curCSS', function() {
                 (parseFloat(curCSS(elem, 'paddingLeft')) || 0) -
                 (parseFloat(curCSS(elem, 'paddingRight')) || 0);
         },
+        // Prop to jQuery for the name!
 
         curCSS = function(elem, prop, force) {
 
@@ -2689,7 +2594,7 @@ hAzzle.define('curCSS', function() {
                 }
 
                 // Support: IE9
-                // getPropertyValue is only needed for .css('filter'). It's terrible slow and ugly too!
+                // getPropertyValue is only needed for .css('filter')
 
                 if (_has.ie === 9 && prop === 'filter') {
                     computedValue = computedStyle.getPropertyValue(prop);
@@ -2705,9 +2610,9 @@ hAzzle.define('curCSS', function() {
 
                 if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
 
-                    var pos = curCSS(elem, 'position');
+                    var position = curCSS(elem, 'position');
 
-                    if (pos === 'fixed' || (pos === 'absolute' && (prop === 'left' || prop === 'top'))) {
+                    if (position === 'fixed' || (position === 'absolute' && (prop === 'left' || prop === 'top'))) {
                         computedValue = hAzzle(elem).position()[prop] + 'px';
                     }
                 }
@@ -2715,7 +2620,8 @@ hAzzle.define('curCSS', function() {
             }
         },
 
-        setOffset = function(elem, opts, i) {
+
+        setOffset = function(elem, options, i) {
             var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
                 position = curCSS(elem, 'position'),
                 curElem = hAzzle(elem),
@@ -2744,34 +2650,40 @@ hAzzle.define('curCSS', function() {
                 curLeft = parseFloat(curCSSLeft) || 0;
             }
 
-            if (_types.isType('function')(opts)) {
-                opts = opts.call(elem, i, curOffset);
+            if (_types.isType('function')(options)) {
+                options = options.call(elem, i, curOffset);
             }
 
-            if (opts.top != null) {
-                props.top = (opts.top - curOffset.top) + curTop;
+            if (options.top != null) {
+                props.top = (options.top - curOffset.top) + curTop;
             }
-            if (opts.left != null) {
-                props.left = (opts.left - curOffset.left) + curLeft;
+            if (options.left != null) {
+                props.left = (options.left - curOffset.left) + curLeft;
             }
 
-            if ('using' in opts) {
-                opts.using.call(elem, props);
+            if ('using' in options) {
+                options.using.call(elem, props);
 
             } else {
                 curElem.css(props);
             }
         };
 
-    this.offset = function(opts) {
+    this.offset = function(options) {
         if (arguments.length) {
-            return opts === undefined ?
+            return options === undefined ?
                 this.elements :
                 this.each(function(elem, i) {
-                    setOffset(elem, opts, i);
+                    setOffset(elem, options, i);
                 });
         }
-        var docElem, elem = this.elements[0],
+
+        var docElem, win,
+            elem = this.elements[0],
+            box = {
+                top: 0,
+                left: 0
+            },
             doc = elem && elem.ownerDocument;
 
         if (!doc) {
@@ -2782,59 +2694,64 @@ hAzzle.define('curCSS', function() {
 
         // Make sure it's not a disconnected DOM node
         if (!_core.contains(docElem, elem)) {
-            return {
-                top: 0,
-                left: 0
-            };
+            return box;
         }
-        // All major browsers supported by hAzzle supports getBoundingClientRect, so no
-        // need for a workaround
+        // If we don't have gBCR, just use 0,0 rather than error
+        if (elem.getBoundingClientRect) {
+            box = elem.getBoundingClientRect();
+        }
+        win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
 
-        var bcr = elem.getBoundingClientRect(),
-            isFixed = (curCSS(elem, 'position') === 'fixed'),
-            win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
         return {
-            top: bcr.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : win.pageYOffset) - docElem.clientTop,
-            left: bcr.left + elem.parentNode.scrollLeft + ((isFixed) ? 0 : win.pageXOffset) - docElem.clientLeft
+            top: box.top + win.pageYOffset - docElem.clientTop,
+            left: box.left + win.pageXOffset - docElem.clientLeft
         };
     };
 
-    this.position = function(relative) {
-
-        var offset = this.offset(),
-            elem = this.elements[0],
-            scroll = {
-                top: 0,
-                left: 0
-            },
-            position = {
-                top: 0,
-                left: 0
-            };
-
+    this.position = function() {
         if (!this.elements[0]) {
             return;
         }
 
-        elem = elem.parentNode;
-
-        if (!_util.nodeName(elem, 'html')) {
-            scroll.top += elem.scrollLeft;
-            scroll.left += elem.scrollTop;
-        }
-        position = {
-            top: offset.top - scroll.top,
-            left: offset.left - scroll.left
-        };
-
-        if (relative && (relative = hAzzle(relative))) {
-            var relativePosition = relative.getPosition();
-            return {
-                top: position.top - relativePosition.top - parseInt(curCSS(relative, 'borderLeftWidth')) || 0,
-                y: position.left - relativePosition.left - parseInt(curCSS(relative, 'borderTopWidth')) || 0
+        var offsetParent, offset,
+            elem = this.elements[0],
+            parentOffset = {
+                top: 0,
+                left: 0
             };
+
+        // Fixed elements are offset from window (parentOffset = {top:0, left: 0},
+        // because it is its only offset parent
+        if (curCSS(elem, 'position') === 'fixed') {
+            // Assume getBoundingClientRect is there when computed position is fixed
+            offset = elem.getBoundingClientRect();
+
+        } else {
+            // Get *real* offsetParent
+            offsetParent = this.offsetParent();
+
+            // Get correct offsets
+            offset = this.offset();
+
+            if (!_util.nodeName(offsetParent.elements[0], 'html')) {
+
+                parentOffset = offsetParent.offset();
+            }
+
+            // Add offsetParent borders
+
+            parentOffset.top += parseFloat(curCSS(offsetParent.elements[0], 'borderTopWidth', true));
+            parentOffset.left += parseFloat(curCSS(offsetParent.elements[0], 'borderLeftWidth', true));
         }
-        return position;
+        // Subtract offsetParent scroll positions
+
+        parentOffset.top -= offsetParent.scrollTop();
+        parentOffset.left -= offsetParent.scrollLeft();
+        // Subtract parent offsets and element margins
+        return {
+            top: offset.top - parentOffset.top - parseFloat(curCSS(elem, 'marginTop', true)),
+            left: offset.left - parentOffset.left - parseFloat(curCSS(elem, 'marginLeft', true))
+        };
     };
 
     this.offsetParent = function() {
@@ -2852,7 +2769,7 @@ hAzzle.define('curCSS', function() {
 
     return {
         computed: computedCSS,
-        styles: getStyles,
+        getStyles: getStyles,
         css: curCSS
     };
 });
@@ -3360,7 +3277,9 @@ hAzzle.define('attrHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters');
+        _setters = hAzzle.require('Setters'),
+        _docElem = document.documentElement,
+        _winDoc = window.document;
 
     // Setter
     _util.mixin(_setters.attrHooks.set, {
@@ -3375,6 +3294,16 @@ hAzzle.define('attrHooks', function() {
                 }
                 return value;
             }
+        },
+        // Title hook for DOM        
+        'title': function(elem, value) {
+            (elem = _docElem ? _winDoc : elem).title = value;
+        }
+    });
+    // Getter    
+    _util.mixin(_setters.attrHooks.get, {
+        'title': function(elem) {
+            return elem === _docElem ? _winDoc.title : elem.title;
         }
     });
     return {};
@@ -3385,12 +3314,15 @@ hAzzle.define('propHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters');
+        _setters = hAzzle.require('Setters'),
 
+        _focusable = /^(?:input|select|textarea|button)$/i;
+
+    // Getter    
     _util.mixin(_setters.propHooks.get, {
         'tabIndex': function(elem) {
             return elem.hasAttribute('tabindex') ||
-                /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ?
+                _focusable.test(elem.nodeName) || elem.href ?
                 elem.tabIndex :
                 -1;
         }
@@ -3407,16 +3339,18 @@ hAzzle.define('propHooks', function() {
     }
     return {};
 });
+
 // boolhooks.js
 hAzzle.define('boolHooks', function() {
 
     var _setters = hAzzle.require('Setters');
 
+    // Setter    
+
     _setters.boolHooks.set = function(elem, value, name) {
-        // If value is false, remove the attribute
         if (value === false) {
+            // Remove boolean attributes when set to false
             _setters.removeAttr(elem, name);
-            // If value is not false, set the same name value (checked = 'checked')
         } else {
             elem.setAttribute(name, name);
         }
@@ -3431,10 +3365,9 @@ hAzzle.define('valHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _strings = hAzzle.require('Strings'),
-        _text = hAzzle.require('Text'),
+        _getText = hAzzle.require('Text'),
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
-        _support = hAzzle.require('Support'),
         _setters = hAzzle.require('Setters');
 
     // Setter
@@ -3470,46 +3403,43 @@ hAzzle.define('valHooks', function() {
 
             return val !== null ?
                 val :
-                _strings.trim(_text.getText(elem));
+                _strings.trim(_getText.getText(elem));
         },
 
-        'select': function(elem) {
+        'select': function(elem, value) {
 
-            var index = elem.selectedIndex,
-                // Single box type attribute for select-one
-                // Checkbox type attribute for select-multiple
-                one = elem.type === 'select-one',
-                options = elem.options,
-                vals = [],
-                val, max, option, i;
+            // Selectbox has special case
 
-            if (index < 0) {
-                return '';
-            }
+            var option, options = elem.options,
+                index = elem.selectedIndex,
+                one = elem.type === 'select-one' || index < 0,
+                values = one ? null : [],
+                max = one ? index + 1 : options.length,
+                i = index < 0 ? max : one ? index : 0;
 
-            i = one ? index : 0;
-            max = one ? index + 1 : options.length;
             for (; i < max; i++) {
-                option = options[i];
-                // Traverse the option element when the elements needed to filter out disabled
-                if (option.selected && (_support.optDisabled ? !option.disabled : option.getAttribute('disabled') === null) &&
-                    (!option.parentElement.disabled || option.parentElement.tagName !== 'OPTGROUP')) {
 
-                    val = hAzzle(option).val();
+                option = options[i];
+
+                if ((option.selected || i === index) &&
+                    option.getAttribute('disabled') === null &&
+                    (!option.parentNode.disabled || !_util.nodeName(option.parentNode, 'optgroup'))) {
+
+                    // Get the specific value for the option
+
+                    value = hAzzle(option).val();
+
+                    // We don't need an array for one selects
 
                     if (one) {
-                        return val;
+                        return value;
                     }
 
-                    vals.push(val);
+                    // Multi-Selects return an array
+                    values.push(value);
                 }
             }
-
-            if (one && !vals.length && options.length) {
-                return options[index].value;
-            }
-
-            return vals;
+            return values;
         }
     });
 

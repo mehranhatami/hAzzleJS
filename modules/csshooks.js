@@ -4,20 +4,8 @@ hAzzle.define('cssHooks', function() {
     var _util = hAzzle.require('Util'),
         _has = hAzzle.require('has'),
         _style = hAzzle.require('Style'),
-        _support = hAzzle.require('Support'),
-        _curCSS = hAzzle.require('curCSS'),
-
-        padMarg = {
-
-            padding: 'paddingTop paddingRight paddingBottom paddingLeft',
-            margin: 'marginTop marginRight marginBottom marginLeft',
-            borderWidth: 'borderTopWidth borderRightWidth borderBottomWidth borderLeftWidth',
-            borderColor: 'borderTopColor borderRightColor borderBottomColor borderLeftColor',
-        };
-
-    if (_support.borderRadius) {
-        padMarg.borderRadius = 'borderTopLeftRadius borderTopRightRadius borderBottomRightRadius borderBottomLeftRadius';
-    }
+        _types = hAzzle.require('Types'),
+        _curCSS = hAzzle.require('curCSS');
 
     // Fixes Chrome bug / issue
 
@@ -48,7 +36,15 @@ hAzzle.define('cssHooks', function() {
         };
     }
 
-    _util.each(padMarg, function(vals, name) {
+    _util.each({
+
+        padding: 'paddingTop paddingRight paddingBottom paddingLeft',
+        margin: 'marginTop marginRight marginBottom marginLeft',
+        borderWidth: 'borderTopWidth borderRightWidth borderBottomWidth borderLeftWidth',
+        borderColor: 'borderTopColor borderRightColor borderBottomColor borderLeftColor',
+        borderRadius: 'borderTopLeftRadius borderTopRightRadius borderBottomRightRadius borderBottomLeftRadius'
+
+    }, function(vals, name) {
         vals = vals.split(' ');
         _style.cssHooks.get[name] = function(elem) {
             return _curCSS.css(elem, vals[0]) + ' ' +
@@ -57,7 +53,8 @@ hAzzle.define('cssHooks', function() {
                 _curCSS.css(elem, vals[3]);
         };
     });
-
+    
+       // Getter    
     _util.extend(_style.cssHooks.get, {
         'opacity': function(elem, computed) {
             if (computed) {
@@ -66,10 +63,52 @@ hAzzle.define('cssHooks', function() {
                 return ret === '' ? '1' : ret;
             }
         },
-        'zIndex': function(elem) {
-            var val = _curCSS.css(elem, 'zIndex');
-            return val === 'auto' ? 0 : val;
-        }
+        'zIndex': function( elem ){
+        var val = _curCSS.css( elem, 'zIndex' );
+        return val === 'auto' ? 0 : val;
+    },
+    'height': function(elem) {
+
+       var docElem;
+            
+            if( !elem ){
+                return;
+            }
+            
+            if( _types.isWindow(elem) ){
+                return elem.document.documentElement.clientHeight;
+            }
+    
+            if( elem.nodeType === 9 ){      
+                docElem = elem.documentElement;
+                return Math.max( docElem.scrollHeight, docElem.clientHeight ) ;
+            }
+            
+            return _style.swap( elem, function(){
+                return _curCSS.css( elem, 'height' );
+            });
+     },
+    'width': function(elem) {
+
+       var docElem;
+            
+            if( !elem ){
+                return;
+            }
+            
+            if( _types.isWindow(elem) ){
+                return elem.document.documentElement.clientWidth;
+            }
+    
+            if( elem.nodeType === 9 ){      
+                docElem = elem.documentElement;
+                return Math.max( docElem.scrollWidth, docElem.clientWidth ) ;
+            }
+            
+            return _style.swap( elem, function(){
+                return _curCSS.css( elem, 'Width' );
+            });
+     },
     });
 
     return {};

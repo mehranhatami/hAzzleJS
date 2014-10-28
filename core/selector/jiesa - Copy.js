@@ -86,7 +86,6 @@ hAzzle.define('Jiesa', function() {
                 return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
             }
         },
-
         /**
          * Find elements by selectors.
          *
@@ -100,7 +99,7 @@ hAzzle.define('Jiesa', function() {
          * @param {Bool} c Save to cache? Default is true.
          */
 
-        Jiesa = function(sel, ctx) {
+          Jiesa = function(sel, ctx) {
             var m, nodeType, elem, results = [];
 
             ctx = ctx || document;
@@ -178,7 +177,7 @@ hAzzle.define('Jiesa', function() {
                 }
             }
         },
-        matches = function(elem, sel) {
+      matches = function(elem, sel) {
 
             if (sel.nodeType) {
                 return elem === sel;
