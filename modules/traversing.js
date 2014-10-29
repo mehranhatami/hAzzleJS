@@ -46,6 +46,44 @@ hAzzle.define('Traversing', function() {
                 }
                 return ret;
             });
+        },
+
+        /**
+         * With 'pluckNode()' it's possible to 'collect' DOM elements
+         * from outside hAzzle.
+         *
+         * Example:
+         *
+         * Previous:
+         * ---------
+         *
+         * pluckNode(elems, 'previousElementSibling'),
+         *
+         * Next:
+         * -----
+         * pluckNode(elems, 'nextElementSibling')
+         *
+         **/
+
+        pluckNode = function(elem, method) {
+
+            // What we do if more then one elem?
+            // This need a fix ASAP!!
+
+            if (elem instanceof hAzzle) {
+                elem = elems.elements[0];
+
+            }
+            elem = elem.length ? elem : [elem];
+            return _util.map(elem, function(element) {
+                return getClosestNode(element, method)
+            })
+        },
+        getClosestNode = function(element, method, sel) {
+            do {
+                element = element[method]
+            } while (element && ((sel && !matches(element, sel)) || !_types.isElement(element)))
+            return element
         };
 
     // Returns all sibling elements for nodes
@@ -137,7 +175,7 @@ hAzzle.define('Traversing', function() {
 
     // Get immediate children of each element in the current collection.
     // If selector is given, filter the results to only include ones matching the CSS selector.
-    
+
     this.children = function(selector) {
         var children = [];
         this.each(function(elem) {
@@ -211,5 +249,7 @@ hAzzle.define('Traversing', function() {
         };
     }.bind(this));
 
-    return {};
+    return {
+        pluckNode: pluckNode
+    };
 });
