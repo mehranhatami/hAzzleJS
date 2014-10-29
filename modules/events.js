@@ -26,7 +26,7 @@ hAzzle.define('Events', function() {
         map = {},
         fixHook = {},
         propHook = {},
-        customEvents = {},
+        eventHooks = {},
 
         // Common properties for all event types
 
@@ -123,7 +123,7 @@ hAzzle.define('Events', function() {
 
                 // event type
 
-                type = (customEvents[types[i]] ? customEvents[types[i]].base : types[i]).replace(nameRegex, '');
+                type = (eventHooks[types[i]] ? eventHooks[types[i]].base : types[i]).replace(nameRegex, '');
 
                 // There *must* be a type, no attaching namespace-only handlers
 
@@ -194,8 +194,8 @@ hAzzle.define('Events', function() {
                 type = types.replace(nameRegex, '');
             }
 
-            if (type && customEvents[type]) {
-                type = customEvents[type].base;
+            if (type && eventHooks[type]) {
+                type = eventHooks[type].base;
             }
 
             if (!types || typeof types === 'string') {
@@ -347,7 +347,7 @@ hAzzle.define('Events', function() {
 
         removeHandlers = function(elem, types, handler, namespaces) {
 
-            var type = types && (customEvents[types] ? customEvents[types[i]].base : types)(nameRegex, ''),
+            var type = types && (eventHooks[types] ? eventHooks[types[i]].base : types)(nameRegex, ''),
                 handlers = getRegistered(elem, type, null, false),
                 removed = [],
                 i = 0,
@@ -708,7 +708,7 @@ hAzzle.define('Events', function() {
         constructor: Registry,
         init: function(element, type, handler, original, ns, args, root) {
 
-            var customType = customEvents[type];
+            var customType = eventHooks[type];
 
             // If unload, remove the listener 
             if (type === 'unload') {
@@ -837,7 +837,7 @@ hAzzle.define('Events', function() {
 
     // Mouse wheel
 
-    customEvents.mousewheel = {
+    eventHooks.mousewheel = {
         base: 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll'
     };
 
@@ -849,10 +849,9 @@ hAzzle.define('Events', function() {
         pointerenter: 'pointerover',
         pointerleave: 'pointerout'
     }, function(fix, orig) {
-        customEvents[orig] = {
+        eventHooks[orig] = {
             base: fix,
             handler: function(event) {
-
                 var target = this,
                     related = event.relatedTarget;
 
@@ -862,7 +861,7 @@ hAzzle.define('Events', function() {
                 if (!related) {
                     return false;
                 }
-                return (related !== target && related.prefix !== 'xul' && !/document/.test(target.toString()) !== 'document' && !_core.contains(this, related));
+                return (related !== target && related.prefix !== 'xul' && !/document/.test(target.toString()) !== 'document' && !_core.contains(target, related));
             }
         };
     });
