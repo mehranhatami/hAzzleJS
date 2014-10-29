@@ -347,7 +347,7 @@ hAzzle.define('Events', function() {
 
         removeHandlers = function(elem, types, handler, namespaces) {
 
-            var type = types && (eventHooks[types] ? eventHooks[types[i]].base : types)(nameRegex, ''),
+              var type = types && (eventHooks[types] ? eventHooks[types].base : types).replace(nameRegex, ''),
                 handlers = getRegistered(elem, type, null, false),
                 removed = [],
                 i = 0,
