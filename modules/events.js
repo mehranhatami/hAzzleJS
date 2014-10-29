@@ -10,6 +10,7 @@ hAzzle.define('Events', function() {
         _util = hAzzle.require('Util'),
         _core = hAzzle.require('Core'),
         _collection = hAzzle.require('Collection'),
+        _has = hAzzle.require('has'),
         _types = hAzzle.require('Types'),
         _jiesa = hAzzle.require('Jiesa'),
 
@@ -25,23 +26,37 @@ hAzzle.define('Events', function() {
         popstateEvent = /^popstate$/i,
         map = {},
         fixHook = {},
+        propHook = {},
         customEvents = {},
+
+        // Common properties for all event types
 
         commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
             'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
             'srcElement target timeStamp type view which propertyName').split(' '),
-        mouseProps = commonProps.concat(('button buttons clientX clientY dataTransfer ' +
-            'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ')),
+        mouseProps = ('button buttons clientX clientY dataTransfer ' +
+            'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' '),
         mouseWheelProps = mouseProps.concat(('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ ' +
-            'axis').split(' ')), // 'axis' is FF specific
-        keyProps = commonProps.concat(('char charCode key keyCode keyIdentifier ' +
-            'keyLocation location').split(' ')),
-        textProps = commonProps.concat(('data').split(' ')),
-        touchProps = commonProps.concat(('touches targetTouches changedTouches scale rotation').split(' ')),
-        messageProps = commonProps.concat(('data origin source').split(' ')),
-        stateProps = commonProps.concat(('state').split(' ')),
+            'deltaY deltaX deltaZ').split(' ')),
+        keyProps = ('char charCode key keyCode keyIdentifier ' +
+            'keyLocation location').split(' '),
+        textProps = ('data').split(' '),
+        touchProps = ('touches changedTouches targetTouches scale rotation').split(' '),
+        messageProps = ('data origin source').split(' '),
+        stateProps = ('state').split(' ');
 
-        global = {},
+    // Firefox specific eventTypes
+    if (_has.has('firefox')) {
+        commonProps.concat('mozMovementY mozMovementX'.split(' '));
+    }
+    // WebKit eventTypes
+    // Support: Chrome / Opera
+
+    if (_has.has('webkit')) {
+        commonProps.concat(('webkitMovementY webkitMovementX').split(' '));
+    }
+
+    var global = {},
 
         // Add event to element
 
@@ -391,157 +406,123 @@ hAzzle.define('Events', function() {
             });
         },
 
+        Event = function(event, elem) {
 
-
-        // Common properties for all event types
-
-
-        // Return all common properties
-
-        common = function() {
-            return commonProps;
-        },
-
-        keyHooks = function(event, original) {
-
-            original.keyCode = event.keyCode || event.which;
-
-            return keyProps;
-        },
-
-        mouseHooks = function(event, original, type) {
-
-            original.rightClick = event.which === 3 || event.button === 2;
-            original.pos = {
-                x: 0,
-                y: 0
-            };
-
-            if (event.pageX || event.pageY) {
-                original.clientX = event.pageX;
-                original.clientY = event.pageY;
-            } else if (event.clientX || event.clientY) {
-                original.clientX = event.clientX + document.body.scrollLeft + docElem.scrollLeft;
-                original.clientY = event.clientY + document.body.scrollTop + docElem.scrollTop;
-            }
-            if (type === 'mouseover' || type === 'mouseout') {
-                original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
+            // Allow instantiation without the 'new' keyword
+            if (!(this instanceof Event)) {
+                return new Event(event, elem);
             }
 
-            return mouseProps;
-        },
+            // Needed for DOM0 events
+            event = event || ((elem.ownerDocument ||
+                    elem.document ||
+                    elem).parentWindow ||
+                win).event;
 
-        textHooks = function() {
-            return textProps;
-        },
+            this.originalEvent = event;
 
-        mouseWheelHooks = function() {
-            return mouseWheelProps;
-        },
+            if (!event) {
+                return;
+            }
 
-        touchHooks = function() {
-            return touchProps;
-        },
+            // Support: Cordova 2.5 (WebKit)
+            // All events should have a target; Cordova deviceready doesn't
+            if (!event.target) {
+                event.target = document;
+            }
+            var type = event.type,
+                // fired element (triggering the event)
+                target = event.target || event.srcElement || document,
+                i, p, props, cleaned;
 
-        messageHooks = function() {
-            return messageProps;
-        },
+            // Support: Safari 6.0+, Chrome<28
+            this.target = target.nodeType === 3 ? target.parentNode : target;
+            this.timeStamp = Date.now(); // Set time event was fixed
 
-        popstateHooks = function() {
-            return stateProps;
+            cleaned = fixHook[type];
+
+            if (!cleaned) {
+
+                fixHook[type] =
+
+                    keyEvent.test(type) ? function(event, original) { // keys
+                        // Add which for key events
+                        if (event.which == null) {
+                            event.which = original.charCode != null ? original.charCode : original.keyCode;
+                        }
+                        return keyProps;
+                    } :
+                    mouseEvent.test(type) ? function(event, original, type) { // mouse
+
+                        var button = original.button;
+
+                        original.rightClick = event.which === 3 || event.button === 2;
+                        original.pos = {
+                            x: 0,
+                            y: 0
+                        };
+                        // Calculate pageX/Y if missing and clientX/Y available
+                        if (event.pageX == null && original.clientX != null) {
+                            eventDoc = event.target.ownerDocument || document;
+                            doc = eventDoc.documentElement;
+                            body = eventDoc.body;
+
+                            event.pageX = original.clientX +
+                                (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+                                (doc && doc.clientLeft || body && body.clientLeft || 0);
+                            event.pageY = original.clientY +
+                                (doc && doc.scrollTop || body && body.scrollTop || 0) -
+                                (doc && doc.clientTop || body && body.clientTop || 0);
+                        }
+                        // click: 1 === left; 2 === middle; 3 === right
+
+                        if (!event.which && button !== undefined) {
+                            event.which = button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0));
+                        }
+
+                        if (type === 'mouseover' || type === 'mouseout') {
+                            original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
+                        }
+
+                        return mouseProps;
+                    } :
+                    textEvent.test(type) ? function() { // text
+                        return textProps;
+                    } :
+                    mouseWheelEvent.test(type) ? function() { // mouseWheel
+                        return mouseWheelProps;
+                    } :
+                    touchEvent.test(type) ? function() { // touch and gestures
+                        return touchProps;
+                    } :
+                    popstateEvent.test(type) ? function() { // popstate
+                        return stateProps;
+                    } :
+                    messageEvent.test(type) ? function() { // messages
+                        return messageProps;
+                    } :
+                    function() { // common
+                        return commonProps;
+                    };
+            }
+
+            props = fixHook[type] ? commonProps.concat(fixHook[type](this, event, type)) : commonProps;
+
+            for (i = props.length; i--;) {
+
+                if (!((p = props[i]) in this) && p in event) {
+
+                    this[p] = event[p];
+
+                }
+            }
+
+            return this;
         };
-
-    var Event = function(event, elem) {
-
-        // Allow instantiation without the 'new' keyword
-        if (!(this instanceof Event)) {
-            return new Event(event, elem);
-        }
-
-        // Needed for DOM0 events
-        event = event || ((elem.ownerDocument ||
-                elem.document ||
-                elem).parentWindow ||
-            win).event;
-
-        this.originalEvent = event;
-
-        if (!event) {
-            return;
-        }
-
-        // Support: Cordova 2.5 (WebKit)
-        // All events should have a target; Cordova deviceready doesn't
-        if (!event.target) {
-            event.target = document;
-        }
-        var type = event.type,
-            // fired element (triggering the event)
-            target = event.target || event.srcElement || document,
-            i, p, props, cleaned;
-
-        // Support: Safari 6.0+, Chrome<28
-        this.target = target.nodeType === 3 ? target.parentNode : target;
-        this.timeStamp = Date.now(); // Set time event was fixed
-
-        cleaned = fixHook[type];
-
-        if (!cleaned) {
-
-            fixHook[type] = cleaned =
-
-                mouseEvent.test(type) ? mouseHooks :
-
-                // keys
-
-                keyEvent.test(type) ? keyHooks :
-
-                // text
-
-                textEvent.test(type) ? textHooks :
-
-                // mouseWheel
-
-                mouseWheelEvent.test(type) ? mouseWheelHooks :
-
-                // touch and gestures
-
-                touchEvent.test(type) ? touchHooks :
-
-                // popstate
-
-                popstateEvent.test(type) ? popstateHooks :
-
-                // messages
-
-                messageEvent.test(type) ? messageHooks :
-
-                // common
-
-                common;
-        }
-
-
-        var getEventProperty = function(name) {
-
-        }
-
-        props = cleaned(event, this, type);
-
-        for (i = props.length; i--;) {
-
-            if (!((p = props[i]) in this) && p in event) {
-
-                this[p] = event[p];
-
-            }
-        }
-
-        return this;
-    };
 
 
     Event.prototype = {
+
         constructor: Event,
 
         // prevent default action
@@ -621,7 +602,6 @@ hAzzle.define('Events', function() {
         this.handler = this.createEventHandler(element, handler, null, args);
     }
 
-
     Registry.prototype = {
 
         createEventHandler: function(element, fn, condition, args) {
@@ -648,6 +628,7 @@ hAzzle.define('Events', function() {
                         return call(event, arguments);
                     }
                 } : function(event) {
+
 
                     if (fn.__kfx2rcf) {
 
@@ -854,7 +835,7 @@ hAzzle.define('Events', function() {
     });
 
     return {
-
+        propHook: propHook,
         addEvent: addEvent,
         removeEvent: removeEvent,
         clone: clone,
