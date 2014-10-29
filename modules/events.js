@@ -123,7 +123,7 @@ hAzzle.define('Events', function() {
 
                 // event type
 
-                type = types[i].replace(nameRegex, '');
+                type = (customEvents[types[i]] ? customEvents[types[i]].base : types[i]).replace(nameRegex, '');
 
                 // There *must* be a type, no attaching namespace-only handlers
 
@@ -181,6 +181,7 @@ hAzzle.define('Events', function() {
                 i = types.length;
 
                 while (i--) {
+
                     removeEvent(elem, types[i], selector, fn);
                 }
 
@@ -344,10 +345,9 @@ hAzzle.define('Events', function() {
          *
          */
 
-
         removeHandlers = function(elem, types, handler, namespaces) {
 
-            var type = types && types.replace(nameRegex, ''),
+            var type = types && (customEvents[types] ? customEvents[types[i]].base : types)(nameRegex, ''),
                 handlers = getRegistered(elem, type, null, false),
                 removed = [],
                 i = 0,
@@ -452,7 +452,6 @@ hAzzle.define('Events', function() {
         },
 
         rootHandler = function(evt, type) {
-
             var listeners = getRegistered(this, type || evt.type, null, false),
                 l = listeners.length,
                 i = 0;
@@ -460,7 +459,6 @@ hAzzle.define('Events', function() {
             evt = Event(evt, this);
 
             if (type) {
-
                 evt.type = type;
             }
 
@@ -499,10 +497,7 @@ hAzzle.define('Events', function() {
 
         createEventHandler = function(element, fn, condition, args) {
 
-
-            var // Get delegate target
-
-                getTarget = function(evt, eventElement) {
+            var getTarget = function(evt, eventElement) { // Get delegate target
                     return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt, element) : eventElement;
                 },
 
@@ -510,11 +505,9 @@ hAzzle.define('Events', function() {
                     var target = getTarget(event, this);
                     if (condition.apply(target, arguments)) {
                         if (event) {
-
                             event.currentTarget = target;
                         }
                         return fn.apply(element, args ? _collection.slice(arguments).concat(args) : arguments);
-
                     }
                 } : function(event) {
 
@@ -693,6 +686,7 @@ hAzzle.define('Events', function() {
         },
         isImmediatePropagationStopped: function() {
             var e = this.originalEvent;
+
             return e.isImmediatePropagationStopped && e.isImmediatePropagationStopped();
         },
         clone: function(target) {
@@ -722,8 +716,8 @@ hAzzle.define('Events', function() {
             }
 
             if (customType) {
-                if (customType.condition) {
-                    handler = createEventHandler(element, handler, customType.condition, args);
+                if (customType.handler) {
+                    handler = createEventHandler(element, handler, customType.handler, args);
                 }
                 type = customType.base || type;
             }
@@ -857,7 +851,7 @@ hAzzle.define('Events', function() {
     }, function(fix, orig) {
         customEvents[orig] = {
             base: fix,
-            condition: function(event) {
+            handler: function(event) {
 
                 var target = this,
                     related = event.relatedTarget;
