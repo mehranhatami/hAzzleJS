@@ -127,7 +127,6 @@ hAzzle.define('Events', function() {
                 // There *must* be a type, no attaching namespace-only handlers
 
                 if (!type) {
-
                     continue;
                 }
 
@@ -165,11 +164,11 @@ hAzzle.define('Events', function() {
 
         removeEvent = function(elem, types, selector, fn) {
 
+            var k, type, namespaces, i;
+
             if (elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
-
-            var k, type, namespaces, i;
 
             if (!elem) {
                 hAzzle.err(true, 17, "no element exist in removeEvent() in events.js module");
@@ -218,7 +217,6 @@ hAzzle.define('Events', function() {
                     }
                 }
             }
-
             return elem;
         },
 
@@ -278,7 +276,7 @@ hAzzle.define('Events', function() {
 
                     handlers = getRegistered(cur, type, null, false);
 
-                    evt = Event(null, cur);
+                    evt = new Event(null, cur);
                     evt.type = type;
                     call = args ? 'apply' : 'call';
                     args = args ? [evt].concat(args) : evt;
@@ -334,9 +332,9 @@ hAzzle.define('Events', function() {
             var pfx = root ? '€' : '#',
                 t;
 
-            if (!type || type == '*') {
+            if (!type || (type === '*')) {
                 for (t in map) {
-                    if (t.charAt(0) == pfx) {
+                    if (t.charAt(0) === pfx) {
                         iteratee(elem, _collection.slice(t, 1), original, handler, root, fn);
                     }
                 }
@@ -376,7 +374,8 @@ hAzzle.define('Events', function() {
             return false;
         },
 
-        // List event handlers bound to a given object for each type
+        // list event handlers bound to
+        // a given object for each type
 
         getRegistered = function(elem, type, original, root) {
             var entries = [];
@@ -407,12 +406,8 @@ hAzzle.define('Events', function() {
 
         Event = function(event, elem) {
 
-            // Allow instantiation without the 'new' keyword
-            if (!(this instanceof Event)) {
-                return new Event(event, elem);
-            }
-
             // Needed for DOM0 events
+
             event = event || ((elem.ownerDocument ||
                     elem.document ||
                     elem).parentWindow ||
@@ -434,8 +429,8 @@ hAzzle.define('Events', function() {
                 target = event.target || event.srcElement || document,
                 i, p, props, cleaned;
 
-            // Support: Safari 6.0+, Chrome<28
-            this.target = target.nodeType === 3 ? target.parentNode : target;
+
+            this.target = target.nodeType === 3 ? target.parentNode : target; // Support: Safari 6.0+, Chrome<28
             this.timeStamp = Date.now(); // Set time event was fixed
 
             cleaned = fixHook[type];
@@ -471,13 +466,14 @@ hAzzle.define('Events', function() {
                                 (doc && doc.scrollTop || body && body.scrollTop || 0) -
                                 (doc && doc.clientTop || body && body.clientTop || 0);
                         }
-                        // click: 1 === left; 2 === middle; 3 === right
 
+                        // click: 1 === left; 2 === middle; 3 === right
                         if (!event.which && button !== undefined) {
                             event.which = button & 1 ? 1 : (button & 2 ? 3 : (button & 4 ? 2 : 0));
                         }
 
                         if (type === 'mouseover' || type === 'mouseout') {
+                            // related element (routing of the event)  
                             original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
                         }
 
@@ -516,26 +512,21 @@ hAzzle.define('Events', function() {
                     };
             }
 
-            props = fixHook[type] ? commonProps.concat(fixHook[type](this, event, type)) : commonProps;
+            props = commonProps.concat(fixHook[type](this, event, type));
 
             for (i = props.length; i--;) {
-
                 if (!((p = props[i]) in this) && p in event) {
-
                     this[p] = event[p];
-
                 }
             }
-
             return this;
         };
-
 
     Event.prototype = {
 
         constructor: Event,
 
-        // prevent default action
+        // Prevent default action
 
         preventDefault: function() {
             var e = this.originalEvent;
@@ -546,7 +537,7 @@ hAzzle.define('Events', function() {
             }
         },
 
-        // stop event propagation
+        // Stop event propagation
 
         stopPropagation: function() {
             var e = this.originalEvent;
@@ -556,7 +547,7 @@ hAzzle.define('Events', function() {
                 e.cancelBubble = true;
             }
         },
-        // block any further event processing
+        // Block any further event processing
         stop: function() {
             this.preventDefault();
             this.stopPropagation();
@@ -696,30 +687,30 @@ hAzzle.define('Events', function() {
     };
 
 
-    function rootHandler(evt, type) {
+    var rootHandler = function(evt, type) {
 
-        var listeners = getRegistered(this, type || evt.type, null, false),
-            l = listeners.length,
-            i = 0;
+            var listeners = getRegistered(this, type || evt.type, null, false),
+                l = listeners.length,
+                i = 0;
 
-        evt = Event(evt, this, true);
+            evt = new Event(evt, this, true);
 
-        if (type) {
+            if (type) {
 
-            evt.type = type;
-        }
-
-        for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
-
-            if (!listeners[i].removed) {
-
-                listeners[i].handler.call(this, evt);
+                evt.type = type;
             }
-        }
-    }
 
-    // Find event delegate
-    var findDelegate = function(target, selector, root) {
+            for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
+
+                if (!listeners[i].removed) {
+
+                    listeners[i].handler.call(this, evt);
+                }
+            }
+        },
+
+        // Find delegate target for event delegation
+        findDelegate = function(target, selector, root) {
 
             if (root) {
 
@@ -735,7 +726,6 @@ hAzzle.define('Events', function() {
             }
         },
         // Event delegate
-
         delegate = function(selector, fn) {
 
             var handler = function(e) {
