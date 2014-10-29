@@ -168,7 +168,7 @@ hAzzle.define('Events', function() {
             }
 
             if (!elem) {
-                hAzzle.err(true, 17, "no element exist in removeEvent() in events.js module");
+                hAzzle.err(true, 17, 'no element exist in removeEvent() in events.js module');
                 return;
             }
 
@@ -306,7 +306,7 @@ hAzzle.define('Events', function() {
                      *       console.log(e.detail) // Console.log:  'Object { cheeseburger=true}'
                      * });
                      *
-                     * hAzzle('p').trigger('partytime', {"detail":{"cheeseburger":true}});
+                     * hAzzle('p').trigger('partytime', {'detail':{'cheeseburger':true}});
                      *
                      */
 
@@ -769,40 +769,40 @@ hAzzle.define('Events', function() {
          * hAzzle(document).on('click', hAzzle('p'), function(e) {}
          *
          */
-        findDelegate = function(target, selector, root) {
-
-            if (root) {
-
-                var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
-
-
-                for (; target && target !== root; target = target.parentElement) {
-                    for (i = els.length; i--;) {
-                        if (els[i] === target) {
-                            return target;
+         
+        findDelegate = function(event, sel, ctx) {
+            var cur = event.target;
+            if (ctx) {
+                if (cur.nodeType && (!event.button || event.type !== 'click')) {
+                    var i, array = _types.isString(sel) ? _jiesa.find(sel, ctx) : sel.elements;
+                    for (; cur && cur !== ctx; cur = cur.parentNode) {
+                        if (cur.disabled !== true || event.type !== 'click') {
+                            if (array.length > 1) {
+                                for (i = array.length; i--;) {
+                                    if (array[i] === cur) {
+                                        return cur;
+                                    }
+                                }
+                            } else if (array.length === 1 && array[0] === cur) {
+                                return cur;
+                            }
                         }
                     }
+                    return false;
                 }
             }
         },
         // Event delegate
-        delegate = function(selector, fn) {
-
+        delegate = function(sel, fn) {
             var handler = function(e) {
-                var cur = e.target;
-                // Don't process clicks on disabled elements
-                if (cur.nodeType && cur.disabled !== true) {
-                    var m = findDelegate(cur, selector, this);
-                    if (m) {
-                        fn.apply(m, arguments);
-                    }
-                }
-            };
-
+                    var match = findDelegate(e, sel, this);
+                    if (match) {
+                        fn.apply(match, arguments);
+                    }    
+                };
             handler.__kfx2rcf = {
                 ft: findDelegate,
-                // Don't conflict with Object.prototype properties
-                selector: selector + ' '
+                selector: sel
             };
             return handler;
         };
@@ -849,6 +849,17 @@ hAzzle.define('Events', function() {
         });
     };
 
+    // Fire a custom event
+
+    this.customEvent = function(type, detail, bubbles, cancel) {
+        var event = new CustomEvent(type, {
+            detail: _types.isType('Object')(detail) ? detail : {},
+            bubbles: _types.isBoolean(bubbles) ? bubbles : false,
+            cancelable: _types.isBoolean(cancel) ? cancel : false
+        });
+        this.elements[0].dispatchEvent(event);
+    };
+
     _util.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +
         'change select submit keydown keypress keyup error contextmenu').split(' '), function(prop) {
@@ -889,7 +900,7 @@ hAzzle.define('Events', function() {
                 if (!related) {
                     return false;
                 }
-                return (related !== target && related.prefix != 'xul' && !/document/.test(target.toString()) !== 'document' && !_core.contains(this, related));
+                return (related !== target && related.prefix !== 'xul' && !/document/.test(target.toString()) !== 'document' && !_core.contains(this, related));
             }
         };
     });
