@@ -661,7 +661,9 @@ hAzzle.define('Events', function() {
                 // Get correct target for delegated events
 
                 getTarget = function(evt, eventElement) {
-                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt.target, element) : eventElement;
+                    var target = fn.__kfx2rcf ? findDelegate(evt, fn.__kfx2rcf.selector) : eventElement;
+                    fn.__kfx2rcf.currentTarget = target;
+                    return target;
                 },
 
                 handler = condition ? function(event) {
@@ -744,64 +746,26 @@ hAzzle.define('Events', function() {
                 }
             }
         },
-
-        /**
-         * Find delegate target for event delegation
-         *
-         * The selector can either be an string, or series of
-         * strings splitted by comma
-         *
-         * Examples:
-         *
-         * 'p'
-         * 'p', 'div', 'span'
-         *
-         * You can delegate events like this:
-         *
-         * hAzzle(document).on('click', 'p', function(e) {}
-         *
-         * or
-         *
-         * hAzzle(document).on('click', ['p', 'div', 'span'], function(e) {}
-         *
-         * or
-         *
-         * hAzzle(document).on('click', hAzzle('p'), function(e) {}
-         *
-         */
-         
-        findDelegate = function(event, sel, ctx) {
+        findDelegate = function(event, sel) {
             var cur = event.target;
-            if (ctx) {
-                if (cur.nodeType && (!event.button || event.type !== 'click')) {
-                    var i, array = _types.isString(sel) ? _jiesa.find(sel, ctx) : sel.elements;
-                    for (; cur && cur !== ctx; cur = cur.parentNode) {
-                        if (cur.disabled !== true || event.type !== 'click') {
-                            if (array.length > 1) {
-                                for (i = array.length; i--;) {
-                                    if (array[i] === cur) {
-                                        return cur;
-                                    }
-                                }
-                            } else if (array.length === 1 && array[0] === cur) {
-                                return cur;
-                            }
-                        }
-                    }
-                    return false;
-                }
+            if (cur.nodeType && (!event.button || event.type !== 'click')) {
+                return _jiesa.matches(cur, sel) ? cur : false;
             }
+            return false;
         },
+
         // Event delegate
         delegate = function(sel, fn) {
             var handler = function(e) {
-                    var match = findDelegate(e, sel, this);
-                    if (match) {
-                        fn.apply(match, arguments);
-                    }    
-                };
+                var m = null;
+                if (handler.__kfx2rcf) {
+                    m = handler.__kfx2rcf.currentTarget;
+                }
+                if (m) {
+                    return fn.apply(m, arguments);
+                }
+            };
             handler.__kfx2rcf = {
-                ft: findDelegate,
                 selector: sel
             };
             return handler;
