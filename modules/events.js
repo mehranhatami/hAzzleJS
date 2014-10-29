@@ -440,6 +440,7 @@ hAzzle.define('Events', function() {
         },
 
         unregister = function(entry) {
+
             iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
                 list.splice(i, 1);
                 entry.removed = true;
@@ -448,62 +449,6 @@ hAzzle.define('Events', function() {
                 }
                 return false;
             });
-        },
-
-        createEventHandler = function(elem, fn, condition, args) {
-
-            // Find delegate target
-
-            var delegateTarget = function(evt, eventElement) {
-                    var target, cur = evt.target,
-                        fnk = fn.__kfx2rcf,
-                        sel;
-                    elem = elem || document.documentElement;
-                    if (fnk) {
-                        // Make sure the 'target' has a nodeType, and don't process clicks on disabled elements
-                        if (cur.nodeType && (!evt.button || evt.type !== 'click') && cur.disabled !== true) {
-                            // DOM Level 4 'matches' support are used here, and taken care of inside Jiesa
-                            if (cur !== elem) {
-                                // Don't conflict with Object.prototype properties
-                                sel = fnk.selector + ' ';
-                                target = _jiesa.matches(cur, sel, /* third arg (from/root/refNode) */ elem) ? cur : false;
-                            }
-
-                        }
-
-                    } else {
-                        target = eventElement;
-                    }
-
-                    fnk.currentTarget = target;
-
-                    return target;
-                },
-
-                call = function(event, eargs) {
-                    return fn.apply(elem, args ? _collection.slice(eargs).concat(args) : eargs);
-                },
-
-                // 'condition' are used for mouseenter, pointerenter, pointerleave e.g.
-                handler = condition ? function(event) {
-                    
-                    var target = delegateTarget(event, this);
-                    if (condition.apply(target, arguments)) {
-                        if (event) {
-                            event.currentTarget = target;
-                        }
-                        return call(event, arguments);
-                    }
-                } : function(event) {
-
-                    if (fn.__kfx2rcf) {
-                        event = event.clone(delegateTarget(event));
-                    }
-
-                    return call(event, arguments);
-                };
-            handler.__kfx2rcf = fn.__kfx2rcf;
-            return handler;
         },
 
         rootHandler = function(evt, type) {
@@ -515,6 +460,7 @@ hAzzle.define('Events', function() {
             evt = Event(evt, this);
 
             if (type) {
+
                 evt.type = type;
             }
 
@@ -524,20 +470,63 @@ hAzzle.define('Events', function() {
                 }
             }
         },
+
+        delegateTarget = function(event, sel, ctx) {
+            var cur = event.target;
+            ctx = ctx || document.documentElement;
+            // Make sure the 'target' has a nodeType, and don't process clicks on disabled elements
+            if (cur.nodeType && (!event.button || event.type !== 'click') && cur.disabled !== true) {
+                if (cur !== ctx) {
+                    return _jiesa.matches(cur, sel, /* third arg (from/root/refNode) */ ctx) ? cur : false;
+                }
+            }
+            return false;
+        },
         // Event delegate
         delegate = function(sel, fn) {
-            var handler = function() {
-                var m = null;
-                if (handler.__kfx2rcf) {
-                    m = handler.__kfx2rcf.currentTarget;
-                }
-                if (m) {
-                    return fn.apply(m, arguments);
+            var handler = function(event) {
+                var match = delegateTarget(event, sel, this);
+                if (match) {
+                    fn.apply(match, arguments);
                 }
             };
             handler.__kfx2rcf = {
+                ft: delegateTarget,
                 selector: sel
             };
+            return handler;
+        },
+
+        createEventHandler = function(element, fn, condition, args) {
+
+
+            var // Get delegate target
+
+                getTarget = function(evt, eventElement) {
+                    return fn.__kfx2rcf ? fn.__kfx2rcf.ft(evt, element) : eventElement;
+                },
+
+                handler = condition ? function(event) {
+                    var target = getTarget(event, this);
+                    if (condition.apply(target, arguments)) {
+                        if (event) {
+
+                            event.currentTarget = target;
+                        }
+                        return fn.apply(element, args ? _collection.slice(arguments).concat(args) : arguments);
+
+                    }
+                } : function(event) {
+
+
+                    if (fn.__kfx2rcf) {
+
+                        event = event.clone(getTarget(event));
+                    }
+
+                    return fn.apply(element, args ? _collection.slice(arguments).concat(args) : arguments);
+                };
+            handler.__kfx2rcf = fn.__kfx2rcf;
             return handler;
         },
 
@@ -821,7 +810,6 @@ hAzzle.define('Events', function() {
     };
 
     // Clone events attached to elements
-
 
     this.cloneEvents = function(cloneElem, type) {
         return this.each(function(el) {
