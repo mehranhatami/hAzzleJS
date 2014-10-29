@@ -72,7 +72,7 @@ hAzzle.define('Events', function() {
 
             // Don't attach events to text/comment nodes 
 
-            if (!nodeType || nodeType === 3 || nodeType === 8 || ! events) {
+            if (!nodeType || nodeType === 3 || nodeType === 8 || !events) {
                 return;
             }
 
@@ -243,7 +243,6 @@ hAzzle.define('Events', function() {
             var cur, types = type.split(' '),
                 i = types.length,
                 j = 0,
-                canContinue,
                 nodeType = elem ? elem.nodeType : undefined,
                 l, call, evt, names, handlers;
 
@@ -284,14 +283,38 @@ hAzzle.define('Events', function() {
                             handlers[j].handler.apply(cur, args);
                         }
                     }
-                    canContinue = event.returnValue !== false;
                 } else {
 
-                    evt = document.createEvent('HTMLEvents');
-                    evt.initEvent(type, true, true, win, 1);
-                    canContinue = elem.dispatchEvent(evt);
+                    /**
+                     * Create custom events.
+                     *
+                     * These events can be listened by hAzzle via `on`,
+                     * and by pure javascript via `addEventListener`
+                     *
+                     * Examples:
+                     *
+                     * hAzzle('p').on('customEvent', handler);
+                     *
+                     * hAzzle('p').trigger('customEvent');
+                     *
+                     * window.document.addEventListener('customEvent', handler);
+                     *
+                     * Width arguments:
+                     * ----------------
+                     *
+                     * hAzzle('p').on('partytime', function(e) {
+                     *       console.log(e.detail) // Console.log:  'Object { cheeseburger=true}'
+                     * });
+                     *
+                     * hAzzle('p').trigger('partytime', {"detail":{"cheeseburger":true}});
+                     *
+                     */
+
+                    // create and dispatch the event
+
+                    evt = new CustomEvent(type, args);
+                    elem.dispatchEvent(evt);
                 }
-                return canContinue;
             }
             return elem;
         },
@@ -301,6 +324,26 @@ hAzzle.define('Events', function() {
                 rm(elem, type, original);
             };
         },
+
+        /**
+         * Detach an event or set of events from an element
+         *
+         * There are many different methods for removing events:
+         *
+         *  hAzzle.('p').off(handler);
+         *
+         *  hAzzle.('p').off('click');
+         *
+         *  hAzzle.('p').off('click', handler);
+         *
+         *  hAzzle.('p').off('click mouseover');
+         *
+         *  hAzzle.('p').off({ click: clickHandler, keyup: keyupHandler });
+         *
+         *  hAzzle.('p').off();
+         *
+         */
+
 
         removeHandlers = function(elem, types, handler, namespaces) {
 
@@ -378,7 +421,7 @@ hAzzle.define('Events', function() {
             return false;
         },
 
-        // list event handlers bound to
+        // List event handlers bound to
         // a given object for each type
 
         getRegistered = function(elem, type, original, root) {
@@ -438,8 +481,6 @@ hAzzle.define('Events', function() {
             this.timeStamp = Date.now(); // Set time event was fixed
 
             cleaned = fixHook[type];
-            //alert(type)
-            //  alert(mouseWheelEvent.test(type) )
 
             if (!cleaned) {
 
@@ -704,7 +745,30 @@ hAzzle.define('Events', function() {
             }
         },
 
-        // Find delegate target for event delegation
+        /**
+         * Find delegate target for event delegation
+         *
+         * The selector can either be an string, or series of
+         * strings splitted by comma
+         *
+         * Examples:
+         *
+         * 'p'
+         * 'p', 'div', 'span'
+         *
+         * You can delegate events like this:
+         *
+         * hAzzle(document).on('click', 'p', function(e) {}
+         *
+         * or
+         *
+         * hAzzle(document).on('click', ['p', 'div', 'span'], function(e) {}
+         *
+         * or
+         *
+         * hAzzle(document).on('click', hAzzle('p'), function(e) {}
+         *
+         */
         findDelegate = function(target, selector, root) {
 
             if (root) {
@@ -737,7 +801,8 @@ hAzzle.define('Events', function() {
 
             handler.__kfx2rcf = {
                 ft: findDelegate,
-                selector: selector
+                // Don't conflict with Object.prototype properties
+                selector: selector + ' '
             };
             return handler;
         };
