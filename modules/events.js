@@ -273,7 +273,7 @@ hAzzle.define('Events', function() {
 
                     handlers = getRegistered(cur, type, null, false);
 
-                    evt = new Event(null, cur);
+                    evt = Event(null, cur);
                     evt.type = type;
                     call = args ? 'apply' : 'call';
                     args = args ? [evt].concat(args) : evt;
@@ -500,7 +500,7 @@ hAzzle.define('Events', function() {
                 l = listeners.length,
                 i = 0;
 
-            evt = new Event(evt, this);
+            evt = Event(evt, this);
 
             if (type) {
                 evt.type = type;
@@ -695,7 +695,7 @@ hAzzle.define('Events', function() {
             return e.isImmediatePropagationStopped && e.isImmediatePropagationStopped();
         },
         clone: function(target) {
-            var nE = new Event(this, this.element);
+            var nE = Event(this, this.element);
             nE.currentTarget = target;
             return nE;
         }
