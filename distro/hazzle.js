@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-27
+ * Date: 2014-10-29
  */
 (function() {
 
@@ -1553,7 +1553,7 @@ hAzzle.define('Collection', function() {
 
     // Get the element at position specified by index from the current collection.
     this.eq = function(index) {
-        return index === -1 ? hAzzle(slice(this.elements, this.length - 1)) : hAzzle(slice(this.elements, index, index + 1));
+         return hAzzle(index === -1 ? slice(this.elements, this.length - 1) : slice(this.elements, index, index + 1));
     };
 
     this.reduce = function(fn, accumulator, args) {
@@ -1688,7 +1688,6 @@ hAzzle.define('Collection', function() {
         inArray: inArray
     };
 });
-
 // jiesa.js
 hAzzle.define('Jiesa', function() {
 

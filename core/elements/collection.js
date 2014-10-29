@@ -102,7 +102,7 @@ hAzzle.define('Collection', function() {
 
     // Get the element at position specified by index from the current collection.
     this.eq = function(index) {
-        return index === -1 ? hAzzle(slice(this.elements, this.length - 1)) : hAzzle(slice(this.elements, index, index + 1));
+         return hAzzle(index === -1 ? slice(this.elements, this.length - 1) : slice(this.elements, index, index + 1));
     };
 
     this.reduce = function(fn, accumulator, args) {
