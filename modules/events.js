@@ -378,15 +378,13 @@ hAzzle.define('Events', function() {
 
             var pfx = root ? '€' : '#',
                 t;
-
-            if (!type || (type === '*')) {
+            if (!type || (type === '*')) { 
                 for (t in map) {
                     if (t.charAt(0) === pfx) {
-                        iteratee(elem, _collection.slice(t, 1), original, handler, root, fn);
+                      iteratee(elem, t.substr(1), original, handler, root, fn);
                     }
                 }
             } else {
-
                 var i, l, list = map[pfx + type],
                     all = elem == '*';
 
@@ -404,13 +402,9 @@ hAzzle.define('Events', function() {
         // Check collection for registered event,
         // match element and handler
         isRegistered = function(elem, type, original, root) {
-
             var i, list = map[(root ? '€' : '#') + type];
-
             if (list) {
-
                 i = list.length;
-
                 while (i--) {
 
                     if (!list[i].root && list[i].matches(elem, original, null)) {
@@ -436,6 +430,7 @@ hAzzle.define('Events', function() {
             var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
                 key = (entry.root ? '€' : '#') + entry.type;
             (map[key] || (map[key] = [])).push(entry);
+            console.log(map)
             return contains;
         },
 
@@ -807,7 +802,7 @@ hAzzle.define('Events', function() {
 
     this.cloneEvents = function(cloneElem, type) {
         return this.each(function(el) {
-            clone(el, cloneElem, type);
+           return clone(el, cloneElem, type);
         });
     };
 

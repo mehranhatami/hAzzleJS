@@ -1,5 +1,4 @@
 // manipulation.js
-
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
 hAzzle.define('Manipulation', function() {
@@ -63,7 +62,7 @@ hAzzle.define('Manipulation', function() {
                 destElements,
                 srcElements,
                 i, l;
-
+ 
             // Fix IE cloning issues
             if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
                 !_core.isXML(elem)) {
@@ -76,6 +75,7 @@ hAzzle.define('Manipulation', function() {
             }
             // Only allow cloning of events if the Events.js module are installed
             if (hAzzle.installed.Events) {
+ 
                 // If 'deep' clone events
                 if (deep && (source.nodeType === 1 || source.nodeType === 9)) {
 
@@ -468,6 +468,12 @@ hAzzle.define('Manipulation', function() {
         });
     };
 
+    this.fill = function(children) {
+        return this.each(function(elem) {
+            hAzzle(elem.childNodes).remove();
+        }).add(children);
+    };
+
     this.remove = function() {
         this.deepEach(clearData);
         return this.detach();
@@ -476,6 +482,7 @@ hAzzle.define('Manipulation', function() {
     // 'deep' - let you clone events
 
     this.clone = function(deep) {
+        
         // Better performance with a 'normal' for-loop then
         // map() or each()       
         var elems = this.elements,

@@ -30,56 +30,6 @@ hAzzle.define('Dimensions', function() {
             return a < b ? b : a;
         },
 
-        sizeParams = {
-            'Width': ['Left', 'Right'],
-            'Height': ['Top', 'Bottom']
-
-        },
-        getSize = function(elem, type, extra) {
-
-            var val = elem['offset' + type];
-            type = sizeParams[type];
-
-
-            if (extra === 'outer') {
-                return val;
-            }
-
-            // inner = outer - border
-            val -= parseFloat(_curcss.css(elem, 'border' + type[0] + 'Width')) +
-                parseFloat(_curcss.css(elem, 'border' + type[1] + 'Width'));
-
-            if (extra === 'inner') {
-                return val;
-            }
-            // normal = inner - padding
-            val -= parseFloat(_curcss.css(elem, 'padding' + type[0])) +
-                parseFloat(_curcss.css(elem, 'padding' + type[1]));
-
-            return val + 'px';
-        },
-
-        innerOuter = function(elem, method, value) {
-
-            var docElem;
-
-            if (elem) {
-
-                if (_types.isWindow(elem)) {
-                    return elem.document.documentElement.client[method];
-                }
-
-                if (elem.nodeType === 9) {
-                    docElem = elem.documentElement;
-                    return Math.max(docElem.scroll[method], docElem.client[method]);
-                }
-
-                return _style.swap(elem, function() {
-                    return getSize(elem, method, value);
-                });
-            }
-        },
-
         scrollLeftTop = function(elem, fn) {
             var win = getWindow(elem);
             return fn(elem, win);
@@ -191,6 +141,7 @@ hAzzle.define('Dimensions', function() {
         scrollX = function() {
             return win.pageXOffset || docElem.scrollLeft;
         };
+        
     this.scrollLeft = function(val) {
         return scrollLeft(this.elements[0], val);
     };
@@ -198,26 +149,13 @@ hAzzle.define('Dimensions', function() {
         return scrollTop(this.elements[0], val);
     };
 
-    this.innerHeight = function() {
-        return innerOuter(this.elements[0], 'Height', 'inner');
-    };
-    this.innerWidth = function() {
-        return innerOuter(this.elements[0], 'Width', 'inner');
-    };
-    this.outerHeight = function() {
-        return innerOuter(this.elements[0], 'Height', 'outer');
-    };
-    this.outerWidth = function() {
-        return innerOuter(this.elements[0], 'Width', 'outer');
-    };
-
     // 'this' height and width
 
     _util.each({
-        height: 'height',
+        height: 'Height',
         width: 'Width'
     }, function(val, prop) {
-
+     // Height / Width
         this[prop] = function(value) {
             var elem = this.elements[0],
                 doc;
@@ -235,9 +173,20 @@ hAzzle.define('Dimensions', function() {
                     doc['client' + val]
                 );
             }
-             return value === undefined ?
-            _curcss.css(this.elements[0], 'width', /*force*/ true) :
-            _style.setCSS(this.elements[0], 'height', val);
+            return value === undefined ?
+                _curcss.css(this.elements[0], 'width', /*force*/ true) :
+                _style.setCSS(this.elements[0], 'height', val);
+        };
+        // innerHeight / innerWidth
+        this['inner' + val] = function() {
+            return this.elements[0]['client' + val];
+        }
+        // outerHeight / outerWidth
+        this['outer' + val] = function(value) {
+            var elem = this.elements[0];
+            return margin ? (elem['offset' + val] +
+                (parseInt(_curcss.css(elem, prop === 'height' ? 'marginTop' : 'marginLeft'), 10) || 0) +
+                (parseInt(_curcss.css(elem, prop === 'height' ? 'marginBottom' : 'marginRight'), 10) || 0)) : elem['offset' + val];
 
         }
     }.bind(this));
