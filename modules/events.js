@@ -4,7 +4,6 @@ hAzzle.define('Events', function() {
 
     var win = window,
         doc = window.document || {},
-        docElem = doc.documentElement,
 
         // Include needed modules
         _util = hAzzle.require('Util'),
@@ -20,7 +19,7 @@ hAzzle.define('Events', function() {
         namespaceRegex = /^([^\.]*(?=\..*)\.|.*)/,
         nameRegex = /(\..*)/,
         textEvent = /^text/i,
-        mouseWheelEvent = /mouse.*(wheel|scroll)/i,
+        mouseWheelEvent = /mouse.*(wheel|scroll)|wheel/i,
         touchEvent = /^touch|^gesture/i,
         messageEvent = /^message$/i,
         popstateEvent = /^popstate$/i,
@@ -440,6 +439,8 @@ hAzzle.define('Events', function() {
             this.timeStamp = Date.now(); // Set time event was fixed
 
             cleaned = fixHook[type];
+            //alert(type)
+            //  alert(mouseWheelEvent.test(type) )
 
             if (!cleaned) {
 
@@ -454,15 +455,11 @@ hAzzle.define('Events', function() {
                     } :
                     mouseEvent.test(type) ? function(event, original, type) { // mouse
 
-                        var button = original.button;
+                        var eventDoc, doc, body, button = original.button;
 
-                        original.rightClick = event.which === 3 || event.button === 2;
-                        original.pos = {
-                            x: 0,
-                            y: 0
-                        };
                         // Calculate pageX/Y if missing and clientX/Y available
                         if (event.pageX == null && original.clientX != null) {
+
                             eventDoc = event.target.ownerDocument || document;
                             doc = eventDoc.documentElement;
                             body = eventDoc.body;
@@ -489,7 +486,20 @@ hAzzle.define('Events', function() {
                     textEvent.test(type) ? function() { // text
                         return textProps;
                     } :
-                    mouseWheelEvent.test(type) ? function() { // mouseWheel
+                    mouseWheelEvent.test(type) ? function(event, original, type) { // mouseWheel
+                        if (type === 'wheel') {
+                            event.deltaMode = original.deltaMode;
+                            event.deltaX = original.deltaX;
+                            event.deltaY = original.deltaY;
+                            event.deltaZ = original.deltaZ;
+                        } else {
+                            event.type = 'wheel';
+                            event.deltaMode = 0; // deltaMode === 0 => scrolling in pixels (in Chrome default wheelDeltaY is 120)
+                            event.deltaX = -1 * original.wheelDeltaX;
+                            event.deltaY = -1 * original.wheelDeltaY;
+                            event.deltaZ = 0; // not supported
+                        }
+
                         return mouseWheelProps;
                     } :
                     touchEvent.test(type) ? function() { // touch and gestures
