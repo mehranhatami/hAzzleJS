@@ -27,9 +27,19 @@ hAzzle.define('Events', function() {
         fixHook = {},
         customEvents = {},
 
-        props = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget detail ' +
-            'eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget ' +
-            'shiftKey srcElement target timeStamp type view which propertyName').split(' '),
+        commonProps = ('altKey attrChange attrName bubbles cancelable ctrlKey currentTarget ' +
+            'detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey ' +
+            'srcElement target timeStamp type view which propertyName').split(' '),
+        mouseProps = commonProps.concat(('button buttons clientX clientY dataTransfer ' +
+            'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ')),
+        mouseWheelProps = mouseProps.concat(('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ ' +
+            'axis').split(' ')), // 'axis' is FF specific
+        keyProps = commonProps.concat(('char charCode key keyCode keyIdentifier ' +
+            'keyLocation location').split(' ')),
+        textProps = commonProps.concat(('data').split(' ')),
+        touchProps = commonProps.concat(('touches targetTouches changedTouches scale rotation').split(' ')),
+        messageProps = commonProps.concat(('data origin source').split(' ')),
+        stateProps = commonProps.concat(('state').split(' ')),
 
         global = {},
 
@@ -381,7 +391,7 @@ hAzzle.define('Events', function() {
             });
         },
 
-        
+
 
         // Common properties for all event types
 
@@ -389,14 +399,14 @@ hAzzle.define('Events', function() {
         // Return all common properties
 
         common = function() {
-            return props;
+            return commonProps;
         },
 
         keyHooks = function(event, original) {
 
             original.keyCode = event.keyCode || event.which;
 
-            return 'char charCode key keyCode keyIdentifier keyLocation location'.split(' ');
+            return keyProps;
         },
 
         mouseHooks = function(event, original, type) {
@@ -418,34 +428,27 @@ hAzzle.define('Events', function() {
                 original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
             }
 
-            return 'button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' ');
+            return mouseProps;
         },
 
         textHooks = function() {
-
-            return 'data';
+            return textProps;
         },
 
         mouseWheelHooks = function() {
-
-            return ('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ ' +
-                'axis button buttons clientX clientY dataTransfer ' +
-                'fromElement offsetX offsetY pageX pageY screenX screenY toElement').split(' ');
+            return mouseWheelProps;
         },
 
         touchHooks = function() {
-
-            return 'touches targetTouches changedTouches scale rotation'.split(' ');
+            return touchProps;
         },
 
         messageHooks = function() {
-
-            return 'data origin source'.split(' ');
+            return messageProps;
         },
 
         popstateHooks = function() {
-
-            return 'state';
+            return stateProps;
         };
 
     var Event = function(event, elem) {
@@ -474,7 +477,7 @@ hAzzle.define('Events', function() {
         }
         var type = event.type,
             // fired element (triggering the event)
-            target = event.target || event.srcElement,
+            target = event.target || event.srcElement || document,
             i, p, props, cleaned;
 
         // Support: Safari 6.0+, Chrome<28
@@ -518,9 +521,12 @@ hAzzle.define('Events', function() {
                 common;
         }
 
-        props = cleaned(event, this, type);
 
-        props = props;
+        var getEventProperty = function(name) {
+
+        }
+
+        props = cleaned(event, this, type);
 
         for (i = props.length; i--;) {
 
