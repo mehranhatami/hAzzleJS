@@ -136,7 +136,7 @@ hAzzle.define('Events', function() {
                 namespaces = types[i].replace(namespaceRegex, '').split('.'); // namespaces
 
                 // Registrer
-                first = register(entry = new Registry(
+                first = register(entry = Registry(
                     elem,
                     type, // event type
                     fn,
@@ -440,7 +440,6 @@ hAzzle.define('Events', function() {
         },
 
         unregister = function(entry) {
-
             iteratee(entry.element, entry.type, null, entry.handler, entry.root, function(entry, list, i) {
                 list.splice(i, 1);
                 entry.removed = true;
@@ -451,7 +450,93 @@ hAzzle.define('Events', function() {
             });
         },
 
+        createEventHandler = function(element, fn, condition, args) {
+
+            var call = function(event, eargs) {
+                    return fn.apply(element, args ? _collection.slice(eargs).concat(args) : eargs);
+                },
+
+                // Get correct target for delegated events
+
+                getTarget = function(evt, eventElement) {
+                    var target, cur = evt.target;
+                    if (fn.__kfx2rcf) {
+                        if (cur.nodeType && (!evt.button || evt.type !== 'click') && cur.disabled !== true) {
+                            // DOM Level 4 'matches' support are used here, and taken care of inside Jiesa
+                            target = cur !== element && _jiesa.matches(cur, fn.__kfx2rcf.selector) ? cur : false;
+                        }
+
+                    } else {
+                        target = eventElement;
+                    }
+                    fn.__kfx2rcf.currentTarget = target;
+
+                    return target;
+                },
+                // 'condition' are used for mouseenter, pointerenter, pointerleave e.g.
+                handler = condition ? function(event) {
+                    var target = getTarget(event, this);
+                    if (condition.apply(target, arguments)) {
+                        if (event) {
+                            event.currentTarget = target;
+                        }
+                        return call(event, arguments);
+                    }
+                } : function(event) {
+
+                    if (fn.__kfx2rcf) {
+                        event = event.clone(getTarget(event));
+                    }
+
+                    return call(event, arguments);
+                };
+            handler.__kfx2rcf = fn.__kfx2rcf;
+            return handler;
+        },
+
+        rootHandler = function(evt, type) {
+
+            var listeners = getRegistered(this, type || evt.type, null, false),
+                l = listeners.length,
+                i = 0;
+
+            evt = new Event(evt, this);
+
+            if (type) {
+                evt.type = type;
+            }
+
+            for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
+                if (!listeners[i].removed) {
+                    listeners[i].handler.call(this, evt);
+                }
+            }
+        },
+        // Event delegate
+        delegate = function(sel, fn) {
+            var handler = function() {
+                var m = null;
+                if (handler.__kfx2rcf) {
+                    m = handler.__kfx2rcf.currentTarget;
+                }
+                if (m) {
+                    return fn.apply(m, arguments);
+                }
+            };
+            handler.__kfx2rcf = {
+                selector: sel
+            };
+            return handler;
+        },
+
         Event = function(event, elem) {
+            return new Event.prototype.init(event, elem);
+        };
+
+    Event.prototype = {
+
+        constructor: Event,
+        init: function(event, elem) {
 
             // Needed for DOM0 events
 
@@ -566,11 +651,7 @@ hAzzle.define('Events', function() {
                 }
             }
             return this;
-        };
-
-    Event.prototype = {
-
-        constructor: Event,
+        },
 
         // Prevent default action
 
@@ -619,53 +700,18 @@ hAzzle.define('Events', function() {
             return nE;
         }
     };
+    
+    Event.prototype.init.prototype = Event.prototype;
+    
+    // Registry
+    
+    var Registry = function(element, type, handler, original, ns, args, root) {
+        return new Registry.prototype.init(element, type, handler, original, ns, args, root);
+    };
 
-    var createEventHandler = function(element, fn, condition, args) {
-
-            var call = function(event, eargs) {
-                    return fn.apply(element, args ? _collection.slice(eargs).concat(args) : eargs);
-                },
-
-                // Get correct target for delegated events
-
-                getTarget = function(evt, eventElement) {
-                    var target, cur = evt.target;
-                    if (fn.__kfx2rcf) {
-                        if (cur.nodeType && (!evt.button || evt.type !== 'click') && cur.disabled !== true) {
-                            target = cur !== element && _jiesa.matches(cur, fn.__kfx2rcf.selector) ? cur : false;
-                        }
-
-                    } else {
-                        target = eventElement;
-                    }
-                    fn.__kfx2rcf.currentTarget = target;
-                    return target;
-                },
-
-                handler = condition ? function(event) {
-                    var target = getTarget(event, this);
-                    if (condition.apply(target, arguments)) {
-                        if (event) {
-                            event.currentTarget = target;
-                        }
-
-                        return call(event, arguments);
-                    }
-                } : function(event) {
-
-                    if (fn.__kfx2rcf) {
-                        event = event.clone(getTarget(event));
-                    }
-
-                    return call(event, arguments);
-                };
-            handler.__kfx2rcf = fn.__kfx2rcf;
-            return handler;
-        },
-
-        // Registry
-
-        Registry = function(element, type, handler, original, namespaces, args, root) {
+    Registry.prototype = {
+        constructor: Registry,
+        init: function(element, type, handler, original, ns, args, root) {
 
             var customType = customEvents[type];
 
@@ -677,7 +723,6 @@ hAzzle.define('Events', function() {
             if (customType) {
                 if (customType.condition) {
                     handler = createEventHandler(element, handler, customType.condition, args);
-
                 }
                 type = customType.base || type;
             }
@@ -685,14 +730,12 @@ hAzzle.define('Events', function() {
             this.element = element;
             this.type = type;
             this.original = original;
-            this.namespaces = namespaces;
+            this.namespaces = ns;
             this.eventType = type;
             this.target = element;
             this.root = root;
             this.handler = createEventHandler(element, handler, null, args);
-        };
-
-    Registry.prototype = {
+        },
 
         // Checks if there are any namespaces when we are
         // using the trigger() function
@@ -729,40 +772,7 @@ hAzzle.define('Events', function() {
         }
     };
 
-    var rootHandler = function(evt, type) {
-
-            var listeners = getRegistered(this, type || evt.type, null, false),
-                l = listeners.length,
-                i = 0;
-
-            evt = new Event(evt, this);
-
-            if (type) {
-                evt.type = type;
-            }
-
-            for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
-                if (!listeners[i].removed) {
-                    listeners[i].handler.call(this, evt);
-                }
-            }
-        },
-        // Event delegate
-        delegate = function(sel, fn) {
-            var handler = function() {
-                var m = null;
-                if (handler.__kfx2rcf) {
-                    m = handler.__kfx2rcf.currentTarget;
-                }
-                if (m) {
-                    return fn.apply(m, arguments);
-                }
-            };
-            handler.__kfx2rcf = {
-                selector: sel
-            };
-            return handler;
-        };
+    Registry.prototype.init.prototype = Registry.prototype;
 
     // Add event to element
 
