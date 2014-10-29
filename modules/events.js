@@ -68,23 +68,24 @@ hAzzle.define('Events', function() {
             }
 
             var original, type, types, i, args, entry, first,
-                namespaces;
+                namespaces, nodeType = elem ? elem.nodeType : undefined;
 
             // Don't attach events to text/comment nodes 
 
-            if (elem.nodeType === 3 || elem.nodeType === 8 || !events) {
+            if (!nodeType || nodeType === 3 || nodeType === 8 || ! events) {
                 return;
             }
 
             // Types can be a map of types/handlers
 
-            if (_types.isType(events) === 'object') {
-                if (typeof selector !== 'string') {
-                    fn = selector;
-                    selector = undefined;
-                }
+            if (_types.isType('Object')(events)) {
                 for (type in events) {
-                    addEvent(elem, type, events[type]);
+                    fn = events[type];
+                    if (selector === undefined) {
+                        selector = fn;
+                        fn = undefined;
+                    }
+                    addEvent(elem, type, selector, fn);
                 }
                 return;
             }
@@ -153,13 +154,9 @@ hAzzle.define('Events', function() {
             global[entry.eventType] = true;
         },
 
-        once = function(rm, elem, type, fn, original) {
-            return function() {
-                fn.apply(this, arguments);
-                rm(elem, type, original);
-            };
+        one = function(elem, events, selector, fn) {
+            addEvent(elem, events, selector, fn, 1);
         },
-
         // Detach an event or set of events from an element
 
         removeEvent = function(elem, types, selector, fn) {
@@ -247,6 +244,7 @@ hAzzle.define('Events', function() {
                 i = types.length,
                 j = 0,
                 canContinue,
+                nodeType = elem ? elem.nodeType : undefined,
                 l, call, evt, names, handlers;
 
             if (elem instanceof hAzzle) {
@@ -257,7 +255,7 @@ hAzzle.define('Events', function() {
 
             // Don't do events on text and comment nodes
 
-            if (elem.nodeType === 3 || elem.nodeType === 8 || !type) {
+            if (!nodeType || nodeType === 3 || nodeType === 8 || !type) {
                 return;
             }
 
@@ -296,6 +294,12 @@ hAzzle.define('Events', function() {
                 return canContinue;
             }
             return elem;
+        },
+        once = function(rm, elem, type, fn, original) {
+            return function() {
+                fn.apply(this, arguments);
+                rm(elem, type, original);
+            };
         },
 
         removeHandlers = function(elem, types, handler, namespaces) {
@@ -466,6 +470,7 @@ hAzzle.define('Events', function() {
                                 (doc && doc.scrollTop || body && body.scrollTop || 0) -
                                 (doc && doc.clientTop || body && body.clientTop || 0);
                         }
+
 
                         // click: 1 === left; 2 === middle; 3 === right
                         if (!event.which && button !== undefined) {
@@ -642,50 +647,40 @@ hAzzle.define('Events', function() {
             return handler;
         },
 
-        /**
-         * Checks if there are any namespaces when we are
-         * using the trigger() function
-         */
+        // Checks if there are any namespaces when we are
+        // using the trigger() function
 
         inNamespaces: function(checkNamespaces) {
 
             var self = this,
-                i, j, c = 0;
+                index, subdex, count = 0;
 
             if (!checkNamespaces) {
-
                 return true;
             }
 
-            if (!self.namespaces) {
-
+            if (!this.namespaces) {
                 return false;
             }
 
-            i = checkNamespaces.length;
+            index = checkNamespaces.length;
 
-            while (i--) {
-
-                // Fix me! Goes into infinity loop and crach Firefox
-                // if we try to use while-loop here
-
-                for (j = self.namespaces.length; j--;) {
-                    if (checkNamespaces[i] === self.namespaces[j]) {
-
-                        c++;
+            while (index--) {
+                for (subdex = self.namespaces.length; subdex--;) {
+                    if (checkNamespaces[index] === self.namespaces[index]) {
+                        count++;
                     }
                 }
             }
-            return checkNamespaces.length === c;
+            return checkNamespaces.length === count;
         },
 
-        matches: function(checkElement, checkOriginal, checkHandler) {
-            return this.element === checkElement &&
-                (!checkOriginal || this.original === checkOriginal) &&
-                (!checkHandler || this.handler === checkHandler);
+        matches: function(elem, original, handler) {
+            return this.element === elem &&
+                (!original || this.original === original) &&
+                (!handler || this.handler === handler);
         }
     };
-
 
     var rootHandler = function(evt, type) {
 
@@ -715,6 +710,7 @@ hAzzle.define('Events', function() {
             if (root) {
 
                 var i, els = typeof selector === 'string' ? _jiesa.find(selector, root, true) : root;
+
 
                 for (; target && target !== root; target = target.parentElement) {
                     for (i = els.length; i--;) {
@@ -753,6 +749,7 @@ hAzzle.define('Events', function() {
             addEvent(el, events, selector, fn);
         });
     };
+
     this.one = function(events, selector, fn) {
         return this.each(function(el) {
             addEvent(el, events, selector, fn, 1);
@@ -770,7 +767,6 @@ hAzzle.define('Events', function() {
     // Trigger specific event for element collection
 
     this.trigger = function(type, args) {
-
         return this.each(function(el) {
             trigger(el, type, args);
         });
@@ -805,7 +801,6 @@ hAzzle.define('Events', function() {
 
     customEvents.mousewheel = {
         base: 'onwheel' in document ? 'wheel' : 'onmousewheel' in document ? 'mousewheel' : 'DOMMouseScroll'
-
     };
 
     // Populate the custom event list
@@ -836,9 +831,12 @@ hAzzle.define('Events', function() {
 
     return {
         propHook: propHook,
-        addEvent: addEvent,
-        removeEvent: removeEvent,
+        on: addEvent,
+        one: one,
+        off: removeEvent,
         clone: clone,
-        fire: trigger
+        fire: trigger,
+        // jQuery API friendly name
+        trigger: trigger
     };
 });
