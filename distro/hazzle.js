@@ -1075,6 +1075,7 @@ hAzzle.define('Util', function() {
         mixin: mixin,
         makeArray: makeArray,
 
+
         merge: merge,
         acceptData: acceptData,
         createCallback: createCallback,
@@ -1689,7 +1690,6 @@ hAzzle.define('Collection', function() {
 });
 
 // jiesa.js
-// jiesa.js
 hAzzle.define('Jiesa', function() {
 
     var _util = hAzzle.require('Util'),
@@ -1707,10 +1707,6 @@ hAzzle.define('Jiesa', function() {
 
         rattributeQuotes = new RegExp("=" + whitespace + "*([^\\]'\"]*?)" + whitespace + "*\\]", "g"),
         docElem = window.document.documentElement,
-
-        // Holder for pseudo selectors
-
-        pseudos = {},
 
         _matches = docElem.matches ||
         docElem.webkitMatchesSelector ||
@@ -1736,9 +1732,8 @@ hAzzle.define('Jiesa', function() {
             if (relativeHierarchySelector && hasParent) {
                 context = context.parentNode;
             }
-            var selectors = query.match(_unionSplit),
-                i = 0;
-            for (; i < selectors.length; i++) {
+            var selectors = query.match(_unionSplit);
+            for (var i = 0; i < selectors.length; i++) {
                 selectors[i] = "[id='" + nid + "'] " + selectors[i];
             }
             query = selectors.join(",");
@@ -1782,7 +1777,6 @@ hAzzle.define('Jiesa', function() {
                 return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
             }
         },
-
         /**
          * Find elements by selectors.
          *
@@ -1796,7 +1790,7 @@ hAzzle.define('Jiesa', function() {
          * @param {Bool} c Save to cache? Default is true.
          */
 
-        Jiesa = function(sel, ctx) {
+          Jiesa = function(sel, ctx) {
             var m, nodeType, elem, results = [];
 
             ctx = ctx || document;
@@ -1874,7 +1868,7 @@ hAzzle.define('Jiesa', function() {
                 }
             }
         },
-        matches = function(elem, sel) {
+      matches = function(elem, sel, ctx) {
 
             if (sel.nodeType) {
                 return elem === sel;
@@ -1902,27 +1896,17 @@ hAzzle.define('Jiesa', function() {
 
             if (_core && _core.isHTML) {
 
-                // Do a quick lookup and check for pseudo selectors directly without
-                // touching the DOM
+                try {
+                    var ret = matchesSelector(elem, sel, ctx);
 
-                if (pseudos[sel]) {
-
-                    return pseudos[sel](elem)
-
-                } else {
-
-                    try {
-                        var ret = matchesSelector(elem, sel);
-
-                        // IE 9's matchesSelector returns false on disconnected nodes
-                        if (ret || _core.disconnectedMatch ||
-                            // As well, disconnected nodes are said to be in a document
-                            // fragment in IE 9
-                            elem.document && elem.document.nodeType !== 11) {
-                            return ret;
-                        }
-                    } catch (e) {}
-                }
+                    // IE 9's matchesSelector returns false on disconnected nodes
+                    if (ret || _core.disconnectedMatch ||
+                        // As well, disconnected nodes are said to be in a document
+                        // fragment in IE 9
+                        elem.document && elem.document.nodeType !== 11) {
+                        return ret;
+                    }
+                } catch (e) {}
             }
             // FIX ME!! Fallback solution need to be developed here!
         };
@@ -1966,160 +1950,33 @@ hAzzle.define('Jiesa', function() {
 
     // Filter element collection
 
-    this.filter = function(sel, not) {
+    this.filter = function(selector, not) {
 
-        if (sel === undefined) {
+        if (selector === undefined) {
             return this;
         }
-
-        var elems = this.elements,
-            ret = [];
-        if (typeof sel === 'function') {
-            this.each(function(elem, index) {
-                if (sel.call(elem, index, elem)) {
-                    ret.push(elem);
+        if (typeof selector === 'function') {
+            var els = [];
+            this.each(function(el, index) {
+                if (selector.call(el, index)) {
+                    els.push(el);
                 }
             });
-        } else if (typeof sel === 'string') {
-            // Single element lookup are faster then multiple elements
-            if (this.length === 1 && elems[0].nodeType === 1) {
-                return hAzzle(matchesSelector(elems[0], sel));
-            } else {
-                _util.each(elems, function(elem) {
 
-                    if (matches(elem, sel) !== (not || false) && elem.nodeType === 1) {
-                        ret.push(elem);
-                    }
-                });
-            }
-            return hAzzle(ret);
+            return hAzzle(els);
+
+        } else {
+            return this.filter(function() {
+                return matchesSelector(this, selector) != (not || false);
+            });
         }
     };
 
     return {
         matchesSelector: matchesSelector,
         matches: matches,
-        pseudos: pseudos,
         find: Jiesa
     };
-});
-// pseudos.js
-hAzzle.define('pseudos', function() {
-
-    var _util = hAzzle.require('Util'),
-        _jiesa = hAzzle.require('Jiesa');
-
-    _util.mixin(_jiesa.pseudos, {
-
-        ':hidden': function(elem) {
-
-            var style = elem.style;
-            if (style) {
-                if (style.display === 'none' ||
-                    style.visibility === 'hidden') {
-                    return true;
-                }
-            }
-            return elem.type === 'hidden';
-        },
-
-        ':visible': function(elem) {
-            return !_jiesa.pseudos[':hidden'](elem);
-
-        },
-        ':active': function(elem) {
-            return elem === document.activeElement;
-        },
-
-        ':empty': function(elem) {
-            // DomQuery and jQuery get this wrong, oddly enough.
-            // The CSS 3 selectors spec is pretty explicit about it, too.
-            var cn = elem.childNodes,
-                cnl = elem.childNodes.length,
-                nt,
-                x = cnl - 1;
-
-            for (; x >= 0; x--) {
-
-                nt = cn[x].nodeType;
-
-                if ((nt === 1) || (nt === 3)) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        ':text': function(elem) {
-            var attr;
-            return elem.nodeName.toLowerCase() === 'input' &&
-                elem.type === 'text' &&
-                ((attr = elem.getAttribute('type')) === null ||
-                    attr.toLowerCase() === 'text');
-        },
-        ':button': function(elem) {
-            var name = elem.nodeName.toLowerCase();
-            return name === 'input' && elem.type === 'button' ||
-                name === 'button';
-        },
-        ':input': function(elem) {
-            return /^(?:input|select|textarea|button)$/i.test(elem.nodeName);
-        },
-        ':selected': function(elem) {
-            // Accessing this property makes selected-by-default
-            // options in Safari work properly
-            if (elem.parentNode) {
-                elem.parentNode.selectedIndex;
-            }
-            return elem.selected === true;
-        }
-    });
-
-    // Add button/input type pseudos
-
-    _util.each({
-        radio: true,
-        checkbox: true,
-        file: true,
-        password: true,
-        image: true
-    }, function(value, prop) {
-        _jiesa.pseudos[':' + prop] = createInputPseudo(prop);
-    });
-
-    _util.each({
-        submit: true,
-        reset: true
-    }, function(value, prop) {
-        _jiesa.pseudos[':' + prop] = createButtonPseudo(prop);
-    });
-
-    function createInputPseudo(type) {
-        return function(elem) {
-            var name = elem.nodeName.toLowerCase();
-            return name === 'input' && elem.type === type.toLowerCase();
-        };
-    }
-
-    function createButtonPseudo(type) {
-        return function(elem) {
-            var name = elem.nodeName.toLowerCase();
-            return (name === 'input' || name === 'button') && elem.type === type.toLowerCase();
-        };
-    }
-
-    function createDisabledPseudo(disabled) {
-        return function(elem) {
-            return (disabled || 'label' in elem || elem.href) && elem.disabled === disabled ||
-                'form' in elem && elem.disabled === false && (
-                    elem.isDisabled === disabled ||
-                    elem.isDisabled !== !disabled &&
-                    ('label' in elem) !== disabled
-                );
-        };
-    }
-    _jiesa.pseudos[':enabled'] = createDisabledPseudo(false);
-    _jiesa.pseudos[':disabled'] = createDisabledPseudo(true);
-    return {};
 });
 
 // strings.js
