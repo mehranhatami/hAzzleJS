@@ -24,7 +24,6 @@ hAzzle.define('Style', function() {
             display: 'block'
         },
 
-
         _sNumbs = /^([+-])=([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(.*)/i,
 
         // _vPrix regEx
@@ -270,6 +269,7 @@ hAzzle.define('Style', function() {
     return {
         cssHooks: cssHooks,
         cssProps: cssProps,
+        swap: swap,
         unitless: unitless,
         getCSS: getCSS,
         setCSS: setCSS

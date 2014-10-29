@@ -479,6 +479,7 @@ hAzzle.define('Manipulation', function() {
         return this.detach();
     };
 
+    // Creates a copy of a DOM element, and returns the clone.
     // 'deep' - let you clone events
 
     this.clone = function(deep) {

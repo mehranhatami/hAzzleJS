@@ -93,11 +93,9 @@ hAzzle.define('Dimensions', function() {
 
         rectangle = function(elem, cushion) {
             if (elem) {
-
                 if (elem instanceof hAzzle) {
                     elem = elem.elements[0];
                 } else {
-
                     elem = elem.nodeType ? elem : elem[0];
                 }
                 if (!elem || elem.nodeType !== 1) {
@@ -182,7 +180,7 @@ hAzzle.define('Dimensions', function() {
             return this.elements[0]['client' + val];
         }
         // outerHeight / outerWidth
-        this['outer' + val] = function(value) {
+        this['outer' + val] = function(margin) {
             var elem = this.elements[0];
             return margin ? (elem['offset' + val] +
                 (parseInt(_curcss.css(elem, prop === 'height' ? 'marginTop' : 'marginLeft'), 10) || 0) +

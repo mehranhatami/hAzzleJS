@@ -376,7 +376,7 @@ hAzzle.define('Events', function() {
 
         iteratee = function(elem, type, original, handler, root, fn) {
 
-            var pfx = root ? '€' : '#',
+            var pfx = root ? '@' : '#',
                 t;
             if (!type || (type === '*')) { 
                 for (t in map) {
@@ -386,7 +386,7 @@ hAzzle.define('Events', function() {
                 }
             } else {
                 var i, l, list = map[pfx + type],
-                    all = elem == '*';
+                    all = elem === '*';
 
                 if (!list) {
                     return;
@@ -402,7 +402,7 @@ hAzzle.define('Events', function() {
         // Check collection for registered event,
         // match element and handler
         isRegistered = function(elem, type, original, root) {
-            var i, list = map[(root ? '€' : '#') + type];
+            var i, list = map[(root ? '@' : '#') + type];
             if (list) {
                 i = list.length;
                 while (i--) {
@@ -428,9 +428,8 @@ hAzzle.define('Events', function() {
 
         register = function(entry) {
             var contains = !entry.root && !isRegistered(entry.element, entry.type, null, false),
-                key = (entry.root ? '€' : '#') + entry.type;
+                key = (entry.root ? '@' : '#') + entry.type;
             (map[key] || (map[key] = [])).push(entry);
-            console.log(map)
             return contains;
         },
 
@@ -440,7 +439,7 @@ hAzzle.define('Events', function() {
                 list.splice(i, 1);
                 entry.removed = true;
                 if (list.length === 0) {
-                    delete map[(entry.root ? '€' : '#') + entry.type];
+                    delete map[(entry.root ? '@' : '#') + entry.type];
                 }
                 return false;
             });
@@ -562,7 +561,7 @@ hAzzle.define('Events', function() {
 
                     keyEvent.test(type) ? function(event, original) { // keys
                         // Add which for key events
-                        if (event.which == null) {
+                        if (!event.which) {
                             event.which = original.charCode != null ? original.charCode : original.keyCode;
                         }
                         return keyProps;
@@ -594,7 +593,7 @@ hAzzle.define('Events', function() {
 
                         if (type === 'mouseover' || type === 'mouseout') {
                             // related element (routing of the event)  
-                            original.relatedTarget = event.relatedTarget || event[(type == 'mouseover' ? 'from' : 'to') + 'Element'];
+                            original.relatedTarget = event.relatedTarget || event[(type === 'mouseover' ? 'from' : 'to') + 'Element'];
                         }
 
                         return mouseProps;
@@ -816,6 +815,10 @@ hAzzle.define('Events', function() {
         });
         this.elements[0].dispatchEvent(event);
     };
+    
+    this.ready = function(callback){
+    this.elements[0].addEventListener("DOMContentLoaded", callback);
+  };
 
     _util.each(('blur focus focusin focusout load resize scroll unload click dblclick ' +
         'mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave ' +

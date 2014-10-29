@@ -34,7 +34,7 @@ hAzzle.define('Traversing', function() {
                     ret = [],
                     elem = el[method];
                 while (elem && (index === null || i >= 0)) {
-                    matches = _jiesa.matches(elem, typeof sel === 'string' ? sel : '*')
+                    matches = _jiesa.matches(elem, typeof sel === 'string' ? sel : '*');
                     if (_types.isElement(elem) && matches && (index === null || i-- === 0)) {
                         if (index === null && method !== 'nextElementSibling' && method !== 'parentElement') {
                             ret.unshift(elem);
@@ -75,10 +75,10 @@ hAzzle.define('Traversing', function() {
     // If CSS selector is given, filter results to include only ones matching the selector.
 
     this.parent = function(sel) {
-        var matched = this.map(function(elem) {
-            var parent = elem.parentElement;
-            return parent && parent.nodeType !== 11 ? parent : null;
-        }).filter(sel);
+        var matched = this.filter(function(el) {
+            var parent = this.parentElement;
+            return parent && parent.nodeType !== 11 ? (sel ? _jiesa.matches(parent, sel) : parent) : null;
+        });
 
         if (this.length > 1) {
             // Remove duplicates
@@ -110,7 +110,7 @@ hAzzle.define('Traversing', function() {
         }
         return selector === undefined ? hAzzle(ancestors) : hAzzle(ancestors).filter(selector);
     };
-    
+
     // Return the closest parent of an element based on a selector
 
     this.closest = function(selector, ctx) {
@@ -137,7 +137,7 @@ hAzzle.define('Traversing', function() {
 
     // Get immediate children of each element in the current collection.
     // If selector is given, filter the results to only include ones matching the CSS selector.
-
+    
     this.children = function(selector) {
         var children = [];
         this.each(function(elem) {
