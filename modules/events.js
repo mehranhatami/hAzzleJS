@@ -620,39 +620,7 @@ hAzzle.define('Events', function() {
         }
     };
 
-    // Registry
-
-    function Registry(element, type, handler, original, namespaces, args, root) {
-
-        var customType = customEvents[type];
-
-        // If unload, remove the listener 
-        if (type === 'unload') {
-            handler = once(removeHandlers, element, type, handler, original);
-        }
-
-        if (customType) {
-            if (customType.condition) {
-                handler = this.createEventHandler(element, handler, customType.condition, args);
-
-            }
-            type = customType.base || type;
-        }
-
-        this.element = element;
-        this.type = type;
-        this.original = original;
-        this.namespaces = namespaces;
-        this.eventType = type;
-        this.target = element;
-        this.root = root;
-        this.handler = this.createEventHandler(element, handler, null, args);
-    }
-
-    Registry.prototype = {
-
-        createEventHandler: function(element, fn, condition, args) {
-
+    var createEventHandler = function(element, fn, condition, args) {
 
             var call = function(event, eargs) {
                     return fn.apply(element, args ? _collection.slice(eargs).concat(args) : eargs);
@@ -661,7 +629,15 @@ hAzzle.define('Events', function() {
                 // Get correct target for delegated events
 
                 getTarget = function(evt, eventElement) {
-                    var target = fn.__kfx2rcf ? findDelegate(evt, fn.__kfx2rcf.selector) : eventElement;
+                    var target, cur = evt.target;
+                    if (fn.__kfx2rcf) {
+                        if (cur.nodeType && (!evt.button || evt.type !== 'click') && cur.disabled !== true) {
+                            target = cur !== element && _jiesa.matches(cur, fn.__kfx2rcf.selector) ? cur : false;
+                        }
+
+                    } else {
+                        target = eventElement;
+                    }
                     fn.__kfx2rcf.currentTarget = target;
                     return target;
                 },
@@ -670,7 +646,6 @@ hAzzle.define('Events', function() {
                     var target = getTarget(event, this);
                     if (condition.apply(target, arguments)) {
                         if (event) {
-
                             event.currentTarget = target;
                         }
 
@@ -678,9 +653,7 @@ hAzzle.define('Events', function() {
                     }
                 } : function(event) {
 
-
                     if (fn.__kfx2rcf) {
-
                         event = event.clone(getTarget(event));
                     }
 
@@ -689,6 +662,37 @@ hAzzle.define('Events', function() {
             handler.__kfx2rcf = fn.__kfx2rcf;
             return handler;
         },
+
+        // Registry
+
+        Registry = function(element, type, handler, original, namespaces, args, root) {
+
+            var customType = customEvents[type];
+
+            // If unload, remove the listener 
+            if (type === 'unload') {
+                handler = once(removeHandlers, element, type, handler, original);
+            }
+
+            if (customType) {
+                if (customType.condition) {
+                    handler = createEventHandler(element, handler, customType.condition, args);
+
+                }
+                type = customType.base || type;
+            }
+
+            this.element = element;
+            this.type = type;
+            this.original = original;
+            this.namespaces = namespaces;
+            this.eventType = type;
+            this.target = element;
+            this.root = root;
+            this.handler = createEventHandler(element, handler, null, args);
+        };
+
+    Registry.prototype = {
 
         // Checks if there are any namespaces when we are
         // using the trigger() function
@@ -731,32 +735,21 @@ hAzzle.define('Events', function() {
                 l = listeners.length,
                 i = 0;
 
-            evt = new Event(evt, this, true);
+            evt = new Event(evt, this);
 
             if (type) {
-
                 evt.type = type;
             }
 
             for (; i < l && !evt.isImmediatePropagationStopped(); i++) {
-
                 if (!listeners[i].removed) {
-
                     listeners[i].handler.call(this, evt);
                 }
             }
         },
-        findDelegate = function(event, sel) {
-            var cur = event.target;
-            if (cur.nodeType && (!event.button || event.type !== 'click')) {
-                return _jiesa.matches(cur, sel) ? cur : false;
-            }
-            return false;
-        },
-
         // Event delegate
         delegate = function(sel, fn) {
-            var handler = function(e) {
+            var handler = function() {
                 var m = null;
                 if (handler.__kfx2rcf) {
                     m = handler.__kfx2rcf.currentTarget;
