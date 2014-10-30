@@ -6,6 +6,7 @@ hAzzle.define('has', function() {
         win = window,
         doc = win.document,
         element = doc && doc.createElement('div'),
+        _toString = Object.prototype.toString,
         hasCache = {},
 
         // IE feature detection
@@ -32,14 +33,14 @@ hAzzle.define('has', function() {
         })(),
         // Return the current value of the named feature
         has = function(name) {
-               if(typeof hasCache[name] == 'function'){
-            hasCache[name] = hasCache[name](win, doc, element);
-        }
-        return hasCache[name]; // Boolean
+            if (typeof hasCache[name] == 'function') {
+                hasCache[name] = hasCache[name](win, doc, element);
+            }
+            return hasCache[name]; // Boolean
         },
         // Register a new feature test for some named feature.
         add = function(name, test, now) {
-           hasCache[name] = now ? test(win, doc, element) : test; 
+            hasCache[name] = now ? test(win, doc, element) : test;
         },
         // Deletes the contents of the element passed to test functions.
         clearElement = function(elem) {
@@ -54,13 +55,13 @@ hAzzle.define('has', function() {
     // XPath
 
     add('xpath', function() {
-        return !!(doc.evaluate);
+        return !!doc.evaluate;
     });
 
     // Air 
 
     add('air', function() {
-        return !!(win.runtime);
+        return !!win.runtime;
     });
 
     // Detects native support for the Dart programming language
@@ -72,7 +73,7 @@ hAzzle.define('has', function() {
     // Detects native support for promises
 
     add('promise', function() {
-        return !!(win.Promise);
+        return !!win.Promise;
     });
 
     // mobile
@@ -89,7 +90,10 @@ hAzzle.define('has', function() {
 
     // opera
     add('opera', function() {
-        return !!win.opera || ua.indexOf(' OPR/') >= 0;
+        // Opera 8.x+ can be detected with `window.opera`
+        // This is a safer inference than plain boolean type conversion of `window.opera`
+        // But note that the newer Opera versions (15.x+) are using the webkit engine
+        return _toString.call(window.opera) === '[object Opera]';
     });
 
 
@@ -110,7 +114,7 @@ hAzzle.define('has', function() {
 
     // Safari
     add('safari', function() {
-        return Object.prototype.toString.call(win.HTMLElement).indexOf('Constructor') > 0;
+        return _toString.call(window.HTMLElement).indexOf('Constructor') > 0;
     });
 
     // Safari

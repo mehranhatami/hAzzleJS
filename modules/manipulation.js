@@ -64,42 +64,42 @@ hAzzle.define('Manipulation', function() {
         // - evtName: event type to be cloned (e.g. 'click', 'mouseenter')
         cloneElem = function(elem, deep, evtName) {
 
-            if (!elem) {
-                return;
+            if (elem === null || elem === undefined) {
+                return elem;
             }
-
             // Wrap it out if it's a instanceof hAzzle
 
             elem = getElem(elem);
 
-            var source = elem.cloneNode(true),
+            var source = elem.nodeType && elem.cloneNode(true),
                 destElements,
                 srcElements,
                 i, l;
+            if (source) {
+                // Fix IE cloning issues
+                if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
+                    !_core.isXML(elem)) {
 
-            // Fix IE cloning issues
-            if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
-                !_core.isXML(elem)) {
+                    destElements = grab(source);
+                    srcElements = grab(elem);
 
-                destElements = grab(source);
-                srcElements = grab(elem);
-
-                for (i = 0, l = srcElements.length; i < l; i++) {
-                    fixInput(srcElements[i], destElements[i]);
+                    for (i = 0, l = srcElements.length; i < l; i++) {
+                        fixInput(srcElements[i], destElements[i]);
+                    }
                 }
-            }
 
-            // Clone events if the Events.js module are installed
+                // Clone events if the Events.js module are installed
 
-            if (hAzzle.installed.Events && deep && (source.nodeType === 1 || source.nodeType === 9)) {
-                // Copy the events from the original to the clone
-                destElements = grab(source);
-                srcElements = grab(elem);
-                for (i = 0; i < srcElements.length; i++) {
-                    _events.clone(destElements[i], srcElements[i], evtName);
+                if (hAzzle.installed.Events && deep && (source.nodeType === 1 || source.nodeType === 9)) {
+                    // Copy the events from the original to the clone
+                    destElements = grab(source);
+                    srcElements = grab(elem);
+                    for (i = 0; i < srcElements.length; i++) {
+                        _events.clone(destElements[i], srcElements[i], evtName);
+                    }
                 }
+                return source;
             }
-            return source;
         },
 
         createScriptFromHtml = function(html, context) {
