@@ -29,7 +29,7 @@ hAzzle.define('Traversing', function() {
         },
         traverse = function(els, method, sel, index) {
             index = inVal(sel, index);
-            return gather(els, function(el, elind) {
+            return gather(els, function(el) {
                 var matches, i = index || 0,
                     ret = [],
                     elem = el[method];
@@ -46,6 +46,59 @@ hAzzle.define('Traversing', function() {
                 }
                 return ret;
             });
+        },
+
+        walkElements = function(prop, element, val) {
+            var i = 0,
+                isIndex = typeof val === 'number';
+            if (typeof val === 'undefined') {
+                isIndex = true;
+                val = 0;
+            }
+            while ((element = element[prop])) {
+                if (element.nodeType !== 1) {
+                    continue;
+                }
+                if (isIndex) {
+                    ++i;
+                    if (i === val) {
+                        return element;
+                    }
+                } else if (_jiesa.matches(element, val)) {
+                    return element;
+                }
+            }
+            return null;
+        },
+        up = function(element, val) {
+            return walkElements('parentElement', element, val);
+        },
+        next = function(element, val) {
+            return walkElements('nextElementSibling', element, val);
+        },
+        prev = function(element, val) {
+            return walkElements('previousElementSibling', element, val);
+        },
+        down = function(element, val) {
+            var isIndex = typeof val == 'number',
+                descendants, index, descendant;
+            if (val === null) {
+                element = element.firstChild;
+                while (element && element.nodeType !== 1) {
+                    element = element.nextElementSibling;
+                }
+                return element;
+            }
+            if (!isIndex && _jiesa.matches(element, val) || isIndex && val === 0) { return element; }
+            descendants = _jiesa.find('*', element);
+            if (isIndex) {
+                return descendants[val] || null;
+            }
+            index = 0;
+            while ((descendant = descendants[index]) && !_jiesa.matches(descendant, val)) {
+                ++index;
+            }
+            return descendant || null;
         },
 
         /**
@@ -71,19 +124,20 @@ hAzzle.define('Traversing', function() {
             // This need a fix ASAP!!
 
             if (elem instanceof hAzzle) {
-                elem = elems.elements[0];
-
+                elem = elem.elements[0];
             }
+
             elem = elem.length ? elem : [elem];
+            
             return _util.map(elem, function(element) {
-                return getClosestNode(element, method)
-            })
+                return getClosestNode(element, method);
+            });
         },
         getClosestNode = function(element, method, sel) {
             do {
-                element = element[method]
-            } while (element && ((sel && !matches(element, sel)) || !_types.isElement(element)))
-            return element
+                element = element[method];
+            } while (element && ((sel && !_jiesa.matches(element, sel)) || !_types.isElement(element)));
+            return element;
         };
 
     // Returns all sibling elements for nodes
@@ -113,7 +167,7 @@ hAzzle.define('Traversing', function() {
     // If CSS selector is given, filter results to include only ones matching the selector.
 
     this.parent = function(sel) {
-        var matched = this.filter(function(el) {
+        var matched = this.filter(function() {
             var parent = this.parentElement;
             return parent && parent.nodeType !== 11 ? (sel ? _jiesa.matches(parent, sel) : parent) : null;
         });
@@ -250,6 +304,10 @@ hAzzle.define('Traversing', function() {
     }.bind(this));
 
     return {
-        pluckNode: pluckNode
+        pluckNode: pluckNode,
+        up: up,
+        next: next,
+        prev: prev,
+        down: down
     };
 });
