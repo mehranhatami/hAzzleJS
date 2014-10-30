@@ -771,6 +771,7 @@ hAzzle.define('Util', function() {
                 return obj;
             }
 
+
             var source, prop, i = 1,
                 length = arguments.length;
 
@@ -815,7 +816,6 @@ hAzzle.define('Util', function() {
             }
             return property(value);
         },
-
 
         // Keep the identity function around for default iteratees.
         identity = function(value) {
@@ -1049,33 +1049,24 @@ hAzzle.define('Util', function() {
                 target[key] = source[key];
             }
         },
-        reject = function(a, fn, scope) {
-            var r = [],
-                i = 0,
-                j = 0,
-                l = a.length;
-            for (; i < l; i++) {
-                if (i in a) {
-                    if (fn.call(scope, a[i], i, a)) {
-                        continue;
-                    }
-                    r[j++] = a[i];
+        // Check if a element exist in DOM
+        isInDocument = function(el) {
+            if (!el) {
+                return;
+            }
+            for (var pn = el, html = document.body.parentNode; pn;) {
+                if (pn === html) {
+                    return true;
                 }
+                pn = pn.parentNode;
             }
-            return r;
-        },
-        consoleLog = function(msg) {
-            if (typeof console !== 'undefined' && _types.isHostMethod(console, 'log')) {
-                console.log(msg);
-            }
-        }
+            return false;
+        };
 
     return {
         each: each,
         mixin: mixin,
         makeArray: makeArray,
-
-
         merge: merge,
         acceptData: acceptData,
         createCallback: createCallback,
@@ -1095,8 +1086,7 @@ hAzzle.define('Util', function() {
         has: has,
         noop: function() {},
         extend: extend,
-        reject: reject,
-        consoleLog: consoleLog
+        isInDocument: isInDocument
     };
 });
 // core.js
@@ -1776,6 +1766,17 @@ hAzzle.define('Jiesa', function() {
                 return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
             }
         },
+        
+   normalizeCtx = function (root) {
+    if (!root) {
+        return document;
+    }    
+    if (typeof root === 'string') {
+        return Jiesa(root);
+    }
+    if (!root.nodeType && arrayLike(root)) return root[0]
+    return root
+  },
         /**
          * Find elements by selectors.
          *
@@ -1792,7 +1793,7 @@ hAzzle.define('Jiesa', function() {
           Jiesa = function(sel, ctx) {
             var m, nodeType, elem, results = [];
 
-            ctx = ctx || document;
+            ctx = root = normalizeCtx(ctx);
 
             if (!sel || typeof sel !== 'string') {
                 return results;
@@ -1854,7 +1855,7 @@ hAzzle.define('Jiesa', function() {
                         }
                     });
                     return results;
-                } else { // Fallback to QSA 
+                } else { // Fallback to QSA  
                     // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
                     if (_support.qsa && !_core.rbuggyQSA.length) {
                         if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
@@ -1909,7 +1910,7 @@ hAzzle.define('Jiesa', function() {
             }
             // FIX ME!! Fallback solution need to be developed here!
         };
-
+        
     // Find is not the same as 'Jiesa', but a optimized version for 
     // better performance
 

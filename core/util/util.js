@@ -130,6 +130,7 @@ hAzzle.define('Util', function() {
                 return obj;
             }
 
+
             var source, prop, i = 1,
                 length = arguments.length;
 
@@ -407,26 +408,19 @@ hAzzle.define('Util', function() {
                 target[key] = source[key];
             }
         },
-        reject = function(a, fn, scope) {
-            var r = [],
-                i = 0,
-                j = 0,
-                l = a.length;
-            for (; i < l; i++) {
-                if (i in a) {
-                    if (fn.call(scope, a[i], i, a)) {
-                        continue;
-                    }
-                    r[j++] = a[i];
+        // Check if a element exist in DOM
+        isInDocument = function(el) {
+            if (!el) {
+                return;
+            }
+            for (var pn = el, html = document.body.parentNode; pn;) {
+                if (pn === html) {
+                    return true;
                 }
+                pn = pn.parentNode;
             }
-            return r;
-        },
-        consoleLog = function(msg) {
-            if (typeof console !== 'undefined' && _types.isHostMethod(console, 'log')) {
-                console.log(msg);
-            }
-        }
+            return false;
+        };
 
     return {
         each: each,
@@ -451,7 +445,6 @@ hAzzle.define('Util', function() {
         has: has,
         noop: function() {},
         extend: extend,
-        reject: reject,
-        consoleLog: consoleLog
+        isInDocument: isInDocument
     };
 });

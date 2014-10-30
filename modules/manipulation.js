@@ -6,6 +6,7 @@ hAzzle.define('Manipulation', function() {
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
         _core = hAzzle.require('Core'),
+        _events = hAzzle.require('Events'),
         _types = hAzzle.require('Types'),
         _text = hAzzle.require('Text'),
         _scriptStyle = /<(?:script|style|link)/i,
@@ -20,6 +21,12 @@ hAzzle.define('Manipulation', function() {
         noscope = ['_', '', 0, 1],
 
         tagMap = {
+            tr: ['<table><tbody>', '</tbody></table>', 2],
+            col: ['<table><colgroup>', '</colgroup></table>', 2],
+            fieldset: ['<form>', '</form>', 1],
+            legend: ['<form><fieldset>', '</fieldset></form>', 2],
+            th: td,
+            td: td,
             style: table,
             table: table,
             thead: table,
@@ -27,20 +34,15 @@ hAzzle.define('Manipulation', function() {
             tfoot: table,
             colgroup: table,
             caption: table,
-            tr: ['<table><tbody>', '</tbody></table>', 2],
-            th: td,
-            td: td,
-            col: ['<table><colgroup>', '</colgroup></table>', 2],
-            fieldset: ['<form>', '</form>', 1],
-            legend: ['<form><fieldset>', '</fieldset></form>', 2],
             option: option,
             optgroup: option,
             script: noscope,
             link: noscope,
             param: noscope,
             base: noscope
-        },
-        createHTML = function(html, context) {
+        };
+
+    var createHTML = function(html, context) {
             return hAzzle(create(html, context));
         },
 
@@ -56,16 +58,29 @@ hAzzle.define('Manipulation', function() {
                 dest.defaultValue = src.defaultValue;
             }
         },
-        cloneElem = function(elem, deep) {
+
+        // Returns a duplicate of `element`
+        // - deep (Boolean): Whether to clone events as well.
+        // - evtName: event type to be cloned (e.g. 'click', 'mouseenter')
+        cloneElem = function(elem, deep, evtName) {
+
+            if (!elem) {
+                return;
+            }
+
+            // Wrap it out if it's a instanceof hAzzle
+
+            elem = getElem(elem);
 
             var source = elem.cloneNode(true),
                 destElements,
                 srcElements,
                 i, l;
- 
+
             // Fix IE cloning issues
             if (!_support.noCloneChecked && (elem.nodeType === 1 || elem.nodeType === 11) &&
                 !_core.isXML(elem)) {
+
                 destElements = grab(source);
                 srcElements = grab(elem);
 
@@ -73,22 +88,15 @@ hAzzle.define('Manipulation', function() {
                     fixInput(srcElements[i], destElements[i]);
                 }
             }
-            // Only allow cloning of events if the Events.js module are installed
-            if (hAzzle.installed.Events) {
- 
-                // If 'deep' clone events
-                if (deep && (source.nodeType === 1 || source.nodeType === 9)) {
 
-                    hAzzle(source).cloneEvents(elem);
+            // Clone events if the Events.js module are installed
 
-                    // Copy the events from the original to the clone
-
-                    destElements = grab(source);
-                    srcElements = grab(elem);
-
-                    for (i = 0; i < srcElements.length; i++) {
-                        hAzzle(destElements[i]).cloneEvents(srcElements[i]);
-                    }
+            if (hAzzle.installed.Events && deep && (source.nodeType === 1 || source.nodeType === 9)) {
+                // Copy the events from the original to the clone
+                destElements = grab(source);
+                srcElements = grab(elem);
+                for (i = 0; i < srcElements.length; i++) {
+                    _events.clone(destElements[i], srcElements[i], evtName);
                 }
             }
             return source;
@@ -242,23 +250,40 @@ hAzzle.define('Manipulation', function() {
             }
             return node;
         },
-        createGlobal = function(elem, content, method) {
-            if (typeof content === 'string' &&
-                _core.isHTML &&
-                elem.parentNode && elem.parentNode.nodeType === 1) {
-                elem.insertAdjacentHTML(method, content.replace(_htmlTag, '<$1></$2>'));
-            } else {
-                _util.each(normalize(content, 0), function(relatedNode) {
-                    elem[method](relatedNode); // DOM Level 4
-                });
+        insertMethod = function(elem, content, method, state) {
+            elem = getElem(elem);
+            _util.each(normalize(content, state ? state : 0), function(relatedNode) {
+                elem[method](relatedNode); // DOM Level 4
+            });
+        },
+        // Internal method !!
+        getElem = function(elem) {
+            return elem instanceof hAzzle ? elem.elements[0] : elem;
+        },
+        //  Remove all child nodes of the set of matched elements from the DOM
+        empty = function(elem) {
+            elem = getElem(elem);
+            // Do a 'deep each' and clear all listeners if any 
+            deepEach(elem.children, clearData);
+            while (elem.firstChild) {
+                elem.removeChild(elem.firstChild);
             }
         },
-        prepend = function(elem, content) {
-            createGlobal(elem, content, 'prepend');
+        remove = function(elem) {
+            elem = getElem(elem);
+            deepEach(clearData);
+            if (elem.parentElement) {
+                elem.parentElement.removeChild(elem);
+            }
         },
-
-        append = function(elem, content) {
-            createGlobal(elem, content, 'append');
+        replace = function(elem, html) {
+            elem = getElem(elem);
+            elem = elem.length ? elem : [elem];
+            _util.each(elem, function(el, i) {
+                _util.each(normalize(html, i), function(i) {
+                    el.replace(i); // DOM Level 4
+                });
+            });
         };
 
     // insertAdjacentHTML method for append, prepend, before and after
@@ -267,89 +292,13 @@ hAzzle.define('Manipulation', function() {
         return this.each(function(elem, index) {
             if (typeof html === 'string' &&
                 _core.isHTML &&
-                elem.parentNode && elem.parentNode.nodeType === 1) {
+                elem.parentElement && elem.parentElement.nodeType === 1) {
                 elem.insertAdjacentHTML(method, html.replace(_htmlTag, '<$1></$2>'));
             } else {
                 fn(elem, index);
             }
         });
     };
-
-    this.append = function(content) {
-        return this.iAHMethod('beforeend', content, function(node, state) {
-            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.appendChild(relatedNode); // DOM Level 4
-                });
-            }
-        });
-    };
-
-    this.prepend = function(content) {
-        return this.iAHMethod('afterbegin', content, function(node, state) {
-            if (node.nodeType === 1 || node.nodeType === 11 || node.nodeType === 9) {
-                _util.each(normalize(content, state), function(relatedNode) {
-                    node.prepend(relatedNode); // DOM Level 4
-                });
-            }
-        });
-    };
-
-    this.before = function(content) {
-        return this.iAHMethod('beforebegin', content, function(node, state) {
-            _util.each(normalize(content, state), function(relatedNode) {
-                node.before(relatedNode); // DOM Level 4
-
-            });
-        });
-    };
-
-    this.after = function(content) {
-        return this.iAHMethod('afterend', content, function(node, state) {
-            _util.each(normalize(content, state), function(relatedNode) {
-                node.after(relatedNode); // DOM Level 4
-            });
-        });
-    };
-
-    this.appendTo = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.appendChild(el);
-        });
-    };
-
-    this.prependTo = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.insertBefore(el, node.firstChild);
-        });
-    };
-
-    this.insertBefore = function(content) {
-        return this.domManip(content, function(node, el) {
-            node.parentNode.insertBefore(el, node);
-        });
-    };
-
-    this.insertAfter = function(content) {
-        return this.domManip(content, function(node, el) {
-            var sibling = node.nextSibling;
-            sibling ?
-                node.parentNode.insertBefore(el, sibling) :
-                node.parentNode.appendChild(el);
-        }, 1);
-    };
-
-    // Same as 'ReplaceWith' in jQuery
-
-    this.replaceWith = function(html) {
-        return this.each(function(el, i) {
-            _util.each(normalize(html, i), function(i) {
-                el.replace(i); // DOM Level 4
-            });
-        });
-    };
-
-    // Thanks to jQuery for the function name!!
 
     this.domManip = function(content, fn, /*reverse */ rev) {
 
@@ -387,6 +336,39 @@ hAzzle.define('Manipulation', function() {
             self[--i] = e;
         }, null, !rev);
         return self;
+    };
+
+    this.appendTo = function(content) {
+        return this.domManip(content, function(element, node) {
+            element.appendChild(node);
+        });
+    };
+
+    this.prependTo = function(content) {
+        return this.domManip(content, function(element, node) {
+            element.insertBefore(node, element.firstChild);
+        });
+    };
+
+    this.insertBefore = function(content) {
+        return this.domManip(content, function(element, node) {
+            element.parentNode.insertBefore(node, element);
+        });
+    };
+
+    this.insertAfter = function(content) {
+        return this.domManip(content, function(element, node) {
+            var sibling = element.nextSibling;
+            sibling ?
+                element.parentNode.insertBefore(node, sibling) :
+                element.parentNode.appendChild(node);
+        }, 1);
+    };
+
+    // Same as 'ReplaceWith' in jQuery
+
+    this.replaceWith = function(html) {
+        return replace(this.elements, html);
     };
 
     // Text
@@ -460,18 +442,8 @@ hAzzle.define('Manipulation', function() {
 
     this.empty = function() {
         return this.each(function(elem) {
-            // Do a 'deep each' and clear all listeners if any 
-            deepEach(elem.children, clearData);
-            while (elem.firstChild) {
-                elem.removeChild(elem.firstChild);
-            }
+            empty(elem);
         });
-    };
-
-    this.fill = function(children) {
-        return this.each(function(elem) {
-            hAzzle(elem.childNodes).remove();
-        }).add(children);
     };
 
     this.remove = function() {
@@ -480,10 +452,9 @@ hAzzle.define('Manipulation', function() {
     };
 
     // Creates a copy of a DOM element, and returns the clone.
-    // 'deep' - let you clone events
 
-    this.clone = function(deep) {
-        
+    this.clone = function( /*bool:true - event cloning*/ deep, evtName) {
+
         // Better performance with a 'normal' for-loop then
         // map() or each()       
         var elems = this.elements,
@@ -492,17 +463,53 @@ hAzzle.define('Manipulation', function() {
             l = this.length;
 
         for (; i < l; i++) {
-            ret[i] = cloneElem(elems[i], deep);
+            ret[i] = cloneElem(elems[i], deep, evtName);
         }
         return hAzzle(ret);
     };
+
+    _util.each({
+
+        // Insert content, specified by the parameter, to the end of 
+        // each element in the set of matched elements.
+
+        append: 'beforeend',
+
+        // Insert content, specified by the parameter, to the beginning 
+        // of each element in the set of matched elements.
+
+        prepend: 'afterbegin',
+
+        // Insert content, specified by the parameter, before each 
+        // element in the set of matched elements.
+
+        before: 'beforebegin',
+
+        // Insert content, specified by the parameter, after each element 
+        // in the set of matched elements.  
+
+        after: 'afterend'
+
+    }, function(iah, prop) {
+        this[prop] = function(content) {
+            return this.iAHMethod(iah, content, function(elem, state) {
+                var nodeType = elem ? elem.nodeType : undefined;
+                if (nodeType && (nodeType === 1 || nodeType === 11 || nodeType === 9)) {
+                    insertMethod(elem, content, prop, state);
+                }
+            });
+        };
+
+    }.bind(this));
 
     return {
         clearData: clearData,
         create: create,
         createHTML: createHTML,
         clone: cloneElem,
-        append: append,
-        prepend: prepend
+        insert: insertMethod,
+        replace: replace,
+        empty: empty,
+        remove: remove
     };
 });

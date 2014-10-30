@@ -86,6 +86,17 @@ hAzzle.define('Jiesa', function() {
                 return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
             }
         },
+
+        normalizeCtx = function(root) {
+            if (!root) {
+                return document;
+            }
+            if (typeof root === 'string') {
+                return Jiesa(root);
+            }
+            if (!root.nodeType && arrayLike(root)) return root[0]
+            return root
+        },
         /**
          * Find elements by selectors.
          *
@@ -99,10 +110,10 @@ hAzzle.define('Jiesa', function() {
          * @param {Bool} c Save to cache? Default is true.
          */
 
-          Jiesa = function(sel, ctx) {
+        Jiesa = function(sel, ctx) {
             var m, nodeType, elem, results = [];
 
-            ctx = ctx || document;
+            ctx = root = normalizeCtx(ctx);
 
             if (!sel || typeof sel !== 'string') {
                 return results;
@@ -164,7 +175,7 @@ hAzzle.define('Jiesa', function() {
                         }
                     });
                     return results;
-                } else { // Fallback to QSA 
+                } else { // Fallback to QSA  
                     // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
                     if (_support.qsa && !_core.rbuggyQSA.length) {
                         if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
@@ -177,7 +188,7 @@ hAzzle.define('Jiesa', function() {
                 }
             }
         },
-      matches = function(elem, sel, ctx) {
+        matches = function(elem, sel, ctx) {
 
             if (sel.nodeType) {
                 return elem === sel;
