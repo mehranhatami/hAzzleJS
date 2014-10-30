@@ -13,10 +13,6 @@ hAzzle.define('Strings', function() {
 
         sHyphenate = /[A-Z]/g,
 
-        // Capitalize RegExp
-
-        sCapitalize = /\b[a-z]/g,
-
         // UnescapeHTML RegExp
 
         unEscapeFirst = /^#x([\da-fA-F]+)$/,
@@ -51,12 +47,6 @@ hAzzle.define('Strings', function() {
 
         reversedescapeMap = {},
 
-        // Used by capitalize as callback to replace()
-
-        fcapitalize = function(letter) {
-            return letter.toUpperCase();
-        },
-
         // Used by camelize as callback to replace()
 
         fcamelize = function(all, letter) {
@@ -69,7 +59,10 @@ hAzzle.define('Strings', function() {
         },
 
         capitalize = function(str) {
-            return str ? str.replace(sCapitalize, fcapitalize) : str;
+           return str && typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+        },
+        unCapitalize = function(str) {
+           return str && typeof str === 'string' ? str.charAt(0).toLowerCase() + str.slice(1) : '';
         },
 
         // Convert a string from camel case to 'CSS case', where word boundaries are
@@ -105,15 +98,7 @@ hAzzle.define('Strings', function() {
                 // Who are still using Android 4.1 ?
                 (str + '').replace(nNTrim, '');
         },
-        truncate = function(str, length, truncateStr) {
-            if (!str) {
-                return '';
-            }
-            str = String(str);
-            truncateStr = truncateStr || '...';
-            length = ~~length;
-            return str.length > length ? str.slice(0, length) + truncateStr : str;
-        },
+
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
                 return '&' + reversedescapeMap[m] + ';';
@@ -142,11 +127,11 @@ hAzzle.define('Strings', function() {
     return {
 
         capitalize: capitalize,
+        unCapitalize:unCapitalize,
         hyphenate: hyphenate,
         camelize: camelize,
         trim: trim,
         escapeHTML: escapeHTML,
-        unescapeHTML: unescapeHTML,
-        truncate: truncate
+        unescapeHTML: unescapeHTML
     };
 });

@@ -167,7 +167,7 @@ hAzzle.define('Util', function() {
             if (!value) {
                 return identity;
             }
-            if (_types.isFunction(value)) {
+            if (_types.isType('Function')(value)) {
                 return createCallback(value, ctx, argCount);
             }
             if (_types.isObject(value)) {

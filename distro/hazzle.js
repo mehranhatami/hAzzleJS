@@ -471,24 +471,22 @@ hAzzle.define('Types', function() {
         isNumeric = function(obj) {
             return !isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
         },
+
         isEmpty = function(value) {
-            // Take a shortcut if this is a instanceof hAzzle 
-            if (value instanceof hAzzle && value.length > 0) {
-                return false;
-            } else {
-                var i = 0;
-                return isArray(value) ? value.length === 0 :
-                    isObject(value) ? (function() {
-                        var _;
-                        for (_ in value) {
-                            i++;
-                            break;
-                        }
-                        return (i === 0);
-                    }()) :
-                    value === '';
+            if (value == null) {
+                return true;
             }
+            if (isArray(value) || isString(value) || isType('Arguments')(value)) {
+                return value.length === 0;
+            }
+            var key;
+            for (key in value)
+                if (value != null && Object.prototype.hasOwnProperty.call(value, key)) {
+                    return false;
+                }
+            return true;
         },
+
         isElement = function(value) {
             return (value && typeof value === 'object' && value.ELEMENT_NODE &&
                 _toString.call(value).indexOf('Element') > -1) || false;
@@ -546,7 +544,6 @@ hAzzle.define('Types', function() {
             }
             // Detect length and item 
             if (!('length' in nodes) || !('item' in nodes)) {
-
                 return false;
             }
             try {
@@ -568,7 +565,6 @@ hAzzle.define('Types', function() {
     return {
 
         isType: isType,
-        isFunction: isType('Function'),
         isArray: isArray,
         isEmpty: isEmpty,
         isWindow: isWindow,
@@ -774,8 +770,6 @@ hAzzle.define('Util', function() {
 
                 return obj;
             }
-
-
             var source, prop, i = 1,
                 length = arguments.length;
 
@@ -812,7 +806,7 @@ hAzzle.define('Util', function() {
             if (!value) {
                 return identity;
             }
-            if (_types.isFunction(value)) {
+            if (_types.isType('Function')(value)) {
                 return createCallback(value, ctx, argCount);
             }
             if (_types.isObject(value)) {
@@ -1999,10 +1993,6 @@ hAzzle.define('Strings', function() {
 
         sHyphenate = /[A-Z]/g,
 
-        // Capitalize RegExp
-
-        sCapitalize = /\b[a-z]/g,
-
         // UnescapeHTML RegExp
 
         unEscapeFirst = /^#x([\da-fA-F]+)$/,
@@ -2037,12 +2027,6 @@ hAzzle.define('Strings', function() {
 
         reversedescapeMap = {},
 
-        // Used by capitalize as callback to replace()
-
-        fcapitalize = function(letter) {
-            return letter.toUpperCase();
-        },
-
         // Used by camelize as callback to replace()
 
         fcamelize = function(all, letter) {
@@ -2055,7 +2039,10 @@ hAzzle.define('Strings', function() {
         },
 
         capitalize = function(str) {
-            return str ? str.replace(sCapitalize, fcapitalize) : str;
+           return str && typeof str === 'string' ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+        },
+        unCapitalize = function(str) {
+           return str && typeof str === 'string' ? str.charAt(0).toLowerCase() + str.slice(1) : '';
         },
 
         // Convert a string from camel case to 'CSS case', where word boundaries are
@@ -2091,15 +2078,7 @@ hAzzle.define('Strings', function() {
                 // Who are still using Android 4.1 ?
                 (str + '').replace(nNTrim, '');
         },
-        truncate = function(str, length, truncateStr) {
-            if (!str) {
-                return '';
-            }
-            str = String(str);
-            truncateStr = truncateStr || '...';
-            length = ~~length;
-            return str.length > length ? str.slice(0, length) + truncateStr : str;
-        },
+
         escapeHTML = function(str) {
             return str.replace(escHTML, function(m) {
                 return '&' + reversedescapeMap[m] + ';';
@@ -2128,12 +2107,12 @@ hAzzle.define('Strings', function() {
     return {
 
         capitalize: capitalize,
+        unCapitalize:unCapitalize,
         hyphenate: hyphenate,
         camelize: camelize,
         trim: trim,
         escapeHTML: escapeHTML,
-        unescapeHTML: unescapeHTML,
-        truncate: truncate
+        unescapeHTML: unescapeHTML
     };
 });
 
@@ -3002,7 +2981,7 @@ hAzzle.define('Setters', function() {
             } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
                 return ret;
             } else {
-                if (forceProp || typeof value == 'boolean' || _types.isFunction(value)) {
+                if (forceProp || typeof value == 'boolean' || _types.isType('Function')(value)) {
                     return Prop(elem, name, value);
                 }
                 elem.setAttribute(name, value + '');
@@ -3066,7 +3045,7 @@ hAzzle.define('Setters', function() {
             return;
         }
 
-        isFunction = _types.isFunction(value);
+        isFunction = _types.isType('Function')(value);
 
         return this.each(function(elem, index) {
             var val;

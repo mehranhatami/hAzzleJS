@@ -42,24 +42,22 @@ hAzzle.define('Types', function() {
         isNumeric = function(obj) {
             return !isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
         },
+
         isEmpty = function(value) {
-            // Take a shortcut if this is a instanceof hAzzle 
-            if (value instanceof hAzzle && value.length > 0) {
-                return false;
-            } else {
-                var i = 0;
-                return isArray(value) ? value.length === 0 :
-                    isObject(value) ? (function() {
-                        var _;
-                        for (_ in value) {
-                            i++;
-                            break;
-                        }
-                        return (i === 0);
-                    }()) :
-                    value === '';
+            if (value == null) {
+                return true;
             }
+            if (isArray(value) || isString(value) || isType('Arguments')(value)) {
+                return value.length === 0;
+            }
+            var key;
+            for (key in value)
+                if (value != null && Object.prototype.hasOwnProperty.call(value, key)) {
+                    return false;
+                }
+            return true;
         },
+
         isElement = function(value) {
             return (value && typeof value === 'object' && value.ELEMENT_NODE &&
                 _toString.call(value).indexOf('Element') > -1) || false;
@@ -138,7 +136,6 @@ hAzzle.define('Types', function() {
     return {
 
         isType: isType,
-        isFunction: isType('Function'),
         isArray: isArray,
         isEmpty: isEmpty,
         isWindow: isWindow,
