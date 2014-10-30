@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-29
+ * Date: 2014-10-31
  */
 (function() {
 
@@ -1452,9 +1452,7 @@ hAzzle.define('Collection', function() {
         _keys = Object.keys,
         _concat = _arrayProto.concat,
         _push = _arrayProto.push,
-        inArray = function(elem, array, i) {
-            return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
-        },
+
         makeArray = function(arr, results) {
             var ret = results || [];
 
@@ -1547,7 +1545,7 @@ hAzzle.define('Collection', function() {
 
     // Get the element at position specified by index from the current collection.
     this.eq = function(index) {
-         return hAzzle(index === -1 ? slice(this.elements, this.length - 1) : slice(this.elements, index, index + 1));
+        return hAzzle(index === -1 ? slice(this.elements, this.length - 1) : slice(this.elements, index, index + 1));
     };
 
     this.reduce = function(fn, accumulator, args) {
@@ -1620,6 +1618,10 @@ hAzzle.define('Collection', function() {
         return this.concat(elements);
     };
 
+    this.size = function() {
+        return this.length;
+    };
+
     // Reduce the set of matched elements to the first in the set, or 
     // to the 'num' first element in the set
 
@@ -1678,8 +1680,7 @@ hAzzle.define('Collection', function() {
     return {
         makeArray: makeArray,
         slice: slice,
-        reduce: reduce,
-        inArray: inArray
+        reduce: reduce
     };
 });
 // jiesa.js
@@ -3296,7 +3297,22 @@ hAzzle.define('valHooks', function() {
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters');
+        _setters = hAzzle.require('Setters'),
+
+        // iOF() gives approx 40 - 60% better performance then native indexOf
+        // for valHooks
+
+        iOf = function(array, item, from) {
+            var i, length = array.length;
+
+            for (i = (from < 0) ? Math.max(0, length + from) : from || 0; i < length; i++) {
+                if (array[i] === item) {
+                    return i;
+                }
+            }
+
+            return -1;
+        };
 
     // Setter
     _util.mixin(_setters.valHooks.set, {
@@ -3309,7 +3325,8 @@ hAzzle.define('valHooks', function() {
 
             while (i--) {
                 option = options[i];
-                if ((option.selected = _collection.inArray(option.value, values) >= 0)) {
+
+                if ((option.selected = iOf(values, option.value) >= 0)) {
                     optionSet = true;
                 }
             }
@@ -3379,7 +3396,7 @@ hAzzle.define('valHooks', function() {
     _util.each(['radio', 'checkbox'], function(val) {
         _setters.valHooks.set[val] = function(elem, value) {
             if (_types.isArray(value)) {
-                return (elem.checked = _collection.inArray(hAzzle(elem).val(), value) >= 0);
+                return (elem.checked = iOf(value, hAzzle(elem).val()) >= 0);
             }
         };
     });

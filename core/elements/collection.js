@@ -7,9 +7,7 @@ hAzzle.define('Collection', function() {
         _keys = Object.keys,
         _concat = _arrayProto.concat,
         _push = _arrayProto.push,
-        inArray = function(elem, array, i) {
-            return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
-        },
+
         makeArray = function(arr, results) {
             var ret = results || [];
 
@@ -102,7 +100,7 @@ hAzzle.define('Collection', function() {
 
     // Get the element at position specified by index from the current collection.
     this.eq = function(index) {
-         return hAzzle(index === -1 ? slice(this.elements, this.length - 1) : slice(this.elements, index, index + 1));
+        return hAzzle(index === -1 ? slice(this.elements, this.length - 1) : slice(this.elements, index, index + 1));
     };
 
     this.reduce = function(fn, accumulator, args) {
@@ -175,6 +173,10 @@ hAzzle.define('Collection', function() {
         return this.concat(elements);
     };
 
+    this.size = function() {
+        return this.length;
+    };
+
     // Reduce the set of matched elements to the first in the set, or 
     // to the 'num' first element in the set
 
@@ -233,7 +235,6 @@ hAzzle.define('Collection', function() {
     return {
         makeArray: makeArray,
         slice: slice,
-        reduce: reduce,
-        inArray: inArray
+        reduce: reduce
     };
 });
