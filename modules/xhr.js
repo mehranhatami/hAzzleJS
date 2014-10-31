@@ -1,4 +1,5 @@
 // xhr.js
+// Dependencies: Jsonxml.js module
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
 hAzzle.define('xhr', function() {
@@ -8,10 +9,19 @@ hAzzle.define('xhr', function() {
 
         _util = hAzzle.require('Util'),
         _types = hAzzle.require('Types'),
+        // Note! This module are not part of the Core
+        _jxml = hAzzle.require('Jsonxml'),
 
         // Use native Promise library
 
         Promise = window.Promise,
+
+        responseTypes = {
+            "text/plain": 'text',
+            "text/html": 'html',
+            "application/xml, 'text/xml": 'xml',
+            "application/json, 'text/javascript": 'json'
+        },
 
         createXhr = function(method) {
             if (window.XMLHttpRequest) {
@@ -78,6 +88,22 @@ hAzzle.define('xhr', function() {
 
                 var xhr = createXhr();
 
+                xhr.open(method, url, true);
+
+                xhr.timeout = config.timeout || XHR.defaults.timeout;
+
+                _util.each(XHR.defaults.headers, function(value, key) {
+                    if (!(key in headers)) {
+                        headers[key] = XHR.defaults.headers[key];
+                    }
+                });
+
+                _util.each(headers, function(value, key) {
+                    if (_types.isDefined(value)) {
+                        xhr.setRequestHeader(key, value);
+                    }
+                });
+
                 xhr.onabort = function() {
                     reject(new Error('abort'));
                 };
@@ -91,45 +117,62 @@ hAzzle.define('xhr', function() {
 
                     if (xhr && xhr.readyState === 4) {
                         var status = xhr.status,
-                            response;
+                            statusText, resp,
+                            response, responseHeaders;
+
+                        responseHeaders = xhr.getAllResponseHeaders()
 
                         // responseText is the old-school way of retrieving response (supported by IE8 & 9)
                         // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
 
                         response = ('response' in xhr) ? xhr.response : xhr.responseText;
 
+                        statusText = xhr.statusText || '';
+
                         // normalize IE bug (http://bugs.jquery.com/ticket/1450)
 
                         status = status === 1223 ? 204 : status;
 
-                        try {
-                            response = JSON.parse(response);
-                        } catch (err) {}
+                        // Determine if successfull
 
                         if (status >= 200 && status < 300 || status === 304) {
-                            resolve(response);
+
+                            // if no content
+                            if (status === 204) {
+                                response = "nocontent";
+
+                                // if not modified
+                            } else if (status === 304) {
+                                response = "notmodified";
+                                // If we have data, let's convert it
+                            } else {
+
+                                type = responseTypes[xhr.getResponseHeader('Content-Type')];
+
+                                switch (type) {
+                                    case 'json':
+                                        resp = window.JSON.parse(response + ' ');
+                                        break;
+                                    case 'html':
+                                        resp = response;
+                                        break;
+                                    case 'xml':
+
+                                        hAzzle.err(hAzzle.installed['Jsonxml'], 21, 'Jsonxml.js module needed for xml in xhr()');
+                                        resp = _jxml.parseXML(response)
+                                        break
+                                }
+                            }
+
+                            resolve(resp);
+
                         } else {
                             reject(response);
                         }
                     }
                 };
 
-                xhr.open(method, url, true);
-                xhr.timeout = config.timeout || XHR.defaults.timeout;
-
-                _util.each(XHR.defaults.headers, function(value, key) {
-                    if (!(key in headers)) {
-                        headers[key] = XHR.defaults.headers[key];
-                    }
-                });
-
-                _util.each(headers, function(value, key) {
-                    if (value) {
-                        xhr.setRequestHeader(key, value);
-                    }
-                });
-
-                xhr.send(data);
+                xhr.send(data || null);
             });
         };
 
