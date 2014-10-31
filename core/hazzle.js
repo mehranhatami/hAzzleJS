@@ -1,11 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0b Release Candidate
+ * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-24
+ * Date: 2014-10-31
  */
+ 
 (function() {
 
     var
@@ -86,6 +87,7 @@
             // Include required module
 
             var m, _util = hAzzle.require('Util'),
+               // Document ready
                 _ready = hAzzle.require('Ready');
 
             // If a function is given, call it when the DOM is ready
@@ -151,11 +153,15 @@
 
     // Expose
 
-    hAzzle.version = version.full;
     hAzzle.err = err;
     hAzzle.installed = installed;
     hAzzle.require = require;
     hAzzle.define = define;
+    hAzzle.codename = version.codename 
+    hAzzle.version = version.full
+    hAzzle.major = version.major
+    hAzzle.minor = version.minor
+    hAzzle.dot = version.dot
 
     // Hook hAzzle on the window object
 

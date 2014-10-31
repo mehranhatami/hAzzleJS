@@ -1,7 +1,6 @@
 // curcss.js
 // Note! Contains *only* native CSS, and position, and offset, for more *advanced* CSS, 
 // use the style.js module
-
 hAzzle.define('curCSS', function() {
 
     var _has = hAzzle.require('has'),
@@ -84,7 +83,7 @@ hAzzle.define('curCSS', function() {
             if (typeof elem === 'object' && elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
-            var computedValue = 0;
+            var ret = 0;
 
             if (!force) {
 
@@ -112,26 +111,31 @@ hAzzle.define('curCSS', function() {
                 // getPropertyValue is only needed for .css('filter'). It's terrible slow and ugly too!
 
                 if (_has.ie === 9 && prop === 'filter') {
-                    computedValue = computedStyle.getPropertyValue(prop);
+                    ret = computedStyle.getPropertyValue(prop);
                 } else {
-                    computedValue = computedStyle[prop];
+                    ret = computedStyle[prop];
                 }
 
-                // Fall back to the property's style value (if defined) when computedValue returns nothing
+                // Fall back to the property's style value (if defined) when 'ret' returns nothing
 
-                if (computedValue === '' || computedValue === null) {
-                    computedValue = elem.style[prop];
+                if (ret === '' && !_core.contains(elem.ownerDocument, elem)) {
+                    ret = elem.style[prop];
                 }
 
-                if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
+                if (ret === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
 
                     var pos = curCSS(elem, 'position');
 
                     if (pos === 'fixed' || (pos === 'absolute' && (prop === 'left' || prop === 'top'))) {
-                        computedValue = hAzzle(elem).position()[prop] + 'px';
+                        ret = hAzzle(elem).position()[prop] + 'px';
                     }
                 }
-                return computedValue;
+                return ret !== undefined ?
+                    // Support: IE9-11+
+                    // IE returns zIndex value as an integer.
+                    ret + '' :
+                    ret;
+
             }
         },
 
@@ -251,7 +255,7 @@ hAzzle.define('curCSS', function() {
             var relativePosition = relative.getPosition();
             return {
                 top: position.top - relativePosition.top - parseInt(curCSS(relative, 'borderLeftWidth')) || 0,
-                y: position.left - relativePosition.left - parseInt(curCSS(relative, 'borderTopWidth')) || 0
+                left: position.left - relativePosition.left - parseInt(curCSS(relative, 'borderTopWidth')) || 0
             };
         }
         return position;

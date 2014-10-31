@@ -36,7 +36,7 @@ hAzzle.define('Style', function() {
             return match.toUpperCase();
         },
 
-        _prefixes = ['', 'Webkit', 'O', 'Moz', 'ms', 'Khtml'],
+        _prefixes = ['', 'Webkit', 'Moz', 'ms'],
 
         _prefixElement = document.createElement('div'),
 

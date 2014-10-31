@@ -113,7 +113,7 @@ hAzzle.define('Jiesa', function() {
         Jiesa = function(sel, ctx) {
             var m, nodeType, elem, results = [];
 
-            ctx = root = normalizeCtx(ctx);
+            ctx = normalizeCtx(ctx);
 
             if (!sel || typeof sel !== 'string') {
                 return results;
@@ -145,10 +145,8 @@ hAzzle.define('Jiesa', function() {
                     if ((sel = m[1])) {
                         if (nodeType === 9) {
                             elem = ctx.getElementById(sel);
-                            if (elem && elem.parentNode) {
-                                if (elem.id === sel) {
-                                    return [elem];
-                                }
+                            if (elem && elem.id === sel) {
+                                return [elem];
                             } else {
                                 return [];
                             }
@@ -162,6 +160,7 @@ hAzzle.define('Jiesa', function() {
                     } else if ((sel = m[2])) {
                         return _collection.slice(ctx.getElementsByClassName(sel));
                     } else if ((sel = m[3])) {
+
                         return _collection.slice(ctx.getElementsByTagName(sel));
                     }
                     // E.g. hAzzle( 'span.selected' )  
@@ -176,8 +175,9 @@ hAzzle.define('Jiesa', function() {
                     });
                     return results;
                 } else { // Fallback to QSA  
+
                     // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
-                    if (_support.qsa && !_core.rbuggyQSA.length) {
+                    if (_support.qsa && _core.rbuggyQSA.length) {
                         if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
                             return _collection.slice(fixedRoot(ctx, sel, ctx.querySelectorAll));
                         } else {
