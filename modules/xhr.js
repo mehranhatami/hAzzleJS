@@ -9,8 +9,13 @@ hAzzle.define('xhr', function() {
 
         _util = hAzzle.require('Util'),
         _types = hAzzle.require('Types'),
+        _collection = hAzzle.require('Collection'),
         // Note! This module are not part of the Core
         _jxml = hAzzle.require('Jsonxml'),
+
+        _keys = Object.keys,
+
+        r20 = /%20/g,
 
         // Use native Promise library
 
@@ -23,15 +28,22 @@ hAzzle.define('xhr', function() {
             "application/json, 'text/javascript": 'json'
         },
 
-        createXhr = function(method) {
-            if (window.XMLHttpRequest) {
-                return new window.XMLHttpRequest();
-            }
-
-            hAzzle.err(true, 1, 'This browser does not support XMLHttpRequest.');
+        xhrSuccessStatus = {
+            // file protocol always yields status code 0, assume 200
+            0: 200,
+            // Support: IE9
+            // #1450: sometimes IE returns 1223 when it should be 204
+            1223: 204
         },
 
+        createXhr = function() {
+            hAzzle.err(!window.XMLHttpRequest, 20, 'This browser does not support XMLHttpRequest.');
+            return new window.XMLHttpRequest();
+        },
 
+        urlappend = function(url, data) {
+            return url + (/\?/.test(url) ? '&' : '?') + data;
+        },
         // - method can either be 'post' or 'get'
 
         XHR = function(method, url, config) {
@@ -41,31 +53,38 @@ hAzzle.define('xhr', function() {
             method = method.toUpperCase();
 
             var headers = config.headers || {},
-                charset = 'charset' in config ? config.charset : XHR.defaults.charset,
-                cacheBurst = 'cacheBurst' in config ? config.cacheBurst : XHR.defaults.cacheBurst,
+                charset = config.charset || XHR.defaults.charset,
+                cacheBurst = config.cacheBurst || XHR.defaults.cacheBurst,
                 data = config.data;
 
             if (_types.isType('Object')(data)) {
-                data = Object.keys(data).reduce(function(memo, key) {
-                    var name = encodeURIComponent(key),
+
+                data = _collection.reduce(_keys(data), function(memo, key) {
+
+                    var enc = encodeURIComponent,
+                        name = enc(key),
                         value = data[key];
 
-                    if (Array.isArray(value)) {
-                        value.forEach(function(value) {
-                            memo.push(name + '=' + encodeURIComponent(value));
+                    // If an array was passed in, assume that it is an array of form elements.
+
+                    if (_types.isArray(value)) {
+                        _util.each(value, function(value) {
+                            memo.push(name + '=' + enc(value));
                         });
                     } else {
-                        memo.push(name + '=' + encodeURIComponent(value));
+                        memo.push(name + '=' + enc(value));
                     }
 
                     return memo;
-                }, []).join('&').replace(/%20/g, '+');
+                }, []).join('&').replace(r20, '+');
             }
+
+            // if we're working on a GET request and we have data then we should append
+            // query string to end of URL and not post data
 
             if (typeof data === 'string') {
                 if (method === 'GET') {
-                    url += (~url.indexOf('?') ? '&' : '?') + data;
-
+                    url = urlappend(url, data);
                     data = null;
                 } else {
                     headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=' + charset;
@@ -79,18 +98,28 @@ hAzzle.define('xhr', function() {
             }
 
             if (cacheBurst && method === 'GET') {
-                url += (~url.indexOf('?') ? '&' : '?') + cacheBurst + '=' + Date.now();
+                url = urlappend(url, cacheBurst) + '=' + Date.now();
             }
 
             return new Promise(function(resolve, reject) {
 
                 // Create new XHR request
 
-                var xhr = createXhr();
+                var i, xhr = createXhr();
 
-                xhr.open(method, url, true);
+                xhr.open(method,
+                    url,
+                    config.async || true,
+                    config.username || '',
+                    config.password || '');
 
                 xhr.timeout = config.timeout || XHR.defaults.timeout;
+
+                // Override mime type if needed
+
+                if (config.mimeType && xhr.overrideMimeType) {
+                    xhr.overrideMimeType(config.mimeType);
+                }
 
                 _util.each(XHR.defaults.headers, function(value, key) {
                     if (!(key in headers)) {
@@ -98,11 +127,17 @@ hAzzle.define('xhr', function() {
                     }
                 });
 
-                _util.each(headers, function(value, key) {
-                    if (_types.isDefined(value)) {
-                        xhr.setRequestHeader(key, value);
+                if (!config.crossDomain && !headers['X-Requested-With']) {
+                    headers['X-Requested-With'] = 'XMLHttpRequest';
+                }
+
+                // Set headers
+
+                for (i in headers) {
+                    if (typeof headers[i] !== 'undefined') {
+                        xhr.setRequestHeader(i, headers[i]);
                     }
-                });
+                }
 
                 xhr.onabort = function() {
                     reject(new Error('abort'));
@@ -116,22 +151,16 @@ hAzzle.define('xhr', function() {
                 xhr.onreadystatechange = function() {
 
                     if (xhr && xhr.readyState === 4) {
-                        var status = xhr.status,
-                            statusText, resp,
-                            response, responseHeaders;
-
-                        responseHeaders = xhr.getAllResponseHeaders()
-
+                        var status = xhrSuccessStatus[xhr.status] || xhr.status,
+                            statusText = xhr.statusText || '',
+                            resp, type,
+                            
                         // responseText is the old-school way of retrieving response (supported by IE8 & 9)
                         // response/responseType properties were introduced in XHR Level2 spec (supported by IE10)
 
-                        response = ('response' in xhr) ? xhr.response : xhr.responseText;
+                        response = ('response' in xhr) ? xhr.response : xhr.responseText,
 
-                        statusText = xhr.statusText || '';
-
-                        // normalize IE bug (http://bugs.jquery.com/ticket/1450)
-
-                        status = status === 1223 ? 204 : status;
+                        responseHeaders = xhr.getAllResponseHeaders();
 
                         // Determine if successfull
 
@@ -157,10 +186,9 @@ hAzzle.define('xhr', function() {
                                         resp = response;
                                         break;
                                     case 'xml':
-
-                                        hAzzle.err(hAzzle.installed['Jsonxml'], 21, 'Jsonxml.js module needed for xml in xhr()');
-                                        resp = _jxml.parseXML(response)
-                                        break
+                                        hAzzle.err(!hAzzle.installed.Jsonxml, 21, 'Jsonxml.js module needed for xml in xhr()');
+                                        resp = _jxml.parseXML(response);
+                                        break;
                                 }
                             }
 
