@@ -13,9 +13,9 @@ One important thing to note is that **hAzzle** doesn't try to subclass Array in 
 
 This alone gives you over 100 different ways to deal with the **.elements array**, and you are not restricted to a few methods as you find in **jQuery** / **Zepto**. 
 
-The **util.js module** ( part of the Core) uses some of this native functions. And a couple of other functions such as **odd()** and **even()** not known from the libraries mentioned above.
+The **util.js module** ( part of the Core) uses some of this native functions. And a couple of other functions such as **odd()** and **even()**.
 
-Whatever you want to do, there is no reason to get panic.**hAzzle** also provide some of the same **DOM traversing methods** you might know from **jQuery** / **Zepto** like **.siblings()**, **.has()**, **.children()**, etc. in the **traversing.js module**.
+**hAzzle** also provide some of the same **DOM traversing methods** you might know from **jQuery** / **Zepto** like **.siblings()**, **.has()**, **.children()**, etc. in the **traversing.js module**.
 
 You will also find similar methods like **.eq()**, **.prev()**, **.nextAll()*, **.next()** e.g. in the **collection.js module** ( part of the Core) to traverse through the **.elements array**
 
