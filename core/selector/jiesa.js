@@ -249,7 +249,7 @@ hAzzle.define('Jiesa', function() {
             if (this.length === 1) {
                 return hAzzle(Jiesa(selector, this.elements[0]));
             } else {
-                return _collection.reduce(this.elements, function(els, element) {
+                return _util.reduce(this.elements, function(els, element) {
                     return hAzzle(els.concat(_collection.slice(Jiesa(selector, element))));
                 }, []);
             }

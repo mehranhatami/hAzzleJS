@@ -12,6 +12,8 @@ hAzzle.define('Util', function() {
         _hasOwn = _objectProto.hasOwnProperty,
         _slice = _arrayProto.slice,
         _keys = Object.keys,
+        
+        noop = function() {},
 
         // Short cut for `hasOwnProperty`.
 
@@ -31,12 +33,20 @@ hAzzle.define('Util', function() {
             if (typeof fn !== 'function') {
                 hAzzle.err(true, 5, "'fn' must be a function in util.each()");
             }
+            var i, length = obj.length, key;
 
+            if (typeof fn == 'function' && typeof ctx === 'undefined' && typeof rev === 'undefined' && _types.isArray(obj)) {
+                while (++i < length) {
+                    if (fn(obj[i], i, obj) === false) {
+                        break;
+                    }
+                }
+            }
             fn = createCallback(fn, ctx);
 
-            var i, length = obj.length;
-
             if (length === +length) {
+                fn = createCallback(fn, ctx);
+
                 for (i = 0; i < length; i++) {
                     // Reverse  
                     i = rev ? obj.length - i - 1 : i;
@@ -46,7 +56,6 @@ hAzzle.define('Util', function() {
                 }
             } else {
                 if (obj) {
-                    var key;
                     for (key in obj) {
                         if (fn(obj[key], key, obj) === false) {
                             break;
@@ -60,50 +69,51 @@ hAzzle.define('Util', function() {
         // Internal function that returns an efficient (for current engines) version
         // of the passed-in callback, to be repeatedly applied in other functions.
 
-        createCallback = function(func, ctx, argCount) {
-            if (typeof func === 'function') {
-                if (ctx === undefined) {
-                    return func;
+        createCallback = function(fn, arg, argCount) {
+            if (typeof fn === 'function') {
+                if (arg === undefined) {
+                    return fn;
                 }
 
                 var dir = !argCount ? 3 : argCount;
 
                 return dir === 1 ? function(value) {
-                        return func.call(ctx, value);
+                        return fn.call(arg, value);
                     } : dir === 2 ?
                     function(value, other) {
-                        return func.call(ctx, value, other);
+                        return fn.call(arg, value, other);
                     } : dir === 3 ?
                     function(value, index, collection) {
-                        return func.call(ctx, value, index, collection);
+                        return fn.call(arg, value, index, collection);
                     } : dir === 4 ?
                     function(accumulator, value, index, collection) {
-                        return func.call(ctx, accumulator, value, index, collection);
+                        return fn.call(arg, accumulator, value, index, collection);
                     } : function() {
-                        return func.apply(ctx, arguments);
+                        return fn.apply(arg, arguments);
                     };
 
             }
-            if (!func) {
+            if (!fn) {
                 return identity;
             }
         },
         // Faster alternative then Some - ECMAScript 5 15.4.4.17
         some = function(obj, fn, ctx) {
 
-            if (!obj) {
-                return false;
-            }
+            if (obj) {
+            
             fn = iterate(fn, ctx);
 
             var keys = obj.length !== +obj.length && keys(obj),
                 length = (keys || obj).length,
                 index, currentKey;
+                
             for (index = 0; index < length; index++) {
                 currentKey = keys ? keys[index] : index;
                 if (fn(obj[currentKey], currentKey, obj)) {
                     return true;
                 }
+            }
             }
             return false;
         },
@@ -125,13 +135,7 @@ hAzzle.define('Util', function() {
         // properties from the `src` object(s)
 
         mixin = function(obj) {
-            if (!_types.isObject(obj)) {
-
-                return obj;
-            }
-
-
-
+            if (_types.isObject(obj)) {
             var source, prop, i = 1,
                 length = arguments.length;
 
@@ -143,6 +147,7 @@ hAzzle.define('Util', function() {
                     }
                 }
             }
+          }
             return obj;
         },
         makeArray = function(nodeList) {
@@ -158,10 +163,6 @@ hAzzle.define('Util', function() {
                 array[index] = nodeList[index];
             }
             return array;
-        },
-
-        isElement = function(element) {
-            return element && (element.nodeType === 1 || element.nodeType === 9);
         },
 
         iterate = function(value, ctx, argCount) {
@@ -330,11 +331,35 @@ hAzzle.define('Util', function() {
             }
             return [];
         },
+        
+         //  Reduces a collection
+        // Replacement for reduce -  ECMAScript 5 15.4.4.21     
+        reduce = function(collection, fn, accumulator, args) {
 
-        // Determines whether an object can have data
+            if (!collection) {
+                collection = [];
+            }
 
-        acceptData = function(owner) {
-            return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
+            fn = createCallback(fn, args, 4);
+
+            var keys = collection.length !== +collection.length && _keys(collection),
+                length = (keys || collection).length,
+                index = 0,
+                currentKey;
+
+            if (arguments.length < 3) {
+
+                if (!length) {
+                    hAzzle.err(true, 7, ' no collection length exist in collection.reduce()');
+                }
+
+                accumulator = collection[keys ? keys[index++] : index++];
+            }
+            for (; index < length; index++) {
+                currentKey = keys ? keys[index] : index;
+                accumulator = fn(accumulator, collection[currentKey], currentKey, collection);
+            }
+            return accumulator;
         },
 
         // Return the elements nodeName
@@ -442,24 +467,18 @@ hAzzle.define('Util', function() {
         mixin: mixin,
         makeArray: makeArray,
         merge: merge,
-        acceptData: acceptData,
-        createCallback: createCallback,
-        isElement: isElement,
         nodeName: nodeName,
         unique: unique,
-        sortedIndex: sortedIndex,
         indexOf: indexOf,
         instanceOf: instanceOf,
-        property: property,
-        matches: matches,
-        pairs: pairs,
         filter: filter,
         map: map,
         some: some,
+        reduce:reduce,
         now: Date.now,
         bind: bind,
         has: has,
-        noop: function() {},
+        noop: noop,
         extend: extend,
         isInDocument: isInDocument
     };

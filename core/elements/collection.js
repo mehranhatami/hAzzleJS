@@ -4,13 +4,11 @@ hAzzle.define('Collection', function() {
     var _util = hAzzle.require('Util'),
         _types = hAzzle.require('Types'),
         _arrayProto = Array.prototype,
-        _keys = Object.keys,
         _concat = _arrayProto.concat,
         _push = _arrayProto.push,
 
         makeArray = function(arr, results) {
             var ret = results || [];
-
             if (arr !== undefined) {
                 if (_types.isArrayLike(Object(arr))) {
                     _util.merge(ret, _types.isString(arr) ? [arr] : arr);
@@ -22,35 +20,7 @@ hAzzle.define('Collection', function() {
             return ret;
         },
 
-        //  Reduces a collection
-        // Replacement for reduce -  ECMAScript 5 15.4.4.21     
-        reduce = function(collection, fn, accumulator, args) {
-
-            if (!collection) {
-                collection = [];
-            }
-
-            fn = _util.createCallback(fn, args, 4);
-
-            var keys = collection.length !== +collection.length && _keys(collection),
-                length = (keys || collection).length,
-                index = 0,
-                currentKey;
-
-            if (arguments.length < 3) {
-
-                if (!length) {
-                    hAzzle.err(true, 7, ' no collection length exist in collection.reduce()');
-                }
-
-                accumulator = collection[keys ? keys[index++] : index++];
-            }
-            for (; index < length; index++) {
-                currentKey = keys ? keys[index] : index;
-                accumulator = fn(accumulator, collection[currentKey], currentKey, collection);
-            }
-            return accumulator;
-        },
+       
 
         slice = function(array, start, end) {
             if (typeof start === 'undefined') {
@@ -104,7 +74,7 @@ hAzzle.define('Collection', function() {
     };
 
     this.reduce = function(fn, accumulator, args) {
-        return reduce(this.elements, fn, accumulator, args);
+        return _util.reduce(this.elements, fn, accumulator, args);
     };
 
     this.indexOf = function(elem, arr, i) {
@@ -173,10 +143,6 @@ hAzzle.define('Collection', function() {
         return this.concat(elements);
     };
 
-    this.size = function() {
-        return this.length;
-    };
-
     // Reduce the set of matched elements to the first in the set, or 
     // to the 'num' first element in the set
 
@@ -234,7 +200,6 @@ hAzzle.define('Collection', function() {
 
     return {
         makeArray: makeArray,
-        slice: slice,
-        reduce: reduce
+        slice: slice
     };
 });

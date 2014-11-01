@@ -200,7 +200,7 @@ hAzzle.define('Setters', function() {
             } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
                 return ret;
             } else {
-                if (forceProp || typeof value == 'boolean' || _types.isFunction(value)) {
+                if (forceProp || typeof value == 'boolean' || _types.isType('Function')(value)) {
                     return Prop(elem, name, value);
                 }
                 elem.setAttribute(name, value + '');
@@ -264,7 +264,7 @@ hAzzle.define('Setters', function() {
             return;
         }
 
-        isFunction = _types.isFunction(value);
+        isFunction = _types.isType('Function')(value);
 
         return this.each(function(elem, index) {
             var val;

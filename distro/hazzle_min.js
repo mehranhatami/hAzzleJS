@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-31
+ * Date: 2014-11-1
  */
 (function(){var d=/^#([\w\-]*)$/,g={},f={},m=function(d,f,a){if(d)throw d=Error("[hAzzle-"+f+"] "+a),d.code=f,d;},l=function(d){return d&&(d.ELEMENT_NODE||d.DOCUMENT_NODE)},n=function(g,h){if(g){if(!(this instanceof n))return new n(g,h);if(g instanceof n)return g;var a;a=n.require("Util");var b=n.require("Ready");"function"===typeof g&&(f.Ready?b.ready(g):m(!0,6,"ready.js module not installed"));if("string"===typeof g){if((a=d.exec(g))&&!h&&(this.elements=[document.getElementById(a[1])]),null===this.elements||
 void 0===this.elements)this.elements=this.find(g,h,!0)}else g instanceof Array?this.elements=a.unique(a.filter(g,l)):this.isNodeList(g)?this.elements=a.filter(a.makeArray(g),l):this.elements=g.nodeType?11===g.nodeType?g.children:[g]:g===window?[g]:[];void 0===this.elements?(this.length=0,this.elements=[]):this.length=this.elements.length;return this}};n.version="1.0.0a-rc";n.err=m;n.installed=f;n.require=function(d){return g[d]};n.define=function(d,h){m("string"!==typeof d,1,'id must be a string "'+

@@ -13,7 +13,9 @@ hAzzle.define('Storage', function() {
         this.expando = _core.expando + Math.random();
     }
 
-    Storage.accepts = _util.acceptData;
+    Storage.accepts = function(owner) {
+        return owner.nodeType === 1 || owner.nodeType === 9 || !(+owner.nodeType);
+    };
 
     Storage.prototype = {
 
