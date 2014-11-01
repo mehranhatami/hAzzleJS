@@ -45,6 +45,31 @@ You can develop your own modules for **hAzzle**. If you do so, upload them to th
 
 **Important!!** Don't forget to add a **dependency list** document in the root of your directory so other developers know what **hAzzle modules** to include together with the **Core** to get your module to work.
 
+Module order ( Core)
+---------------------
+
+Correct module order for the Core if you need to test individual modules:
+
+* core/hAzzle.js
+* core/util/has.js
+* core/dom/support.js
+* core/dom/core.js
+* core/util/types.js
+* core/util/util.js
+* core/util/text.js
+* core/elements/collection.js
+* core/selector/jiesa.js
+* core/util/strings.js
+* core/util/storage.js
+* core/elements/curcss.js
+* core/util/units.js
+* core/elements/setters.js
+* core/util/attrhooks.js
+* core/util/prophooks.js
+* core/util/boolhooks.js
+* core/util/valhooks.js
+* core/util/doml4.js
+
 Browser compatiblity
 --------------------
 
