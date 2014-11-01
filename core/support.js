@@ -33,18 +33,15 @@ hAzzle.define('Support', function() {
     input.type = 'checkbox';
 
     // Support: IE<=11+
-    // Must access selectedIndex to make default options select
+
     optSelected = opt.selected;
 
-    // Support: IE<=11+
-    // An input loses its value after becoming a radio
     input = document.createElement('input');
     input.value = 't';
     input.type = 'radio';
     radioValue = input.value === 't';
 
     var imcHTML = (function() {
-
         if (typeof document.implementation.createHTMLDocument === 'function') {
             return true;
         }
@@ -79,16 +76,16 @@ hAzzle.define('Support', function() {
         input.setAttribute('name', 't');
 
         div.appendChild(input);
-        
+
         // Support: IE<=11+
         // Make sure textarea (and checkbox) defaultValue is properly cloned
         div.innerHTML = '<textarea>x</textarea>';
         noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
     });
-     assert(function(div) {
-       supportBorderRadius = div.style.borderRadius != null;         
-         });
+    assert(function(div) {
+        supportBorderRadius = div.style.borderRadius != null;
+    });
 
     return {
         assert: assert,
@@ -100,6 +97,6 @@ hAzzle.define('Support', function() {
         sortDetached: sortDetached,
         noCloneChecked: noCloneChecked,
         cS: !!document.defaultView.getComputedStyle,
-        borderRadius:supportBorderRadius
+        borderRadius: supportBorderRadius
     };
 });

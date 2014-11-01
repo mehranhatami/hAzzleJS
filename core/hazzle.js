@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-31
+ * Date: 2014-11-1
  */
  
 (function() {
@@ -18,17 +18,9 @@
 
         modules = {},
 
-        // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
+        version = '1.0.0a-rc',
 
-        installed = {},
-
-        version = {
-            full: '1.0.0a-rc',
-            major: 1,
-            minor: 0,
-            dot: 0,
-            codeName: 'new-age'
-        },
+        codename = 'new-age',
 
         // Throws an error if `condition` is `true`.
 
@@ -54,9 +46,6 @@
             err(modules[name], 2, 'module already included "' + name + '"');
             err(typeof fn !== 'function', 3, 'function body for "' + name + '" must be an function "' + fn + '"');
 
-            // append to module object
-            installed[name] = true;
-
             modules[name] = fn.call(hAzzle.prototype);
         },
 
@@ -69,7 +58,7 @@
         // so important to wrap [] around the 'sel' to avoid
         // errors
 
-        hAzzle = function(sel, ctx) {
+         hAzzle = function(sel, ctx) {
 
             // hAzzle(), hAzzle(null), hAzzle(undefined), hAzzle(false)
             if (!sel) {
@@ -86,14 +75,14 @@
 
             // Include required module
 
-            var m, _util = hAzzle.require('Util'),
+            var m, els, _util = hAzzle.require('Util'),
                // Document ready
                 _ready = hAzzle.require('Ready');
 
             // If a function is given, call it when the DOM is ready
 
             if (typeof sel === 'function') {
-                if (installed.Ready) {
+                if (modules.Ready) {
                     _ready.ready(sel);
                 } else {
                     err(true, 6, 'ready.js module not installed');
@@ -105,36 +94,36 @@
                 // Quick look-up for hAzzle(#id)
 
                 if ((m = idOnly.exec(sel)) && !ctx) {
-                    this.elements = [document.getElementById(m[1])];
+                    els = [document.getElementById(m[1])];
                 }
 
-                if (this.elements === null || this.elements === undefined) {
+                if (els === null || els === undefined) {
 
                     // The 'find' method need to have a boolean value set to 'true', to 
                     // work as expected. Else it will behave like the global .find method
 
-                    this.elements = this.find(sel, ctx, true);
+                    els = this.find(sel, ctx, true);
                 }
                 // hAzzle([dom]) 
-            } else if (sel instanceof Array) {
-                this.elements = _util.unique(_util.filter(sel, validTypes));
+            } else if (isArray(sel)) {
+                els = _util.unique(_util.filter(sel, validTypes));
                 // hAzzle(dom)
             } else if (this.isNodeList(sel)) {
-                this.elements = _util.filter(_util.makeArray(sel), validTypes);
+                els = _util.filter(_util.makeArray(sel), validTypes);
                 // hAzzle(dom)
             } else if (sel.nodeType) {
                 // If it's a html fragment, create nodes from it
                 if (sel.nodeType === 11) {
                     // This children? Are they an array or not?
-                    this.elements = sel.children;
+                    els = sel.children;
                 } else {
-                    this.elements = [sel];
+                    els = [sel];
                 }
                 // window     
             } else if (sel === window) {
-                this.elements = [sel];
+                els = [sel];
             } else {
-                this.elements = [];
+                els = [];
             }
 
             // Create a new hAzzle collection from the nodes found
@@ -142,11 +131,12 @@
             // elements to an empty array [] to avoid hAzzle
             // throwing errors
 
-            if (this.elements === undefined) {
+            if (els === undefined) {
                 this.length = 0;
                 this.elements = [];
             } else {
-                this.length = this.elements.length;
+                this.elements = els;
+                this.length = els.length;
             }
             return this;
         };
@@ -154,14 +144,11 @@
     // Expose
 
     hAzzle.err = err;
-    hAzzle.installed = installed;
+    hAzzle.installed = modules;
     hAzzle.require = require;
     hAzzle.define = define;
-    hAzzle.codename = version.codename 
-    hAzzle.version = version.full
-    hAzzle.major = version.major
-    hAzzle.minor = version.minor
-    hAzzle.dot = version.dot
+    hAzzle.codename = codename;
+    hAzzle.version = version;
 
     // Hook hAzzle on the window object
 
