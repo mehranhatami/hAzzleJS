@@ -45,6 +45,19 @@ You can develop your own modules for **hAzzle**. If you do so, upload them to th
 
 **Important!!** Don't forget to add a **dependency list** document in the root of your directory so other developers know what **hAzzle modules** to include together with the **Core** to get your module to work.
 
+DOM Level 4 (DL4)
+------------------
+
+DOM Level 4 (DL4) will soon replace the 'old' DOM Level 3 (DL3). So **hAzzle** has a build in polify in the Core supporting the most common features. **Note!** This polify can't be removed, and needed for some of the modules ( not part of the Core) to work. 
+* prepend
+* append
+* before
+* after
+* replace
+* remove
+* matches
+* customEvent
+
 Module order ( Core)
 ---------------------
 Correct module order for the Core if you need to test individual modules:
@@ -71,7 +84,7 @@ Correct module order for the Core if you need to test individual modules:
 * core/util/doml4.js
 
 Module order (module folder)
------------------------
+----------------------------
 
 * modules/style.js
 * modules/csshooks.js
