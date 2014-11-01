@@ -51,11 +51,10 @@ hAzzle.define('Types', function() {
                 return value.length === 0;
             }
             var key;
-            for (key in value) {
+            for (key in value)
                 if (value != null && Object.prototype.hasOwnProperty.call(value, key)) {
                     return false;
                 }
-            }
             return true;
         },
 
@@ -65,7 +64,7 @@ hAzzle.define('Types', function() {
         },
         isNaN = function(value) {
             // `NaN` as a primitive is the only value that is not equal to itself
-            return isNumber(value) && value !== +value;
+            return isNumber(value) && value != +value;
         },
         isUndefined = function(value) {
             return typeof value === 'undefined';
@@ -119,9 +118,7 @@ hAzzle.define('Types', function() {
                 return false;
             }
             try {
-                if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) {
-                    return true;
-                }
+                if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) return true;
             } catch (e) {
                 return false;
             }
@@ -131,7 +128,7 @@ hAzzle.define('Types', function() {
         // http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
         isHostMethod = function(o, p) {
             var t = typeof o[p];
-            return t === 'function' || (!!(t === 'object' && o[p])) || t === 'unknown';
+            return t === 'function' || (!!(t == 'object' && o[p])) || t == 'unknown';
         };
 
     this.isNodeList = isNodeList;

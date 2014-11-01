@@ -15,9 +15,8 @@
 
     'use strict';
 
-    var Aproto = Array.prototype
-        _slice = Aproto.slice,
-        _indexOf = Aproto.indexOf,
+    var _slice = Array.prototype.slice,
+        property,
 
         ElementPrototype = (window.Element ||
             window.Node ||
@@ -87,7 +86,7 @@
                 // FIX ME!! Need a better solution for this in hAzzle
                 function matches(selector) {
                     var parentElement = this.parentElement;
-                    return !!parentElement && -1 < _indexOf.call(
+                    return !!parentElement && -1 < indexOf.call(
                         parentElement.querySelectorAll(selector),
                         this
                     );

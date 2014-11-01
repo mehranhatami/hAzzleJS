@@ -1,5 +1,4 @@
 // has.js- feature detection
-
 hAzzle.define('has', function() {
 
     var

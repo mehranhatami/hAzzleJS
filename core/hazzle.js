@@ -6,7 +6,6 @@
  *
  * Date: 2014-11-1
  */
- 
 (function() {
 
     var
@@ -58,7 +57,7 @@
         // so important to wrap [] around the 'sel' to avoid
         // errors
 
-         hAzzle = function(sel, ctx) {
+        hAzzle = function(sel, ctx) {
 
             // hAzzle(), hAzzle(null), hAzzle(undefined), hAzzle(false)
             if (!sel) {
@@ -75,8 +74,9 @@
 
             // Include required module
 
+
             var m, els, _util = hAzzle.require('Util'),
-               // Document ready
+                // Document ready
                 _ready = hAzzle.require('Ready');
 
             // If a function is given, call it when the DOM is ready
@@ -88,6 +88,7 @@
                     err(true, 6, 'ready.js module not installed');
                 }
             }
+
 
             if (typeof sel === 'string') {
 
@@ -105,7 +106,7 @@
                     els = this.find(sel, ctx, true);
                 }
                 // hAzzle([dom]) 
-            } else if (isArray(sel)) {
+            } else if (sel instanceof Array) {
                 els = _util.unique(_util.filter(sel, validTypes));
                 // hAzzle(dom)
             } else if (this.isNodeList(sel)) {
