@@ -131,6 +131,7 @@ hAzzle.define('Util', function() {
             }
 
 
+
             var source, prop, i = 1,
                 length = arguments.length;
 
@@ -420,6 +421,20 @@ hAzzle.define('Util', function() {
                 pn = pn.parentNode;
             }
             return false;
+        },
+        // Faster 'instanceOf' then the native one
+        instanceOf = function(item, object) {
+            if (item == null) {
+                return false;
+            }
+            var constructor = item.$constructor || item.constructor;
+            while (constructor) {
+                if (constructor === object) {
+                    return true;
+                }
+                constructor = constructor.parent;
+            }
+            return item instanceof object;
         };
 
     return {
@@ -434,6 +449,7 @@ hAzzle.define('Util', function() {
         unique: unique,
         sortedIndex: sortedIndex,
         indexOf: indexOf,
+        instanceOf: instanceOf,
         property: property,
         matches: matches,
         pairs: pairs,

@@ -140,8 +140,6 @@
     return true;
   }
 
-
-
   function getScript(url, callback) {
     var elem = doc.createElement('script');
     if (getScript.onerror === undefined) {

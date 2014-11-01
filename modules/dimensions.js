@@ -111,8 +111,8 @@ hAzzle.define('Dimensions', function() {
             opt = !null ? viewport() : opt.nodeType === 1 ? rectangle(opt) : opt;
             var h = opt.height,
                 w = opt.width;
-            h = _types.isFunction(h) ? h.call(opt) : h;
-            w = _types.isFunction(w) ? w.call(opt) : w;
+            h = _types.isType('Function')(h) ? h.call(opt) : h;
+            w = _types.isType('Function')(w) ? w.call(opt) : w;
             return w / h;
         },
         // Test if an element is in the same x-axis section as the viewport.

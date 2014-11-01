@@ -1,5 +1,4 @@
 // classes.js
-
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
 hAzzle.define('Classes', function() {
@@ -36,7 +35,13 @@ hAzzle.define('Classes', function() {
             }
             return classes;
         },
+        getElem = function(elem) {
 
+            if (_util.instanceOf(elem, hAzzle)) {
+                return elem.elements[0];
+            }
+            return elem;
+        },
         addRemove = function(elem, classes, nativeMethodName, fn, done) {
 
             if (!_types.isEmptyObject(elem)) {
@@ -79,7 +84,7 @@ hAzzle.define('Classes', function() {
                 // Callback function (if provided) that will be fired after the
                 // className value has been added / removed to / from the element 
 
-                if (_types.isFunction(done)) {
+                if (_types.isType('Function')(done)) {
                     done.call(elem, elem);
                 }
             }
@@ -89,10 +94,7 @@ hAzzle.define('Classes', function() {
 
         hasClass = function(elem, classes) {
 
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
-
+            elem = getElem(elem);
             elem = elem.length ? elem : [elem];
 
             var className = ' ' + classes + ' ',
@@ -121,9 +123,7 @@ hAzzle.define('Classes', function() {
 
         addClass = function(elem, classes, /*optional*/ fn) {
 
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
+            elem = getElem(elem);
 
             var els = elem.length ? elem : [elem];
             _util.each(els, function(elem) {
@@ -150,9 +150,7 @@ hAzzle.define('Classes', function() {
 
         removeClass = function(elem, classes, /*optional*/ fn) {
 
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
+            elem = getElem(elem);
 
             var els = elem.length ? elem : [elem];
 
@@ -187,9 +185,7 @@ hAzzle.define('Classes', function() {
 
         toggleClass = function(elem, value, condition) {
 
-            if (elem instanceof hAzzle) {
-                elem = elem.elements[0];
-            }
+            elem = getElem(elem);
 
             var els = elem.length ? elem : [elem],
                 type = typeof value;

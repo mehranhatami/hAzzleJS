@@ -1,11 +1,12 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0d Release Candidate
+ * Version: 1.0.0db Release Candidate
  * Released under the MIT License.
  *
  * Date: 2014-10-31
  */
+ 
 (function() {
 
     var
@@ -75,7 +76,7 @@
                 return;
             }
             // Allow instantiation without the 'new' keyword
-            if (!(this instanceof hAzzle)) {
+            if (!(_util.instanceOf(this, hAzzle))) {
                 return new hAzzle(sel, ctx);
             }
 
@@ -86,6 +87,7 @@
             // Include required module
 
             var m, _util = hAzzle.require('Util'),
+               // Document ready
                 _ready = hAzzle.require('Ready');
 
             // If a function is given, call it when the DOM is ready
@@ -151,11 +153,15 @@
 
     // Expose
 
-    hAzzle.version = version.full;
     hAzzle.err = err;
     hAzzle.installed = installed;
     hAzzle.require = require;
     hAzzle.define = define;
+    hAzzle.codename = version.codename 
+    hAzzle.version = version.full
+    hAzzle.major = version.major
+    hAzzle.minor = version.minor
+    hAzzle.dot = version.dot
 
     // Hook hAzzle on the window object
 
@@ -770,6 +776,10 @@ hAzzle.define('Util', function() {
 
                 return obj;
             }
+
+
+
+
             var source, prop, i = 1,
                 length = arguments.length;
 
@@ -1059,6 +1069,20 @@ hAzzle.define('Util', function() {
                 pn = pn.parentNode;
             }
             return false;
+        },
+        // Faster 'instanceOf' then the native one
+        instanceOf = function(item, object) {
+            if (item == null) {
+                return false;
+            }
+            var constructor = item.$constructor || item.constructor;
+            while (constructor) {
+                if (constructor === object) {
+                    return true;
+                }
+                constructor = constructor.parent;
+            }
+            return item instanceof object;
         };
 
     return {
@@ -1073,6 +1097,7 @@ hAzzle.define('Util', function() {
         unique: unique,
         sortedIndex: sortedIndex,
         indexOf: indexOf,
+        instanceOf: instanceOf,
         property: property,
         matches: matches,
         pairs: pairs,
@@ -1765,17 +1790,17 @@ hAzzle.define('Jiesa', function() {
                 return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
             }
         },
-        
-   normalizeCtx = function (root) {
-    if (!root) {
-        return document;
-    }    
-    if (typeof root === 'string') {
-        return Jiesa(root);
-    }
-    if (!root.nodeType && arrayLike(root)) return root[0]
-    return root
-  },
+
+        normalizeCtx = function(root) {
+            if (!root) {
+                return document;
+            }
+            if (typeof root === 'string') {
+                return Jiesa(root);
+            }
+            if (!root.nodeType && arrayLike(root)) return root[0]
+            return root
+        },
         /**
          * Find elements by selectors.
          *
@@ -1789,10 +1814,10 @@ hAzzle.define('Jiesa', function() {
          * @param {Bool} c Save to cache? Default is true.
          */
 
-          Jiesa = function(sel, ctx) {
+        Jiesa = function(sel, ctx) {
             var m, nodeType, elem, results = [];
 
-            ctx = root = normalizeCtx(ctx);
+            ctx = normalizeCtx(ctx);
 
             if (!sel || typeof sel !== 'string') {
                 return results;
@@ -1824,10 +1849,8 @@ hAzzle.define('Jiesa', function() {
                     if ((sel = m[1])) {
                         if (nodeType === 9) {
                             elem = ctx.getElementById(sel);
-                            if (elem && elem.parentNode) {
-                                if (elem.id === sel) {
-                                    return [elem];
-                                }
+                            if (elem && elem.id === sel) {
+                                return [elem];
                             } else {
                                 return [];
                             }
@@ -1841,6 +1864,7 @@ hAzzle.define('Jiesa', function() {
                     } else if ((sel = m[2])) {
                         return _collection.slice(ctx.getElementsByClassName(sel));
                     } else if ((sel = m[3])) {
+
                         return _collection.slice(ctx.getElementsByTagName(sel));
                     }
                     // E.g. hAzzle( 'span.selected' )  
@@ -1855,8 +1879,9 @@ hAzzle.define('Jiesa', function() {
                     });
                     return results;
                 } else { // Fallback to QSA  
+
                     // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
-                    if (_support.qsa && !_core.rbuggyQSA.length) {
+                    if (_support.qsa && _core.rbuggyQSA.length) {
                         if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
                             return _collection.slice(fixedRoot(ctx, sel, ctx.querySelectorAll));
                         } else {
@@ -1867,7 +1892,7 @@ hAzzle.define('Jiesa', function() {
                 }
             }
         },
-      matches = function(elem, sel, ctx) {
+        matches = function(elem, sel, ctx) {
 
             if (sel.nodeType) {
                 return elem === sel;
@@ -1909,7 +1934,7 @@ hAzzle.define('Jiesa', function() {
             }
             // FIX ME!! Fallback solution need to be developed here!
         };
-        
+
     // Find is not the same as 'Jiesa', but a optimized version for 
     // better performance
 
@@ -2422,7 +2447,6 @@ hAzzle.define('Storage', function() {
 // curcss.js
 // Note! Contains *only* native CSS, and position, and offset, for more *advanced* CSS, 
 // use the style.js module
-
 hAzzle.define('curCSS', function() {
 
     var _has = hAzzle.require('has'),
@@ -2505,7 +2529,7 @@ hAzzle.define('curCSS', function() {
             if (typeof elem === 'object' && elem instanceof hAzzle) {
                 elem = elem.elements[0];
             }
-            var computedValue = 0;
+            var ret = 0;
 
             if (!force) {
 
@@ -2533,26 +2557,31 @@ hAzzle.define('curCSS', function() {
                 // getPropertyValue is only needed for .css('filter'). It's terrible slow and ugly too!
 
                 if (_has.ie === 9 && prop === 'filter') {
-                    computedValue = computedStyle.getPropertyValue(prop);
+                    ret = computedStyle.getPropertyValue(prop);
                 } else {
-                    computedValue = computedStyle[prop];
+                    ret = computedStyle[prop];
                 }
 
-                // Fall back to the property's style value (if defined) when computedValue returns nothing
+                // Fall back to the property's style value (if defined) when 'ret' returns nothing
 
-                if (computedValue === '' || computedValue === null) {
-                    computedValue = elem.style[prop];
+                if (ret === '' && !_core.contains(elem.ownerDocument, elem)) {
+                    ret = elem.style[prop];
                 }
 
-                if (computedValue === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
+                if (ret === 'auto' && (prop === 'top' || prop === 'right' || prop === 'bottom' || prop === 'left')) {
 
                     var pos = curCSS(elem, 'position');
 
                     if (pos === 'fixed' || (pos === 'absolute' && (prop === 'left' || prop === 'top'))) {
-                        computedValue = hAzzle(elem).position()[prop] + 'px';
+                        ret = hAzzle(elem).position()[prop] + 'px';
                     }
                 }
-                return computedValue;
+                return ret !== undefined ?
+                    // Support: IE9-11+
+                    // IE returns zIndex value as an integer.
+                    ret + '' :
+                    ret;
+
             }
         },
 
@@ -2672,7 +2701,7 @@ hAzzle.define('curCSS', function() {
             var relativePosition = relative.getPosition();
             return {
                 top: position.top - relativePosition.top - parseInt(curCSS(relative, 'borderLeftWidth')) || 0,
-                y: position.left - relativePosition.left - parseInt(curCSS(relative, 'borderTopWidth')) || 0
+                left: position.left - relativePosition.left - parseInt(curCSS(relative, 'borderTopWidth')) || 0
             };
         }
         return position;
