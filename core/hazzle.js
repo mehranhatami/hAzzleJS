@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-10-31
+ * Date: 2014-11-02
  */
  
 (function() {
@@ -22,13 +22,9 @@
 
         installed = {},
 
-        version = {
-            full: '1.0.0a-rc',
-            major: 1,
-            minor: 0,
-            dot: 0,
-            codeName: 'new-age'
-        },
+        version = '1.0.0a-rc',
+
+        codename = 'new-age',
 
         // Throws an error if `condition` is `true`.
 
@@ -86,7 +82,7 @@
 
             // Include required module
 
-            var m, _util = hAzzle.require('Util'),
+            var m, els, _util = hAzzle.require('Util'),
                // Document ready
                 _ready = hAzzle.require('Ready');
 
@@ -105,36 +101,36 @@
                 // Quick look-up for hAzzle(#id)
 
                 if ((m = idOnly.exec(sel)) && !ctx) {
-                    this.elements = [document.getElementById(m[1])];
+                    els = [document.getElementById(m[1])];
                 }
 
-                if (this.elements === null || this.elements === undefined) {
+                if (els === null || els === undefined) {
 
                     // The 'find' method need to have a boolean value set to 'true', to 
                     // work as expected. Else it will behave like the global .find method
 
-                    this.elements = this.find(sel, ctx, true);
+                    els = this.find(sel, ctx, true);
                 }
                 // hAzzle([dom]) 
             } else if (sel instanceof Array) {
-                this.elements = _util.unique(_util.filter(sel, validTypes));
+                els = _util.unique(_util.filter(sel, validTypes));
                 // hAzzle(dom)
             } else if (this.isNodeList(sel)) {
-                this.elements = _util.filter(_util.makeArray(sel), validTypes);
+                els = _util.filter(_util.makeArray(sel), validTypes);
                 // hAzzle(dom)
             } else if (sel.nodeType) {
                 // If it's a html fragment, create nodes from it
                 if (sel.nodeType === 11) {
                     // This children? Are they an array or not?
-                    this.elements = sel.children;
+                    els = sel.children;
                 } else {
-                    this.elements = [sel];
+                    els = [sel];
                 }
                 // window     
             } else if (sel === window) {
-                this.elements = [sel];
+                els = [sel];
             } else {
-                this.elements = [];
+                els = [];
             }
 
             // Create a new hAzzle collection from the nodes found
@@ -142,11 +138,12 @@
             // elements to an empty array [] to avoid hAzzle
             // throwing errors
 
-            if (this.elements === undefined) {
+            if (els === undefined) {
                 this.length = 0;
                 this.elements = [];
             } else {
-                this.length = this.elements.length;
+                this.elements = els;
+                this.length = els.length;
             }
             return this;
         };
@@ -157,11 +154,8 @@
     hAzzle.installed = installed;
     hAzzle.require = require;
     hAzzle.define = define;
-    hAzzle.codename = version.codename 
-    hAzzle.version = version.full
-    hAzzle.major = version.major
-    hAzzle.minor = version.minor
-    hAzzle.dot = version.dot
+    hAzzle.codename = codename 
+    hAzzle.version = version
 
     // Hook hAzzle on the window object
 

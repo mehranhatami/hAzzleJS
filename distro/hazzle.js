@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-11-2
+ * Date: 2014-11-02
  */
  
 (function() {
@@ -17,6 +17,10 @@
         // Holder for all modules
 
         modules = {},
+
+        // Keep track of installed modules. Hopefully people won't spoof this... would be daft.
+
+        installed = {},
 
         version = '1.0.0a-rc',
 
@@ -45,6 +49,9 @@
             err(typeof name !== 'string', 1, 'id must be a string "' + name + '"');
             err(modules[name], 2, 'module already included "' + name + '"');
             err(typeof fn !== 'function', 3, 'function body for "' + name + '" must be an function "' + fn + '"');
+
+            // append to module object
+            installed[name] = true;
 
             modules[name] = fn.call(hAzzle.prototype);
         },
@@ -75,21 +82,19 @@
 
             // Include required module
 
-
             var m, els, _util = hAzzle.require('Util'),
-                // Document ready
+               // Document ready
                 _ready = hAzzle.require('Ready');
 
             // If a function is given, call it when the DOM is ready
 
             if (typeof sel === 'function') {
-                if (modules.Ready) {
+                if (installed.Ready) {
                     _ready.ready(sel);
                 } else {
                     err(true, 6, 'ready.js module not installed');
                 }
             }
-
 
             if (typeof sel === 'string') {
 
@@ -146,11 +151,11 @@
     // Expose
 
     hAzzle.err = err;
-    hAzzle.installed = modules;
+    hAzzle.installed = installed;
     hAzzle.require = require;
     hAzzle.define = define;
-    hAzzle.codename = codename;
-    hAzzle.version = version;
+    hAzzle.codename = codename 
+    hAzzle.version = version
 
     // Hook hAzzle on the window object
 
