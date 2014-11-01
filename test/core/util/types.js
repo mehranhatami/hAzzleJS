@@ -10,7 +10,7 @@
      // 'Blob': null,
      // 'RegExp': null,
      // 'Arguments': null,
-       'Function': null,
+    //   'Function': null,
      // 'Date': null,
       'Array': null,
       'Empty': null,

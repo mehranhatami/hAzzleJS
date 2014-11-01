@@ -1,7 +1,7 @@
 /*!
  * hAzzle.js
  * Copyright (c) 2014 Kenny Flashlight
- * Version: 1.0.0db Release Candidate
+ * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
  * Date: 2014-11-1
@@ -75,7 +75,7 @@
                 return;
             }
             // Allow instantiation without the 'new' keyword
-            if (!(_util.instanceOf(this, hAzzle))) {
+            if (!(this instanceof hAzzle)) {
                 return new hAzzle(sel, ctx);
             }
 
