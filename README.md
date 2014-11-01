@@ -9,15 +9,15 @@ It's biggest design goal is to be as minimal as possible, and give the controll 
 
 The Core contains only the basic code needed for the modules to work. On top of the Core is the module layer. You can use it whole, or just import specific modules you need. The API should be familiar to everyone who has worked with some of the libraries mentioned above.
 
-One important thing to note is that **hAzzle** doesn't try to subclass Array in any way. A **hAzzle instance** is just a standard object, with the current elements selection stored in the **.elements array**. This gives you option to use use all **ES5** / **ES6** functions methods, or deal with the **.elements array** with the same methods you find in libraries such as **Underscore** and **Loadash**.
+One important thing to note is that **hAzzle** doesn't try to subclass Array in any way. A **hAzzle instance** is just a standard object, with the current elements selection stored in the **.elements array**. This gives you option to use all **ES5** / **ES6** functions methods, or deal with the **.elements array** with the same methods you find in libraries such as **Underscore** and **Loadash**.
 
 This alone gives you over 100 different ways to deal with the **.elements array**, and you are not restricted to a few methods as you find in **jQuery** / **Zepto**. 
 
-The **util.js module** ( part of the Core) uses some of this native functions.
+The **util.js module** ( part of the Core) uses some of this native functions. And a couple of other functions such as **odd()** and **even()** not known from the libraries mentioned above.
 
-Anyway. There is no reason to get panic.**hAzzle** also provide some of the same **DOM traversing methods** you might know from this libraries like **.siblings()**, **.has()**, **.children()**, etc. in the **traversing.js module**.
+Whatever you want to do, there is no reason to get panic.**hAzzle** also provide some of the same **DOM traversing methods** you might know from **jQuery** / **Zepto** like **.siblings()**, **.has()**, **.children()**, etc. in the **traversing.js module**.
 
-You will also find similar methods like **.eq()**, **.prev()**, **.nextAll()*, **.next()** e.g., as you may know from **jQuery / Zepto** in the **collection.js module** ( part of the Core) to traverse through the **.elements array**
+You will also find similar methods like **.eq()**, **.prev()**, **.nextAll()*, **.next()** e.g. in the **collection.js module** ( part of the Core) to traverse through the **.elements array**
 
 Other methodds such as **.addClass()**, **.prepend()**, **.text()**, **.html()** e.g. are all included in the **module folder**.
 
