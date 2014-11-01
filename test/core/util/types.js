@@ -1,4 +1,4 @@
-/*(function () {
+(function () {
   var expect = chai.expect,
     _types = hAzzle.require('Types'),
     
@@ -50,4 +50,3 @@
 
   });
 }());
-*/
