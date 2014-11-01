@@ -6,7 +6,6 @@
  *
  * Date: 2014-11-1
  */
- 
 (function() {
 
     var
@@ -58,7 +57,7 @@
         // so important to wrap [] around the 'sel' to avoid
         // errors
 
-         hAzzle = function(sel, ctx) {
+        hAzzle = function(sel, ctx) {
 
             // hAzzle(), hAzzle(null), hAzzle(undefined), hAzzle(false)
             if (!sel) {
@@ -76,7 +75,7 @@
             // Include required module
 
             var m, els, _util = hAzzle.require('Util'),
-               // Document ready
+                // Document ready
                 _ready = hAzzle.require('Ready');
 
             // If a function is given, call it when the DOM is ready
@@ -470,10 +469,11 @@ hAzzle.define('Types', function() {
                 return value.length === 0;
             }
             var key;
-            for (key in value)
+            for (key in value) {
                 if (value != null && Object.prototype.hasOwnProperty.call(value, key)) {
                     return false;
                 }
+            }
             return true;
         },
 
@@ -483,7 +483,7 @@ hAzzle.define('Types', function() {
         },
         isNaN = function(value) {
             // `NaN` as a primitive is the only value that is not equal to itself
-            return isNumber(value) && value != +value;
+            return isNumber(value) && value !== +value;
         },
         isUndefined = function(value) {
             return typeof value === 'undefined';
@@ -537,7 +537,9 @@ hAzzle.define('Types', function() {
                 return false;
             }
             try {
-                if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) return true;
+                if (nodes(0) === null || (nodes(0) && nodes(0).tagName)) {
+                    return true;
+                }
             } catch (e) {
                 return false;
             }
@@ -547,7 +549,7 @@ hAzzle.define('Types', function() {
         // http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
         isHostMethod = function(o, p) {
             var t = typeof o[p];
-            return t === 'function' || (!!(t == 'object' && o[p])) || t == 'unknown';
+            return t === 'function' || (!!(t === 'object' && o[p])) || t === 'unknown';
         };
 
     this.isNodeList = isNodeList;
@@ -575,7 +577,6 @@ hAzzle.define('Types', function() {
         isHostMethod: isHostMethod
     };
 });
-
 
 // util.js
 hAzzle.define('Util', function() {
@@ -1191,6 +1192,7 @@ hAzzle.define('Core', function() {
                 features.detectDuplicates = !!_hasDuplicate;
                 features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
 
+
                 // On non-HTML documents innerHTML and getElementsById doesnt work properly
                 _support.assert(function(div) {
                     div.innerHTML = '<a id="hAzzle_id"></a>';
@@ -1436,8 +1438,6 @@ hAzzle.define('Collection', function() {
             return ret;
         },
 
-
-
         slice = function(array, start, end) {
             if (typeof start === 'undefined') {
                 start = 0;
@@ -1507,7 +1507,7 @@ hAzzle.define('Collection', function() {
     };
 
     this.slice = function(start, end) {
-        return new hAzzle(slice(this.elements, start, end));
+        return hAzzle(slice(this.elements, start, end));
     };
 
     // Concatenate two elements lists
@@ -1618,8 +1618,7 @@ hAzzle.define('Collection', function() {
         makeArray: makeArray,
         slice: slice
     };
-});
-// jiesa.js
+}); // jiesa.js
 hAzzle.define('Jiesa', function() {
 
     var _util = hAzzle.require('Util'),
@@ -1933,12 +1932,26 @@ hAzzle.define('Jiesa', function() {
  * - remove
  * - matches
  */
+/**
+ * DOM 4 shim / pollify for hAzzle
+ *
+ * This pollify covers:
+ *
+ * - append
+ * - prepend
+ * - before
+ * - after
+ * - replace
+ * - remove
+ * - matches
+ */
 (function(window) {
 
     'use strict';
 
-    var _slice = Array.prototype.slice,
-        property,
+    var Aproto = Array.prototype
+    _slice = Aproto.slice,
+        _indexOf = Aproto.indexOf,
 
         ElementPrototype = (window.Element ||
             window.Node ||
@@ -2008,7 +2021,7 @@ hAzzle.define('Jiesa', function() {
                 // FIX ME!! Need a better solution for this in hAzzle
                 function matches(selector) {
                     var parentElement = this.parentElement;
-                    return !!parentElement && -1 < indexOf.call(
+                    return !!parentElement && -1 < _indexOf.call(
                         parentElement.querySelectorAll(selector),
                         this
                     );

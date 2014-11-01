@@ -20,8 +20,6 @@ hAzzle.define('Collection', function() {
             return ret;
         },
 
-       
-
         slice = function(array, start, end) {
             if (typeof start === 'undefined') {
                 start = 0;
@@ -91,7 +89,7 @@ hAzzle.define('Collection', function() {
     };
 
     this.slice = function(start, end) {
-        return new hAzzle(slice(this.elements, start, end));
+        return hAzzle(slice(this.elements, start, end));
     };
 
     // Concatenate two elements lists
