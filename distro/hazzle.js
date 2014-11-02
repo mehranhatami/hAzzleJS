@@ -6,7 +6,6 @@
  *
  * Date: 2014-11-02
  */
- 
 (function() {
 
     var
@@ -83,7 +82,7 @@
             // Include required module
 
             var m, els, _util = hAzzle.require('Util'),
-               // Document ready
+                // Document ready
                 _ready = hAzzle.require('Ready');
 
             // If a function is given, call it when the DOM is ready
@@ -154,7 +153,7 @@
     hAzzle.installed = installed;
     hAzzle.require = require;
     hAzzle.define = define;
-    hAzzle.codename = codename 
+    hAzzle.codename = codename
     hAzzle.version = version
 
     // Hook hAzzle on the window object
@@ -2798,10 +2797,9 @@ hAzzle.define('Setters', function() {
     var _util = hAzzle.require('Util'),
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
-        _has = hAzzle.require('has'),
-        _concat = Array.prototype.concat,
-        whiteSpace = /\S+/g,
-        wreturn = /\r/g,
+        _whiteSpace = /\S+/g,
+        _wreturn = /\r/g,
+
         boolElemArray = ('input select option textarea button form details').split(' '),
         boolAttrArray = ('multiple selected checked disabled readonly required ' +
             'async autofocus compact nowrap declare noshade hreflang onload src' +
@@ -2815,26 +2813,11 @@ hAzzle.define('Setters', function() {
             'class': 'className',
             'for': 'htmlFor'
         },
-        forcePropNames = {
-            innerHTML: 1,
-            textContent: 1,
-            className: 1,
-            htmlFor: _has.has('ie'),
-            value: 1
-        },
-        attrHooks = {
-            get: {},
-            set: {}
-        },
         propHooks = {
             get: {},
             set: {}
         },
-        nodeHooks = {
-            get: {},
-            set: {}
-        },
-        boolHooks = {
+        attrHooks = {
             get: {},
             set: {}
         },
@@ -2844,10 +2827,7 @@ hAzzle.define('Setters', function() {
         },
 
         getElem = function(elem) {
-            if (elem instanceof hAzzle) {
-                return elem.elements;
-            }
-            return elem;
+            return elem instanceof hAzzle ? elem.elements : elem;
         },
 
         // Get names on the boolean attributes
@@ -2862,25 +2842,21 @@ hAzzle.define('Setters', function() {
         // Removes an attribute from an HTML element.
 
         removeAttr = function(elem, value) {
-
             elem = getElem(elem);
-
             var name, propName,
                 i = 0,
-                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
-                l = keys.length;
+                attrNames = value && value.match(_whiteSpace);
 
-            for (; i < l; i++) {
+            if (attrNames && elem.nodeType === 1) {
+                while ((name = attrNames[i++])) {
+                    propName = propMap[name] || name;
 
-                name = keys[i];
+                    if (getBooleanAttrName(elem, name)) {
+                        elem[propName] = false;
+                    } else {
+                        elem.removeAttribute(name);
+                    }
 
-                // Get the properties
-
-                propName = propMap[name] || name;
-
-                if (getBooleanAttrName(elem, name)) {
-                    elem[propName] = false;
-                } else {
                     elem.removeAttribute(name);
                 }
             }
@@ -2893,61 +2869,49 @@ hAzzle.define('Setters', function() {
             elem = getElem(elem);
 
             var nodeType = elem ? elem.nodeType : undefined,
-                hooks, ret, notxml, forceProp = forcePropNames[name];
+                hooks, ret, notxml;
 
-            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
-                return '';
-            }
-            // don't get/set attributes on text, comment and attribute nodes
+            if (nodeType && (nodeType !== 3 || nodeType !== 8 || nodeType !== 2)) {
 
-
-            // Fallback to prop when attributes are not supported
-            if (typeof elem.getAttribute === 'undefined') {
-                return Prop(elem, name, value);
-            }
-
-            notxml = nodeType !== 1 || !_core.isXML(elem);
-
-            if (notxml) {
-
-                name = name.toLowerCase();
-                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
-                    getBooleanAttrName(elem, name) ?
-                    boolHooks[value === 'undefined' ?
-                        'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
-            }
-
-            // getAttribute
-
-            if (value === undefined) {
-
-                if (hooks && (ret = hooks.get(elem, name))) {
-                    if (ret !== null) {
-                        return ret;
-                    }
-                }
-                if (name == 'textContent') {
-                    return Prop(elem, name);
-                }
-                ret = elem.getAttribute(name, 2);
-                // Non-existent attributes return null, we normalize to undefined
-                return ret == null ?
-                    undefined :
-                    ret;
-            }
-
-            // setAttribute          
-
-            if (!value) {
-                removeAttr(elem, name);
-            } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
-                return ret;
-            } else {
-                if (forceProp || typeof value == 'boolean' || _types.isType('Function')(value)) {
+                // Fallback to prop when attributes are not supported
+                if (typeof elem.getAttribute === 'undefined') {
                     return Prop(elem, name, value);
                 }
-                elem.setAttribute(name, value + '');
+
+                notxml = nodeType !== 1 || !_core.isXML(elem);
+
+                if (notxml) {
+
+                    name = name.toLowerCase();
+                    hooks = attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null;
+                }
+
+                // getAttribute
+
+                if (value === undefined) {
+
+                    if (hooks && (ret = hooks.get(elem, name))) {
+                        if (ret !== null) {
+                            return ret;
+                        }
+                    }
+
+                    ret = elem.getAttribute(name, 2);
+                    // Non-existent attributes return null, we normalize to undefined
+                    return ret == null ?
+                        undefined :
+                        ret;
+                }
+
+                if (!value) {
+                    removeAttr(elem, name);
+                } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
+                    return ret;
+                } else {
+                    elem.setAttribute(name, value + '');
+                }
             }
+            return '';
         },
 
         Prop = function(elem, name, value) {
@@ -2999,7 +2963,7 @@ hAzzle.define('Setters', function() {
 
                 return typeof ret === 'string' ?
                     // Handle most common string cases
-                    ret.replace(wreturn, '') :
+                    ret.replace(_wreturn, '') :
                     // Handle cases where value is null/undef or number
                     ret == null ? '' : ret;
             }
@@ -3132,19 +3096,15 @@ hAzzle.define('Setters', function() {
     return {
         attrHooks: attrHooks,
         propHooks: propHooks,
-        boolHooks: boolHooks,
-        nodeHooks: nodeHooks,
         valHooks: valHooks,
         propMap: propMap,
         boolAttr: boolAttr,
         boolElem: boolElem,
-        attr: Attr,
-        prop: Prop,
         removeAttr: removeAttr,
-        getBooleanAttrName: getBooleanAttrName
+        attr: Attr,
+        prop: Prop
     };
 });
-
 // attrhooks.js
 hAzzle.define('attrHooks', function() {
 
@@ -3195,24 +3155,6 @@ hAzzle.define('propHooks', function() {
             return null;
         };
     }
-    return {};
-});
-// boolhooks.js
-hAzzle.define('boolHooks', function() {
-
-    var _setters = hAzzle.require('Setters');
-
-    _setters.boolHooks.set = function(elem, value, name) {
-        // If value is false, remove the attribute
-        if (value === false) {
-            _setters.removeAttr(elem, name);
-            // If value is not false, set the same name value (checked = 'checked')
-        } else {
-            elem.setAttribute(name, name);
-        }
-        return name;
-    };
-
     return {};
 });
 
@@ -3344,7 +3286,7 @@ hAzzle.define('valHooks', function() {
  * - matches
  * - customEvent
  */
- 
+
 (function(window) {
 
     'use strict';
@@ -3467,12 +3409,12 @@ hAzzle.define('valHooks', function() {
 
         return fragment;
     }
-    
+
     // CUSTOM EVENT
-    
+
     try { // Native, working customEvent()
         new window.CustomEvent('?');
-    } catch (e) { 
+    } catch (e) {
         window.CustomEvent = function(
             eventName,
             defaultInitDict

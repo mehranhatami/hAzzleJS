@@ -4,15 +4,9 @@ hAzzle.define('Setters', function() {
     var _util = hAzzle.require('Util'),
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
-        _has = hAzzle.require('has'),
-        _strings = hAzzle.require('Strings'),
-        _concat = Array.prototype.concat,
-        SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
-        whiteSpace = /\S+/g,
-        wreturn = /\r/g,
-        wrapBrackets = /^[\[\s]+|\s+|[\]\s]+$/g, // replace whitespace, trim [] brackets
-        arrWhitespace = /\s*[\s\,]+\s*/,
-        escapeDots = /\\*\./g, // find periods w/ and w/o preceding backslashes
+        _whiteSpace = /\S+/g,
+        _wreturn = /\r/g,
+
         boolElemArray = ('input select option textarea button form details').split(' '),
         boolAttrArray = ('multiple selected checked disabled readonly required ' +
             'async autofocus compact nowrap declare noshade hreflang onload src' +
@@ -26,26 +20,11 @@ hAzzle.define('Setters', function() {
             'class': 'className',
             'for': 'htmlFor'
         },
-        forcePropNames = {
-            innerHTML: 1,
-            textContent: 1,
-            className: 1,
-            htmlFor: _has.has('ie'),
-            value: 1
-        },
-        attrHooks = {
-            get: {},
-            set: {}
-        },
         propHooks = {
             get: {},
             set: {}
         },
-        nodeHooks = {
-            get: {},
-            set: {}
-        },
-        boolHooks = {
+        attrHooks = {
             get: {},
             set: {}
         },
@@ -54,21 +33,8 @@ hAzzle.define('Setters', function() {
             set: {}
         },
 
-        SVGAttribute = function(prop) {
-
-            if (_has.ie || (_has.has('android') && !_has.has('chrome'))) {
-                SVGAttributes += '|transform';
-            }
-
-            return new RegExp('^(' + SVGAttributes + ')$', 'i').test(prop);
-        },
-
         getElem = function(elem) {
-            if (elem instanceof hAzzle) {
-                return elem.elements;
-            }
-            return elem;
-
+            return elem instanceof hAzzle ? elem.elements : elem;
         },
 
         // Get names on the boolean attributes
@@ -83,64 +49,24 @@ hAzzle.define('Setters', function() {
         // Removes an attribute from an HTML element.
 
         removeAttr = function(elem, value) {
-
             elem = getElem(elem);
-
             var name, propName,
                 i = 0,
-                keys = typeof value === 'string' ? value.match(whiteSpace) : _concat(value),
-                l = keys.length;
+                attrNames = value && value.match(_whiteSpace);
 
-            for (; i < l; i++) {
+            if (attrNames && elem.nodeType === 1) {
+                while ((name = attrNames[i++])) {
+                    propName = propMap[name] || name;
 
-                name = keys[i];
+                    if (getBooleanAttrName(elem, name)) {
+                        elem[propName] = false;
+                    } else {
+                        elem.removeAttribute(name);
+                    }
 
-                // Get the properties
-
-                propName = propMap[name] || name;
-
-                if (getBooleanAttrName(elem, name)) {
-                    elem[propName] = false;
-                } else {
                     elem.removeAttribute(name);
                 }
             }
-        },
-
-        // Toggle attributes        
-
-        toggleAttr = function(elem, attr, force) {
-
-            elem = getElem(elem);
-
-            typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
-
-            var opposite = !force;
-
-            force ? Attr(elem, attr, '') : removeAttr(elem, attr);
-
-            return elem[attr] === opposite ? elem[attr] = force : force;
-
-        },
-
-        // Convert list of attr names or data- keys into a selector.
-
-        toAttrSelector = function(list, prefix, join) {
-            var l, s, i = 0,
-                j = 0,
-                emp = '',
-                arr = [];
-            prefix = true === prefix;
-            list = typeof list == 'string' ? list.split(arrWhitespace) : typeof list == 'number' ? '' + list : list;
-            for (l = list.length; i < l;) {
-                s = list[i++];
-                s = prefix ? _strings.hyphenate(s) : s.replace(wrapBrackets, emp);
-                s && (arr[j++] = s);
-            }
-            // Escape periods to allow atts like `[data-the.wh_o]`
-            // @link api.jquery.com/category/selectors/
-            // @link stackoverflow.com/q/13283699/770127
-            return false === join ? arr : j ? '[' + arr.join('],[').replace(escapeDots, '\\\\.') + ']' : emp;
         },
 
         // get/set attribute
@@ -150,61 +76,49 @@ hAzzle.define('Setters', function() {
             elem = getElem(elem);
 
             var nodeType = elem ? elem.nodeType : undefined,
-                hooks, ret, notxml, forceProp = forcePropNames[name];
+                hooks, ret, notxml;
 
-            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
-                return '';
-            }
-            // don't get/set attributes on text, comment and attribute nodes
+            if (nodeType && (nodeType !== 3 || nodeType !== 8 || nodeType !== 2)) {
 
-
-            // Fallback to prop when attributes are not supported
-            if (typeof elem.getAttribute === 'undefined') {
-                return Prop(elem, name, value);
-            }
-
-            notxml = nodeType !== 1 || !_core.isXML(elem);
-
-            if (notxml) {
-
-                name = name.toLowerCase();
-                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
-                    getBooleanAttrName(elem, name) ?
-                    boolHooks[value === 'undefined' ?
-                        'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
-            }
-
-            // getAttribute
-
-            if (value === undefined) {
-
-                if (hooks && (ret = hooks.get(elem, name))) {
-                    if (ret !== null) {
-                        return ret;
-                    }
-                }
-                if (name == 'textContent') {
-                    return Prop(elem, name);
-                }
-                ret = elem.getAttribute(name, 2);
-                // Non-existent attributes return null, we normalize to undefined
-                return ret == null ?
-                    undefined :
-                    ret;
-            }
-
-            // setAttribute          
-
-            if (!value) {
-                removeAttr(elem, name);
-            } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
-                return ret;
-            } else {
-                if (forceProp || typeof value == 'boolean' || _types.isType('Function')(value)) {
+                // Fallback to prop when attributes are not supported
+                if (typeof elem.getAttribute === 'undefined') {
                     return Prop(elem, name, value);
                 }
-                elem.setAttribute(name, value + '');
+
+                notxml = nodeType !== 1 || !_core.isXML(elem);
+
+                if (notxml) {
+
+                    name = name.toLowerCase();
+                    hooks = attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null;
+                }
+
+                // getAttribute
+
+                if (value === undefined) {
+
+                    if (hooks && (ret = hooks.get(elem, name))) {
+                        if (ret !== null) {
+                            return ret;
+                        }
+                    }
+
+                    ret = elem.getAttribute(name, 2);
+                    // Non-existent attributes return null, we normalize to undefined
+                    return ret == null ?
+                        undefined :
+                        ret;
+                }
+
+                if (!value) {
+                    removeAttr(elem, name);
+                } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
+                    return ret;
+                } else {
+                    elem.setAttribute(name, value + '');
+                }
             }
+            return '';
         },
 
         Prop = function(elem, name, value) {
@@ -256,7 +170,7 @@ hAzzle.define('Setters', function() {
 
                 return typeof ret === 'string' ?
                     // Handle most common string cases
-                    ret.replace(wreturn, '') :
+                    ret.replace(_wreturn, '') :
                     // Handle cases where value is null/undef or number
                     ret == null ? '' : ret;
             }
@@ -299,10 +213,6 @@ hAzzle.define('Setters', function() {
                 elem.value = val;
             }
         });
-    };
-
-    this.hasAttr = function(name) {
-        return name && typeof this.attr(name) !== 'undefined';
     };
 
     // Toggle properties on DOM elements
@@ -371,12 +281,6 @@ hAzzle.define('Setters', function() {
             });
     };
 
-    //  Check if  element has an attribute
-
-    this.hasAttr = function(name) {
-        return name && typeof this.attr(name) !== 'undefined';
-    };
-
     _util.each(boolAttrArray, function(prop) {
         boolAttr[boolAttrArray[prop]] = boolAttrArray[prop];
     });
@@ -399,18 +303,12 @@ hAzzle.define('Setters', function() {
     return {
         attrHooks: attrHooks,
         propHooks: propHooks,
-        boolHooks: boolHooks,
-        nodeHooks: nodeHooks,
         valHooks: valHooks,
         propMap: propMap,
         boolAttr: boolAttr,
         boolElem: boolElem,
-        attr: Attr,
-        prop: Prop,
         removeAttr: removeAttr,
-        toggleAttr: toggleAttr,
-        toAttrSelector: toAttrSelector,
-        getBooleanAttrName: getBooleanAttrName,
-        SVGAttribute: SVGAttribute
+        attr: Attr,
+        prop: Prop
     };
 });

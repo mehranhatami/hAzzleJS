@@ -92,7 +92,7 @@ hAzzle.define('Events', function() {
 
             // Event delegation
 
-            if (!_types.isFunction(selector)) {
+            if (!_types.isType('Function')(selector)) {
                 original = fn;
                 args = _collection.slice(arguments, 4);
                 fn = delegate(selector, original);
