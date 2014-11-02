@@ -178,9 +178,10 @@ _arr[0] elem
 _arr[1] elem
 _arr[2] elem
 
-and you can use **jQuery / Zepto** methods as you are used too, and in the same time you can use **hAzzle** methods the normal way.
-
 ```
+Now you can use **jQuery / Zepto** methods as you are used too. But you can also use **hAzzle** methods together
+with this functions.
+
 **UnderscoreJS** and **Loadash** can be used as well. 
 
 ```javascript
