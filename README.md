@@ -72,7 +72,7 @@ Let's say you want to append() some content. With hAzle and DL4, you do it like 
 document.getElementById('d').append('new content');
 ```
 
-**2 lines of code**, and pure, native Javascript is all it takes to append content. **append()**,** prepend()**, **after()** and **before()** works the same way.
+**2 lines of code**, and pure, native Javascript is all it takes to append content.
 
 Comparing to **jQuery**, to archive the same you have to add over **60 lines of code**:
 
