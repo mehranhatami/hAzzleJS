@@ -48,8 +48,7 @@ You can develop your own modules for **hAzzle**. If you do so, upload them to th
 DOM Level 4 (DL4)
 ------------------
 
-DOM Level 4 (DL4) will soon replace the 'old' DOM Level 3 (DL3). So **hAzzle** has a build in polify in the Core supporting the most common features. And also fixes a couple of cross-browser issues (e.g. IE9 and IE10's customEvent() are not usable as a constructor. 
-**Note!** This polify can't be removed, and needed for some of the modules ( not part of the Core) to work. 
+ **hAzzle** has a build in polify in the Core supporting the most common features. And also fixes a couple of cross-browser issues (e.g. IE9 and IE10's customEvent() are not usable as a constructor. The polify can't be removed, and needed for some of the modules (not part of the Core) to work. 
 
 * prepend
 * append
