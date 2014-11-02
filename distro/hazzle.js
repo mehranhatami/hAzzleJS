@@ -2799,14 +2799,9 @@ hAzzle.define('Setters', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _has = hAzzle.require('has'),
-        _strings = hAzzle.require('Strings'),
         _concat = Array.prototype.concat,
-        SVGAttributes = 'width|height|x|y|cx|cy|r|rx|ry|x1|x2|y1|y2',
         whiteSpace = /\S+/g,
         wreturn = /\r/g,
-        wrapBrackets = /^[\[\s]+|\s+|[\]\s]+$/g, // replace whitespace, trim [] brackets
-        arrWhitespace = /\s*[\s\,]+\s*/,
-        escapeDots = /\\*\./g, // find periods w/ and w/o preceding backslashes
         boolElemArray = ('input select option textarea button form details').split(' '),
         boolAttrArray = ('multiple selected checked disabled readonly required ' +
             'async autofocus compact nowrap declare noshade hreflang onload src' +
@@ -2848,21 +2843,11 @@ hAzzle.define('Setters', function() {
             set: {}
         },
 
-        SVGAttribute = function(prop) {
-
-            if (_has.ie || (_has.has('android') && !_has.has('chrome'))) {
-                SVGAttributes += '|transform';
-            }
-
-            return new RegExp('^(' + SVGAttributes + ')$', 'i').test(prop);
-        },
-
         getElem = function(elem) {
             if (elem instanceof hAzzle) {
                 return elem.elements;
             }
             return elem;
-
         },
 
         // Get names on the boolean attributes
@@ -2899,42 +2884,6 @@ hAzzle.define('Setters', function() {
                     elem.removeAttribute(name);
                 }
             }
-        },
-
-        // Toggle attributes        
-
-        toggleAttr = function(elem, attr, force) {
-
-            elem = getElem(elem);
-
-            typeof force == 'boolean' || (force = null == Attr(elem, attr) === false);
-
-            var opposite = !force;
-
-            force ? Attr(elem, attr, '') : removeAttr(elem, attr);
-
-            return elem[attr] === opposite ? elem[attr] = force : force;
-
-        },
-
-        // Convert list of attr names or data- keys into a selector.
-
-        toAttrSelector = function(list, prefix, join) {
-            var l, s, i = 0,
-                j = 0,
-                emp = '',
-                arr = [];
-            prefix = true === prefix;
-            list = typeof list == 'string' ? list.split(arrWhitespace) : typeof list == 'number' ? '' + list : list;
-            for (l = list.length; i < l;) {
-                s = list[i++];
-                s = prefix ? _strings.hyphenate(s) : s.replace(wrapBrackets, emp);
-                s && (arr[j++] = s);
-            }
-            // Escape periods to allow atts like `[data-the.wh_o]`
-            // @link api.jquery.com/category/selectors/
-            // @link stackoverflow.com/q/13283699/770127
-            return false === join ? arr : j ? '[' + arr.join('],[').replace(escapeDots, '\\\\.') + ']' : emp;
         },
 
         // get/set attribute
@@ -3095,10 +3044,6 @@ hAzzle.define('Setters', function() {
         });
     };
 
-    this.hasAttr = function(name) {
-        return name && typeof this.attr(name) !== 'undefined';
-    };
-
     // Toggle properties on DOM elements
 
     this.toggleProp = function(prop) {
@@ -3165,12 +3110,6 @@ hAzzle.define('Setters', function() {
             });
     };
 
-    //  Check if  element has an attribute
-
-    this.hasAttr = function(name) {
-        return name && typeof this.attr(name) !== 'undefined';
-    };
-
     _util.each(boolAttrArray, function(prop) {
         boolAttr[boolAttrArray[prop]] = boolAttrArray[prop];
     });
@@ -3202,10 +3141,7 @@ hAzzle.define('Setters', function() {
         attr: Attr,
         prop: Prop,
         removeAttr: removeAttr,
-        toggleAttr: toggleAttr,
-        toAttrSelector: toAttrSelector,
-        getBooleanAttrName: getBooleanAttrName,
-        SVGAttribute: SVGAttribute
+        getBooleanAttrName: getBooleanAttrName
     };
 });
 
@@ -3406,13 +3342,16 @@ hAzzle.define('valHooks', function() {
  * - replace
  * - remove
  * - matches
+ * - customEvent
  */
+ 
 (function(window) {
 
     'use strict';
 
-    var _slice = Array.prototype.slice,
-        property,
+    var _Aproto = Array.prototype,
+        _slice = _Aproto.slice,
+        _indexOf = _Aproto.indexOf,
 
         ElementPrototype = (window.Element ||
             window.Node ||
@@ -3479,10 +3418,9 @@ hAzzle.define('valHooks', function() {
                 ElementPrototype.webkitMatchesSelector ||
                 ElementPrototype.mozMatchesSelector ||
                 ElementPrototype.msMatchesSelector ||
-                // FIX ME!! Need a better solution for this in hAzzle
                 function matches(selector) {
                     var parentElement = this.parentElement;
-                    return !!parentElement && -1 < indexOf.call(
+                    return !!parentElement && -1 < _indexOf.call(
                         parentElement.querySelectorAll(selector),
                         this
                     );
@@ -3494,7 +3432,7 @@ hAzzle.define('valHooks', function() {
 
     // Loop through
     for (; i; i -= 2) {
-        if (!(properties[i - 2] in ElementPrototype)) {
+        if (!ElementPrototype[properties[i - 2]]) {
             ElementPrototype[properties[i - 2]] = properties[i - 1];
         }
     }
@@ -3529,5 +3467,62 @@ hAzzle.define('valHooks', function() {
 
         return fragment;
     }
+    
+    // CUSTOM EVENT
+    
+    try { // Native, working customEvent()
+        new window.CustomEvent('?');
+    } catch (e) { 
+        window.CustomEvent = function(
+            eventName,
+            defaultInitDict
+        ) {
+            function CustomEvent(type, eventInitDict) {
 
+                var event = document.createEvent(eventName);
+
+                if (typeof type !== 'string') {
+                    throw new Error('An event name must be provided');
+                }
+
+                if (eventName === 'Event') {
+                    event.initCustomEvent = initCustomEvent;
+                }
+                if (eventInitDict == null) {
+                    eventInitDict = defaultInitDict;
+                }
+                event.initCustomEvent(
+                    type,
+                    eventInitDict.bubbles,
+                    eventInitDict.cancelable,
+                    eventInitDict.detail
+                );
+                return event;
+            }
+
+            // Attached at runtime
+            function initCustomEvent(
+                type, bubbles, cancelable, detail
+            ) {
+                this.initEvent(type, bubbles, cancelable);
+                this.detail = detail;
+            }
+
+            return CustomEvent;
+        }(
+
+            // In IE9 and IE10 CustomEvent() are not usable as a constructor, so let us fix that
+            // https://developer.mozilla.org/en/docs/Web/API/CustomEvent
+
+            window.CustomEvent ?
+            // Use the CustomEvent interface in such case
+            'CustomEvent' : 'Event',
+            // Otherwise the common compatible one
+            {
+                bubbles: false,
+                cancelable: false,
+                detail: null
+            }
+        );
+    }
 }(window));

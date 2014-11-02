@@ -10,13 +10,16 @@
  * - replace
  * - remove
  * - matches
+ * - customEvent
  */
+ 
 (function(window) {
 
     'use strict';
 
-    var _slice = Array.prototype.slice,
-        property,
+    var _Aproto = Array.prototype,
+        _slice = _Aproto.slice,
+        _indexOf = _Aproto.indexOf,
 
         ElementPrototype = (window.Element ||
             window.Node ||
@@ -83,22 +86,21 @@
                 ElementPrototype.webkitMatchesSelector ||
                 ElementPrototype.mozMatchesSelector ||
                 ElementPrototype.msMatchesSelector ||
-                // FIX ME!! Need a better solution for this in hAzzle
                 function matches(selector) {
                     var parentElement = this.parentElement;
-                    return !!parentElement && -1 < indexOf.call(
+                    return !!parentElement && -1 < _indexOf.call(
                         parentElement.querySelectorAll(selector),
                         this
                     );
                 }
             )
         ],
-       // slice = properties.slice,
+        // slice = properties.slice,
         i = properties.length;
 
     // Loop through
     for (; i; i -= 2) {
-        if (!(properties[i - 2] in ElementPrototype)) {
+        if (!ElementPrototype[properties[i - 2]]) {
             ElementPrototype[properties[i - 2]] = properties[i - 1];
         }
     }
@@ -106,7 +108,7 @@
     // Create TextNode if string, else
     // return the node untouched
 
-    function stringNode(node) { 
+    function stringNode(node) {
         return typeof node === 'string' ?
             window.document.createTextNode(node) : node;
     }
@@ -117,7 +119,8 @@
 
         var fragment = window.document.createDocumentFragment(),
             container = _slice.call(nodes, 0),
-            i = 0, l = nodes.length;
+            i = 0,
+            l = nodes.length;
 
         if (nodes.length === 1) {
             return stringNode(nodes[0]);
@@ -132,5 +135,63 @@
 
         return fragment;
     }
+    
+    // CUSTOM EVENT
+    // -------------
+    
+    try { // Native, working customEvent()
+        new window.CustomEvent('?');
+    } catch (e) { 
+        window.CustomEvent = function(
+            eventName,
+            defaultInitDict
+        ) {
+            function CustomEvent(type, eventInitDict) {
 
+                var event = document.createEvent(eventName);
+
+                if (typeof type !== 'string') {
+                    throw new Error('An event name must be provided');
+                }
+
+                if (eventName === 'Event') {
+                    event.initCustomEvent = initCustomEvent;
+                }
+                if (eventInitDict == null) {
+                    eventInitDict = defaultInitDict;
+                }
+                event.initCustomEvent(
+                    type,
+                    eventInitDict.bubbles,
+                    eventInitDict.cancelable,
+                    eventInitDict.detail
+                );
+                return event;
+            }
+
+            // Attached at runtime
+            function initCustomEvent(
+                type, bubbles, cancelable, detail
+            ) {
+                this.initEvent(type, bubbles, cancelable);
+                this.detail = detail;
+            }
+
+            return CustomEvent;
+        }(
+
+            // In IE9 and IE10 CustomEvent() are not usable as a constructor, so let us fix that
+            // https://developer.mozilla.org/en/docs/Web/API/CustomEvent
+
+            window.CustomEvent ?
+            // Use the CustomEvent interface in such case
+            'CustomEvent' : 'Event',
+            // Otherwise the common compatible one
+            {
+                bubbles: false,
+                cancelable: false,
+                detail: null
+            }
+        );
+    }
 }(window));
