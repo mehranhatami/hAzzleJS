@@ -80,6 +80,90 @@ https://github.com/jquery/jquery/blob/master/src/manipulation.js#L194
 
 and you are stricted to use jQuery for this methods.
 
+How to use
+-------------
+You can use all functions internally in the same way as you do in jQuery / Zepto. 
+
+```javascript
+hAzzle('#id').eq(1).append('new content');
+```
+or a each example:
+
+```javascript
+this.each(function(elem) {
+});
+```
+**NOTE!** The **this** keyword pointing to the window itself, and not the element like you may be used to from **jQuery** / **Zepto**
+
+This change in internal each() gives you a native Javascript option to bind the elements to the Window object.
+
+```javascript
+this.each(function(elem) {
+this['hello'] = function() { console.log('Hello!'); });
+}.bind(this));
+
+Then you can access it like this:
+
+hAzzle('p').hello();
+
+and it will show you 'Hello!' in the console log
+```
+For the methods **find()**, **filter()**, **reduce()** e.g. you can use the **this** keyword as a reference to the elemetns
+itself.
+
+**hAzzle** are more powerfull then this, and you can choose to include and use only the modules you want ( Core need to be loaded on the page first)
+
+In the each() example above, we can also do it like this:
+
+```javascript
+var _util = hAzzle.require('Util');
+var obj = {a:'1', b:'2'};
+
+_util.each(obj, function(a, b) {}) 
+```
+**Note!** Mostly all functions can be used this way. There are a few exceptions, and this is restricted for internal uage with the **. elements array**
+
+```javascript
+
+// Get the elements array
+var _arr  = hAzzle('p')
+
+The array can be acceed like this:
+
+console.log(_arr.elements)
+
+```
+Natives ES5 / ES6 on the **.elements array** are easy as well.
+
+```javascript
+
+// Get the elements array
+var _arr  = hAzzle('p')
+
+and then some natives:
+
+_arr.elements.reverse()
+_arr.elements..sort()
+_arr.elements.find()
+_arr.elements.filter()
+
+```
+Adding / removing classes can be done same way:
+
+```javascript
+
+hAzzle('p').addClass('test')
+
+or
+var _cls = hAzzle.require('Classes');
+
+// hAzzle 
+_cls.addClass(hAzzle('p'), 'test')
+
+// native
+_cls.addClass(document.getElementById('example'), 'test')
+
+```
 
 Module order ( Core)
 ---------------------
@@ -109,6 +193,7 @@ Correct module order for the Core if you need to test individual modules:
 Module order (module folder)
 ----------------------------
 
+* modules/attributes.js
 * modules/style.js
 * modules/csshooks.js
 * modules/dimensions.js
