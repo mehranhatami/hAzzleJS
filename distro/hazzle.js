@@ -245,16 +245,16 @@ hAzzle.define('Support', function() {
         input.setAttribute('name', 't');
 
         div.appendChild(input);
-
+        
         // Support: IE<=11+
         // Make sure textarea (and checkbox) defaultValue is properly cloned
         div.innerHTML = '<textarea>x</textarea>';
         noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
     });
-    assert(function(div) {
-        supportBorderRadius = div.style.borderRadius != null;
-    });
+     assert(function(div) {
+       supportBorderRadius = div.style.borderRadius != null;         
+         });
 
     return {
         assert: assert,
@@ -265,11 +265,9 @@ hAzzle.define('Support', function() {
         multipleArgs: MultipleArgs,
         sortDetached: sortDetached,
         noCloneChecked: noCloneChecked,
-        cS: !!document.defaultView.getComputedStyle,
-        borderRadius: supportBorderRadius
+        borderRadius:supportBorderRadius
     };
 });
-
 // has.js- feature detection
 hAzzle.define('has', function() {
 
@@ -416,6 +414,10 @@ hAzzle.define('has', function() {
 
     add('MSPointer', function() {
         return 'msMaxTouchPoints' in navigator; //IE10+
+    });
+
+    add('ComputedStyle', function() {
+        return !!document.defaultView.getComputedStyle;
     });
 
     return {
@@ -2435,14 +2437,11 @@ hAzzle.define('curCSS', function() {
         _core = hAzzle.require('Core'),
         _types = hAzzle.require('Types'),
         _util = hAzzle.require('Util'),
-        _support = hAzzle.require('Support'),
         _storage = hAzzle.require('Storage'),
 
         docElem = window.document.documentElement,
 
-        computedStyle = !!document.defaultView.getComputedStyle,
-
-        computedValues = _support.computedStyle && _has.has('webkit') ? function(elem) {
+        computedValues = _has.has('ComputedStyle') && _has.has('webkit') ? function(elem) {
             // Looks stupid, but gives better performance in Webkit browsers
             var str;
             if (elem.nodeType === 1) {
@@ -2464,9 +2463,14 @@ hAzzle.define('curCSS', function() {
                     if (elem.ownerDocument !== undefined) {
                         view = elem.ownerDocument.defaultView;
                     }
-                    return _support.cS ? (view && computedStyle ?
-                        (view.opener ? view.getComputedStyle(elem, null) :
-                            window.getComputedStyle(elem, null)) : elem.style) : elem.style;
+                    if( _has.has('ComputedStyle')) {
+                    
+                    if(view && view.opener) {
+                        return view.getComputedStyle(elem, null);
+                        }
+                        return window.getComputedStyle(elem, null);
+                    } 
+                    return elem.style;
                 }
             }
             return '';
@@ -2520,7 +2524,6 @@ hAzzle.define('curCSS', function() {
                     return curHeight(elem);
                 } else if (prop === 'width' &&
                     curCSS(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
-
                     return curWidth(elem);
                 }
             }

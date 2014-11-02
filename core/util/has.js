@@ -146,6 +146,10 @@ hAzzle.define('has', function() {
         return 'msMaxTouchPoints' in navigator; //IE10+
     });
 
+    add('ComputedStyle', function() {
+        return !!document.defaultView.getComputedStyle;
+    });
+
     return {
         has: has,
         add: add,

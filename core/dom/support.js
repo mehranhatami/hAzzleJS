@@ -99,7 +99,6 @@ hAzzle.define('Support', function() {
         multipleArgs: MultipleArgs,
         sortDetached: sortDetached,
         noCloneChecked: noCloneChecked,
-        cS: !!document.defaultView.getComputedStyle,
         borderRadius:supportBorderRadius
     };
 });
