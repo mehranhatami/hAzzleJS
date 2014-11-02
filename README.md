@@ -61,9 +61,11 @@ DOM Level 4 (DL4)
 
 Why is the Core so big?
 ---------------------
-The hAzzle Core are not so big comparing to other libraries, and contains a lot more then the Javascript library. It take care of cross-browser, setting right document (HTML / XML), feature detection and more.
+The hAzzle Core are not so big comparing to other libraries, and contains a lot more then the Javascript library. It take care of cross-browser issues, browsers bugs, setting the right document (HTML / XML), feature detection and more.
 
-I give a quick example on the benefits using the Core comparing to jQuery library.
+One example are the **customEvent**. This method are not usable as a constructor in **IE9** / **IE10**. With **hAzzle Core** this is fixed! Ref: https://developer.mozilla.org/en/docs/Web/API/CustomEvent
+
+Another quick example on the benefits using the **hAzzle Core** comparing to jQuery library.
 
 Let's say you want to append() some content. With hAzzle and DL4, you do it like this:
 
