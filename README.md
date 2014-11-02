@@ -67,9 +67,8 @@ I give a quick example on the benefits using the Core comparing to jQuery librar
 
 Let's say you want to append() some content. With hAzle and DL4, you do it like this:
 
-**<div id="d">Hello! </div>**
-
 ```javascript
+<div id="d">Hello! </div>
 document.getElementById('d').append('new content');
 ```
 
