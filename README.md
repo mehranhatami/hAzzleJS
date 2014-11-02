@@ -69,7 +69,9 @@ Let's say you want to append() some content. With hAzle and DL4, you do it like 
 
 **<div id="d">Hello! </div>**
 
-**document.getElementById('d').append('new content');**
+```javascript
+document.getElementById('d').append('new content');
+```
 
 **2 lines of code**, and pure, native Javascript is all it takes to append content. **append()**,** prepend()**, **after()** and **before()** works the same way.
 
