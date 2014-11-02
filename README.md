@@ -65,7 +65,7 @@ The hAzzle Core are not so big comparing to other libraries, and contains a lot 
 
 I give a quick example on the benefits using the Core comparing to jQuery library.
 
-Let's say you want to append() some content. With hAzle and DL4, you do it like this:
+Let's say you want to append() some content. With hAzzle and DL4, you do it like this:
 
 ```javascript
 <div id="d">Hello! </div>
@@ -79,8 +79,6 @@ Comparing to **jQuery**, to archive the same you have to add over **60 lines of 
 https://github.com/jquery/jquery/blob/master/src/manipulation.js#L194
 
 and you are stricted to use jQuery for this methods.
-
-With **hAzzle**, you need only **2 lines of  code**, and you are not restricted to any library.
 
 
 Module order ( Core)
