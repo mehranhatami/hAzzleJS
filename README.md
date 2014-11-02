@@ -128,24 +128,24 @@ _util.each(obj, function(a, b) {})
 // Get the elements array
 var _arr  = hAzzle('p')
 
-The array can be acceed like this:
+The array can be used like this:
 
 console.log(_arr.elements)
-
 ```
+
 Natives ES5 / ES6 on the **.elements array** are easy as well.
 
 ```javascript
 
 // Get the elements array
-var _arr  = hAzzle('p')
+var _arr  = hAzzle('p').elements
 
 and then some natives:
 
-_arr.elements.reverse()
-_arr.elements..sort()
-_arr.elements.find()
-_arr.elements.filter()
+_arr.reverse()
+_arr.sort()
+_arr.find()
+_arr.filter()
 
 ```
 Adding / removing classes can be done same way:
@@ -153,7 +153,6 @@ Adding / removing classes can be done same way:
 ```javascript
 
 hAzzle('p').addClass('test')
-
 or
 var _cls = hAzzle.require('Classes');
 
@@ -164,6 +163,38 @@ _cls.addClass(hAzzle('p'), 'test')
 _cls.addClass(document.getElementById('example'), 'test')
 
 ```
+**Note!** If you include all modules you have a complete library like **jQuery** / **Zepto**, and you have mostly the same methods with a **big** exception. Everything are done the native way with hAzzle, so nothing are compatible with the mentioned libraries. Meaning you can't copy a function from **hAzzle** and hope it works for **jQuery**, because it won't.
+
+However. You can make jQuery work on hAzzle.
+
+```javascript
+
+// Make jQuery / Zepto work
+var _arr  = hAzzle('p').toJqueryZepto();
+
+the created _arr would look like
+
+_arr[0] elem
+_arr[1] elem
+_arr[2] elem
+
+and you can use **jQuery / Zepto** methods as you are used too, and in the same time you can use **hAzzle** methods the normal way.
+
+```
+**UnderscoreJS** and **Loadash** can be used as well. 
+
+```javascript
+
+// Get the elements array
+var _arr  = hAzzle('p').elements;
+
+// Include the library you want, and then use the methods like this:
+
+_arr {method}
+
+and you are dealing with the array.
+```
+It's also easy to create your own methods. No examples given, but with the **. elements array** as illustrated below you can use all native methods or **UnderscoreJS** // **Loadash** and create your own methods with the array.
 
 Module order ( Core)
 ---------------------
