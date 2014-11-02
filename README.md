@@ -59,6 +59,29 @@ DOM Level 4 (DL4)
 * matches
 * customEvent
 
+Why is the Core so big?
+---------------------
+The hAzzle Core are not so big comparing to other libraries, and contains a lot more then the Javascript library. It take care of cross-browser, setting right document (HTML / XML), feature detection and more.
+
+I give a quick example on the benefits using the Core comparing to jQuery library.
+
+Let's say you want to append() some content. With hAzle and DL4, you do it like this:
+
+**<div id="d">Hello! </div>**
+
+**document.getElementById('d').append('new content');**
+
+**2 lines of code**, and pure, native Javascript is all it takes to append content. **append()**,** prepend()**, **after()** and **before()** works the same way.
+
+Comparing to **jQuery**, to archive the same you have to add over **60 lines of code**:
+
+https://github.com/jquery/jquery/blob/master/src/manipulation.js#L194
+
+and you are stricted to use jQuery for this methods.
+
+With **hAzzle**, you need only **2 lines of  code**, and you are not restricted to any library.
+
+
 Module order ( Core)
 ---------------------
 Correct module order for the Core if you need to test individual modules:
