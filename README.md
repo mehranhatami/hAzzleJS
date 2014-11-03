@@ -204,25 +204,23 @@ Module order ( Core)
 Correct module order for the Core if you need to test individual modules:
 
 * core/hAzzle.js
-* core/util/has.js
-* core/dom/support.js
-* core/dom/core.js
-* core/dom/test.js
-* core/util/types.js
-* core/util/util.js
-* core/util/text.js
-* core/elements/collection.js
-* core/selector/jiesa.js
-* core/util/strings.js
-* core/util/storage.js
-* core/elements/curcss.js
-* core/util/units.js
-* core/elements/setters.js
-* core/util/attrhooks.js
-* core/util/prophooks.js
-* core/util/boolhooks.js
-* core/util/valhooks.js
-* core/util/doml4.js
+* core/has.js
+* core/support.js
+* core/core.js
+* core/types.js
+* core/util.js
+* core/text.js
+* core/collection.js
+* core/jiesa.js
+* core/strings.js
+* core/storage.js
+* core/curcss.js
+* core/units.js
+* core/setters.js
+* core/attrhooks.js
+* core/prophooks.js
+* core/valhooks.js
+* core/doml4.js
 
 Module order (module folder)
 ----------------------------
@@ -234,7 +232,6 @@ Module order (module folder)
 * modules/xhr.js
 * modules/ready.js
 * modules/classes.js
-
 * modules/traversing.js
 * modules/visibility.js
 * modules/jsonxml.js
