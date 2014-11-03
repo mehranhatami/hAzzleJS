@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-11-02
+ * Date: 2014-11-03
  */
 (function() {
 
@@ -164,13 +164,15 @@
 
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-// support.js'
-// NOTE! support.js module are not the same as has.js, and should not be merged into one 
+// support.js
+// NOTE! This module are here just to be a 'litle' compatible with jQuery for developers 
+// that are used to support() from jQuery. We only use this a few places. 
+// For 'feature detection', use has.js (included in the Core).
 hAzzle.define('Support', function() {
 
     // Feature detection of elements
-    var cls, MultipleArgs, sortDetached,
-        noCloneChecked, supportBorderRadius,
+
+    var support = {},
 
         assert = function(fn) {
 
@@ -191,7 +193,6 @@ hAzzle.define('Support', function() {
             }
         },
 
-        optSelected, radioValue,
         input = document.createElement('input'),
         select = document.createElement('select'),
         opt = select.appendChild(document.createElement('option'));
@@ -200,37 +201,16 @@ hAzzle.define('Support', function() {
 
     // Support: IE<=11+
     // Must access selectedIndex to make default options select
-    optSelected = opt.selected;
+    support.optSelected = opt.selected;
 
     // Support: IE<=11+
     // An input loses its value after becoming a radio
     input = document.createElement('input');
     input.value = 't';
     input.type = 'radio';
-    radioValue = input.value === 't';
+    support.radioValue = input.value === 't';
 
-    var imcHTML = (function() {
-
-        if (typeof document.implementation.createHTMLDocument === 'function') {
-            return true;
-        }
-        return false;
-    }());
-
-    // classList and MultipleArgs detections
-
-    assert(function(div) {
-
-        div.classList.add('a', 'b');
-        // Detect if the browser supports classList
-        cls = !!document.documentElement.classList;
-        // Detect if the classList API supports multiple arguments
-        // IE11-- don't support it
-
-        MultipleArgs = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-    });
-
-    sortDetached = assert(function(div) {
+    support.sortDetached = assert(function(div) {
         // Should return 1, but returns 4 (following)
         return div.compareDocumentPosition(document.createElement('div')) & 1;
     });
@@ -245,29 +225,28 @@ hAzzle.define('Support', function() {
         input.setAttribute('name', 't');
 
         div.appendChild(input);
-        
+
         // Support: IE<=11+
         // Make sure textarea (and checkbox) defaultValue is properly cloned
         div.innerHTML = '<textarea>x</textarea>';
-        noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+        support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
     });
-     assert(function(div) {
-       supportBorderRadius = div.style.borderRadius != null;         
-         });
+    assert(function(div) {
+        support.supportBorderRadius = div.style.borderRadius != null;
+    });
 
     return {
         assert: assert,
-        optSelected: optSelected,
-        radioValue: radioValue,
-        imcHTML: imcHTML,
-        classList: cls,
-        multipleArgs: MultipleArgs,
-        sortDetached: sortDetached,
-        noCloneChecked: noCloneChecked,
-        borderRadius:supportBorderRadius
+        support:support,
+        optSelected: support.optSelected,
+        radioValue: support.radioValue,
+        sortDetached: support.sortDetached,
+        noCloneChecked: support.noCloneChecked,
+        borderRadius: support.supportBorderRadius
     };
 });
+
 // has.js- feature detection
 hAzzle.define('has', function() {
 
@@ -419,6 +398,23 @@ hAzzle.define('has', function() {
     add('ComputedStyle', function() {
         return !!document.defaultView.getComputedStyle;
     });
+
+    add('classlist', function() {
+        return !!document.documentElement.classList;
+    });
+
+    // Detect if the classList API supports multiple arguments
+    // IE11-- don't support it
+
+    add('multiArgs', function() {
+        var mu, div = document.createElement('div');
+        div.classList.add('a', 'b');
+        mu = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+        // release memory in IE
+        div = null;
+        return mu;
+    });
+
 
     return {
         has: has,
@@ -1131,26 +1127,37 @@ hAzzle.define('Util', function() {
 // core.js
 hAzzle.define('Core', function() {
 
-    var winDoc = window.document,
-        docElem = winDoc.documentElement,
-        _support = hAzzle.require('Support'),
+ var winDoc = window.document,
+        Core = {},
+        featuresCache = {},
         _indexOf = Array.prototype.indexOf,
-        _rnative = /^[^{]+\{\s*\[native \w/,
-        _matches,
-        _CoreCache = {},
-        _hasDuplicate,
-        _sortInput,
+        expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
+        sortInput,
+        sortDetached = (function() {
+            var div = document.createElement('div');
+            // Should return 1, but returns 4 (following)
+            return div.compareDocumentPosition(document.createElement('div')) & 1;
+            div = null;
+        }()),
+        hasDuplicate,
+
+        detectDuplicates = function() {
+            return !!hasDuplicate;
+        },
+
         sortOrder = function(a, b) {
             if (a === b) {
-                _hasDuplicate = true;
+                hasDuplicate = true;
             }
             return 0;
         },
+        sortStable = expando.split('').sort(sortOrder).join('') === expando,
+        MAX_NEGATIVE = 1 << 31,
         siblingCheck = function(a, b) {
             var cur = b && a,
                 diff = cur && a.nodeType === 1 && b.nodeType === 1 &&
-                (~b.sourceIndex || 1 << 31) -
-                (~a.sourceIndex || 1 << 31);
+                (~b.sourceIndex || MAX_NEGATIVE) -
+                (~a.sourceIndex || MAX_NEGATIVE);
 
             // Use IE sourceIndex if available on both nodes
             if (diff) {
@@ -1167,292 +1174,304 @@ hAzzle.define('Core', function() {
             }
 
             return a ? 1 : -1;
-        },
-
-        Core = {
-
-            uidX: 1,
-            uidK: 'hAzzle_id',
-            expando: 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
-
-            // Check if this is XML doc or not
-
-            isXML: function(elem) {
-                var documentElement = elem && (elem.ownerDocument || elem).documentElement;
-
-                if (documentElement) {
-                    return documentElement.nodeName !== 'HTML'
-                } else {
-                    return false;
-                }
-            },
-
-            // Get unique XML document ID
-
-            xmlID: function(elem) {
-                var uid = elem.getAttribute(this.uidK);
-
-                if (!uid) {
-                    uid = this.uidX++;
-                    elem.setAttribute(this.uidK, uid);
-                }
-                return uid;
-            },
-
-            // Get unique HTML document ID
-
-            htmlID: function(elem) {
-                return elem.uniqueNumber ||
-                    (elem.uniqueNumber = this.uidX++);
-            },
-
-            native: _rnative.test(docElem.compareDocumentPosition),
-            // Set document
-
-            setDocument: function(document) {
-
-                // convert elements / window arguments to document. if document cannot be extrapolated, the function returns.
-                var nodeType = document.nodeType,
-                    doc = document ? document.ownerDocument || document : winDoc;
-
-                if (nodeType === 9) { // document
-
-                } else if (nodeType) {
-                    doc = document.ownerDocument; // node
-                } else if (document.navigator) {
-                    doc = document.document; // window
-                } else {
-                    return;
-                }
-
-                // Check if it's the old document
-
-                if (this.document === doc) {
-                    return;
-                }
-                // Override default window.document, and set our document
-
-                document = doc;
-                this.document = doc;
-
-                var root = document.documentElement,
-                    rootID = this.xmlID(root),
-                    features = _CoreCache[rootID],
-                    feature;
-
-                // Don't run feature detection twice
-
-                if (features) {
-                    for (feature in features) {
-                        this[feature] = features[feature];
-                    }
-                    return;
-                }
-
-                features = _CoreCache[rootID] = {};
-                features.root = root;
-                features.isXMLDocument = this.isXML(document);
-                features.detectDuplicates = !!_hasDuplicate;
-                features.sortStable = Core.expando.split('').sort(sortOrder).join('') === Core.expando;
-
-                // On non-HTML documents innerHTML and getElementsById doesnt work properly
-                _support.assert(function(div) {
-                    div.innerHTML = '<a id="hAzzle_id"></a>';
-                    features.isHTMLDocument = !!document.getElementById('hAzzle_id');
-                });
-
-                // If HTML document
-
-                if (!Core.isXML(root)) {
-
-                    // Check if getElementsByTagName('*') returns only elements
-                    features.getElementsByTagName = _support.assert(function(div) {
-                        div.appendChild(doc.createComment(''));
-                        return !div.getElementsByTagName('*').length;
-                    }); // IE returns elements with the name instead of just id for getElementsById for some documents
-                    features.getById = _support.assert(function(div) {
-                        div.innerHTML = '<a name="hAzzle_id"></a><b id="hAzzle_id"></b>';
-                        return document.getElementById('hAzzle_id') === div.firstChild;
-                    });
-
-                    var rbuggyMatches = Core.rbuggyMatches = [],
-                        rbuggyQSA = Core.rbuggyQSA = [];
-
-                    if ((_support.qsa = _rnative.test(doc.querySelectorAll))) {
-                        // Build QSA regex
-                        // Regex strategy adopted from Diego Perini
-                        _support.assert(function(div) {
-                            div.innerHTML = "<select msallowcapture=''><option selected=''></option></select>";
-
-                            // Webkit/Opera - :checked should return selected option elements
-                            // http://www.w3.org/TR/2011/REC-css3-selectors-20110929/#checked
-                            if (!div.querySelectorAll(':checked').length) {
-                                rbuggyQSA.push(':checked');
-                            }
-                        });
-                    }
-
-                    if ((features._matchesSelector = _rnative.test((_matches = docElem._matches ||
-                            docElem.webkitMatchesSelector ||
-                            docElem.mozMatchesSelector ||
-                            docElem.oMatchesSelector ||
-                            docElem.msMatchesSelector)))) {
-
-                        _support.assert(function(div) {
-                            // Check to see if it's possible to do _matchesSelector
-                            // on a disconnected node (IE 9)
-                            Core.disconnectedMatch = _matches.call(div, 'div');
-                        });
-                    }
-
-                    rbuggyQSA = rbuggyQSA.length && new RegExp(rbuggyQSA.join('|'));
-                    rbuggyMatches = rbuggyMatches.length && new RegExp(rbuggyMatches.join('|'));
-                }
-
-                // Contains
-
-                features.contains = Core.native || Core.native.test(docElem.contains) ?
-                    function(a, b) {
-                        var adown = a.nodeType === 9 ? a.documentElement : a,
-                            bup = b && b.parentNode;
-                        return a === bup || !!(bup && bup.nodeType === 1 && (
-                            adown.contains ?
-                            adown.contains(bup) :
-                            a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
-                        ));
-                    } :
-                    function(a, b) {
-                        if (b) {
-                            while ((b = b.parentNode)) {
-                                if (b === a) {
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-                    };
-
-                // Document order sorting
-                Core.sortOrder = Core.native ?
-                    function(a, b) {
-
-                        // Flag for duplicate removal
-                        if (a === b) {
-                            _hasDuplicate = true;
-                            return 0;
-                        }
-
-                        // Sort on method existence if only one input has compareDocumentPosition
-                        var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
-                        if (compare) {
-                            return compare;
-                        }
-
-                        // Calculate position if both inputs belong to the same document
-                        compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                            a.compareDocumentPosition(b) : 1;
-
-                        // Disconnected nodes
-                        if (compare & 1 ||
-                            (!_support.sortDetached && b.compareDocumentPosition(a) === compare)) {
-
-                            // Choose the first element that is related to our preferred document
-                            if (a === doc || a.ownerDocument === winDoc && Core.contains(winDoc, a)) {
-                                return -1;
-                            }
-                            if (b === doc || b.ownerDocument === winDoc && Core.contains(winDoc, b)) {
-                                return 1;
-                            }
-
-                            // Maintain original order
-                            return _sortInput ?
-                                (_indexOf.call(_sortInput, a) - _indexOf.call(_sortInput, b)) :
-                                0;
-                        }
-
-                        return compare & 4 ? -1 : 1;
-                    } :
-                    function(a, b) {
-                        // Exit early if the nodes are identical
-                        if (a === b) {
-                            _hasDuplicate = true;
-                            return 0;
-                        }
-
-                        var cur,
-                            i = 0,
-                            aup = a.parentNode,
-                            bup = b.parentNode,
-                            ap = [a],
-                            bp = [b];
-
-                        // Parentless nodes are either documents or disconnected
-                        if (!aup || !bup) {
-                            return a === doc ? -1 :
-                                b === doc ? 1 :
-                                aup ? -1 :
-                                bup ? 1 :
-                                _sortInput ?
-                                (_indexOf.call(_sortInput, a) - _indexOf.call(_sortInput, b)) :
-                                0;
-
-                            // If the nodes are siblings, we can do a quick check
-                        } else if (aup === bup) {
-                            return siblingCheck(a, b);
-                        }
-
-                        // Otherwise we need full lists of their ancestors for comparison
-                        cur = a;
-                        while ((cur = cur.parentNode)) {
-                            ap.unshift(cur);
-                        }
-                        cur = b;
-                        while ((cur = cur.parentNode)) {
-                            bp.unshift(cur);
-                        }
-
-                        // Walk down the tree looking for a discrepancy
-                        while (ap[i] === bp[i]) {
-                            i++;
-                        }
-
-                        return i ?
-                            // Do a sibling check if the nodes have a common ancestor
-                            siblingCheck(ap[i], bp[i]) :
-
-                            // Otherwise nodes in our document sort first
-                            ap[i] === winDoc ? -1 :
-                            bp[i] === winDoc ? 1 :
-                            0;
-                    };
-
-                root = null;
-
-                for (feature in features) {
-                    this[feature] = features[feature];
-                }
-            }
         };
-    // Set correct sortOrder
 
-    sortOrder = Core.sortOrder;
+    // Feature / Bug detection 
+
+    Core.isNativeCode = function(fn) {
+        return (/\{\s*\[native code\]\s*\}/).test('' + fn);
+    };
+
+    Core.expando = expando;
+
+    Core.isXML = function(elem) {
+        var documentElement = elem && (elem.ownerDocument || elem).documentElement;
+        return documentElement ? documentElement.nodeName !== 'HTML' : false;
+    };
+
+    Core.uidx = 1;
+    Core.uidk = 'hAzzle-uniqueid';
+
+    Core.getUIDXML = function(node) {
+        var uid = node.getAttribute(this.uidk);
+        if (!uid) {
+            uid = this.uidx++;
+            node.setAttribute(this.uidk, uid);
+        }
+        return uid;
+    };
+
+    Core.getUIDHTML = function(node) {
+        return node.uniqueNumber || (node.uniqueNumber = this.uidx++);
+    };
 
     // Set document
 
+    Core.setDocument = function(node) {
+
+        var doc = node ? node.ownerDocument || node : winDoc;
+
+        // If no document and documentElement is available, return
+        if (doc.nodeType !== 9 || !doc.documentElement) {
+            return document;
+        }
+
+        // check if it's the old document
+
+        if (this.document === doc) {
+            return;
+        }
+
+        // Set our document
+
+        this.document = doc;
+
+        var root = doc.documentElement,
+            rootUid = this.getUIDXML(root),
+            features = featuresCache[rootUid],
+            feature;
+
+        // If already cached, return
+
+        if (features) {
+            for (feature in features) {
+                this[feature] = features[feature];
+            }
+            return;
+        }
+
+        features = featuresCache[rootUid] = {};
+        features.root = root;
+        features.isXMLDocument = this.isXML(document);
+
+        features.brokenStarGEBTN = features.starSelectsClosedQSA = features.idGetsName = features.ioASaf = features.disconnectedMatch = features.brokenMixedCaseQSA = features.brokenGEBCN = features.brokenCheckedQSA = features.brokenEmptyAttributeQSA = features.isHTMLDocument = features.nativeMatchesSelector = false;
+
+        var getElementsByTagName, matches,
+
+            selected, id = 'hAzzle_uniqueid',
+            testNode = document.createElement('div'),
+            testRoot = document.body || document.getElementsByTagName('body')[0] || root;
+
+        testRoot.appendChild(testNode);
+
+        // Non-HTML documents innerHTML and getElementsById doesnt work properly
+        // Support: IE<10
+
+        try {
+            testNode.innerHTML = '<a id="' + id + '"></a>';
+            features.isHTMLDocument = !!document.getElementById(id);
+        } catch (e) {}
+
+        // HTML document
+
+        if (features.isHTMLDocument) {
+
+            // Check if getElementsByTagName('*') returns only elements
+            testNode.appendChild(document.createComment(''));
+            getElementsByTagName = !testNode.getElementsByTagName('*').length;
+
+            // IE returns elements with the name instead of just id for getElementsById for some documents
+            try {
+                testNode.innerHTML = '<a name="' + id + '"></a><b id="' + id + '"></b>';
+                features.getById = document.getElementById(id) === testNode.firstChild;
+            } catch (e) {}
+
+            if (testNode.querySelectorAll) {
+
+                // Webkit and Opera dont return selected options on querySelectorAll
+                testNode.innerHTML = '<select><option selected="selected">a</option></select>';
+                features.brokenCheckedQSA = !testNode.querySelectorAll(':checked').length;
+
+                testNode.innerHTML = "<select msallowcapture=''>" +
+                    "<option id='d\f]' selected=''></option></select>";
+
+                // Support: Chrome<29, Android<4.2+, Safari<7.0+, iOS<7.0+, PhantomJS<1.9.7+
+                features.ioASaf = !testNode.querySelectorAll('[id~=d]').length;
+
+                // IE returns incorrect results for attr[*^$]='' selectors on querySelectorAll
+                try {
+                    testNode.innerHTML = '<a class=""></a>';
+                    features.brokenEmptyAttributeQSA = (testNode.querySelectorAll('[class*=""]').length != 0);
+                } catch (e) {}
+
+            } // QSA end
+
+            // Native matchesSelector function
+
+            if ((features.nativeMatchesSelector = this.isNativeCode((matches = root.matches ||
+                    root.webkitMatchesSelector ||
+                    root.mozMatchesSelector ||
+                    root.oMatchesSelector ||
+                    root.msMatchesSelector)))) {
+
+                try {
+
+                    // Check to see if it's possible to do matchesSelector
+                    // on a disconnected node (IE 9)
+
+                    features.disconnectedMatch = matches.call(testNode, 'div');
+
+                    // if matchesSelector trows errors on incorrect sintaxes we can use it
+                    matches.call(root, ':hAzzle');
+                    matches = null;
+
+                } catch (e) {}
+            }
+
+        } // HTML doc end
+
+        try {
+            root.hAzzle_expando = 1;
+            delete root.hAzzle_expando;
+            features.getUID = this.getUIDHTML;
+        } catch (e) {
+            features.getUID = this.getUIDXML;
+        }
+
+        testRoot.removeChild(testNode);
+        testNode = selected = testRoot = null;
+
+        var nativeRootContains = root && this.isNativeCode(root.contains),
+            nativeDocumentContains = document && this.isNativeCode(root.compareDocumentPosition);
+
+        features.contains = (nativeRootContains && nativeDocumentContains) ? function(a, b) {
+            var adown = a.nodeType === 9 ? a.documentElement : a,
+                bup = b && b.parentElement;
+            return a === bup || !!(bup && bup.nodeType === 1 && (
+                adown.contains ?
+                adown.contains(bup) :
+                a.compareDocumentPosition && a.compareDocumentPosition(bup) & 16
+            ));
+        } : function(a, b) {
+            if (b) {
+                while ((b = b.parentElement)) {
+                    if (b === a) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+
+        features.documentSorter = (root.compareDocumentPosition) ? function(a, b) {
+
+                // Flag for duplicate removal
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                // Sort on method existence if only one input has compareDocumentPosition
+                var compare = !a.compareDocumentPosition - !b.compareDocumentPosition;
+                if (compare) {
+                    return compare;
+                }
+
+                // Calculate position if both inputs belong to the same document
+                compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
+                    a.compareDocumentPosition(b) :
+
+                    // Otherwise we know they are disconnected
+                    1;
+
+                // Disconnected nodes
+                if (compare & 1 ||
+                    (!sortDetached && b.compareDocumentPosition(a) === compare)) {
+
+                    // Choose the first element that is related to our preferred document
+                    if (a === doc || a.ownerDocument === winDoc && features.contains(winDoc, a)) {
+                        return -1;
+                    }
+                    if (b === doc || b.ownerDocument === winDoc && features.contains(winDoc, b)) {
+                        return 1;
+                    }
+
+                    // Maintain original order
+                    return sortInput ?
+                        (_indexOf(sortInput, a) - _indexOf(sortInput, b)) :
+                        0;
+                }
+
+                return compare & 4 ? -1 : 1;
+            } :
+            function(a, b) {
+                // Exit early if the nodes are identical
+                if (a === b) {
+                    hasDuplicate = true;
+                    return 0;
+                }
+
+                var cur,
+                    i = 0,
+                    aup = a.parentNode,
+                    bup = b.parentNode,
+                    ap = [a],
+                    bp = [b];
+
+                // Parentless nodes are either documents or disconnected
+                if (!aup || !bup) {
+                    return a === doc ? -1 :
+                        b === doc ? 1 :
+                        aup ? -1 :
+                        bup ? 1 :
+                        sortInput ?
+                        (_indexOf(sortInput, a) - _indexOf(sortInput, b)) :
+                        0;
+
+                    // If the nodes are siblings, we can do a quick check
+                } else if (aup === bup) {
+                    return siblingCheck(a, b);
+                }
+
+                // Otherwise we need full lists of their ancestors for comparison
+                cur = a;
+                while ((cur = cur.parentNode)) {
+                    ap.unshift(cur);
+                }
+                cur = b;
+                while ((cur = cur.parentNode)) {
+                    bp.unshift(cur);
+                }
+
+                // Walk down the tree looking for a discrepancy
+                while (ap[i] === bp[i]) {
+                    i++;
+                }
+
+                return i ?
+                    // Do a sibling check if the nodes have a common ancestor
+                    siblingCheck(ap[i], bp[i]) :
+
+                    // Otherwise nodes in our document sort first
+                    ap[i] === winDoc ? -1 :
+                    bp[i] === winDoc ? 1 :
+                    0;
+            };
+
+        root = null;
+
+        for (feature in features) {
+            this[feature] = features[feature];
+        }
+    };
+
+    // Set document
+    
     Core.setDocument(winDoc);
 
-    function uniqueSort(results) {
-
+    var uniqueSort = function(results) {
         var elem,
             duplicates = [],
             j = 0,
             i = 0;
 
-        _hasDuplicate = !Core.detectDuplicates;
-        _sortInput = !Core.sortStable && results.slice(0);
+        // Unless we *know* we can detect duplicates, assume their presence
+
+        hasDuplicate = !detectDuplicates;
+        sortInput = !sortStable && results.slice(0);
         results.sort(sortOrder);
 
-        if (_hasDuplicate) {
+        if (hasDuplicate) {
             while ((elem = results[i++])) {
                 if (elem === results[i]) {
                     j = duplicates.push(i);
@@ -1463,10 +1482,10 @@ hAzzle.define('Core', function() {
             }
         }
 
-        _sortInput = null;
+        sortInput = null;
 
         return results;
-    }
+    };
 
     return {
         root: Core.root,
@@ -1474,10 +1493,10 @@ hAzzle.define('Core', function() {
         isHTML: !Core.isXML(winDoc),
         expando: Core.expando,
         uniqueSort: uniqueSort,
-        contains: Core.contains,
-        rbuggyQSA: Core.rbuggyQSA
+        contains: Core.contains
     };
 });
+
 // collection.js
 hAzzle.define('Collection', function() {
 
@@ -1905,7 +1924,6 @@ hAzzle.define('Jiesa', function() {
             if (elem === document) {
                 return false;
             }
-
 
             if (_core && _core.isHTML) {
 

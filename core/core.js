@@ -2,7 +2,7 @@
 hAzzle.define('Core', function() {
 
  var winDoc = window.document,
-        locale = {},
+        Core = {},
         featuresCache = {},
         _indexOf = Array.prototype.indexOf,
         expando = 'hAzzle-' + String(Math.random()).replace(/\D/g, ''),
@@ -25,7 +25,7 @@ hAzzle.define('Core', function() {
             }
             return 0;
         },
-        sortStable = expando.split("").sort(sortOrder).join("") === expando,
+        sortStable = expando.split('').sort(sortOrder).join('') === expando,
         MAX_NEGATIVE = 1 << 31,
         siblingCheck = function(a, b) {
             var cur = b && a,
@@ -52,21 +52,21 @@ hAzzle.define('Core', function() {
 
     // Feature / Bug detection 
 
-    locale.isNativeCode = function(fn) {
+    Core.isNativeCode = function(fn) {
         return (/\{\s*\[native code\]\s*\}/).test('' + fn);
     };
 
-    locale.expando = expando;
+    Core.expando = expando;
 
-    locale.isXML = function(elem) {
+    Core.isXML = function(elem) {
         var documentElement = elem && (elem.ownerDocument || elem).documentElement;
         return documentElement ? documentElement.nodeName !== 'HTML' : false;
     };
 
-    locale.uidx = 1;
-    locale.uidk = 'hAzzle-uniqueid';
+    Core.uidx = 1;
+    Core.uidk = 'hAzzle-uniqueid';
 
-    locale.getUIDXML = function(node) {
+    Core.getUIDXML = function(node) {
         var uid = node.getAttribute(this.uidk);
         if (!uid) {
             uid = this.uidx++;
@@ -75,13 +75,13 @@ hAzzle.define('Core', function() {
         return uid;
     };
 
-    locale.getUIDHTML = function(node) {
+    Core.getUIDHTML = function(node) {
         return node.uniqueNumber || (node.uniqueNumber = this.uidx++);
     };
 
     // Set document
 
-    locale.setDocument = function(node) {
+    Core.setDocument = function(node) {
 
         var doc = node ? node.ownerDocument || node : winDoc;
 
@@ -98,7 +98,7 @@ hAzzle.define('Core', function() {
 
         // Set our document
 
-        this.document = document = doc;
+        this.document = doc;
 
         var root = doc.documentElement,
             rootUid = this.getUIDXML(root),
@@ -140,7 +140,7 @@ hAzzle.define('Core', function() {
 
         if (features.isHTMLDocument) {
 
-            // Check if getElementsByTagName("*") returns only elements
+            // Check if getElementsByTagName('*') returns only elements
             testNode.appendChild(document.createComment(''));
             getElementsByTagName = !testNode.getElementsByTagName('*').length;
 
@@ -160,9 +160,9 @@ hAzzle.define('Core', function() {
                     "<option id='d\f]' selected=''></option></select>";
 
                 // Support: Chrome<29, Android<4.2+, Safari<7.0+, iOS<7.0+, PhantomJS<1.9.7+
-                features.ioASaf = !testNode.querySelectorAll("[id~=d]").length;
+                features.ioASaf = !testNode.querySelectorAll('[id~=d]').length;
 
-                // IE returns incorrect results for attr[*^$]="" selectors on querySelectorAll
+                // IE returns incorrect results for attr[*^$]='' selectors on querySelectorAll
                 try {
                     testNode.innerHTML = '<a class=""></a>';
                     features.brokenEmptyAttributeQSA = (testNode.querySelectorAll('[class*=""]').length != 0);
@@ -183,7 +183,7 @@ hAzzle.define('Core', function() {
                     // Check to see if it's possible to do matchesSelector
                     // on a disconnected node (IE 9)
 
-                    features.disconnectedMatch = matches.call(testNode, "div");
+                    features.disconnectedMatch = matches.call(testNode, 'div');
 
                     // if matchesSelector trows errors on incorrect sintaxes we can use it
                     matches.call(root, ':hAzzle');
@@ -248,7 +248,6 @@ hAzzle.define('Core', function() {
                     // Otherwise we know they are disconnected
                     1;
 
-
                 // Disconnected nodes
                 if (compare & 1 ||
                     (!sortDetached && b.compareDocumentPosition(a) === compare)) {
@@ -268,10 +267,6 @@ hAzzle.define('Core', function() {
                 }
 
                 return compare & 4 ? -1 : 1;
-
-
-
-
             } :
             function(a, b) {
                 // Exit early if the nodes are identical
@@ -332,12 +327,11 @@ hAzzle.define('Core', function() {
         for (feature in features) {
             this[feature] = features[feature];
         }
-
     };
 
     // Set document
     
-    locale.setDocument(winDoc);
+    Core.setDocument(winDoc);
 
     var uniqueSort = function(results) {
         var elem,
@@ -345,8 +339,8 @@ hAzzle.define('Core', function() {
             j = 0,
             i = 0;
 
-
         // Unless we *know* we can detect duplicates, assume their presence
+
         hasDuplicate = !detectDuplicates;
         sortInput = !sortStable && results.slice(0);
         results.sort(sortOrder);
@@ -368,11 +362,11 @@ hAzzle.define('Core', function() {
     };
 
     return {
-        root: locale.root,
-        isXML: locale.isXML,
-        isHTML: !locale.isXML(winDoc),
-        expando: locale.expando,
+        root: Core.root,
+        isXML: Core.isXML,
+        isHTML: !Core.isXML(winDoc),
+        expando: Core.expando,
         uniqueSort: uniqueSort,
-        contains: locale.contains,
+        contains: Core.contains
     };
 });
