@@ -4,6 +4,7 @@ hAzzle.define('Jiesa', function() {
     var _util = hAzzle.require('Util'),
         _core = hAzzle.require('Core'),
         _collection = hAzzle.require('Collection'),
+        _types = hAzzle.require('Types'),
         _support = hAzzle.require('Support'),
         _relativeSel = /^\s*[+~]/,
         _reSpace = /[\n\t\r]/g,
@@ -94,8 +95,10 @@ hAzzle.define('Jiesa', function() {
             if (typeof root === 'string') {
                 return Jiesa(root);
             }
-            if (!root.nodeType && arrayLike(root)) return root[0]
-            return root
+            if (!root.nodeType && _types.isArrayLike(root)) {
+            return root[0];
+            }
+            return root;
         },
         /**
          * Find elements by selectors.
@@ -175,18 +178,23 @@ hAzzle.define('Jiesa', function() {
                     });
                     return results;
                 } else { // Fallback to QSA  
-
-                    // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
-                    if (_support.qsa && _core.rbuggyQSA.length) {
-                        if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
-                            return _collection.slice(fixedRoot(ctx, sel, ctx.querySelectorAll));
-                        } else {
-                            // we can use the native qSA
-                            return _collection.slice(ctx.querySelectorAll(sel));
-                        }
-                    }
+                    return qsa(sel, ctx);
                 }
             }
+            return qsa(sel, ctx);
+        },
+        qsa = function(sel, ctx) {
+            var ret;
+            // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
+            // if (_support.qsa && _core.rbuggyQSA.length) {
+            if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
+                ret = fixedRoot(ctx, sel, ctx.querySelectorAll);
+            } else {
+                // we can use the native qSA
+                ret = ctx.querySelectorAll(sel);
+            }
+            //                  }
+            return _collection.slice(ret);
         },
         matches = function(elem, sel, ctx) {
 
