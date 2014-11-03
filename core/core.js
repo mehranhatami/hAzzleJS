@@ -369,6 +369,9 @@ hAzzle.define('Core', function() {
         contains: Core.contains,
         matches: Core.matches,
         disconnectedMatch: Core.disconnectedMatch,
-        nativeMatches: Core.nativeMatchesSelector
+        nativeMatches: Core.nativeMatchesSelector,
+        brokenCheckedQSA: Core.brokenCheckedQSA,
+        ioASaf: Core.ioASaf,
+        brokenEmptyAttributeQSA: Core.brokenEmptyAttributeQSA
     };
 });
