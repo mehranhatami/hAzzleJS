@@ -118,7 +118,7 @@ hAzzle.define('Core', function() {
         features.root = root;
         features.isXMLDocument = this.isXML(document);
 
-        features.brokenStarGEBTN = features.starSelectsClosedQSA = features.idGetsName = features.ioASaf = features.disconnectedMatch = features.brokenMixedCaseQSA = features.brokenGEBCN = features.brokenCheckedQSA = features.brokenEmptyAttributeQSA = features.isHTMLDocument = features.nativeMatchesSelector = false;
+        features.brokenStarGEBTN = features.matches = features.starSelectsClosedQSA = features.idGetsName = features.ioASaf = features.disconnectedMatch = features.brokenMixedCaseQSA = features.brokenGEBCN = features.brokenCheckedQSA = features.brokenEmptyAttributeQSA = features.isHTMLDocument = features.nativeMatchesSelector = false;
 
         var getElementsByTagName, matches,
 
@@ -191,6 +191,8 @@ hAzzle.define('Core', function() {
 
                 } catch (e) {}
             }
+            
+            features.matches = matches;
 
         } // HTML doc end
 
@@ -243,10 +245,7 @@ hAzzle.define('Core', function() {
 
                 // Calculate position if both inputs belong to the same document
                 compare = (a.ownerDocument || a) === (b.ownerDocument || b) ?
-                    a.compareDocumentPosition(b) :
-
-                    // Otherwise we know they are disconnected
-                    1;
+                    a.compareDocumentPosition(b) : 1;
 
                 // Disconnected nodes
                 if (compare & 1 ||
@@ -367,6 +366,9 @@ hAzzle.define('Core', function() {
         isHTML: !Core.isXML(winDoc),
         expando: Core.expando,
         uniqueSort: uniqueSort,
-        contains: Core.contains
+        contains: Core.contains,
+        matches: Core.matches,
+        disconnectedMatch: Core.disconnectedMatch,
+        nativeMatches: Core.nativeMatchesSelector
     };
 });

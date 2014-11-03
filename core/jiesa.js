@@ -1,29 +1,23 @@
 // jiesa.js
 hAzzle.define('Jiesa', function() {
 
-    var _util = hAzzle.require('Util'),
+    var // Dependencies    
+
+        _util = hAzzle.require('Util'),
         _core = hAzzle.require('Core'),
         _collection = hAzzle.require('Collection'),
         _types = hAzzle.require('Types'),
         _has = hAzzle.require('has'),
         _selector = hAzzle.require('selector'),
+
+        // RegEx
+
         _relativeSel = /^\s*[+~]/,
         _reSpace = /[\n\t\r]/g,
         _idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
         _tagNameAndOrIdAndOrClassExp = /^(\w+)(?:#([\w-]+)|)(?:\.([\w-]+)|)$/,
         _unionSplit = /([^\s,](?:"(?:\\.|[^"])+"|'(?:\\.|[^'])+'|[^,])*)/g,
-
-        // http://www.w3.org/TR/css3-selectors/#whitespace
-        whitespace = "[\\x20\\t\\r\\n\\f]",
-
-        rattributeQuotes = new RegExp("=" + whitespace + "*([^\\]'\"]*?)" + whitespace + "*\\]", "g"),
-        docElem = window.document.documentElement,
-
-        _matches = docElem.matches ||
-        docElem.webkitMatchesSelector ||
-        docElem.mozMatchesSelector ||
-        docElem.oMatchesSelector ||
-        docElem.msMatchesSelector,
+        _rattributeQuotes = /=[\x20\t\r\n\f]*([^\]'"]*?)[\x20\t\r\n\f]*\]/g,
 
         fixedRoot = function(context, query, method) {
             var oldContext = context,
@@ -58,34 +52,28 @@ hAzzle.define('Jiesa', function() {
             }
         },
 
+        // Dependencies: DOM Level 4 matches()
+
         matchesSelector = function(elem, sel, ctx) {
 
             if (ctx && ctx.nodeType !== 9) {
                 // doesn't support three args, use rooted id trick
                 return fixedRoot(ctx, sel, function(query) {
-                    return _matches(elem, query);
+                    return elem.matches(query);
                 });
             }
-            // we have a native matchesSelector, use that
-            return _matches.call(elem, sel);
+            // We have a native matchesSelector, use that
+            return elem.matches(sel);
         },
 
-        /**
-         * Determine if the element contains the klass.
-         * Uses the `classList` api if it's supported.
-         * https://developer.mozilla.org/en-US/docs/Web/API/Element.classList
-         *
-         * @param {Object} el
-         * @param {String} klass
-         *
-         * @return {Array}
-         */
+        // Determine if the element contains the klass.
+        // Uses the `classList` api if it's supported.
 
-        containsClass = function(el, klass) {
+        containsClass = function(el, cls) {
             if (_has.has('classList')) {
-                return el.classList.contains(klass);
+                return el.classList.contains(cls);
             } else {
-                return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
+                return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(cls) >= 0;
             }
         },
 
@@ -97,22 +85,12 @@ hAzzle.define('Jiesa', function() {
                 return Jiesa(root);
             }
             if (!root.nodeType && _types.isArrayLike(root)) {
-            return root[0];
+                return root[0];
             }
             return root;
         },
-        /**
-         * Find elements by selectors.
-         *
-         * Supported:
-         * - #foo
-         * - .foo
-         * - div (tagname)
-         *
-         * @param {String} sel The selector string
-         * @param {Object} ctx The context. Default is document.
-         * @param {Bool} c Save to cache? Default is true.
-         */
+
+        // Find elements by selectors.
 
         Jiesa = function(sel, ctx) {
             var m, nodeType, elem, results = [];
@@ -143,7 +121,7 @@ hAzzle.define('Jiesa', function() {
                 return results;
             }
 
-            if (!_core.isHTML) {
+            if (_core.isHTML) {
 
                 if ((m = _idClassTagNameExp.exec(sel))) {
                     if ((sel = m[1])) {
@@ -178,29 +156,28 @@ hAzzle.define('Jiesa', function() {
                         }
                     });
                     return results;
-                } else { // Fallback to QSA  
-                    return qsa(sel, ctx);
+                } else { // Fallback to QSA if the native selector engine are not installed
+                    return hAzzle.installed['selector'] ? _selector.find(sel, ctx) : qsa(sel, ctx);
                 }
             }
-            
-            return qsa(sel, ctx);
-            
+            // HTML / XML documents, so check if the native selector engine are installed 
             // To avoid bloating the hAzzle Core - the main selector engine are a separate module            
+
             hAzzle.err(!hAzzle.installed['selector'], 22, ' the selector.js module need to be installed');
-            
+
             return _selector.find(sel, ctx);
         },
         qsa = function(sel, ctx) {
             var ret;
-       // If QSA support
-          if (_has.has('qsa')) {
-            if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
-                ret = fixedRoot(ctx, sel, ctx.querySelectorAll);
-            } else {
-                // we can use the native qSA
-                ret = ctx.querySelectorAll(sel);
+            // If QSA support
+            if (_has.has('qsa')) {
+                if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
+                    ret = fixedRoot(ctx, sel, ctx.querySelectorAll);
+                } else {
+                    // we can use the native qSA
+                    ret = ctx.querySelectorAll(sel);
+                }
             }
-                              }
             return _collection.slice(ret);
         },
         matches = function(elem, sel, ctx) {
@@ -214,7 +191,7 @@ hAzzle.define('Jiesa', function() {
             }
 
             // Make sure that attribute selectors are quoted
-            sel = typeof sel === 'string' ? sel.replace(rattributeQuotes, "='$1']") : sel;
+            sel = typeof sel === 'string' ? sel.replace(_rattributeQuotes, "='$1']") : sel;
 
             // If instance of hAzzle
 
@@ -228,14 +205,14 @@ hAzzle.define('Jiesa', function() {
                 return false;
             }
 
-
-            if (_core && _core.isHTML) {
+            if (_core.nativeMatches && _core.isHTML) {
 
                 try {
                     var ret = matchesSelector(elem, sel, ctx);
 
                     // IE 9's matchesSelector returns false on disconnected nodes
                     if (ret || _core.disconnectedMatch ||
+
                         // As well, disconnected nodes are said to be in a document
                         // fragment in IE 9
                         elem.document && elem.document.nodeType !== 11) {
@@ -270,8 +247,7 @@ hAzzle.define('Jiesa', function() {
             }
         }
 
-        var i,
-            len = this.length,
+        var i, len = this.length,
             self = this.elements;
 
         return hAzzle(_util.filter(hAzzle(selector).elements, function(node) {
