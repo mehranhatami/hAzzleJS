@@ -142,10 +142,11 @@ hAzzle.define('Traversing', function() {
         });
 
         if (this.length > 1) {
-            // Remove duplicates
-            _core.uniqueSort(matched.elements);
+          // Remove duplicates
+          matched =  _core.uniqueSort(matched.elements);
+          hAzzle(matched)
         }
-        return matched;
+        return hAzzle(matched);
     };
 
     // Returns all parent elements for nodes

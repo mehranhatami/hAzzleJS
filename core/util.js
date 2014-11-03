@@ -35,7 +35,7 @@ hAzzle.define('Util', function() {
             }
             var i, length = obj.length, key;
 
-            if (typeof fn == 'function' && typeof ctx === 'undefined' && typeof rev === 'undefined' && _types.isArray(obj)) {
+            if (typeof fn === 'function' && typeof ctx === 'undefined' && typeof rev === 'undefined' && _types.isArray(obj)) {
                 while (++i < length) {
                     if (fn(obj[i], i, obj) === false) {
                         break;

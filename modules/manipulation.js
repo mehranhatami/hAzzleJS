@@ -42,7 +42,15 @@ hAzzle.define('Manipulation', function() {
             base: noscope
         };
 
-    var createHTML = function(html, context) {
+    var imcHTML = (function() {
+
+        if (typeof document.implementation.createHTMLDocument === 'function') {
+            return true;
+        }
+        return false;
+    })(),
+
+      createHTML = function(html, context) {
             return hAzzle(create(html, context));
         },
 
@@ -127,7 +135,7 @@ hAzzle.define('Manipulation', function() {
             if (node) {
                 // Mitigate XSS vulnerability
 
-                var defaultContext = _support.imcHTML ?
+                var defaultContext = imcHTML ?
                     document.implementation.createHTMLDocument() :
                     document,
                     ctx = context || defaultContext,

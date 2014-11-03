@@ -3,7 +3,7 @@ var hAzzle = window.hAzzle || (window.hAzzle = {});
 
 hAzzle.define('Classes', function() {
 
-    var _support = hAzzle.require('Support'),
+    var _has = hAzzle.require('has'),
         _util = hAzzle.require('Util'),
         _storage = hAzzle.require('Storage'),
         _strings = hAzzle.require('Strings'),
@@ -58,7 +58,7 @@ hAzzle.define('Classes', function() {
                 }
                 // use native classList property if possible
 
-                if (!_support.classList) {
+                if (!_has.has('classlist')) {
 
                     // Flag native
 
@@ -71,7 +71,7 @@ hAzzle.define('Classes', function() {
 
                 // Some browsers (e.g. IE) don't support multiple  arguments
 
-                if (based && _support.multipleArgs) {
+                if (based && _has.has('multiArgs')) {
                     elem && elem.classList[nativeMethodName].apply(elem.classList, classes);
                 } else {
 
@@ -100,7 +100,7 @@ hAzzle.define('Classes', function() {
             var className = ' ' + classes + ' ',
                 els = elem.length ? elem : [elem],
                 i = 0,
-                cls = _support.classList,
+                cls = _has.has('classlist'),
                 l = els.length;
 
             for (; i < l; i++) {

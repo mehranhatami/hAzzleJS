@@ -19,9 +19,6 @@ hAzzle.define('Collection', function() {
 
             return ret;
         },
-
-       
-
         slice = function(array, start, end) {
             if (typeof start === 'undefined') {
                 start = 0;

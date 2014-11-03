@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-11-02
+ * Date: 2014-11-03
  */
  
 (function() {

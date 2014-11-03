@@ -1,10 +1,12 @@
-// support.js'
-// NOTE! support.js module are not the same as has.js, and should not be merged into one 
+// support.js
+// NOTE! This module are here just to be a 'litle' compatible with jQuery for developers 
+// that are used to support() from jQuery. We only use this a few places. 
+// For 'feature detection', use has.js (included in the Core).
 hAzzle.define('Support', function() {
 
     // Feature detection of elements
-    var cls, MultipleArgs, sortDetached,
-        noCloneChecked, supportBorderRadius,
+
+    var support = {},
 
         assert = function(fn) {
 
@@ -25,7 +27,6 @@ hAzzle.define('Support', function() {
             }
         },
 
-        optSelected, radioValue,
         input = document.createElement('input'),
         select = document.createElement('select'),
         opt = select.appendChild(document.createElement('option'));
@@ -34,37 +35,16 @@ hAzzle.define('Support', function() {
 
     // Support: IE<=11+
     // Must access selectedIndex to make default options select
-    optSelected = opt.selected;
+    support.optSelected = opt.selected;
 
     // Support: IE<=11+
     // An input loses its value after becoming a radio
     input = document.createElement('input');
     input.value = 't';
     input.type = 'radio';
-    radioValue = input.value === 't';
+    support.radioValue = input.value === 't';
 
-    var imcHTML = (function() {
-
-        if (typeof document.implementation.createHTMLDocument === 'function') {
-            return true;
-        }
-        return false;
-    }());
-
-    // classList and MultipleArgs detections
-
-    assert(function(div) {
-
-        div.classList.add('a', 'b');
-        // Detect if the browser supports classList
-        cls = !!document.documentElement.classList;
-        // Detect if the classList API supports multiple arguments
-        // IE11-- don't support it
-
-        MultipleArgs = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-    });
-
-    sortDetached = assert(function(div) {
+    support.sortDetached = assert(function(div) {
         // Should return 1, but returns 4 (following)
         return div.compareDocumentPosition(document.createElement('div')) & 1;
     });
@@ -79,26 +59,24 @@ hAzzle.define('Support', function() {
         input.setAttribute('name', 't');
 
         div.appendChild(input);
-        
+
         // Support: IE<=11+
         // Make sure textarea (and checkbox) defaultValue is properly cloned
         div.innerHTML = '<textarea>x</textarea>';
-        noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
+        support.noCloneChecked = !!div.cloneNode(true).lastChild.defaultValue;
 
     });
-     assert(function(div) {
-       supportBorderRadius = div.style.borderRadius != null;         
-         });
+    assert(function(div) {
+        support.supportBorderRadius = div.style.borderRadius != null;
+    });
 
     return {
         assert: assert,
-        optSelected: optSelected,
-        radioValue: radioValue,
-        imcHTML: imcHTML,
-        classList: cls,
-        multipleArgs: MultipleArgs,
-        sortDetached: sortDetached,
-        noCloneChecked: noCloneChecked,
-        borderRadius:supportBorderRadius
+        support:support,
+        optSelected: support.optSelected,
+        radioValue: support.radioValue,
+        sortDetached: support.sortDetached,
+        noCloneChecked: support.noCloneChecked,
+        borderRadius: support.supportBorderRadius
     };
 });

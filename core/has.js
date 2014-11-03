@@ -10,7 +10,6 @@ hAzzle.define('has', function() {
         hasCache = {},
 
         // IE feature detection
-        // Props: Velocity.js 
         ie = (function() {
 
             if (doc.documentMode) {
@@ -149,6 +148,27 @@ hAzzle.define('has', function() {
     add('ComputedStyle', function() {
         return !!document.defaultView.getComputedStyle;
     });
+
+    add('qsa', function() {
+        return !!document.querySelectorAll;
+    });
+
+    add('classlist', function() {
+        return !!document.documentElement.classList;
+    });
+
+    // Detect if the classList API supports multiple arguments
+    // IE11-- don't support it
+
+    add('multiArgs', function() {
+        var mu, div = document.createElement('div');
+        div.classList.add('a', 'b');
+        mu = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+        // release memory in IE
+        div = null;
+        return mu;
+    });
+
 
     return {
         has: has,

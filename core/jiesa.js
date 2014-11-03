@@ -5,7 +5,8 @@ hAzzle.define('Jiesa', function() {
         _core = hAzzle.require('Core'),
         _collection = hAzzle.require('Collection'),
         _types = hAzzle.require('Types'),
-        _support = hAzzle.require('Support'),
+        _has = hAzzle.require('has'),
+        _selector = hAzzle.require('selector'),
         _relativeSel = /^\s*[+~]/,
         _reSpace = /[\n\t\r]/g,
         _idClassTagNameExp = /^(?:#([\w-]+)|\.([\w-]+)|(\w+))$/,
@@ -81,7 +82,7 @@ hAzzle.define('Jiesa', function() {
          */
 
         containsClass = function(el, klass) {
-            if (_support.classList) {
+            if (_has.has('classList')) {
                 return el.classList.contains(klass);
             } else {
                 return (' ' + el.className + ' ').replace(_reSpace, ' ').indexOf(klass) >= 0;
@@ -142,7 +143,7 @@ hAzzle.define('Jiesa', function() {
                 return results;
             }
 
-            if (_core.isHTML) {
+            if (!_core.isHTML) {
 
                 if ((m = _idClassTagNameExp.exec(sel))) {
                     if ((sel = m[1])) {
@@ -181,19 +182,25 @@ hAzzle.define('Jiesa', function() {
                     return qsa(sel, ctx);
                 }
             }
+            
             return qsa(sel, ctx);
+            
+            // To avoid bloating the hAzzle Core - the main selector engine are a separate module            
+            hAzzle.err(!hAzzle.installed['selector'], 22, ' the selector.js module need to be installed');
+            
+            return _selector.find(sel, ctx);
         },
         qsa = function(sel, ctx) {
             var ret;
-            // NOTE! QSA are temporary. In v. 1.1 QSA will be gone
-            // if (_support.qsa && _core.rbuggyQSA.length) {
+       // If QSA support
+          if (_has.has('qsa')) {
             if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
                 ret = fixedRoot(ctx, sel, ctx.querySelectorAll);
             } else {
                 // we can use the native qSA
                 ret = ctx.querySelectorAll(sel);
             }
-            //                  }
+                              }
             return _collection.slice(ret);
         },
         matches = function(elem, sel, ctx) {
