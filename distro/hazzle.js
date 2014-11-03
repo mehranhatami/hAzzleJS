@@ -1779,11 +1779,16 @@ hAzzle.define('Jiesa', function() {
                         }
                     });
                     return results;
-                } else { // Fallback to QSA if the native selector engine are not installed
-                    return hAzzle.installed['selector'] ? _selector.find(sel, ctx) : qsa(sel, ctx);
                 }
+                // Fallback to QSA if the native selector engine are not installed
+                if (!hAzzle.installed['selector'] && _has.has('qsa') && (!_core.brokenCheckedQSA ||
+                        !_core.ioASaf ||
+                        !_core.brokenEmptyAttributeQSA)) {
+                    return qsa(sel, ctx);
+                }
+
             }
-            // HTML / XML documents, so check if the native selector engine are installed 
+            // We are dealing with HTML / XML documents, so check if the native selector engine are installed 
             // To avoid bloating the hAzzle Core - the main selector engine are a separate module            
 
             hAzzle.err(!hAzzle.installed['selector'], 22, ' the selector.js module need to be installed');
@@ -1792,14 +1797,11 @@ hAzzle.define('Jiesa', function() {
         },
         qsa = function(sel, ctx) {
             var ret;
-            // If QSA support
-            if (_has.has('qsa')) {
-                if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
-                    ret = fixedRoot(ctx, sel, ctx.querySelectorAll);
-                } else {
-                    // we can use the native qSA
-                    ret = ctx.querySelectorAll(sel);
-                }
+            if (ctx.nodeType === 1 && ctx.nodeName.toLowerCase() !== 'object') {
+                ret = fixedRoot(ctx, sel, ctx.querySelectorAll);
+            } else {
+                // we can use the native qSA
+                ret = ctx.querySelectorAll(sel);
             }
             return _collection.slice(ret);
         },
@@ -1909,6 +1911,7 @@ hAzzle.define('Jiesa', function() {
     return {
         matchesSelector: matchesSelector,
         matches: matches,
+        qsa: qsa,
         find: Jiesa
     };
 });
