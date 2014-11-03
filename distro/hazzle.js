@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-11-03
+ * Date: 2014-11-04
  */
 (function() {
 
@@ -417,6 +417,7 @@ hAzzle.define('Types', function() {
             return typeof value !== 'undefined';
         },
         isEmptyObject = function(obj) {
+
             var name;
             for (name in obj) {
                 return false;
@@ -1044,7 +1045,7 @@ hAzzle.define('Util', function() {
 // core.js
 hAzzle.define('Core', function() {
 
- var winDoc = window.document,
+    var winDoc = window.document,
         Core = {},
         featuresCache = {},
         _indexOf = Array.prototype.indexOf,
@@ -1234,7 +1235,7 @@ hAzzle.define('Core', function() {
 
                 } catch (e) {}
             }
-            
+
             features.matches = matches;
 
         } // HTML doc end
@@ -1372,7 +1373,7 @@ hAzzle.define('Core', function() {
     };
 
     // Set document
-    
+
     Core.setDocument(winDoc);
 
     var uniqueSort = function(results) {
@@ -2394,13 +2395,13 @@ hAzzle.define('curCSS', function() {
                     if (elem.ownerDocument !== undefined) {
                         view = elem.ownerDocument.defaultView;
                     }
-                    if( _has.has('ComputedStyle')) {
-                    
-                    if(view && view.opener) {
-                        return view.getComputedStyle(elem, null);
+                    if (_has.has('ComputedStyle')) {
+
+                        if (view && view.opener) {
+                            return view.getComputedStyle(elem, null);
                         }
                         return window.getComputedStyle(elem, null);
-                    } 
+                    }
                     return elem.style;
                 }
             }
@@ -2646,7 +2647,6 @@ hAzzle.define('curCSS', function() {
 // units.js
 hAzzle.define('Units', function() {
     var _curcss = hAzzle.require('curCSS'),
-        _support = hAzzle.require('Support'),
 
         leftRightMargPad = /^(left$|right$|margin|padding)/,
         relAbsFixed = /^(relative|absolute|fixed)$/,
@@ -2658,18 +2658,15 @@ hAzzle.define('Units', function() {
 
             if (unit === '' ||
                 unit === 'px') {
-
                 return px; // Don't waste time if there is no conversion to do.
             }
 
             if (unit === '%') {
 
                 if (leftRightMargPad.test(prop)) {
-
                     prop = 'width';
 
                 } else if (topBottom.test(prop)) {
-
                     prop = 'height';
                 }
 
@@ -2681,7 +2678,6 @@ hAzzle.define('Units', function() {
                     prop = parseFloat(_curcss.css(elem, prop));
 
                     if (prop !== 0) {
-
                         return px / prop * 100;
                     }
                 }
@@ -2689,24 +2685,20 @@ hAzzle.define('Units', function() {
             }
 
             if (unit === 'em') {
-
                 return px / parseFloat(_curcss.css(elem, 'fontSize'));
             }
 
             // The first time we calculate how many pixels there is in 1 meter
             // for calculate what is 1 inch/cm/mm/etc.
-
             if (units.unity === undefined) {
 
-                var u = units.unity = {};
+                var u = units.unity = {},
+                    div = document.createElement("div");
 
-                _support.assert(function(div) {
-
-                    div.style.width = '100cm';
-                    document.body.appendChild(div);
-                    u.mm = div.offsetWidth / 1000;
-                });
-
+                div.style.width = '100cm';
+                document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+                u.mm = div.offsetWidth / 1000;
+                document.body.removeChild(div);
                 u.cm = u.mm * 10;
                 u.in = u.cm * 2.54;
                 u.pt = u.in * 1 / 72;
@@ -3044,7 +3036,22 @@ hAzzle.define('attrHooks', function() {
 
     var _util = hAzzle.require('Util'),
         _support = hAzzle.require('Support'),
-        _setters = hAzzle.require('Setters');
+        _setters = hAzzle.require('Setters'),
+
+        radioValue = (function() {
+
+            var input = document.createElement('input');
+
+            input.type = 'checkbox';
+
+            // Support: IE<=11+
+            // An input loses its value after becoming a radio
+            input = document.createElement('input');
+            input.value = 't';
+            input.type = 'radio';
+            return input.value === 't';
+
+        }());
 
     // Setter
     _util.mixin(_setters.attrHooks.set, {
@@ -3068,7 +3075,6 @@ hAzzle.define('attrHooks', function() {
 hAzzle.define('propHooks', function() {
 
     var _util = hAzzle.require('Util'),
-        _support = hAzzle.require('Support'),
         _setters = hAzzle.require('Setters');
 
     _util.mixin(_setters.propHooks.get, {
@@ -3080,7 +3086,13 @@ hAzzle.define('propHooks', function() {
         }
     });
 
-    if (!_support.optSelected) {
+    // Support: IE<=11+
+    // Must access selectedIndex to make default options select
+
+    var select = document.createElement('select'),
+        opt = select.appendChild(document.createElement('option'));
+
+    if (!opt.selected) {
         _setters.propHooks.get.selected = function(elem) {
             var parent = elem.parentNode;
             if (parent && parent.parentNode) {
@@ -3100,7 +3112,6 @@ hAzzle.define('valHooks', function() {
         _text = hAzzle.require('Text'),
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
-        _support = hAzzle.require('Support'),
         _setters = hAzzle.require('Setters'),
 
         // iOF() gives approx 40 - 60% better performance then native indexOf
@@ -3174,7 +3185,7 @@ hAzzle.define('valHooks', function() {
             for (; i < max; i++) {
                 option = options[i];
                 // Traverse the option element when the elements needed to filter out disabled
-                if (option.selected && (_support.optDisabled ? !option.disabled : option.getAttribute('disabled') === null) &&
+                if (option.selected && option.getAttribute('disabled') === null &&
                     (!option.parentElement.disabled || option.parentElement.tagName !== 'OPTGROUP')) {
 
                     val = hAzzle(option).val();

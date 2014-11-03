@@ -27,15 +27,9 @@ hAzzle.define('Support', function() {
             }
         },
 
-        input = document.createElement('input'),
-        select = document.createElement('select'),
-        opt = select.appendChild(document.createElement('option'));
+        input = document.createElement('input');
 
     input.type = 'checkbox';
-
-    // Support: IE<=11+
-    // Must access selectedIndex to make default options select
-    support.optSelected = opt.selected;
 
     // Support: IE<=11+
     // An input loses its value after becoming a radio
@@ -43,11 +37,6 @@ hAzzle.define('Support', function() {
     input.value = 't';
     input.type = 'radio';
     support.radioValue = input.value === 't';
-
-    support.sortDetached = assert(function(div) {
-        // Should return 1, but returns 4 (following)
-        return div.compareDocumentPosition(document.createElement('div')) & 1;
-    });
 
     assert(function(adiv) {
         var fragment = document.createDocumentFragment(),
@@ -72,10 +61,8 @@ hAzzle.define('Support', function() {
 
     return {
         assert: assert,
-        support:support,
-        optSelected: support.optSelected,
+        support: support,
         radioValue: support.radioValue,
-        sortDetached: support.sortDetached,
         noCloneChecked: support.noCloneChecked,
         borderRadius: support.supportBorderRadius
     };

@@ -6,7 +6,6 @@ hAzzle.define('valHooks', function() {
         _text = hAzzle.require('Text'),
         _types = hAzzle.require('Types'),
         _collection = hAzzle.require('Collection'),
-        _support = hAzzle.require('Support'),
         _setters = hAzzle.require('Setters'),
 
         // iOF() gives approx 40 - 60% better performance then native indexOf
@@ -80,7 +79,7 @@ hAzzle.define('valHooks', function() {
             for (; i < max; i++) {
                 option = options[i];
                 // Traverse the option element when the elements needed to filter out disabled
-                if (option.selected && (_support.optDisabled ? !option.disabled : option.getAttribute('disabled') === null) &&
+                if (option.selected && option.getAttribute('disabled') === null &&
                     (!option.parentElement.disabled || option.parentElement.tagName !== 'OPTGROUP')) {
 
                     val = hAzzle(option).val();

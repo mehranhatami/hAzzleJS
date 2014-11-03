@@ -1,7 +1,6 @@
 // units.js
 hAzzle.define('Units', function() {
     var _curcss = hAzzle.require('curCSS'),
-        _support = hAzzle.require('Support'),
 
         leftRightMargPad = /^(left$|right$|margin|padding)/,
         relAbsFixed = /^(relative|absolute|fixed)$/,
@@ -13,18 +12,15 @@ hAzzle.define('Units', function() {
 
             if (unit === '' ||
                 unit === 'px') {
-
                 return px; // Don't waste time if there is no conversion to do.
             }
 
             if (unit === '%') {
 
                 if (leftRightMargPad.test(prop)) {
-
                     prop = 'width';
 
                 } else if (topBottom.test(prop)) {
-
                     prop = 'height';
                 }
 
@@ -36,7 +32,6 @@ hAzzle.define('Units', function() {
                     prop = parseFloat(_curcss.css(elem, prop));
 
                     if (prop !== 0) {
-
                         return px / prop * 100;
                     }
                 }
@@ -44,24 +39,20 @@ hAzzle.define('Units', function() {
             }
 
             if (unit === 'em') {
-
                 return px / parseFloat(_curcss.css(elem, 'fontSize'));
             }
 
             // The first time we calculate how many pixels there is in 1 meter
             // for calculate what is 1 inch/cm/mm/etc.
-
             if (units.unity === undefined) {
 
-                var u = units.unity = {};
+                var u = units.unity = {},
+                    div = document.createElement("div");
 
-                _support.assert(function(div) {
-
-                    div.style.width = '100cm';
-                    document.body.appendChild(div);
-                    u.mm = div.offsetWidth / 1000;
-                });
-
+                div.style.width = '100cm';
+                document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+                u.mm = div.offsetWidth / 1000;
+                document.body.removeChild(div);
                 u.cm = u.mm * 10;
                 u.in = u.cm * 2.54;
                 u.pt = u.in * 1 / 72;
