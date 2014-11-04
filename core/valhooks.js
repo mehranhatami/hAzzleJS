@@ -10,17 +10,17 @@ hAzzle.define('valHooks', function() {
 
         // Support: Android<4.4
         supportCheckboxes = (function() {
-            var checkbox = document.createElement('<input type="checkbox">');
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
             checkbox.checked = true;
             var node = checkbox.getAttributeNode('checked');
             return !node || !node.specified;
         })(),
-
-
+ 
         // iOF() gives approx 40 - 60% better performance then native indexOf
         // for valHooks
 
-        iOf = function(array, item, from) {
+         iOf = function(array, item, from) {
             var i, length = array.length;
 
             for (i = (from < 0) ? Math.max(0, length + from) : from || 0; i < length; i++) {
