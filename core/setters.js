@@ -93,7 +93,7 @@ hAzzle.define('Setters', function() {
                     hooks = attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null;
                 }
 
-                // getAttribute
+                // Get attribute
 
                 if (value === undefined) {
 
@@ -109,7 +109,9 @@ hAzzle.define('Setters', function() {
                         undefined :
                         ret;
                 }
-
+               
+                // Set attribute
+                
                 if (!value) {
                     removeAttr(elem, name);
                 } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
@@ -128,9 +130,8 @@ hAzzle.define('Setters', function() {
             var nodeType = elem ? elem.nodeType : undefined,
                 hook, ret;
 
-            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
-                return '';
-            }
+            if (nodeType && (nodeType !== 3 || nodeType !== 8 || nodeType !== 2)) {
+
             if (nodeType !== 1 || _core.isHTML) {
 
                 // Fix name and attach hooks
@@ -141,8 +142,7 @@ hAzzle.define('Setters', function() {
             if (typeof value !== 'undefined') {
 
                 return hook && (ret = hook.set(elem, value, name)) !== undefined ?
-                    ret :
-                    (elem[name] = value);
+                    ret : (elem[name] = value);
 
             } else {
 
@@ -150,6 +150,8 @@ hAzzle.define('Setters', function() {
                     ret :
                     elem[name];
             }
+            }
+            return '';
         };
 
     this.val = function(value) {
@@ -215,14 +217,6 @@ hAzzle.define('Setters', function() {
         });
     };
 
-    // Toggle properties on DOM elements
-
-    this.toggleProp = function(prop) {
-        return this.each(function(elem) {
-            return elem.prop(prop, !elem.prop(prop));
-        });
-    };
-
     this.prop = function(name, value) {
         var elem = this.elements;
         if (typeof name === 'object') {
@@ -243,14 +237,14 @@ hAzzle.define('Setters', function() {
         });
     };
 
-    // Toggle properties on DOM elements
+  // Toggle properties on DOM elements
 
     this.toggleProp = function(prop) {
         return this.each(function(elem) {
             return elem.prop(prop, !elem.prop(prop));
         });
     };
-
+    
     this.removeProp = function(name) {
         return this.each(function() {
             delete this[propMap[name] || name];

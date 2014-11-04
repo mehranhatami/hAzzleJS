@@ -176,7 +176,6 @@ hAzzle.define('has', function() {
         hasCache = {},
 
         // IE feature detection
-        // Props: Velocity.js 
         ie = (function() {
 
             if (doc.documentMode) {
@@ -314,6 +313,10 @@ hAzzle.define('has', function() {
 
     add('ComputedStyle', function() {
         return !!document.defaultView.getComputedStyle;
+    });
+
+    add('qsa', function() {
+        return !!document.querySelectorAll;
     });
 
     add('classlist', function() {
@@ -2812,7 +2815,7 @@ hAzzle.define('Setters', function() {
                     hooks = attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null;
                 }
 
-                // getAttribute
+                // Get attribute
 
                 if (value === undefined) {
 
@@ -2828,7 +2831,9 @@ hAzzle.define('Setters', function() {
                         undefined :
                         ret;
                 }
-
+               
+                // Set attribute
+                
                 if (!value) {
                     removeAttr(elem, name);
                 } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
@@ -2847,9 +2852,8 @@ hAzzle.define('Setters', function() {
             var nodeType = elem ? elem.nodeType : undefined,
                 hook, ret;
 
-            if (!nodeType || nodeType === 3 || nodeType === 8 || nodeType === 2) {
-                return '';
-            }
+            if (nodeType && (nodeType !== 3 || nodeType !== 8 || nodeType !== 2)) {
+
             if (nodeType !== 1 || _core.isHTML) {
 
                 // Fix name and attach hooks
@@ -2860,8 +2864,7 @@ hAzzle.define('Setters', function() {
             if (typeof value !== 'undefined') {
 
                 return hook && (ret = hook.set(elem, value, name)) !== undefined ?
-                    ret :
-                    (elem[name] = value);
+                    ret : (elem[name] = value);
 
             } else {
 
@@ -2869,6 +2872,8 @@ hAzzle.define('Setters', function() {
                     ret :
                     elem[name];
             }
+            }
+            return '';
         };
 
     this.val = function(value) {
@@ -2915,10 +2920,8 @@ hAzzle.define('Setters', function() {
             // Treat null/undefined as ''; convert numbers to string
             if (val == null) {
                 val = '';
-
             } else if (typeof val === 'number') {
                 val += '';
-
             } else if (_types.isArray(val)) {
                 val = _util.map(val, function(value) {
                     return value == null ? '' : value + '';
@@ -2931,14 +2934,6 @@ hAzzle.define('Setters', function() {
             if (!hooks || hooks(elem, val, 'value') === undefined) {
                 elem.value = val;
             }
-        });
-    };
-
-    // Toggle properties on DOM elements
-
-    this.toggleProp = function(prop) {
-        return this.each(function(elem) {
-            return elem.prop(prop, !elem.prop(prop));
         });
     };
 
@@ -2962,14 +2957,14 @@ hAzzle.define('Setters', function() {
         });
     };
 
-    // Toggle properties on DOM elements
+  // Toggle properties on DOM elements
 
     this.toggleProp = function(prop) {
         return this.each(function(elem) {
             return elem.prop(prop, !elem.prop(prop));
         });
     };
-
+    
     this.removeProp = function(name) {
         return this.each(function() {
             delete this[propMap[name] || name];
@@ -3114,6 +3109,16 @@ hAzzle.define('valHooks', function() {
         _collection = hAzzle.require('Collection'),
         _setters = hAzzle.require('Setters'),
 
+        // Support: Android<4.4
+        supportCheckboxes = (function() {
+            var checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true;
+            var node = checkbox.getAttributeNode('checked');
+            return !node || !node.specified;
+        })(),
+
+
         // iOF() gives approx 40 - 60% better performance then native indexOf
         // for valHooks
 
@@ -3215,6 +3220,14 @@ hAzzle.define('valHooks', function() {
             }
         };
     });
+    
+    if (!supportCheckboxes) {
+        _setters.valHooks.get[val] = function(elem) {
+            return elem.getAttribute('value') === null ? 'on' : elem.value;
+        };
+    }
+
+    return {};
 });
 
 /**

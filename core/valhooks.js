@@ -8,6 +8,15 @@ hAzzle.define('valHooks', function() {
         _collection = hAzzle.require('Collection'),
         _setters = hAzzle.require('Setters'),
 
+        // Support: Android<4.4
+        supportCheckboxes = (function() {
+            var checkbox = document.createElement('<input type="checkbox">');
+            checkbox.checked = true;
+            var node = checkbox.getAttributeNode('checked');
+            return !node || !node.specified;
+        })(),
+
+
         // iOF() gives approx 40 - 60% better performance then native indexOf
         // for valHooks
 
@@ -109,4 +118,12 @@ hAzzle.define('valHooks', function() {
             }
         };
     });
+    
+    if (!supportCheckboxes) {
+        _setters.valHooks.get[val] = function(elem) {
+            return elem.getAttribute('value') === null ? 'on' : elem.value;
+        };
+    }
+
+    return {};
 });
