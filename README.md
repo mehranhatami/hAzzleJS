@@ -38,6 +38,23 @@ the **.elements array** will be converted to **jQuery / Zepto style** and you ca
 
 **Note! hazzle will work as before, so you can actually use both hAzzle and jQuery / Zepto methods together**
 
+jQuery  similarities
+---------------------
+
+As most of the developers are accustomed to using jQuery, hAzzle supports some of the same features, although the API is different.  This function names are identical:
+
+* attr () 
+* prop () 
+* val () 
+* css () 
+
+**and**
+
+* valHooks () 
+* propHooks () 
+* attrHooks () 
+* cssHooks ()
+
 Your modules
 --------------
 
