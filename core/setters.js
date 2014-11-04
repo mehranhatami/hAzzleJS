@@ -32,7 +32,14 @@ hAzzle.define('Setters', function() {
             get: {},
             set: {}
         },
-
+        nodeHooks = {
+            get: {},
+            set: {}
+        },
+        boolHooks = {
+            get: {},
+            set: {}
+        },
         getElem = function(elem) {
             return elem instanceof hAzzle ? elem.elements : elem;
         },
@@ -90,7 +97,10 @@ hAzzle.define('Setters', function() {
                 if (notxml) {
 
                     name = name.toLowerCase();
-                    hooks = attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null;
+                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
+                    getBooleanAttrName(elem, name) ?
+                    boolHooks[value === 'undefined' ?
+                  'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
                 }
 
                 // Get attribute
@@ -198,10 +208,8 @@ hAzzle.define('Setters', function() {
             // Treat null/undefined as ''; convert numbers to string
             if (val == null) {
                 val = '';
-
             } else if (typeof val === 'number') {
                 val += '';
-
             } else if (_types.isArray(val)) {
                 val = _util.map(val, function(value) {
                     return value == null ? '' : value + '';
@@ -298,6 +306,8 @@ hAzzle.define('Setters', function() {
         attrHooks: attrHooks,
         propHooks: propHooks,
         valHooks: valHooks,
+        boolHooks: boolHooks,
+        nodeHooks: nodeHooks,
         propMap: propMap,
         boolAttr: boolAttr,
         boolElem: boolElem,
