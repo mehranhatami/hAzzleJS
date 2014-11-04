@@ -1429,6 +1429,10 @@ hAzzle.define('Collection', function() {
         _concat = _arrayProto.concat,
         _push = _arrayProto.push,
 
+        inArray = function(elem, array, i) {
+            return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
+        },
+        
         makeArray = function(arr, results) {
             var ret = results || [];
             if (arr !== undefined) {
@@ -1441,9 +1445,6 @@ hAzzle.define('Collection', function() {
 
             return ret;
         },
-
-
-
         slice = function(array, start, end) {
             if (typeof start === 'undefined') {
                 start = 0;
@@ -1622,6 +1623,7 @@ hAzzle.define('Collection', function() {
 
     return {
         makeArray: makeArray,
+        inArray:inArray,
         slice: slice
     };
 });
