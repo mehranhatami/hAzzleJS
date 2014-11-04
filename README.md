@@ -97,11 +97,11 @@ Comparing to **jQuery**, to archive the same you have to add over **60 lines of 
 
 https://github.com/jquery/jquery/blob/master/src/manipulation.js#L194
 
-and you are stricted to use jQuery for this methods.
+and you are stricted to use **jQuery** for this methods.
 
 How to use
 -------------
-You can use all functions internally in the same way as you do in jQuery / Zepto. 
+You can use all functions internally in the same way as you do in **jQuery** / **Zepto**. 
 
 ```javascript
 hAzzle('#id').eq(1).append('new content');
@@ -152,7 +152,7 @@ The array can be used like this:
 console.log(_arr.elements)
 ```
 
-Natives ES5 / ES6 on the **.elements array** are easy as well.
+Natives **ES5** / **ES6** on the **.elements array** are easy as well.
 
 ```javascript
 
@@ -222,7 +222,6 @@ Correct module order for the Core if you need to test individual modules:
 
 * core/hAzzle.js
 * core/has.js
-* core/support.js
 * core/core.js
 * core/types.js
 * core/util.js
@@ -242,6 +241,7 @@ Correct module order for the Core if you need to test individual modules:
 Module order (module folder)
 ----------------------------
 
+* modules/support.js
 * modules/selector.js
 * modules/attributes.js
 * modules/style.js
