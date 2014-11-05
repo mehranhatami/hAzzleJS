@@ -231,17 +231,18 @@ Correct module order for the Core if you need to test individual modules:
 * core/strings.js
 * core/storage.js
 * core/curcss.js
-* core/units.js
 * core/setters.js
 * core/attrhooks.js
 * core/prophooks.js
 * core/valhooks.js
+* core/boolhooks.js
 * core/doml4.js
 
 Module order (module folder)
 ----------------------------
 
 * modules/support.js
+* modules/units.js
 * modules/selector.js
 * modules/attributes.js
 * modules/style.js
