@@ -345,11 +345,11 @@ hAzzle.define('has', function() {
 });
 
 // types.js
+// types.js
 hAzzle.define('Types', function() {
 
     var i,
         _toString = Object.prototype.toString,
-
         isArray = Array.isArray,
         arrayLikeClasses = {};
 
@@ -420,7 +420,6 @@ hAzzle.define('Types', function() {
             return typeof value !== 'undefined';
         },
         isEmptyObject = function(obj) {
-
             var name;
             for (name in obj) {
                 return false;
@@ -471,12 +470,6 @@ hAzzle.define('Types', function() {
                 return false;
             }
             return false;
-        },
-        // Trio of functions taken from Peter Michaux's article:
-        // http://peter.michaux.ca/articles/feature-detection-state-of-the-art-browser-scripting
-        isHostMethod = function(o, p) {
-            var t = typeof o[p];
-            return t === 'function' || (!!(t == 'object' && o[p])) || t == 'unknown';
         };
 
     this.isNodeList = isNodeList;
@@ -500,11 +493,9 @@ hAzzle.define('Types', function() {
         isNaN: isNaN,
         isDefined: isDefined,
         isUndefined: isUndefined,
-        isNodeList: isNodeList,
-        isHostMethod: isHostMethod
+        isNodeList: isNodeList
     };
-});
-// text.js
+});// text.js
 hAzzle.define('Text', function() {
 
     var getText = function(elem) {
