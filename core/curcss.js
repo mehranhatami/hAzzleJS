@@ -3,10 +3,9 @@ hAzzle.define('curCSS', function() {
 
     var _storage = hAzzle.require('Storage'),
         _core = hAzzle.require('Core'),
-        _has = hAzzle.require('has'),
+        _feature = hAzzle.require('has'),
 
         computedValues = function(elem) {
-
             if (elem && elem.ownerDocument !== null) {
                 var view = false;
                 if (elem) {
@@ -30,32 +29,48 @@ hAzzle.define('curCSS', function() {
             }
         },
         getStyles = function(elem) {
-           return computed(elem).computedStyle === null ? 
-                  computed(elem).computedStyle = computedValues(elem) :
-                  computed(elem).computedStyle
+            return computed(elem).computedStyle === null ?
+                computed(elem).computedStyle = computedValues(elem) :
+                computed(elem).computedStyle;
         },
+
+        toPixel = function(value) {
+            // style values can be floats, client code may want
+            // to round for integer pixels.
+            return parseFloat(value) || 0;
+        },
+
         css = function(elem, prop, force) {
 
             elem = elem instanceof hAzzle ? elem.elements[0] : elem;
 
             var ret = 0;
 
+            if (_feature.has('ie') && prop === 'auto') {
+                if (prop === 'height') {
+                    return elem.offsetHeight;
+                }
+                if (prop === 'width') {
+                    return elem.offsetWidth;
+                }
+            }
+
             if (!force) {
 
                 if (prop === 'height' &&
                     css(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
                     return elem.offsetHeight -
-                        (parseFloat(css(elem, 'borderTopWidth')) || 0) -
-                        (parseFloat(css(elem, 'borderBottomWidth')) || 0) -
-                        (parseFloat(css(elem, 'paddingTop')) || 0) -
-                        (parseFloat(css(elem, 'paddingBottom')) || 0);
+                        (toPixel(css(elem, 'borderTopWidth'))) -
+                        (toPixel(css(elem, 'borderBottomWidth'))) -
+                        (toPixel(css(elem, 'paddingTop'))) -
+                        (toPixel(css(elem, 'paddingBottom')));
                 } else if (prop === 'width' &&
                     css(elem, 'boxSizing').toString().toLowerCase() !== 'border-box') {
                     return elem.offsetWidth -
-                        (parseFloat(css(elem, 'borderLeftWidth')) || 0) -
-                        (parseFloat(css(elem, 'borderRightWidth')) || 0) -
-                        (parseFloat(css(elem, 'paddingLeft')) || 0) -
-                        (parseFloat(css(elem, 'paddingRight')) || 0);
+                        (toPixel(css(elem, 'borderLeftWidth'))) -
+                        (toPixel(css(elem, 'borderRightWidth'))) -
+                        (toPixel(css(elem, 'paddingLeft'))) -
+                        (toPixel(css(elem, 'paddingRight')));
                 }
             }
 
@@ -66,14 +81,14 @@ hAzzle.define('curCSS', function() {
                 // IE and Firefox do not return a value for the generic borderColor -- they only return 
                 // individual values for each border side's color.
 
-                if ((_has.ie || _has.has('firefox')) && prop === 'borderColor') {
+                if ((_feature.ie || _feature.has('firefox')) && prop === 'borderColor') {
                     prop = 'borderTopColor';
                 }
 
                 // Support: IE9
                 // getPropertyValue is only needed for .css('filter')
 
-                if (_has.ie === 9 && prop === 'filter') {
+                if (_feature.ie === 9 && prop === 'filter') {
                     ret = computedStyle.getPropertyValue(prop);
                 } else {
                     ret = computedStyle[prop];
