@@ -14,7 +14,7 @@ hAzzle.define('Visibility', function() {
         },
 
         isHidden = function(elem) {
-            return _ccs.curCSS(elem, 'display') === 'none' || !_core.contains(elem.ownerDocument, elem);
+            return _ccs.css(elem, 'display') === 'none' || !_core.contains(elem.ownerDocument, elem);
         },
 
         showHide = function(elements, show) {
@@ -45,7 +45,7 @@ hAzzle.define('Visibility', function() {
                 } else {
                     hidden = isHidden(elem);
                     if (display && display !== 'none' || !hidden) {
-                        _storage.private.set(elem, 'cssDisplay', hidden ? display : _ccs.curCSS(elem, 'display'));
+                        _storage.private.set(elem, 'cssDisplay', hidden ? display : _ccs.css(elem, 'display'));
                     }
                 }
             }
@@ -99,7 +99,7 @@ hAzzle.define('Visibility', function() {
 
                     doc.body.appendChild(elem);
 
-                    display = _ccs.curCSS(elem, 'display');
+                    display = _ccs.css(elem, 'display');
                     body.removeChild(iframe);
                 }
 

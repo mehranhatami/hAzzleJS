@@ -1,13 +1,13 @@
-// has.js- feature detection
+// has.js
 hAzzle.define('has', function() {
 
     var
         ua = navigator.userAgent,
         win = window,
         doc = win.document,
-        element = doc && doc.createElement('div'),
-        _toString = Object.prototype.toString,
-        hasCache = {},
+        element = doc.createElement('div'),
+        oString = Object.prototype.toString,
+        cache = {},
 
         // IE feature detection
         ie = (function() {
@@ -15,14 +15,16 @@ hAzzle.define('has', function() {
             if (doc.documentMode) {
                 return doc.documentMode;
             } else {
-                for (var i = 7; i > 4; i--) {
-                    var div = doc.createElement('div');
+                var i = 7,
+                    div;
+                for (; i > 4; i--) {
+
+                    div = doc.createElement('div');
 
                     div.innerHTML = '<!--[if IE ' + i + ']><span></span><![endif]-->';
 
                     if (div.getElementsByTagName('span').length) {
-                        div = null;
-
+                        div = null; // Release memory in IE
                         return i;
                     }
                 }
@@ -32,24 +34,38 @@ hAzzle.define('has', function() {
         })(),
         // Return the current value of the named feature
         has = function(name) {
-            if (typeof hasCache[name] == 'function') {
-                hasCache[name] = hasCache[name](win, doc, element);
-            }
-            return hasCache[name]; // Boolean
+            return typeof cache[name] === 'function' ? (cache[name] = cache[name](win, doc, element)) : cache[name];
         },
-        // Register a new feature test for some named feature.
-        add = function(name, test, now) {
-            hasCache[name] = now ? test(win, doc, element) : test;
+        // Register a new feature test for some named feature
+        add = function(name, test, now, force) {
+            (typeof cache[name] === 'undefined' || force) && (cache[name] = test);
+            return now && has(name);
         },
-        // Deletes the contents of the element passed to test functions.
-        clearElement = function(elem) {
-            if (elem) {
-                while (elem.lastChild) {
-                    elem.removeChild(elem.lastChild);
-                }
+        // Conditional loading of AMD modules based on a has feature test value.
+        load = function(id, parentRequire, loaded) {
+            if (id) {
+                parentRequire([id], loaded);
+            } else {
+                loaded();
             }
+        },
+        // Delete the content of the element passed to test functions.
+        clear = function(elem) {
+            elem.innerHTML = '';
             return elem;
         };
+
+    // Detect if the classList API supports multiple arguments
+    // IE11-- don't support it
+
+    add('multiArgs', function() {
+        var mu, div = document.createElement('div');
+        div.classList.add('a', 'b');
+        mu = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
+        // release memory in IE
+        div = null;
+        return mu;
+    });
 
     // XPath
 
@@ -92,9 +108,8 @@ hAzzle.define('has', function() {
         // Opera 8.x+ can be detected with `window.opera`
         // This is a safer inference than plain boolean type conversion of `window.opera`
         // But note that the newer Opera versions (15.x+) are using the webkit engine
-        return _toString.call(window.opera) === '[object Opera]';
+        return oString.call(window.opera) === '[object Opera]';
     });
-
 
     // Firefox
     add('firefox', function() {
@@ -113,7 +128,7 @@ hAzzle.define('has', function() {
 
     // Safari
     add('safari', function() {
-        return _toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+        return oString.call(window.HTMLElement).indexOf('Constructor') > 0;
     });
 
     // Safari
@@ -145,35 +160,22 @@ hAzzle.define('has', function() {
         return 'msMaxTouchPoints' in navigator; //IE10+
     });
 
-    add('ComputedStyle', function() {
-        return !!document.defaultView.getComputedStyle;
-    });
-
+    // querySelectorAll
     add('qsa', function() {
         return !!document.querySelectorAll;
     });
 
+    // ClassList
     add('classlist', function() {
         return !!document.documentElement.classList;
     });
 
-    // Detect if the classList API supports multiple arguments
-    // IE11-- don't support it
-
-    add('multiArgs', function() {
-        var mu, div = document.createElement('div');
-        div.classList.add('a', 'b');
-        mu = /(^| )a( |$)/.test(div.className) && /(^| )b( |$)/.test(div.className);
-        // release memory in IE
-        div = null;
-        return mu;
-    });
-
-
     return {
         has: has,
         add: add,
-        clearElement: clearElement,
+        load: load,
+        cache: cache,
+        clear: clear,
         ie: ie
     };
 });

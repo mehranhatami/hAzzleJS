@@ -4,7 +4,7 @@
  * Version: 1.0.0d Release Candidate
  * Released under the MIT License.
  *
- * Date: 2014-11-03
+ * Date: 2014-11-05
  */
  
 (function() {
@@ -154,8 +154,8 @@
     hAzzle.installed = installed;
     hAzzle.require = require;
     hAzzle.define = define;
-    hAzzle.codename = codename 
-    hAzzle.version = version
+    hAzzle.codename = codename;
+    hAzzle.version = version;
 
     // Hook hAzzle on the window object
 

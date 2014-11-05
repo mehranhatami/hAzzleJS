@@ -332,7 +332,7 @@ hAzzle.define('Util', function() {
             return [];
         },
         
-         //  Reduces a collection
+        // Reduces a collection
         // Replacement for reduce -  ECMAScript 5 15.4.4.21     
         reduce = function(collection, fn, accumulator, args) {
 

@@ -158,7 +158,7 @@ hAzzle.define('Jiesa', function() {
                     return results;
                 }
                 // Fallback to QSA if the native selector engine are not installed
-                if (!hAzzle.installed['selector'] && _has.has('qsa') && (!_core.brokenCheckedQSA ||
+                if (!hAzzle.installed.selector && _has.has('qsa') && (!_core.brokenCheckedQSA ||
                         !_core.ioASaf ||
                         !_core.brokenEmptyAttributeQSA)) {
                     try {
@@ -170,7 +170,7 @@ hAzzle.define('Jiesa', function() {
             // We are dealing with HTML / XML documents, so check if the native selector engine are installed 
             // To avoid bloating the hAzzle Core - the main selector engine are a separate module            
 
-            hAzzle.err(!hAzzle.installed['selector'], 22, ' the selector.js module need to be installed');
+            hAzzle.err(!hAzzle.installed.selector, 22, ' the selector.js module need to be installed');
 
             return _selector.find(sel, ctx);
         },
@@ -282,7 +282,7 @@ hAzzle.define('Jiesa', function() {
 
         } else {
             return this.filter(function() {
-                return matchesSelector(this, selector) != (not || false);
+                return matchesSelector(this, selector) !== (not || false);
             });
         }
     };
