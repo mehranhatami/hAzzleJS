@@ -142,7 +142,7 @@ hAzzle.define('Dimensions', function() {
         },
         setOffset = function(elem, opts, i) {
             var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
-                position = _curcss(elem, 'position'),
+                position = _curcss.css(elem, 'position'),
                 curElem = hAzzle(elem),
                 props = {};
 
@@ -152,8 +152,8 @@ hAzzle.define('Dimensions', function() {
             }
 
             curOffset = curElem.offset();
-            curCSSTop = _curcss(elem, 'top');
-            curCSSLeft = _curcss(elem, 'left');
+            curCSSTop = _curcss.css(elem, 'top');
+            curCSSLeft = _curcss.css(elem, 'left');
             calculatePosition = (position === 'absolute' || position === 'fixed') &&
                 (curCSSTop + curCSSLeft).indexOf('auto') > -1;
 
@@ -223,7 +223,7 @@ hAzzle.define('Dimensions', function() {
         // need for a workaround
 
         var bcr = elem.getBoundingClientRect(),
-            isFixed = (_curcss(elem, 'position') === 'fixed'),
+            isFixed = (_curcss.css(elem, 'position') === 'fixed'),
             win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
         return {
             top: bcr.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : win.pageYOffset) - docElem.clientTop,
@@ -262,19 +262,19 @@ hAzzle.define('Dimensions', function() {
         if (relative && (relative = hAzzle(relative))) {
             var relativePosition = relative.getPosition();
             return {
-                top: position.top - relativePosition.top - parseInt(_curcss(relative, 'borderLeftWidth')) || 0,
-                left: position.left - relativePosition.left - parseInt(_curcss(relative, 'borderTopWidth')) || 0
+                top: position.top - relativePosition.top - parseInt(_curcss.css(relative, 'borderLeftWidth')) || 0,
+                left: position.left - relativePosition.left - parseInt(_curcss.css(relative, 'borderTopWidth')) || 0
             };
         }
         return position;
     };
 
     this.offsetParent = function() {
-        return this.map(function() {
-            var offsetParent = this.offsetParent || docElem;
+        return this.map(function(elem) {
+            var offsetParent = elem.offsetParent || docElem;
 
             while (offsetParent && (!_util.nodeName(offsetParent, 'html') &&
-                    _curcss(offsetParent, 'position') === 'static')) {
+                    _curcss.css(offsetParent, 'position') === 'static')) {
                 offsetParent = offsetParent.offsetParent;
             }
 

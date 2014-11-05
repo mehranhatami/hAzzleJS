@@ -495,7 +495,7 @@ hAzzle.define('Types', function() {
         isUndefined: isUndefined,
         isNodeList: isNodeList
     };
-});// text.js
+}); // text.js
 hAzzle.define('Text', function() {
 
     var getText = function(elem) {
@@ -1158,13 +1158,13 @@ hAzzle.define('Core', function() {
                 features = featuresCache[rootUid] = {};
                 features.root = root;
                 features.isXMLDocument = this.isXML(document);
-                features.matches = 
-                features.ioASaf = 
-                features.disconnectedMatch = 
-                features.brokenCheckedQSA = 
-                features.brokenEmptyAttributeQSA = 
-                features.isHTMLDocument = 
-                features.nativeMatchesSelector = false;
+                features.matches =
+                    features.ioASaf =
+                    features.disconnectedMatch =
+                    features.brokenCheckedQSA =
+                    features.brokenEmptyAttributeQSA =
+                    features.isHTMLDocument =
+                    features.nativeMatchesSelector = false;
 
                 var getElementsByTagName, matches,
                     selected, id = '__hUID',
@@ -1433,7 +1433,7 @@ hAzzle.define('Collection', function() {
         inArray = function(elem, array, i) {
             return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
         },
-        
+
         makeArray = function(arr, results) {
             var ret = results || [];
             if (arr !== undefined) {
@@ -1517,6 +1517,7 @@ hAzzle.define('Collection', function() {
     this.slice = function(start, end) {
         return new hAzzle(slice(this.elements, start, end));
     };
+
 
     // Concatenate two elements lists
 
@@ -1624,7 +1625,7 @@ hAzzle.define('Collection', function() {
 
     return {
         makeArray: makeArray,
-        inArray:inArray,
+        inArray: inArray,
         slice: slice
     };
 });
@@ -1791,9 +1792,11 @@ hAzzle.define('Jiesa', function() {
                 if (!hAzzle.installed['selector'] && _has.has('qsa') && (!_core.brokenCheckedQSA ||
                         !_core.ioASaf ||
                         !_core.brokenEmptyAttributeQSA)) {
-                    return qsa(sel, ctx);
-                }
+                    try {
+                        return qsa(sel, ctx);
+                    } catch (e) {}
 
+                }
             }
             // We are dealing with HTML / XML documents, so check if the native selector engine are installed 
             // To avoid bloating the hAzzle Core - the main selector engine are a separate module            
@@ -2367,7 +2370,7 @@ hAzzle.define('Storage', function() {
     };
 });
 // curcss.js
-hAzzle.define('css', function() {
+hAzzle.define('curCSS', function() {
 
     var _storage = hAzzle.require('Storage'),
         _core = hAzzle.require('Core'),
@@ -2398,18 +2401,13 @@ hAzzle.define('css', function() {
             }
         },
         getStyles = function(elem) {
-            var computed;
-            if (computed(elem).computedStyle === null) {
-                computed = computed(elem).computedStyle = computedValues(elem);
-            } else {
-                computed = computed(elem).computedStyle;
-            }
-
-            return computed;
+            return computed(elem).computedStyle === null ?
+                computed(elem).computedStyle = computedValues(elem) :
+                computed(elem).computedStyle
         },
         css = function(elem, prop, force) {
 
-         elem = elem instanceof hAzzle ? elem.elements[0] : elem;
+            elem = elem instanceof hAzzle ? elem.elements[0] : elem;
 
             var ret = 0;
 
@@ -2444,7 +2442,7 @@ hAzzle.define('css', function() {
                 }
 
                 // Support: IE9
-                // getPropertyValue is only needed for .css('filter'). It's terrible slow and ugly too!
+                // getPropertyValue is only needed for .css('filter')
 
                 if (_has.ie === 9 && prop === 'filter') {
                     ret = computedStyle.getPropertyValue(prop);
@@ -2458,6 +2456,7 @@ hAzzle.define('css', function() {
                     ret = elem.style[prop];
                 }
             }
+            return ret !== undefined ? ret + '' : ret;
         };
 
     return {
@@ -2466,7 +2465,6 @@ hAzzle.define('css', function() {
         css: css
     };
 });
-
 // setters.js
 hAzzle.define('Setters', function() {
 
@@ -2566,10 +2564,10 @@ hAzzle.define('Setters', function() {
                 if (notxml) {
 
                     name = name.toLowerCase();
-                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
-                    getBooleanAttrName(elem, name) ?
-                    boolHooks[value === 'undefined' ?
-                  'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
+                    hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
+                        getBooleanAttrName(elem, name) ?
+                        boolHooks[value === 'undefined' ?
+                            'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
                 }
 
                 // Get attribute
@@ -2588,9 +2586,9 @@ hAzzle.define('Setters', function() {
                         undefined :
                         ret;
                 }
-               
+
                 // Set attribute
-                
+
                 if (!value) {
                     removeAttr(elem, name);
                 } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
@@ -2611,24 +2609,24 @@ hAzzle.define('Setters', function() {
 
             if (nodeType && (nodeType !== 3 || nodeType !== 8 || nodeType !== 2)) {
 
-            if (nodeType !== 1 || _core.isHTML) {
+                if (nodeType !== 1 || _core.isHTML) {
 
-                // Fix name and attach hooks
-                name = propMap[name] || name;
-                hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
-            }
+                    // Fix name and attach hooks
+                    name = propMap[name] || name;
+                    hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
+                }
 
-            if (typeof value !== 'undefined') {
+                if (typeof value !== 'undefined') {
 
-                return hook && (ret = hook.set(elem, value, name)) !== undefined ?
-                    ret : (elem[name] = value);
+                    return hook && (ret = hook.set(elem, value, name)) !== undefined ?
+                        ret : (elem[name] = value);
 
-            } else {
+                } else {
 
-                return hook && (ret = hook(elem, name)) !== null ?
-                    ret :
-                    elem[name];
-            }
+                    return hook && (ret = hook(elem, name)) !== null ?
+                        ret :
+                        elem[name];
+                }
             }
             return '';
         };
@@ -2714,14 +2712,14 @@ hAzzle.define('Setters', function() {
         });
     };
 
-  // Toggle properties on DOM elements
+    // Toggle properties on DOM elements
 
     this.toggleProp = function(prop) {
         return this.each(function(elem) {
             return elem.prop(prop, !elem.prop(prop));
         });
     };
-    
+
     this.removeProp = function(name) {
         return this.each(function() {
             delete this[propMap[name] || name];
@@ -2979,7 +2977,7 @@ hAzzle.define('valHooks', function() {
             }
         };
     });
-    
+
     if (!supportCheckboxes) {
         _setters.valHooks.get[val] = function(elem) {
             return elem.getAttribute('value') === null ? 'on' : elem.value;

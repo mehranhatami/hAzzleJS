@@ -5,9 +5,12 @@ hAzzle.define('Style', function() {
 
     var _util = hAzzle.require('Util'),
         _types = hAzzle.require('Types'),
-        _units = hAzzle.require('Units'),
         _strings = hAzzle.require('Strings'),
         _curcss = hAzzle.require('curCSS'),
+
+        leftRightMargPad = /^(left$|right$|margin|padding)/,
+        relAbsFixed = /^(relative|absolute|fixed)$/,
+        topBottom = /^(top|bottom)$/,
 
         _unitlessProps = ('zoom box-flex columns counter-reset volume stress overflow flex-grow ' +
             'column-count flex-shrink flex-height order orphans widows rotate3d flipped ' +
@@ -101,7 +104,6 @@ hAzzle.define('Style', function() {
             val = hooks ? hooks(elem, true) : val;
 
             if (!computed && val === undefined) {
-                console.log(_curcss)
                 style = _curcss.styles(elem);
                 val = hooks ? hooks(elem, true) : style[name];
                 computed = true;
@@ -137,7 +139,7 @@ hAzzle.define('Style', function() {
                     // and convert all unit types to PX (e.g. 10em will become 160px)
 
                     if (type === 'string' && (ret = _sNumbs.exec(value))) {
-                        value = _units.units(_curcss.css(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
+                        value = units(_curcss.css(elem, name), ret[3], elem, name) + (ret[1] + 1) * ret[2];
                         type = 'number';
                     }
 
@@ -177,7 +179,8 @@ hAzzle.define('Style', function() {
         },
         swap = function(elem, fn) {
             var obj = {},
-                name, style = elem.style, val;
+                name, style = elem.style,
+                val;
 
             if (elem.offsetWidth) {
                 val = fn();
@@ -194,6 +197,65 @@ hAzzle.define('Style', function() {
             }
 
             return val;
+        },
+        // Converts one unit to another
+
+        units = function(px, unit, elem, prop) {
+
+            if (unit === '' ||
+                unit === 'px') {
+                return px; // Don't waste time if there is no conversion to do.
+            }
+
+            if (unit === '%') {
+
+                if (leftRightMargPad.test(prop)) {
+                    prop = 'width';
+
+                } else if (topBottom.test(prop)) {
+                    prop = 'height';
+                }
+
+                elem = relAbsFixed.test(_curcss.css(elem, 'position')) ?
+                    elem.offsetParent : elem.parentNode;
+
+                if (elem) {
+
+                    prop = parseFloat(_curcss.css(elem, prop));
+
+                    if (prop !== 0) {
+                        return px / prop * 100;
+                    }
+                }
+                return 0;
+            }
+
+            if (unit === 'em') {
+                return px / parseFloat(_curcss.css(elem, 'fontSize'));
+            }
+
+            // The first time we calculate how many pixels there is in 1 meter
+            // for calculate what is 1 inch/cm/mm/etc.
+            if (units.unity === undefined) {
+
+                var u = units.unity = {},
+                    div = document.createElement("div");
+
+                div.style.width = '100cm';
+                document.body.appendChild(div); // If we don't link the <div> to something, the offsetWidth attribute will be not set correctly.
+                u.mm = div.offsetWidth / 1000;
+                document.body.removeChild(div);
+                u.cm = u.mm * 10;
+                u.in = u.cm * 2.54;
+                u.pt = u.in * 1 / 72;
+                u.pc = u.pt * 12;
+            }
+
+            // If the unity specified is not recognized we return the value.
+
+            unit = units.unity[unit];
+
+            return unit ? px / unit : px;
         };
 
     this.css = function(name, value) {
@@ -217,8 +279,6 @@ hAzzle.define('Style', function() {
             if (typeof name === 'string') {
                 return elem[0] && getCSS(elem[0], name);
             }
-
-            // Object
 
             return this.each(function(elem) {
                 _util.each(name, function(value, prop) {

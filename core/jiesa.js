@@ -161,9 +161,11 @@ hAzzle.define('Jiesa', function() {
                 if (!hAzzle.installed['selector'] && _has.has('qsa') && (!_core.brokenCheckedQSA ||
                         !_core.ioASaf ||
                         !_core.brokenEmptyAttributeQSA)) {
-                    return qsa(sel, ctx);
-                }
+                    try {
+                        return qsa(sel, ctx);
+                    } catch (e) {}
 
+                }
             }
             // We are dealing with HTML / XML documents, so check if the native selector engine are installed 
             // To avoid bloating the hAzzle Core - the main selector engine are a separate module            

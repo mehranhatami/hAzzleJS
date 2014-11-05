@@ -1,9 +1,9 @@
 // curcss.js
-hAzzle.define('css', function() {
+hAzzle.define('curCSS', function() {
 
     var _storage = hAzzle.require('Storage'),
-        _core = hAzzle.require('Storage'),
-        _has = hAzzle.require('Storage'),
+        _core = hAzzle.require('Core'),
+        _has = hAzzle.require('has'),
 
         computedValues = function(elem) {
 
@@ -30,18 +30,13 @@ hAzzle.define('css', function() {
             }
         },
         getStyles = function(elem) {
-            var computed;
-            if (computed(elem).computedStyle === null) {
-                computed = computed(elem).computedStyle = computedValues(elem);
-            } else {
-                computed = computed(elem).computedStyle;
-            }
-
-            return computed;
+           return computed(elem).computedStyle === null ? 
+                  computed(elem).computedStyle = computedValues(elem) :
+                  computed(elem).computedStyle
         },
         css = function(elem, prop, force) {
 
-         elem = elem instanceof hAzzle ? elem.elements[0] : elem;
+            elem = elem instanceof hAzzle ? elem.elements[0] : elem;
 
             var ret = 0;
 
@@ -76,7 +71,7 @@ hAzzle.define('css', function() {
                 }
 
                 // Support: IE9
-                // getPropertyValue is only needed for .css('filter'). It's terrible slow and ugly too!
+                // getPropertyValue is only needed for .css('filter')
 
                 if (_has.ie === 9 && prop === 'filter') {
                     ret = computedStyle.getPropertyValue(prop);
@@ -90,6 +85,7 @@ hAzzle.define('css', function() {
                     ret = elem.style[prop];
                 }
             }
+            return ret !== undefined ? ret + '' : ret;
         };
 
     return {
