@@ -236,67 +236,47 @@ hAzzle.define('has', function() {
 
     // XPath
 
-    add('xpath', function() {
-        return !!doc.evaluate;
-    });
+    add('xpath', !!doc.evaluate);
 
     // Air 
 
-    add('air', function() {
-        return !!win.runtime;
-    });
+    add('air', !!win.runtime);
 
     // Detects native support for the Dart programming language
 
-    add('dart', function() {
-        return !!(win.startDart || doc.startDart);
-    });
+    add('dart', !!(win.startDart || doc.startDart));
 
     // Detects native support for promises
 
-    add('promise', function() {
-        return !!win.Promise;
-    });
+    add('promise', !!win.Promise);
 
     // mobile
 
-    add('mobile', function() {
-        return /^Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
-    });
+    add('mobile', /^Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua));
 
     // android
 
-    add('android', function() {
-        return /^Android/i.test(ua);
-    });
+    add('android', /^Android/i.test(ua));
 
     // opera
-    add('opera', function() {
+    add('opera', 
         // Opera 8.x+ can be detected with `window.opera`
         // This is a safer inference than plain boolean type conversion of `window.opera`
         // But note that the newer Opera versions (15.x+) are using the webkit engine
-        return oString.call(window.opera) === '[object Opera]';
-    });
+        oString.call(window.opera) === '[object Opera]'
+    );
 
     // Firefox
-    add('firefox', function() {
-        return typeof InstallTrigger !== 'undefined';
-    });
+    add('firefox', typeof InstallTrigger !== 'undefined');
 
     // Chrome
-    add('chrome', function() {
-        return win.chrome;
-    });
+    add('chrome', win.chrome);
 
     // Webkit
-    add('webkit', function() {
-        return 'WebkitAppearance' in doc.documentElement.style;
-    });
+    add('webkit', 'WebkitAppearance' in doc.documentElement.style);
 
     // Safari
-    add('safari', function() {
-        return oString.call(window.HTMLElement).indexOf('Constructor') > 0;
-    });
+    add('safari', oString.call(window.HTMLElement).indexOf('Constructor') > 0);
 
     // Safari
     add('ie', function() {
@@ -305,37 +285,25 @@ hAzzle.define('has', function() {
 
     // Touch support
 
-    add('touch', function() {
-        return 'ontouchstart' in document ||
+    add('touch', 'ontouchstart' in document ||
             ('onpointerdown' in document && navigator.maxTouchPoints > 0) ||
-            window.navigator.msMaxTouchPoints;
-    });
+            window.navigator.msMaxTouchPoints);
 
     // Touch events 
 
-    add('touchEvents', function() {
-        return 'ontouchstart' in document;
-    });
+    add('touchEvents', 'ontouchstart' in document);
 
     // Pointer Events
 
-    add('pointerEvents', function() {
-        return 'onpointerdown' in document;
-    });
+    add('pointerEvents', 'onpointerdown' in document);
 
-    add('MSPointer', function() {
-        return 'msMaxTouchPoints' in navigator; //IE10+
-    });
+    add('MSPointer', 'msMaxTouchPoints' in navigator); //IE10+
 
     // querySelectorAll
-    add('qsa', function() {
-        return !!document.querySelectorAll;
-    });
+    add('qsa', !!document.querySelectorAll);
 
     // ClassList
-    add('classlist', function() {
-        return !!document.documentElement.classList;
-    });
+    add('classlist', !!document.documentElement.classList);
 
     return {
         has: has,
