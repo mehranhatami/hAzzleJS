@@ -10,6 +10,7 @@ hAzzle.define('Dimensions', function() {
         _util = hAzzle.require('Util'),
         _types = hAzzle.require('Types'),
         _style = hAzzle.require('Style'),
+        _core = hAzzle.require('Core'),
         _curcss = hAzzle.require('curCSS'),
 
         _matchMedia = win.matchMedia || win.msMatchMedia,
@@ -138,13 +139,147 @@ hAzzle.define('Dimensions', function() {
         // Get the horizontal scroll position in pixels
         scrollX = function() {
             return win.pageXOffset || docElem.scrollLeft;
+        },
+        setOffset = function(elem, opts, i) {
+            var curPosition, curLeft, curCSSTop, curTop, curOffset, curCSSLeft, calculatePosition,
+                position = _curcss(elem, 'position'),
+                curElem = hAzzle(elem),
+                props = {};
+
+            // Set position first, in-case top/left are set even on static elem
+            if (position === 'static') {
+                elem.style.position = 'relative';
+            }
+
+            curOffset = curElem.offset();
+            curCSSTop = _curcss(elem, 'top');
+            curCSSLeft = _curcss(elem, 'left');
+            calculatePosition = (position === 'absolute' || position === 'fixed') &&
+                (curCSSTop + curCSSLeft).indexOf('auto') > -1;
+
+            // Need to be able to calculate position if either
+            // top or left is auto and position is either absolute or fixed
+            if (calculatePosition) {
+                curPosition = curElem.position();
+                curTop = curPosition.top;
+                curLeft = curPosition.left;
+
+            } else {
+                curTop = parseFloat(curCSSTop) || 0;
+                curLeft = parseFloat(curCSSLeft) || 0;
+            }
+
+            if (_types.isType('function')(opts)) {
+                opts = opts.call(elem, i, curOffset);
+            }
+
+            if (opts.top != null) {
+                props.top = (opts.top - curOffset.top) + curTop;
+            }
+            if (opts.left != null) {
+                props.left = (opts.left - curOffset.left) + curLeft;
+            }
+
+            if ('using' in opts) {
+                opts.using.call(elem, props);
+
+            } else {
+                curElem.css(props);
+            }
         };
-        
+
     this.scrollLeft = function(val) {
         return scrollLeft(this.elements[0], val);
     };
     this.scrollTop = function(val) {
         return scrollTop(this.elements[0], val);
+    };
+
+    this.offset = function(opts) {
+        if (arguments.length) {
+            return opts === undefined ?
+                this.elements :
+                this.each(function(elem, i) {
+                    setOffset(elem, opts, i);
+                });
+        }
+        var docElem, elem = this.elements[0],
+            doc = elem && elem.ownerDocument;
+
+        if (!doc) {
+            return;
+        }
+
+        docElem = doc.documentElement;
+
+        // Make sure it's not a disconnected DOM node
+        if (!_core.contains(docElem, elem)) {
+            return {
+                top: 0,
+                left: 0
+            };
+        }
+        // All major browsers supported by hAzzle supports getBoundingClientRect, so no
+        // need for a workaround
+
+        var bcr = elem.getBoundingClientRect(),
+            isFixed = (_curcss(elem, 'position') === 'fixed'),
+            win = _types.isWindow(doc) ? doc : doc.nodeType === 9 && doc.defaultView;
+        return {
+            top: bcr.top + elem.parentNode.scrollTop + ((isFixed) ? 0 : win.pageYOffset) - docElem.clientTop,
+            left: bcr.left + elem.parentNode.scrollLeft + ((isFixed) ? 0 : win.pageXOffset) - docElem.clientLeft
+        };
+    };
+
+    this.position = function(relative) {
+
+        var offset = this.offset(),
+            elem = this.elements[0],
+            scroll = {
+                top: 0,
+                left: 0
+            },
+            position = {
+                top: 0,
+                left: 0
+            };
+
+        if (!this.elements[0]) {
+            return;
+        }
+
+        elem = elem.parentNode;
+
+        if (!_util.nodeName(elem, 'html')) {
+            scroll.top += elem.scrollLeft;
+            scroll.left += elem.scrollTop;
+        }
+        position = {
+            top: offset.top - scroll.top,
+            left: offset.left - scroll.left
+        };
+
+        if (relative && (relative = hAzzle(relative))) {
+            var relativePosition = relative.getPosition();
+            return {
+                top: position.top - relativePosition.top - parseInt(_curcss(relative, 'borderLeftWidth')) || 0,
+                left: position.left - relativePosition.left - parseInt(_curcss(relative, 'borderTopWidth')) || 0
+            };
+        }
+        return position;
+    };
+
+    this.offsetParent = function() {
+        return this.map(function() {
+            var offsetParent = this.offsetParent || docElem;
+
+            while (offsetParent && (!_util.nodeName(offsetParent, 'html') &&
+                    _curcss(offsetParent, 'position') === 'static')) {
+                offsetParent = offsetParent.offsetParent;
+            }
+
+            return offsetParent || docElem;
+        });
     };
 
     // 'this' height and width
@@ -153,7 +288,7 @@ hAzzle.define('Dimensions', function() {
         height: 'Height',
         width: 'Width'
     }, function(val, prop) {
-     // Height / Width
+        // Height / Width
         this[prop] = function(value) {
             var elem = this.elements[0],
                 doc;
@@ -177,16 +312,16 @@ hAzzle.define('Dimensions', function() {
         };
         // innerHeight / innerWidth
         this['inner' + val] = function() {
-            return this.elements[0]['client' + val];
-        }
-        // outerHeight / outerWidth
+                return this.elements[0]['client' + val];
+            };
+            // outerHeight / outerWidth
         this['outer' + val] = function(margin) {
             var elem = this.elements[0];
             return margin ? (elem['offset' + val] +
                 (parseInt(_curcss.css(elem, prop === 'height' ? 'marginTop' : 'marginLeft'), 10) || 0) +
                 (parseInt(_curcss.css(elem, prop === 'height' ? 'marginBottom' : 'marginRight'), 10) || 0)) : elem['offset' + val];
 
-        }
+        };
     }.bind(this));
 
     return {
