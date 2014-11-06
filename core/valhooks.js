@@ -1,14 +1,14 @@
 // valhooks.js
-hAzzle.define('valHooks', function() {
+hAzzle.include([
+    'util',
+    'strings',
+    'text',
+    'types',
+    'collection',
+    'setters'
+], function(_util, _strings, _text, _types, _collection, _setters) {
 
-    var _util = hAzzle.require('Util'),
-        _strings = hAzzle.require('Strings'),
-        _text = hAzzle.require('Text'),
-        _types = hAzzle.require('Types'),
-        _collection = hAzzle.require('Collection'),
-        _setters = hAzzle.require('Setters'),
-
-        // Support: Android<4.4
+    var // Support: Android<4.4
         supportCheckboxes = (function() {
             var checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -16,11 +16,11 @@ hAzzle.define('valHooks', function() {
             var node = checkbox.getAttributeNode('checked');
             return !node || !node.specified;
         })(),
- 
+
         // iOF() gives approx 40 - 60% better performance then native indexOf
         // for valHooks
 
-         iOf = function(array, item, from) {
+        iOf = function(array, item, from) {
             var i, length = array.length;
 
             for (i = (from < 0) ? Math.max(0, length + from) : from || 0; i < length; i++) {
@@ -118,7 +118,7 @@ hAzzle.define('valHooks', function() {
             }
         };
     });
-    
+
     if (!supportCheckboxes) {
         _setters.valHooks.get[val] = function(elem) {
             return elem.getAttribute('value') === null ? 'on' : elem.value;

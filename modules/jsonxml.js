@@ -1,5 +1,5 @@
 // jsonxml.js
-hAzzle.define('Jsonxml', function() {
+hAzzle.include(function() {
 
     // Parse JSON    
 

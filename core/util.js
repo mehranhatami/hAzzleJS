@@ -1,11 +1,7 @@
 // util.js
-hAzzle.define('Util', function() {
+hAzzle.include(['types'], function(_types) {
 
-    var // Modules
-
-        _types = hAzzle.require('Types'),
-
-        // Save a reference to some core methods
+    var // Save a reference to some core methods
 
         _arrayProto = Array.prototype,
         _objectProto = Object.prototype,

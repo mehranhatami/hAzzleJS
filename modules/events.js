@@ -1,18 +1,16 @@
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('Events', function() {
+hAzzle.include([
+    'util',
+    'core',
+    'collection',
+    'has',
+    'types',
+    'jiesa'
+], function(_util, _core, _collection, _has, _types, _jiesa) {
 
     var win = window,
         doc = window.document || {},
-
-        // Include needed modules
-        _util = hAzzle.require('Util'),
-        _core = hAzzle.require('Core'),
-        _collection = hAzzle.require('Collection'),
-        _has = hAzzle.require('has'),
-        _types = hAzzle.require('Types'),
-        _jiesa = hAzzle.require('Jiesa'),
-
         evwhite = (/\S+/g),
         mouseEvent = /^click|mouse(?!(.*wheel|scroll))|menu|pointer|contextmenu|drag|drop/i,
         keyEvent = /^key/,
@@ -238,7 +236,7 @@ hAzzle.define('Events', function() {
             return elem;
         },
 
-       //  Fires a custom event with the current element as its target.
+        //  Fires a custom event with the current element as its target.
         fire = function(elem, type, args) {
 
             var cur, types = type.split(' '),
@@ -462,9 +460,9 @@ hAzzle.define('Events', function() {
                 }
             }
         },
-       
-       // EVENT DELEGATION
-       // Fix me! Add observer pattern for event delegation
+
+        // EVENT DELEGATION
+        // Fix me! Add observer pattern for event delegation
 
         delegateTarget = function(event, sel, ctx) {
             var cur = event.target;

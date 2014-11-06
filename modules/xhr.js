@@ -2,20 +2,16 @@
 // Dependencies: Jsonxml.js module
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('xhr', function() {
+hAzzle.include([
+    'util',
+    'types',
+    'collection',
+    'has',
+    // Note! This module are not part of the Core
+    'jsonxml'
+], function(_util, _types, _collection, _has, _jxml) {
 
-    var
-    // Modules
-
-        _util = hAzzle.require('Util'),
-        _types = hAzzle.require('Types'),
-        _collection = hAzzle.require('Collection'),
-        _has = hAzzle.require('has'),
-
-        // Note! This module are not part of the Core
-        _jxml = hAzzle.require('Jsonxml'),
-
-        _keys = Object.keys,
+    var _keys = Object.keys,
 
         r20 = /%20/g;
 

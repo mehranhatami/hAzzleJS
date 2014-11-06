@@ -1,5 +1,5 @@
 // types.js
-hAzzle.define('Types', function() {
+hAzzle.include(function() {
 
     var i,
         _toString = Object.prototype.toString,

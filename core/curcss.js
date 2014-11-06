@@ -1,11 +1,11 @@
 // curcss.js
-hAzzle.define('curCSS', function() {
+hAzzle.include([
+    'storage',
+    'core',
+    'has'
+], function(_storage, _core, _feature) {
 
-    var _storage = hAzzle.require('Storage'),
-        _core = hAzzle.require('Core'),
-        _feature = hAzzle.require('has'),
-
-        computedValues = function(elem) {
+    var computedValues = function(elem) {
             if (elem && elem.ownerDocument !== null) {
                 var view = false;
                 if (elem) {

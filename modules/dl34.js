@@ -1,12 +1,12 @@
 // pseudos.js
 // NOTE!!! Will extend the existing CSS3 pseudos included in the CORE with
 // other CSS3 selectors (CL3), and a few CSS Level 4 pseudo selectors (CL4)
-hAzzle.define('dl34', function() {
+hAzzle.include([
+    'util',
+    'jiesa'
+], function(_util, _jiesa) {
 
-    var _util = hAzzle.require('Util'),
-        _jiesa = hAzzle.require('Jiesa'),
-
-        radicheck = /radio|checkbox/i,
+    var radicheck = /radio|checkbox/i,
         optcheck = /option/i,
 
         isForm = function(elem) {

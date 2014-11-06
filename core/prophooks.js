@@ -1,11 +1,11 @@
 // prophooks.js
-hAzzle.define('propHooks', function () {
-
-    var _util = hAzzle.require('Util'),
-        _setters = hAzzle.require('Setters');
+hAzzle.include([
+    'util',
+    'setters'
+], function(_util, _setters) {
 
     _util.mixin(_setters.propHooks.get, {
-        'tabIndex': function (elem) {
+        'tabIndex': function(elem) {
             return elem.hasAttribute('tabindex') ||
                 /^(?:input|select|textarea|button)$/i.test(elem.nodeName) || elem.href ?
                 elem.tabIndex :
@@ -19,8 +19,8 @@ hAzzle.define('propHooks', function () {
     var select = document.createElement('select'),
         opt = select.appendChild(document.createElement('option'));
 
-    if (!opt.selected) { 
-        _setters.propHooks.get.selected = function (elem) {
+    if (!opt.selected) {
+        _setters.propHooks.get.selected = function(elem) {
             var parent = elem.parentNode;
             if (parent && parent.parentNode) {
                 parent.parentNode.selectedIndex;
@@ -28,5 +28,5 @@ hAzzle.define('propHooks', function () {
             return null;
         };
     }
-      return {};
+    return {};
 });

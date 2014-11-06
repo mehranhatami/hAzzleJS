@@ -1,14 +1,14 @@
 // style.js
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('Style', function() {
+hAzzle.include([
+    'util',
+    'types',
+    'strings',
+    'curcss'
+], function(_util, _types, _strings, _curcss) {
 
-    var _util = hAzzle.require('Util'),
-        _types = hAzzle.require('Types'),
-        _strings = hAzzle.require('Strings'),
-        _curcss = hAzzle.require('curCSS'),
-
-        leftRightMargPad = /^(left$|right$|margin|padding)/,
+    var leftRightMargPad = /^(left$|right$|margin|padding)/,
         relAbsFixed = /^(relative|absolute|fixed)$/,
         topBottom = /^(top|bottom)$/,
 

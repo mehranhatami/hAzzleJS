@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>A Lightweight Module Library</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+    <script src="core/hazzle.js"></script>
+    <script>
+    //This is how hAzzle developers use hAzzle's modules
+    hAzzle.request(['jiesa', 'selector'], function(jiesa, selector) {
+
+        console.log('request a Module[jiesa]:' + jiesa);
+
+        console.log('check if "jiesa" is actually working, jiesa.find(\'body\'):' + jiesa.find('body'));
+
+        console.log('request a Module[selector]:' + selector);
+
+        console.log('check if "selector" is actually working, selector.find(\'body\'):' + selector.find('body'));
+
+        console.log('Congratulation! Module system is working!!');
+
+    });
+    </script>
+</body>
+
+</html>

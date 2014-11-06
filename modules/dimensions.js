@@ -1,17 +1,15 @@
 // dimensions.js
-hAzzle.define('Dimensions', function() {
+hAzzle.include([
+    'util',
+    'types',
+    'style',
+    'core',
+    'curcss'
+], function(_util, _types, _style, _core, _curcss) {
 
     var win = window,
         doc = window.document,
         docElem = doc.documentElement,
-
-        // Include the modules    
-
-        _util = hAzzle.require('Util'),
-        _types = hAzzle.require('Types'),
-        _style = hAzzle.require('Style'),
-        _core = hAzzle.require('Core'),
-        _curcss = hAzzle.require('curCSS'),
 
         _matchMedia = win.matchMedia || win.msMatchMedia,
         mq = _matchMedia ? function(q) {
@@ -312,9 +310,9 @@ hAzzle.define('Dimensions', function() {
         };
         // innerHeight / innerWidth
         this['inner' + val] = function() {
-                return this.elements[0]['client' + val];
-            };
-            // outerHeight / outerWidth
+            return this.elements[0]['client' + val];
+        };
+        // outerHeight / outerWidth
         this['outer' + val] = function(margin) {
             var elem = this.elements[0];
             return margin ? (elem['offset' + val] +

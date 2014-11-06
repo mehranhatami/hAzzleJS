@@ -1,13 +1,12 @@
 // attributes.js
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('attributes', function() {
+hAzzle.include([
+    'has',
+    'setters'
+], function(_has, _setters) {
 
     var
-    // dependencies
-
-        _has = hAzzle.require('has'),
-        _setters = hAzzle.require('Setters'),
 
         getElem = function(elem) {
             if (elem instanceof hAzzle) {

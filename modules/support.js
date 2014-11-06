@@ -2,7 +2,7 @@
 // NOTE! This module are here just to be a 'litle' compatible with jQuery for developers 
 // that are used to support() from jQuery. We only use this a few places. 
 // For 'feature detection', use has.js (included in the Core).
-hAzzle.define('Support', function() {
+hAzzle.include(function() {
 
     // Feature detection of elements
 

@@ -1,14 +1,15 @@
 // classes.js
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('Classes', function() {
+hAzzle.include([
+    'has',
+    'util',
+    'storage',
+    'strings',
+    'types'
+], function(_has, _util, _storage, _strings, _types) {
 
-    var _has = hAzzle.require('has'),
-        _util = hAzzle.require('Util'),
-        _storage = hAzzle.require('Storage'),
-        _strings = hAzzle.require('Strings'),
-        _types = hAzzle.require('Types'),
-        _reSpace = /[\n\t\r]/g,
+    var _reSpace = /[\n\t\r]/g,
         _whitespace = /\s+/,
         a1 = [''],
 

@@ -1,11 +1,12 @@
 // storage.js
-hAzzle.define('Storage', function() {
+hAzzle.include([
+    'util',
+    'strings',
+    'types',
+    'core'
+], function(_util, _strings, _types, _core) {
 
-    var _util = hAzzle.require('Util'),
-        _strings = hAzzle.require('Strings'),
-        _types = hAzzle.require('Types'),
-        _core = hAzzle.require('Core'),
-        _shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
+    var _shtmlRegEx = /^(?:\{[\w\W]*\}|\[[\w\W]*\])$/,
         _scharRegEx = /([A-Z])/g,
         _sWhiteRegex = (/\S+/g);
 

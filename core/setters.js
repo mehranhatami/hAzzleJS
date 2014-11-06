@@ -1,10 +1,11 @@
 // setters.js
-hAzzle.define('Setters', function() {
+hAzzle.include([
+    'util',
+    'core',
+    'types'
+], function(_util, _core, _types) {
 
-    var _util = hAzzle.require('Util'),
-        _core = hAzzle.require('Core'),
-        _types = hAzzle.require('Types'),
-        _whiteSpace = /\S+/g,
+    var _whiteSpace = /\S+/g,
         _wreturn = /\r/g,
 
         boolElemArray = ('input select option textarea button form details').split(' '),
@@ -97,10 +98,10 @@ hAzzle.define('Setters', function() {
                 if (notxml) {
 
                     name = name.toLowerCase();
-                hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
-                    getBooleanAttrName(elem, name) ?
-                    boolHooks[value === 'undefined' ?
-                  'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
+                    hooks = (attrHooks[value === 'undefined' ? 'get' : 'set'][name] || null) ||
+                        getBooleanAttrName(elem, name) ?
+                        boolHooks[value === 'undefined' ?
+                            'get' : 'set'][name] : nodeHooks[value === 'undefined' ? 'get' : 'set'][name];
                 }
 
                 // Get attribute
@@ -119,9 +120,9 @@ hAzzle.define('Setters', function() {
                         undefined :
                         ret;
                 }
-               
+
                 // Set attribute
-                
+
                 if (!value) {
                     removeAttr(elem, name);
                 } else if (hooks && (ret = hooks.set(elem, value, name)) !== undefined) {
@@ -142,24 +143,24 @@ hAzzle.define('Setters', function() {
 
             if (nodeType && (nodeType !== 3 || nodeType !== 8 || nodeType !== 2)) {
 
-            if (nodeType !== 1 || _core.isHTML) {
+                if (nodeType !== 1 || _core.isHTML) {
 
-                // Fix name and attach hooks
-                name = propMap[name] || name;
-                hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
-            }
+                    // Fix name and attach hooks
+                    name = propMap[name] || name;
+                    hook = value === 'undefined' ? propHooks.get[name] : propHooks.set[name];
+                }
 
-            if (typeof value !== 'undefined') {
+                if (typeof value !== 'undefined') {
 
-                return hook && (ret = hook.set(elem, value, name)) !== undefined ?
-                    ret : (elem[name] = value);
+                    return hook && (ret = hook.set(elem, value, name)) !== undefined ?
+                        ret : (elem[name] = value);
 
-            } else {
+                } else {
 
-                return hook && (ret = hook(elem, name)) !== null ?
-                    ret :
-                    elem[name];
-            }
+                    return hook && (ret = hook(elem, name)) !== null ?
+                        ret :
+                        elem[name];
+                }
             }
             return '';
         };
@@ -245,14 +246,14 @@ hAzzle.define('Setters', function() {
         });
     };
 
-  // Toggle properties on DOM elements
+    // Toggle properties on DOM elements
 
     this.toggleProp = function(prop) {
         return this.each(function(elem) {
             return elem.prop(prop, !elem.prop(prop));
         });
     };
-    
+
     this.removeProp = function(name) {
         return this.each(function() {
             delete this[propMap[name] || name];

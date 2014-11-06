@@ -1,15 +1,15 @@
 // traversing.js
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('Traversing', function() {
+hAzzle.include([
+    'jiesa',
+    'collection',
+    'types',
+    'core',
+    'util'
+], function(_jiesa, _collection, _types, _core, _util) {
 
-    var _jiesa = hAzzle.require('Jiesa'),
-        _collection = hAzzle.require('Collection'),
-        _types = hAzzle.require('Types'),
-        _core = hAzzle.require('Core'),
-        _util = hAzzle.require('Util'),
-
-        // Return correct index value
+    var // Return correct index value
 
         inVal = function(sel, index) {
             return typeof sel === 'undefined' && !_types.isNumber(index) ? 0 :
@@ -142,9 +142,9 @@ hAzzle.define('Traversing', function() {
         });
 
         if (this.length > 1) {
-          // Remove duplicates
-          matched =  _core.uniqueSort(matched.elements);
-          hAzzle(matched)
+            // Remove duplicates
+            matched = _core.uniqueSort(matched.elements);
+            hAzzle(matched)
         }
         return hAzzle(matched);
     };

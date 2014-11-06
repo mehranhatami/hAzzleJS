@@ -1,8 +1,6 @@
 // units.js
-hAzzle.define('Units', function() {
-    var _curcss = hAzzle.require('curCSS'),
-
-        leftRightMargPad = /^(left$|right$|margin|padding)/,
+hAzzle.include(['curcss'], function(_curcss) {
+    var leftRightMargPad = /^(left$|right$|margin|padding)/,
         relAbsFixed = /^(relative|absolute|fixed)$/,
         topBottom = /^(top|bottom)$/,
 

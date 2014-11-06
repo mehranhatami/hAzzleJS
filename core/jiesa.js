@@ -1,16 +1,14 @@
 // jiesa.js
-hAzzle.define('Jiesa', function() {
+hAzzle.include([
+    'util',
+    'core',
+    'collection',
+    'types',
+    'has',
+    'selector'
+], function(_util, _core, _collection, _types, _has, _selector) {
 
-    var // Dependencies    
-
-        _util = hAzzle.require('Util'),
-        _core = hAzzle.require('Core'),
-        _collection = hAzzle.require('Collection'),
-        _types = hAzzle.require('Types'),
-        _has = hAzzle.require('has'),
-        _selector = hAzzle.require('selector'),
-
-        // RegEx
+    var // RegEx
 
         _relativeSel = /^\s*[+~]/,
         _reSpace = /[\n\t\r]/g,

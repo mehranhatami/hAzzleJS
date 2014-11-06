@@ -1,5 +1,5 @@
 // has.js
-hAzzle.define('has', function() {
+hAzzle.include(function() {
 
     var
         ua = navigator.userAgent,

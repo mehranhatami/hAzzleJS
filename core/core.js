@@ -1,5 +1,5 @@
 // core.js
-hAzzle.define('Core', function() {
+hAzzle.include(function() {
 
     var winDoc = window.document,
         featuresCache = {},

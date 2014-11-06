@@ -1,5 +1,5 @@
 // ready.js
-hAzzle.define('Ready', function() {
+hAzzle.include(function() {
 
     var
         doc = window.document,
@@ -23,6 +23,7 @@ hAzzle.define('Ready', function() {
         clearTimeout(poller);
         domReady(load);
     };
+
     function processQ() {
         // Calls all functions in the queue in order, unless processQ() is already running, in which case just return
 
@@ -35,7 +36,7 @@ hAzzle.define('Ready', function() {
             try {
                 (readyQ.shift())(doc);
             } catch (err) {
-               hAzzle.err(true, 7, 'error in domReady callback');
+                hAzzle.err(true, 7, 'error in domReady callback');
             }
         }
 
@@ -92,7 +93,7 @@ hAzzle.define('Ready', function() {
             poller();
         }
     }
- 
+
     return {
         ready: domReady
     };

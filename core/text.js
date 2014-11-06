@@ -1,5 +1,5 @@
 // text.js
-hAzzle.define('Text', function() {
+hAzzle.include(function() {
 
     var getText = function(elem) {
 

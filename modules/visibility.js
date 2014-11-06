@@ -2,12 +2,13 @@
 
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('Visibility', function() {
+hAzzle.include([
+    'curcss',
+    'core',
+    'storage'
+], function(_ccs, _core, _storage) {
 
-    var _ccs = hAzzle.require('curCSS'),
-        _core = hAzzle.require('Core'),
-        _storage = hAzzle.require('Storage'),
-        iframe, doc,
+    var iframe, doc,
         elemdisplay = {
             HTML: 'block',
             BODY: 'block'
@@ -24,9 +25,9 @@ hAzzle.define('Visibility', function() {
                 length = elements.length;
 
             for (; index < length; index++) {
-              
+
                 elem = elements[index];
-              
+
                 if (!elem.style) {
                     continue;
                 }
@@ -124,9 +125,9 @@ hAzzle.define('Visibility', function() {
     this.hide = function() {
         return showHide(this.elements);
     };
-    
+
     // Toggle show/hide.
-    
+
     this.toggle = function(state, /*optional*/ fn) {
 
         if (!fn && typeof state === 'function') {
@@ -145,7 +146,7 @@ hAzzle.define('Visibility', function() {
 
             if (fn) {
                 fn.call(elem, elem);
-                    // Set to false so it  get fired only once
+                // Set to false so it  get fired only once
                 fn = false;
             }
         });
@@ -154,6 +155,6 @@ hAzzle.define('Visibility', function() {
     return {
         show: show,
         hide: hide,
-        isHidden:isHidden
+        isHidden: isHidden
     };
 });

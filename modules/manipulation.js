@@ -1,15 +1,16 @@
 // manipulation.js
 var hAzzle = window.hAzzle || (window.hAzzle = {});
 
-hAzzle.define('Manipulation', function() {
+hAzzle.include([
+    'util',
+    'support',
+    'core',
+    'events',
+    'types',
+    'text'
+], function(_util, _support, _core, _events, _types, _text) {
 
-    var _util = hAzzle.require('Util'),
-        _support = hAzzle.require('Support'),
-        _core = hAzzle.require('Core'),
-        _events = hAzzle.require('Events'),
-        _types = hAzzle.require('Types'),
-        _text = hAzzle.require('Text'),
-        _scriptStyle = /<(?:script|style|link)/i,
+    var _scriptStyle = /<(?:script|style|link)/i,
         _tagName = /<([\w:]+)/,
         _htmlTag = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/gi,
         _rcheckableType = (/^(?:checkbox|radio)$/i),
@@ -44,13 +45,13 @@ hAzzle.define('Manipulation', function() {
 
     var imcHTML = (function() {
 
-        if (typeof document.implementation.createHTMLDocument === 'function') {
-            return true;
-        }
-        return false;
-    })(),
+            if (typeof document.implementation.createHTMLDocument === 'function') {
+                return true;
+            }
+            return false;
+        })(),
 
-      createHTML = function(html, context) {
+        createHTML = function(html, context) {
             return hAzzle(create(html, context));
         },
 

@@ -1,5 +1,5 @@
 // strings.js
-hAzzle.define('Strings', function() {
+hAzzle.include(function() {
     var
     // Aliasing to the native function
 

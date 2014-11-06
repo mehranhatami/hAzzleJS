@@ -1,16 +1,17 @@
 // collection.js
-hAzzle.define('Collection', function() {
+hAzzle.include([
+    'util',
+    'types'
+], function(_util, _types) {
 
-    var _util = hAzzle.require('Util'),
-        _types = hAzzle.require('Types'),
-        _arrayProto = Array.prototype,
+    var _arrayProto = Array.prototype,
         _concat = _arrayProto.concat,
         _push = _arrayProto.push,
 
         inArray = function(elem, array, i) {
             return array === undefined ? -1 : _arrayProto.indexOf.call(array, elem, i);
         },
-        
+
         makeArray = function(arr, results) {
             var ret = results || [];
             if (arr !== undefined) {
@@ -79,7 +80,7 @@ hAzzle.define('Collection', function() {
     };
 
     this.indexOf = function(elem, arr, i) {
-        return arr == null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
+        return arr === null ? -1 : _arrayProto.indexOf.call(arr, elem, i);
     };
 
     this.map = function(fn, args) {
@@ -201,7 +202,7 @@ hAzzle.define('Collection', function() {
 
     return {
         makeArray: makeArray,
-        inArray:inArray,
+        inArray: inArray,
         slice: slice
     };
 });

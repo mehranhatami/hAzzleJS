@@ -1,19 +1,19 @@
 // csshooks.js
-hAzzle.define('cssHooks', function() {
+hAzzle.include([
+    'util',
+    'has',
+    'style',
+    'support',
+    'curcss'
+], function(_util, _has, _style, _support, _curCSS) {
 
-    var _util = hAzzle.require('Util'),
-        _has = hAzzle.require('has'),
-        _style = hAzzle.require('Style'),
-        _support = hAzzle.require('Support'),
-        _curCSS = hAzzle.require('curCSS'),
+    var padMarg = {
 
-        padMarg = {
-
-            padding: 'paddingTop paddingRight paddingBottom paddingLeft',
-            margin: 'marginTop marginRight marginBottom marginLeft',
-            borderWidth: 'borderTopWidth borderRightWidth borderBottomWidth borderLeftWidth',
-            borderColor: 'borderTopColor borderRightColor borderBottomColor borderLeftColor',
-        };
+        padding: 'paddingTop paddingRight paddingBottom paddingLeft',
+        margin: 'marginTop marginRight marginBottom marginLeft',
+        borderWidth: 'borderTopWidth borderRightWidth borderBottomWidth borderLeftWidth',
+        borderColor: 'borderTopColor borderRightColor borderBottomColor borderLeftColor',
+    };
 
     if (_support.borderRadius) {
         padMarg.borderRadius = 'borderTopLeftRadius borderTopRightRadius borderBottomRightRadius borderBottomLeftRadius';
