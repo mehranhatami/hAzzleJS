@@ -85,12 +85,12 @@
 
                 if (els === null || els === undefined) {
 
-                    // The 'find' method need to have a boolean value set to 'true', to 
+                    // The 'find' method need to have a boolean value set to 'true', to
                     // work as expected. Else it will behave like the global .find method
 
                     els = this.find(sel, ctx, true);
                 }
-                // hAzzle([dom]) 
+                // hAzzle([dom])
             } else if (sel instanceof Array) {
                 els = _util.unique(_util.filter(sel, validTypes));
                 // hAzzle(dom)
@@ -105,7 +105,7 @@
                 } else {
                     els = [sel];
                 }
-                // window     
+                // window
             } else if (sel === window) {
                 els = [sel];
             } else {
@@ -227,7 +227,7 @@
 
                 if (isObject(options.core) &&
                     isObject(options.core.paths) &&
-                    options.core.paths[moduleName] === true){
+                    options.core.paths[moduleName] === true) {
 
                     moduleName = options.core.baseUrl + moduleName;
                 } else if (isObject(options.paths)) {
@@ -251,7 +251,8 @@
             };
 
         if (currentScript) {
-            baseUrl = currentScript.getAttribute('base') || getFileInfo(currentScript.src).filePath;
+            baseUrl = currentScript.getAttribute('base') || getFileInfo(
+                currentScript.src).filePath;
             baseGlobal = currentScript.getAttribute('global');
         }
         var getScript = function(url, callback) {
@@ -260,14 +261,15 @@
 
                 elem.addEventListener('error', function(e) {
                     //missing dependency
-                    console.error('The script ' + e.target.src + ' is not accessible.');
+                    console.error('The script ' + e.target.src +
+                        ' is not accessible.');
                     if (typeof callback === 'function') {
                         callback('error');
                     }
                 });
 
                 elem.addEventListener('load', function(e) {
-                    //dependency is loaded successfully 
+                    //dependency is loaded successfully
                     if (typeof callback === 'function') {
                         callback('success');
                     }
@@ -356,6 +358,22 @@
                 }
             },
 
+            getLoadedModules = function(array) {
+                var i = 0,
+                    len = array.length,
+                    loaded = [];
+
+                for (; i < len; i += 1) {
+                    if (installed[array[i]]) {
+                        loaded.push(modules[array[i]]);
+                    } else {
+                        //to keep the order
+                        loaded.push(undefined);
+                    }
+                }
+
+                return loaded;
+            },
             loadModules = function(array, callback) {
 
                 var i = 0,
@@ -372,6 +390,7 @@
                 for (; i < len; i += 1) {
                     loadModule(array[i], pCallback);
                 }
+
             },
 
             include = function(moduleName, array, moduleDefinition) {
@@ -383,7 +402,7 @@
                     moduleName = undefined;
                     array = emptyArray;
                 }
-                //define(array, moduleDefinition) 
+                //define(array, moduleDefinition)
                 else if (isArray(moduleName)) {
                     moduleDefinition = array;
                     array = moduleName;
@@ -431,10 +450,17 @@
             },
 
             request = function(array, fn) {
+                if (typeof array === 'string') {
+                    array = [array];
+                }
+
+                if (!isArray(array)) {
+                    console.error('Invalid input parameter to request modules');
+                    return;
+                }
 
                 if (typeof fn !== 'function') {
-                    console.error('Invalid input parameter to require a module');
-                    return;
+                    return getLoadedModules(array);
                 }
 
                 if (isArray(array) && array.length) {
@@ -472,18 +498,24 @@
             //@deprecated
             // Returns an instance for `name`
             require = function(name) {
-                console.warn('hAzzle.require is deprecated now, use hAzzle.request instead to support lazy loading');
+                console.warn(
+                    'hAzzle.require is deprecated now, use hAzzle.request instead to support lazy loading'
+                );
                 return modules[name];
             },
 
             //@deprecated
             // Defines a module for `name: String`, `fn: Function`,
             define = function(name, fn) {
-                console.warn('hAzzle.define is deprecated now, use hAzzle.include instead to support lazy loading');
+                console.warn(
+                    'hAzzle.define is deprecated now, use hAzzle.include instead to support lazy loading'
+                );
                 // Check arguments
-                err(typeof name !== 'string', 1, 'id must be a string "' + name + '"');
+                err(typeof name !== 'string', 1, 'id must be a string "' + name +
+                    '"');
                 err(modules[name], 2, 'module already included "' + name + '"');
-                err(typeof fn !== 'function', 3, 'function body for "' + name + '" must be an function "' + fn + '"');
+                err(typeof fn !== 'function', 3, 'function body for "' + name +
+                    '" must be an function "' + fn + '"');
 
                 // append to module object
                 installed[name] = true;

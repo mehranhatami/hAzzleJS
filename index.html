@@ -24,6 +24,10 @@
 
         console.log('check if "selector" is actually working, selector.find(\'body\'):' + selector.find('body'));
 
+        console.log('If modules are already loaded, you can use "hAzzle.request" function without callback:');
+
+        console.log('hAzzle.request([\'core\', \'util\'])=>', hAzzle.request(['core', 'util']));
+
         console.log('Congratulation! Module system is working!!');
 
     });
